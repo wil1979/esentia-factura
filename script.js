@@ -1,3 +1,17 @@
+function agregarAFilaTabla(reg) {
+  const tabla = document.getElementById("tablaHistorial").querySelector("tbody");
+  const fila = document.createElement("tr");
+  fila.innerHTML = `
+    <td>${reg.factura}</td>
+    <td>${reg.fecha}</td>
+    <td>${reg.cliente}</td>
+    <td>${reg.producto}</td>
+    <td>${reg.cantidad}</td>
+    <td>₡${reg.precio.toLocaleString()}</td>
+    <td><strong style="color:#0074cc;">₡${reg.total.toLocaleString()}</strong></td>
+  `;
+  tabla.appendChild(fila);
+}
 function getPrecioYNombreProducto() {
   const productoSelect = document.getElementById("producto").value;
   let nombre = "";
