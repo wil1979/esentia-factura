@@ -108,10 +108,13 @@ function guardarRegistro() {
 
   if (!window.registros) window.registros = [];
 
-  window.registros.push({
-    factura, fecha, cliente, producto: nombre,
-    cantidad, precio, total
-  });
+  const nuevoRegistro = {
+  factura, fecha, cliente, producto: nombre,
+  cantidad, precio, total
+};
+window.registros.push(nuevoRegistro);
+agregarAFilaTabla(nuevoRegistro);
+
 
   let csv = "Factura,Fecha,Cliente,Producto,Cantidad,Precio,Total\n";
   window.registros.forEach(r => {
