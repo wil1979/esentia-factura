@@ -1,5 +1,3 @@
-let registros = [];
-
 function getPrecioYNombreProducto() {
   const productoSelect = document.getElementById("producto").value;
   let nombre = "";
@@ -41,19 +39,32 @@ function generarFactura() {
   const { nombre, precio } = getPrecioYNombreProducto();
   const total = cantidad * precio;
 
-  doc.setFontSize(14);
-  doc.text("Factura - Esentia", 20, 20);
-  doc.setFontSize(10);
-  doc.text(`Factura N°: ${factura}`, 20, 28);
-  doc.text(`Fecha: ${fecha}`, 20, 35);
-  doc.text(`Cliente: ${cliente}`, 20, 45);
-  doc.text(`Producto: ${nombre}`, 20, 55);
-  doc.text(`Cantidad: ${cantidad}`, 20, 65);
-  doc.text(`Precio Unitario: ₡${precio.toFixed(2)}`, 20, 75);
-  doc.text(`Total: ₡${total.toFixed(2)}`, 20, 85);
-  doc.text("Gracias por su compra - Fragancias que enamoran", 20, 100);
+  const logo = new Image();
+  logo.src = "logo.jpg"; // Logo debe estar en el mismo directorio
 
-  doc.save(`Factura_${factura}.pdf`);
+  logo.onload = function () {
+    doc.addImage(logo, "JPEG", 150, 10, 40, 20); // Ajusta tamaño y posición
+
+    doc.setFontSize(14);
+    doc.text("Factura - Esentia", 20, 20);
+    doc.setFontSize(10);
+    doc.text(`Factura N°: ${factura}`, 20, 28);
+    doc.text(`Fecha: ${fecha}`, 20, 35);
+    doc.text(`Cliente: ${cliente}`, 20, 45);
+    doc.text(`Producto: ${nombre}`, 20, 55);
+    doc.text(`Cantidad: ${cantidad}`, 20, 65);
+    doc.text(`Precio Unitario: ₡${precio.toFixed(2)}`, 20, 75);
+
+    doc.setTextColor(0, 102, 204); // azul
+    doc.setFont("helvetica", "bold");
+    doc.text(`TOTAL A PAGAR: ₡${total.toLocaleString()}`, 20, 85);
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "normal");
+    doc.text("Gracias por su compra - Fragancias que enamoran", 20, 100);
+
+    doc.save(`Factura_${factura}.pdf`);
+  };
 }
 
 function enviarWhatsApp() {
@@ -81,13 +92,15 @@ function guardarRegistro() {
   const { nombre, precio } = getPrecioYNombreProducto();
   const total = cantidad * precio;
 
-  registros.push({
+  if (!window.registros) window.registros = [];
+
+  window.registros.push({
     factura, fecha, cliente, producto: nombre,
     cantidad, precio, total
   });
 
   let csv = "Factura,Fecha,Cliente,Producto,Cantidad,Precio,Total\n";
-  registros.forEach(r => {
+  window.registros.forEach(r => {
     csv += `${r.factura},${r.fecha},${r.cliente},${r.producto},${r.cantidad},${r.precio},${r.total}\n`;
   });
 
