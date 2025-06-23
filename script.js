@@ -27,9 +27,9 @@ function generarFactura() {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(12);
   doc.setTextColor(0, 0, 0); // Negro
-  doc.text("RUC: 123456789", 20, 40);
+  //doc.text("RUC: 123456789", 20, 40);
   doc.text("Teléfono: +506 8407-9454", 20, 50);
-  doc.text("Correo: info@esentia.com", 20, 60);
+  doc.text("Correo: wilberthcm2009@hotmail.com", 20, 60);
   doc.line(20, 65, 190, 65); // Separador
 
   // Información del cliente
@@ -52,8 +52,8 @@ function generarFactura() {
   doc.setFont("helvetica", "bold");
   doc.text("Métodos de Pago", 20, 165);
   doc.setFont("helvetica", "normal");
-  doc.text("Transferencia bancaria: BAC San José -#Cliente: WILBER GONZALO cuenta IBAN: CR59010200009453897656", 20, 175);
-  doc.text("Sinpe / Numero: 72952454 ", 20, 185);
+  //doc.text("Transferencia bancaria: BAC San José - Cuenta Corriente #123456789", 20, 175);
+  doc.text("Sinpe Mobil / Numero: 72952454 ", 20, 185);
   doc.text("Efectivo contra entrega (previa coordinación)", 20, 195);
 
   // Agradecimiento final
@@ -63,3 +63,8 @@ function generarFactura() {
   // Guardar documento
   doc.save(`Factura_${cliente.replace(/\s+/g, '_')}.pdf`);
 }
+ 
+
+
+
+  
