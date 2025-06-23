@@ -17,7 +17,12 @@ function getPrecioYNombreProducto() {
 function actualizarTotal() {
   const cantidad = parseInt(document.getElementById("cantidad").value);
   const { precio } = getPrecioYNombreProducto();
-  const total = cantidad * precio;
+  let subtotal = cantidad * precio;
+  let descuento = 0;
+  if (cantidad >= 2) {
+    descuento = 500;
+  }
+  const total = subtotal - descuento;
   document.getElementById("totalDisplay").textContent = `Total a pagar: ₡${total.toLocaleString()}`;
 }
 
@@ -41,7 +46,12 @@ function generarFactura() {
   const cliente = document.getElementById("cliente").value;
   const cantidad = parseInt(document.getElementById("cantidad").value);
   const { nombre, precio } = getPrecioYNombreProducto();
-  const total = cantidad * precio;
+  let subtotal = cantidad * precio;
+  let descuento = 0;
+  if (cantidad >= 2) {
+    descuento = 500;
+  }
+  const total = subtotal - descuento;
 
   doc.setFontSize(16);
   doc.text("Factura - Esentia", 20, 20);
@@ -52,15 +62,17 @@ function generarFactura() {
   doc.text(`Producto: ${nombre}`, 20, 55);
   doc.text(`Cantidad: ${cantidad}`, 20, 65);
   doc.text(`Precio Unitario: ₡${precio.toFixed(2)}`, 20, 75);
+  doc.text(`Subtotal: ₡${subtotal.toLocaleString()}`, 20, 82);
+  if (descuento > 0) doc.text(`Descuento aplicado: -₡${descuento.toLocaleString()}`, 20, 89);
   doc.setTextColor(0, 102, 204);
   doc.setFont("helvetica", "bold");
-  doc.text(`TOTAL A PAGAR: ₡${total.toLocaleString()}`, 20, 85);
+  doc.text(`TOTAL A PAGAR: ₡${total.toLocaleString()}`, 20, 96);
   doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "normal");
-  doc.text("Formas de pago:", 20, 95);
-  doc.text("1. Efectivo contra entrega", 20, 102);
-  doc.text("2. SINPE 72952454 - Wilber Calderón M.", 20, 109);
-  doc.text("Gracias por su compra - Fragancias que enamoran", 20, 120);
+  doc.text("Formas de pago:", 20, 105);
+  doc.text("1. Efectivo contra entrega", 20, 112);
+  doc.text("2. SINPE 72952454 - Wilber Calderón M.", 20, 119);
+  doc.text("Gracias por su compra - Fragancias que enamoran", 20, 130);
 
   doc.save(`Factura_${factura}.pdf`);
 }
@@ -71,11 +83,19 @@ function enviarWhatsApp() {
   const cliente = document.getElementById("cliente").value;
   const cantidad = parseInt(document.getElementById("cantidad").value);
   const { nombre, precio } = getPrecioYNombreProducto();
-  const total = cantidad * precio;
+  let subtotal = cantidad * precio;
+  let descuento = 0;
+  if (cantidad >= 2) {
+    descuento = 500;
+  }
+  const total = subtotal - descuento;
 
   const mensaje = `Hola Wilber, soy ${cliente}. Quiero confirmar mi pedido:\n` +
                   `🧾 Factura N°: ${factura}\n📅 Fecha: ${fecha}\n` +
-                  `🧴 Producto: ${nombre}\n📦 Cantidad: ${cantidad}\n💰 Total: ₡${total.toLocaleString()}\n\n` +
+                  `🧴 Producto: ${nombre}\n📦 Cantidad: ${cantidad}\n` +
+                  `💰 Subtotal: ₡${subtotal.toLocaleString()}\n` +
+                  `🔖 Descuento: ₡${descuento.toLocaleString()}\n` +
+                  `💰 Total: ₡${total.toLocaleString()}\n\n` +
                   `💳 Formas de pago:\n1. Efectivo contra entrega\n2. SINPE 72952454 - Wilber Calderón M.`;
 
   const url = `https://wa.me/50684079454?text=${encodeURIComponent(mensaje)}`;
