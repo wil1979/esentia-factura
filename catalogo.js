@@ -5,6 +5,11 @@ function agregarCarrito(nombre, precio) {
   renderCarrito();
 }
 
+function eliminarDelCarrito(index) {
+  carrito.splice(index, 1);
+  renderCarrito();
+}
+
 function renderCarrito() {
   const lista = document.getElementById("listaCarrito");
   lista.innerHTML = "";
@@ -13,7 +18,8 @@ function renderCarrito() {
   carrito.forEach((item, i) => {
     total += item.precio;
     const li = document.createElement("li");
-    li.textContent = `${item.nombre} - ₡${item.precio.toLocaleString()}`;
+    li.innerHTML = `${item.nombre} - ₡${item.precio.toLocaleString()}
+                    <button onclick="eliminarDelCarrito(${i})" style="margin-left:10px;">❌</button>`;
     lista.appendChild(li);
   });
 
