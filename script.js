@@ -21,14 +21,23 @@ function actualizarTotal() {
   document.getElementById("totalDisplay").textContent = `Total a pagar: ₡${total.toLocaleString()}`;
 }
 
-document.getElementById("producto").addEventListener("change", actualizarTotal);
-document.getElementById("cantidad").addEventListener("input", actualizarTotal);
-window.onload = actualizarTotal;
+window.onload = () => {
+  const ahora = new Date();
+  const consecutivo = ahora.toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
+  const fecha = ahora.toLocaleDateString('es-CR');
+  document.getElementById("factura").value = consecutivo;
+  document.getElementById("fecha").value = fecha;
+  actualizarTotal();
+  document.getElementById("producto").addEventListener("change", actualizarTotal);
+  document.getElementById("cantidad").addEventListener("input", actualizarTotal);
+};
 
 function generarFactura() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
+  const factura = document.getElementById("factura").value;
+  const fecha = document.getElementById("fecha").value;
   const cliente = document.getElementById("cliente").value;
   const cantidad = parseInt(document.getElementById("cantidad").value);
   const { nombre, precio } = getPrecioYNombreProducto();
@@ -37,28 +46,50 @@ function generarFactura() {
   doc.setFontSize(16);
   doc.text("Factura - Esentia", 20, 20);
   doc.setFontSize(12);
-  doc.text(`Cliente: ${cliente}`, 20, 30);
-  doc.text(`Producto: ${nombre}`, 20, 40);
-  doc.text(`Cantidad: ${cantidad}`, 20, 50);
-  doc.text(`Precio Unitario: ₡${precio.toFixed(2)}`, 20, 60);
-  doc.text(`Total a pagar: ₡${total.toFixed(2)}`, 20, 70);
-  doc.text("Gracias por su compra - Fragancias que enamoran", 20, 90);
+  doc.text(`Factura N°: ${factura}`, 20, 30);
+  doc.text(`Fecha: ${fecha}`, 20, 37);
+  doc.text(`Cliente: ${cliente}`, 20, 45);
+  doc.text(`Producto: ${nombre}`, 20, 55);
+  doc.text(`Cantidad: ${cantidad}`, 20, 65);
+  doc.text(`Precio Unitario: ₡${precio.toFixed(2)}`, 20, 75);
+  doc.setTextColor(0, 102, 204);
+  doc.setFont("helvetica", "bold");
+  doc.text(`TOTAL A PAGAR: ₡${total.toLocaleString()}`, 20, 85);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "normal");
+  doc.text("Formas de pago:", 20, 95);
+  doc.text("1. Efectivo contra entrega", 20, 102);
+  doc.text("2. SINPE 72952454 - Wilber Calderón M.", 20, 109);
+  doc.text("Gracias por su compra - Fragancias que enamoran", 20, 120);
 
-  doc.save(`Factura_${cliente}.pdf`);
+  doc.save(`Factura_${factura}.pdf`);
 }
 
 function enviarWhatsApp() {
+  const factura = document.getElementById("factura").value;
+  const fecha = document.getElementById("fecha").value;
   const cliente = document.getElementById("cliente").value;
   const cantidad = parseInt(document.getElementById("cantidad").value);
   const { nombre, precio } = getPrecioYNombreProducto();
   const total = cantidad * precio;
 
   const mensaje = `Hola Wilber, soy ${cliente}. Quiero confirmar mi pedido:\n` +
-                  `🧴 Producto: ${nombre}\n` +
-                  `📦 Cantidad: ${cantidad}\n` +
-                  `💰 Total: ₡${total.toLocaleString()}\n\n` +
-                  `Gracias, quedo atento(a) a la factura.`;
+                  `🧾 Factura N°: ${factura}\n📅 Fecha: ${fecha}\n` +
+                  `🧴 Producto: ${nombre}\n📦 Cantidad: ${cantidad}\n💰 Total: ₡${total.toLocaleString()}\n\n` +
+                  `💳 Formas de pago:\n1. Efectivo contra entrega\n2. SINPE 72952454 - Wilber Calderón M.`;
 
   const url = `https://wa.me/50684079454?text=${encodeURIComponent(mensaje)}`;
   window.open(url, '_blank');
+}
+
+function enviarCatalogo() {
+  const numero = document.getElementById("telCliente").value.trim();
+  if (!numero || numero.length < 8) {
+    alert("Ingrese un número válido");
+    return;
+  }
+
+  const mensaje = "Hola, te comparto el catálogo de Esentia 🌿:\nhttps://wil1979.github.io/esentia-factura/catalogo.html";
+  const url = `https://wa.me/506${numero}?text=${encodeURIComponent(mensaje)}`;
+  window.open(url, "_blank");
 }
