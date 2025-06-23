@@ -52,8 +52,8 @@ function generarFactura() {
   doc.setFont("helvetica", "bold");
   doc.text("Métodos de Pago", 20, 165);
   doc.setFont("helvetica", "normal");
-  doc.text("Transferencia bancaria: BAC San José - Cuenta Corriente #123456789", 20, 175);
-  doc.text("PayPal / Tarjeta: https://link.mipago.com ", 20, 185);
+  doc.text("Transferencia bancaria: BAC San José -#Cliente: WILBER GONZALO cuenta IBAN: CR59010200009453897656", 20, 175);
+  doc.text("Sinpe / Numero: 72952454 ", 20, 185);
   doc.text("Efectivo contra entrega (previa coordinación)", 20, 195);
 
   // Agradecimiento final
