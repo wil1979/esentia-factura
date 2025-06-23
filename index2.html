@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Factura Esentia</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="container">
+   
+    <img src="images/logo.png" alt="Logo Esentia" class="logo">
+    <h1>Generar Factura - Esentia</h1>
+
+    <form id="facturaForm">
+      <label>Factura N°:</label>
+      <input type="text" id="factura" value="001" required>
+
+      <label>Fecha:</label>
+      <input type="date" id="fecha" required>
+
+      <label># de Cliente: (Telefono)</label>
+      <input type="text" id="cliente" required>
+
+      <label>Producto:</label>
+      <select id="producto" required>
+        <option value="aceite">Aromatizante en Aceite con atomizador 30 ml - ₡3500</option>
+        <option value="auto">Aromatizante Ambiental para Auto 50 ml - ₡2500</option>
+      </select>
+
+      <label>Cantidad:</label>
+      <input type="number" id="cantidad" required min="1" value="1">
+
+      <p id="totalDisplay" style="margin-top: 1rem; font-weight: bold;"></p>
+
+      <button type="button" onclick="generarFactura()">Generar PDF</button>
+      <button type="button" onclick="enviarWhatsApp()">Pedido por WhatsApp</button>
+      <button type="button" onclick="guardarRegistro()">Guardar y Descargar Registro</button>
+    </form>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+  <h2 style="margin-top: 2rem;">Historial de Facturas</h2>
+<table id="tablaHistorial">
+  <thead>
+    <tr>
+      <th>Factura</th>
+      <th>Fecha</th>
+      <th>Cliente</th>
+      <th>Producto</th>
+      <th>Cantidad</th>
+      <th>Precio</th>
+      <th>Total</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+</html>
