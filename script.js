@@ -1,131 +1,65 @@
-function agregarAFilaTabla(reg) {
-  const tabla = document.getElementById("tablaHistorial").querySelector("tbody");
-  const fila = document.createElement("tr");
-  fila.innerHTML = `
-    <td>${reg.factura}</td>
-    <td>${reg.fecha}</td>
-    <td>${reg.cliente}</td>
-    <td>${reg.producto}</td>
-    <td>${reg.cantidad}</td>
-    <td>₡${reg.precio.toLocaleString()}</td>
-    <td><strong style="color:#0074cc;">₡${reg.total.toLocaleString()}</strong></td>
-  `;
-  tabla.appendChild(fila);
-}
-function getPrecioYNombreProducto() {
-  const productoSelect = document.getElementById("producto").value;
-  let nombre = "";
-  let precio = 0;
-
-  if (productoSelect === "aceite") {
-    nombre = "Aromatizante en Aceite con atomizador 30 ml";
-    precio = 3500;
-  } else if (productoSelect === "auto") {
-    nombre = "Aromatizante Ambiental para Auto 50 ml";
-    precio = 2500;
-  }
-
-  return { nombre, precio };
-}
-
-function actualizarTotal() {
-  const cantidad = parseInt(document.getElementById("cantidad").value);
-  const { precio } = getPrecioYNombreProducto();
-  const total = cantidad * precio;
-  document.getElementById("totalDisplay").textContent = `Total a pagar: ₡${total.toLocaleString()}`;
-}
-
-document.getElementById("producto").addEventListener("change", actualizarTotal);
-document.getElementById("cantidad").addEventListener("input", actualizarTotal);
-window.onload = () => {
-  document.getElementById("fecha").valueAsDate = new Date();
-  actualizarTotal();
-};
-
 function generarFactura() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
-  const factura = document.getElementById("factura").value;
-  const fecha = document.getElementById("fecha").value;
-  const cliente = document.getElementById("cliente").value;
+  // Datos del cliente y producto
+  const cliente = document.getElementById("cliente").value.trim();
   const cantidad = parseInt(document.getElementById("cantidad").value);
   const { nombre, precio } = getPrecioYNombreProducto();
   const total = cantidad * precio;
 
-  const logo = new Image();
-  logo.src = "logo.jpg"; // Logo debe estar en el mismo directorio
+  // Validación básica
+  if (!cliente || cantidad <= 0) {
+    alert("Por favor, complete todos los campos correctamente.");
+    return;
+  }
 
-  logo.onload = function () {
-    doc.addImage(logo, "JPEG", 150, 10, 40, 20); // Ajusta tamaño y posición
+  // Insertar el logo
+  const imgLogo = "image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQA..."; // Reemplaza esto con tu base64
+  doc.addImage(imgLogo, 'PNG', 150, 10, 40, 20); // x, y, ancho, alto
 
-    doc.setFontSize(14);
-    doc.text("Factura - Esentia", 20, 20);
-    doc.setFontSize(10);
-    doc.text(`Factura N°: ${factura}`, 20, 28);
-    doc.text(`Fecha: ${fecha}`, 20, 35);
-    doc.text(`Cliente: ${cliente}`, 20, 45);
-    doc.text(`Producto: ${nombre}`, 20, 55);
-    doc.text(`Cantidad: ${cantidad}`, 20, 65);
-    doc.text(`Precio Unitario: ₡${precio.toFixed(2)}`, 20, 75);
+  // Estilos visuales
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.setTextColor(0, 102, 204); // Azul oscuro
+  doc.text("Esentia Fragancias", 20, 30);
 
-    doc.setTextColor(0, 102, 204); // azul
-    doc.setFont("helvetica", "bold");
-    doc.text(`TOTAL A PAGAR: ₡${total.toLocaleString()}`, 20, 85);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12);
+  doc.setTextColor(0, 0, 0); // Negro
+  doc.text("RUC: 123456789", 20, 40);
+  doc.text("Teléfono: +506 8407-9454", 20, 50);
+  doc.text("Correo: info@esentia.com", 20, 60);
+  doc.line(20, 65, 190, 65); // Separador
 
-    doc.setTextColor(0, 0, 0);
-    doc.setFont("helvetica", "normal");
-    doc.text("Gracias por su compra - Fragancias que enamoran", 20, 100);
+  // Información del cliente
+  doc.setFont("helvetica", "bold");
+  doc.text("Datos del Cliente", 20, 75);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Cliente: ${cliente}`, 20, 85);
+  doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 95);
 
-    doc.save(`Factura_${factura}.pdf`);
-  };
-}
+  // Detalles del producto
+  doc.setFont("helvetica", "bold");
+  doc.text("Detalles del Pedido", 20, 110);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Producto: ${nombre}`, 20, 120);
+  doc.text(`Cantidad: ${cantidad}`, 20, 130);
+  doc.text(`Precio Unitario: ₡${precio.toLocaleString()}`, 20, 140);
+  doc.text(`Total: ₡${total.toLocaleString()}`, 20, 150);
 
-function enviarWhatsApp() {
-  const factura = document.getElementById("factura").value;
-  const fecha = document.getElementById("fecha").value;
-  const cliente = document.getElementById("cliente").value;
-  const cantidad = parseInt(document.getElementById("cantidad").value);
-  const { nombre, precio } = getPrecioYNombreProducto();
-  const total = cantidad * precio;
+  // Métodos de pago
+  doc.setFont("helvetica", "bold");
+  doc.text("Métodos de Pago", 20, 165);
+  doc.setFont("helvetica", "normal");
+  doc.text("Transferencia bancaria: BAC San José - Cuenta Corriente #123456789", 20, 175);
+  doc.text("PayPal / Tarjeta: https://link.mipago.com ", 20, 185);
+  doc.text("Efectivo contra entrega (previa coordinación)", 20, 195);
 
-  const mensaje = `Hola Wilber, soy ${cliente}. Quiero confirmar mi pedido:\n` +
-                  `🧾 Factura N°: ${factura}\n📅 Fecha: ${fecha}\n` +
-                  `🧴 Producto: ${nombre}\n📦 Cantidad: ${cantidad}\n` +
-                  `💰 Total: ₡${total.toLocaleString()}\n\nGracias.`;
+  // Agradecimiento final
+  doc.setFont("helvetica", "italic");
+  doc.text("Gracias por su compra - Fragancias que enamoran", 20, 210);
 
-  const url = `https://wa.me/50684079454?text=${encodeURIComponent(mensaje)}`;
-  window.open(url, '_blank');
-}
-
-function guardarRegistro() {
-  const factura = document.getElementById("factura").value;
-  const fecha = document.getElementById("fecha").value;
-  const cliente = document.getElementById("cliente").value;
-  const cantidad = parseInt(document.getElementById("cantidad").value);
-  const { nombre, precio } = getPrecioYNombreProducto();
-  const total = cantidad * precio;
-
-  if (!window.registros) window.registros = [];
-
-  const nuevoRegistro = {
-  factura, fecha, cliente, producto: nombre,
-  cantidad, precio, total
-};
-window.registros.push(nuevoRegistro);
-agregarAFilaTabla(nuevoRegistro);
-
-
-  let csv = "Factura,Fecha,Cliente,Producto,Cantidad,Precio,Total\n";
-  window.registros.forEach(r => {
-    csv += `${r.factura},${r.fecha},${r.cliente},${r.producto},${r.cantidad},${r.precio},${r.total}\n`;
-  });
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "registros_factura.csv";
-  a.click();
-  URL.revokeObjectURL(url);
+  // Guardar documento
+  doc.save(`Factura_${cliente.replace(/\s+/g, '_')}.pdf`);
 }
