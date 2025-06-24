@@ -124,6 +124,7 @@ function recomendarAmigo() {
     "Hola 👋, quiero recomendarte este catálogo de fragancias de Esentia. Si haces una compra, yo obtengo un 15% de descuento. ¡Dale un vistazo! 👉 https://esentia-catalogo.com"
   );
 
-  const url = `https://wa.me/${numero}?text=${mensaje}`;
+  //const url = `https://wa.me/${numero}?text=${mensaje}`;
+  const url = `https://wa.me/506${numero}?text=${mensaje}`;
   window.open(url, "_blank");
 }
