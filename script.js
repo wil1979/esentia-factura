@@ -19,7 +19,7 @@ function actualizarTotal() {
 
   productos.forEach(p => subtotal += p.precio);
 
-  const descuento = subtotal * 0.1;
+  const descuento = subtotal * 0.0;
   const total = subtotal - descuento;
 
   document.getElementById("totalDisplay").textContent = `Total a pagar: ₡${total.toLocaleString()}`;
@@ -52,7 +52,7 @@ function generarFactura() {
   let subtotal = 0;
   productos.forEach(p => subtotal += p.precio);
 
-  const descuento = subtotal * 0.1;
+  const descuento = subtotal * 0.0;
   const total = subtotal - descuento;
 
   // Cargar el logo como imagen base64 o desde URL
