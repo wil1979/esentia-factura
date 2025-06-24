@@ -1,28 +1,27 @@
-function getPrecioYNombreProducto() {
-  const productoSelect = document.getElementById("producto").value;
-  let nombre = "";
-  let precio = 0;
+function getProductosSeleccionados() {
+  const checks = document.querySelectorAll('input[type="checkbox"]:checked');
+  const productos = [];
 
-  if (productoSelect === "aceite") {
-    nombre = "Aromatizante en Aceite con atomizador 30 ml";
-    precio = 3500;
-  } else if (productoSelect === "auto") {
-    nombre = "Aromatizante Ambiental para Auto 50 ml";
-    precio = 2500;
-  }
+  checks.forEach(chk => {
+    productos.push({
+      nombre: chk.dataset.nombre,
+      precio: parseInt(chk.dataset.precio),
+      img: chk.dataset.img
+    });
+  });
 
-  return { nombre, precio };
+  return productos;
 }
 
 function actualizarTotal() {
-  const cantidad = parseInt(document.getElementById("cantidad").value);
-  const { precio } = getPrecioYNombreProducto();
-  let subtotal = cantidad * precio;
-  let descuento = 0;
-  if (cantidad >= 2) {
-    descuento = 500;
-  }
+  const productos = getProductosSeleccionados();
+  let subtotal = 0;
+
+  productos.forEach(p => subtotal += p.precio);
+
+  const descuento = subtotal * 0.1;
   const total = subtotal - descuento;
+
   document.getElementById("totalDisplay").textContent = `Total a pagar: ₡${total.toLocaleString()}`;
 }
 
@@ -30,11 +29,15 @@ window.onload = () => {
   const ahora = new Date();
   const consecutivo = ahora.toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
   const fecha = ahora.toLocaleDateString('es-CR');
+
   document.getElementById("factura").value = consecutivo;
   document.getElementById("fecha").value = fecha;
+
+  document.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+    chk.addEventListener("change", actualizarTotal);
+  });
+
   actualizarTotal();
-  document.getElementById("producto").addEventListener("change", actualizarTotal);
-  document.getElementById("cantidad").addEventListener("input", actualizarTotal);
 };
 
 function generarFactura() {
@@ -44,59 +47,131 @@ function generarFactura() {
   const factura = document.getElementById("factura").value;
   const fecha = document.getElementById("fecha").value;
   const cliente = document.getElementById("cliente").value;
-  const cantidad = parseInt(document.getElementById("cantidad").value);
-  const { nombre, precio } = getPrecioYNombreProducto();
-  let subtotal = cantidad * precio;
-  let descuento = 0;
-  if (cantidad >= 2) {
-    descuento = 500;
-  }
+  const productos = getProductosSeleccionados();
+
+  let subtotal = 0;
+  productos.forEach(p => subtotal += p.precio);
+
+  const descuento = subtotal * 0.1;
   const total = subtotal - descuento;
 
+  // Cargar el logo como imagen base64 o desde URL
+  const logoSrc = "images/logo.png"; // Ruta local relativa
+
+  const imgProps = doc.getImageProperties(logoSrc);
+  const pdfWidth = doc.internal.pageSize.getWidth();
+  const imgWidth = 50; // Ancho del logo en mm
+  const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+  // Añadir logo
+  doc.addImage(logoSrc, "PNG", 20, 10, imgWidth, imgHeight);
+
+  // Datos de la factura
   doc.setFontSize(16);
-  doc.text("Factura - Esentia", 20, 20);
+  doc.text("🧾 Factura - Esentia", 20, 20 + imgHeight); // Ajuste debajo del logo
   doc.setFontSize(12);
-  doc.text(`Factura N°: ${factura}`, 20, 30);
-  doc.text(`Fecha: ${fecha}`, 20, 37);
-  doc.text(`Cliente: ${cliente}`, 20, 45);
-  doc.text(`Producto: ${nombre}`, 20, 55);
-  doc.text(`Cantidad: ${cantidad}`, 20, 65);
-  doc.text(`Precio Unitario: ₡${precio.toFixed(2)}`, 20, 75);
-  doc.text(`Subtotal: ₡${subtotal.toLocaleString()}`, 20, 82);
-  if (descuento > 0) doc.text(`Descuento aplicado: -₡${descuento.toLocaleString()}`, 20, 89);
+  doc.text(`N°: ${factura}`, 20, 30 + imgHeight);
+  doc.text(`Fecha: ${fecha}`, 20, 37 + imgHeight);
+  doc.text(`Cliente: ${cliente}`, 20, 45 + imgHeight);
+
+  let y = 55 + imgHeight;
+  productos.forEach(p => {
+    doc.text(`- ${p.nombre} - ₡${p.precio.toLocaleString()}`, 20, y);
+    y += 7;
+  });
+
+  doc.text(`Subtotal: ₡${subtotal.toLocaleString()}`, 20, y + 5);
+  doc.text(`Descuento: ₡${descuento.toLocaleString()}`, 20, y + 12);
   doc.setTextColor(0, 102, 204);
   doc.setFont("helvetica", "bold");
-  doc.text(`TOTAL A PAGAR: ₡${total.toLocaleString()}`, 20, 96);
+  doc.text(`TOTAL A PAGAR: ₡${total.toLocaleString()}`, 20, y + 20);
   doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "normal");
-  doc.text("Formas de pago:", 20, 105);
-  doc.text("1. Efectivo contra entrega", 20, 112);
-  doc.text("2. SINPE 72952454 - Wilber Calderón M.", 20, 119);
-  doc.text("Gracias por su compra - Fragancias que enamoran", 20, 130);
 
-  doc.save(`Factura_${factura}.pdf`);
+  doc.text("Formas de pago:", 20, y + 30);
+  doc.text("1. Efectivo contra entrega", 20, y + 37);
+  doc.text("2. SINPE 72952454 - Wilber Calderón M.", 20, y + 44);
+
+  // Guardar en historial
+  guardarFacturaEnHistorial({
+    factura,
+    fecha,
+    cliente,
+    productos,
+    subtotal,
+    descuento,
+    total
+  });
+
+  // Mostrar PDF
+  const pdfUrl = doc.output("bloburl");
+  window.open(pdfUrl, "_blank");
 }
 
-function enviarWhatsApp() {
+function guardarFacturaEnHistorial(facturaData) {
+  let historial = JSON.parse(localStorage.getItem("facturas")) || [];
+  historial.push(facturaData);
+  localStorage.setItem("facturas", JSON.stringify(historial));
+}
+
+function mostrarHistorial() {
+  const historial = JSON.parse(localStorage.getItem("facturas")) || [];
+  const contenedor = document.getElementById("historial");
+
+  if (historial.length === 0) {
+    contenedor.innerHTML = "<p>No hay facturas guardadas.</p>";
+    return;
+  }
+
+  contenedor.innerHTML = "<ul style='list-style-type: none; padding-left: 0;'>";
+
+  historial.forEach((factura, index) => {
+    contenedor.innerHTML += `
+      <li style="margin-bottom: 1rem; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem;">
+        <strong>Factura N°:</strong> ${factura.factura}<br>
+        <strong>Cliente:</strong> ${factura.cliente}<br>
+        <strong>Total:</strong> ₡${factura.total.toLocaleString()}<br>
+        <small>${factura.fecha}</small>
+      </li>`;
+  });
+
+  contenedor.innerHTML += "</ul>";
+}
+
+function enviarFacturaPorWhatsApp() {
   const factura = document.getElementById("factura").value;
   const fecha = document.getElementById("fecha").value;
   const cliente = document.getElementById("cliente").value;
-  const cantidad = parseInt(document.getElementById("cantidad").value);
-  const { nombre, precio } = getPrecioYNombreProducto();
-  let subtotal = cantidad * precio;
-  let descuento = 0;
-  if (cantidad >= 2) {
-    descuento = 500;
-  }
+  const productos = getProductosSeleccionados();
+
+  let subtotal = 0;
+  productos.forEach(p => subtotal += p.precio);
+
+  const descuento = subtotal * 0.1;
   const total = subtotal - descuento;
 
-  const mensaje = `Hola Wilber, soy ${cliente}. Quiero confirmar mi pedido:\n` +
-                  `🧾 Factura N°: ${factura}\n📅 Fecha: ${fecha}\n` +
-                  `🧴 Producto: ${nombre}\n📦 Cantidad: ${cantidad}\n` +
-                  `💰 Subtotal: ₡${subtotal.toLocaleString()}\n` +
-                  `🔖 Descuento: ₡${descuento.toLocaleString()}\n` +
-                  `💰 Total: ₡${total.toLocaleString()}\n\n` +
-                  `💳 Formas de pago:\n1. Efectivo contra entrega\n2. SINPE 72952454 - Wilber Calderón M.`;
+  let mensajeProductos = "";
+  productos.forEach(p => {
+    mensajeProductos += `- ${p.nombre} - ₡${p.precio.toLocaleString()}\n`;
+  });
+
+  const mensaje = `
+🧾 *Factura Esentia*  
+N°: ${factura}  
+📅 Fecha: ${fecha}  
+👤 Cliente: ${cliente}  
+
+📦 Productos:  
+${mensajeProductos}
+
+💰 Subtotal: ₡${subtotal.toLocaleString()}  
+🔖 Descuento: ₡${descuento.toLocaleString()}  
+✅ Total a pagar: ₡${total.toLocaleString()}  
+
+💳 Formas de pago:
+1. Efectivo contra entrega  
+2. SINPE 72952454 - Wilber Calderón M.
+`;
 
   const url = `https://wa.me/50684079454?text=${encodeURIComponent(mensaje)}`;
   window.open(url, '_blank');
@@ -109,7 +184,26 @@ function enviarCatalogo() {
     return;
   }
 
-  const mensaje = "Hola, te comparto el catálogo de Esentia 🌿:\nhttps://wil1979.github.io/esentia-factura/catalogo.html";
-  const url = `https://wa.me/506${numero}?text=${encodeURIComponent(mensaje)}`;
-  window.open(url, "_blank");
+  const catalogoTexto = `
+🌿 *Catálogo Esentia* 🌿
+
+Aromatizantes para el Hogar:
+- Chocolate 30 ml - ₡3500
+- Coco Cookies 30 ml - ₡3500
+- Durazno 30 ml - ₡3500
+- Fresa 30 ml - ₡3500
+- Melón Vainilla 30 ml - ₡3500
+- Piña Colada 30 ml - ₡3500
+
+Aromatizantes para Auto:
+- New Car 30 ml - ₡2500
+- Pino 30 ml - ₡2500
+- Lavanda 30 ml - ₡2500
+
+Ver más detalles aquí:  https://wil1979.github.io/esentia-factura/catalogo.html 
+  `;
+
+  const mensaje = encodeURIComponent(catalogoTexto);
+  const url = `https://wa.me/506 ${numero}?text=${mensaje}`;
+  window.open(url, '_blank');
 }

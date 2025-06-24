@@ -1,47 +1,66 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Factura Esentia</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js "></script>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .producto-img {
+      vertical-align: middle;
+      width: 40px;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
 
   <div class="container">
-    <h1>Generar Factura - Esentia</h1>
+    <h1>🧾 Generar Factura - Esentia</h1>
 
     <form id="facturaForm">
       <label>Número de factura:</label>
-      <input type="text" id="factura" readonly>
+      <input type="text" id="factura" readonly />
 
       <label>Fecha:</label>
-      <input type="text" id="fecha" readonly>
+      <input type="text" id="fecha" readonly />
 
       <label>Cliente:</label>
-      <input type="text" id="cliente" required>
+      <input type="text" id="cliente" required />
 
-      <label>Producto:</label>
-      <select id="producto" required>
-        <option value="aceite">Aromatizante en Aceite con atomizador 30 ml - ₡3500</option>
-        <option value="auto">Aromatizante Ambiental para Auto 50 ml - ₡2500</option>
-      </select>
+      <h3>Selecciona uno o más productos:</h3>
+      <div class="productos-grid">
+        <!-- Hogar -->
+        <div><input type="checkbox" id="chocolate" data-nombre="Chocolate 30 ml" data-precio="3500" data-img="https://wil1979.github.io/esentia-factura/images/chocolate.jpg "><label for="chocolate"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/chocolate.jpg "> Chocolate 30 ml - ₡3500</label></div>
+        <div><input type="checkbox" id="cococookies" data-nombre="Coco Cookies 30 ml" data-precio="3500" data-img="https://wil1979.github.io/esentia-factura/images/cococookies.jpg "><label for="cococookies"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/cococookies.jpg "> Coco Cookies 30 ml - ₡3500</label></div>
+        <div><input type="checkbox" id="durazno" data-nombre="Durazno 30 ml" data-precio="3500" data-img="https://wil1979.github.io/esentia-factura/images/durazno.jpg "><label for="durazno"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/durazno.jpg "> Durazno 30 ml - ₡3500</label></div>
+        <div><input type="checkbox" id="fresa" data-nombre="Fresa 30 ml" data-precio="3500" data-img="https://wil1979.github.io/esentia-factura/images/fresa.jpg "><label for="fresa"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/fresa.jpg "> Fresa 30 ml - ₡3500</label></div>
+        <div><input type="checkbox" id="melonvainilla" data-nombre="Melón Vainilla 30 ml" data-precio="3500" data-img="https://wil1979.github.io/esentia-factura/images/melonvainilla.jpg "><label for="melonvainilla"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/melonvainilla.jpg "> Melón Vainilla 30 ml - ₡3500</label></div>
+        <div><input type="checkbox" id="pinacolada" data-nombre="Piña Colada 30 ml" data-precio="3500" data-img="https://wil1979.github.io/esentia-factura/images/pinacolada.jpg "><label for="pinacolada"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/pinacolada.jpg "> Piña Colada 30 ml - ₡3500</label></div>
 
-      <label>Cantidad:</label>
-      <input type="number" id="cantidad" required min="1" value="1">
+        <!-- Auto -->
+        <div><input type="checkbox" id="newcar" data-nombre="New Car 50 ml" data-precio="2500" data-img="https://wil1979.github.io/esentia-factura/images/newcar.jpg "><label for="newcar"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/newcar.jpg "> New Car 50 ml - ₡2500</label></div>
+        <div><input type="checkbox" id="pino" data-nombre="Pino 50 ml" data-precio="2500" data-img="https://wil1979.github.io/esentia-factura/images/pino.jpg "><label for="pino"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/pino.jpg "> Pino 50 ml - ₡2500</label></div>
+        <div><input type="checkbox" id="lavandaauto" data-nombre="Lavanda 50 ml" data-precio="2500" data-img="https://wil1979.github.io/esentia-factura/images/lavanda-auto.jpg "><label for="lavandaauto"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/lavanda-auto.jpg "> Lavanda 50 ml - ₡2500</label></div>
+      </div>
 
       <p id="totalDisplay" style="margin-top: 1rem; font-weight: bold;"></p>
 
-      <button type="button" onclick="generarFactura()">Generar PDF</button>
-      <button type="button" onclick="enviarWhatsApp()">Enviar por WhatsApp</button>
+      <button type="button" onclick="generarFactura()">📄 Generar PDF</button>
+      <button type="button" onclick="enviarFacturaPorWhatsApp()">📲 Enviar factura por WhatsApp</button>
     </form>
 
-    <hr>
+    <hr />
 
     <h3>📤 Enviar catálogo al cliente</h3>
     <label for="telCliente">Número (solo 8 dígitos):</label>
-    <input type="tel" id="telCliente" placeholder="88889999">
-    <button onclick="enviarCatalogo()">Enviar Catálogo por WhatsApp</button>
+    <input type="tel" id="telCliente" placeholder="88889999" />
+    <button onclick="enviarCatalogo()">📧 Enviar Catálogo por WhatsApp</button>
+
+    <hr />
+    <h3>📁 Historial de Facturas</h3>
+    <button type="button" onclick="mostrarHistorial()">Mostrar Historial</button>
+    <div id="historial" style="margin-top: 1rem;"></div>
   </div>
 
   <script src="script.js"></script>
