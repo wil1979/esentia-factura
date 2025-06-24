@@ -1,4 +1,4 @@
-// JS mejorado para catálogo con promociones
+// JS mejorado para catálogo con promociones y recomendación
 let carrito = [];
 let cuponActivo = false;
 
@@ -111,4 +111,19 @@ function mostrarImagenGrande(src) {
 
 function cerrarModal() {
   document.getElementById("modalImagen").style.display = "none";
+}
+
+function recomendarAmigo() {
+  const numero = document.getElementById("numeroAmigo").value.trim();
+  if (!numero.match(/^\d{8,12}$/)) {
+    alert("Ingrese un número válido sin símbolos ni espacios.");
+    return;
+  }
+
+  const mensaje = encodeURIComponent(
+    "Hola 👋, quiero recomendarte este catálogo de fragancias de Esentia. Si haces una compra, yo obtengo un 15% de descuento. ¡Dale un vistazo! 👉 https://esentia-catalogo.com"
+  );
+
+  const url = `https://wa.me/${numero}?text=${mensaje}`;
+  window.open(url, "_blank");
 }
