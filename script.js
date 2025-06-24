@@ -147,7 +147,7 @@ function enviarFacturaPorWhatsApp() {
   let subtotal = 0;
   productos.forEach(p => subtotal += p.precio);
 
-  const descuento = subtotal * 0.1;
+  const descuento = subtotal * 0.0;
   const total = subtotal - descuento;
 
   let mensajeProductos = "";
