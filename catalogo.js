@@ -18,34 +18,28 @@ function eliminarDelCarrito(index) {
 }
 
 function aplicarCupon() {
-    const cupon = document.getElementById("cupon").value.trim();
-    let descuento = 0;
-
-    if (cupon.toUpperCase() === "ESENTIA10") {
-        descuento = 10;
-        alert("Cupón aplicado correctamente: 10% de descuento");
-    } else if (cupon.toUpperCase() === "AMIGO15") {
-        descuento = 15;
-        alert("Cupón aplicado correctamente: 15% de descuento adicional");
-    } else {
-        alert("Cupón inválido");
-    }
-
-    // Aquí puedes aplicar el descuento a tu carrito
-    aplicarDescuento(descuento);
-    renderCarrito();
+  const cupon = document.getElementById("cupon").value.trim().toUpperCase();
+  if (cupon === "ESENTIA10") {
+    cuponActivo = "ESENTIA10";
+    alert("Cupón aplicado correctamente: 10% de descuento");
+  } else if (cupon === "AMIGO15") {
+    cuponActivo = "AMIGO15";
+    alert("Cupón aplicado correctamente: 15% de descuento");
+  } else {
+    cuponActivo = false;
+    alert("Cupón inválido");
+  }
+  renderCarrito();
 }
-
-function aplicarDescuento(descuento) {
-    // Lógica para aplicar el descuento al carrito
-    console.log(`Descuento aplicado: ${descuento}%`);
-}
-
 
 function calcularDescuentoPorCantidad(item) {
- if (item.cantidad > 4) return item.precio * 0.10; // 10% de descuento
-    if (item.cantidad === 2) return item.precio * 0.05; // 5% de descuento
-    return 0; // Sin descuento
+  if (item.cantidad >= 5) {
+    return item.precio * 0.10;
+  }
+  if (item.cantidad >= 2 && item.cantidad < 4) {
+    return item.precio * 0.05;
+  }
+  return 0;
 }
 
 function renderCarrito() {
@@ -125,4 +119,19 @@ function mostrarImagenGrande(src) {
 
 function cerrarModal() {
   document.getElementById("modalImagen").style.display = "none";
+}
+
+function recomendarAmigo() {
+  const numero = document.getElementById("numeroAmigo").value.trim();
+  if (!numero.match(/^\d{8,12}$/)) {
+    alert("Ingrese un número válido sin símbolos ni espacios.");
+    return;
+  }
+
+  const mensaje = encodeURIComponent(
+    "Hola 👋, quiero recomendarte este catálogo de fragancias de Esentia. Si haces una compra, yo obtengo un 15% de descuento y Tu obtienes un 10 % en tu proxima compra. ¡Dale un vistazo! 👉 https://wil1979.github.io/esentia-factura/catalogo.html"
+  );
+
+  const url = `https://wa.me/${numero}?text=${mensaje}`;
+  window.open(url, "_blank");
 }
