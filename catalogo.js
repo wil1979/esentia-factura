@@ -33,7 +33,7 @@ function aplicarCupon() {
 }
 
 // Si "descuentosActivos" es false, no se aplican descuentos por cantidad
-let descuentosActivos = true;
+let descuentosActivos = false;
 
 function calcularDescuentoPorCantidad(item) {
   if (!descuentosActivos) return 0;
