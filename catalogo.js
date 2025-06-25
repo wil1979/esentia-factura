@@ -18,14 +18,17 @@ function eliminarDelCarrito(index) {
 }
 
 function aplicarCupon() {
-  const cupon = document.getElementById("cupon").value.trim();
-  if (cupon.toUpperCase() === "ESENTIA10") {
-    cuponActivo = true;
-    alert("Cupón aplicado correctamente: 10% de descuento");
-  } else {
-    alert("Cupón inválido");
-  }
-  renderCarrito();
+const cupon = document.getElementById("cupon").value.trim();
+if (cupon.toUpperCase() === "ESENTIA10") {
+cuponActivo = true;
+alert("Cupón aplicado correctamente: 10% de descuento");
+} else if (cupon.toUpperCase() === "ESENTIA15") {
+cuponActivo = true;
+alert("Cupón aplicado correctamente: 15% de descuento");
+} else {
+alert("Cupón inválido");
+}
+renderCarrito();
 }
 
 function calcularDescuentoPorCantidad(item) {
