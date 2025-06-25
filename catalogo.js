@@ -32,7 +32,7 @@ renderCarrito();
 }
 
 function calcularDescuentoPorCantidad(item) {
-  if (item.cantidad >= 3) return item.precio * 0.10; // 10% de descuento
+  if (item.cantidad >= 4) return item.precio * 0.10; // 10% de descuento
     if (item.cantidad === 2) return item.precio * 0.05; // 5% de descuento
     return 0; // Sin descuento
 }
