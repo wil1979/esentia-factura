@@ -91,8 +91,9 @@ function generarFactura() {
   doc.text("Formas de pago:", 20, y + 30);
   doc.text("1. Efectivo contra entrega", 20, y + 37);
   doc.text("2. SINPE 72952454 - Wilber Calderón M.", 20, y + 44);
+  doc.text("2. Transferencia BAC : CR59010200009453897656 - Wilber Calderón M.", 20, y + 44);
 
-  // Guardar en historial
+  // Guardar en historial CR59010200009453897656
   guardarFacturaEnHistorial({
     factura,
     fecha,
@@ -191,14 +192,10 @@ Aromatizantes para el Hogar:
 - Chocolate 30 ml - ₡3500
 - Coco Cookies 30 ml - ₡3500
 - Durazno 30 ml - ₡3500
-- Fresa 30 ml - ₡3500
-- Melón Vainilla 30 ml - ₡3500
-- Piña Colada 30 ml - ₡3500
+- ...
 
 Aromatizantes para Auto:
-- New Car 30 ml - ₡2500
-- Pino 30 ml - ₡2500
-- Lavanda 30 ml - ₡2500
+- 
 
 Ver más detalles aquí:  https://wil1979.github.io/esentia-factura/catalogo.html 
   `;
