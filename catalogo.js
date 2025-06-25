@@ -94,10 +94,13 @@ function finalizarPedido() {
     total += subtotal;
   });
 
-  if (cuponActivo) {
-    mensaje += `%0ACupón aplicado: ESENTIA10 (-10%%)`;
-    total *= 0.9;
-  }
+  if (cuponActivo === "ESENTIA10") {
+mensaje += %0ACupón aplicado: ESENTIA10 (-10%%);
+total *= 0.9;
+} else if (cuponActivo === "ESENTIA15") {
+mensaje += %0ACupón aplicado: ESENTIA15 (-15%%);
+total *= 0.85;
+}
 
   mensaje += `%0A💰 Total: ₡${Math.round(total).toLocaleString()}`;
 
