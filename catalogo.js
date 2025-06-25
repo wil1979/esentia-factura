@@ -29,7 +29,7 @@ function aplicarCupon() {
 }
 
 function calcularDescuentoPorCantidad(item) {
-  if (item.cantidad >= 3) return 1000;
+  //if (item.cantidad >= 3) return 1000;
   if (item.cantidad === 2) return 500;
   return 0;
 }
@@ -102,12 +102,12 @@ function finalizarPedido() {
   window.open(url, "_blank");
 }
 
-function mostrarImagenGrande(src) {
-  const modal = document.getElementById("modalImagen");
-  const imagen = document.getElementById("imagenAmpliada");
-  imagen.src = src;
-  modal.style.display = "flex";
-}
+//function mostrarImagenGrande(src) {
+ // const modal = document.getElementById("modalImagen");
+//  const imagen = document.getElementById("imagenAmpliada");
+  //imagen.src = src;
+//  modal.style.display = "flex";
+//}
 
 function cerrarModal() {
   document.getElementById("modalImagen").style.display = "none";
