@@ -121,8 +121,7 @@ function recomendarAmigo() {
   }
 
   const mensaje = encodeURIComponent(
-    "Hola 👋, quiero recomendarte este catálogo de fragancias de Esentia. Si haces una compra, yo obtengo un 15% de descuento. ¡Dale un vistazo! 👉 https://esentia-catalogo.com"
-  );
+    "Hola 👋, quiero recomendarte este catálogo de fragancias de Esentia. Si haces una compra, yo obtengo un 15% de descuento y tu 10% en tu proxima compra. ¡Dale un vistazo! 👉 https://wil1979.github.io/esentia-factura/catalogo.html
 
   //const url = `https://wa.me/${numero}?text=${mensaje}`;
   const url = `https://wa.me/506${numero}?text=${mensaje}`;
