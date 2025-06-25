@@ -91,7 +91,7 @@ function generarFactura() {
   doc.text("Formas de pago:", 20, y + 30);
   doc.text("1. Efectivo contra entrega", 20, y + 37);
   doc.text("2. SINPE 72952454 - Wilber Calderón M.", 20, y + 44);
-  doc.text("2. Transferencia BAC : CR59010200009453897656 - Wilber Calderón M.", 20, y + 44);
+  doc.text("2. Transfereñncia BAC : CR59010200009453897656 - Wilber Calderón M.", 20, y + 44);
 
   // Guardar en historial CR59010200009453897656
   guardarFacturaEnHistorial({
@@ -172,9 +172,10 @@ ${mensajeProductos}
 💳 Formas de pago:
 1. Efectivo contra entrega  
 2. SINPE 72952454 - Wilber Calderón M.
+3.Transfereñncia BAC : CR59010200009453897656 - Wilber Calderón M
 `;
 
-  const url = `https://wa.me/50684079454?text=${encodeURIComponent(mensaje)}`;
+  const url = `https://wa.me/506 ${numero}?text=${mensaje}`;
   window.open(url, '_blank');
 }
 
