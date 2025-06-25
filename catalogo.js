@@ -9,6 +9,7 @@ function agregarCarrito(nombre, precio) {
   } else {
     carrito.push({ nombre, precio, cantidad: 1 });
   }
+  console.log(carrito); // <--- Esto mostrará en consola el contenido actualizado
   renderCarrito();
 }
 
@@ -121,7 +122,7 @@ function recomendarAmigo() {
   }
 
   const mensaje = encodeURIComponent(
-    "Hola 👋, quiero recomendarte este catálogo de fragancias de Esentia. Si haces una compra, yo obtengo un 15% de descuento y tu 10% en tu proxima compra. ¡Dale un vistazo! 👉 https://wil1979.github.io/esentia-factura/catalogo.html
+    "Hola 👋, quiero recomendarte este catálogo de fragancias de Esentia. Si haces una compra, yo obtengo un 15% de descuento y tu 10% en tu proxima compra. ¡Dale un vistazo! 👉 https://wil1979.github.io/esentia-factura/catalogo.html"
 
   //const url = `https://wa.me/${numero}?text=${mensaje}`;
   const url = `https://wa.me/506${numero}?text=${mensaje}`;
