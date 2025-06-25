@@ -32,7 +32,11 @@ function aplicarCupon() {
   renderCarrito();
 }
 
+// Si "descuentosActivos" es false, no se aplican descuentos por cantidad
+let descuentosActivos = true;
+
 function calcularDescuentoPorCantidad(item) {
+  if (!descuentosActivos) return 0;
   if (item.cantidad >= 5) {
     return item.precio * 0.10;
   }
@@ -41,6 +45,10 @@ function calcularDescuentoPorCantidad(item) {
   }
   return 0;
 }
+
+// Puedes activar/desactivar descuentos desde la factura llamando:
+// descuentosActivos = false; // para desactivar
+// descuentosActivos = true;  // para activar
 
 function renderCarrito() {
   const lista = document.getElementById("listaCarrito");
