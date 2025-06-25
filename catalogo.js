@@ -12,6 +12,76 @@ function agregarCarrito(nombre, precio) {
   renderCarrito();
 }
 
+// Definición de productos para la categoría Hogar
+const productosHogar = [
+  {
+    nombre: "Chocolate 30 ml",
+    precioOriginal: 4000,
+    precioOferta: 3500,
+    imagen: "images/chocolate.jpg"
+  },
+  {
+    nombre: "Coco Cookies 30 ml",
+    precio: 3500,
+    imagen: "images/cococookies.jpg"
+  },
+  {
+    nombre: "Durazno 30 ml",
+    precio: 3500,
+    imagen: "images/durazno.jpg"
+  },
+  {
+    nombre: "Manzana Canela 30 ml",
+    precio: 3500,
+    imagen: "images/manzanacanela.jpg"
+  },
+  {
+    nombre: "Melón Vainilla 30 ml",
+    precio: 3500,
+    imagen: "images/melonvainilla.jpg"
+  },
+  {
+    nombre: "Piña Colada 30 ml",
+    precio: 3500,
+    imagen: "images/pinacolada.jpg"
+  },
+  {
+    nombre: "Fresa 30 ml",
+    precio: 3500,
+    imagen: "images/fresa.jpg"
+  }
+];
+
+function renderizarProductos() {
+  const container = document.getElementById("productos-hogar");
+  container.innerHTML = ""; // Limpiar contenido previo
+
+  productosHogar.forEach(producto => {
+    const divProducto = document.createElement("div");
+    divProducto.className = producto.precioOferta ? "producto oferta" : "producto";
+
+    const precioHTML = producto.precioOferta
+      ? `<p><span class="precio-original">₡${producto.precioOriginal}</span> ₡${producto.precioOferta}</p>`
+      : `<p>₡${producto.precio}</p>`;
+
+    const precioFinal = producto.precioOferta || producto.precio;
+
+    divProducto.innerHTML = `
+      <img src="${producto.imagen}" alt="${producto.nombre}" onclick="mostrarImagenGrande(this.src)">
+      <h3>${producto.nombre}</h3>
+      ${precioHTML}
+      <button onclick="agregarCarrito('${producto.nombre}', ${precioFinal})">Agregar al carrito</button>
+    `;
+
+    container.appendChild(divProducto);
+  });
+}
+
+// Llamar a la función cuando cargue la página
+window.addEventListener("DOMContentLoaded", () => {
+  renderizarProductos();
+});
+
 function eliminarDelCarrito(index) {
   carrito.splice(index, 1);
   renderCarrito();
