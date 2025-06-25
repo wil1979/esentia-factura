@@ -18,23 +18,20 @@ function eliminarDelCarrito(index) {
 }
 
 function aplicarCupon() {
-const cupon = document.getElementById("cupon").value.trim();
-if (cupon.toUpperCase() === "ESENTIA10") {
-cuponActivo = true;
-alert("Cupón aplicado correctamente: 10% de descuento");
-} else if (cupon.toUpperCase() === "ESENTIA15") {
-cuponActivo = true;
-alert("Cupón aplicado correctamente: 15% de descuento");
-} else {
-alert("Cupón inválido");
-}
-renderCarrito();
+  const cupon = document.getElementById("cupon").value.trim();
+  if (cupon.toUpperCase() === "ESENTIA10") {
+    cuponActivo = true;
+    alert("Cupón aplicado correctamente: 10% de descuento");
+  } else {
+    alert("Cupón inválido");
+  }
+  renderCarrito();
 }
 
 function calcularDescuentoPorCantidad(item) {
-  if (item.cantidad >= 4) return item.precio * 0.10; // 10% de descuento
-    if (item.cantidad === 2) return item.precio * 0.05; // 5% de descuento
-    return 0; // Sin descuento
+  if (item.cantidad >= 3) return 1000;
+  if (item.cantidad === 2) return 500;
+  return 0;
 }
 
 function renderCarrito() {
@@ -94,13 +91,10 @@ function finalizarPedido() {
     total += subtotal;
   });
 
-  if (cuponActivo === "ESENTIA10") {
-mensaje += %0ACupón aplicado: ESENTIA10 (-10%%);
-total *= 0.9;
-} else if (cuponActivo === "ESENTIA15") {
-mensaje += %0ACupón aplicado: ESENTIA15 (-15%%);
-total *= 0.85;
-}
+  if (cuponActivo) {
+    mensaje += `%0ACupón aplicado: ESENTIA10 (-10%%)`;
+    total *= 0.9;
+  }
 
   mensaje += `%0A💰 Total: ₡${Math.round(total).toLocaleString()}`;
 
@@ -108,12 +102,12 @@ total *= 0.85;
   window.open(url, "_blank");
 }
 
-//function mostrarImagenGrande(src) {
- // const modal = document.getElementById("modalImagen");
-//  const imagen = document.getElementById("imagenAmpliada");
-  //imagen.src = src;
-//  modal.style.display = "flex";
-//}
+function mostrarImagenGrande(src) {
+  const modal = document.getElementById("modalImagen");
+  const imagen = document.getElementById("imagenAmpliada");
+  imagen.src = src;
+  modal.style.display = "flex";
+}
 
 function cerrarModal() {
   document.getElementById("modalImagen").style.display = "none";
