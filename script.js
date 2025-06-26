@@ -145,6 +145,12 @@ function enviarFacturaPorWhatsApp() {
   const cliente = document.getElementById("cliente").value;
   const productos = getProductosSeleccionados();
 
+  const numero = document.getElementById("telCliente").value.trim();
+  if (!numero || numero.length < 8) {
+    alert("Ingrese un número válido para enviar la factura");
+    return;
+  }
+
   let subtotal = 0;
   productos.forEach(p => subtotal += p.precio);
 
@@ -172,10 +178,11 @@ ${mensajeProductos}
 💳 Formas de pago:
 1. Efectivo contra entrega  
 2. SINPE 72952454 - Wilber Calderón M.
-3.Transfereñncia BAC : CR59010200009453897656 - Wilber Calderón M
+3. Transferencia BAC: CR59010200009453897656 - Wilber Calderón M.
 `;
 
-  const url = `https://wa.me/506 ${numero}?text=${mensaje}`;
+  const mensajeCodificado = encodeURIComponent(mensaje);
+  const url = `https://wa.me/506${numero}?text=${mensajeCodificado}`;
   window.open(url, '_blank');
 }
 
