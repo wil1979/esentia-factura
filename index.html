@@ -54,13 +54,11 @@
       <select id="productoSelect">
         <option value="">-- Selecciona un producto --</option>
         <option value="Aromatizante Melon & Vainilla|3500">Aromatizante Melon y vainilla – 3500</option>
-        <option value="Aromatizante Pina Colada|3500">Aromatizante Pina Colada 3500</option>
-        <option value="Aromatizante Fresa|3500">Aromatizante Fresa – ₡3500</option>
-        <option value="Aromatizante Chocolate |3500">Aromatizante Chocolate – ₡3500</option>
-        <option value="Aromatizante Coco Cookies|3500">Aromatizante Coco Cookies – ₡3500</option>
-        <option value="Aromatizante Durazno|3500">Aromatizante Manzana Canela – ₡3500</option>
-        <option value="Aromatizante Manzana Canela|3500">Aromatizante Manzana Canela – ₡3500</option>
-        <!-- Puedes agregar más productos aquí -->
+        <option value="Aromatizante Pina Colada|3500">Aromatizante Pina Colada – 3500</option>
+        <option value="Aromatizante Fresa|3500">Aromatizante Fresa – 3500</option>
+        <option value="Aromatizante Chocolate|3500">Aromatizante Chocolate – 3500</option>
+        <option value="Aromatizante Coco Cookies|3500">Aromatizante Coco Cookies – 3500</option>
+        <option value="Aromatizante Manzana Canela|3500">Aromatizante Manzana Canela – 3500</option>
       </select>
 
       <label for="cantidadSelect">Cantidad:</label>
@@ -94,51 +92,10 @@
 
     <hr />
     <h3>📁 Historial de Facturas</h3>
-<button type="button" onclick="mostrarHistorial()">Mostrar Historial</button>
-<button type="button" onclick="borrarHistorial()">🗑️ Borrar Historial</button>
-<div id="historial" style="margin-top: 1rem;"></div>
-
+    <button type="button" onclick="mostrarHistorial()">Mostrar Historial</button>
+    <button type="button" onclick="borrarHistorial()">🗑️ Borrar Historial</button>
+    <div id="historial" style="margin-top: 1rem;"></div>
   </div>
-
-  <script>
-    let productosFactura = [];
-
-    function agregarProducto() {
-      const sel = document.getElementById("productoSelect");
-      const [nombre, precio] = sel.value.split("|");
-      const cantidad = parseInt(document.getElementById("cantidadSelect").value) || 1;
-      if (!nombre) return alert("Selecciona un producto válido");
-
-      productosFactura.push({ nombre, precio: parseInt(precio), cantidad });
-      actualizarVistaProductos();
-      actualizarTotal();
-    }
-
-    function actualizarVistaProductos() {
-      const ul = document.getElementById("listaProductos");
-      ul.innerHTML = "";
-      productosFactura.forEach((p, i) => {
-        ul.innerHTML += `<li>${p.nombre} x${p.cantidad} – ₡${(p.precio * p.cantidad).toLocaleString()}
-          <button onclick="productosFactura.splice(${i},1); actualizarVistaProductos(); actualizarTotal();">🗑️</button></li>`;
-      });
-    }
-
-    document.getElementById("idCliente").addEventListener("blur", () => {
-      const cedula = document.getElementById("idCliente").value.trim();
-      if (!cedula) return;
-
-      fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedula}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.nombre) {
-            document.getElementById("cliente").value = data.nombre;
-          } else {
-            alert("No se encontró información para este ID.");
-          }
-        })
-        .catch(() => alert("Error al consultar la API de Hacienda"));
-    });
-  </script>
 
   <script src="script.js"></script>
 </body>
