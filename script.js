@@ -1,29 +1,4 @@
-function getProductosSeleccionados() {
-  const checks = document.querySelectorAll('input[type="checkbox"]:checked');
-  const productos = [];
-
-  checks.forEach(chk => {
-    productos.push({
-      nombre: chk.dataset.nombre,
-      precio: parseInt(chk.dataset.precio),
-      img: chk.dataset.img
-    });
-  });
-
-  return productos;
-}
-
-function actualizarTotal() {
-  const productos = getProductosSeleccionados();
-  let subtotal = 0;
-
-  productos.forEach(p => subtotal += p.precio);
-
-  const descuento = subtotal * 0.0;
-  const total = subtotal - descuento;
-
-  document.getElementById("totalDisplay").textContent = `Total a pagar: ₡${total.toLocaleString()}`;
-}
+let productosFactura = [];
 
 window.onload = () => {
   const ahora = new Date();
@@ -32,13 +7,38 @@ window.onload = () => {
 
   document.getElementById("factura").value = consecutivo;
   document.getElementById("fecha").value = fecha;
-
-  document.querySelectorAll('input[type="checkbox"]').forEach(chk => {
-    chk.addEventListener("change", actualizarTotal);
-  });
-
   actualizarTotal();
 };
+
+function agregarProducto() {
+  const sel = document.getElementById("productoSelect");
+  const [nombre, precio] = sel.value.split("|");
+  const cantidad = parseInt(document.getElementById("cantidadSelect").value) || 1;
+  if (!nombre) return alert("Selecciona un producto válido");
+
+  productosFactura.push({ nombre, precio: parseInt(precio), cantidad });
+  actualizarVistaProductos();
+  actualizarTotal();
+}
+
+function actualizarVistaProductos() {
+  const ul = document.getElementById("listaProductos");
+  ul.innerHTML = "";
+  productosFactura.forEach((p, i) => {
+    ul.innerHTML += `<li>${p.nombre} x${p.cantidad} – ₡${(p.precio * p.cantidad).toLocaleString()}
+      <button onclick="productosFactura.splice(${i},1); actualizarVistaProductos(); actualizarTotal();">🗑️</button></li>`;
+  });
+}
+
+function actualizarTotal() {
+  let subtotal = productosFactura.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
+  const descuentoFijo = parseFloat(document.getElementById("descuentoCantidad").value) || 0;
+  const descuentoPorcentaje = parseFloat(document.getElementById("descuentoPorcentaje").value) || 0;
+  const descuento = descuentoFijo + (subtotal * descuentoPorcentaje / 100);
+  const total = subtotal - descuento;
+
+  document.getElementById("totalDisplay").textContent = `Total a pagar: ₡${total.toLocaleString()}`;
+}
 
 function generarFactura() {
   const { jsPDF } = window.jspdf;
@@ -47,64 +47,45 @@ function generarFactura() {
   const factura = document.getElementById("factura").value;
   const fecha = document.getElementById("fecha").value;
   const cliente = document.getElementById("cliente").value;
-  const productos = getProductosSeleccionados();
 
-  let subtotal = 0;
-  productos.forEach(p => subtotal += p.precio);
-
-  const descuento = subtotal * 0.0;
+  let subtotal = productosFactura.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
+  const descuentoFijo = parseFloat(document.getElementById("descuentoCantidad").value) || 0;
+  const descuentoPorcentaje = parseFloat(document.getElementById("descuentoPorcentaje").value) || 0;
+  const descuento = descuentoFijo + (subtotal * descuentoPorcentaje / 100);
   const total = subtotal - descuento;
 
-  // Cargar el logo como imagen base64 o desde URL
-  const logoSrc = "images/logo.png"; // Ruta local relativa
-
-  const imgProps = doc.getImageProperties(logoSrc);
-  const pdfWidth = doc.internal.pageSize.getWidth();
-  const imgWidth = 50; // Ancho del logo en mm
-  const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-
-  // Añadir logo
-  doc.addImage(logoSrc, "PNG", 20, 10, imgWidth, imgHeight);
-
-  // Datos de la factura
   doc.setFontSize(16);
-  doc.text("🧾 Factura - Esentia", 20, 20 + imgHeight); // Ajuste debajo del logo
+  doc.text("🧾 Factura - Esentia", 20, 20);
   doc.setFontSize(12);
-  doc.text(`N°: ${factura}`, 20, 30 + imgHeight);
-  doc.text(`Fecha: ${fecha}`, 20, 37 + imgHeight);
-  doc.text(`Cliente: ${cliente}`, 20, 45 + imgHeight);
+  doc.text(`N°: ${factura}`, 20, 30);
+  doc.text(`Fecha: ${fecha}`, 20, 37);
+  doc.text(`Cliente: ${cliente}`, 20, 45);
 
-  let y = 55 + imgHeight;
-  productos.forEach(p => {
-    doc.text(`- ${p.nombre} - ₡${p.precio.toLocaleString()}`, 20, y);
+  let y = 55;
+  productosFactura.forEach(p => {
+    doc.text(`- ${p.nombre} x${p.cantidad} – ₡${(p.precio * p.cantidad).toLocaleString()}`, 20, y);
     y += 7;
   });
 
   doc.text(`Subtotal: ₡${subtotal.toLocaleString()}`, 20, y + 5);
   doc.text(`Descuento: ₡${descuento.toLocaleString()}`, 20, y + 12);
-  doc.setTextColor(0, 102, 204);
   doc.setFont("helvetica", "bold");
+  doc.setTextColor(0, 102, 204);
   doc.text(`TOTAL A PAGAR: ₡${total.toLocaleString()}`, 20, y + 20);
-  doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "normal");
+  doc.setTextColor(0, 0, 0);
 
   doc.text("Formas de pago:", 20, y + 30);
   doc.text("1. Efectivo contra entrega", 20, y + 37);
   doc.text("2. SINPE 72952454 - Wilber Calderón M.", 20, y + 44);
-  doc.text("2. Transfereñncia BAC : CR59010200009453897656 - Wilber Calderón M.", 20, y + 44);
+  doc.text("3. BAC: CR59010200009453897656 - Wilber Calderón M.", 20, y + 51);
 
-  // Guardar en historial CR59010200009453897656
   guardarFacturaEnHistorial({
-    factura,
-    fecha,
-    cliente,
-    productos,
-    subtotal,
-    descuento,
-    total
+    factura, fecha, cliente,
+    productos: productosFactura,
+    subtotal, descuento, total
   });
 
-  // Mostrar PDF
   const pdfUrl = doc.output("bloburl");
   window.open(pdfUrl, "_blank");
 }
@@ -126,40 +107,45 @@ function mostrarHistorial() {
 
   contenedor.innerHTML = "<ul style='list-style-type: none; padding-left: 0;'>";
 
-  historial.forEach((factura, index) => {
+  historial.forEach(f => {
     contenedor.innerHTML += `
       <li style="margin-bottom: 1rem; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem;">
-        <strong>Factura N°:</strong> ${factura.factura}<br>
-        <strong>Cliente:</strong> ${factura.cliente}<br>
-        <strong>Total:</strong> ₡${factura.total.toLocaleString()}<br>
-        <small>${factura.fecha}</small>
+        <strong>Factura N°:</strong> ${f.factura}<br>
+        <strong>Cliente:</strong> ${f.cliente}<br>
+        <strong>Total:</strong> ₡${f.total.toLocaleString()}<br>
+        <small>${f.fecha}</small>
       </li>`;
   });
 
   contenedor.innerHTML += "</ul>";
 }
 
-function enviarFacturaPorWhatsApp() {
-  const factura = document.getElementById("factura").value;
-  const fecha = document.getElementById("fecha").value;
-  const cliente = document.getElementById("cliente").value;
-  const productos = getProductosSeleccionados();
+function borrarHistorial() {
+  localStorage.removeItem("facturas");
+  mostrarHistorial();
+}
 
-  const numero = document.getElementById("telCliente").value.trim();
-  if (!numero || numero.length < 8) {
-    alert("Ingrese un número válido para enviar la factura");
+function enviarFacturaPorWhatsApp() {
+  const numero = document.getElementById("numeroWhatsApp").value.trim();
+
+  if (!/^[678]\d{7}$/.test(numero)) {
+    alert("Ingrese un número válido de 8 dígitos que empiece con 6, 7 u 8.");
     return;
   }
 
-  let subtotal = 0;
-  productos.forEach(p => subtotal += p.precio);
+  const factura = document.getElementById("factura").value;
+  const fecha = document.getElementById("fecha").value;
+  const cliente = document.getElementById("cliente").value;
 
-  const descuento = subtotal * 0.0;
+  let subtotal = productosFactura.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
+  const descuentoFijo = parseFloat(document.getElementById("descuentoCantidad").value) || 0;
+  const descuentoPorcentaje = parseFloat(document.getElementById("descuentoPorcentaje").value) || 0;
+  const descuento = descuentoFijo + (subtotal * descuentoPorcentaje / 100);
   const total = subtotal - descuento;
 
   let mensajeProductos = "";
-  productos.forEach(p => {
-    mensajeProductos += `- ${p.nombre} - ₡${p.precio.toLocaleString()}\n`;
+  productosFactura.forEach(p => {
+    mensajeProductos += `- ${p.nombre} x${p.cantidad} – ₡${(p.precio * p.cantidad).toLocaleString()}\n`;
   });
 
   const mensaje = `
@@ -177,8 +163,8 @@ ${mensajeProductos}
 
 💳 Formas de pago:
 1. Efectivo contra entrega  
-2. SINPE 72952454 - Wilber Calderón M.
-3. Transferencia BAC: CR59010200009453897656 - Wilber Calderón M.
+2. SINPE 72952454  
+3. Transferencia BAC: CR59010200009453897656  
 `;
 
   const mensajeCodificado = encodeURIComponent(mensaje);
@@ -188,19 +174,37 @@ ${mensajeProductos}
 
 function enviarCatalogo() {
   const numero = document.getElementById("telCliente").value.trim();
-  if (!numero || numero.length < 8) {
-    alert("Ingrese un número válido");
+
+  if (!/^[678]\d{7}$/.test(numero)) {
+    alert("Ingrese un número válido (8 dígitos que empiece con 6, 7 u 8)");
     return;
   }
 
   const catalogoTexto = `
-🌿 *Catálogo 
-Consulta por tu aroma faborito👇🏻
+🌿 *Catálogo Esentia*  
+Consulta por tu aroma favorito👇🏻
 
-Ver más detalles aquí:  https://wil1979.github.io/esentia-factura/catalogo.html 
+https://wil1979.github.io/esentia-factura/catalogo.html
   `;
 
   const mensaje = encodeURIComponent(catalogoTexto);
   const url = `https://wa.me/506${numero}?text=${mensaje}`;
   window.open(url, '_blank');
 }
+
+// API Hacienda
+document.getElementById("idCliente").addEventListener("blur", () => {
+  const cedula = document.getElementById("idCliente").value.trim();
+  if (!cedula) return;
+
+  fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedula}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.nombre) {
+        document.getElementById("cliente").value = data.nombre;
+      } else {
+        alert("No se encontró información para este ID.");
+      }
+    })
+    .catch(() => alert("Error al consultar la API de Hacienda"));
+});
