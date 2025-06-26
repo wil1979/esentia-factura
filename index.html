@@ -3,13 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <title>Factura Esentia</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js "></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link rel="stylesheet" href="style.css" />
   <style>
-    .producto-img {
-      vertical-align: middle;
-      width: 40px;
-      border-radius: 5px;
+    .cantidad-input {
+      width: 60px;
+      margin-left: 0.5rem;
+    }
+    ul#listaProductos li {
+      margin-top: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 0.3rem;
+    }
+    ul#listaProductos button {
+      background: transparent;
+      border: none;
+      color: red;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -25,26 +38,47 @@
       <label>Fecha:</label>
       <input type="text" id="fecha" readonly />
 
-      <label>Cliente:</label>
-      <input type="text" id="cliente" required />
-
-      <h3>Selecciona uno o más productos:</h3>
-      <div class="productos-grid">
-        <!-- Hogar -->
-        <div><input type="checkbox" id="chocolate" data-nombre="Chocolate 30 ml" data-precio="3500" data-img="https://wil1979.github.io/esentia-factura/images/chocolate.jpg "><label for="chocolate"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/chocolate.jpg "> Chocolate 30 ml - ₡3500</label></div>
-        <div><input type="checkbox" id="cococookies" data-nombre="Coco Cookies 30 ml" data-precio="3500" data-img="https://wil1979.github.io/esentia-factura/images/cococookies.jpg "><label for="cococookies"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/cococookies.jpg "> Coco Cookies 30 ml - ₡3500</label></div>
-        <div><input type="checkbox" id="durazno" data-nombre="Durazno 30 ml" data-precio="3500" data-img="https://wil1979.github.io/esentia-factura/images/durazno.jpg "><label for="durazno"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/durazno.jpg "> Durazno 30 ml - ₡3500</label></div>
-        <div><input type="checkbox" id="fresa" data-nombre="Fresa 30 ml" data-precio="3500" data-img="https://wil1979.github.io/esentia-factura/images/fresa.jpg "><label for="fresa"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/fresa.jpg "> Fresa 30 ml - ₡3500</label></div>
-        <div><input type="checkbox" id="melonvainilla" data-nombre="Melón Vainilla 30 ml" data-precio="3500" data-img="https://wil1979.github.io/esentia-factura/images/melonvainilla.jpg "><label for="melonvainilla"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/melonvainilla.jpg "> Melón Vainilla 30 ml - ₡3500</label></div>
-        <div><input type="checkbox" id="pinacolada" data-nombre="Piña Colada 30 ml" data-precio="3500" data-img="https://wil1979.github.io/esentia-factura/images/pinacolada.jpg "><label for="pinacolada"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/pinacolada.jpg "> Piña Colada 30 ml - ₡3500</label></div>
-        <div><input type="checkbox" id="manzanacanela" data-nombre="Manzana Canela 30 ml" data-precio="3500" data-img="https://wil1979.github.io/esentia-factura/images/manzanacanela.jpg "><label for="manzanacanela"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/manzanacanela.jpg "> Manzana Canela 30 ml - ₡3500</label></div>
-
-        <!-- Auto 
-        <div><input type="checkbox" id="newcar" data-nombre="New Car 50 ml" data-precio="2500" data-img="https://wil1979.github.io/esentia-factura/images/newcar.jpg "><label for="newcar"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/newcar.jpg "> New Car 50 ml - ₡2500</label></div>
-        <div><input type="checkbox" id="pino" data-nombre="Pino 50 ml" data-precio="2500" data-img="https://wil1979.github.io/esentia-factura/images/pino.jpg "><label for="pino"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/pino.jpg "> Pino 50 ml - ₡2500</label></div>
-        <div><input type="checkbox" id="lavandaauto" data-nombre="Lavanda 50 ml" data-precio="2500" data-img="https://wil1979.github.io/esentia-factura/images/lavanda-auto.jpg "><label for="lavandaauto"><img class="producto-img" src="https://wil1979.github.io/esentia-factura/images/lavanda-auto.jpg "> Lavanda 50 ml - ₡2500</label></div>
+      <div style="display: flex; gap: 1rem;">
+        <div style="flex: 1;">
+          <label for="idCliente">ID Cliente (Cédula):</label>
+          <input type="text" id="idCliente" placeholder="Ej: 102030405" />
+        </div>
+        <div style="flex: 2;">
+          <label for="cliente">Cliente:</label>
+          <input type="text" id="cliente" required />
+        </div>
       </div>
--->
+
+      <h3>Agregar producto</h3>
+      <label for="productoSelect">Selecciona un producto:</label>
+      <select id="productoSelect">
+        <option value="">-- Selecciona un producto --</option>
+        <option value="Aromatizante Melon & Vainilla|3500">Aromatizante Melon y vainilla – 3500</option>
+        <option value="Aromatizante Pina Colada|3500">Aromatizante Pina Colada 3500</option>
+        <option value="Aromatizante Fresa|3500">Aromatizante Fresa – ₡3500</option>
+        <option value="Aromatizante Chocolate |3500">Aromatizante Chocolate – ₡3500</option>
+        <option value="Aromatizante Coco Cookies|3500">Aromatizante Coco Cookies – ₡3500</option>
+        <option value="Aromatizante Durazno|3500">Aromatizante Manzana Canela – ₡3500</option>
+        <option value="Aromatizante Manzana Canela|3500">Aromatizante Manzana Canela – ₡3500</option>
+        <!-- Puedes agregar más productos aquí -->
+      </select>
+
+      <label for="cantidadSelect">Cantidad:</label>
+      <input type="number" id="cantidadSelect" min="1" value="1" class="cantidad-input" />
+      <button type="button" onclick="agregarProducto()">➕ Agregar</button>
+
+      <ul id="listaProductos"></ul>
+
+      <h3>Descuentos</h3>
+      <label for="descuentoCantidad">Descuento por monto fijo (₡):</label>
+      <input type="number" id="descuentoCantidad" value="0" min="0" />
+
+      <label for="descuentoPorcentaje">Descuento por porcentaje (%):</label>
+      <input type="number" id="descuentoPorcentaje" value="0" min="0" max="100" />
+
+      <label for="numeroWhatsApp">Número WhatsApp (solo 8 dígitos):</label>
+      <input type="tel" id="numeroWhatsApp" placeholder="88889999" />
+
       <p id="totalDisplay" style="margin-top: 1rem; font-weight: bold;"></p>
 
       <button type="button" onclick="generarFactura()">📄 Generar PDF</button>
@@ -60,9 +94,51 @@
 
     <hr />
     <h3>📁 Historial de Facturas</h3>
-    <button type="button" onclick="mostrarHistorial()">Mostrar Historial</button>
-    <div id="historial" style="margin-top: 1rem;"></div>
+<button type="button" onclick="mostrarHistorial()">Mostrar Historial</button>
+<button type="button" onclick="borrarHistorial()">🗑️ Borrar Historial</button>
+<div id="historial" style="margin-top: 1rem;"></div>
+
   </div>
+
+  <script>
+    let productosFactura = [];
+
+    function agregarProducto() {
+      const sel = document.getElementById("productoSelect");
+      const [nombre, precio] = sel.value.split("|");
+      const cantidad = parseInt(document.getElementById("cantidadSelect").value) || 1;
+      if (!nombre) return alert("Selecciona un producto válido");
+
+      productosFactura.push({ nombre, precio: parseInt(precio), cantidad });
+      actualizarVistaProductos();
+      actualizarTotal();
+    }
+
+    function actualizarVistaProductos() {
+      const ul = document.getElementById("listaProductos");
+      ul.innerHTML = "";
+      productosFactura.forEach((p, i) => {
+        ul.innerHTML += `<li>${p.nombre} x${p.cantidad} – ₡${(p.precio * p.cantidad).toLocaleString()}
+          <button onclick="productosFactura.splice(${i},1); actualizarVistaProductos(); actualizarTotal();">🗑️</button></li>`;
+      });
+    }
+
+    document.getElementById("idCliente").addEventListener("blur", () => {
+      const cedula = document.getElementById("idCliente").value.trim();
+      if (!cedula) return;
+
+      fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedula}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.nombre) {
+            document.getElementById("cliente").value = data.nombre;
+          } else {
+            alert("No se encontró información para este ID.");
+          }
+        })
+        .catch(() => alert("Error al consultar la API de Hacienda"));
+    });
+  </script>
 
   <script src="script.js"></script>
 </body>
