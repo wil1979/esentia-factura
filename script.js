@@ -187,21 +187,13 @@ function enviarCatalogo() {
   }
 
   const catalogoTexto = `
-🌿 *Catálogo Esentia* 🌿
-
-Aromatizantes para el Hogar:
-- Chocolate 30 ml - ₡3500
-- Coco Cookies 30 ml - ₡3500
-- Durazno 30 ml - ₡3500
-- ...
-
-Aromatizantes para Auto:
-- 
+🌿 *Catálogo 
+Consulta por tu aroma faborito👇🏻
 
 Ver más detalles aquí:  https://wil1979.github.io/esentia-factura/catalogo.html 
   `;
 
   const mensaje = encodeURIComponent(catalogoTexto);
-  const url = `https://wa.me/506 ${numero}?text=${mensaje}`;
+  const url = `https://wa.me/506${numero}?text=${mensaje}`;
   window.open(url, '_blank');
 }
