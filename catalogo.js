@@ -100,11 +100,51 @@ function agregarCarrito(nombre, precio) {
     carrito.push({ nombre, precio, cantidad: 1 });
   }
   const boton = document.getElementById("botonCarrito");
-  boton.classList.add("animado");
-  setTimeout(() => boton.classList.remove("animado"), 300);
+boton.classList.add("animado");
+setTimeout(() => boton.classList.remove("animado"), 300);
 
-  renderCarrito();
+renderCarrito();
 }
+
+// Definición de productos para la categoría Hogar
+const productosHogar = [
+  {
+    nombre: "Chocolate 30 ml",
+    precioOriginal: 4000,
+    precioOferta: 3500,
+    imagen: "images/chocolate.jpg"
+  },
+  {
+    nombre: "Coco Cookies 30 ml",
+    precio: 3500,
+    imagen: "images/cococookies.jpg"
+  },
+  {
+    nombre: "Durazno 30 ml",
+    precio: 3500,
+    imagen: "images/durazno.jpg"
+  },
+  {
+    nombre: "Manzana Canela 30 ml",
+    precio: 3500,
+    imagen: "images/manzanacanela.jpg"
+  },
+  {
+    nombre: "Melón Vainilla 30 ml",
+    precio: 3500,
+    imagen: "images/melonvainilla.jpg"
+  },
+  {
+    nombre: "Piña Colada 30 ml",
+    precio: 3500,
+    imagen: "images/pinacolada.jpg"
+  },
+  {
+    nombre: "Fresa 30 ml",
+    precio: 3500,
+    imagen: "images/fresa.jpg"
+  }
+];
 
 const categorias = [
   {
@@ -168,23 +208,14 @@ function renderizarProductos() {
   const container = document.getElementById("productos-hogar");
   container.innerHTML = "";
 
-  categorias.forEach((categoria, index) => {
-    const wrapper = document.createElement("div");
-    wrapper.className = "categoria-plegable";
+  categorias.forEach(categoria => {
+    const titulo = document.createElement("h3");
+    titulo.textContent = categoria.nombre;
+    titulo.style.marginTop = "2rem";
+    container.appendChild(titulo);
 
-    const encabezado = document.createElement("button");
-    encabezado.className = "encabezado-categoria";
-    encabezado.textContent = categoria.nombre;
-    encabezado.setAttribute("data-index", index);
-    encabezado.onclick = () => {
-      const seccion = document.getElementById(`contenido-${index}`);
-      seccion.style.display = seccion.style.display === "none" ? "block" : "none";
-    };
-
-    const contenido = document.createElement("div");
-    contenido.className = "productos";
-    contenido.id = `contenido-${index}`;
-    contenido.style.display = "none";
+    const fila = document.createElement("div");
+    fila.className = "productos";
 
     categoria.productos.forEach(producto => {
       const divProducto = document.createElement("div");
@@ -203,15 +234,14 @@ function renderizarProductos() {
         <button onclick="agregarCarrito('${producto.nombre}', ${precioFinal})">Agregar al carrito</button>
       `;
 
-      contenido.appendChild(divProducto);
+      fila.appendChild(divProducto);
     });
 
-    wrapper.appendChild(encabezado);
-    wrapper.appendChild(contenido);
-    container.appendChild(wrapper);
+    container.appendChild(fila);
   });
 }
 
+// Llamar a la función cuando cargue la página
 window.addEventListener("DOMContentLoaded", () => {
   renderizarProductos();
 });
