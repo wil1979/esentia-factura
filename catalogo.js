@@ -1,4 +1,3 @@
-// JS mejorado para catálogo con promociones
 let carrito = [];
 let cuponActivo = false;
 
@@ -9,52 +8,13 @@ function agregarCarrito(nombre, precio) {
   } else {
     carrito.push({ nombre, precio, cantidad: 1 });
   }
+
   const boton = document.getElementById("botonCarrito");
-boton.classList.add("animado");
-setTimeout(() => boton.classList.remove("animado"), 300);
+  boton.classList.add("animado");
+  setTimeout(() => boton.classList.remove("animado"), 300);
 
-renderCarrito();
+  renderCarrito();
 }
-
-// Definición de productos para la categoría Hogar
-const productosHogar = [
-  {
-    nombre: "Chocolate 30 ml",
-    precioOriginal: 4000,
-    precioOferta: 3500,
-    imagen: "images/chocolate.jpg"
-  },
-  {
-    nombre: "Coco Cookies 30 ml",
-    precio: 3500,
-    imagen: "images/cococookies.jpg"
-  },
-  {
-    nombre: "Durazno 30 ml",
-    precio: 3500,
-    imagen: "images/durazno.jpg"
-  },
-  {
-    nombre: "Manzana Canela 30 ml",
-    precio: 3500,
-    imagen: "images/manzanacanela.jpg"
-  },
-  {
-    nombre: "Melón Vainilla 30 ml",
-    precio: 3500,
-    imagen: "images/melonvainilla.jpg"
-  },
-  {
-    nombre: "Piña Colada 30 ml",
-    precio: 3500,
-    imagen: "images/pinacolada.jpg"
-  },
-  {
-    nombre: "Fresa 30 ml",
-    precio: 3500,
-    imagen: "images/fresa.jpg"
-  }
-];
 
 const categorias = [
   {
@@ -151,6 +111,10 @@ function renderizarProductos() {
   });
 }
 
+window.addEventListener("DOMContentLoaded", () => {
+  renderizarProductos();
+});
+
 function eliminarDelCarrito(index) {
   carrito.splice(index, 1);
   renderCarrito();
@@ -171,7 +135,6 @@ function aplicarCupon() {
   renderCarrito();
 }
 
-// Si "descuentosActivos" es false, no se aplican descuentos por cantidad
 let descuentosActivos = false;
 
 function calcularDescuentoPorCantidad(item) {
@@ -184,10 +147,6 @@ function calcularDescuentoPorCantidad(item) {
   }
   return 0;
 }
-
-// Puedes activar/desactivar descuentos desde la factura llamando:
-// descuentosActivos = false; // para desactivar
-// descuentosActivos = true;  // para activar
 
 function renderCarrito() {
   const lista = document.getElementById("listaCarrito");
@@ -222,17 +181,15 @@ function renderCarrito() {
     li.appendChild(texto);
     li.appendChild(boton);
     lista.appendChild(li);
-     
-    
   });
 
- if (cuponActivo === "ESENTIA10") {
-  total *= 0.9;
-} else if (cuponActivo === "AMIGO15") {
-  total *= 0.85;
-}
+  if (cuponActivo === "ESENTIA10") {
+    total *= 0.9;
+  } else if (cuponActivo === "AMIGO15") {
+    total *= 0.85;
+  }
 
-  document.getElementById("total").textContent = Total: ₡${Math.round(total).toLocaleString()};
+  document.getElementById("total").textContent = `Total: ₡${Math.round(total).toLocaleString()}`;
   document.getElementById("contadorCarrito").textContent = carrito.reduce((s, i) => s + i.cantidad, 0);
 }
 
@@ -244,6 +201,7 @@ function finalizarPedido() {
 
   let mensaje = "Hola Wilber, quiero hacer el siguiente pedido:%0A";
   let total = 0;
+
   carrito.forEach(item => {
     const descuento = calcularDescuentoPorCantidad(item) * item.cantidad;
     const subtotal = (item.precio * item.cantidad) - descuento;
@@ -252,33 +210,32 @@ function finalizarPedido() {
   });
 
   if (cuponActivo === "ESENTIA10") {
-  mensaje += `%0ACupón aplicado: ESENTIA10 (-10%)`;
-  total *= 0.9;
-} else if (cuponActivo === "AMIGO15") {
-  mensaje += %0ACupón aplicado: AMIGO15 (-15%%);
-  total *= 0.85;
-}
+    mensaje += `%0ACupón aplicado: ESENTIA10 (-10%)`;
+    total *= 0.9;
+  } else if (cuponActivo === "AMIGO15") {
+    mensaje += `%0ACupón aplicado: AMIGO15 (-15%)`;
+    total *= 0.85;
+  }
 
-  mensaje += %0A💰 Total: ₡${Math.round(total).toLocaleString()};
-
-  const url = https://wa.me/50684079454?text=${mensaje};
+  mensaje += `%0A💰 Total: ₡${Math.round(total).toLocaleString()}`;
+  const url = `https://wa.me/50684079454?text=${mensaje}`;
   window.open(url, "_blank");
 }
 
 function mostrarImagenGrande(src) {
-    var modal = document.getElementById('modalImagen');
-    var img = document.getElementById('imgGrande');
-    img.src = src;
-    modal.style.display = 'flex';
-    // Para cerrar al tocar fuera de la imagen
-    modal.onclick = function(e){
-        if (e.target === modal) cerrarImagenGrande();
-    }
+  var modal = document.getElementById('modalImagen');
+  var img = document.getElementById('imgGrande');
+  img.src = src;
+  modal.style.display = 'flex';
+  modal.onclick = function (e) {
+    if (e.target === modal) cerrarImagenGrande();
+  };
 }
+
 function cerrarImagenGrande() {
-    var modal = document.getElementById('modalImagen');
-    modal.style.display = 'none';
-    document.getElementById('imgGrande').src = "";
+  var modal = document.getElementById('modalImagen');
+  modal.style.display = 'none';
+  document.getElementById('imgGrande').src = "";
 }
 
 function cerrarModal() {
@@ -293,10 +250,10 @@ function recomendarAmigo() {
   }
 
   const mensaje = encodeURIComponent(
-    "Hola 👋, quiero recomendarte este catálogo de fragancias de Esentia. Si haces una compra, yo obtengo un 10% de descuento y Tu obtienes un 10 % en tu proxima compra. ¡Dale un vistazo! 👉 https://wil1979.github.io/esentia-factura/catalogo.html"
+    "Hola 👋, quiero recomendarte este catálogo de fragancias de Esentia. Si haces una compra, yo obtengo un 10% de descuento y tú obtienes un 10% en tu próxima compra. ¡Dale un vistazo! 👉 https://wil1979.github.io/esentia-factura/catalogo.html"
   );
 
-  const url = https://wa.me/506${numero}?text=${mensaje};
+  const url = `https://wa.me/506${numero}?text=${mensaje}`;
   window.open(url, "_blank");
 }
 
