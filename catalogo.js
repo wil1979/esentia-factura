@@ -115,6 +115,16 @@ window.addEventListener("DOMContentLoaded", () => {
   renderizarProductos();
 });
 
+function filtrarProductos() {
+  const texto = document.getElementById("buscador").value.toLowerCase();
+  const productos = document.querySelectorAll(".producto");
+
+  productos.forEach(prod => {
+    const nombre = prod.querySelector("h3").textContent.toLowerCase();
+    prod.style.display = nombre.includes(texto) ? "block" : "none";
+  });
+}
+
 function eliminarDelCarrito(index) {
   carrito.splice(index, 1);
   renderCarrito();
