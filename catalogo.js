@@ -247,12 +247,12 @@ function finalizarPedido() {
   carrito.forEach(item => {
     const descuento = calcularDescuentoPorCantidad(item) * item.cantidad;
     const subtotal = (item.precio * item.cantidad) - descuento;
-    mensaje += 🧴 ${item.nombre} x${item.cantidad} - ₡${subtotal.toLocaleString()}%0A;
+    mensaje += `🧴 ${item.nombre} x${item.cantidad} - ₡${subtotal.toLocaleString()}%0A`;
     total += subtotal;
   });
 
   if (cuponActivo === "ESENTIA10") {
-  mensaje += %0ACupón aplicado: ESENTIA10 (-10%%);
+  mensaje += `%0ACupón aplicado: ESENTIA10 (-10%)`;
   total *= 0.9;
 } else if (cuponActivo === "AMIGO15") {
   mensaje += %0ACupón aplicado: AMIGO15 (-15%%);
