@@ -1,4 +1,4 @@
- // JS mejorado para catálogo con promociones
+// JS mejorado para catálogo con promociones
 let carrito = [];
 let cuponActivo = false;
 
@@ -309,4 +309,3 @@ function irAlCarrito() {
   const carritoSection = document.querySelector(".carrito");
   carritoSection.scrollIntoView({ behavior: "smooth" });
 }
-
