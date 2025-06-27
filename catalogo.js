@@ -9,7 +9,11 @@ function agregarCarrito(nombre, precio) {
   } else {
     carrito.push({ nombre, precio, cantidad: 1 });
   }
-  renderCarrito();
+  const boton = document.getElementById("botonCarrito");
+boton.classList.add("animado");
+setTimeout(() => boton.classList.remove("animado"), 300);
+
+renderCarrito();
 }
 
 // Definición de productos para la categoría Hogar
