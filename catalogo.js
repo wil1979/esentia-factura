@@ -227,7 +227,8 @@ function renderCarrito() {
     li.appendChild(texto);
     li.appendChild(boton);
     lista.appendChild(li);
-    document.getElementById("contadorCarrito").textContent = carrito.reduce((s, i) => s + i.cantidad, 0);
+     
+    
   });
 
  if (cuponActivo === "ESENTIA10") {
@@ -237,6 +238,7 @@ function renderCarrito() {
 }
 
   document.getElementById("total").textContent = `Total: ₡${Math.round(total).toLocaleString()}`;
+  document.getElementById("contadorCarrito").textContent = carrito.reduce((s, i) => s + i.cantidad, 0);
 }
 
 function finalizarPedido() {
