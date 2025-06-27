@@ -205,7 +205,7 @@ function renderCarrito() {
     li.style.alignItems = "center";
 
     const texto = document.createElement("span");
-    texto.textContent = ${item.nombre} x${item.cantidad} - ₡${subtotal.toLocaleString()};
+    texto.textContent = `${item.nombre} x${item.cantidad} - ₡${subtotal.toLocaleString()}`;
 
     const boton = document.createElement("button");
     boton.textContent = "❌";
