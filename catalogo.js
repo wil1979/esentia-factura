@@ -257,12 +257,27 @@ function finalizarPedido() {
   const url = `https://wa.me/50684079454?text=${mensaje}`;
   window.open(url, "_blank");
 }
-
 function mostrarImagenGrande(src) {
-  const modal = document.getElementById("modalImagen");
-  const imagen = document.getElementById("imagenAmpliada");
-  imagen.src = src;
-  modal.style.display = "flex";
+    var modal = document.getElementById('modalImagen');
+    var img = document.getElementById('imgGrande');
+    img.src = src;
+    modal.style.display = 'flex';
+    // Para cerrar al tocar fuera de la imagen
+    modal.onclick = function(e){
+        if (e.target === modal) cerrarImagenGrande();
+    }
+}
+function cerrarImagenGrande() {
+    var modal = document.getElementById('modalImagen');
+    modal.style.display = 'none';
+    document.getElementById('imgGrande').src = "";
+}
+
+//function mostrarImagenGrande(src) {
+//  const modal = document.getElementById("modalImagen");
+//  const imagen = document.getElementById("imagenAmpliada");
+ // imagen.src = src;
+ // modal.style.display = "flex";
 }
 
 function cerrarModal() {
