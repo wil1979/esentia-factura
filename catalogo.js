@@ -223,6 +223,7 @@ function renderCarrito() {
     li.appendChild(texto);
     li.appendChild(boton);
     lista.appendChild(li);
+    document.getElementById("contadorCarrito").textContent = carrito.reduce((s, i) => s + i.cantidad, 0);
   });
 
  if (cuponActivo === "ESENTIA10") {
@@ -296,4 +297,9 @@ function recomendarAmigo() {
 
   const url = `https://wa.me/506${numero}?text=${mensaje}`;
   window.open(url, "_blank");
+}
+
+function irAlCarrito() {
+  const carritoSection = document.querySelector(".carrito");
+  carritoSection.scrollIntoView({ behavior: "smooth" });
 }
