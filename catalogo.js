@@ -132,17 +132,17 @@ function renderizarProductos() {
       divProducto.className = producto.precioOferta ? "producto oferta" : "producto";
 
       const precioHTML = producto.precioOferta
-        ? <p><span class="precio-original">₡${producto.precioOriginal}</span> ₡${producto.precioOferta}</p>
-        : <p>₡${producto.precio}</p>;
+        ? `<p><span class="precio-original">₡${producto.precioOriginal}</span> ₡${producto.precioOferta}</p>`
+        : `<p>₡${producto.precio}</p>`;
 
       const precioFinal = producto.precioOferta || producto.precio;
 
-      divProducto.innerHTML = 
+      divProducto.innerHTML = `
         <img src="${producto.imagen}" alt="${producto.nombre}" onclick="mostrarImagenGrande(this.src)">
         <h3>${producto.nombre}</h3>
         ${precioHTML}
         <button onclick="agregarCarrito('${producto.nombre}', ${precioFinal})">Agregar al carrito</button>
-      ;
+      `;
 
       fila.appendChild(divProducto);
     });
@@ -150,11 +150,6 @@ function renderizarProductos() {
     container.appendChild(fila);
   });
 }
-
-// Llamar a la función cuando cargue la página
-window.addEventListener("DOMContentLoaded", () => {
-  renderizarProductos();
-});
 
 function eliminarDelCarrito(index) {
   carrito.splice(index, 1);
