@@ -225,9 +225,11 @@ function renderCarrito() {
     lista.appendChild(li);
   });
 
-  if (cuponActivo) {
-    total *= 0.9;
-  }
+ if (cuponActivo === "ESENTIA10") {
+  total *= 0.9;
+} else if (cuponActivo === "AMIGO15") {
+  total *= 0.85;
+}
 
   document.getElementById("total").textContent = `Total: ₡${Math.round(total).toLocaleString()}`;
 }
@@ -247,16 +249,20 @@ function finalizarPedido() {
     total += subtotal;
   });
 
-  if (cuponActivo) {
-    mensaje += `%0ACupón aplicado: ESENTIA10 (-10%%)`;
-    total *= 0.9;
-  }
+  if (cuponActivo === "ESENTIA10") {
+  mensaje += `%0ACupón aplicado: ESENTIA10 (-10%%)`;
+  total *= 0.9;
+} else if (cuponActivo === "AMIGO15") {
+  mensaje += `%0ACupón aplicado: AMIGO15 (-15%%)`;
+  total *= 0.85;
+}
 
   mensaje += `%0A💰 Total: ₡${Math.round(total).toLocaleString()}`;
 
   const url = `https://wa.me/50684079454?text=${mensaje}`;
   window.open(url, "_blank");
 }
+
 function mostrarImagenGrande(src) {
     var modal = document.getElementById('modalImagen');
     var img = document.getElementById('imgGrande');
@@ -271,13 +277,6 @@ function cerrarImagenGrande() {
     var modal = document.getElementById('modalImagen');
     modal.style.display = 'none';
     document.getElementById('imgGrande').src = "";
-}
-
-//function mostrarImagenGrande(src) {
-//  const modal = document.getElementById("modalImagen");
-//  const imagen = document.getElementById("imagenAmpliada");
- // imagen.src = src;
- // modal.style.display = "flex";
 }
 
 function cerrarModal() {
