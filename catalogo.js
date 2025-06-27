@@ -1,94 +1,4 @@
-// JS mejorado para catálogo con promociones
-let carrito = [];
-let cuponActivo = false;
-
-
-
-function eliminarDelCarrito(index) {
-  carrito.splice(index, 1);
-  renderCarrito();
-}
-
-function aplicarCupon() {
-  const cupon = document.getElementById("cupon").value.trim().toUpperCase();
-  if (cupon === "ESENTIA10") {
-    cuponActivo = "ESENTIA10";
-    alert("Cupón aplicado correctamente: 10% de descuento");
-  } else if (cupon === "AMIGO15") {
-    cuponActivo = "AMIGO15";
-    alert("Cupón aplicado correctamente: 15% de descuento");
-  } else {
-    cuponActivo = false;
-    alert("Cupón inválido");
-  }
-  renderCarrito();
-}
-
-// Si "descuentosActivos" es false, no se aplican descuentos por cantidad
-let descuentosActivos = false;
-
-function calcularDescuentoPorCantidad(item) {
-  if (!descuentosActivos) return 0;
-  if (item.cantidad >= 5) {
-    return item.precio * 0.10;
-  }
-  if (item.cantidad >= 2 && item.cantidad < 4) {
-    return item.precio * 0.05;
-  }
-  return 0;
-}
-
-// Puedes activar/desactivar descuentos desde la factura llamando:
-// descuentosActivos = false; // para desactivar
-// descuentosActivos = true;  // para activar
-
-function renderCarrito() {
-  const lista = document.getElementById("listaCarrito");
-  lista.innerHTML = "";
-
-  let total = 0;
-  carrito.forEach((item, i) => {
-    const descuento = calcularDescuentoPorCantidad(item) * item.cantidad;
-    const subtotal = (item.precio * item.cantidad) - descuento;
-    total += subtotal;
-
-    const li = document.createElement("li");
-    li.style.display = "flex";
-    li.style.justifyContent = "space-between";
-    li.style.alignItems = "center";
-
-    const texto = document.createElement("span");
-    texto.textContent = `${item.nombre} x${item.cantidad} - ₡${subtotal.toLocaleString()}`;
-
-    const boton = document.createElement("button");
-    boton.textContent = "❌";
-    boton.onclick = () => eliminarDelCarrito(i);
-    boton.style.fontSize = "12px";
-    boton.style.padding = "2px 6px";
-    boton.style.marginLeft = "10px";
-    boton.style.cursor = "pointer";
-    boton.style.backgroundColor = "#f44336";
-    boton.style.color = "#fff";
-    boton.style.border = "none";
-    boton.style.borderRadius = "4px";
-
-    li.appendChild(texto);
-    li.appendChild(boton);
-    lista.appendChild(li);
-     
-    
-  });
-
- if (cuponActivo === "ESENTIA10") {
-  total *= 0.9;
-} else if (cuponActivo === "AMIGO15") {
-  total *= 0.85;
-}
-
-  document.getElementById("total").textContent = `Total: ₡${Math.round(total).toLocaleString()}`;
-  document.getElementById("contadorCarrito").textContent = carrito.reduce((s, i) => s + i.cantidad, 0);
-}
-// JS mejorado para catálogo con promociones y categorías plegables
+ // JS mejorado para catálogo con promociones
 let carrito = [];
 let cuponActivo = false;
 
@@ -222,17 +132,17 @@ function renderizarProductos() {
       divProducto.className = producto.precioOferta ? "producto oferta" : "producto";
 
       const precioHTML = producto.precioOferta
-        ? `<p><span class="precio-original">₡${producto.precioOriginal}</span> ₡${producto.precioOferta}</p>`
-        : `<p>₡${producto.precio}</p>`;
+        ? <p><span class="precio-original">₡${producto.precioOriginal}</span> ₡${producto.precioOferta}</p>
+        : <p>₡${producto.precio}</p>;
 
       const precioFinal = producto.precioOferta || producto.precio;
 
-      divProducto.innerHTML = `
+      divProducto.innerHTML = 
         <img src="${producto.imagen}" alt="${producto.nombre}" onclick="mostrarImagenGrande(this.src)">
         <h3>${producto.nombre}</h3>
         ${precioHTML}
         <button onclick="agregarCarrito('${producto.nombre}', ${precioFinal})">Agregar al carrito</button>
-      `;
+      ;
 
       fila.appendChild(divProducto);
     });
@@ -246,6 +156,91 @@ window.addEventListener("DOMContentLoaded", () => {
   renderizarProductos();
 });
 
+function eliminarDelCarrito(index) {
+  carrito.splice(index, 1);
+  renderCarrito();
+}
+
+function aplicarCupon() {
+  const cupon = document.getElementById("cupon").value.trim().toUpperCase();
+  if (cupon === "ESENTIA10") {
+    cuponActivo = "ESENTIA10";
+    alert("Cupón aplicado correctamente: 10% de descuento");
+  } else if (cupon === "AMIGO15") {
+    cuponActivo = "AMIGO15";
+    alert("Cupón aplicado correctamente: 15% de descuento");
+  } else {
+    cuponActivo = false;
+    alert("Cupón inválido");
+  }
+  renderCarrito();
+}
+
+// Si "descuentosActivos" es false, no se aplican descuentos por cantidad
+let descuentosActivos = false;
+
+function calcularDescuentoPorCantidad(item) {
+  if (!descuentosActivos) return 0;
+  if (item.cantidad >= 5) {
+    return item.precio * 0.10;
+  }
+  if (item.cantidad >= 2 && item.cantidad < 4) {
+    return item.precio * 0.05;
+  }
+  return 0;
+}
+
+// Puedes activar/desactivar descuentos desde la factura llamando:
+// descuentosActivos = false; // para desactivar
+// descuentosActivos = true;  // para activar
+
+function renderCarrito() {
+  const lista = document.getElementById("listaCarrito");
+  lista.innerHTML = "";
+
+  let total = 0;
+  carrito.forEach((item, i) => {
+    const descuento = calcularDescuentoPorCantidad(item) * item.cantidad;
+    const subtotal = (item.precio * item.cantidad) - descuento;
+    total += subtotal;
+
+    const li = document.createElement("li");
+    li.style.display = "flex";
+    li.style.justifyContent = "space-between";
+    li.style.alignItems = "center";
+
+    const texto = document.createElement("span");
+    texto.textContent = ${item.nombre} x${item.cantidad} - ₡${subtotal.toLocaleString()};
+
+    const boton = document.createElement("button");
+    boton.textContent = "❌";
+    boton.onclick = () => eliminarDelCarrito(i);
+    boton.style.fontSize = "12px";
+    boton.style.padding = "2px 6px";
+    boton.style.marginLeft = "10px";
+    boton.style.cursor = "pointer";
+    boton.style.backgroundColor = "#f44336";
+    boton.style.color = "#fff";
+    boton.style.border = "none";
+    boton.style.borderRadius = "4px";
+
+    li.appendChild(texto);
+    li.appendChild(boton);
+    lista.appendChild(li);
+     
+    
+  });
+
+ if (cuponActivo === "ESENTIA10") {
+  total *= 0.9;
+} else if (cuponActivo === "AMIGO15") {
+  total *= 0.85;
+}
+
+  document.getElementById("total").textContent = Total: ₡${Math.round(total).toLocaleString()};
+  document.getElementById("contadorCarrito").textContent = carrito.reduce((s, i) => s + i.cantidad, 0);
+}
+
 function finalizarPedido() {
   if (carrito.length === 0) {
     alert("El carrito está vacío");
@@ -257,21 +252,21 @@ function finalizarPedido() {
   carrito.forEach(item => {
     const descuento = calcularDescuentoPorCantidad(item) * item.cantidad;
     const subtotal = (item.precio * item.cantidad) - descuento;
-    mensaje += `🧴 ${item.nombre} x${item.cantidad} - ₡${subtotal.toLocaleString()}%0A`;
+    mensaje += 🧴 ${item.nombre} x${item.cantidad} - ₡${subtotal.toLocaleString()}%0A;
     total += subtotal;
   });
 
   if (cuponActivo === "ESENTIA10") {
-  mensaje += `%0ACupón aplicado: ESENTIA10 (-10%%)`;
+  mensaje += %0ACupón aplicado: ESENTIA10 (-10%%);
   total *= 0.9;
 } else if (cuponActivo === "AMIGO15") {
-  mensaje += `%0ACupón aplicado: AMIGO15 (-15%%)`;
+  mensaje += %0ACupón aplicado: AMIGO15 (-15%%);
   total *= 0.85;
 }
 
-  mensaje += `%0A💰 Total: ₡${Math.round(total).toLocaleString()}`;
+  mensaje += %0A💰 Total: ₡${Math.round(total).toLocaleString()};
 
-  const url = `https://wa.me/50684079454?text=${mensaje}`;
+  const url = https://wa.me/50684079454?text=${mensaje};
   window.open(url, "_blank");
 }
 
@@ -306,7 +301,7 @@ function recomendarAmigo() {
     "Hola 👋, quiero recomendarte este catálogo de fragancias de Esentia. Si haces una compra, yo obtengo un 10% de descuento y Tu obtienes un 10 % en tu proxima compra. ¡Dale un vistazo! 👉 https://wil1979.github.io/esentia-factura/catalogo.html"
   );
 
-  const url = `https://wa.me/506${numero}?text=${mensaje}`;
+  const url = https://wa.me/506${numero}?text=${mensaje};
   window.open(url, "_blank");
 }
 
@@ -314,3 +309,4 @@ function irAlCarrito() {
   const carritoSection = document.querySelector(".carrito");
   carritoSection.scrollIntoView({ behavior: "smooth" });
 }
+
