@@ -65,6 +65,14 @@ const categorias = [
     ]
   },
   {
+    nombre: "🌲 Amaderada",
+    productos: [
+      { nombre: "Menta 30 ml", precio: 3500, imagen: "images/menta.jpg" },
+      { nombre: "Navidad 30 ml", precio: 3500, imagen: "images/navidad.jpg" },
+      { nombre: "Antitabaco 30 ml", precio: 3500, imagen: "images/antitabaco.jpg" }
+    ]
+  },  
+  {
     nombre: "👶 Línea Especial",
     productos: [
       { nombre: "Baby 30 ml", precio: 3500, imagen: "images/baby.jpg" },
