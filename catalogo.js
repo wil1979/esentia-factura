@@ -25,7 +25,7 @@ const categorias = [
       { nombre: "Fresa 30 ml", precio: 3500, imagen: "images/fresa.jpg" },
       { nombre: "Piña Colada 30 ml", precio: 3500, imagen: "images/pinacolada.jpg" },
       { nombre: "Melón Vainilla 30 ml", precio: 3500, imagen: "images/melonvainilla.jpg" },
-      { nombre: "Manzana Canela 30 ml", precio: 3500, imagen: "images/manzanacanela.jpg" },
+      //{ nombre: "Manzana Canela 30 ml", precio: 3500, imagen: "images/manzanacanela.jpg" },
     ]
   },
   {
