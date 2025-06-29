@@ -20,19 +20,19 @@ const categorias = [
   {
     nombre: "🍬 Aromas Dulces",
     productos: [
-      { nombre: "Chocolate 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/chocolate.jpg" },
-      { nombre: "Coco Cookies 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/cococookies.jpg" },
-      { nombre: "Fresa 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/fresa.jpg" },
-      { nombre: "Piña Colada 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/pinacolada.jpg" },
-      { nombre: "Melón Vainilla 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/melonvainilla.jpg" },
+      { nombre: "Chocolate 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/chocolate.png" },
+      { nombre: "Coco Cookies 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/cococookies.png" },
+      { nombre: "Fresa 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/fresa.png" },
+      { nombre: "Piña Colada 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/pinacolada.png" },
+      { nombre: "Melón Vainilla 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/melonvainilla.pmg" },
       //{ nombre: "Manzana Canela 30 ml", precio: 3500, imagen: "images/manzanacanela.jpg" },
     ]
   },
   {
     nombre: "🌸 Aromas Florales",
     productos: [
-      { nombre: "Lavanda 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/lavanda.jpg" },
-      { nombre: "Magnolia 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/magnolia.jpg" },
+      { nombre: "Lavanda 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/lavanda.png" },
+      { nombre: "Magnolia 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/magnolia.png" },
      // { nombre: "Rosa 30 ml", precio: 3500, imagen: "images/rosa.jpg" },
      // { nombre: "Violeta 30 ml", precio: 3500, imagen: "images/violeta.jpg" },
      // { nombre: "Bouquet Blanc 30 ml", precio: 3500, imagen: "images/bouquet.jpg" }
@@ -41,10 +41,10 @@ const categorias = [
   {
     nombre: "🍊 Frutales y Cítricos",
     productos: [
-      //{ nombre: "Manzana 30 ml", precio: 3500, imagen: "images/manzana.jpg" },
+      { nombre: "Limon 30 ml", precio: 3500, imagen: "images/limon.png" },
     //  { nombre: "Melocotón 30 ml", precio: 3500, imagen: "images/melocoton.jpg" },
     //  { nombre: "Naranja 30 ml", precio: 3500, imagen: "images/naranja.jpg" },
-      { nombre: "Frutos Rojos 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/frutosrojos.jpg" },
+      { nombre: "Frutos Rojos 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/frutosrojos.png" },
     //  { nombre: "Citronela 30 ml", precio: 3500, imagen: "images/citronela.jpg" }
     ]
   },
