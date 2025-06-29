@@ -279,3 +279,17 @@ function irAlCarrito() {
   const carritoSection = document.querySelector(".carrito");
   carritoSection.scrollIntoView({ behavior: "smooth" });
 }
+
+const botonFlotante = document.getElementById('botonCarrito');
+  const recomendarSeccion = document.querySelector('.recomendar');
+
+  window.addEventListener('scroll', () => {
+    const seccionPosicion = recomendarSeccion.getBoundingClientRect().top;
+    const ventanaAltura = window.innerHeight;
+
+    if (seccionPosicion < ventanaAltura && seccionPosicion > 0) {
+      botonFlotante.style.display = 'none'; // Oculta el botón
+    } else {
+      botonFlotante.style.display = 'block'; // Muestra el botón
+    }
+  });
