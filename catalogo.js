@@ -292,4 +292,19 @@ const botonFlotante = document.getElementById('botonCarrito');
     } else {
       botonFlotante.style.display = 'block'; // Muestra el botón
     }
+    
+    document.addEventListener('DOMContentLoaded', function () {
+    const popup = document.getElementById('popup');
+    const popupClose = document.getElementById('popup-close');
+
+    // Mostrar el pop-up después de 3 segundos al cargar la página
+    setTimeout(() => {
+      popup.classList.add('active');
+    }, 3000);
+
+    // Cerrar el pop-up al hacer clic en el botón
+    popupClose.addEventListener('click', () => {
+      popup.classList.remove('active');
+    });
+  });
   });
