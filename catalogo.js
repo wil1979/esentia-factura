@@ -41,7 +41,7 @@ const categorias = [
   {
     nombre: "🍊 Frutales y Cítricos",
     productos: [
-      { nombre: "Limon 30 ml", precio: 3500, imagen: "images/limon.png" },
+     // { nombre: "Limon 30 ml", precio: 3500, imagen: "images/limon.png" },
     //  { nombre: "Melocotón 30 ml", precio: 3500, imagen: "images/melocoton.jpg" },
     //  { nombre: "Naranja 30 ml", precio: 3500, imagen: "images/naranja.jpg" },
       { nombre: "Frutos Rojos 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/frutosrojos.jpg" },
