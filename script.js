@@ -163,8 +163,8 @@ ${mensajeProductos}
 
 💳 Formas de pago:
 1. Efectivo contra entrega  
-2. SINPE 72952454  
-3. Transferencia BAC: CR59010200009453897656  
+2. SINPE 72952454  Wilber Calderon M
+3. Transferencia BAC: CR59010200009453897656  Wilber Calderon M
 `;
 
   const mensajeCodificado = encodeURIComponent(mensaje);
