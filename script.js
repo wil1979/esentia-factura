@@ -165,6 +165,8 @@ ${mensajeProductos}
 1. Efectivo contra entrega  
 2. SINPE 72952454  Wilber Calderon M
 3. Transferencia BAC: CR59010200009453897656  Wilber Calderon M
+🌿 Encuentra tus fragancias favoritas aquí:  
+https://wil1979.github.io/esentia-factura/catalogo.html
 `;
 
   const mensajeCodificado = encodeURIComponent(mensaje);
