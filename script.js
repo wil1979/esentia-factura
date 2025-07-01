@@ -78,7 +78,11 @@ function generarFactura() {
   doc.text("Formas de pago:", 20, y + 30);
   doc.text("1. Efectivo contra entrega", 20, y + 37);
   doc.text("2. SINPE 72952454 - Wilber Calderón M.", 20, y + 44);
-  doc.text("3. BAC: CR59010200009453897656 - Wilber Calderón M.", 20, y + 51);
+  doc.text("3. BAC: CR59010200009453897656 - Wilber Calderón M.", 20, y + 51)
+  // Agregar enlace y mensaje
+  doc.setTextColor(0, 102, 204);
+  doc.text("Encuentra tus fragancias favoritas aquí:", 20, y + 65);
+  doc.text("https://wil1979.github.io/esentia-factura/catalogo.html", 20, y + 72);
 
   guardarFacturaEnHistorial({
     factura, fecha, cliente,
