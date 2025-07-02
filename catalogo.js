@@ -21,7 +21,7 @@ const categorias = [
     nombre: "🍬 Aromas Dulces",
     productos: [
       { nombre: "Chocolate 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/chocolate.png" },
-      { nombre: "Coco Cookies 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/cococookies.png" },
+      { nombre: "Coco Cookies 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/cococooquies.png" },
       { nombre: "Fresa 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/fresa.png" },
       { nombre: "Piña Colada 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/pinacolada.png" },
       { nombre: "Melón Vainilla 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/melonvainilla.png" },
