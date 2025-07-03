@@ -53,7 +53,7 @@ const categorias = [
     productos: [
       //{ nombre: "Eco Bambú 50 ml", precio: 3500, imagen: "images/bambu.png" },
       //{ nombre: "Sándalo 50 ml", precio: 3500, imagen: "images/sandalo.png" },
-      { nombre: "Pino 50 ml", precio: 3500, imagen: "images/pino.png" }
+      { nombre: "Pino 50 ml", precio: 3500, imagen: "images/pino.png" },
       { nombre: "Eucalipto 50 ml", precio: 3500, imagen: "images/eucalipto.png" }
     ]
   },
