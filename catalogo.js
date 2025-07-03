@@ -20,64 +20,65 @@ const categorias = [
   {
     nombre: "🍬 Aromas Dulces",
     productos: [
-      { nombre: "Chocolate 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/chocolate.png" },
-      { nombre: "Coco Cookies 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/cococooquies.png" },
-      { nombre: "Fresa 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/fresa.png" },
-      { nombre: "Piña Colada 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/pinacolada.png" },
-      { nombre: "Melón Vainilla 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/melonvainilla.png" },
+      { nombre: "Chocolate 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/chocolate.png" },
+      { nombre: "Coco Cookies 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/cococooquies.png" },
+      { nombre: "Fresa 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/fresa.png" },
+      { nombre: "Piña Colada 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/pinacolada.png" },
+      { nombre: "Melón Vainilla 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/melonvainilla.png" },
       //{ nombre: "Manzana Canela 30 ml", precio: 3500, imagen: "images/manzanacanela.png" },
     ]
   },
   {
     nombre: "🌸 Aromas Florales",
     productos: [
-      { nombre: "Lavanda 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/lavanda.png" },
-      { nombre: "Magnolia 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/magnolia.png" },
-      // { nombre: "Rosa 30 ml", precio: 3500, imagen: "images/rosa.png" },
-      // { nombre: "Violeta 30 ml", precio: 3500, imagen: "images/violeta.png" },
-      // { nombre: "Bouquet Blanc 30 ml", precio: 3500, imagen: "images/bouquet.png" }
+      { nombre: "Lavanda 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/lavanda.png" },
+      { nombre: "Magnolia 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/magnolia.png" },
+      // { nombre: "Rosa 50 ml", precio: 3500, imagen: "images/rosa.png" },
+      // { nombre: "Violeta 50 ml", precio: 3500, imagen: "images/violeta.png" },
+      // { nombre: "Bouquet Blanc 50 ml", precio: 3500, imagen: "images/bouquet.png" }
     ]
   },
   {
     nombre: "🍊 Frutales y Cítricos",
     productos: [
-      // { nombre: "Limon 30 ml", precio: 3500, imagen: "images/limon.png" },
-      // { nombre: "Melocotón 30 ml", precio: 3500, imagen: "images/melocoton.png" },
-      // { nombre: "Naranja 30 ml", precio: 3500, imagen: "images/naranja.png" },
-      { nombre: "Frutos Rojos 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/frutosrojos.png" },
-      // { nombre: "Citronela 30 ml", precio: 3500, imagen: "images/citronela.png" }
+      // { nombre: "Limon 50 ml", precio: 3500, imagen: "images/limon.png" },
+      // { nombre: "Melocotón 50 ml", precio: 3500, imagen: "images/melocoton.png" },
+      // { nombre: "Naranja 50 ml", precio: 3500, imagen: "images/naranja.png" },
+      { nombre: "Frutos Rojos 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/frutosrojos.png" },
+      // { nombre: "Citronela 50 ml", precio: 3500, imagen: "images/citronela.png" }
     ]
   },
   {
     nombre: "🌿 Naturales y Herbales",
     productos: [
-      //{ nombre: "Eco Bambú 30 ml", precio: 3500, imagen: "images/bambu.png" },
-      //{ nombre: "Sándalo 30 ml", precio: 3500, imagen: "images/sandalo.png" },
-      //{ nombre: "Pino 30 ml", precio: 3500, imagen: "images/pino.png" }
+      //{ nombre: "Eco Bambú 50 ml", precio: 3500, imagen: "images/bambu.png" },
+      //{ nombre: "Sándalo 50 ml", precio: 3500, imagen: "images/sandalo.png" },
+      { nombre: "Pino 50 ml", precio: 3500, imagen: "images/pino.png" }
+      { nombre: "Eucalipto 50 ml", precio: 3500, imagen: "images/eucalipto.png" }
     ]
   },
   {
     nombre: "🌊 Ambientales",
     productos: [
-      // { nombre: "Océano 30 ml", precio: 3500, imagen: "images/oceano.png" },
-      // { nombre: "Navidad 30 ml", precio: 3500, imagen: "images/navidad.png" },
-      // { nombre: "Antitabaco 30 ml", precio: 3500, imagen: "images/antitabaco.png" }
+      // { nombre: "Océano 50 ml", precio: 3500, imagen: "images/oceano.png" },
+      // { nombre: "Navidad 50 ml", precio: 3500, imagen: "images/navidad.png" },
+      // { nombre: "Antitabaco 50 ml", precio: 3500, imagen: "images/antitabaco.png" }
     ]
   },
   {
     nombre: "🌲 Amaderada",
     productos: [
-      { nombre: "Menta 30 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/menta.png" },
-      // { nombre: "Navidad 30 ml", precio: 3500, imagen: "images/navidad.png" },
-      // { nombre: "Antitabaco 30 ml", precio: 3500, imagen: "images/antitabaco.png" }
+      { nombre: "Menta 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/menta.png" },
+      // { nombre: "Navidad 50 ml", precio: 3500, imagen: "images/navidad.png" },
+      // { nombre: "Antitabaco 50 ml", precio: 3500, imagen: "images/antitabaco.png" }
     ]
   },
   {
     nombre: "👶 Línea Especial",
     productos: [
-      //{ nombre: "Baby 30 ml", precio: 3500, imagen: "images/baby.png" },
-      // { nombre: "Blanc 30 ml", precio: 3500, imagen: "images/blanc.png" },
-      // { nombre: "Bleu 30 ml", precio: 3500, imagen: "images/bleu.png" }
+      //{ nombre: "Baby 50 ml", precio: 3500, imagen: "images/baby.png" },
+      // { nombre: "Blanc 50 ml", precio: 3500, imagen: "images/blanc.png" },
+      // { nombre: "Bleu 50 ml", precio: 3500, imagen: "images/bleu.png" }
     ]
   }
 ];
