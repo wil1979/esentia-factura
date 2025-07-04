@@ -223,3 +223,44 @@ document.getElementById("idCliente").addEventListener("blur", () => {
     })
     .catch(() => alert("Error al consultar la API de Hacienda"));
 });
+
+function filtrarProductos() {
+  const texto = document.getElementById("buscarNombre").value.toLowerCase();
+  const categoria = document.getElementById("buscarCategoria").value;
+  const precioMin = parseFloat(document.getElementById("precioMin").value) || 0;
+  const precioMax = parseFloat(document.getElementById("precioMax").value) || Infinity;
+
+  const resultados = productosDisponibles.filter(p =>
+    p.nombre.toLowerCase().includes(texto) &&
+    (categoria === "" || p.categoria === categoria) &&
+    p.precio >= precioMin &&
+    p.precio <= precioMax
+  );
+
+  mostrarResultados(resultados);
+}
+
+function mostrarResultados(productos) {
+  const div = document.getElementById("resultadosFiltro");
+  if (productos.length === 0) {
+    div.innerHTML = "<p>No se encontraron productos.</p>";
+    return;
+  }
+
+  div.innerHTML = productos.map((p, i) => `
+    <div style="margin-bottom: 0.5rem; border-bottom: 1px solid #ccc; padding-bottom: 0.3rem;">
+      <strong>${p.nombre}</strong> – ${p.categoria} – ₡${p.precio.toLocaleString()}
+      <br/>
+      Cantidad: <input type="number" id="cant${i}" value="1" min="1" style="width: 60px;" />
+      <button onclick="agregarDesdeBusqueda('${p.nombre}', ${p.precio}, 'cant${i}')">Agregar</button>
+    </div>
+  `).join("");
+}
+
+function agregarDesdeBusqueda(nombre, precio, inputId) {
+  const cantidad = parseInt(document.getElementById(inputId).value) || 1;
+  productosFactura.push({ nombre, precio, cantidad });
+  actualizarVistaProductos();
+  actualizarTotal();
+  alert(`✅ ${nombre} x${cantidad} agregado`);
+}
