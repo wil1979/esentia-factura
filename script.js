@@ -10,6 +10,13 @@ window.onload = () => {
   actualizarTotal();
 };
 
+document.addEventListener('DOMContentLoaded', function() {
+  $('#productoSelect').select2({
+    placeholder: 'Busca un producto',
+    allowClear: true
+  });
+});
+
 function agregarProducto() {
   const sel = document.getElementById("productoSelect");
   const [nombre, precio] = sel.value.split("|");
