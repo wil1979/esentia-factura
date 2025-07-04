@@ -205,6 +205,15 @@ https://wil1979.github.io/esentia-factura/catalogo.html
   window.open(url, '_blank');
 }
 
+
+  $(document).ready(function() {
+    $('#productoSelect').select2({
+      placeholder: 'Busca un producto',
+      allowClear: true
+    });
+  });
+
+
 // API Hacienda
 document.getElementById("idCliente").addEventListener("blur", () => {
   const cedula = document.getElementById("idCliente").value.trim();
