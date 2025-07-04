@@ -1,5 +1,37 @@
 let productosFactura = [];
 
+const productosDisponibles = [
+  { nombre: "Aromatizante Melon & Vainilla", categoria: "🍬 Aromas Dulces", precio: 3000 },
+  { nombre: "Aromatizante Chocolate", categoria: "🍬 Aromas Dulces", precio: 3000 },
+  { nombre: "Aromatizante Coco", categoria: "🍬 Aromas Dulces", precio: 3000 },
+  { nombre: "Aromatizante Coco Cookies", categoria: "🍬 Aromas Dulces", precio: 3000 },
+  { nombre: "Aromatizante Pina Colada", categoria: "🍬 Aromas Dulces", precio: 3000 },
+  { nombre: "Aromatizante Fresa", categoria: "🍬 Aromas Dulces", precio: 3000 },
+  { nombre: "Aromatizante Melocotón", categoria: "🍬 Aromas Dulces", precio: 3000 },
+  { nombre: "Aromatizante Manzana Canela", categoria: "🍬 Aromas Dulces", precio: 3000 },
+
+  { nombre: "Aromatizante Lavanda", categoria: "🌸 Aromas Florales", precio: 3000 },
+  { nombre: "Aromatizante Magnolia", categoria: "🌸 Aromas Florales", precio: 3000 },
+  { nombre: "Aromatizante Rosa", categoria: "🌸 Aromas Florales", precio: 3000 },
+  { nombre: "Aromatizante Violeta", categoria: "🌸 Aromas Florales", precio: 3000 },
+
+  { nombre: "Aromatizante Frutos Rojos", categoria: "🍊 Aromas Cítricos y Frutales", precio: 3000 },
+  { nombre: "Aromatizante Naranja", categoria: "🍊 Aromas Cítricos y Frutales", precio: 3000 },
+  { nombre: "Aromatizante Citronela", categoria: "🍊 Aromas Cítricos y Frutales", precio: 3000 },
+
+  { nombre: "Aromatizante Eco Bambú", categoria: "🌿 Naturales y Herbales", precio: 3000 },
+  { nombre: "Aromatizante Pino", categoria: "🌿 Naturales y Herbales", precio: 3000 },
+  { nombre: "Aromatizante Sándalo", categoria: "🌿 Naturales y Herbales", precio: 3000 },
+
+  { nombre: "Aromatizante Océano", categoria: "🌊 Frescos y Ambientales", precio: 3000 },
+  { nombre: "Aromatizante Navidad", categoria: "🌊 Frescos y Ambientales", precio: 3000 },
+  { nombre: "Aromatizante Antitabaco", categoria: "🌊 Frescos y Ambientales", precio: 3000 },
+
+  { nombre: "Aromatizante Baby", categoria: "👶 Línea Especial", precio: 3000 },
+  { nombre: "Aromatizante Blanc", categoria: "👶 Línea Especial", precio: 3000 },
+  { nombre: "Aromatizante Bleu", categoria: "👶 Línea Especial", precio: 3000 }
+];
+
 window.onload = () => {
   const ahora = new Date();
   const consecutivo = ahora.toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
