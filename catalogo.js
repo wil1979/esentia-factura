@@ -20,7 +20,8 @@ const categorias = [
   {
     nombre: "🍬 Aromas Dulces",
     productos: [
-      { nombre: "Chocolate 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/chocolate.png" },
+      { nombre: "Chocolate 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/chocolate.png,
+  beneficios: "Aroma cálido y reconfortante que estimula la creatividad."},
       { nombre: "Coco Cookies 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/cococooquies.png" },
       { nombre: "Fresa 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/fresa.png" },
       { nombre: "Piña Colada 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/pinacolada.png" },
