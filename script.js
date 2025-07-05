@@ -185,7 +185,7 @@ function enviarFacturaPorWhatsApp() {
   });
 
   const mensaje = `
-🧾 *Factura Esentia*  
+🧾 *Factura Esentia Agradecemos su preferencia.*  
 N°: ${factura}  
 📅 Fecha: ${fecha}  
 👤 Cliente: ${cliente}  
