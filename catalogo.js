@@ -23,16 +23,16 @@ const categorias = [
       // { nombre: "Chocolate 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/chocolate.png" },
       // { nombre: "Coco Cookies 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/cococooquies.png" },
       // { nombre: "Fresa 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/fresa.png" },
-      { nombre: "Piña Colada 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/pinacolada.jpg" },
-      { nombre: "Melón Vainilla 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/melonvainilla.jpg" },
+      { nombre: "Piña Colada 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/pinacolada.png" },
+      { nombre: "Melón Vainilla 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/melonvainilla.png" },
       // { nombre: "Manzana Canela 30 ml", precio: 3500, imagen: "images/manzanacanela.png" },
     ]
   },
   {
     nombre: "🌸 Aromas Florales",
     productos: [
-      { nombre: "Lavanda 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/lavanda.jpg" },
-      { nombre: "Magnolia 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/magnolia.jpg" },
+      { nombre: "Lavanda 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/lavanda.png" },
+      { nombre: "Magnolia 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/magnolia.png" },
       // { nombre: "Rosa 50 ml", precio: 3500, imagen: "images/rosa.png" },
       // { nombre: "Violeta 50 ml", precio: 3500, imagen: "images/violeta.png" },
       // { nombre: "Bouquet Blanc 50 ml", precio: 3500, imagen: "images/bouquet.png" }
@@ -62,13 +62,13 @@ const categorias = [
     productos: [
       // { nombre: "Océano 50 ml", precio: 3500, imagen: "images/oceano.png" },
       // { nombre: "Navidad 50 ml", precio: 3500, imagen: "images/navidad.png" },
-      { nombre: "Antitabaco 50 ml", precio: 3500, imagen: "images/antitabaco.jpg" }
+      { nombre: "Antitabaco 50 ml", precio: 3500, imagen: "images/antitabaco.png" }
     ]
   },
   {
     nombre: "🌲 Amaderada",
     productos: [
-      { nombre: "Menta 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/menta.jpg" },
+      { nombre: "Menta 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/menta.png" },
       // { nombre: "Navidad 50 ml", precio: 3500, imagen: "images/navidad.png" },
       // { nombre: "Antitabaco 50 ml", precio: 3500, imagen: "images/antitabaco.png" }
     ]
