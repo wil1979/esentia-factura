@@ -62,7 +62,7 @@ const categorias = [
     productos: [
       // { nombre: "Océano 50 ml", precio: 3500, imagen: "images/oceano.png" },
       // { nombre: "Navidad 50 ml", precio: 3500, imagen: "images/navidad.png" },
-      { nombre: "Antitabaco 50 ml", precio: 3500, imagen: "images/antitabaco.png" }
+      { nombre: "Antitabaco 50 ml", precio: 3500, imagen: "images/antitabaco.jpg" }
     ]
   },
   {
