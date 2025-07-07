@@ -63,6 +63,8 @@ const categorias = [
       // { nombre: "Océano 50 ml", precio: 3500, imagen: "images/oceano.png" },
       // { nombre: "Navidad 50 ml", precio: 3500, imagen: "images/navidad.png" },
       { nombre: "Antitabaco 50 ml", precio: 3500, imagen: "images/antitabaco.jpg" }
+      ]
+      
     
   },
   {
@@ -110,7 +112,7 @@ function renderizarProductos() {
         <img src="${producto.imagen}" alt="${producto.nombre}" onclick="mostrarImagenGrande(this.src)">
         <h3>${producto.nombre}</h3>
         ${precioHTML}
-        <button onclick="agregarCarrito('${producto.nombre}', ${precioFinal})">Agregar al carrito</button>
+        <button onclick="agregarCarrito(\ '${producto.nombre}\', ${precioFinal})">Agregar al carrito</button>
       `;
 
       fila.appendChild(divProducto);
