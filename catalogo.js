@@ -31,7 +31,7 @@ const categorias = [
   {
     nombre: "🌸 Aromas Florales",
     productos: [
-      { nombre: "Lavanda 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/lavanda.jpg" }
+      { nombre: "Lavanda 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/lavanda.jpg" },
       { nombre: "Magnolia 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/magnolia.jpg" },
       // { nombre: "Rosa 50 ml", precio: 3500, imagen: "images/rosa.png" },
       // { nombre: "Violeta 50 ml", precio: 3500, imagen: "images/violeta.png" },
