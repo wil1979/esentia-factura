@@ -107,11 +107,11 @@ function renderizarProductos() {
       const precioFinal = producto.precioOferta || producto.precio;
 
       divProducto.innerHTML = `
-        <img src="${producto.imagen}" alt="${producto.nombre}" onclick="mostrarImagenGrande(this.src)">
-        <h3>${producto.nombre}</h3>
-        ${precioHTML}
-        <button onclick="agregarCarrito(\ '${producto.nombre}\', ${precioFinal})">Agregar al carrito</button>
-      `;
+  <img src="${producto.imagen}" alt="${producto.nombre}" onclick="mostrarImagenGrande(this.src)">
+  <h3>${producto.nombre}</h3>
+  ${precioHTML}
+  <button onclick="agregarCarrito(\`${producto.nombre}\`, ${precioFinal})">Agregar al carrito</button>
+`;
 
       fila.appendChild(divProducto);
     });
