@@ -20,65 +20,66 @@ const categorias = [
   {
     nombre: "🍬 Aromas Dulces",
     productos: [
-      // { nombre: "Chocolate 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/chocolate.png" },
-      // { nombre: "Coco Cookies 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/cococooquies.png" },
-      // { nombre: "Fresa 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/fresa.png" },
-      { nombre: "Piña Colada 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/pinacolada.jpg" },
-      { nombre: "Melón Vainilla 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/melonvainilla.jpg" },
+      // { nombre: "Chocolate ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/chocolate.png" },
+      // { nombre: "Coco Cookies ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/cococookies.png" },
+      // { nombre: "Fresa ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/fresa.png" },
+      { nombre: "Piña Colada ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/pinacolada.jpg" },
+      { nombre: "Melón Vainilla ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/melonvainilla.jpg" },
       // { nombre: "Manzana Canela 30 ml", precio: 3500, imagen: "images/manzanacanela.png" },
     ]
   },
   {
     nombre: "🌸 Aromas Florales",
     productos: [
-      { nombre: "Lavanda 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/lavanda.jpg" },
-      { nombre: "Magnolia 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/magnolia.jpg" },
-      // { nombre: "Rosa 50 ml", precio: 3500, imagen: "images/rosa.png" },
-      // { nombre: "Violeta 50 ml", precio: 3500, imagen: "images/violeta.png" },
-      // { nombre: "Bouquet Blanc 50 ml", precio: 3500, imagen: "images/bouquet.png" }
+      { nombre: "Lavanda ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/lavanda.jpg" },
+      { nombre: "Magnolia ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/magnolia.jpg" },
+      // { nombre: "Rosa ", precioOriginal: 5500, precio: 3500, imagen: "images/rosa.png" },
+      // { nombre: "Violeta ", precioOriginal: 5500, precio: 3500, imagen: "images/violeta.png" },
+      // { nombre: "Bouquet Blanc ", precioOriginal: 5500, precio: 3500, imagen: "images/bouquet.png" }
     ]
   },
   {
     nombre: "🍊 Frutales y Cítricos",
     productos: [
-      // { nombre: "Limón 50 ml", precio: 3500, imagen: "images/limon.png" },
-      // { nombre: "Melocotón 50 ml", precio: 3500, imagen: "images/melocoton.png" },
-      // { nombre: "Naranja 50 ml", precio: 3500, imagen: "images/naranja.png" },
-      // { nombre: "Frutos Rojos 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/frutosrojos.png" },
-      // { nombre: "Citronela 50 ml", precio: 3500, imagen: "images/citronela.png" }
+      // { nombre: "Limón ", precioOriginal: 5500,precio: 3500, imagen: "images/limon.png" },
+      // { nombre: "Melocotón ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/melocoton.png" },
+      // { nombre: "Naranja ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/naranja.png" },
+      // { nombre: "Frutos Rojos ", precioOriginal: 5500, precioOriginal: 5500, precioOferta: 3500, imagen: "images/frutosrojos.png" },
+      // { nombre: "Citronela ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/citronela.png" }
     ]
   },
   {
     nombre: "🌿 Naturales y Herbales",
     productos: [
-      // { nombre: "Eco Bambú 50 ml", precio: 3500, imagen: "images/bambu.png" },
-      // { nombre: "Sándalo 50 ml", precio: 3500, imagen: "images/sandalo.png" },
-      // { nombre: "Pino 50 ml", precio: 3500, imagen: "images/pino.png" },
-      { nombre: "Eucalipto 50 ml", precio: 3500, imagen: "images/eucalipto.jpg" }
+      // { nombre: "Violeta ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/violeta.png" },
+      // { nombre: "Eco Bambú ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/bambu.png" },
+      // { nombre: "Sándalo ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/sandalo.png" },
+      // { nombre: "Pino ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/pino.png" },
+      { nombre: "Eucalipto ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/eucalipto.jpg" }
     ]
   },
   {
     nombre: "🌊 Ambientales",
     productos: [
-      // { nombre: "Océano 50 ml", precio: 3500, imagen: "images/oceano.png" },
-      // { nombre: "Navidad 50 ml", precio: 3500, imagen: "images/navidad.png" },
-      { nombre: "Antitabaco 50 ml", precio: 3500, imagen: "images/antitabaco.jpg" }
+      // { nombre: "Océano ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/oceano.png" },
+      // { nombre: "Navidad ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/navidad.png" },
+      { nombre: "Antitabaco ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/antitabaco.jpg" }
     ]
   },
   {
     nombre: "🌲 Amaderada",
     productos: [
-      { nombre: "Menta 50 ml", precioOriginal: 5500, precioOferta: 3500, imagen: "images/menta.jpg" },
-      // { nombre: "Navidad 50 ml", precio: 3500, imagen: "images/navidad.png" },
-      // { nombre: "Antitabaco 50 ml", precio: 3500, imagen: "images/antitabaco.png" }
+      { nombre: "Menta ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/menta.jpg" },
+      // { nombre: "Navidad ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/navidad.png" },
+      // { nombre: "Antitabaco ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/antitabaco.png" }
     ]
   },
   {
     nombre: "👶 Línea Especial",
     productos: [
-      // { nombre: "Baby 50 ml", precio: 3500, imagen: "images/baby.png" },
-      // { nombre: "Blanc 50 ml", precio: 3500, imagen: "images/blanc.png" },
-      // { nombre: "Bleu 50 ml", precio: 3500, imagen: "images/bleu.png" }
+      // { nombre: "Baby ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/baby.png" },
+      // { nombre: "Blanc ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/blanc.png" },
+      // { nombre: "Bleu ", precioOriginal: 5500, precioOferta: 3500, imagen: "images/bleu.png" }
     ]
   }
 ];
