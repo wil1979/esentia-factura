@@ -62,7 +62,7 @@ const categorias = [
     {
       nombre: "Difusor Pequeño",
       precio: 5500,
-      imagen: "images/difusor.png", // Asegúrate de tener esta imagen o usa una placeholder
+      imagen: "images/3b4bad00-d563-4421-bf68-b0b8a1edead9.jpeg", // Asegúrate de tener esta imagen o usa una placeholder
       info: "Difusor con luz ambiental ajustable. Ideal para aromaterapia nocturna."
     }
   ]
