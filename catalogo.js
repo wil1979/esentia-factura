@@ -1,5 +1,6 @@
 let carrito = [];
 let cuponActivo = false;
+let productoSeleccionado = null;
 let productoPendiente = null;
 
 // Modo oscuro
@@ -16,13 +17,11 @@ function toggleModoOscuro() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  // Cargar modo guardado
-  const modoGuardado = localStorage.getItem("modo");
+  const modoGuardado = localStorage.getItem("modo") || "claro";
   if (modoGuardado === "oscuro") {
     document.body.classList.add("modo-oscuro");
     document.getElementById("modoOscuroBtn").textContent = "☀️ Modo Claro";
   }
-
   renderizarProductos();
 });
 
@@ -44,10 +43,12 @@ const categorias = [
     nombre: "🌬️ Difusores",
     productos: [
       {
-        nombre: "Difusor Pequeño",
+        nombre: "Difusor Pequeño + Aroma a escoger",
         precio: 5500,
         imagen: "images/difusor.jpg",
-        info: "Difusor con luz ambiental ajustable. Ideal para aromaterapia nocturna."
+        info: "Difusor de aceite esencial de 200ml, Humidificador de aire, Mini Humidificador con luz colorida para el hogar y el coche.",
+        beneficios: "Humidifica el ambiente, mejora la calidad del aire y proporciona un aroma agradable.",
+        usoRecomendado: "Dormitorios y espacios de terapia."
       }
     ]
   },
@@ -253,7 +254,6 @@ const categorias = [
     ]
   }
 ];
- 
 
 function renderizarProductos() {
   const container = document.getElementById("productos-hogar");
@@ -281,11 +281,11 @@ function renderizarProductos() {
       if (producto.nombre.startsWith("Difusor")) {
         botonHTML = `<button onclick="abrirModalSeleccionAroma('${producto.nombre}', ${producto.precio})">Agregar al carrito</button>`;
       } else {
-        botonHTML = `<button onclick="mostrarInfoProducto('${producto.nombre}', ${precioFinal}, '${producto.imagen}', \`${producto.info}\`, \`${producto.beneficios || ''}\`, \`${producto.usoRecomendado || ''}\`)">Ver detalles</button>`;
+       // botonHTML = `<button onclick="mostrarInfoProducto('${producto.nombre}', ${precioFinal}, '${producto.imagen}', \`${producto.info}\`, \`${producto.beneficios || ''}\`, \`${producto.usoRecomendado || ''}\')">Ver detalles</button>`;
       }
 
       divProducto.innerHTML = `
-        <img src="${producto.imagen}" alt="${producto.nombre}" onclick="mostrarInfoProducto('${producto.nombre}', ${precioFinal}, '${producto.imagen}', \`${producto.info}\`, \`${producto.beneficios || ''}\`, \`${producto.usoRecomendado || ''}\`)">
+        <img src="${producto.imagen}" alt="${producto.nombre}" onclick="mostrarInfoProducto('${producto.nombre}', ${precioFinal}, '${producto.imagen}', \`${producto.info}\`)">
         <h3>${producto.nombre}</h3>
         ${precioHTML}
         ${botonHTML}
@@ -297,10 +297,6 @@ function renderizarProductos() {
   });
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  renderizarProductos();
-});
-
 function filtrarProductos() {
   const texto = document.getElementById("buscador").value.toLowerCase();
   const productos = document.querySelectorAll(".producto");
@@ -309,8 +305,6 @@ function filtrarProductos() {
     prod.style.display = nombre.includes(texto) ? "block" : "none";
   });
 }
-
-// ==== MODALES ====
 
 function mostrarInfoProducto(nombre, precio, imagen, info, beneficios, usoRecomendado) {
   document.getElementById("modalProductoNombre").textContent = nombre;
@@ -355,10 +349,7 @@ function cargarOpcionesAromas() {
       if (!producto.nombre.startsWith("Difusor")) {
         const div = document.createElement("div");
         div.className = "opcion-aroma";
-        div.innerHTML = `
-          <span>${producto.nombre}</span>
-          <button onclick="seleccionarAroma('${producto.nombre}')">Elegir</button>
-        `;
+        div.innerHTML = `<span>${producto.nombre}</span><button onclick="seleccionarAroma('${producto.nombre}')">Elegir</button>`;
         lista.appendChild(div);
       }
     });
@@ -372,7 +363,6 @@ function seleccionarAroma(aromaNombre) {
   cerrarModalSeleccionAroma();
 }
 
-// ==== CARRITO ====
 function renderCarrito() {
   const lista = document.getElementById("listaCarritoModal");
   lista.innerHTML = "";
@@ -398,7 +388,7 @@ function renderCarrito() {
     lista.appendChild(li);
   });
 
-  // Aplicar cupón si existe
+  // Aplicar cupón
   if (cuponActivo === "ESENTIA10") {
     total *= 0.9;
   } else if (cuponActivo === "AMIGO15") {
@@ -407,46 +397,22 @@ function renderCarrito() {
 
   document.getElementById("totalModal").textContent = `Total: ₡${Math.round(total).toLocaleString()}`;
   document.getElementById("contadorCarrito").textContent = carrito.reduce((s, i) => s + i.cantidad, 0);
+  localStorage.setItem("carrito", JSON.stringify(carrito));
 }
 
-function finalizarPedido() {
-  if (carrito.length === 0) {
-    alert("El carrito está vacío");
-    return;
+function cargarCarrito() {
+  const data = localStorage.getItem("carrito");
+  if (data) {
+    carrito = JSON.parse(data);
+    renderCarrito();
   }
+}
 
-  let mensaje = "Hola Wilber 👋%0AQuiero hacer el siguiente pedido:%0A%0A";
-
-  let total = 0;
-
-  carrito.forEach(item => {
-    const descuento = calcularDescuentoPorCantidad(item) * item.cantidad;
-    const subtotal = (item.precio * item.cantidad) - descuento;
-    mensaje += `🧴 ${item.nombre} x${item.cantidad} - ₡${subtotal.toLocaleString()}%0A`;
-    total += subtotal;
-  });
-
-  if (cuponActivo === "ESENTIA10") {
-    mensaje += `%0ACupón aplicado: ESENTIA10 (-10%)`;
-    total *= 0.9;
-  } else if (cuponActivo === "AMIGO15") {
-    mensaje += `%0ACupón aplicado: AMIGO15 (-15%)`;
-    total *= 0.85;
+function vaciarCarrito() {
+  if (confirm("¿Estás seguro de querer vaciar el carrito?")) {
+    carrito = [];
+    renderCarrito();
   }
-
-  mensaje += `%0A%0A💰 *Total:* ₡${Math.round(total).toLocaleString()}*%0A%0A¡Gracias por tu compra! 🌿`;
-
-  const url = `https://wa.me/50672952454?text=${mensaje}`;
-  window.open(url, "_blank");
-}
-
-function abrirModalCarrito() {
-  renderCarrito();
-  document.getElementById("modalCarrito").style.display = "block";
-}
-
-function cerrarModalCarrito() {
-  document.getElementById("modalCarrito").style.display = "none";
 }
 
 function aplicarCupon() {
@@ -464,50 +430,68 @@ function aplicarCupon() {
   renderCarrito();
 }
 
+function finalizarPedido() {
+  if (carrito.length === 0) {
+    alert("El carrito está vacío");
+    return;
+  }
+  let mensaje = "Hola Wilber 👋%0AQuiero hacer el siguiente pedido:%0A%0A";
+  let total = 0;
+
+  carrito.forEach(item => {
+    const subtotal = item.precio * item.cantidad;
+    mensaje += `🧴 ${item.nombre} x${item.cantidad} - ₡${subtotal.toLocaleString()}%0A`;
+    total += subtotal;
+  });
+
+  if (cuponActivo === "ESENTIA10") {
+    mensaje += `%0ACupón aplicado: ESENTIA10 (-10%)`;
+    total *= 0.9;
+  } else if (cuponActivo === "AMIGO15") {
+    mensaje += `%0ACupón aplicado: AMIGO15 (-15%)`;
+    total *= 0.85;
+  }
+
+  mensaje += `%0A%0A💰 Total: ₡${Math.round(total).toLocaleString()}*%0A%0A¡Gracias por tu compra! 🌿`;
+  window.open(` https://wa.me/50672952454?text=${mensaje}`, "_blank");
+}
+
+function abrirModalCarrito() {
+  renderCarrito();
+  document.getElementById("modalCarrito").style.display = "block";
+}
+
+function cerrarModalCarrito() {
+  document.getElementById("modalCarrito").style.display = "none";
+}
+
 function recomendarAmigo() {
   const numero = document.getElementById("numeroAmigo").value.trim();
   if (!numero.match(/^\d{8,12}$/)) {
     alert("Ingrese un número válido sin símbolos ni espacios.");
     return;
   }
-  const mensaje = encodeURIComponent(
-    "Hola 👋, quiero recomendarte este catálogo de fragancias de Esentia. Si haces una compra, yo obtengo un 10% de descuento y tú obtienes un 10% en tu próxima compra. ¡Dale un vistazo! 👉  https://wil1979.github.io/esentia-factura/catalogo.html "
-  );
-  const url = `https://wa.me/506 ${numero}?text=${mensaje}`;
-  window.open(url, "_blank");
+  const mensaje = encodeURIComponent("Hola 👋, quiero recomendarte este catálogo de fragancias de Esentia. Si haces una compra, yo obtengo un 10% de descuento y tú obtienes un 10% en tu próxima compra. ¡Dale un vistazo! 👉  https://wil1979.github.io/esentia-factura/catalogo.html  ");
+  window.open(`https://wa.me/506 ${numero}?text=${mensaje}`, "_blank");
 }
 
 function irAlCarrito() {
   const carritoSection = document.querySelector(".carrito");
-  carritoSection.scrollIntoView({ behavior: "smooth" });
+  carritoSection?.scrollIntoView({ behavior: "smooth" });
 }
 
 function mostrarImagenGrande(src) {
-  var modal = document.getElementById('modalImagen');
-  var img = document.getElementById('imgGrande');
-  img.src = src;
-  modal.style.display = 'flex';
-  modal.onclick = function(e) {
-    if (e.target === modal) cerrarImagenGrande();
-  };
+  document.getElementById("modalImagen").style.display = "flex";
+  document.getElementById("imgGrande").src = src;
 }
 
 function cerrarImagenGrande() {
-  var modal = document.getElementById('modalImagen');
-  modal.style.display = 'none';
-  document.getElementById('imgGrande').src = "";
+  document.getElementById("modalImagen").style.display = "none";
+  document.getElementById("imgGrande").src = "";
 }
 
-// ==== POPUP ====
-document.addEventListener('DOMContentLoaded', function () {
-  const popup = document.getElementById('popup');
-  const popupClose = document.getElementById('popup-close');
-
-  setTimeout(() => {
-    popup.classList.add('active');
-  }, 3000);
-
-  popupClose.addEventListener('click', () => {
-    popup.classList.remove('active');
-  });
+// Cargar carrito desde localStorage
+window.addEventListener("DOMContentLoaded", () => {
+  cargarCarrito();
+  renderizarProductos();
 });
