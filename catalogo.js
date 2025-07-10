@@ -1,43 +1,30 @@
 let carrito = [];
 let cuponActivo = false;
-let productoSeleccionado = null;
+let productoPendiente = null;
 
-function abrirModalSeleccionAroma(nombre, precio) {
-  productoPendiente = { nombre, precio };
-  const modal = document.getElementById("modalSeleccionAroma");
-  modal.style.display = "block";
-  cargarOpcionesAromas();
+// Modo oscuro
+function toggleModoOscuro() {
+  document.body.classList.toggle("modo-oscuro");
+  const btn = document.getElementById("modoOscuroBtn");
+  if (document.body.classList.contains("modo-oscuro")) {
+    btn.textContent = "☀️ Modo Claro";
+    localStorage.setItem("modo", "oscuro");
+  } else {
+    btn.textContent = "🌙 Modo Oscuro";
+    localStorage.setItem("modo", "claro");
+  }
 }
 
-function cerrarModalSeleccionAroma() {
-  document.getElementById("modalSeleccionAroma").style.display = "none";
-  productoPendiente = null;
-}
+window.addEventListener("DOMContentLoaded", () => {
+  // Cargar modo guardado
+  const modoGuardado = localStorage.getItem("modo");
+  if (modoGuardado === "oscuro") {
+    document.body.classList.add("modo-oscuro");
+    document.getElementById("modoOscuroBtn").textContent = "☀️ Modo Claro";
+  }
 
-function cargarOpcionesAromas() {
-  const lista = document.getElementById("listaAromas");
-  lista.innerHTML = "";
-
-  categorias.forEach(categoria => {
-    categoria.productos.forEach(producto => {
-      if (!producto.nombre.startsWith("Difusor")) {
-        const div = document.createElement("div");
-        div.className = "opcion-aroma";
-        div.innerHTML = `
-          <span>${producto.nombre}</span>
-          <button onclick="seleccionarAroma('${producto.nombre}')">Elegir</button>
-        `;
-        lista.appendChild(div);
-      }
-    });
-  });
-}
-function seleccionarAroma(aromaNombre) {
-  if (!productoPendiente) return;
-  const nombreCompleto = `${productoPendiente.nombre} - ${aromaNombre}`;
-  agregarCarrito(nombreCompleto, productoPendiente.precio);
-  cerrarModalSeleccionAroma();
-}
+  renderizarProductos();
+});
 
 function agregarCarrito(nombre, precio) {
   const itemExistente = carrito.find(item => item.nombre === nombre);
@@ -46,29 +33,26 @@ function agregarCarrito(nombre, precio) {
   } else {
     carrito.push({ nombre, precio, cantidad: 1 });
   }
-
   const boton = document.getElementById("botonCarrito");
   boton.classList.add("animado");
   setTimeout(() => boton.classList.remove("animado"), 300);
-
   renderCarrito();
 }
 
 const categorias = [
   {
-
     nombre: "🌬️ Difusores",
-  productos: [
-    {
-      nombre: "Difusor Pequeño",
-      precio: 5500,
-      imagen: "images/3b4bad00-d563-4421-bf68-b0b8a1edead9.jpeg", // Asegúrate de tener esta imagen o usa una placeholder
-      info: "Difusor con luz ambiental ajustable. Ideal para aromaterapia nocturna."
-    }
-  ]
-},
+    productos: [
+      {
+        nombre: "Difusor Pequeño",
+        precio: 5500,
+        imagen: "images/difusor.jpg",
+        info: "Difusor con luz ambiental ajustable. Ideal para aromaterapia nocturna."
+      }
+    ]
+  },
   {
-    nombre: "🍬 Aromas Dulces",
+     nombre: "🍬 Aromas Dulces",
     productos: [
       {
         nombre: "Chocolate",
@@ -269,10 +253,11 @@ const categorias = [
     ]
   }
 ];
+ 
+
 function renderizarProductos() {
   const container = document.getElementById("productos-hogar");
   container.innerHTML = "";
-
   categorias.forEach(categoria => {
     const titulo = document.createElement("h3");
     titulo.textContent = categoria.nombre;
@@ -293,19 +278,18 @@ function renderizarProductos() {
       const precioFinal = producto.precioOferta || producto.precio;
 
       let botonHTML = "";
-if (producto.nombre.startsWith("Difusor")) {
-  botonHTML = `<button onclick="abrirModalSeleccionAroma('${producto.nombre}', ${producto.precio})">Agregar al carrito</button>`;
-} else {
-  botonHTML = `<button onclick="agregarCarrito(\`${producto.nombre}\`, ${precioFinal})">Agregar al carrito</button>`;
-}
+      if (producto.nombre.startsWith("Difusor")) {
+        botonHTML = `<button onclick="abrirModalSeleccionAroma('${producto.nombre}', ${producto.precio})">Agregar al carrito</button>`;
+      } else {
+        botonHTML = `<button onclick="mostrarInfoProducto('${producto.nombre}', ${precioFinal}, '${producto.imagen}', \`${producto.info}\`, \`${producto.beneficios || ''}\`, \`${producto.usoRecomendado || ''}\`)">Ver detalles</button>`;
+      }
 
-divProducto.innerHTML = `
-  <img src="${producto.imagen}" alt="${producto.nombre}" onclick="mostrarInfoProducto('${producto.nombre}', ${precioFinal}, '${producto.imagen}', \`${producto.info}\`)">
-  <h3>${producto.nombre}</h3>
-  ${precioHTML}
-  ${botonHTML}
-`;
-
+      divProducto.innerHTML = `
+        <img src="${producto.imagen}" alt="${producto.nombre}" onclick="mostrarInfoProducto('${producto.nombre}', ${precioFinal}, '${producto.imagen}', \`${producto.info}\`, \`${producto.beneficios || ''}\`, \`${producto.usoRecomendado || ''}\`)">
+        <h3>${producto.nombre}</h3>
+        ${precioHTML}
+        ${botonHTML}
+      `;
       fila.appendChild(divProducto);
     });
 
@@ -320,58 +304,85 @@ window.addEventListener("DOMContentLoaded", () => {
 function filtrarProductos() {
   const texto = document.getElementById("buscador").value.toLowerCase();
   const productos = document.querySelectorAll(".producto");
-
   productos.forEach(prod => {
     const nombre = prod.querySelector("h3").textContent.toLowerCase();
     prod.style.display = nombre.includes(texto) ? "block" : "none";
   });
 }
 
-function eliminarDelCarrito(index) {
-  carrito.splice(index, 1);
-  renderCarrito();
+// ==== MODALES ====
+
+function mostrarInfoProducto(nombre, precio, imagen, info, beneficios, usoRecomendado) {
+  document.getElementById("modalProductoNombre").textContent = nombre;
+  document.getElementById("modalProductoImagen").src = imagen;
+  document.getElementById("modalProductoInfo").textContent = info;
+  document.getElementById("modalProductoUso").innerHTML = 
+    `<strong>🧠 Beneficios:</strong> ${beneficios}<br><strong>🏠 Uso recomendado:</strong> ${usoRecomendado}`;
+  document.getElementById("modalProductoPrecio").textContent = `₡${precio.toLocaleString()}`;
+  productoSeleccionado = { nombre, precio };
+  document.getElementById("modalProducto").style.display = "block";
 }
 
-function aplicarCupon() {
-  const cupon = document.getElementById("cupon").value.trim().toUpperCase();
-  if (cupon === "ESENTIA10") {
-    cuponActivo = "ESENTIA10";
-    alert("Cupón aplicado correctamente: 10% de descuento");
-  } else if (cupon === "AMIGO15") {
-    cuponActivo = "AMIGO15";
-    alert("Cupón aplicado correctamente: 15% de descuento");
-  } else {
-    cuponActivo = false;
-    alert("Cupón inválido");
-  }
-  renderCarrito();
+function cerrarModalProducto() {
+  document.getElementById("modalProducto").style.display = "none";
+  productoSeleccionado = null;
 }
 
-let descuentosActivos = false;
-
-function calcularDescuentoPorCantidad(item) {
-  if (!descuentosActivos) return 0;
-  if (item.cantidad >= 5) {
-    return item.precio * 0.10;
-  }
-  if (item.cantidad >= 2 && item.cantidad < 4) {
-    return item.precio * 0.05;
-  }
-  return 0;
+function agregarDesdeModal() {
+  if (!productoSeleccionado) return;
+  agregarCarrito(productoSeleccionado.nombre, productoSeleccionado.precio);
+  cerrarModalProducto();
 }
 
+function abrirModalSeleccionAroma(nombre, precio) {
+  productoPendiente = { nombre, precio };
+  const modal = document.getElementById("modalSeleccionAroma");
+  modal.style.display = "block";
+  cargarOpcionesAromas();
+}
+
+function cerrarModalSeleccionAroma() {
+  document.getElementById("modalSeleccionAroma").style.display = "none";
+  productoPendiente = null;
+}
+
+function cargarOpcionesAromas() {
+  const lista = document.getElementById("listaAromas");
+  lista.innerHTML = "";
+
+  categorias.forEach(categoria => {
+    categoria.productos.forEach(producto => {
+      if (!producto.nombre.startsWith("Difusor")) {
+        const div = document.createElement("div");
+        div.className = "opcion-aroma";
+        div.innerHTML = `
+          <span>${producto.nombre}</span>
+          <button onclick="seleccionarAroma('${producto.nombre}')">Elegir</button>
+        `;
+        lista.appendChild(div);
+      }
+    });
+  });
+}
+
+function seleccionarAroma(aromaNombre) {
+  if (!productoPendiente) return;
+  const nombreCompleto = `${productoPendiente.nombre} - ${aromaNombre}`;
+  agregarCarrito(nombreCompleto, productoPendiente.precio);
+  cerrarModalSeleccionAroma();
+}
+
+// ==== CARRITO ====
 function renderCarrito() {
   const lista = document.getElementById("listaCarritoModal");
   lista.innerHTML = "";
   let total = 0;
 
   carrito.forEach((item, i) => {
-    const descuento = calcularDescuentoPorCantidad(item) * item.cantidad;
-    const subtotal = (item.precio * item.cantidad) - descuento;
+    const subtotal = item.precio * item.cantidad;
     total += subtotal;
 
     const li = document.createElement("li");
-
     const texto = document.createElement("span");
     texto.textContent = `${item.nombre} x${item.cantidad} - ₡${subtotal.toLocaleString()}`;
 
@@ -387,7 +398,7 @@ function renderCarrito() {
     lista.appendChild(li);
   });
 
-  // Aplicar cupón si está activo
+  // Aplicar cupón si existe
   if (cuponActivo === "ESENTIA10") {
     total *= 0.9;
   } else if (cuponActivo === "AMIGO15") {
@@ -398,31 +409,14 @@ function renderCarrito() {
   document.getElementById("contadorCarrito").textContent = carrito.reduce((s, i) => s + i.cantidad, 0);
 }
 
-// Abrir modal del carrito
-function abrirModalCarrito() {
-  renderCarrito(); // Actualiza visualización
-  document.getElementById("modalCarrito").style.display = "block";
-}
-
-// Cerrar modal del carrito
-function cerrarModalCarrito() {
-  document.getElementById("modalCarrito").style.display = "none";
-}
-
-// Opcional: permitir cerrar con tecla ESC
-document.addEventListener("keydown", function(event) {
-  if (event.key === "Escape") {
-    cerrarModalCarrito();
-  }
-});
-
 function finalizarPedido() {
   if (carrito.length === 0) {
     alert("El carrito está vacío");
     return;
   }
 
-  let mensaje = "Hola Wilber, quiero hacer el siguiente pedido:%0A";
+  let mensaje = "Hola Wilber 👋%0AQuiero hacer el siguiente pedido:%0A%0A";
+
   let total = 0;
 
   carrito.forEach(item => {
@@ -440,39 +434,34 @@ function finalizarPedido() {
     total *= 0.85;
   }
 
-  mensaje += `%0A💰 Total: ₡${Math.round(total).toLocaleString()}`;
+  mensaje += `%0A%0A💰 *Total:* ₡${Math.round(total).toLocaleString()}*%0A%0A¡Gracias por tu compra! 🌿`;
+
   const url = `https://wa.me/50672952454?text=${mensaje}`;
   window.open(url, "_blank");
 }
 
-
-
-
-
-function mostrarInfoProducto(nombre, precio, imagen, info, beneficios, usoRecomendado) {
-  document.getElementById("modalProductoNombre").textContent = nombre;
-  document.getElementById("modalProductoImagen").src = imagen;
-  document.getElementById("modalProductoInfo").textContent = info;
-  document.getElementById("modalProductoUso").innerHTML = `<strong>🧠 Beneficios:</strong> ${beneficios}<br><strong>🏠 Uso recomendado:</strong> ${usoRecomendado}`;
-  document.getElementById("modalProductoPrecio").textContent = `₡${precio.toLocaleString()}`;
-  productoSeleccionado = { nombre, precio };
-  document.getElementById("modalProducto").style.display = "block";
+function abrirModalCarrito() {
+  renderCarrito();
+  document.getElementById("modalCarrito").style.display = "block";
 }
 
-function cerrarModalProducto() {
-  document.getElementById("modalProducto").style.display = "none";
-  productoSeleccionado = null;
+function cerrarModalCarrito() {
+  document.getElementById("modalCarrito").style.display = "none";
 }
 
-function agregarDesdeModal() {
-  if (!productoSeleccionado) return;
-  agregarCarrito(productoSeleccionado.nombre, productoSeleccionado.precio);
-  cerrarModalProducto();
-}
-
-
-function cerrarModal() {
-  document.getElementById("modalImagen").style.display = "none";
+function aplicarCupon() {
+  const cupon = document.getElementById("cupon").value.trim().toUpperCase();
+  if (cupon === "ESENTIA10") {
+    cuponActivo = "ESENTIA10";
+    alert("Cupón aplicado correctamente: 10% de descuento");
+  } else if (cupon === "AMIGO15") {
+    cuponActivo = "AMIGO15";
+    alert("Cupón aplicado correctamente: 15% de descuento");
+  } else {
+    cuponActivo = false;
+    alert("Cupón inválido");
+  }
+  renderCarrito();
 }
 
 function recomendarAmigo() {
@@ -481,12 +470,10 @@ function recomendarAmigo() {
     alert("Ingrese un número válido sin símbolos ni espacios.");
     return;
   }
-
   const mensaje = encodeURIComponent(
-    "Hola 👋, quiero recomendarte este catálogo de fragancias de Esentia. Si haces una compra, yo obtengo un 10% de descuento y tú obtienes un 10% en tu próxima compra. ¡Dale un vistazo! 👉 https://wil1979.github.io/esentia-factura/catalogo.html"
+    "Hola 👋, quiero recomendarte este catálogo de fragancias de Esentia. Si haces una compra, yo obtengo un 10% de descuento y tú obtienes un 10% en tu próxima compra. ¡Dale un vistazo! 👉  https://wil1979.github.io/esentia-factura/catalogo.html "
   );
-
-  const url = `https://wa.me/506${numero}?text=${mensaje}`;
+  const url = `https://wa.me/506 ${numero}?text=${mensaje}`;
   window.open(url, "_blank");
 }
 
@@ -495,31 +482,32 @@ function irAlCarrito() {
   carritoSection.scrollIntoView({ behavior: "smooth" });
 }
 
-const botonFlotante = document.getElementById('botonCarrito');
-  const recomendarSeccion = document.querySelector('.recomendar');
+function mostrarImagenGrande(src) {
+  var modal = document.getElementById('modalImagen');
+  var img = document.getElementById('imgGrande');
+  img.src = src;
+  modal.style.display = 'flex';
+  modal.onclick = function(e) {
+    if (e.target === modal) cerrarImagenGrande();
+  };
+}
 
-  window.addEventListener('scroll', () => {
-    const seccionPosicion = recomendarSeccion.getBoundingClientRect().top;
-    const ventanaAltura = window.innerHeight;
+function cerrarImagenGrande() {
+  var modal = document.getElementById('modalImagen');
+  modal.style.display = 'none';
+  document.getElementById('imgGrande').src = "";
+}
 
-    if (seccionPosicion < ventanaAltura && seccionPosicion > 0) {
-      botonFlotante.style.display = 'none'; // Oculta el botón
-    } else {
-      botonFlotante.style.display = 'block'; // Muestra el botón
-    }
-    
-    document.addEventListener('DOMContentLoaded', function () {
-    const popup = document.getElementById('popup');
-    const popupClose = document.getElementById('popup-close');
+// ==== POPUP ====
+document.addEventListener('DOMContentLoaded', function () {
+  const popup = document.getElementById('popup');
+  const popupClose = document.getElementById('popup-close');
 
-    // Mostrar el pop-up después de 3 segundos al cargar la página
-    setTimeout(() => {
-      popup.classList.add('active');
-    }, 3000);
+  setTimeout(() => {
+    popup.classList.add('active');
+  }, 3000);
 
-    // Cerrar el pop-up al hacer clic en el botón
-    popupClose.addEventListener('click', () => {
-      popup.classList.remove('active');
-    });
+  popupClose.addEventListener('click', () => {
+    popup.classList.remove('active');
   });
-  });
+});

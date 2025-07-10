@@ -18,7 +18,6 @@ const productosDisponibles = [
   { nombre: "Aromatizante Frutos Rojos", categoria: "🍊 Aromas Cítricos y Frutales", precio: 3000 },
   { nombre: "Aromatizante Naranja", categoria: "🍊 Aromas Cítricos y Frutales", precio: 3000 },
   { nombre: "Aromatizante Citronela", categoria: "🍊 Aromas Cítricos y Frutales", precio: 3000 },
-  { nombre: "Aromatizante Sandia", categoria: "🍊 Aromas Cítricos y Frutales", precio: 3000 },
 
   { nombre: "Aromatizante Eco Bambú", categoria: "🌿 Naturales y Herbales", precio: 3000 },
   { nombre: "Aromatizante Pino", categoria: "🌿 Naturales y Herbales", precio: 3000 },
