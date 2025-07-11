@@ -40,6 +40,8 @@ window.onload = () => {
   document.getElementById("factura").value = consecutivo;
   document.getElementById("fecha").value = fecha;
   actualizarTotal();
+   // 🔧 Cargar productos en el select
+  cargarProductosDesdeCatalogo
 };
 
 function agregarProducto() {
