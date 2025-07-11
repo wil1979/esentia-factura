@@ -39,6 +39,23 @@ function agregarCarrito(nombre, precio) {
 }
 
 const categorias = [
+
+  {
+    
+        nombre: "🚗 Ambientadores para Auto",
+  productos: [
+    {
+      nombre: "Ambientador Auto",
+      precio: 1500,
+      imagen: "images/IMG_2057.jpeg",
+      info: "AROMATERAPIA: Estimula creatividad y concentración. Recomendado para viajes largos.",
+      beneficios: "Mejora el estado de ánimo durante trayectos largos",
+      usoRecomendado: "Ideal para automóviles y transporte personal.",
+      esNuevo: true ,// 👈 Esto marca el producto como nuevo
+       fechaLanzamiento: "2025-10-07" // 👈 Fecha de lanzamiento
+      }
+    ]
+  },
   {
     nombre: "🌬️ Difusores",
     productos: [
@@ -278,18 +295,32 @@ function renderizarProductos() {
       const precioFinal = producto.precioOferta || producto.precio;
 
       let botonHTML = "";
-      if (producto.nombre.startsWith("Difusor")) {
-        botonHTML = `<button onclick="abrirModalSeleccionAroma('${producto.nombre}', ${producto.precio})">Agregar al carrito</button>`;
-      } else {
-       // botonHTML = `<button onclick="mostrarInfoProducto('${producto.nombre}', ${precioFinal}, '${producto.imagen}', \`${producto.info}\`, \`${producto.beneficios || ''}\`, \`${producto.usoRecomendado || ''}\')">Ver detalles</button>`;
-      }
+      if (producto.nombre.startsWith("Difusor") || producto.nombre.startsWith("Ambientador")) {
+  botonHTML = `<button onclick="abrirModalSeleccionAroma('${producto.nombre}', ${producto.precio})">Agregar al carrito</button>`;
+} else {
+  botonHTML = `<button onclick="mostrarInfoProducto('${producto.nombre}', ${precioFinal}, '${producto.imagen}', \`${producto.info}\`, \`${producto.beneficios || ''}\`, \`${producto.usoRecomendado || ''}\`)">Ver detalles</button>`;
+}
 
-      divProducto.innerHTML = `
-        <img src="${producto.imagen}" alt="${producto.nombre}" onclick="mostrarInfoProducto('${producto.nombre}', ${precioFinal}, '${producto.imagen}', \`${producto.info}\`)">
-        <h3>${producto.nombre}</h3>
-        ${precioHTML}
-        ${botonHTML}
-      `;
+ /*     let badgeHTML = "";
+if (producto.esNuevo) {
+  badgeHTML = `<span class="nuevo-badge">🌟 NEW</span>`;
+}
+  */
+
+let badgeHTML = "";
+if (producto.fechaLanzamiento && esProductoNuevo(producto.fechaLanzamiento)) {
+  badgeHTML = `<span class="nuevo-badge">🌟 Nuevo</span>`;
+}
+
+divProducto.innerHTML = `
+  <div style="position:relative;">
+    <img src="${producto.imagen}" alt="${producto.nombre}" onclick="mostrarInfoProducto(...)">
+    ${badgeHTML}
+  </div>
+  <h3>${producto.nombre}</h3>
+  ${precioHTML}
+  ${botonHTML}
+`;
       fila.appendChild(divProducto);
     });
 
@@ -494,4 +525,32 @@ function cerrarImagenGrande() {
 window.addEventListener("DOMContentLoaded", () => {
   cargarCarrito();
   renderizarProductos();
+  cargarProductosFactura();
 });
+
+function esProductoNuevo(fechaLanzamiento, dias = 30) {
+  const hoy = new Date();
+  const lanzamiento = new Date(fechaLanzamiento);
+  const diferenciaMs = hoy - lanzamiento;
+  const diferenciaDias = Math.floor(diferenciaMs / (1000 * 60 * 60 * 24));
+  return diferenciaDias <= dias;
+}
+function cargarProductosFactura() {
+  const sel = document.getElementById("productoSelect");
+  if (!sel) return;
+
+  categorias.forEach(categoria => {
+    const grupo = document.createElement("optgroup");
+    grupo.label = categoria.nombre;
+
+    categoria.productos.forEach(producto => {
+      const precioFinal = producto.precioOferta || producto.precio;
+      const option = document.createElement("option");
+      option.value = `${producto.nombre}|${precioFinal}`;
+      option.textContent = `${producto.nombre} – ₡${precioFinal.toLocaleString()}`;
+      grupo.appendChild(option);
+    });
+
+    sel.appendChild(grupo);
+  });
+}

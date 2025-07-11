@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Catálogo Limpieza - Esentia</title>
+  <link rel="stylesheet" href="catalogo.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body class="modo-claro">
+  <header>
+    <div class="logo-container">
+      <img src="images/logo.png" alt="Logo de Esentia" class="logo" />
+    </div>
+    <h1>Catálogo de Productos de Limpieza</h1>
+  </header>
+
+  <main>
+    <div class="contenedor">
+      <section class="categoria">
+        <h2>🧼 Productos de Limpieza</h2>
+        <input type="text" id="buscador" placeholder="🔍 Buscar producto..." oninput="filtrarProductos()" style="width: 100%; padding: 10px; font-size: 1rem; margin-bottom: 1rem;" />
+        <div id="productos-limpieza" class="productos"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Botón flotante del carrito -->
+  <button id="botonCarrito" onclick="abrirModalCarrito()">
+    🛒 <span id="contadorCarrito">0</span>
+  </button>
+
+  <!-- Modal de Información del Producto -->
+  <div id="modalProducto" class="modal-carrito">
+    <div class="modal-contenido" style="max-width: 500px;">
+      <span onclick="cerrarModalProducto()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer;">&times;</span>
+      <h2 style="margin-top: 0;" id="modalProductoNombre">Nombre del Producto</h2>
+      <img id="modalProductoImagen" src="" alt="Imagen del producto" style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px; margin: 10px 0;">
+      <p id="modalProductoInfo" style="font-size: 1rem; line-height: 1.5;"></p>
+      <p id="modalProductoPrecio" style="font-size: 1.1rem; color: var(--verde); font-weight: bold;"></p>
+      <button onclick="agregarDesdeModal()" style="background: var(--naranja); color: white; border: none; padding: 10px 16px; width: 100%;">🛒 Agregar al carrito</button>
+    </div>
+  </div>
+
+  <!-- Modal del Carrito -->
+  <div id="modalCarrito" class="modal-carrito">
+    <button onclick="vaciarCarrito()" style="background: #e53935; color: white; border: none; padding: 8px 16px; border-radius: 6px; margin-bottom: 10px;">🗑️ Vaciar carrito</button>
+    <div class="modal-contenido">
+      <span onclick="cerrarModalCarrito()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer;">&times;</span>
+      <h2 style="margin-top: 0;">🛒 Tu Carrito</h2>
+      <ul id="listaCarritoModal"></ul>
+      <p id="totalModal"><strong>Total:</strong> ₡0</p>
+      <input type="text" id="cupon" placeholder="Código de cupón" style="width: 100%; padding: 8px; margin-bottom: 10px;">
+      <button onclick="aplicarCupon()">Aplicar cupón</button>
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button onclick="finalizarPedido()" style="flex:1; background: var(--naranja); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold;">Enviar Pedido</button>
+        <button onclick="cerrarModalCarrito()" style="flex:1; background: #ccc; color: #333; border: none; padding: 10px; border-radius: 6px;">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="limpieza.js"></script>
+</body>
+</html>
