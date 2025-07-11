@@ -1,5 +1,7 @@
 let productosFactura = [];
+let clienteSeleccionado = null;
 
+// Cargar productos desde el catálogo
 function cargarProductosDesdeCatalogo() {
   const sel = document.getElementById("productoSelect");
   if (!sel) return;
@@ -20,8 +22,16 @@ function cargarProductosDesdeCatalogo() {
 
     sel.appendChild(grupo);
   });
+
+  // Inicializar Select2
+  $('#productoSelect').select2({
+    placeholder: "Busca un producto",
+    allowClear: true,
+    width: '100%'
+  });
 }
 
+// Agregar producto al carrito
 function agregarProducto() {
   const sel = document.getElementById("productoSelect");
   const [nombre, precio] = sel.value.split("|");
@@ -34,6 +44,7 @@ function agregarProducto() {
   actualizarTotal();
 }
 
+// Actualizar carrito en tiempo real
 function actualizarVista() {
   const ul = document.getElementById("listaProductos");
   ul.innerHTML = "";
@@ -46,6 +57,7 @@ function actualizarVista() {
   });
 }
 
+// Calcular totales
 function actualizarTotal() {
   let subtotal = productosFactura.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
   const descuentoFijo = parseFloat(document.getElementById("descuentoCantidad").value) || 0;
@@ -56,6 +68,7 @@ function actualizarTotal() {
   document.getElementById("totalDisplay").textContent = `✅ Total a pagar: ₡${total.toLocaleString()}`;
 }
 
+// Enviar por WhatsApp
 function enviarFacturaPorWhatsApp() {
   const numero = document.getElementById("numeroWhatsApp").value.trim();
   if (!/^[678]\d{7}$/.test(numero)) {
@@ -88,6 +101,7 @@ function enviarFacturaPorWhatsApp() {
   window.open(url, "_blank");
 }
 
+// Generar PDF
 function generarFacturaPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
@@ -97,12 +111,10 @@ function generarFacturaPDF() {
   const fecha = document.getElementById("fecha").value;
 
   let subtotal = productosFactura.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
-  const descuentoFijo = parseFloat(document.getElementById("descuentoCantidad").value) || 0;
+  const descuento = parseFloat(document.getElementById("descuentoCantidad").value) || 0;
   const descuentoPorcentaje = parseFloat(document.getElementById("descuentoPorcentaje").value) || 0;
-  const descuento = descuentoFijo + (subtotal * descuentoPorcentaje / 100);
-  const total = subtotal - descuento;
+  const total = subtotal - (descuento + (subtotal * descuentoPorcentaje / 100));
 
-  // Logo
   try {
     doc.addImage("images/logo.png", "PNG", 15, 10, 40, 20);
   } catch {}
@@ -131,6 +143,7 @@ function generarFacturaPDF() {
   doc.save(`factura-${factura}.pdf`);
 }
 
+// Historial de facturas
 function guardarEnHistorial(facturaData) {
   let historial = JSON.parse(localStorage.getItem("facturas")) || [];
   historial.unshift(facturaData);
@@ -164,3 +177,29 @@ function borrarHistorial() {
     mostrarHistorial();
   }
 }
+
+// Conectar con API de Hacienda
+document.getElementById("idCliente").addEventListener("blur", () => {
+  const cedula = document.getElementById("idCliente").value.trim().replace(/\D/g, '');
+  if (!cedula || !/^(\d{9}|\d{12})$/.test(cedula)) {
+    alert("Cédula inválida. Debe tener 9 o 12 dígitos.");
+    return;
+  }
+
+  fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedula}`)
+    .then(response => {
+      if (!response.ok) throw new Error("Respuesta no válida");
+      return response.json();
+    })
+    .then(data => {
+      if (data && data.nombre) {
+        document.getElementById("cliente").value = data.nombre;
+      } else {
+        alert("No se encontró información para esta identificación.");
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Error al consultar la API de Hacienda. Intente más tarde.");
+    });
+});
