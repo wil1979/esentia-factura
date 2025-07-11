@@ -271,7 +271,7 @@ const categorias = [
     ]
   }
 ];
-/*
+
 function renderizarProductos() {
   const container = document.getElementById("productos-hogar");
   container.innerHTML = "";
@@ -305,7 +305,7 @@ function renderizarProductos() {
 if (producto.esNuevo) {
   badgeHTML = `<span class="nuevo-badge">🌟 NEW</span>`;
 }
-  **
+  */
 
 let badgeHTML = "";
 if (producto.fechaLanzamiento && esProductoNuevo(producto.fechaLanzamiento)) {
@@ -327,50 +327,6 @@ divProducto.innerHTML = `
     container.appendChild(fila);
   });
 }
-
-*/
-
-
-function renderizarProductos() {
-  const container = document.getElementById("productos-hogar");
-  container.innerHTML = "";
-  categorias.forEach(categoria => {
-    const titulo = document.createElement("h3");
-    titulo.textContent = categoria.nombre;
-    container.appendChild(titulo);
-
-    const fila = document.createElement("div");
-    fila.className = "productos";
-
-    categoria.productos.forEach(producto => {
-      const divProducto = document.createElement("div");
-      divProducto.className = producto.precioOferta ? "producto oferta" : "producto";
-      const precioFinal = producto.precioOferta || producto.precio;
-
-      let badgeHTML = "";
-      if (producto.esNuevo && producto.fechaLanzamiento && esProductoNuevo(producto.fechaLanzamiento)) {
-        badgeHTML = `<span class="nuevo-badge">🌟 Nuevo</span>`;
-      }
-
-      divProducto.innerHTML = `
-        <img src="${producto.imagen}" alt="${producto.nombre}">
-        <h3>${producto.nombre}</h3>
-        <p>₡${precioFinal.toLocaleString()}</p>
-        <button onclick="agregarCarrito('${producto.nombre}', ${precioFinal})">Agregar al carrito</button>
-      `;
-      fila.appendChild(divProducto);
-    });
-
-    container.appendChild(fila);
-  });
-}
-
-// Cargar productos en el formulario
-window.addEventListener("DOMContentLoaded", () => {
-  renderizarProductos();
-  cargarProductosDesdeCatalogo();
-  cargarProductosFactura();
-});
 
 function cargarProductosFactura() {
   const sel = document.getElementById("productoSelect");
