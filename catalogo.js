@@ -271,7 +271,7 @@ const categorias = [
     ]
   }
 ];
-
+/*
 function renderizarProductos() {
   const container = document.getElementById("productos-hogar");
   container.innerHTML = "";
@@ -305,7 +305,7 @@ function renderizarProductos() {
 if (producto.esNuevo) {
   badgeHTML = `<span class="nuevo-badge">🌟 NEW</span>`;
 }
-  */
+  **
 
 let badgeHTML = "";
 if (producto.fechaLanzamiento && esProductoNuevo(producto.fechaLanzamiento)) {
@@ -325,6 +325,143 @@ divProducto.innerHTML = `
     });
 
     container.appendChild(fila);
+  });
+}
+
+*/
+const categorias = [
+  {
+    nombre: "🌬️ Difusores",
+    productos: [
+      {
+        nombre: "Difusor Pequeño",
+        precio: 5500,
+        imagen: "images/difusor.jpg",
+        info: "Difusor con luz ambiental ajustable. Ideal para aromaterapia nocturna."
+      }
+    ]
+  },
+  {
+    nombre: "🍬 Aromas Dulces",
+    productos: [
+      {
+        nombre: "Chocolate",
+        precioOriginal: 5500,
+        precioOferta: 3500,
+        imagen: "images/chocolate.png",
+        info: "AROMATERAPIA: Aumenta serotonina 40% y reduce ansiedad.",
+        beneficios: "Antidepresivo natural, mejora el estado de ánimo",
+        usoRecomendado: "Dormitorios, espacios de terapia."
+      },
+      {
+        nombre: "Fresa",
+        precioOriginal: 5500,
+        precioOferta: 3500,
+        imagen: "images/fresa.png",
+        info: "AROMATERAPIA: Estimula producción de endorfinas.",
+        beneficios: "Mejora el estado anímico y combate la depresión",
+        usoRecomendado: "Clínicas de salud mental."
+      }
+    ]
+  },
+  {
+    nombre: "🌸 Aromas Florales",
+    productos: [
+      {
+        nombre: "Lavanda",
+        precioOriginal: 5500,
+        precioOferta: 3500,
+        imagen: "images/lavanda.png",
+        info: "AROMATERAPIA: Reduce el cortisol 31%, mejora calidad del sueño.",
+        beneficios: "Relajante natural, ideal para personas con estrés.",
+        usoRecomendado: "Uso nocturno en dormitorios."
+      },
+      {
+        nombre: "Magnolia",
+        precioOriginal: 5500,
+        precioOferta: 3500,
+        imagen: "images/magnolia.png",
+        info: "AROMATERAPIA: Reduce estrés emocional en 35%. Equilibra estados de ánimo.",
+        beneficios: "Equilibra emociones y reduce la irritabilidad.",
+        usoRecomendado: "Perfecto para meditación y salas de yoga."
+      }
+    ]
+  },
+  {
+    nombre: "🚗 Ambientadores para Auto",
+    productos: [
+      {
+        nombre: "Ambientador Auto",
+        precio: 5500,
+        imagen: "images/ambientador-auto.png",
+        info: "AROMATERAPIA: Estimula creatividad y concentración.",
+        beneficios: "Aumenta energía mental 40% y mejora el estado de ánimo.",
+        usoRecomendado: "Ideal para automóviles y transporte personal.",
+        esNuevo: true,
+        fechaLanzamiento: "2025-04-01"
+      }
+    ]
+  }
+];
+
+function renderizarProductos() {
+  const container = document.getElementById("productos-hogar");
+  container.innerHTML = "";
+  categorias.forEach(categoria => {
+    const titulo = document.createElement("h3");
+    titulo.textContent = categoria.nombre;
+    container.appendChild(titulo);
+
+    const fila = document.createElement("div");
+    fila.className = "productos";
+
+    categoria.productos.forEach(producto => {
+      const divProducto = document.createElement("div");
+      divProducto.className = producto.precioOferta ? "producto oferta" : "producto";
+      const precioFinal = producto.precioOferta || producto.precio;
+
+      let badgeHTML = "";
+      if (producto.esNuevo && producto.fechaLanzamiento && esProductoNuevo(producto.fechaLanzamiento)) {
+        badgeHTML = `<span class="nuevo-badge">🌟 Nuevo</span>`;
+      }
+
+      divProducto.innerHTML = `
+        <img src="${producto.imagen}" alt="${producto.nombre}">
+        <h3>${producto.nombre}</h3>
+        <p>₡${precioFinal.toLocaleString()}</p>
+        <button onclick="agregarCarrito('${producto.nombre}', ${precioFinal})">Agregar al carrito</button>
+      `;
+      fila.appendChild(divProducto);
+    });
+
+    container.appendChild(fila);
+  });
+}
+
+// Cargar productos en el formulario
+window.addEventListener("DOMContentLoaded", () => {
+  renderizarProductos();
+  cargarProductosDesdeCatalogo();
+  cargarProductosFactura();
+});
+
+function cargarProductosFactura() {
+  const sel = document.getElementById("productoSelect");
+  if (!sel) return;
+
+  categorias.forEach(categoria => {
+    const grupo = document.createElement("optgroup");
+    grupo.label = categoria.nombre;
+
+    categoria.productos.forEach(producto => {
+      const precioFinal = producto.precioOferta || producto.precio;
+      const option = document.createElement("option");
+      option.value = `${producto.nombre}|${precioFinal}`;
+      option.textContent = `${producto.nombre} – ₡${precioFinal.toLocaleString()}`;
+      grupo.appendChild(option);
+    });
+
+    sel.appendChild(grupo);
   });
 }
 
