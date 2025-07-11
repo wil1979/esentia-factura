@@ -64,15 +64,7 @@ function actualizarVistaProductos() {
   });
 }
 
-function actualizarTotal() {
-  let subtotal = productosFactura.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
-  const descuentoFijo = parseFloat(document.getElementById("descuentoCantidad").value) || 0;
-  const descuentoPorcentaje = parseFloat(document.getElementById("descuentoPorcentaje").value) || 0;
-  const descuento = descuentoFijo + (subtotal * descuentoPorcentaje / 100);
-  const total = subtotal - descuento;
 
-  document.getElementById("totalDisplay").textContent = `Total a pagar: ₡${total.toLocaleString()}`;
-}
 
 function generarFactura() {
   const { jsPDF } = window.jspdf;
@@ -324,29 +316,6 @@ function guardarFacturaEnHistorial(facturaData) {
   localStorage.setItem("facturas", JSON.stringify(historial));
 }
 
-function mostrarHistorial() {
-  const historial = JSON.parse(localStorage.getItem("facturas")) || [];
-  const contenedor = document.getElementById("historial");
-
-  if (historial.length === 0) {
-    contenedor.innerHTML = "<p>No hay facturas guardadas.</p>";
-    return;
-  }
-
-  contenedor.innerHTML = "<ul style='list-style-type: none; padding-left: 0;'>";
-
-  historial.forEach(f => {
-    contenedor.innerHTML += `
-      <li style="margin-bottom: 1rem; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem;">
-        <strong>Factura N°:</strong> ${f.factura}<br>
-        <strong>Cliente:</strong> ${f.cliente}<br>
-        <strong>Total:</strong> ₡${f.total.toLocaleString()}<br>
-        <small>${f.fecha}</small>
-      </li>`;
-  });
-
-  contenedor.innerHTML += "</ul>";
-}
 
 function borrarHistorial() {
   localStorage.removeItem("facturas");
