@@ -79,7 +79,12 @@ const categorias = [
         imagen: "images/chocolate.png",
         info: "AROMATERAPIA: Aumenta serotonina 40% y reduce ansiedad emocional. Efecto antidepresivo natural.",
         beneficios: "Antidepresivo natural, mejora el estado de ánimo y combate la tristeza.",
-        usoRecomendado: "Dormitorios y espacios de terapia."
+        usoRecomendado: "Dormitorios y espacios de terapia.",
+        variantes: [
+    { nombre: "Lavanda 5ml", precio: 1500 },    
+    { nombre: "Lavanda 30ml", precio: 3000 },
+    { nombre: "Lavanda 50ml", precio: 3500 }
+  ]
       },
       {
         nombre: "Coco Cookies",
@@ -314,13 +319,14 @@ if (producto.fechaLanzamiento && esProductoNuevo(producto.fechaLanzamiento)) {
 
 divProducto.innerHTML = `
   <div style="position:relative;">
-    <img src="${producto.imagen}" alt="${producto.nombre}" onclick="mostrarInfoProducto(...)">
+    <img src="${producto.imagen}" alt="${producto.nombre}" onclick="mostrarInfoProducto('${producto.nombre}', ${precioFinal}, '${producto.imagen}', \`${producto.info}\`, \`${producto.beneficios || ''}\`, \`${producto.usoRecomendado || ''}\`)">
     ${badgeHTML}
   </div>
   <h3>${producto.nombre}</h3>
   ${precioHTML}
   ${botonHTML}
 `;
+
       fila.appendChild(divProducto);
     });
 
@@ -351,9 +357,14 @@ function cargarProductosFactura() {
 function filtrarProductos() {
   const texto = document.getElementById("buscador").value.toLowerCase();
   const productos = document.querySelectorAll(".producto");
+
   productos.forEach(prod => {
     const nombre = prod.querySelector("h3").textContent.toLowerCase();
-    prod.style.display = nombre.includes(texto) ? "block" : "none";
+    if (nombre.includes(texto)) {
+      prod.style.display = "block";
+    } else {
+      prod.style.display = "none";
+    }
   });
 }
 
@@ -517,14 +528,24 @@ function cerrarModalCarrito() {
 }
 
 function recomendarAmigo() {
-  const numero = document.getElementById("numeroAmigo").value.trim();
+  const input = document.getElementById("numeroAmigo");
+  const numero = input.value.trim();
+
   if (!numero.match(/^\d{8,12}$/)) {
-    alert("Ingrese un número válido sin símbolos ni espacios.");
+    mostrarToast("⚠️ Número inválido. Use 8-12 dígitos sin símbolos.", "#e53935");
     return;
   }
-  const mensaje = encodeURIComponent("Hola 👋, quiero recomendarte este catálogo de fragancias de Esentia. Si haces una compra, yo obtengo un 10% de descuento y tú obtienes un 10% en tu próxima compra. ¡Dale un vistazo! 👉  https://wil1979.github.io/esentia-factura/catalogo.html  ");
+
+  const mensaje = encodeURIComponent(
+    "Hola 👋, quiero recomendarte este catálogo de fragancias de Esentia. ¡Dale un vistazo! 👉 https://wil1979.github.io/esentia-factura/catalogo.html"
+  );
+
   window.open(`https://wa.me/506${numero}?text=${mensaje}`, "_blank");
+
+  input.value = "";
+  mostrarToast("✅ ¡Mensaje preparado en WhatsApp!");
 }
+
 
 function irAlCarrito() {
   const carritoSection = document.querySelector(".carrito");
@@ -573,4 +594,21 @@ function cargarProductosFactura() {
 
     sel.appendChild(grupo);
   });
+}
+
+function mostrarToast(mensaje, color = "#4caf50") {
+  const toast = document.getElementById("toast");
+  toast.textContent = mensaje;
+  toast.style.backgroundColor = color;
+  toast.style.display = "block";
+  toast.style.opacity = "1";
+
+  setTimeout(() => {
+    toast.style.transition = "opacity 0.5s";
+    toast.style.opacity = "0";
+    setTimeout(() => {
+      toast.style.display = "none";
+      toast.style.transition = "";
+    }, 500);
+  }, 3000);
 }
