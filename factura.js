@@ -1,34 +1,52 @@
 let productosFactura = [];
-let clienteSeleccionado = null;
 
 // Cargar productos desde el catálogo
-function cargarProductosDesdeCatalogo() {
-  const sel = document.getElementById("productoSelect");
-  if (!sel) return;
+function cargarProductosEnFacturacion() {
+  // Pequeño retraso para asegurar que el DOM esté listo
+  setTimeout(() => {
+    const sel = document.getElementById("productoSelect");
+    if (!sel) return;
 
-  sel.innerHTML = '<option value="">-- Selecciona un producto --</option>';
+    // Limpiar select
+    sel.innerHTML = '<option value="">-- Selecciona un producto --</option>';
 
-  categorias.forEach(categoria => {
-    const grupo = document.createElement("optgroup");
-    grupo.label = categoria.nombre;
+    // Recorrer categorías y productos
+    categorias.forEach(categoria => {
+      const grupo = document.createElement("optgroup");
+      grupo.label = categoria.nombre;
 
-    categoria.productos.forEach(producto => {
-      const precioFinal = producto.precioOferta || producto.precio;
-      const option = document.createElement("option");
-      option.value = `${producto.nombre}|${precioFinal}`;
-      option.textContent = `${producto.nombre} – ₡${precioFinal.toLocaleString()}`;
-      grupo.appendChild(option);
+      categoria.productos.forEach(producto => {
+        const precioFinal = producto.precioOferta || producto.precio;
+        const option = document.createElement("option");
+        option.value = `${producto.nombre}|${precioFinal}`;
+        option.textContent = `${producto.nombre} – ₡${precioFinal.toLocaleString()}`;
+        grupo.appendChild(option);
+      });
+
+      sel.appendChild(grupo);
     });
 
-    sel.appendChild(grupo);
-  });
+    // Inicializar Select2 si está disponible
+    if (typeof $ !== 'undefined') {
+      $('#productoSelect').select2({
+        placeholder: "Busca un producto",
+        allowClear: true,
+        width: '100%'
+      });
+    }
+  }, 500); // Delay ligero para evitar errores de DOM no cargado
+}
 
-  // Inicializar Select2
-  $('#productoSelect').select2({
-    placeholder: "Busca un producto",
-    allowClear: true,
-    width: '100%'
-  });
+// Generar número de factura automático
+function generarNumeroFactura() {
+  const consecutivoKey = "esentia_factura_consecutivo";
+  let consecutivo = parseInt(localStorage.getItem(consecutivoKey)) || 1;
+
+  const numeroFormateado = String(consecutivo).padStart(4, '0');
+  const nuevoNumero = `ES-${numeroFormateado}`;
+
+  localStorage.setItem(consecutivoKey, consecutivo + 1);
+  return nuevoNumero;
 }
 
 // Agregar producto al carrito
@@ -44,7 +62,7 @@ function agregarProducto() {
   actualizarTotal();
 }
 
-// Actualizar carrito en tiempo real
+// Actualizar lista de productos
 function actualizarVista() {
   const ul = document.getElementById("listaProductos");
   ul.innerHTML = "";
@@ -72,7 +90,7 @@ function actualizarTotal() {
 function enviarFacturaPorWhatsApp() {
   const numero = document.getElementById("numeroWhatsApp").value.trim();
   if (!/^[678]\d{7}$/.test(numero)) {
-    alert("Ingrese un número válido de 8 dígitos que empiece con 6, 7 u 8.");
+    alert("Número inválido. Debe tener 8 dígitos y empezar con 6, 7 u 8.");
     return;
   }
 
@@ -95,13 +113,14 @@ function enviarFacturaPorWhatsApp() {
   mensaje += `\n💰 Subtotal: ₡${subtotal.toLocaleString()}`;
   mensaje += `\n🔖 Descuento: ₡${descuento.toLocaleString()} (${descuentoPorcentaje}% si aplica)`;
   mensaje += `\n✅ Total a pagar: ₡${total.toLocaleString()}`;
-  mensaje += `\n\n💳 Formas de pago:\n1. Efectivo contra entrega\n2. SINPE 72952454 Wilber Calderón M.\n3. BAC: CR59010200009453897656\n\n🌿 Encuentra más fragancias aquí:\nhttps://wil1979.github.io/esentia-factura/catalogo.html `;
+   
+  mensaje += `\n\n💳 Formas de pago:\n1. Efectivo contra entrega\n2. SINPE 72952454 Wilber Calderón M.\n3. BAC: CR59010200009453897656\n\n🌿 Encuentra más fragancias aquí:\nhttps://wil1979.github.io/esentia-factura/catalogo.html    `;
 
-  const url = `https://wa.me/506 ${numero}?text=${encodeURIComponent(mensaje)}`;
+  const url = `https://wa.me/506${numero}?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
 }
 
-// Generar PDF
+// Generar PDF y abrir en nueva ventana
 function generarFacturaPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
@@ -115,24 +134,28 @@ function generarFacturaPDF() {
   const descuentoPorcentaje = parseFloat(document.getElementById("descuentoPorcentaje").value) || 0;
   const total = subtotal - (descuento + (subtotal * descuentoPorcentaje / 100));
 
+  // Logo
   try {
     doc.addImage("images/logo.png", "PNG", 15, 10, 40, 20);
   } catch {}
 
+  // Encabezado
   doc.setFontSize(16);
-  doc.text("🧾 Factura - Esentia", 60, 20);
+  doc.text(" Factura - Esentia", 60, 20);
 
   doc.setFontSize(12);
   doc.text(`N°: ${factura}`, 15, 40);
   doc.text(`Fecha: ${fecha}`, 15, 50);
   doc.text(`Cliente: ${cliente}`, 15, 60);
 
+  // Productos
   let y = 70;
   productosFactura.forEach(p => {
     doc.text(`• ${p.nombre} x${p.cantidad} – ₡${(p.precio * p.cantidad).toLocaleString()}`, 15, y);
     y += 10;
   });
 
+  // Totales
   y += 10;
   doc.text(`Subtotal: ₡${subtotal.toLocaleString()}`, 15, y);
   y += 10;
@@ -140,7 +163,25 @@ function generarFacturaPDF() {
   y += 10;
   doc.text(`Total: ₡${total.toLocaleString()}`, 15, y);
 
-  doc.save(`factura-${factura}.pdf`);
+  // Nota de agradecimiento y formas de pago
+  y += 20;
+  doc.setFontSize(14);
+  doc.text(" ¡Gracias por tu confianza!", 15, y);
+
+  y += 10;
+  const nota = `
+Estamos encantados de servirte. 
+Es un placer poder ayudarte a crear ambientes relajantes y aromáticos.
+
+Formas de pago:
+1. Efectivo contra entrega
+2. SINPE Móvil: 72952454 - Wilber Calderón M.
+3. Depósito bancario: CR59010200009453897656`;
+  doc.text(nota, 15, y + 10);
+
+ doc.save(`factura-${factura}.pdf`);
+  // Mostrar en nueva ventana
+  /* doc.output('dataurlnewwindow');*/
 }
 
 // Historial de facturas
@@ -202,4 +243,23 @@ document.getElementById("idCliente").addEventListener("blur", () => {
       console.error(err);
       alert("Error al consultar la API de Hacienda. Intente más tarde.");
     });
+});
+
+// Generar número de factura al cargar la página
+window.addEventListener("DOMContentLoaded", () => {
+  // Fecha actual
+  const fechaInput = document.getElementById("fecha");
+  if (fechaInput && !fechaInput.value) {
+    const hoy = new Date().toISOString().split("T")[0];
+    fechaInput.value = hoy;
+  }
+
+  // Número de factura
+  const facturaInput = document.getElementById("factura");
+  if (facturaInput && !facturaInput.value) {
+    facturaInput.value = generarNumeroFactura();
+  }
+
+  // Cargar productos
+  cargarProductosEnFacturacion();
 });
