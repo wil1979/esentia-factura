@@ -523,7 +523,7 @@ function recomendarAmigo() {
     return;
   }
   const mensaje = encodeURIComponent("Hola 👋, quiero recomendarte este catálogo de fragancias de Esentia. Si haces una compra, yo obtengo un 10% de descuento y tú obtienes un 10% en tu próxima compra. ¡Dale un vistazo! 👉  https://wil1979.github.io/esentia-factura/catalogo.html  ");
-  window.open(`https://wa.me/506 ${numero}?text=${mensaje}`, "_blank");
+  window.open(`https://wa.me/506${numero}?text=${mensaje}`, "_blank");
 }
 
 function irAlCarrito() {
