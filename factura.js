@@ -2,41 +2,43 @@ let productosFactura = [];
 
 // Cargar productos desde el catálogo
 function cargarProductosEnFacturacion() {
-  // Pequeño retraso para asegurar que el DOM esté listo
   setTimeout(() => {
     const sel = document.getElementById("productoSelect");
     if (!sel) return;
 
-    // Limpiar select
     sel.innerHTML = '<option value="">-- Selecciona un producto --</option>';
 
-    // Recorrer categorías y productos
     categorias.forEach(categoria => {
       const grupo = document.createElement("optgroup");
       grupo.label = categoria.nombre;
 
       categoria.productos.forEach(producto => {
-        const precioFinal = producto.precioOferta || producto.precio;
-        const option = document.createElement("option");
-        option.value = `${producto.nombre}|${precioFinal}`;
-        option.textContent = `${producto.nombre} – ₡${precioFinal.toLocaleString()}`;
-        grupo.appendChild(option);
+        if (producto.variantes && producto.variantes.length > 0) {
+          producto.variantes.forEach(variante => {
+            const option = document.createElement("option");
+            option.value = `${variante.nombre}|${variante.precio}`;
+            option.textContent = `${variante.nombre} – ₡${variante.precio.toLocaleString()}`;
+            grupo.appendChild(option);
+          });
+        } else {
+          const precioFinal = producto.precioOferta || producto.precio;
+          const option = document.createElement("option");
+          option.value = `${producto.nombre}|${precioFinal}`;
+          option.textContent = `${producto.nombre} – ₡${precioFinal.toLocaleString()}`;
+          grupo.appendChild(option);
+        }
       });
 
       sel.appendChild(grupo);
     });
 
-    // Inicializar Select2 si está disponible
-    if (typeof $ !== 'undefined') {
-      $('#productoSelect').select2({
-        placeholder: "Busca un producto",
-        allowClear: true,
-        width: '100%'
-      });
-    }
-  }, 500); // Delay ligero para evitar errores de DOM no cargado
+    $('#productoSelect').select2({
+      placeholder: "Busca un producto",
+      allowClear: true,
+      width: '100%'
+    });
+  }, 500);
 }
-
 // Generar número de factura automático
 function generarNumeroFactura() {
   const consecutivoKey = "esentia_factura_consecutivo";
@@ -113,8 +115,7 @@ function enviarFacturaPorWhatsApp() {
   mensaje += `\n💰 Subtotal: ₡${subtotal.toLocaleString()}`;
   mensaje += `\n🔖 Descuento: ₡${descuento.toLocaleString()} (${descuentoPorcentaje}% si aplica)`;
   mensaje += `\n✅ Total a pagar: ₡${total.toLocaleString()}`;
-   
-  mensaje += `\n\n💳 Formas de pago:\n1. Efectivo contra entrega\n2. SINPE 72952454 Wilber Calderón M.\n3. BAC: CR59010200009453897656\n\n🌿 Encuentra más fragancias aquí:\nhttps://wil1979.github.io/esentia-factura/catalogo.html    `;
+  mensaje += `\n\n💳 Formas de pago:\n1. Efectivo contra entrega\n2. SINPE 72952454 Wilber Calderón M.\n3. BAC: CR59010200009453897656\n\n🌿 Encuentra más fragancias aquí:\nhttps://wil1979.github.io/esentia-factura/catalogo.html        `;
 
   const url = `https://wa.me/506${numero}?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
@@ -141,7 +142,7 @@ function generarFacturaPDF() {
 
   // Encabezado
   doc.setFontSize(16);
-  doc.text(" Factura - Esentia", 60, 20);
+  doc.text("🧾 Factura - Esentia", 60, 20);
 
   doc.setFontSize(12);
   doc.text(`N°: ${factura}`, 15, 40);
@@ -166,9 +167,8 @@ function generarFacturaPDF() {
   // Nota de agradecimiento y formas de pago
   y += 20;
   doc.setFontSize(14);
-  doc.text(" ¡Gracias por tu confianza!", 15, y);
+  doc.text("🙏 ¡Gracias por tu confianza!", 15, y);
 
-  y += 10;
   const nota = `
 Estamos encantados de servirte. 
 Es un placer poder ayudarte a crear ambientes relajantes y aromáticos.
@@ -177,11 +177,13 @@ Formas de pago:
 1. Efectivo contra entrega
 2. SINPE Móvil: 72952454 - Wilber Calderón M.
 3. Depósito bancario: CR59010200009453897656`;
+
+  y += 10;
   doc.text(nota, 15, y + 10);
 
- doc.save(`factura-${factura}.pdf`);
   // Mostrar en nueva ventana
-  /* doc.output('dataurlnewwindow');*/
+  doc.save(`factura-${factura}.pdf`);
+ // doc.output('dataurlnewwindow');
 }
 
 // Historial de facturas
