@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Etiquetas Esentia - Impresión</title>
+  <meta charset="UTF-8">
+  <title>Etiquetas Esentia - Frontal</title>
   <style>
     @page {
       size: A4;
@@ -36,60 +36,55 @@
       position: relative;
       break-inside: avoid;
       page-break-inside: avoid;
+      background: white;
     }
 
-    .label img.product-image {
-      max-width: 1cm;
-      height: auto;
-      float: right;
-      display: block;
+    .label .top-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
       margin-bottom: 0.2cm;
     }
 
     .label h3 {
       font-size: 10pt;
       font-weight: bold;
-      margin: 0 0 0.2cm 0;
+      margin: 0;
       color: black;
     }
 
-    .label p {
-      margin: 0 0 0.2cm 0;
-      font-size: 8pt;
-    }
-
-    .label ul {
-      margin: 0 0 0.2cm 0;
-      padding-left: 0.5cm;
-      font-size: 7pt;
-      list-style-type: disc;
-    }
-
-    .label ul li {
-      margin-bottom: 0.1cm;
-    }
-
-    .label .qr {
-      max-width: 0.8cm;
+    .label img.product-image {
+      width: 1cm;
       height: auto;
-      float: right;
-      margin-top: 0.2cm;
-      display: block;
+      margin-left: 0.2cm;
     }
 
     .label .logo {
-      max-width: 0.8cm;
+      width: 0.8cm;
       height: auto;
-      float: left;
-      margin-right: 0.2cm;
-      display: block;
+      position: absolute;
+      bottom: 0.3cm;
+      left: 0.3cm;
+    }
+
+    .label .qr {
+      width: 0.8cm;
+      height: auto;
+      position: absolute;
+      bottom: 0.3cm;
+      right: 0.3cm;
+    }
+
+    .label .centered {
+      text-align: center;
+      margin-top: 0.5cm;
     }
   </style>
 </head>
 <body>
 
-  <!-- Contenedor de hojas -->
-  <div id="etiqueta-container"></div>
+  <!-- Contenedor de etiquetas -->
+  <div id="etiqueta-container" class="sheet"></div>
 
   <script>
     // === Tus categorías completas ===
@@ -103,7 +98,6 @@
             precioOferta: 3500,
             imagen: "images/limon.png",
             info: "AROMATERAPIA: Aumenta alerta mental 50%. Purifica ambientes eliminando patógenos.",
-            beneficios: "Refrescante, purificante y antibacteriano natural.",
             usoRecomendado: "Excelente para cocinas y hospitales.",
             disponible: true,
             variantes: [
@@ -118,7 +112,6 @@
             precioOferta: 3500,
             imagen: "images/naranja.png",
             info: "AROMATERAPIA: Aumenta producción de serotonina 60%. Antidepresivo natural.",
-            beneficios: "Combate la depresión leve y mejora el estado de ánimo matutino.",
             usoRecomendado: "Uso matutino en salas de estar.",
             disponible: true,
             variantes: [
@@ -138,7 +131,6 @@
             precioOferta: 3500,
             imagen: "images/chocolate.png",
             info: "AROMATERAPIA: Aumenta serotonina 40% y reduce ansiedad emocional. Efecto antidepresivo natural.",
-            beneficios: "Antidepresivo natural, mejora el estado de ánimo.",
             usoRecomendado: "Dormitorios y espacios de terapia.",
             disponible: true,
             variantes: [
@@ -148,14 +140,34 @@
             ]
           }
         ]
+      },
+      {
+        nombre: "🌸 Aromas Florales",
+        productos: [
+          {
+            nombre: "Lavanda",
+            precioOriginal: 5500,
+            precioOferta: 3500,
+            imagen: "images/lavanda.png",
+            info: "Reduce el cortisol 31%, mejora calidad del sueño en 45%. Ideal para insomnio y ansiedad.",
+            usoRecomendado: "Uso nocturno en dormitorios.",
+            disponible: true,
+            variantes: [
+              { nombre: "Lavanda 5ml", precio: 1500 },
+              { nombre: "Lavanda 30ml", precio: 3000 },
+              { nombre: "Lavanda 50ml", precio: 3500 }
+            ]
+          }
+        ]
       }
     ];
 
     // === Configuración de cuántas etiquetas imprimir por variante ===
     const configuracionImpresion = [
-      { nombreProducto: "Limón", varianteNombre: "Limón", cantidad: 15 },
-      { nombreProducto: "Naranja", varianteNombre: "Naranja", cantidad: 15 },
-      { nombreProducto: "Chocolate", varianteNombre: "Chocolate", cantidad: 20 }
+      { nombreProducto: "Limón", varianteNombre: "Limón 30ml", cantidad: 15 },
+      { nombreProducto: "Naranja", varianteNombre: "Naranja 30ml", cantidad: 20 },
+      { nombreProducto: "Chocolate", varianteNombre: "Chocolate 30ml", cantidad: 30 },
+      { nombreProducto: "Lavanda", varianteNombre: "Lavanda 30ml", cantidad: 35 }
     ];
 
     function generarEtiquetas() {
@@ -175,11 +187,14 @@
           const div = document.createElement("div");
           div.className = "label";
           div.innerHTML = `
-            <h3>${variante.nombre}</h3>
-            ${producto.imagen ? `<img src="${producto.imagen}" alt="${producto.nombre}" class="product-image">` : ''}
-            
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://wil1979.github.io/esentia-factura/catalogo.html" alt="QR" class="qr" />
-            <img src="images/logo.png" alt="Logo" class="logo" />
+            <div class="top-section">
+              <h3>${variante.nombre}</h3>
+              <img src="${producto.imagen}" alt="${producto.nombre}" class="product-image" />
+            </div>
+            <div class="centered">
+              <img src="images/logo.png" alt="Logo" class="logo" />
+              <img src="https://api.qrserver.com/v1/create-qr-code/?data=https://wil1979.github.io/esentia-factura/catalogo.html&size=100x100" alt="QR" class="qr" />
+            </div>
           `;
           contenedor.appendChild(div);
         }
