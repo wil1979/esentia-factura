@@ -1,93 +1,118 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Etiqueta Esentia</title>
+  <meta charset="UTF-8">
+  <title>Hoja de Etiquetas Esentia</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500&family=Open+Sans&display=swap');
+    @page {
+      size: letter;
+      margin: 0;
+    }
 
     body {
-      background: #eee;
-      padding: 20px;
+      margin: 0;
+      padding: 0;
       font-family: 'Open Sans', sans-serif;
+      background: #fff;
+    }
+
+    .hoja {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: repeat(5, 4cm);
+      grid-template-rows: repeat(5, 5cm);
+      gap: 0;
+      box-sizing: border-box;
+      padding: 0.5cm;
     }
 
     .etiqueta {
-      width: 240px; /* 4 cm a 96dpi */
-      height: 360px; /* 6 cm a 96dpi */
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      width: 4cm;
+      height: 5cm;
+      box-sizing: border-box;
+      padding: 4px;
+      border: 0.5px solid #ccc;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 10px 15px;
-      box-sizing: border-box;
-    }
-
-    .informacion {
-      font-size: 12px;
-      line-height: 1.4;
-      color: #333;
+      font-size: 7px;
+      overflow: hidden;
     }
 
     .titulo {
-      font-family: 'Playfair Display', serif;
-      font-size: 16px;
-      color: #222;
-      margin-bottom: 5px;
+      font-weight: bold;
+      font-size: 7.5px;
+      margin-bottom: 1px;
     }
 
     .logo-qr {
-      text-align: center;
-      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2px;
     }
 
-    .logo-placeholder {
-      width: 80px;
-      height: 40px;
-      background: #ccc;
-      margin: 0 auto 5px;
-      border-radius: 5px;
-      line-height: 40px;
-      font-size: 10px;
-      color: #555;
+    .logo {
+      width: 45px;
+      height: auto;
     }
 
     .qr {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto;
+      width: 45px;
+      height: 45px;
     }
 
     .slogan {
-      font-family: 'Playfair Display', serif;
-      font-size: 13px;
+      text-align: center;
       font-style: italic;
-      color: #444;
-      margin-top: 5px;
+      font-size: 7px;
+      margin-top: 1px;
     }
   </style>
 </head>
 <body>
 
-  <div class="etiqueta">
-    <div class="informacion">
-      <div class="titulo">Uso recomendado</div>
-      Aplicar de 3 a 5 gotas en difusores de cerámica o eléctricos. No aplicar directamente sobre la piel.
-      <br><br>
-      <div class="titulo">Advertencias</div>
-      Mantener fuera del alcance de niños y mascotas. No ingerir. Evitar el contacto con los ojos y superficies delicadas. Conservar en lugar fresco y seco.
-    </div>
+  <div class="hoja">
+    <!-- Repetimos la misma etiqueta 25 veces -->
+    <!-- Puedes duplicar esta sección si necesitas más -->
+    <!-- Etiqueta individual -->
+    <!-- Pegaremos esto 25 veces -->
+    <!-- Usamos una pequeña función JS abajo si deseas automatizar -->
 
-    <div class="logo-qr">
-      <div class="logo-placeholder">LOGO AQUÍ</div>
-      <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://wil1979.github.io/esentia-factura/catalogo.html" alt="QR Esentia" class="qr" />
-      <div class="slogan">Fragancias que enamoran</div>
-    </div>
+    <!-- Etiquetas manuales (25 veces) -->
+    <!-- Puedes también usar JavaScript para generarlas dinámicamente -->
+
+    <!-- INICIO ETIQUETAS -->
+    <!-- Copia-pega este bloque 25 veces si lo haces manual -->
+    <!-- O genera con JS -->
+    <!-- Aquí un ejemplo dinámico abajo -->
   </div>
+
+  <script>
+    const contenedor = document.querySelector('.hoja');
+
+    for (let i = 0; i < 25; i++) {
+      const etiqueta = document.createElement('div');
+      etiqueta.classList.add('etiqueta');
+      etiqueta.innerHTML = `
+        <div>
+          <div class="titulo">Uso recomendado</div>
+          Aplicar 3 a 5 gotas en difusor cerámico o eléctrico. No aplicar directamente en piel.
+          <div class="titulo">Advertencias</div>
+          Mantener fuera del alcance de niños y mascotas. No ingerir. Evitar contacto con ojos.
+        </div>
+        <div>
+          <div class="logo-qr">
+            <img src="logo.png" alt="Logo Esentia" class="logo" />
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://wil1979.github.io/esentia-factura/catalogo.html" alt="QR" class="qr" />
+          </div>
+          <div class="slogan">Fragancias que enamoran</div>
+        </div>
+      `;
+      contenedor.appendChild(etiqueta);
+    }
+  </script>
 
 </body>
 </html>
