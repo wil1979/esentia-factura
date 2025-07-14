@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Etiquetas Esentia - Impresión</title>
   <style>
     @page {
-      size: 50cm,50cm;
+      size: A4;
       margin: 0;
     }
 
@@ -13,6 +13,7 @@
       margin: 0;
       padding: 0;
       font-family: Arial, sans-serif;
+      background: white;
     }
 
     .sheet {
@@ -33,21 +34,23 @@
       line-height: 1.1;
       box-sizing: border-box;
       position: relative;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
 
-    .label img {
-      width: 1.2cm;
+    .label img.product-image {
+      max-width: 1cm;
       height: auto;
       float: right;
+      display: block;
       margin-bottom: 0.2cm;
-      margin-left: 0.2cm;
     }
 
     .label h3 {
       font-size: 10pt;
       font-weight: bold;
       margin: 0 0 0.2cm 0;
-      color: #000;
+      color: black;
     }
 
     .label p {
@@ -56,7 +59,7 @@
     }
 
     .label ul {
-      margin: 0;
+      margin: 0 0 0.2cm 0;
       padding-left: 0.5cm;
       font-size: 7pt;
       list-style-type: disc;
@@ -66,433 +69,127 @@
       margin-bottom: 0.1cm;
     }
 
-    @media print {
-      body {
-        color: black;
-        background: white;
-      }
+    .label .qr {
+      max-width: 0.8cm;
+      height: auto;
+      float: right;
+      margin-top: 0.2cm;
+      display: block;
+    }
 
-      .label {
-        page-break-inside: avoid;
-        break-inside: avoid;
-      }
-
-      .sheet {
-        page-break-after: always;
-        box-shadow: none;
-      }
-
-      .label img {
-        display: block;
-      }
+    .label .logo {
+      max-width: 0.8cm;
+      height: auto;
+      float: left;
+      margin-right: 0.2cm;
+      display: block;
     }
   </style>
 </head>
 <body>
 
-  <!-- Hoja A4 -->
-  <div class="sheet">
-    <!-- Etiqueta 1 -->
-    <div class="label">
-      <h3>🍋 Limón </h3>
-      <img src="images/limon.png" alt="Limon"
-       <img src="images/logo.png" alt="logo"
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://wil1979.github.io/esentia-factura/catalogo.html" alt="QR" class="qr" />
-    </div>
+  <!-- Contenedor de hojas -->
+  <div id="etiqueta-container"></div>
 
-    <!-- Etiqueta 2 -->
-    <div class="label">
-      <h3>🍊 Naranja</h3>
-      <img src="images/naranja.png" alt="Limon"
-      <img src="images/logo.png" alt="logo"
-    </div>
-    
+  <script>
+    // === Tus categorías completas ===
+    const categorias = [
+      {
+        nombre: "🍊 Frutales y Cítricos",
+        productos: [
+          {
+            nombre: "Limón",
+            precioOriginal: 5500,
+            precioOferta: 3500,
+            imagen: "images/limon.png",
+            info: "AROMATERAPIA: Aumenta alerta mental 50%. Purifica ambientes eliminando patógenos.",
+            beneficios: "Refrescante, purificante y antibacteriano natural.",
+            usoRecomendado: "Excelente para cocinas y hospitales.",
+            disponible: true,
+            variantes: [
+              { nombre: "Limón 5ml", precio: 1500 },
+              { nombre: "Limón 30ml", precio: 3000 },
+              { nombre: "Limón 50ml", precio: 3500 }
+            ]
+          },
+          {
+            nombre: "Naranja",
+            precioOriginal: 5500,
+            precioOferta: 3500,
+            imagen: "images/naranja.png",
+            info: "AROMATERAPIA: Aumenta producción de serotonina 60%. Antidepresivo natural.",
+            beneficios: "Combate la depresión leve y mejora el estado de ánimo matutino.",
+            usoRecomendado: "Uso matutino en salas de estar.",
+            disponible: true,
+            variantes: [
+              { nombre: "Naranja 5ml", precio: 1500 },
+              { nombre: "Naranja 30ml", precio: 3000 },
+              { nombre: "Naranja 50ml", precio: 3500 }
+            ]
+          }
+        ]
+      },
+      {
+        nombre: "🍬 Dulces y Gourmets",
+        productos: [
+          {
+            nombre: "Chocolate",
+            precioOriginal: 5500,
+            precioOferta: 3500,
+            imagen: "images/chocolate.png",
+            info: "AROMATERAPIA: Aumenta serotonina 40% y reduce ansiedad emocional. Efecto antidepresivo natural.",
+            beneficios: "Antidepresivo natural, mejora el estado de ánimo.",
+            usoRecomendado: "Dormitorios y espacios de terapia.",
+            disponible: true,
+            variantes: [
+              { nombre: "Chocolate 5ml", precio: 1500 },
+              { nombre: "Chocolate 30ml", precio: 3000 },
+              { nombre: "Chocolate 50ml", precio: 3500 }
+            ]
+          }
+        ]
+      }
+    ];
 
-    <!-- Etiqueta 3 -->
-    <div class="label">
-      <h3>🌿 Eucalipto </h3>
-      <img src="images/eucalipto.png" alt="Eucalipto">
-      <img src="images/logo.png" alt="logo"
-    </div>
+    // === Configuración de cuántas etiquetas imprimir por variante ===
+    const configuracionImpresion = [
+      { nombreProducto: "Limón", varianteNombre: "Limón 30ml", cantidad: 5 },
+      { nombreProducto: "Naranja", varianteNombre: "Naranja 30ml", cantidad: 2 },
+      { nombreProducto: "Chocolate", varianteNombre: "Chocolate 30ml", cantidad: 3 }
+    ];
 
-    <!-- Etiqueta 4 -->
-    <div class="label">
-      <h3>🍬 Chocolate 50ml</h3>
-      <img src="images/chocolate.png" alt="Chocolate">
-      <p><strong>AROMATERAPIA:</strong> Aumenta serotonina 40% y reduce ansiedad emocional.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Dormitorios y espacios de terapia.</li>
-        <li>Ideal para momentos de estrés o depresión leve.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>No ingerir ni aplicar directamente sobre la piel.</li>
-        <li>Mantener alejado del calor excesivo.</li>
-        <li>Evite derramar sobre superficies pintadas.</li>
-      </ul>
-    </div>
+    function generarEtiquetas() {
+      const contenedor = document.getElementById("etiqueta-container");
 
-    <!-- Etiqueta 5 -->
-    <div class="label">
-      <h3>🐝 Citronela 30ml</h3>
-      <img src="images/citronela.png" alt="Citronela">
-      <p><strong>AROMATERAPIA:</strong> Repelente de insectos natural (eficacia 92%).</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Zonas tropicales y exteriores.</li>
-        <li>Perfecto para jardines y terrazas.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>No usar en presencia de aves o reptiles.</li>
-        <li>Evite el contacto con los ojos.</li>
-        <li>Guarde en lugar fresco y oscuro.</li>
-      </ul>
-    </div>
+      configuracionImpresion.forEach(config => {
+        const categoria = categorias.find(cat => cat.productos.some(p => p.nombre === config.nombreProducto));
+        if (!categoria) return;
 
-    <!-- Etiqueta 6 -->
-    <div class="label">
-      <h3>🌲 Pino 30ml</h3>
-      <img src="images/pino.png" alt="Pino">
-      <p><strong>AROMATERAPIA:</strong> Purificador aéreo (elimina 86% de alérgenos).</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Áreas con mascotas o polvo.</li>
-        <li>Excelente para baños y zonas frías.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>Evite usar sin diluir en difusores.</li>
-        <li>No apto para uso directo en la piel.</li>
-        <li>Mantener fuera del alcance de niños.</li>
-      </ul>
-    </div>
+        const producto = categoria.productos.find(p => p.nombre === config.nombreProducto);
+        if (!producto || !producto.disponible) return;
 
-    <!-- Etiqueta 7 -->
-    <div class="label">
-      <h3>🌸 Rosa 50ml</h3>
-      <img src="images/rosa.png" alt="Rosa">
-      <p><strong>AROMATERAPIA:</strong> Regula desequilibrios hormonales. Alivia síntomas premenstruales en 52%.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Para espacios femeninos y zonas de autocuidado.</li>
-        <li>Mejora el bienestar emocional.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>No usar en presencia de embarazadas.</li>
-        <li>Evite el contacto directo con la piel sensible.</li>
-        <li>Mantener en lugar fresco y seco.</li>
-      </ul>
-    </div>
+        const variante = producto.variantes.find(v => v.nombre === config.varianteNombre);
+        if (!variante) return;
 
-    <!-- Etiqueta 8 -->
-    <div class="label">
-      <h3>🌿 Sándalo 30ml</h3>
-      <img src="images/sandalo.png" alt="Sándalo">
-      <p><strong>AROMATERAPIA:</strong> Ancestralmente usado en rituales. Profundiza conexión espiritual.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Templos y espacios sagrados.</li>
-        <li>Mejora la meditación profunda.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>Evite el contacto con ojos y piel irritada.</li>
-        <li>Guarde en lugar fresco y oscuro.</li>
-        <li>Evite usar en ambientes cerrados prolongados.</li>
-      </ul>
-    </div>
+        for (let i = 0; i < config.cantidad; i++) {
+          const div = document.createElement("div");
+          div.className = "label";
+          div.innerHTML = `
+            <h3>${variante.nombre}</h3>
+            ${producto.imagen ? `<img src="${producto.imagen}" alt="${producto.nombre}" class="product-image">` : ''}
+            
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://wil1979.github.io/esentia-factura/catalogo.html" alt="QR" class="qr" />
+            <img src="images/logo.png" alt="Logo" class="logo" />
+          `;
+          contenedor.appendChild(div);
+        }
+      });
+    }
 
-    <!-- Etiqueta 9 -->
-    <div class="label">
-      <h3>🌊 Océano 30ml</h3>
-      <img src="images/oceano.png" alt="Océano">
-      <p><strong>AROMATERAPIA:</strong> Induce estados meditativos profundos. Mejora capacidad pulmonar 22%.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Prácticas de respiración y yoga.</li>
-        <li>Ambientes de relajación y calma.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>No aplicar en heridas o piel sensible.</li>
-        <li>Evite el contacto prolongado con superficies.</li>
-        <li>Mantener fuera del alcance de niños pequeños.</li>
-      </ul>
-    </div>
-
-    <!-- Etiqueta 10 -->
-    <div class="label">
-      <h3>❄️ Ciprés 30ml</h3>
-      <img src="images/cipres.png" alt="Ciprés">
-      <p><strong>AROMATERAPIA:</strong> Aroma fresco y amaderado, ideal para la concentración.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Estudios, oficinas y espacios de trabajo.</li>
-        <li>Mejora la claridad mental y equilibrio emocional.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>No usar en ambientes muy cerrados.</li>
-        <li>Evite el contacto con los ojos.</li>
-        <li>Guarde en lugar fresco y seco.</li>
-      </ul>
-    </div>
-
-    <!-- Etiqueta 11 -->
-    <div class="label">
-      <h3>🍬 Coco Cookies 30ml</h3>
-      <img src="images/cococookies.png" alt="Coco Cookies">
-      <p><strong>AROMATERAPIA:</strong> Combina relajación (ondas theta +18%) y control de apetito emocional.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Cocinas y áreas de trabajo.</li>
-        <li>Reduce antojos dulces y estrés emocional.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>No apto para consumo humano.</li>
-        <li>Evite derramar sobre superficies delicadas.</li>
-        <li>Mantener lejos del calor excesivo.</li>
-      </ul>
-    </div>
-
-    <!-- Etiqueta 12 -->
-    <div class="label">
-      <h3>🕯️ Ambientador Auto</h3>
-      <img src="images/IMG_2057.jpeg" alt="Ambientador Auto">
-      <p><strong>AROMATERAPIA:</strong> Estimula creatividad y concentración en viajes largos.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Automóviles y transporte personal.</li>
-        <li>Evite usar en ambientes cerrados prolongados.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>No ingerir ni aplicar sobre la piel.</li>
-        <li>Evite derramar sobre superficies interiores del auto.</li>
-        <li>Mantener lejos del calor directo.</li>
-      </ul>
-    </div>
-
-    <!-- Etiqueta 13 -->
-    <div class="label">
-      <h3>🕯️ Difusor Pequeño</h3>
-      <img src="images/difusor.jpg" alt="Difusor">
-      <p><strong>AROMATERAPIA:</strong> Humidificador de aire con luz colorida para el hogar y el coche.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Dormitorios y espacios de terapia.</li>
-        <li>Combina con aromas suaves y relajantes.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>Use solo con aromas autorizados.</li>
-        <li>No sumerja en agua ni moje la base eléctrica.</li>
-        <li>Evite caídas y manipulación incorrecta.</li>
-      </ul>
-    </div>
-
-    <!-- Etiqueta 14 -->
-    <div class="label">
-      <h3>🍬 Fresa 30ml</h3>
-      <img src="images/fresa.png" alt="Fresa">
-      <p><strong>AROMATERAPIA:</strong> Estimula producción de endorfinas. Antídoto contra apatía estacional.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Clínicas de salud mental.</li>
-        <li>Ambientes familiares y relajantes.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>No aplicar en piel sensible.</li>
-        <li>Evite derramar sobre superficies delicadas.</li>
-        <li>Mantener fuera del alcance de niños.</li>
-      </ul>
-    </div>
-
-    <!-- Etiqueta 15 -->
-    <div class="label">
-      <h3>🍬 Melón Vainilla 30ml</h3>
-      <img src="images/melonvainilla.png" alt="Melón Vainilla">
-      <p><strong>AROMATERAPIA:</strong> Combinación relajante (ondas alfa cerebrales). Disminuye antojos dulces 30%.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Comedores y cocinas.</li>
-        <li>Reducción de ansiedad emocional.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>No aplicar en superficies pintadas.</li>
-        <li>Evite el contacto con los ojos.</li>
-        <li>Mantener lejos del calor excesivo.</li>
-      </ul>
-    </div>
-
-    <!-- Etiqueta 16 -->
-    <div class="label">
-      <h3>🌸 Magnolia 30ml</h3>
-      <img src="images/magnolia.png" alt="Magnolia">
-      <p><strong>AROMATERAPIA:</strong> Reduce estrés emocional en 35%. Equilibra estados de ánimo.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Perfecto para meditación y yoga.</li>
-        <li>Evita el estrés y la irritabilidad.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>No apto para consumo humano.</li>
-        <li>Evite derramar sobre superficies delicadas.</li>
-        <li>Mantener fuera del alcance de niños pequeños.</li>
-      </ul>
-    </div>
-
-    <!-- Etiqueta 17 -->
-    <div class="label">
-      <h3>🍃 Violeta 30ml</h3>
-      <img src="images/violeta.png" alt="Violeta">
-      <p><strong>AROMATERAPIA:</strong> Estimula intuición y sueños lúcidos. Aumenta fase REM 40%.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Estudios de psicología y onirología.</li>
-        <li>Para mejorar la claridad onírica y creatividad.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>Evite el contacto prolongado con la piel.</li>
-        <li>No usar en ambientes con bebés o mascotas.</li>
-        <li>Mantener lejos del calor y la humedad.</li>
-      </ul>
-    </div>
-
-    <!-- Etiqueta 18 -->
-    <div class="label">
-      <h3>🍬 Baby 50ml</h3>
-      <img src="images/baby.png" alt="Baby">
-      <p><strong>AROMATERAPIA:</strong> Calma cólicos del lactante. Regula ritmos circadianos infantiles.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Para cuartos de bebé y áreas infantiles.</li>
-        <li>Mejora el sueño y ambiente.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>No aplicar directamente en la cuna.</li>
-        <li>Evite el contacto con el bebé.</li>
-        <li>Guarde en lugar fresco y oscuro.</li>
-      </ul>
-    </div>
-
-    <!-- Etiqueta 19 -->
-    <div class="label">
-      <h3>🍬 Blanc 30ml</h3>
-      <img src="images/blanc.png" alt="Blanc">
-      <p><strong>AROMATERAPIA:</strong> Efecto hidratante cutáneo inmediato. Mejora textura de la piel.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Baños y espacios de belleza.</li>
-        <li>Perfecto para relajación y cuidado personal.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>Evite el contacto directo con la piel.</li>
-        <li>Guarde en lugar fresco y oscuro.</li>
-        <li>No apto para uso en mascotas o niños.</li>
-      </ul>
-    </div>
-
-    <!-- Etiqueta 20 -->
-    <div class="label">
-      <h3>🎄 Navidad 50ml</h3>
-      <img src="images/navidad.png" alt="Navidad">
-      <p><strong>AROMATERAPIA:</strong> Estimula memorias afectivas. Reduce nostalgia en adultos mayores.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Residencias y épocas festivas.</li>
-        <li>Evoca emociones positivas y recuerdos felices.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>Evite usar en ambientes muy cerrados.</li>
-        <li>No apto para consumo humano.</li>
-        <li>Guarde lejos de fuentes de calor.</li>
-      </ul>
-    </div>
-
-    <!-- Etiqueta 21 -->
-    <div class="label">
-      <h3>🥥 Coco Cookies 30ml</h3>
-      <img src="images/cococookies.png" alt="Coco Cookies">
-      <p><strong>AROMATERAPIA:</strong> Combina relajación y control de apetito emocional. Reduce antojos dulces 35%.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Cocinas y áreas de trabajo.</li>
-        <li>Relaja la mente y reduce estrés emocional.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>No ingerir ni aplicar directamente sobre la piel.</li>
-        <li>Evite derramar sobre superficies delicadas.</li>
-        <li>Mantener fuera del alcance de niños.</li>
-      </ul>
-    </div>
-
-    <!-- Etiqueta 22 -->
-    <div class="label">
-      <h3>🍃 Pino 30ml</h3>
-      <img src="images/pino.png" alt="Pino">
-      <p><strong>AROMATERAPIA:</strong> Purificador aéreo (elimina 86% de alérgenos). Descongestiona vías respiratorias.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Áreas con mascotas o polvo.</li>
-        <li>Alivio natural para asmáticos.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>Evite el contacto prolongado con la piel.</li>
-        <li>Guarde en lugar fresco y oscuro.</li>
-        <li>No usar en ambientes con aves o reptiles.</li>
-      </ul>
-    </div>
-
-    <!-- Etiqueta 23 -->
-    <div class="label">
-      <h3>🌊 Océano 50ml</h3>
-      <img src="images/oceano.png" alt="Océano">
-      <p><strong>AROMATERAPIA:</strong> Induce estados meditativos profundos. Mejora capacidad pulmonar 22%.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Prácticas de respiración y yoga.</li>
-        <li>Perfecto para zonas de relajación.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>No aplicar en heridas ni sobre piel sensible.</li>
-        <li>Evite el contacto con los ojos.</li>
-        <li>Mantener lejos del calor excesivo.</li>
-      </ul>
-    </div>
-
-    <!-- Etiqueta 24 -->
-    <div class="label">
-      <h3>🍬 Chocolate 50ml</h3>
-      <img src="images/chocolate.png" alt="Chocolate">
-      <p><strong>AROMATERAPIA:</strong> Aumenta serotonina 40% y reduce ansiedad emocional. Efecto antidepresivo natural.</p>
-      <p><strong>Uso recomendado:</strong></p>
-      <ul>
-        <li>Dormitorios y espacios de terapia.</li>
-        <li>Mejora el estado de ánimo.</li>
-      </ul>
-      <p><strong>Precauciones:</strong></p>
-      <ul>
-        <li>No ingerir ni aplicar directamente sobre la piel.</li>
-        <li>Evite derramar sobre superficies delicadas.</li>
-        <li>Mantener fuera del alcance de niños.</li>
-      </ul>
-    </div>
-  </div>
+    window.onload = () => {
+      generarEtiquetas();
+    };
+  </script>
 
 </body>
 </html>
