@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Etiquetas Esentia - Frontal</title>
+  <meta charset="UTF-8" />
+  <title>Etiquetas Esentia - Impresión</title>
   <style>
     @page {
-      size: A4;
+      size: letter;
       margin: 0;
     }
 
@@ -17,13 +17,13 @@
     }
 
     .sheet {
-      width: 21cm;
-      height: 29.7cm;
+      width: 21.59cm;
+      height: 27.94cm;
       display: grid;
-      grid-template-columns: repeat(4, 5cm);
-      grid-template-rows: repeat(6, 4cm);
+      grid-template-columns: repeat(5, 4cm); /* 5 columnas */
+      grid-template-rows: repeat(8, 4cm);   /* 8 filas */
       gap: 0.2cm;
-      padding: 0.8cm;
+      padding: 0.6cm;
       box-sizing: border-box;
     }
 
@@ -36,48 +36,37 @@
       position: relative;
       break-inside: avoid;
       page-break-inside: avoid;
-      background: white;
-    }
-
-    .label .top-section {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 0.2cm;
+      text-align: center;
     }
 
     .label h3 {
       font-size: 10pt;
       font-weight: bold;
-      margin: 0;
+      margin: 0 0 0.2cm 0;
       color: black;
     }
 
     .label img.product-image {
-      width: 1cm;
+      max-width: 1.2cm;
       height: auto;
-      margin-left: 0.2cm;
+      display: block;
+      margin: 0 auto 0.2cm auto;
     }
 
-    .label .logo {
-      width: 0.8cm;
+    .label img.logo {
+      max-width: 0.8cm;
       height: auto;
       position: absolute;
       bottom: 0.3cm;
       left: 0.3cm;
     }
 
-    .label .qr {
-      width: 0.8cm;
+    .label img.qr {
+      max-width: 0.8cm;
       height: auto;
       position: absolute;
       bottom: 0.3cm;
       right: 0.3cm;
-    }
-
-    .label .centered {
-      text-align: center;
-      margin-top: 0.5cm;
     }
   </style>
 </head>
@@ -87,119 +76,81 @@
   <div id="etiqueta-container" class="sheet"></div>
 
   <script>
-    // === Tus categorías completas ===
-    const categorias = [
-      {
-        nombre: "🍊 Frutales y Cítricos",
-        productos: [
-          {
-            nombre: "Limón",
-            precioOriginal: 5500,
-            precioOferta: 3500,
-            imagen: "images/limon.png",
-            info: "AROMATERAPIA: Aumenta alerta mental 50%. Purifica ambientes eliminando patógenos.",
-            usoRecomendado: "Excelente para cocinas y hospitales.",
-            disponible: true,
-            variantes: [
-              { nombre: "Limón 5ml", precio: 1500 },
-              { nombre: "Limón 30ml", precio: 3000 },
-              { nombre: "Limón 50ml", precio: 3500 }
-            ]
-          },
-          {
-            nombre: "Naranja",
-            precioOriginal: 5500,
-            precioOferta: 3500,
-            imagen: "images/naranja.png",
-            info: "AROMATERAPIA: Aumenta producción de serotonina 60%. Antidepresivo natural.",
-            usoRecomendado: "Uso matutino en salas de estar.",
-            disponible: true,
-            variantes: [
-              { nombre: "Naranja 5ml", precio: 1500 },
-              { nombre: "Naranja 30ml", precio: 3000 },
-              { nombre: "Naranja 50ml", precio: 3500 }
-            ]
-          }
-        ]
-      },
-      {
-        nombre: "🍬 Dulces y Gourmets",
-        productos: [
-          {
-            nombre: "Chocolate",
-            precioOriginal: 5500,
-            precioOferta: 3500,
-            imagen: "images/chocolate.png",
-            info: "AROMATERAPIA: Aumenta serotonina 40% y reduce ansiedad emocional. Efecto antidepresivo natural.",
-            usoRecomendado: "Dormitorios y espacios de terapia.",
-            disponible: true,
-            variantes: [
-              { nombre: "Chocolate 5ml", precio: 1500 },
-              { nombre: "Chocolate 30ml", precio: 3000 },
-              { nombre: "Chocolate 50ml", precio: 3500 }
-            ]
-          }
-        ]
-      },
-      {
-        nombre: "🌸 Aromas Florales",
-        productos: [
-          {
-            nombre: "Lavanda",
-            precioOriginal: 5500,
-            precioOferta: 3500,
-            imagen: "images/lavanda.png",
-            info: "Reduce el cortisol 31%, mejora calidad del sueño en 45%. Ideal para insomnio y ansiedad.",
-            usoRecomendado: "Uso nocturno en dormitorios.",
-            disponible: true,
-            variantes: [
-              { nombre: "Lavanda 5ml", precio: 1500 },
-              { nombre: "Lavanda 30ml", precio: 3000 },
-              { nombre: "Lavanda 50ml", precio: 3500 }
-            ]
-          }
-        ]
-      }
-    ];
+    // === Cargar productos desde productos_esentia.json ===
+    async function cargarProductos() {
+  try {
+    const response = await fetch("productos_esentia.json");
+    const data = await response.json();
+    return data; // ya es un array
+  } catch (err) {
+    console.error("Error al cargar el archivo JSON:", err);
+    return [];
+  }
+}
 
-    // === Configuración de cuántas etiquetas imprimir por variante ===
-    const configuracionImpresion = [
-      { nombreProducto: "Limón", varianteNombre: "Limón 30ml", cantidad: 15 },
-      { nombreProducto: "Naranja", varianteNombre: "Naranja 30ml", cantidad: 20 },
-      { nombreProducto: "Chocolate", varianteNombre: "Chocolate 30ml", cantidad: 30 },
-      { nombreProducto: "Lavanda", varianteNombre: "Lavanda 30ml", cantidad: 35 }
-    ];
+    // === Configuración de impresión ===
+const configuracionImpresion = [
+  { nombreProducto: "Ariel", cantidad: 1 },
+  { nombreProducto: "Bambú", cantidad: 1 },
+  { nombreProducto: "Bebé", cantidad: 1 },
+  { nombreProducto: "Canela", cantidad: 1 },
+  { nombreProducto: "Cherry", cantidad: 1 },
+  { nombreProducto: "Chicle", cantidad: 1 },
+  { nombreProducto: "Ciprés", cantidad: 1 },
+  { nombreProducto: "Coco", cantidad: 1 },
+  { nombreProducto: "Eucalipto", cantidad: 1 },
+  { nombreProducto: "Fantasía navideña", cantidad: 1 },
+  { nombreProducto: "Floral", cantidad: 1 },
+  { nombreProducto: "Fresa", cantidad: 1 },
+  { nombreProducto: "Fresco amanecer", cantidad: 1 },
+  { nombreProducto: "Frutal", cantidad: 1 },
+  { nombreProducto: "Herbal", cantidad: 1 },
+  { nombreProducto: "Kiwi", cantidad: 1 },
+  { nombreProducto: "Lavanda", cantidad: 1 },
+  { nombreProducto: "Limón", cantidad: 1 },
+  { nombreProducto: "Manzana", cantidad: 1 },
+  { nombreProducto: "Manzana Canela", cantidad: 1 },
+  { nombreProducto: "Manzana verde", cantidad: 1 },
+  { nombreProducto: "Maracuya", cantidad: 1 },
+  { nombreProducto: "Melocotón", cantidad: 1 },
+  { nombreProducto: "Menta", cantidad: 1 },
+  { nombreProducto: "Naranja", cantidad: 1 },
+  { nombreProducto: "Pepino", cantidad: 1 },
+  { nombreProducto: "Vainilla", cantidad: 1 },
+  { nombreProducto: "Primaveral", cantidad: 1 },
+  { nombreProducto: "Violeta", cantidad: 1 },
+  { nombreProducto: "Sábila", cantidad: 1 },
+  { nombreProducto: "Sandía", cantidad: 1 },
+  { nombreProducto: "Suave abril", cantidad: 1 }
+];
 
-    function generarEtiquetas() {
-      const contenedor = document.getElementById("etiqueta-container");
 
-      configuracionImpresion.forEach(config => {
-        const categoria = categorias.find(cat => cat.productos.some(p => p.nombre === config.nombreProducto));
-        if (!categoria) return;
+    // === Generar etiquetas ===
+    async function generarEtiquetas() {
+  const contenedor = document.getElementById("etiqueta-container");
+  const productos = await cargarProductos();
 
-        const producto = categoria.productos.find(p => p.nombre === config.nombreProducto);
-        if (!producto || !producto.disponible) return;
+  configuracionImpresion.forEach(config => {
+    const producto = productos.find(p => p.nombre === config.nombreProducto);
+    if (!producto || !producto.disponible) return;
 
-        const variante = producto.variantes.find(v => v.nombre === config.varianteNombre);
-        if (!variante) return;
+    const variantes = producto.variantes || [producto];
 
-        for (let i = 0; i < config.cantidad; i++) {
-          const div = document.createElement("div");
-          div.className = "label";
-          div.innerHTML = `
-            <div class="top-section">
-              <h3>${variante.nombre}</h3>
-              <img src="${producto.imagen}" alt="${producto.nombre}" class="product-image" />
-            </div>
-            <div class="centered">
-              <img src="images/logo.png" alt="Logo" class="logo" />
-              <img src="https://api.qrserver.com/v1/create-qr-code/?data=https://wil1979.github.io/esentia-factura/catalogo.html&size=100x100" alt="QR" class="qr" />
-            </div>
-          `;
-          contenedor.appendChild(div);
-        }
+    for (let i = 0; i < config.cantidad; i++) {
+      variantes.forEach(variante => {
+        const div = document.createElement("div");
+        div.className = "label";
+        div.innerHTML = `
+          <h3>${variante.nombre}</h3>
+          ${producto.imagen ? `<img src="${producto.imagen}" alt="${producto.nombre}" class="product-image">` : ''}
+          <img src="images/logo.png" alt="Logo" class="logo" />
+          <img src="https://api.qrserver.com/v1/create-qr-code/?data=https://wil1979.github.io/esentia-factura/catalogo.html&size=100x100" alt="QR" class="qr" />
+        `;
+        contenedor.appendChild(div);
       });
     }
+  });
+}
 
     window.onload = () => {
       generarEtiquetas();
