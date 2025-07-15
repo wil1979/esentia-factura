@@ -12,7 +12,19 @@ function cargarProductosEnFacturacion() {
       const grupo = document.createElement("optgroup");
       grupo.label = categoria.nombre;
 
+      
       categoria.productos.forEach(producto => {
+  // 👇 Solo agregar productos disponibles
+  if (!producto.disponible) return;
+
+  const precioFinal = producto.precioOferta || producto.precio;
+  const option = document.createElement("option");
+  option.value = `${producto.nombre}|${precioFinal}`;
+  option.textContent = `${producto.nombre} – ₡${precioFinal.toLocaleString()}`;
+  grupo.appendChild(option);
+});
+
+     /* categoria.productos.forEach(producto => {
         if (producto.variantes && producto.variantes.length > 0) {
           producto.variantes.forEach(variante => {
             const option = document.createElement("option");
@@ -27,7 +39,7 @@ function cargarProductosEnFacturacion() {
           option.textContent = `${producto.nombre} – ₡${precioFinal.toLocaleString()}`;
           grupo.appendChild(option);
         }
-      });
+      });*/
 
       sel.appendChild(grupo);
     });

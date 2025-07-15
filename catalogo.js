@@ -65,6 +65,7 @@ const categorias = [
       beneficios: "Mejora el estado de ánimo durante trayectos largos",
       usoRecomendado: "Ideal para automóviles y transporte personal.",
       esNuevo: true ,// 👈 Esto marca el producto como nuevo
+      disponible: true ,// ✅ Mostrará u ocultará el producto,
        fechaLanzamiento: "2025-10-07" // 👈 Fecha de lanzamiento
       }
     ]
@@ -80,12 +81,17 @@ const categorias = [
         beneficios: "Humidifica el ambiente, mejora la calidad del aire y proporciona un aroma agradable.",
         usoRecomendado: "Dormitorios y espacios de terapia.",
         esNuevo: true ,// 👈 Esto marca el producto como nuevo
-       fechaLanzamiento: "2025-10-07" // 👈 Fecha de lanzamiento
+        disponible: true ,// ✅ Mostrará u ocultará el producto,
+       fechaLanzamiento: "2025-10-07" ,// 👈 Fecha de lanzamiento
+       variantes: [
+          { nombre: "Difusor Pequeño", precio: 3500 },
+          { nombre: "Difusor Pequeño + Aroma a escoger", precio: 5500 },         
+       ]
       }
     ]
   },
   {
-      nombre: "🍬 Aromas Dulces",
+    nombre: "Aromas Disponibles",
     productos: [
       {
         nombre: "Chocolate",
@@ -95,6 +101,7 @@ const categorias = [
         info: "AROMATERAPIA: Aumenta serotonina 40% y reduce ansiedad emocional. Efecto antidepresivo natural.",
         beneficios: "Antidepresivo natural, mejora el estado de ánimo y combate la tristeza.",
         usoRecomendado: "Dormitorios y espacios de terapia.",
+        disponible: true ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Chocolate 5ml", precio: 1500 },
           { nombre: "Chocolate 30ml", precio: 3000 },
@@ -109,6 +116,7 @@ const categorias = [
         info: "AROMATERAPIA: Combina relajación (ondas theta +18%) y control de apetito emocional. Reduce antojos dulces 35%.",
         beneficios: "Relaja la mente y reduce el deseo de comer dulces por estrés emocional.",
         usoRecomendado: "Perfecto para cocinas y áreas de trabajo.",
+        disponible: true ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "CocoCookies 5ml", precio: 1500 },
           { nombre: "CocoCookies 30ml", precio: 3000 },
@@ -123,6 +131,7 @@ const categorias = [
         info: "AROMATERAPIA: Estimula producción de endorfinas. Antídoto contra apatía estacional.",
         beneficios: "Mejora el estado anímico y combate la depresión ligera o estacional.",
         usoRecomendado: "Clínicas de salud mental y ambientes familiares.",
+        disponible: false ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Fresa 5ml", precio: 1500 },
           { nombre: "Fresa 30ml", precio: 3000 },
@@ -137,6 +146,7 @@ const categorias = [
         info: "AROMATERAPIA: Potencia socialización (aumenta conversación 45%). Crea ambiente vacacional.",
         beneficios: "Estimula la interacción social y crea un clima distendido.",
         usoRecomendado: "Perfecto para fiestas y reuniones sociales.",
+        disponible: false ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Piña Colada 5ml", precio: 1500 },
           { nombre: "Piña Colada 30ml", precio: 3000 },
@@ -151,18 +161,16 @@ const categorias = [
         info: "AROMATERAPIA: Combinación relajante (ondas alfa cerebrales). Disminuye antojos dulces 30%.",
         beneficios: "Calma la ansiedad y reduce el consumo compulsivo de azúcar.",
         usoRecomendado: "Ideal para comedores y cocinas.",
+        disponible: true ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Melón Vainilla 5ml", precio: 1500 },
           { nombre: "Melón Vainilla 30ml", precio: 3000 },
           { nombre: "Melón Vainilla 50ml", precio: 3500 }
         ]
-      }
-    ]
-  },
+      },
+   
   {
-    nombre: "🌸 Aromas Florales",
-    productos: [
-      {
+    
         nombre: "Lavanda",
         precioOriginal: 5500,
         precioOferta: 3500,
@@ -170,6 +178,7 @@ const categorias = [
         info: "AROMATERAPIA: Reduce el cortisol 31%, mejora calidad del sueño en 45%. Ideal para insomnio y ansiedad.",
         beneficios: "Relajante natural, ideal para personas con estrés o problemas para conciliar el sueño.",
         usoRecomendado: "Uso nocturno en dormitorios.",
+        disponible: true ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Lavanda 5ml", precio: 1500 },
           { nombre: "Lavanda 30ml", precio: 3000 },
@@ -184,6 +193,7 @@ const categorias = [
         info: "AROMATERAPIA: Reduce estrés emocional en 35%. Equilibra estados de ánimo.",
         beneficios: "Equilibra emociones y reduce la irritabilidad.",
         usoRecomendado: "Perfecto para meditación y salas de yoga.",
+        disponible: true ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Magnolia 5ml", precio: 1500 },
           { nombre: "Magnolia 30ml", precio: 3000 },
@@ -198,6 +208,7 @@ const categorias = [
         info: "AROMATERAPIA: Regula desequilibrios hormonales. Alivia síntomas premenstruales en 52%.",
         beneficios: "Ayuda en el bienestar femenino y equilibrio hormonal.",
         usoRecomendado: "Espacios femeninos y zonas de autocuidado.",
+         disponible: false ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Rosa 5ml", precio: 1500 },
           { nombre: "Rosa 30ml", precio: 3000 },
@@ -212,18 +223,16 @@ const categorias = [
         info: "AROMATERAPIA: Estimula intuición y sueños lúcidos. Aumenta fase REM 40%.",
         beneficios: "Potencia la creatividad, la intuición y la claridad onírica.",
         usoRecomendado: "Estudios de psicología y onirología.",
+         disponible: false ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Violeta 5ml", precio: 1500 },
           { nombre: "Violeta 30ml", precio: 3000 },
           { nombre: "Violeta 50ml", precio: 3500 }
         ]
-      }
-    ]
-  },
+      },
+  
   {
-    nombre: "🍊 Frutales y Cítricos",
-    productos: [
-      {
+   
         nombre: "Limón",
         precioOriginal: 5500,
         precioOferta: 3500,
@@ -231,6 +240,7 @@ const categorias = [
         info: "AROMATERAPIA: Aumenta alerta mental 50%. Purifica ambientes eliminando patógenos.",
         beneficios: "Refrescante, purificante y antibacteriano natural.",
         usoRecomendado: "Excelente para cocinas y hospitales.",
+         disponible: false ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Limón 5ml", precio: 1500 },
           { nombre: "Limón 30ml", precio: 3000 },
@@ -245,6 +255,7 @@ const categorias = [
         info: "AROMATERAPIA: Aumenta producción de serotonina 60%. Antidepresivo natural.",
         beneficios: "Combate la depresión leve y mejora el estado de ánimo matutino.",
         usoRecomendado: "Uso matutino en salas de estar.",
+         disponible: false ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Naranja 5ml", precio: 1500 },
           { nombre: "Naranja 30ml", precio: 3000 },
@@ -259,17 +270,15 @@ const categorias = [
         info: "AROMATERAPIA: Repelente de insectos natural (eficacia 92%). Elimina virus transmitidos por mosquitos.",
         beneficios: "Protección natural contra insectos y ambientes limpios.",
         usoRecomendado: "Exteriores tropicales y zonas verdes.",
+         disponible: true ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Citronela 5ml", precio: 1500 },
           { nombre: "Citronela 30ml", precio: 3000 },
           { nombre: "Citronela 50ml", precio: 3500 }
         ]
-      }
-    ]
-  },
-  {
-    nombre: "🌿 Naturales y Herbales",
-    productos: [
+      },
+  
+  
       {
         nombre: "Eucalipto",
         precioOriginal: 5500,
@@ -278,6 +287,7 @@ const categorias = [
         info: "AROMATERAPIA: Descongestiona vías respiratorias en 90% durante primeros 15 minutos. Elimina 85% de patógenos aéreos.",
         beneficios: "Mejora la respiración, descongestiona nariz y pulmones.",
         usoRecomendado: "Para asmáticos y espacios húmedos.",
+         disponible: true ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Eucalipto 5ml", precio: 1500 },
           { nombre: "Eucalipto 30ml", precio: 3000 },
@@ -292,6 +302,7 @@ const categorias = [
         info: "AROMATERAPIA: Ancestralmente usado en rituales. Profundiza conexión espiritual.",
         beneficios: "Facilita la meditación y potencia la introspección.",
         usoRecomendado: "Templos y espacios sagrados.",
+         disponible: false ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Sándalo 5ml", precio: 1500 },
           { nombre: "Sándalo 30ml", precio: 3000 },
@@ -306,18 +317,16 @@ const categorias = [
         info: "AROMATERAPIA: Purificador aéreo (elimina 86% de alérgenos). Descongestiona vías respiratorias.",
         beneficios: "Alivio natural para asmáticos y personas con alergias.",
         usoRecomendado: "Áreas con mascotas o polvo.",
+         disponible: false ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Pino 5ml", precio: 1500 },
           { nombre: "Pino 30ml", precio: 3000 },
           { nombre: "Pino 50ml", precio: 3500 }
         ]
-      }
-    ]
-  },
+      },
+ 
   {
-    nombre: "🌊 Ambientales",
-    productos: [
-      {
+    
         nombre: "Océano",
         precioOriginal: 5500,
         precioOferta: 3500,
@@ -325,6 +334,7 @@ const categorias = [
         info: "AROMATERAPIA: Induce estados meditativos profundos. Mejora capacidad pulmonar 22%.",
         beneficios: "Promueve la calma y mejora la respiración consciente.",
         usoRecomendado: "Prácticas de respiración y yoga.",
+         disponible: false ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Océano 5ml", precio: 1500 },
           { nombre: "Océano 30ml", precio: 3000 },
@@ -339,17 +349,15 @@ const categorias = [
         info: "AROMATERAPIA: Estimula memorias afectivas. Reduce nostalgia en adultos mayores.",
         beneficios: "Evoca emociones positivas y recuerdos felices.",
         usoRecomendado: "Residencias y épocas festivas.",
+        disponible: false ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Navidad 5ml", precio: 1500 },
           { nombre: "Navidad 30ml", precio: 3000 },
           { nombre: "Navidad 50ml", precio: 3500 }
         ]
-      }
-    ]
-  },
-  {
-    nombre: "👶 Línea Especial",
-    productos: [
+      },
+  
+  
       {
         nombre: "Baby",
         precioOriginal: 5500,
@@ -358,6 +366,7 @@ const categorias = [
         info: "AROMATERAPIA: Calma cólicos del lactante. Regula ritmos circadianos infantiles.",
         beneficios: "Regula el sueño y la tranquilidad en bebés.",
         usoRecomendado: "Nurserías y cuartos de bebé.",
+        disponible: false ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Baby 5ml", precio: 1500 },
           { nombre: "Baby 30ml", precio: 3000 },
@@ -372,6 +381,7 @@ const categorias = [
     info: "AROMATERAPIA: Aroma fresco y limpio, ideal para espacios de descanso.",
     beneficios: "Sensación de limpieza y frescura duradera.",
     usoRecomendado: "Ropa de cama, habitaciones y baños.",
+    disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Ariel 5ml", precio: 1500 },
       { nombre: "Ariel 30ml", precio: 3000 },
@@ -386,6 +396,7 @@ const categorias = [
     info: "AROMATERAPIA: Estimulante y cálida, perfecta para activar los sentidos.",
     beneficios: "Estimulante natural, energizante.",
     usoRecomendado: "Salas de estar y cocinas.",
+    disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Canela 5ml", precio: 1500 },
       { nombre: "Canela 30ml", precio: 3000 },
@@ -400,6 +411,7 @@ const categorias = [
     info: "AROMATERAPIA: Dulce y vibrante, evoca alegría y dinamismo.",
     beneficios: "Aumenta la vitalidad y mejora el ánimo.",
     usoRecomendado: "Salas de estar y oficinas juveniles.",
+    disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Cherry 5ml", precio: 1500 },
       { nombre: "Cherry 30ml", precio: 3000 },
@@ -414,6 +426,7 @@ const categorias = [
     info: "AROMATERAPIA: Dulce y divertido, evoca juventud y alegría.",
     beneficios: "Eleva el ánimo, ideal para ambientes alegres.",
     usoRecomendado: "Espacios juveniles o comercios.",
+    disponible: true ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Chicle 5ml", precio: 1500 },
       { nombre: "Chicle 30ml", precio: 3000 },
@@ -428,6 +441,7 @@ const categorias = [
     info: "AROMATERAPIA: Aroma fresco y amaderado, ideal para la concentración.",
     beneficios: "Equilibra emociones y mejora la claridad mental.",
     usoRecomendado: "Estudios y espacios de trabajo.",
+    disponible: true ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Ciprés 5ml", precio: 1500 },
       { nombre: "Ciprés 30ml", precio: 3000 },
@@ -442,6 +456,7 @@ const categorias = [
     info: "AROMATERAPIA: Notas cálidas y festivas, crea un ambiente acogedor.",
     beneficios: "Despierta la nostalgia y calidez del hogar.",
     usoRecomendado: "Temporada navideña y reuniones familiares.",
+    disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Navidad 5ml", precio: 1500 },
       { nombre: "Navidad 30ml", precio: 3000 },
@@ -455,6 +470,7 @@ const categorias = [
     imagen: "images/frescoamanecer.png",
     info: "AROMATERAPIA: Refrescante y energético para empezar el día.",
     beneficios: "Estimula la vitalidad y la motivación.",
+     disponible: false ,// ✅ Mostrará u ocultará el producto,
     usoRecomendado: "Baños y oficinas.",
     variantes: [
       { nombre: "Amanecer 5ml", precio: 1500 },
@@ -470,6 +486,7 @@ const categorias = [
     info: "AROMATERAPIA: Mezcla alegre de frutas tropicales.",
     beneficios: "Energizante, ideal para animar el día.",
     usoRecomendado: "Cocinas, salas y oficinas.",
+    disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Frutal 5ml", precio: 1500 },
       { nombre: "Frutal 30ml", precio: 3000 },
@@ -484,6 +501,7 @@ const categorias = [
     info: "AROMATERAPIA: Tonificante y equilibrado, ideal para la relajación.",
     beneficios: "Reduce el estrés y equilibra emociones.",
     usoRecomendado: "Salas de meditación y estudios.",
+    disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Herbal 5ml", precio: 1500 },
       { nombre: "Herbal 30ml", precio: 3000 },
@@ -498,6 +516,7 @@ const categorias = [
     info: "AROMATERAPIA: Cítrico y fresco, estimula la creatividad.",
     beneficios: "Energizante, purifica el aire.",
     usoRecomendado: "Cocinas, oficinas y baños.",
+    disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Limón 5ml", precio: 1500 },
       { nombre: "Limón 30ml", precio: 3000 },
@@ -512,6 +531,7 @@ const categorias = [
     info: "AROMATERAPIA: Dulce y suave, crea un ambiente familiar.",
     beneficios: "Confort emocional y armonía.",
     usoRecomendado: "Salas, dormitorios y espacios compartidos.",
+    disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Manzana 5ml", precio: 1500 },
       { nombre: "Manzana 30ml", precio: 3000 },
@@ -526,6 +546,7 @@ const categorias = [
     info: "AROMATERAPIA: Mezcla cálida y acogedora, ideal para el hogar.",
     beneficios: "Evoca calidez, armoniza ambientes.",
     usoRecomendado: "Comedores y salas familiares.",
+    disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Manzana Canela 5ml", precio: 1500 },
       { nombre: "Manzana Canela 30ml", precio: 3000 },
@@ -540,6 +561,7 @@ const categorias = [
     info: "AROMATERAPIA: Refrescante y afrutado, ideal para ambientes limpios.",
     beneficios: "Activa los sentidos, revitalizante.",
     usoRecomendado: "Baños y cocinas.",
+    disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Manzana verde 5ml", precio: 1500 },
       { nombre: "Manzana verde 30ml", precio: 3000 },
@@ -554,6 +576,7 @@ const categorias = [
     info: "AROMATERAPIA: Tropical y relajante, ayuda a liberar tensiones.",
     beneficios: "Relaja, refresca y aporta alegría.",
     usoRecomendado: "Dormitorios y jardines interiores.",
+     disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Maracuya 5ml", precio: 1500 },
       { nombre: "Maracuya 30ml", precio: 3000 },
@@ -568,6 +591,7 @@ const categorias = [
     info: "AROMATERAPIA: Dulce y suave, brinda calidez y armonía.",
     beneficios: "Relajante y acogedor.",
     usoRecomendado: "Dormitorios y zonas de descanso.",
+     disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Melocotón 5ml", precio: 1500 },
       { nombre: "Melocotón 30ml", precio: 3000 },
@@ -582,6 +606,7 @@ const categorias = [
     info: "AROMATERAPIA: Refrescante y estimulante, mejora la concentración.",
     beneficios: "Revitalizante y purificante.",
     usoRecomendado: "Estudios y áreas de trabajo.",
+     disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Menta 5ml", precio: 1500 },
       { nombre: "Menta 30ml", precio: 3000 },
@@ -596,6 +621,7 @@ const categorias = [
     info: "AROMATERAPIA: Cítrica y alegre, levanta el ánimo.",
     beneficios: "Energizante y relajante a la vez.",
     usoRecomendado: "Cocinas y áreas sociales.",
+     disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Naranja 5ml", precio: 1500 },
       { nombre: "Naranja 30ml", precio: 3000 },
@@ -610,6 +636,7 @@ const categorias = [
     info: "AROMATERAPIA: Refrescante y ligero, ideal para relajación.",
     beneficios: "Reduce el estrés y refresca el ambiente.",
     usoRecomendado: "Baños y espacios de spa.",
+     disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Pepino 5ml", precio: 1500 },
       { nombre: "Pepino 30ml", precio: 3000 },
@@ -624,6 +651,7 @@ const categorias = [
     info: "AROMATERAPIA: Dulce y reconfortante, ideal para descansar.",
     beneficios: "Relaja, reconforta y reduce ansiedad.",
     usoRecomendado: "Dormitorios y espacios íntimos.",
+     disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Vainilla 5ml", precio: 1500 },
       { nombre: "Vainilla 30ml", precio: 3000 },
@@ -637,6 +665,7 @@ const categorias = [
     imagen: "images/primaveral.png",
     info: "AROMATERAPIA: Fresco y floral, ideal para renovar el ambiente.",
     beneficios: "Inspirador, crea sensaciones de alegría.",
+     disponible: false ,// ✅ Mostrará u ocultará el producto,
     usoRecomendado: "Salas y entradas.",
     variantes: [
       { nombre: "Primaveral 5ml", precio: 1500 },
@@ -652,6 +681,7 @@ const categorias = [
     info: "AROMATERAPIA: Floral y relajante, ideal para la noche.",
     beneficios: "Promueve el sueño y la tranquilidad.",
     usoRecomendado: "Dormitorios y salas de descanso.",
+     disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Violeta 5ml", precio: 1500 },
       { nombre: "Violeta 30ml", precio: 3000 },
@@ -666,6 +696,7 @@ const categorias = [
     info: "AROMATERAPIA: Refrescante y purificante, muy natural.",
     beneficios: "Limpia, suaviza y calma.",
     usoRecomendado: "Cocinas y baños.",
+     disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Sábila 5ml", precio: 1500 },
       { nombre: "Sábila 30ml", precio: 3000 },
@@ -680,6 +711,7 @@ const categorias = [
     info: "AROMATERAPIA: Dulce y jugoso, ideal para verano.",
     beneficios: "Refrescante y revitalizante.",
     usoRecomendado: "Ambientes abiertos y reuniones sociales.",
+     disponible: true ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Sandía 5ml", precio: 1500 },
       { nombre: "Sandía 30ml", precio: 3000 },
@@ -694,6 +726,7 @@ const categorias = [
     info: "AROMATERAPIA: Delicado y floral, como una brisa suave.",
     beneficios: "Relaja y brinda serenidad.",
     usoRecomendado: "Dormitorios y salas acogedoras.",
+     disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Suave abril 5ml", precio: 1500 },
       { nombre: "Suave abril 30ml", precio: 3000 },
@@ -708,6 +741,7 @@ const categorias = [
     info: "AROMATERAPIA: Frutal y refrescante, aporta vitalidad.",
     beneficios: "Refuerza el ánimo y energiza el ambiente.",
     usoRecomendado: "Cocinas y espacios abiertos.",
+     disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Kiwi 5ml", precio: 1500 },
       { nombre: "Kiwi 30ml", precio: 3000 },
@@ -722,6 +756,7 @@ const categorias = [
     info: "AROMATERAPIA: Combinación de flores que aporta frescura y alegría.",
     beneficios: "Relajante, crea ambientes armoniosos.",
     usoRecomendado: "Dormitorios y salas de estar.",
+     disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Floral 5ml", precio: 1500 },
       { nombre: "Floral 30ml", precio: 3000 },
@@ -736,6 +771,7 @@ const categorias = [
     info: "AROMATERAPIA: Aroma tropical, dulce y relajante.",
     beneficios: "Evoca vacaciones y reduce el estrés.",
     usoRecomendado: "Dormitorios y terrazas.",
+     disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Coco 5ml", precio: 1500 },
       { nombre: "Coco 30ml", precio: 3000 },
@@ -746,10 +782,11 @@ const categorias = [
     nombre: "Bambú",
     precioOriginal: 5500,
     precioOferta: 3500,
-    imagen: "images/bambu.png",
+    imagen: "images/banbu.png",
     info: "AROMATERAPIA: Refrescante y natural, ayuda a purificar el ambiente.",
     beneficios: "Relaja y armoniza los espacios.",
     usoRecomendado: "Oficinas y salas de espera.",
+     disponible: false ,// ✅ Mostrará u ocultará el producto,
     variantes: [
       { nombre: "Bambú 5ml", precio: 1500 },
       { nombre: "Bambú 30ml", precio: 3000 },
@@ -764,6 +801,7 @@ const categorias = [
         info: "AROMATERAPIA: Efecto hidratante cutáneo inmediato. Mejora textura de la piel.",
         beneficios: "Hidratación natural y frescura ambiental.",
         usoRecomendado: "Baños y espacios de belleza.",
+         disponible: false ,// ✅ Mostrará u ocultará el producto,
         variantes: [
           { nombre: "Blanc 5ml", precio: 1500 },
           { nombre: "Blanc 30ml", precio: 3000 },
@@ -774,10 +812,12 @@ const categorias = [
     ]
   }
 ];
-
 function renderizarProductos() {
   const container = document.getElementById("productos-hogar");
+  if (!container) return;
+
   container.innerHTML = "";
+
   categorias.forEach(categoria => {
     const titulo = document.createElement("h3");
     titulo.textContent = categoria.nombre;
@@ -786,44 +826,44 @@ function renderizarProductos() {
 
     const fila = document.createElement("div");
     fila.className = "productos";
+    fila.style.display = "flex";
+    fila.style.flexWrap = "wrap";
+    fila.style.gap = "1.5rem";
 
     categoria.productos.forEach(producto => {
+      // Verificar si el producto está disponible
+      if (!producto.disponible) return; 
+
       const divProducto = document.createElement("div");
       divProducto.className = producto.precioOferta ? "producto oferta" : "producto";
+
+      const precioFinal = producto.precioOferta || producto.precio;
+
+      let badgeHTML = "";
+      if (producto.fechaLanzamiento && esProductoNuevo(producto.fechaLanzamiento)) {
+        badgeHTML = `<span class="nuevo-badge">🌟 Nuevo</span>`;
+      }
+
+      let botonHTML = "";
+      if (producto.nombre.startsWith("Difusor") || producto.nombre.startsWith("Ambientador")) {
+        botonHTML = `<button onclick="abrirModalSeleccionAroma('${producto.nombre}', ${precioFinal})">Agregar al carrito</button>`;
+      } else {
+        botonHTML = `<button onclick="mostrarInfoProducto('${producto.nombre}', ${precioFinal}, '${producto.imagen}', \`${producto.info}\`, \`${producto.beneficios || ''}\`, \`${producto.usoRecomendado || ''}\`)">Ver detalles</button>`;
+      }
 
       const precioHTML = producto.precioOferta
         ? `<p><span class="precio-original">₡${producto.precioOriginal}</span> ₡${producto.precioOferta}</p>`
         : `<p>₡${producto.precio}</p>`;
 
-      const precioFinal = producto.precioOferta || producto.precio;
-
-      let botonHTML = "";
-      if (producto.nombre.startsWith("Difusor") || producto.nombre.startsWith("Ambientador")) {
-  botonHTML = `<button onclick="abrirModalSeleccionAroma('${producto.nombre}', ${producto.precio})">Agregar al carrito</button>`;
-} else {
- botonHTML = `<button onclick="mostrarInfoProducto('${producto.nombre}', ${precioFinal}, '${producto.imagen}', \`${producto.info}\`, \`${producto.beneficios || ''}\`, \`${producto.usoRecomendado || ''}\`)">Ver detalles</button>`;
-}
-
- /*     let badgeHTML = "";
-if (producto.esNuevo) {
-  badgeHTML = `<span class="nuevo-badge">🌟 NEW</span>`;
-}
-  */
-
-let badgeHTML = "";
-if (producto.fechaLanzamiento && esProductoNuevo(producto.fechaLanzamiento)) {
-  badgeHTML = `<span class="nuevo-badge">🌟 Nuevo</span>`;
-}
-
-divProducto.innerHTML = `
-  <div style="position:relative;">
-    <img src="${producto.imagen}" alt="${producto.nombre}" onclick="mostrarInfoProducto('${producto.nombre}" style="width:100%; height:200px; object-fit:cover; border-radius:8px; cursor:pointer;" onclick="mostrarInfoProducto('${producto.nombre}'', ${precioFinal}, '${producto.imagen}', \`${producto.info}\`, \`${producto.beneficios || ''}\`, \`${producto.usoRecomendado || ''}\`)">
-    ${badgeHTML}
-  </div>
-  <h3>${producto.nombre}</h3>
-  ${precioHTML}
-  ${botonHTML}
-`;
+      divProducto.innerHTML = `
+        <div style="position:relative;">
+          <img src="${producto.imagen}" alt="${producto.nombre}" onclick="mostrarInfoProducto('${producto.nombre}', ${precioFinal}, '${producto.imagen}', \`${producto.info}\`, \`${producto.beneficios || ''}\`, \`${producto.usoRecomendado || ''}\`)">
+          ${badgeHTML}
+        </div>
+        <h3>${producto.nombre}</h3>
+        ${precioHTML}
+        ${botonHTML}
+      `;
 
       fila.appendChild(divProducto);
     });
