@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Generador de Hoja de QRs</title>
+  <title>Generador de Hojas de QRs</title>
   <style>
     body {
       font-family: sans-serif;
@@ -90,7 +90,7 @@
   <button onclick="abrirModal()">Configurar Tamaño QR</button>
   <button onclick="descargarPDF()">Descargar como PDF</button>
 
-  <div id="hoja" class="hoja"></div>
+  <div id="contenedor-hojas"></div>
 
   <!-- Modal -->
   <div id="modal" class="modal">
@@ -102,6 +102,9 @@
       </label>
       <label>Alto (cm):
         <input type="number" id="altoQR" value="1" step="0.1">
+      </label>
+      <label>Cantidad total de QRs:
+        <input type="number" id="totalQRs" value="20" min="1">
       </label>
       <button onclick="generarQRs()">Generar</button>
     </div>
@@ -122,10 +125,11 @@
     function generarQRs() {
       const anchoQR = parseFloat(document.getElementById("anchoQR").value);
       const altoQR = parseFloat(document.getElementById("altoQR").value);
-      const hoja = document.getElementById("hoja");
+      const cantidadTotal = parseInt(document.getElementById("totalQRs").value);
+      const contenedor = document.getElementById("contenedor-hojas");
 
       // Limpiar contenido previo
-      hoja.innerHTML = "";
+      contenedor.innerHTML = "";
 
       // Margen entre QRs (en cm)
       const margenCorte = 0.2;
@@ -134,48 +138,62 @@
       const anchoHoja = 21.59 - 2; // 1cm de padding cada lado
       const altoHoja = 27.94 - 2;
 
-      // Calcular cuántos QRs caben
+      // Calcular cuántos QRs caben por hoja
       const qrPorFila = Math.floor(anchoHoja / (anchoQR + margenCorte));
       const filas = Math.floor(altoHoja / (altoQR + margenCorte));
-      const totalQRs = qrPorFila * filas;
+      const qrPorHoja = qrPorFila * filas;
+
+      if (qrPorHoja <= 0) {
+        alert("El tamaño del QR es demasiado grande para la hoja.");
+        return;
+      }
 
       // URL base del QR dinámico
       const urlBaseQR = "https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://wil1979.github.io/esentia-factura/catalogo.html";
 
-      // Crear los QRs
-      for (let i = 0; i < totalQRs; i++) {
-        const div = document.createElement("div");
-        div.className = "qr";
-        div.style.width = `${anchoQR}cm`;
-        div.style.height = `${altoQR}cm`;
+      let qrRestantes = cantidadTotal;
 
-        const img = document.createElement("img");
-        img.src = urlBaseQR;
-        img.alt = "QR";
-        img.style.width = "100%";
-        img.style.height = "100%";
-        img.style.objectFit = "contain";
+      while (qrRestantes > 0) {
+        const hoja = document.createElement("div");
+        hoja.className = "hoja";
 
-        div.appendChild(img);
-        hoja.appendChild(div);
+        const qrEnEstaHoja = Math.min(qrPorHoja, qrRestantes);
+
+        for (let i = 0; i < qrEnEstaHoja; i++) {
+          const div = document.createElement("div");
+          div.className = "qr";
+          div.style.width = `${anchoQR}cm`;
+          div.style.height = `${altoQR}cm`;
+
+          const img = document.createElement("img");
+          img.src = urlBaseQR;
+          img.alt = "QR";
+          img.style.width = "100%";
+          img.style.height = "100%";
+          img.style.objectFit = "contain";
+
+          div.appendChild(img);
+          hoja.appendChild(div);
+        }
+
+        contenedor.appendChild(hoja);
+        qrRestantes -= qrEnEstaHoja;
       }
 
-      alert(`Se generarán ${totalQRs} QRs de ${anchoQR}x${altoQR} cm`);
+      alert(`Se generaron ${cantidadTotal} QRs en hojas de ${anchoQR}x${altoQR} cm`);
       cerrarModal();
     }
 
     function descargarPDF() {
-      const hoja = document.getElementById("hoja");
-
       const options = {
         margin: 0,
-        filename: 'qr_sheet.pdf',
+        filename: 'qr_sheet_multipagina.pdf',
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, logging: false },
         jsPDF: { unit: 'cm', format: 'letter', orientation: 'portrait' }
       };
 
-      html2pdf().set(options).from(hoja).save();
+      html2pdf().set(options).from(document.getElementById("contenedor-hojas")).save();
     }
   </script>
 </body>
