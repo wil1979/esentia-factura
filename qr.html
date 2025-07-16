@@ -10,12 +10,10 @@
       padding: 20px;
     }
 
-    /* Solo visible en pantalla */
     .visible-en-pantalla {
       display: block;
     }
 
-    /* Oculto al imprimir o generar PDF */
     @media print {
       body * {
         visibility: hidden;
@@ -105,16 +103,6 @@
       margin-top: 5px;
     }
 
-    #contenedor-hojas {
-      margin-top: 20px;
-    }
-
-    /* Contenedor oculto */
-    #hoja-imprimir {
-      display: none;
-    }
-
-    /* Mensaje de carga */
     #mensaje-carga {
       display: none;
       position: fixed;
@@ -134,7 +122,7 @@
 
   <div id="mensaje-carga">Cargando imágenes…</div>
 
-  <!-- Contenido visible en pantalla -->
+  <!-- Contenido visible -->
   <div class="visible-en-pantalla">
     <h2>Generador de Hojas con QR o Logo</h2>
     <button onclick="abrirModal()">Configurar Diseño</button>
@@ -160,13 +148,13 @@
         </select>
       </label>
       <label>Ancho (cm):
-        <input type="number" id="ancho" value="2" step="0.1">
+        <input type="number" id="ancho" step="0.1">
       </label>
       <label>Alto (cm):
-        <input type="number" id="alto" value="2" step="0.1">
+        <input type="number" id="alto" step="0.1">
       </label>
       <label>Cantidad total:
-        <input type="number" id="total" value="20" min="1">
+        <input type="number" id="total" min="1">
       </label>
       <button onclick="generarDiseño()">Generar Vista Previa</button>
     </div>
@@ -178,6 +166,20 @@
           crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
   <script>
+    // Cargar configuración guardada
+    const configGuardada = JSON.parse(localStorage.getItem("configQR"));
+    if (configGuardada) {
+      document.getElementById("tipoElemento").value = configGuardada.tipo || "qr";
+      document.getElementById("ancho").value = configGuardada.ancho || "2";
+      document.getElementById("alto").value = configGuardada.alto || "2";
+      document.getElementById("total").value = configGuardada.total || "20";
+    } else {
+      document.getElementById("tipoElemento").value = "qr";
+      document.getElementById("ancho").value = "2";
+      document.getElementById("alto").value = "2";
+      document.getElementById("total").value = "20";
+    }
+
     function abrirModal() {
       document.getElementById("modal").style.display = "block";
     }
@@ -187,22 +189,28 @@
     }
 
     function generarDiseño() {
-      generarContenido(document.getElementById("contenedor-hojas"));
-    }
-
-    function generarParaImpresion() {
-      const destino = document.getElementById("hoja-imprimir");
-      destino.innerHTML = "";
-      generarContenido(destino, true);
-    }
-
-    function generarContenido(contenedor, oculto = false) {
       const tipo = document.getElementById("tipoElemento").value;
       const ancho = parseFloat(document.getElementById("ancho").value);
       const alto = parseFloat(document.getElementById("alto").value);
       const cantidadTotal = parseInt(document.getElementById("total").value);
 
-      contenedor.innerHTML = ""; // Limpiar contenido
+      localStorage.setItem("configQR", JSON.stringify({ tipo, ancho, alto, total: cantidadTotal }));
+
+      generarContenido(document.getElementById("contenedor-hojas"), tipo, ancho, alto, cantidadTotal);
+    }
+
+    function generarParaImpresion() {
+      const tipo = document.getElementById("tipoElemento").value;
+      const ancho = parseFloat(document.getElementById("ancho").value);
+      const alto = parseFloat(document.getElementById("alto").value);
+      const cantidadTotal = parseInt(document.getElementById("total").value);
+
+      generarContenido(document.getElementById("hoja-imprimir"), tipo, ancho, alto, cantidadTotal);
+      alert("Vista para imprimir generada. Puedes usar Imprimir o Descargar PDF.");
+    }
+
+    function generarContenido(contenedor, tipo, ancho, alto, cantidadTotal) {
+      contenedor.innerHTML = ""; // Limpiar
 
       const margenCorte = 0.2;
       const anchoHoja = 21.59 - 2;
@@ -231,34 +239,35 @@
           div.style.width = `${ancho}cm`;
           div.style.height = `${alto}cm`;
 
-          const img = document.createElement("img");
-
-          if (tipo === "qr") {
-            img.src = "https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://wil1979.github.io/esentia-factura/catalogo.html";
+          // Reusar imagen de la vista previa si ya existe
+          const imgPreview = document.querySelector("#contenedor-hojas img");
+          if (imgPreview) {
+            const imgClone = imgPreview.cloneNode(true);
+            div.appendChild(imgClone);
           } else {
-            img.src = "images/logo.png"; // Ruta del logo
+            const img = document.createElement("img");
+            img.alt = tipo === "qr" ? "QR" : "Logo";
+            img.style.width = "100%";
+            img.style.height = "100%";
+            img.style.objectFit = "contain";
+            img.src = tipo === "qr"
+              ? "https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://wil1979.github.io/esentia-factura/catalogo.html"
+              : "images/logo.png";
+
+            div.appendChild(img);
           }
 
-          img.alt = tipo === "qr" ? "QR" : "Logo";
-          img.style.width = "100%";
-          img.style.height = "100%";
-          img.style.objectFit = "contain";
-
-          div.appendChild(img);
           hoja.appendChild(div);
         }
 
         contenedor.appendChild(hoja);
         restantes -= enEstaHoja;
       }
-
-      if (oculto) {
-        alert("Vista previa generada. Puedes imprimir o descargar el PDF.");
-      }
     }
 
     function descargarPDF() {
       const element = document.getElementById("hoja-imprimir");
+
       if (!element.innerHTML.trim()) {
         alert("No hay contenido para descargar. Haz clic en 'Generar Vista Previa' primero.");
         return;
@@ -266,33 +275,7 @@
 
       mostrarCarga(true);
 
-      const imgs = element.querySelectorAll("img");
-      let loaded = 0;
-
-      if (imgs.length === 0) {
-        alert("No hay elementos para descargar.");
-        mostrarCarga(false);
-        return;
-      }
-
-      imgs.forEach((img, index) => {
-        if (img.complete && img.naturalHeight !== 0) {
-          loaded++;
-          if (loaded === imgs.length) finalizarPDF();
-        } else {
-          img.onload = () => {
-            loaded++;
-            if (loaded === imgs.length) finalizarPDF();
-          };
-          img.onerror = () => {
-            console.error("Error al cargar imagen:", img.src);
-            loaded++;
-            if (loaded === imgs.length) finalizarPDF();
-          };
-        }
-      });
-
-      function finalizarPDF() {
+      setTimeout(() => {
         const options = {
           margin: 0,
           filename: 'hoja_elementos.pdf',
@@ -303,11 +286,12 @@
 
         html2pdf().set(options).from(element).save();
         mostrarCarga(false);
-      }
+      }, 500); // Pequeña pausa para asegurar renderizado
     }
 
     function imprimir() {
       const element = document.getElementById("hoja-imprimir");
+
       if (!element.innerHTML.trim()) {
         alert("No hay contenido para imprimir. Haz clic en 'Generar Vista Previa' primero.");
         return;
@@ -315,41 +299,14 @@
 
       mostrarCarga(true);
 
-      const imgs = element.querySelectorAll("img");
-      let loaded = 0;
-
-      if (imgs.length === 0) {
-        alert("No hay elementos para imprimir.");
-        mostrarCarga(false);
-        return;
-      }
-
-      imgs.forEach((img, index) => {
-        if (img.complete && img.naturalHeight !== 0) {
-          loaded++;
-          if (loaded === imgs.length) finalizarImpresion();
-        } else {
-          img.onload = () => {
-            loaded++;
-            if (loaded === imgs.length) finalizarImpresion();
-          };
-          img.onerror = () => {
-            console.error("Error al cargar imagen:", img.src);
-            loaded++;
-            if (loaded === imgs.length) finalizarImpresion();
-          };
-        }
-      });
-
-      function finalizarImpresion() {
+      setTimeout(() => {
         window.print();
         mostrarCarga(false);
-      }
+      }, 500);
     }
 
     function mostrarCarga(mostrar) {
-      const msg = document.getElementById("mensaje-carga");
-      msg.style.display = mostrar ? "block" : "none";
+      document.getElementById("mensaje-carga").style.display = mostrar ? "block" : "none";
     }
   </script>
 </body>
