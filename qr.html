@@ -206,6 +206,7 @@
 <div id="hoja-imprimir"></div>
 
 <!-- Modal -->
+<!-- Modal -->
 <div id="modal" class="modal">
   <div class="modal-contenido">
     <span onclick="cerrarModal()">×</span>
@@ -228,8 +229,12 @@
       <input type="number" id="total" min="1">
     </label>
     <button onclick="generarDiseño()">Generar Vista Previa</button>
+    <button onclick="cerrarModal()" style="background:#ccc; color:#000;">Cancelar</button>
   </div>
 </div>
+
+<!-- Botón para limpiar -->
+<button onclick="limpiarHojas()" style="margin: 10px; padding: 10px 20px; font-size: 16px;">Limpiar Hojas</button>
 
 <!-- Tabla de selección de productos -->
 <div id="tabla-seleccion" style="display:none;">
@@ -273,6 +278,32 @@
       tbody.appendChild(tr);
     });
   }
+  
+  // Cerrar modal y limpiar contenido temporal
+function cerrarModal() {
+  document.getElementById("modal").style.display = "none";
+  // Opcional: limpiar contenido previo si cambias de idea
+  document.getElementById("contenedor-hojas").innerHTML = "";
+  document.getElementById("hoja-imprimir").innerHTML = "";
+}
+
+// Limpiar todas las hojas generadas
+function limpiarHojas() {
+  if (confirm("¿Estás seguro de limpiar todas las hojas generadas?")) {
+    document.getElementById("contenedor-hojas").innerHTML = "";
+    document.getElementById("hoja-imprimir").innerHTML = "";
+    alert("Hoja(s) limpiada(s).");
+  }
+}
+
+function abrirModal() {
+  document.getElementById("tabla-seleccion").style.display = "none";
+  document.getElementById("modal").style.display = "block";
+
+  // Limpiar contenido anterior al cambiar configuración
+  document.getElementById("contenedor-hojas").innerHTML = "";
+  document.getElementById("hoja-imprimir").innerHTML = "";
+}
 
   function procesarConfiguracion() {
     const inputs = document.querySelectorAll('input[type="number"]');
