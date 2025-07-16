@@ -3,25 +3,180 @@
 <head>
   <meta charset="UTF-8">
   <title>Generador de Hoja de QRs</title>
-  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+    }
+
+    .hoja {
+      width: 21.59cm; /* Tamaño Carta */
+      height: 27.94cm;
+      margin: 20px auto;
+      background: #fff;
+      padding: 1cm;
+      box-sizing: border-box;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.2cm; /* margen de corte */
+      page-break-after: always;
+    }
+
+    .qr {
+      background: #fff;
+      border: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .qr img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 10;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+    }
+
+    .modal-contenido {
+      background: white;
+      padding: 20px;
+      margin: 15% auto;
+      width: 300px;
+      position: relative;
+      border-radius: 8px;
+    }
+
+    .modal-contenido span {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+
+    label {
+      display: block;
+      margin: 10px 0;
+    }
+
+    input[type=number] {
+      width: 100%;
+      padding: 5px;
+      font-size: 16px;
+      margin-top: 5px;
+    }
+  </style>
 </head>
 <body>
 
+  <h2>Generador de Hojas con QRs</h2>
   <button onclick="abrirModal()">Configurar Tamaño QR</button>
+  <button onclick="descargarPDF()">Descargar como PDF</button>
 
   <div id="hoja" class="hoja"></div>
 
   <!-- Modal -->
   <div id="modal" class="modal">
     <div class="modal-contenido">
-      <span onclick="cerrarModal()">X</span>
+      <span onclick="cerrarModal()">×</span>
       <h3>Configura el tamaño del QR</h3>
-      <label>Ancho (cm): <input type="number" id="anchoQR" value="1" step="0.1"></label>
-      <label>Alto (cm): <input type="number" id="altoQR" value="1" step="0.1"></label>
+      <label>Ancho (cm):
+        <input type="number" id="anchoQR" value="1" step="0.1">
+      </label>
+      <label>Alto (cm):
+        <input type="number" id="altoQR" value="1" step="0.1">
+      </label>
       <button onclick="generarQRs()">Generar</button>
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <!-- Librería html2pdf -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js " integrity="sha512-GsL34yK2jsd/2GJjqc1gN+e9w7Fc9AoLAa7ESNQN7J5Ow3gJYUO3YJkBIxkBK1MWIpLtZT1fVJ6bAHSlDw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <script>
+    function abrirModal() {
+      document.getElementById("modal").style.display = "block";
+    }
+
+    function cerrarModal() {
+      document.getElementById("modal").style.display = "none";
+    }
+
+    function generarQRs() {
+      const anchoQR = parseFloat(document.getElementById("anchoQR").value);
+      const altoQR = parseFloat(document.getElementById("altoQR").value);
+      const hoja = document.getElementById("hoja");
+
+      // Limpiar contenido previo
+      hoja.innerHTML = "";
+
+      // Margen entre QRs (en cm)
+      const margenCorte = 0.2;
+
+      // Tamaño efectivo de la hoja (menos padding)
+      const anchoHoja = 21.59 - 2; // 1cm de padding cada lado
+      const altoHoja = 27.94 - 2;
+
+      // Calcular cuántos QRs caben
+      const qrPorFila = Math.floor(anchoHoja / (anchoQR + margenCorte));
+      const filas = Math.floor(altoHoja / (altoQR + margenCorte));
+      const totalQRs = qrPorFila * filas;
+
+      // URL base del QR dinámico
+      const urlBaseQR = "https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://wil1979.github.io/esentia-factura/catalogo.html";
+
+      // Crear los QRs
+      for (let i = 0; i < totalQRs; i++) {
+        const div = document.createElement("div");
+        div.className = "qr";
+        div.style.width = `${anchoQR}cm`;
+        div.style.height = `${altoQR}cm`;
+
+        const img = document.createElement("img");
+        img.src = urlBaseQR;
+        img.alt = "QR";
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.objectFit = "contain";
+
+        div.appendChild(img);
+        hoja.appendChild(div);
+      }
+
+      alert(`Se generarán ${totalQRs} QRs de ${anchoQR}x${altoQR} cm`);
+      cerrarModal();
+    }
+
+    function descargarPDF() {
+      const hoja = document.getElementById("hoja");
+
+      const options = {
+        margin: 0,
+        filename: 'qr_sheet.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, logging: false },
+        jsPDF: { unit: 'cm', format: 'letter', orientation: 'portrait' }
+      };
+
+      html2pdf().set(options).from(hoja).save();
+    }
+  </script>
 </body>
 </html>
