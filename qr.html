@@ -10,6 +10,27 @@
       padding: 20px;
     }
 
+    /* Solo visible en pantalla */
+    .visible-en-pantalla {
+      display: block;
+    }
+
+    /* Oculto al imprimir o generar PDF */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #hoja-imprimir, #hoja-imprimir * {
+        visibility: visible;
+      }
+      #hoja-imprimir {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
+
     .hoja {
       width: 21.59cm;
       height: 27.94cm;
@@ -20,8 +41,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 0.2cm;
-      border: 1px dashed #ccc;
-      page-break-after: always;
+      border: none;
     }
 
     .item {
@@ -88,16 +108,28 @@
     #contenedor-hojas {
       margin-top: 20px;
     }
+
+    /* Hoja oculta para imprimir */
+    #hoja-imprimir {
+      display: none;
+    }
   </style>
 </head>
 <body>
 
-  <h2>Generador de Hojas con QR o Logo</h2>
-  <button onclick="abrirModal()">Configurar Diseño</button>
-  <button onclick="descargarPDF()">Descargar PDF</button>
-  <button onclick="imprimir()">Imprimir</button>
+  <!-- Contenido visible en pantalla -->
+  <div class="visible-en-pantalla">
+    <h2>Generador de Hojas con QR o Logo</h2>
+    <button onclick="abrirModal()">Configurar Diseño</button>
+    <button onclick="generarParaImpresion()">Generar Vista Previa</button>
+    <button onclick="descargarPDF()">Descargar PDF</button>
+    <button onclick="imprimir()">Imprimir</button>
 
-  <div id="contenedor-hojas"></div>
+    <div id="contenedor-hojas"></div>
+  </div>
+
+  <!-- Contenedor oculto usado solo para imprimir o PDF -->
+  <div id="hoja-imprimir"></div>
 
   <!-- Modal -->
   <div id="modal" class="modal">
@@ -136,35 +168,42 @@
     }
 
     function generarDiseño() {
+      generarContenido(document.getElementById("contenedor-hojas"));
+    }
+
+    function generarParaImpresion() {
+      generarContenido(document.getElementById("hoja-imprimir"));
+      alert("Vista para imprimir generada. Puedes usar Imprimir o Descargar PDF.");
+    }
+
+    function generarContenido(contenedor) {
       const tipo = document.getElementById("tipoElemento").value;
       const ancho = parseFloat(document.getElementById("ancho").value);
       const alto = parseFloat(document.getElementById("alto").value);
       const cantidadTotal = parseInt(document.getElementById("total").value);
-      const contenedor = document.getElementById("contenedor-hojas");
 
-      contenedor.innerHTML = ""; // Limpiar vista previa
+      contenedor.innerHTML = ""; // Limpiar contenido
 
       const margenCorte = 0.2;
       const anchoHoja = 21.59 - 2;
       const altoHoja = 27.94 - 2;
 
-      const qrPorFila = Math.floor(anchoHoja / (ancho + margenCorte));
+      const porFila = Math.floor(anchoHoja / (ancho + margenCorte));
       const filas = Math.floor(altoHoja / (alto + margenCorte));
-      const porHoja = qrPorFila * filas;
+      const porHoja = porFila * filas;
 
       if (porHoja <= 0) {
         alert("El tamaño es demasiado grande para la hoja.");
         return;
       }
 
-      let loadedImages = 0;
-      const totalImages = cantidadTotal;
+      let restantes = cantidadTotal;
 
-      while (cantidadTotal > 0) {
+      while (restantes > 0) {
         const hoja = document.createElement("div");
         hoja.className = "hoja";
 
-        const enEstaHoja = Math.min(porHoja, cantidadTotal);
+        const enEstaHoja = Math.min(porHoja, restantes);
 
         for (let i = 0; i < enEstaHoja; i++) {
           const div = document.createElement("div");
@@ -190,47 +229,26 @@
         }
 
         contenedor.appendChild(hoja);
-        cantidadTotal -= enEstaHoja;
+        restantes -= enEstaHoja;
       }
-
-      alert(`Vista previa generada`);
-      cerrarModal();
     }
 
     function descargarPDF() {
-      const element = document.getElementById("contenedor-hojas");
+      const element = document.getElementById("hoja-imprimir");
+      if (!element.innerHTML.trim()) {
+        alert("No hay contenido para descargar. Haz clic en 'Generar Vista Previa' primero.");
+        return;
+      }
+
       const options = {
         margin: 0,
         filename: 'hoja_elementos.pdf',
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
+        html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'cm', format: 'letter', orientation: 'portrait' }
       };
 
-      const imgs = element.querySelectorAll("img");
-      let loaded = 0;
-
-      if (imgs.length === 0) {
-        alert("No hay elementos para descargar.");
-        return;
-      }
-
-      imgs.forEach(img => {
-        if (img.complete && img.naturalHeight !== 0) {
-          loaded++;
-          if (loaded === imgs.length) html2pdf().set(options).from(element).save();
-        } else {
-          img.onload = () => {
-            loaded++;
-            if (loaded === imgs.length) html2pdf().set(options).from(element).save();
-          };
-          img.onerror = () => {
-            console.error("Error al cargar imagen:", img.src);
-            loaded++;
-            if (loaded === imgs.length) html2pdf().set(options).from(element).save();
-          };
-        }
-      });
+      html2pdf().set(options).from(element).save();
     }
 
     function imprimir() {
