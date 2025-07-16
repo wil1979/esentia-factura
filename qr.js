@@ -30,11 +30,22 @@ function generarQRs() {
   hoja.style.setProperty('--ancho-qr', `${anchoQR}cm`);
   hoja.style.setProperty('--alto-qr', `${altoQR}cm`);
 
+  // URL base del QR dinámico
+  const urlBaseQR = " https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://wil1979.github.io/esentia-factura/catalogo.html";
+
   // Crear los QRs
   for (let i = 0; i < totalQRs; i++) {
     const div = document.createElement("div");
     div.className = "qr";
-    div.textContent = `QR ${i + 1}`;
+
+    const img = document.createElement("img");
+    img.src = urlBaseQR;
+    img.alt = "QR";
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "contain";
+
+    div.appendChild(img);
     hoja.appendChild(div);
   }
 
