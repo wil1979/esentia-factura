@@ -5,6 +5,19 @@ function abrirModal() {
 function cerrarModal() {
   document.getElementById("modal").style.display = "none";
 }
+function descargarPDF() {
+  const hoja = document.getElementById("hoja");
+
+  const options = {
+    margin: 0,
+    filename: 'qr_sheet.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, logging: false },
+    jsPDF: { unit: 'cm', format: 'letter', orientation: 'portrait' }
+  };
+
+  html2pdf().set(options).from(hoja).save();
+}
 
 function generarQRs() {
   const anchoQR = parseFloat(document.getElementById("anchoQR").value);
