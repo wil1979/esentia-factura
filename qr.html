@@ -109,13 +109,30 @@
       margin-top: 20px;
     }
 
-    /* Hoja oculta para imprimir */
+    /* Contenedor oculto */
     #hoja-imprimir {
       display: none;
+    }
+
+    /* Mensaje de carga */
+    #mensaje-carga {
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #000;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 5px;
+      z-index: 1000;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
+
+  <div id="mensaje-carga">Cargando imágenes…</div>
 
   <!-- Contenido visible en pantalla -->
   <div class="visible-en-pantalla">
@@ -156,7 +173,9 @@
   </div>
 
   <!-- Librería html2pdf -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js " integrity="sha512-GsL34yK2jsd/2GJjqc1gN+e9w7Fc9AoLAa7ESNQN7J5Ow3gJYUO3YJkBIxkBK1MWIpLtZT1fVJ6bAHSlDw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js "
+          integrity="sha512-GsL34yK2jsd/2GJjqc1gN+e9w7Fc9AoLAa7ESNQN7J5Ow3gJYUO3YJkBIxkBK1MWIpLtZT1fVJ6bAHSlDw=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
   <script>
     function abrirModal() {
@@ -172,11 +191,12 @@
     }
 
     function generarParaImpresion() {
-      generarContenido(document.getElementById("hoja-imprimir"));
-      alert("Vista para imprimir generada. Puedes usar Imprimir o Descargar PDF.");
+      const destino = document.getElementById("hoja-imprimir");
+      destino.innerHTML = "";
+      generarContenido(destino, true);
     }
 
-    function generarContenido(contenedor) {
+    function generarContenido(contenedor, oculto = false) {
       const tipo = document.getElementById("tipoElemento").value;
       const ancho = parseFloat(document.getElementById("ancho").value);
       const alto = parseFloat(document.getElementById("alto").value);
@@ -231,6 +251,10 @@
         contenedor.appendChild(hoja);
         restantes -= enEstaHoja;
       }
+
+      if (oculto) {
+        alert("Vista previa generada. Puedes imprimir o descargar el PDF.");
+      }
     }
 
     function descargarPDF() {
@@ -240,19 +264,92 @@
         return;
       }
 
-      const options = {
-        margin: 0,
-        filename: 'hoja_elementos.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'cm', format: 'letter', orientation: 'portrait' }
-      };
+      mostrarCarga(true);
 
-      html2pdf().set(options).from(element).save();
+      const imgs = element.querySelectorAll("img");
+      let loaded = 0;
+
+      if (imgs.length === 0) {
+        alert("No hay elementos para descargar.");
+        mostrarCarga(false);
+        return;
+      }
+
+      imgs.forEach((img, index) => {
+        if (img.complete && img.naturalHeight !== 0) {
+          loaded++;
+          if (loaded === imgs.length) finalizarPDF();
+        } else {
+          img.onload = () => {
+            loaded++;
+            if (loaded === imgs.length) finalizarPDF();
+          };
+          img.onerror = () => {
+            console.error("Error al cargar imagen:", img.src);
+            loaded++;
+            if (loaded === imgs.length) finalizarPDF();
+          };
+        }
+      });
+
+      function finalizarPDF() {
+        const options = {
+          margin: 0,
+          filename: 'hoja_elementos.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'cm', format: 'letter', orientation: 'portrait' }
+        };
+
+        html2pdf().set(options).from(element).save();
+        mostrarCarga(false);
+      }
     }
 
     function imprimir() {
-      window.print();
+      const element = document.getElementById("hoja-imprimir");
+      if (!element.innerHTML.trim()) {
+        alert("No hay contenido para imprimir. Haz clic en 'Generar Vista Previa' primero.");
+        return;
+      }
+
+      mostrarCarga(true);
+
+      const imgs = element.querySelectorAll("img");
+      let loaded = 0;
+
+      if (imgs.length === 0) {
+        alert("No hay elementos para imprimir.");
+        mostrarCarga(false);
+        return;
+      }
+
+      imgs.forEach((img, index) => {
+        if (img.complete && img.naturalHeight !== 0) {
+          loaded++;
+          if (loaded === imgs.length) finalizarImpresion();
+        } else {
+          img.onload = () => {
+            loaded++;
+            if (loaded === imgs.length) finalizarImpresion();
+          };
+          img.onerror = () => {
+            console.error("Error al cargar imagen:", img.src);
+            loaded++;
+            if (loaded === imgs.length) finalizarImpresion();
+          };
+        }
+      });
+
+      function finalizarImpresion() {
+        window.print();
+        mostrarCarga(false);
+      }
+    }
+
+    function mostrarCarga(mostrar) {
+      const msg = document.getElementById("mensaje-carga");
+      msg.style.display = mostrar ? "block" : "none";
     }
   </script>
 </body>
