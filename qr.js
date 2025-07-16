@@ -5,6 +5,7 @@ function abrirModal() {
 function cerrarModal() {
   document.getElementById("modal").style.display = "none";
 }
+
 function descargarPDF() {
   const hoja = document.getElementById("hoja");
 
