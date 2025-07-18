@@ -59,7 +59,6 @@
       right: 0.3cm;
     }
 
-    /* Modales */
     .modal {
       padding: 20px;
       max-width: 600px;
@@ -95,7 +94,6 @@
       width: 60px;
     }
 
-    /* Botones flotantes */
     #botones-flotantes {
       position: fixed;
       top: 100px;
@@ -133,8 +131,19 @@
 </head>
 <body>
 
+<!-- Modal de selección de elementos visibles -->
+<div id="configuracion-elementos-modal" class="modal">
+  <h2>Selecciona qué elementos mostrar en la etiqueta</h2>
+  <form id="form-elementos">
+    <label><input type="checkbox" id="mostrar-logo" checked> Logo</label>
+    <label><input type="checkbox" id="mostrar-qr" checked> Código QR</label>
+    <label><input type="checkbox" id="mostrar-imagen" checked> Imagen del producto</label><br>
+    <button type="button" onclick="guardarElementos()">Siguiente</button>
+  </form>
+</div>
+
 <!-- Modal de configuración de tamaños -->
-<div id="configuracion-tamanos-modal" class="modal">
+<div id="configuracion-tamanos-modal" class="modal" style="display:none;">
   <h2>Configura los tamaños de las etiquetas e imágenes</h2>
   <form id="form-tamanos">
     <label>
@@ -193,7 +202,11 @@
 
 <script>
   let productos = [];
-  let tamanos = {
+
+  let configuracionEtiqueta = {
+    mostrarLogo: true,
+    mostrarQR: true,
+    mostrarImagen: true,
     anchoEtiqueta: 4,
     altoEtiqueta: 4,
     imgProducto: 1.2,
@@ -225,12 +238,21 @@
     });
   }
 
+  function guardarElementos() {
+    configuracionEtiqueta.mostrarLogo = document.getElementById("mostrar-logo").checked;
+    configuracionEtiqueta.mostrarQR = document.getElementById("mostrar-qr").checked;
+    configuracionEtiqueta.mostrarImagen = document.getElementById("mostrar-imagen").checked;
+
+    document.getElementById("configuracion-elementos-modal").style.display = "none";
+    document.getElementById("configuracion-tamanos-modal").style.display = "block";
+  }
+
   function guardarTamanos() {
-    tamanos.anchoEtiqueta = parseFloat(document.getElementById("label-ancho").value);
-    tamanos.altoEtiqueta = parseFloat(document.getElementById("label-alto").value);
-    tamanos.imgProducto = parseFloat(document.getElementById("img-producto-ancho").value);
-    tamanos.imgLogo = parseFloat(document.getElementById("img-logo-ancho").value);
-    tamanos.imgQR = parseFloat(document.getElementById("img-qr-ancho").value);
+    configuracionEtiqueta.anchoEtiqueta = parseFloat(document.getElementById("label-ancho").value);
+    configuracionEtiqueta.altoEtiqueta = parseFloat(document.getElementById("label-alto").value);
+    configuracionEtiqueta.imgProducto = parseFloat(document.getElementById("img-producto-ancho").value);
+    configuracionEtiqueta.imgLogo = parseFloat(document.getElementById("img-logo-ancho").value);
+    configuracionEtiqueta.imgQR = parseFloat(document.getElementById("img-qr-ancho").value);
 
     document.getElementById("configuracion-tamanos-modal").style.display = "none";
     document.getElementById("configuracion-modal").style.display = "block";
@@ -270,8 +292,8 @@
   function generarEtiquetas(configuracionImpresion) {
     const contenedor = document.getElementById("etiqueta-container");
     contenedor.innerHTML = '';
-    contenedor.style.gridTemplateColumns = `repeat(5, ${tamanos.anchoEtiqueta}cm)`;
-    contenedor.style.gridTemplateRows = `repeat(8, ${tamanos.altoEtiqueta}cm)`;
+    contenedor.style.gridTemplateColumns = `repeat(5, ${configuracionEtiqueta.anchoEtiqueta}cm)`;
+    contenedor.style.gridTemplateRows = `repeat(8, ${configuracionEtiqueta.altoEtiqueta}cm)`;
 
     configuracionImpresion.forEach(config => {
       const producto = productos.find(p => p.nombre === config.nombreProducto);
@@ -280,8 +302,8 @@
       for (let i = 0; i < config.cantidad; i++) {
         const div = document.createElement("div");
         div.className = "label";
-        div.style.width = `${tamanos.anchoEtiqueta}cm`;
-        div.style.height = `${tamanos.altoEtiqueta}cm`;
+        div.style.width = `${configuracionEtiqueta.anchoEtiqueta}cm`;
+        div.style.height = `${configuracionEtiqueta.altoEtiqueta}cm`;
 
         // Título
         const h3 = document.createElement("h3");
@@ -289,30 +311,34 @@
         div.appendChild(h3);
 
         // Imagen del producto
-        if (producto.imagen) {
+        if (configuracionEtiqueta.mostrarImagen && producto.imagen) {
           const imgProd = document.createElement("img");
           imgProd.src = producto.imagen;
           imgProd.alt = producto.nombre;
           imgProd.className = "product-image";
-          imgProd.style.maxWidth = `${tamanos.imgProducto}cm`;
+          imgProd.style.maxWidth = `${configuracionEtiqueta.imgProducto}cm`;
           div.appendChild(imgProd);
         }
 
         // Logo
-        const logo = document.createElement("img");
-        logo.src = "images/logo.png";
-        logo.alt = "Logo de Esentia";
-        logo.className = "logo";
-        logo.style.maxWidth = `${tamanos.imgLogo}cm`;
-        div.appendChild(logo);
+        if (configuracionEtiqueta.mostrarLogo) {
+          const logo = document.createElement("img");
+          logo.src = "images/logo.png";
+          logo.alt = "Logo de Esentia";
+          logo.className = "logo";
+          logo.style.maxWidth = `${configuracionEtiqueta.imgLogo}cm`;
+          div.appendChild(logo);
+        }
 
         // QR Code
-        const qr = document.createElement("img");
-        qr.src = "https://api.qrserver.com/v1/create-qr-code/?data=https://wil1979.github.io/esentia-factura/catalogo.html&size=100x100";
-        qr.alt = "Código QR";
-        qr.className = "qr";
-        qr.style.maxWidth = `${tamanos.imgQR}cm`;
-        div.appendChild(qr);
+        if (configuracionEtiqueta.mostrarQR) {
+          const qr = document.createElement("img");
+          qr.src = "https://api.qrserver.com/v1/create-qr-code/?data=https://wil1979.github.io/esentia-factura/catalogo.html&size=100x100";
+          qr.alt = "Código QR";
+          qr.className = "qr";
+          qr.style.maxWidth = `${configuracionEtiqueta.imgQR}cm`;
+          div.appendChild(qr);
+        }
 
         contenedor.appendChild(div);
       }
@@ -348,7 +374,8 @@
     document.querySelectorAll('input[type="number"]').forEach(input => input.value = 0);
 
     document.getElementById("configuracion-modal").style.display = "none";
-    document.getElementById("configuracion-tamanos-modal").style.display = "block";
+    document.getElementById("configuracion-tamanos-modal").style.display = "none";
+    document.getElementById("configuracion-elementos-modal").style.display = "block";
   }
 
   window.onload = cargarProductos;
