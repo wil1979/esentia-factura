@@ -137,7 +137,8 @@
   <form id="form-elementos">
     <label><input type="checkbox" id="mostrar-logo" checked> Logo</label>
     <label><input type="checkbox" id="mostrar-qr" checked> Código QR</label>
-    <label><input type="checkbox" id="mostrar-imagen" checked> Imagen del producto</label><br>
+    <label><input type="checkbox" id="mostrar-imagen" checked> Imagen del producto</label>
+    <label><input type="checkbox" id="mostrar-nombre" checked> Nombre del producto</label><br>
     <button type="button" onclick="guardarElementos()">Siguiente</button>
   </form>
 </div>
@@ -207,6 +208,7 @@
     mostrarLogo: true,
     mostrarQR: true,
     mostrarImagen: true,
+    mostrarNombre: true,
     anchoEtiqueta: 4,
     altoEtiqueta: 4,
     imgProducto: 1.2,
@@ -242,9 +244,18 @@
     configuracionEtiqueta.mostrarLogo = document.getElementById("mostrar-logo").checked;
     configuracionEtiqueta.mostrarQR = document.getElementById("mostrar-qr").checked;
     configuracionEtiqueta.mostrarImagen = document.getElementById("mostrar-imagen").checked;
+    configuracionEtiqueta.mostrarNombre = document.getElementById("mostrar-nombre").checked;
 
-    document.getElementById("configuracion-elementos-modal").style.display = "none";
-    document.getElementById("configuracion-tamanos-modal").style.display = "block";
+    const mostrarProducto = configuracionEtiqueta.mostrarNombre || configuracionEtiqueta.mostrarImagen;
+
+    if (mostrarProducto) {
+      document.getElementById("configuracion-elementos-modal").style.display = "none";
+      document.getElementById("configuracion-tamanos-modal").style.display = "block";
+    } else {
+      // No se muestra nombre ni imagen → omitir modal de productos
+      document.getElementById("configuracion-elementos-modal").style.display = "none";
+      document.getElementById("configuracion-tamanos-modal").style.display = "block";
+    }
   }
 
   function guardarTamanos() {
@@ -254,8 +265,16 @@
     configuracionEtiqueta.imgLogo = parseFloat(document.getElementById("img-logo-ancho").value);
     configuracionEtiqueta.imgQR = parseFloat(document.getElementById("img-qr-ancho").value);
 
-    document.getElementById("configuracion-tamanos-modal").style.display = "none";
-    document.getElementById("configuracion-modal").style.display = "block";
+    const mostrarProducto = configuracionEtiqueta.mostrarNombre || configuracionEtiqueta.mostrarImagen;
+
+    if (mostrarProducto) {
+      document.getElementById("configuracion-tamanos-modal").style.display = "none";
+      document.getElementById("configuracion-modal").style.display = "block";
+    } else {
+      // Generar etiquetas directamente sin productos
+      document.getElementById("configuracion-tamanos-modal").style.display = "none";
+      generarEtiquetas([{ nombreProducto: "Sin nombre", cantidad: 1 }]);
+    }
   }
 
   function procesarConfiguracion() {
@@ -296,28 +315,30 @@
     contenedor.style.gridTemplateRows = `repeat(8, ${configuracionEtiqueta.altoEtiqueta}cm)`;
 
     configuracionImpresion.forEach(config => {
-      const producto = productos.find(p => p.nombre === config.nombreProducto);
-      if (!producto) return;
-
       for (let i = 0; i < config.cantidad; i++) {
         const div = document.createElement("div");
         div.className = "label";
         div.style.width = `${configuracionEtiqueta.anchoEtiqueta}cm`;
         div.style.height = `${configuracionEtiqueta.altoEtiqueta}cm`;
 
-        // Título
-        const h3 = document.createElement("h3");
-        h3.textContent = producto.nombre.toUpperCase();
-        div.appendChild(h3);
+        // Nombre del producto
+        if (configuracionEtiqueta.mostrarNombre) {
+          const h3 = document.createElement("h3");
+          h3.textContent = config.nombreProducto.toUpperCase();
+          div.appendChild(h3);
+        }
 
         // Imagen del producto
-        if (configuracionEtiqueta.mostrarImagen && producto.imagen) {
-          const imgProd = document.createElement("img");
-          imgProd.src = producto.imagen;
-          imgProd.alt = producto.nombre;
-          imgProd.className = "product-image";
-          imgProd.style.maxWidth = `${configuracionEtiqueta.imgProducto}cm`;
-          div.appendChild(imgProd);
+        if (configuracionEtiqueta.mostrarImagen && productos.length > 0) {
+          const producto = productos.find(p => p.nombre === config.nombreProducto);
+          if (producto && producto.imagen) {
+            const imgProd = document.createElement("img");
+            imgProd.src = producto.imagen;
+            imgProd.alt = producto.nombre;
+            imgProd.className = "product-image";
+            imgProd.style.maxWidth = `${configuracionEtiqueta.imgProducto}cm`;
+            div.appendChild(imgProd);
+          }
         }
 
         // Logo
