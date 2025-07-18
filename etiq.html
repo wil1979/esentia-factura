@@ -1,27 +1,297 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+  <meta charset="UTF-8" />
+  <title>Generador de Etiquetas Esentia</title>
   <style>
+    @page {
+      size: letter;
+      margin: 0;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+    }
+    .sheet {
+      width: 21.59cm;
+      height: 27.94cm;
+      display: grid;
+      grid-template-columns: repeat(5, 4cm);
+      grid-template-rows: repeat(8, 4cm);
+      gap: 0.2cm;
+      padding: 0.6cm;
+      box-sizing: border-box;
+      background: white;
+    }
+    .label {
+      border: 1px solid #000;
+      padding: 0.3cm;
+      font-size: 10pt;
+      box-sizing: border-box;
+      position: relative;
+      text-align: center;
+      break-inside: avoid;
+    }
+    .label h3 {
+      font-size: 11pt;
+      font-weight: bold;
+      margin: 0 0 0.2cm 0;
+      color: black;
+    }
+    .label img.product-image {
+      max-width: 1.2cm;
+      display: block;
+      margin: 0 auto 0.2cm auto;
+    }
+    .label img.logo {
+      max-width: 1.8cm;
+      position: absolute;
+      bottom: 0.3cm;
+      left: 0.3cm;
+    }
+    .label img.qr {
+      max-width: 0.8cm;
+      position: absolute;
+      bottom: 0.3cm;
+      right: 0.3cm;
+    }
+
+    #configuracion-modal {
+      padding: 20px;
+      max-width: 600px;
+      margin: 30px auto;
+      background: white;
+      border: 1px solid #ccc;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+    }
+
+    th, td {
+      padding: 8px;
+      border: 1px solid #ddd;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: #eee;
+    }
+
+    input[type="number"] {
+      width: 60px;
+    }
+
+    /* Botones flotantes */
     #botones-flotantes {
-      display: none;
       position: fixed;
-      top: 20px;
+      top: 100px;
       right: 20px;
+      display: none; /* Se muestra al generar etiquetas */
+      flex-direction: column;
+      gap: 10px;
+      z-index: 999;
+    }
+
+    #botones-flotantes button {
       background: #4CAF50;
       color: white;
-      padding: 10px;
+      border: none;
+      padding: 12px 16px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    #botones-flotantes button:hover {
+      background: #45a049;
+    }
+
+    @media (max-width: 768px) {
+      #botones-flotantes {
+        display: none !important;
+      }
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+      .label {
+        page-break-inside: avoid;
+      }
     }
   </style>
 </head>
 <body>
 
-<div id="botones-flotantes">
-  <button onclick="alert('Botón funciona')">Mostrar</button>
+<!-- Modal de configuración -->
+<div id="configuracion-modal" role="dialog" aria-labelledby="modal-title">
+  <h2 id="modal-title">Selecciona la cantidad de etiquetas por producto</h2>
+  <table id="tabla-productos">
+    <thead>
+      <tr><th>Producto</th><th>Variantes</th><th>Cantidad</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 </div>
 
-<button onclick="document.getElementById('botones-flotantes').style.display = 'block'">
-  Mostrar botones
-</button>
+<!-- Botones flotantes -->
+<div id="botones-flotantes">
+  <button aria-label="Generar etiquetas" onclick="procesarConfiguracion()">🖨️ Generar</button>
+  <button aria-label="Exportar a PDF" onclick="exportarPDF()">📄 PDF</button>
+  <button aria-label="Imprimir etiquetas" onclick="imprimirEtiquetas()">🖨️ Imprimir</button>
+  <button aria-label="Reiniciar formulario" onclick="reiniciar()">🔄 Reiniciar</button>
+</div>
+
+<!-- Etiquetas -->
+<div id="etiqueta-container" class="sheet" style="display:none;"></div>
+
+<!-- Librería html2pdf -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js "></script>
+
+<script>
+  let productos = [];
+
+  async function cargarProductos() {
+    try {
+      const response = await fetch("productos_esentia.json");
+      const data = await response.json();
+      productos = data.filter(p => p.disponible);
+      construirTabla(productos);
+    } catch (err) {
+      console.error("Error al cargar productos:", err);
+    }
+  }
+
+  function construirTabla(productos) {
+    const tbody = document.querySelector("#tabla-productos tbody");
+    productos.forEach(prod => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${prod.nombre}</td>
+        <td>${prod.variantes.map(v => v.nombre.split(" ").pop()).join(", ")}</td>
+        <td><input type="number" min="0" value="0" data-producto="${prod.nombre}"></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function procesarConfiguracion() {
+    const inputs = document.querySelectorAll('input[type="number"]');
+    const configuracion = [];
+    inputs.forEach(input => {
+      const cantidad = parseInt(input.value);
+      if (cantidad > 0) {
+        configuracion.push({
+          nombreProducto: input.dataset.producto,
+          cantidad: cantidad
+        });
+      }
+    });
+
+    const total = configuracion.reduce((sum, item) => sum + item.cantidad, 0);
+    const etiquetasPorHoja = 5 * 8;
+    const hojas = Math.ceil(total / etiquetasPorHoja);
+
+    const confirmar = confirm(
+      `Se van a generar ${total} etiquetas.\n` +
+      `Caben ${etiquetasPorHoja} por hoja.\n` +
+      `Se necesitarán ${hojas} hoja(s).\n\n¿Deseas continuar?`
+    );
+
+    if (confirmar) {
+      console.log("Mostrando botones flotantes...");
+      document.getElementById("configuracion-modal").style.display = "none";
+      document.getElementById("etiqueta-container").style.display = "grid";
+      document.getElementById("botones-flotantes").style.display = "flex";
+      generarEtiquetas(configuracion);
+    }
+  }
+
+  function generarEtiquetas(configuracionImpresion) {
+    const contenedor = document.getElementById("etiqueta-container");
+    contenedor.innerHTML = '';
+    configuracionImpresion.forEach(config => {
+      const producto = productos.find(p => p.nombre === config.nombreProducto);
+      if (!producto) return;
+
+      for (let i = 0; i < config.cantidad; i++) {
+        const div = document.createElement("div");
+        div.className = "label";
+
+        // Título
+        const h3 = document.createElement("h3");
+        h3.textContent = producto.nombre.toUpperCase();
+        div.appendChild(h3);
+
+        // Imagen del producto
+        if (producto.imagen) {
+          const imgProd = document.createElement("img");
+          imgProd.src = producto.imagen;
+          imgProd.alt = producto.nombre;
+          imgProd.className = "product-image";
+          div.appendChild(imgProd);
+        }
+
+        // Logo
+        const logo = document.createElement("img");
+        logo.src = "images/logo.png";
+        logo.alt = "Logo de Esentia";
+        logo.className = "logo";
+        div.appendChild(logo);
+
+        // QR Code
+        const qr = document.createElement("img");
+        qr.src = "https://api.qrserver.com/v1/create-qr-code/?data=https://wil1979.github.io/esentia-factura/catalogo.html&size=100x100";
+        qr.alt = "Código QR";
+        qr.className = "qr";
+        div.appendChild(qr);
+
+        contenedor.appendChild(div);
+      }
+    });
+  }
+
+  function exportarPDF() {
+    const contenedor = document.getElementById("etiqueta-container");
+    if (contenedor.childElementCount === 0) {
+      alert("Primero debes generar las etiquetas.");
+      return;
+    }
+
+    const options = {
+      margin: 0,
+      filename: 'etiquetas_esentia.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'cm', format: 'letter', orientation: 'portrait' }
+    };
+
+    html2pdf().set(options).from(contenedor).save();
+  }
+
+  function imprimirEtiquetas() {
+    window.print();
+  }
+
+  function reiniciar() {
+    document.getElementById("etiqueta-container").innerHTML = '';
+    document.getElementById("etiqueta-container").style.display = "none";
+    document.getElementById("botones-flotantes").style.display = "none";
+    document.querySelectorAll('input[type="number"]').forEach(input => input.value = 0);
+    document.getElementById("configuracion-modal").style.display = "block";
+  }
+
+  window.onload = cargarProductos;
+</script>
 
 </body>
 </html>
