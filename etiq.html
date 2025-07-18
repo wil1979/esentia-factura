@@ -14,17 +14,17 @@
       font-family: Arial, sans-serif;
       background: #f2f2f2;
     }
+
     .sheet {
       width: 21.59cm;
       height: 27.94cm;
       display: grid;
-      grid-template-columns: repeat(5, 4cm);
-      grid-template-rows: repeat(8, 4cm);
       gap: 0.2cm;
       padding: 0.6cm;
       box-sizing: border-box;
       background: white;
     }
+
     .label {
       border: 1px solid #000;
       padding: 0.3cm;
@@ -34,37 +34,44 @@
       text-align: center;
       break-inside: avoid;
     }
+
     .label h3 {
       font-size: 11pt;
       font-weight: bold;
       margin: 0 0 0.2cm 0;
       color: black;
     }
+
     .label img.product-image {
-      max-width: 3.2cm;
       display: block;
       margin: 0 auto 0.2cm auto;
     }
+
     .label img.logo {
-      max-width: 1.8cm;
       position: absolute;
       bottom: 0.3cm;
       left: 0.3cm;
     }
+
     .label img.qr {
-      max-width: .8cm;
       position: absolute;
       bottom: 0.3cm;
       right: 0.3cm;
     }
 
-    #configuracion-modal {
+    /* Modales */
+    .modal {
       padding: 20px;
       max-width: 600px;
       margin: 30px auto;
       background: white;
       border: 1px solid #ccc;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .modal label {
+      display: block;
+      margin-bottom: 10px;
     }
 
     table {
@@ -93,7 +100,7 @@
       position: fixed;
       top: 100px;
       right: 20px;
-      display: none; /* Se muestra al generar etiquetas */
+      display: none;
       flex-direction: column;
       gap: 10px;
       z-index: 999;
@@ -107,17 +114,11 @@
       font-size: 16px;
       border-radius: 6px;
       cursor: pointer;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
 
     #botones-flotantes button:hover {
       background: #45a049;
-    }
-
-    @media (max-width: 768px) {
-      #botones-flotantes {
-        display: none !important;
-      }
     }
 
     @media print {
@@ -128,52 +129,60 @@
         page-break-inside: avoid;
       }
     }
-    
-    
-  #configuracion-modal button {
-    background: #4CAF50;
-    color: white;
-    border: none;
-    padding: 10px 16px;
-    font-size: 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  }
-
-  #configuracion-modal button:hover {
-    background: #45a049;
-  }
-
   </style>
 </head>
 <body>
 
-<!-- Modal de configuración -->
-<!-- Modal de configuración -->
-<div id="configuracion-modal" role="dialog" aria-labelledby="modal-title">
-  <h2 id="modal-title">Selecciona la cantidad de etiquetas por producto</h2>
+<!-- Modal de configuración de tamaños -->
+<div id="configuracion-tamanos-modal" class="modal">
+  <h2>Configura los tamaños de las etiquetas e imágenes</h2>
+  <form id="form-tamanos">
+    <label>
+      Tamaño de etiqueta (ancho en cm):
+      <input type="number" id="label-ancho" value="4" step="0.1" min="1" />
+    </label><br><br>
+
+    <label>
+      Tamaño de etiqueta (alto en cm):
+      <input type="number" id="label-alto" value="4" step="0.1" min="1" />
+    </label><br><br>
+
+    <label>
+      Máximo ancho imagen producto (cm):
+      <input type="number" id="img-producto-ancho" value="1.2" step="0.1" min="0.5" />
+    </label><br><br>
+
+    <label>
+      Máximo ancho logo (cm):
+      <input type="number" id="img-logo-ancho" value="1.8" step="0.1" min="0.5" />
+    </label><br><br>
+
+    <label>
+      Máximo ancho QR (cm):
+      <input type="number" id="img-qr-ancho" value="0.8" step="0.1" min="0.5" />
+    </label><br><br>
+
+    <button type="button" onclick="guardarTamanos()">Siguiente</button>
+  </form>
+</div>
+
+<!-- Modal de configuración de productos -->
+<div id="configuracion-modal" class="modal" style="display:none;">
+  <h2>Selecciona la cantidad de etiquetas por producto</h2>
   <table id="tabla-productos">
     <thead>
       <tr><th>Producto</th><th>Variantes</th><th>Cantidad</th></tr>
     </thead>
     <tbody></tbody>
   </table>
-  
-  <!-- Botón dentro del modal -->
-  <div style="text-align: right; margin-top: 15px;">
-    <button onclick="procesarConfiguracion()" style="background: #4CAF50; color: white; border: none; padding: 10px 16px; font-size: 16px; border-radius: 6px; cursor: pointer;">
-      🖨️ Generar Etiquetas
-    </button>
-  </div>
+  <button onclick="procesarConfiguracion()">🖨️ Generar Etiquetas</button>
 </div>
 
 <!-- Botones flotantes -->
 <div id="botones-flotantes">
-  <button aria-label="Generar etiquetas" onclick="procesarConfiguracion()">🖨️ Generar</button>
-  <button aria-label="Exportar a PDF" onclick="exportarPDF()">📄 PDF</button>
-  <button aria-label="Imprimir etiquetas" onclick="imprimirEtiquetas()">🖨️ Imprimir</button>
-  <button aria-label="Reiniciar formulario" onclick="reiniciar()">🔄 Reiniciar</button>
+  <button onclick="exportarPDF()">📄 PDF</button>
+  <button onclick="imprimirEtiquetas()">🖨️ Imprimir</button>
+  <button onclick="reiniciar()">🔄 Reiniciar</button>
 </div>
 
 <!-- Etiquetas -->
@@ -184,6 +193,13 @@
 
 <script>
   let productos = [];
+  let tamanos = {
+    anchoEtiqueta: 4,
+    altoEtiqueta: 4,
+    imgProducto: 1.2,
+    imgLogo: 1.8,
+    imgQR: 0.8
+  };
 
   async function cargarProductos() {
     try {
@@ -207,6 +223,17 @@
       `;
       tbody.appendChild(tr);
     });
+  }
+
+  function guardarTamanos() {
+    tamanos.anchoEtiqueta = parseFloat(document.getElementById("label-ancho").value);
+    tamanos.altoEtiqueta = parseFloat(document.getElementById("label-alto").value);
+    tamanos.imgProducto = parseFloat(document.getElementById("img-producto-ancho").value);
+    tamanos.imgLogo = parseFloat(document.getElementById("img-logo-ancho").value);
+    tamanos.imgQR = parseFloat(document.getElementById("img-qr-ancho").value);
+
+    document.getElementById("configuracion-tamanos-modal").style.display = "none";
+    document.getElementById("configuracion-modal").style.display = "block";
   }
 
   function procesarConfiguracion() {
@@ -233,7 +260,6 @@
     );
 
     if (confirmar) {
-      console.log("Mostrando botones flotantes...");
       document.getElementById("configuracion-modal").style.display = "none";
       document.getElementById("etiqueta-container").style.display = "grid";
       document.getElementById("botones-flotantes").style.display = "flex";
@@ -244,6 +270,9 @@
   function generarEtiquetas(configuracionImpresion) {
     const contenedor = document.getElementById("etiqueta-container");
     contenedor.innerHTML = '';
+    contenedor.style.gridTemplateColumns = `repeat(5, ${tamanos.anchoEtiqueta}cm)`;
+    contenedor.style.gridTemplateRows = `repeat(8, ${tamanos.altoEtiqueta}cm)`;
+
     configuracionImpresion.forEach(config => {
       const producto = productos.find(p => p.nombre === config.nombreProducto);
       if (!producto) return;
@@ -251,6 +280,8 @@
       for (let i = 0; i < config.cantidad; i++) {
         const div = document.createElement("div");
         div.className = "label";
+        div.style.width = `${tamanos.anchoEtiqueta}cm`;
+        div.style.height = `${tamanos.altoEtiqueta}cm`;
 
         // Título
         const h3 = document.createElement("h3");
@@ -263,6 +294,7 @@
           imgProd.src = producto.imagen;
           imgProd.alt = producto.nombre;
           imgProd.className = "product-image";
+          imgProd.style.maxWidth = `${tamanos.imgProducto}cm`;
           div.appendChild(imgProd);
         }
 
@@ -271,6 +303,7 @@
         logo.src = "images/logo.png";
         logo.alt = "Logo de Esentia";
         logo.className = "logo";
+        logo.style.maxWidth = `${tamanos.imgLogo}cm`;
         div.appendChild(logo);
 
         // QR Code
@@ -278,6 +311,7 @@
         qr.src = "https://api.qrserver.com/v1/create-qr-code/?data=https://wil1979.github.io/esentia-factura/catalogo.html&size=100x100";
         qr.alt = "Código QR";
         qr.className = "qr";
+        qr.style.maxWidth = `${tamanos.imgQR}cm`;
         div.appendChild(qr);
 
         contenedor.appendChild(div);
@@ -311,8 +345,10 @@
     document.getElementById("etiqueta-container").innerHTML = '';
     document.getElementById("etiqueta-container").style.display = "none";
     document.getElementById("botones-flotantes").style.display = "none";
-    document.querySelectorAll('input[type="number"]').forEach(input => input.value = 5);
-    document.getElementById("configuracion-modal").style.display = "block";
+    document.querySelectorAll('input[type="number"]').forEach(input => input.value = 0);
+
+    document.getElementById("configuracion-modal").style.display = "none";
+    document.getElementById("configuracion-tamanos-modal").style.display = "block";
   }
 
   window.onload = cargarProductos;
