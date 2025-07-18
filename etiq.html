@@ -267,9 +267,9 @@
     configuracionEtiqueta.imgLogo = parseFloat(document.getElementById("img-logo-ancho").value);
     configuracionEtiqueta.imgQR = parseFloat(document.getElementById("img-qr-ancho").value);
 
-    const mostrarProducto = configuracionEtiqueta.mostrarNombre || configuracionEtiqueta.mostrarImagen;
-
     document.getElementById("configuracion-tamanos-modal").style.display = "none";
+
+    const mostrarProducto = configuracionEtiqueta.mostrarNombre || configuracionEtiqueta.mostrarImagen;
 
     if (mostrarProducto) {
       document.getElementById("configuracion-modal").style.display = "block";
@@ -284,12 +284,20 @@
     inputs.forEach(input => {
       const cantidad = parseInt(input.value);
       if (cantidad > 0) {
-        configuracion.push({
-          nombreProducto: input.dataset.producto,
-          cantidad: cantidad
-        });
+        const nombreProducto = input.dataset.producto;
+        if (nombreProducto) {
+          configuracion.push({
+            nombreProducto: nombreProducto,
+            cantidad: cantidad
+          });
+        }
       }
     });
+
+    if (configuracion.length === 0) {
+      alert("Por favor, ingresa al menos una cantidad mayor a 0.");
+      return;
+    }
 
     const total = configuracion.reduce((sum, item) => sum + item.cantidad, 0);
     const etiquetasPorHoja = 5 * 8;
@@ -330,6 +338,9 @@
     contenedor.style.gridTemplateRows = `repeat(8, ${configuracionEtiqueta.altoEtiqueta}cm)`;
 
     configuracionImpresion.forEach(config => {
+      const producto = productos.find(p => p.nombre === config.nombreProducto);
+      if (!producto) return;
+
       for (let i = 0; i < config.cantidad; i++) {
         const div = document.createElement("div");
         div.className = "label";
@@ -339,21 +350,18 @@
         // Nombre del producto
         if (configuracionEtiqueta.mostrarNombre) {
           const h3 = document.createElement("h3");
-          h3.textContent = config.nombreProducto.toUpperCase();
+          h3.textContent = producto.nombre.toUpperCase();
           div.appendChild(h3);
         }
 
         // Imagen del producto
-        if (configuracionEtiqueta.mostrarImagen && productos.length > 0) {
-          const producto = productos.find(p => p.nombre === config.nombreProducto);
-          if (producto && producto.imagen) {
-            const imgProd = document.createElement("img");
-            imgProd.src = producto.imagen;
-            imgProd.alt = producto.nombre;
-            imgProd.className = "product-image";
-            imgProd.style.maxWidth = `${configuracionEtiqueta.imgProducto}cm`;
-            div.appendChild(imgProd);
-          }
+        if (configuracionEtiqueta.mostrarImagen && producto.imagen) {
+          const imgProd = document.createElement("img");
+          imgProd.src = producto.imagen;
+          imgProd.alt = producto.nombre;
+          imgProd.className = "product-image";
+          imgProd.style.maxWidth = `${configuracionEtiqueta.imgProducto}cm`;
+          div.appendChild(imgProd);
         }
 
         // Logo
