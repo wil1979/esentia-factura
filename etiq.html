@@ -26,7 +26,7 @@
     }
 
     .label {
-      border: 1px solid #000;
+      border: 0.5px solid #ccc;
       padding: 0.3cm;
       font-size: 10pt;
       box-sizing: border-box;
@@ -390,22 +390,27 @@
   }
 
   function exportarPDF() {
-    const contenedor = document.getElementById("etiqueta-container");
-    if (contenedor.childElementCount === 0) {
-      alert("Primero debes generar las etiquetas.");
-      return;
-    }
-
-    const options = {
-      margin: 0,
-      filename: 'etiquetas_esentia.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'cm', format: 'letter', orientation: 'portrait' }
-    };
-
-    html2pdf().set(options).from(contenedor).save();
+  const contenedor = document.getElementById("etiqueta-container");
+  if (contenedor.childElementCount === 0) {
+    alert("Primero debes generar las etiquetas.");
+    return;
   }
+
+  const options = {
+    margin: 0,
+    filename: 'etiquetas_esentia.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'cm', format: 'letter', orientation: 'portrait' }
+  };
+
+  html2pdf().set(options).from(contenedor).outputPdf('blob').then(pdfBlob => {
+    const blobURL = URL.createObjectURL(pdfBlob);
+    const iframe = document.getElementById("visor-pdf");
+    iframe.src = blobURL;
+    iframe.style.display = "block";
+  });
+}
 
   function imprimirEtiquetas() {
     window.print();
