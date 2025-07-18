@@ -176,6 +176,16 @@
   </form>
 </div>
 
+<!-- Modal de cantidad (sin productos) -->
+<div id="configuracion-cantidad-modal" class="modal" style="display:none;">
+  <h2>¿Cuántas etiquetas deseas generar?</h2>
+  <label>
+    Cantidad:
+    <input type="number" id="cantidad-etiquetas" min="1" value="1" />
+  </label><br><br>
+  <button type="button" onclick="generarEtiquetasDirecto()">Generar Etiquetas</button>
+</div>
+
 <!-- Modal de configuración de productos -->
 <div id="configuracion-modal" class="modal" style="display:none;">
   <h2>Selecciona la cantidad de etiquetas por producto</h2>
@@ -246,16 +256,8 @@
     configuracionEtiqueta.mostrarImagen = document.getElementById("mostrar-imagen").checked;
     configuracionEtiqueta.mostrarNombre = document.getElementById("mostrar-nombre").checked;
 
-    const mostrarProducto = configuracionEtiqueta.mostrarNombre || configuracionEtiqueta.mostrarImagen;
-
-    if (mostrarProducto) {
-      document.getElementById("configuracion-elementos-modal").style.display = "none";
-      document.getElementById("configuracion-tamanos-modal").style.display = "block";
-    } else {
-      // No se muestra nombre ni imagen → omitir modal de productos
-      document.getElementById("configuracion-elementos-modal").style.display = "none";
-      document.getElementById("configuracion-tamanos-modal").style.display = "block";
-    }
+    document.getElementById("configuracion-elementos-modal").style.display = "none";
+    document.getElementById("configuracion-tamanos-modal").style.display = "block";
   }
 
   function guardarTamanos() {
@@ -267,13 +269,12 @@
 
     const mostrarProducto = configuracionEtiqueta.mostrarNombre || configuracionEtiqueta.mostrarImagen;
 
+    document.getElementById("configuracion-tamanos-modal").style.display = "none";
+
     if (mostrarProducto) {
-      document.getElementById("configuracion-tamanos-modal").style.display = "none";
       document.getElementById("configuracion-modal").style.display = "block";
     } else {
-      // Generar etiquetas directamente sin productos
-      document.getElementById("configuracion-tamanos-modal").style.display = "none";
-      generarEtiquetas([{ nombreProducto: "Sin nombre", cantidad: 1 }]);
+      document.getElementById("configuracion-cantidad-modal").style.display = "block";
     }
   }
 
@@ -306,6 +307,20 @@
       document.getElementById("botones-flotantes").style.display = "flex";
       generarEtiquetas(configuracion);
     }
+  }
+
+  function generarEtiquetasDirecto() {
+    const cantidad = parseInt(document.getElementById("cantidad-etiquetas").value);
+    if (isNaN(cantidad) || cantidad <= 0) {
+      alert("Por favor, ingresa una cantidad válida.");
+      return;
+    }
+
+    document.getElementById("configuracion-cantidad-modal").style.display = "none";
+    document.getElementById("etiqueta-container").style.display = "grid";
+    document.getElementById("botones-flotantes").style.display = "flex";
+
+    generarEtiquetas([{ nombreProducto: "Sin nombre", cantidad: cantidad }]);
   }
 
   function generarEtiquetas(configuracionImpresion) {
@@ -392,9 +407,9 @@
     document.getElementById("etiqueta-container").innerHTML = '';
     document.getElementById("etiqueta-container").style.display = "none";
     document.getElementById("botones-flotantes").style.display = "none";
-    document.querySelectorAll('input[type="number"]').forEach(input => input.value = 0);
 
     document.getElementById("configuracion-modal").style.display = "none";
+    document.getElementById("configuracion-cantidad-modal").style.display = "none";
     document.getElementById("configuracion-tamanos-modal").style.display = "none";
     document.getElementById("configuracion-elementos-modal").style.display = "block";
   }
