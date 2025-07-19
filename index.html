@@ -2,89 +2,118 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Esentia - Facturación</title>
+  <title>Esentia - Página Principal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
-  <!-- Estilos -->
-  <link rel="stylesheet" href="catalogo.css" />
-  
-  <!-- Select2 (opcional) -->
-  <link href="https://cdn.jsdelivr.net/npm/select2 @4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-  
-  <!-- jsPDF para generar PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js "></script>
-  
-  <!-- jQuery (requerido por Select2) -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js "></script>
-  <script src="https://cdn.jsdelivr.net/npm/select2 @4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: #f2f7f5;
+      color: #333;
+    }
+
+    header {
+      background: #d6efe9;
+      text-align: center;
+      padding: 1rem;
+      border-bottom: 3px solid #b2d8d8;
+    }
+
+    header img {
+      height: 60px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.8rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      padding: 2rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.3s;
+      text-align: center;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+
+    .card h2 {
+      margin-top: 0.5rem;
+      font-size: 1.2rem;
+    }
+
+    .emoji {
+      font-size: 2.2rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.85rem;
+      color: #777;
+      background: #f9f9f9;
+      border-top: 1px solid #ccc;
+    }
+  </style>
 </head>
-<body class="modo-claro">
+<body>
 
   <header>
-    <div class="logo-container">
-      <img src="images/logo.png" alt="Logo de Esentia" class="logo" />
-    </div>
-    <h1>🧾 Sistema de Facturación - Esentia</h1>
+    <img src="images/logo.png" alt="Logo Esentia" />
+    <h1>🌿 Bienvenido a Esentia</h1>
+    <p>Tu centro de herramientas administrativas</p>
   </header>
 
-  <main class="container">
-    <form id="facturaForm">
-      <label for="idCliente">Cédula Cliente (9 o 12 dígitos):</label>
-      <input type="text" id="idCliente" placeholder="Ej: 102030405" />
+  <section class="grid">
+    <a href="https://wil1979.github.io/esentia-factura/factura.html" class="card">
+      <div class="emoji">🧾</div>
+      <h2>Facturación</h2>
+    </a>
+    <a href="https://wil1979.github.io/esentia-factura/catalogo.html" class="card">
+      <div class="emoji">🌸</div>
+      <h2>Catálogo de Esencias</h2>
+    </a>
+    <a href="https://wil1979.github.io/esentia-factura/limpieza/limpieza.html" class="card"></a>
+      <div class="emoji">🧼</div>
+      <h2>Catálogo de Limpieza</h2>
+    </a>
+    <a href="https://wil1979.github.io/esentia-factura/limpieza/index.html" class="card">
+      
+      <div class="emoji">📦</div>
+      <h2>Solicitud a Proveedor</h2>
+    </a>
+    <a href="https://wil1979.github.io/esentia-factura/etiq.html" class="card">
+      <div class="emoji">🏷️</div>
+      <h2>Crear Etiquetas</h2>
+    </a>
+    <a href="https://wil1979.github.io/esentia-factura/etiqueta.html" class="card">
+      <div class="emoji">🔍</div>
+      <h2>Etiqueta Trasera Informativa</h2>
+    </a>
+    <a href="https://wil1979.github.io/esentia-factura/qr.html" class="card">
+      <div class="emoji">🎨</div>
+      <h2>QR y Logo</h2>
+    </a>
+  </section>
 
-      <label for="cliente">Nombre del Cliente:</label>
-      <input type="text" id="cliente" placeholder="Nombre completo" required />
-
-      <label for="factura">Número de Factura:</label>
-      <input type="text" id="factura" readonly />
-
-      <label for="fecha">Fecha:</label>
-      <input type="date" id="fecha" value="2025-04-05" readonly />
-
-      <label for="productoSelect">Buscar Producto:</label>
-      <select id="productoSelect" style="width: 100%;"></select>
-
-      <label for="cantidadSelect">Cantidad:</label>
-      <input type="number" id="cantidadSelect" value="1" min="1" style="width: 60px;" />
-
-      <button type="button" onclick="agregarProducto()">➕ Agregar al carrito</button>
-
-      <ul id="listaProductos" style="margin-top: 1rem;"></ul>
-
-      <label for="descuentoCantidad">Descuento fijo (₡):</label>
-      <input type="number" id="descuentoCantidad" value="0" min="0" />
-
-      <label for="descuentoPorcentaje">Descuento (%)</label>
-      <input type="number" id="descuentoPorcentaje" value="0" min="0" max="100" />
-
-      <label for="numeroWhatsApp">Enviar por WhatsApp (8 dígitos):</label>
-      <input type="tel" id="numeroWhatsApp" placeholder="88889999" />
-
-      <p id="totalDisplay" style="font-weight: bold; margin-top: 1rem;"></p>
-
-      <button type="button" onclick="generarFacturaPDF()">📄 Generar PDF</button>
-      <button type="button" onclick="enviarFacturaPorWhatsApp()">📲 Enviar por WhatsApp</button>
-    </form>
-
-    <hr />
-
-    <h3>📁 Historial de Facturas</h3>
-    <button type="button" onclick="mostrarHistorial()">Mostrar</button>
-    <button type="button" onclick="borrarHistorial()">🗑️ Borrar</button>
-    <div id="historial" style="margin-top: 1rem;"></div>
-  </main>
-
-  <footer style="text-align: center; font-size: 0.9rem; color: #888; margin-top: 2rem;">
-
-    <strong>Indicaciones de Uso</strong><br />
-    Añada 5-9 gotas en un quemador cerámico, candela o difusor eléctrico para difundir inmediatamente su aroma en el ambiente<br />
-    Evite derramar el aceite sobre superficies pintadas o barnizadas<br />
-    <br />
-    <strong>NOTA:</strong> no son consumibles ni aplicables directamente en la piel.
-    &copy; 2025 Esentia - Desarrollado por Wilber Calderón M.
+  <footer>
+    &copy; 2025 Esentia. Diseñado con amor por Wilber Calderón.
   </footer>
 
-  <script src="catalogo.js"></script>
-  <script src="factura.js"></script>
 </body>
 </html>
