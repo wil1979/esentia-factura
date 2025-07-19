@@ -1,6 +1,21 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
+  <!-- Manifest -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#4caf50" />
+<link rel="icon" href="images/logo.png" sizes="192x192" />
+
+<!-- Service Worker -->
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(() => console.log('Service Worker registrado'))
+      .catch(err => console.error('Error al registrar Service Worker:', err));
+  }
+</script>
+
   <meta charset="UTF-8" />
   <title>Esentia - Facturación</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -40,7 +55,9 @@
 
       <label for="fecha">Fecha:</label>
       <input type="date" id="fecha" value="2025-04-05" readonly />
-
+   
+      <hr>
+<h3>🧼 Agregar Productos de Aromatizantes</h3>
       <label for="productoSelect">Buscar Producto:</label>
       <select id="productoSelect" style="width: 100%;"></select>
 
@@ -51,9 +68,9 @@
 
       <ul id="listaProductos" style="margin-top: 1rem;"></ul>
 
+<hr/>
 
 
-//seccion de limpieza
       <hr>
 <h3>🧼 Agregar Productos de Limpieza</h3>
 
@@ -64,7 +81,7 @@
 <input type="number" id="cantidadLimpieza" value="1" min="1" style="width: 60px;" />
 
 <button type="button" onclick="agregarProductoLimpieza()">➕ Agregar producto de limpieza</button>
-//seccion de limpieza
+
 
       <label for="descuentoCantidad">Descuento fijo (₡):</label>
       <input type="number" id="descuentoCantidad" value="0" min="0" />

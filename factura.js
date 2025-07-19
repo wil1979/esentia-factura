@@ -127,7 +127,8 @@ function enviarFacturaPorWhatsApp() {
   mensaje += `\n💰 Subtotal: ₡${subtotal.toLocaleString()}`;
   mensaje += `\n🔖 Descuento: ₡${descuento.toLocaleString()} (${descuentoPorcentaje}% si aplica)`;
   mensaje += `\n✅ Total a pagar: ₡${total.toLocaleString()}`;
-  mensaje += `\n\n💳 Formas de pago:\n1. Efectivo contra entrega\n2. SINPE 72952454 Wilber Calderón M.\n3. BAC: CR59010200009453897656\n\n🌿 Encuentra más fragancias aquí:\nhttps://wil1979.github.io/esentia-factura/catalogo.html        `;
+  mensaje += `\n\n💳 Formas de pago:\n1. Efectivo contra entrega\n2. SINPE 72952454 Wilber Calderón M.\n3. BAC: CR59010200009453897656\n\n🌿 Estamos encantados de atenderte.
+Es un placer ayudarte a crear espacios más limpios, frescos y armoniosos con nuestras fragancias y productos de limpieza.`;
 
   const url = `https://wa.me/506${numero}?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
@@ -154,7 +155,7 @@ function generarFacturaPDF() {
 
   // Encabezado
   doc.setFontSize(16);
-  doc.text("🧾 Factura - Esentia", 60, 20);
+  doc.text(" Factura - Esentia", 60, 20);
 
   doc.setFontSize(12);
   doc.text(`N°: ${factura}`, 15, 40);
@@ -182,8 +183,8 @@ function generarFacturaPDF() {
   doc.text("🙏 ¡Gracias por tu confianza!", 15, y);
 
   const nota = `
-Estamos encantados de servirte. 
-Es un placer poder ayudarte a crear ambientes relajantes y aromáticos.
+Estamos encantados de atenderte.
+Es un placer ayudarte a crear espacios más limpios, frescos y armoniosos con nuestras fragancias y productos de limpieza.
 
 Formas de pago:
 1. Efectivo contra entrega
@@ -276,4 +277,43 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // Cargar productos
   cargarProductosEnFacturacion();
+
+  cargarProductosLimpieza();
 });
+
+function cargarProductosLimpieza() {
+  fetch('./productos_limpieza_completo.json')
+    .then(res => res.json())
+    .then(productos => {
+      const select = document.getElementById("productoLimpiezaSelect");
+      select.innerHTML = '<option value="">-- Selecciona un producto --</option>';
+
+      productos.forEach(prod => {
+        if (!prod.disponible) return;
+
+        const option = document.createElement("option");
+        option.value = `${prod.nombre}|${prod.precioPublico}`;
+        option.textContent = `${prod.nombre} – ₡${prod.precioPublico.toLocaleString()}`;
+        select.appendChild(option);
+      });
+
+      $('#productoLimpiezaSelect').select2({
+        placeholder: "Buscar producto de limpieza",
+        allowClear: true,
+        width: '100%'
+      });
+    });
+}
+
+function agregarProductoLimpieza() {
+  const select = document.getElementById("productoLimpiezaSelect");
+  const [nombre, precio] = select.value.split("|");
+  const cantidad = parseInt(document.getElementById("cantidadLimpieza").value) || 1;
+
+  if (!nombre) return alert("Selecciona un producto válido");
+
+  productosFactura.push({ nombre, precio: parseInt(precio), cantidad });
+  actualizarVista();
+  actualizarTotal();
+}
+
