@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Etiqueta Aceite de Masaje</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js "></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 10px;
+      background: #f0f0f0;
+      display: flex;
+      gap: 10px;
+    }
+
+    .formulario {
+      flex: 1;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      max-width: 400px;
+      height: fit-content;
+    }
+
+    .formulario input,
+    .formulario textarea,
+    .formulario select {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 4px 6px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .formulario button {
+      padding: 8px 16px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .etiqueta-container {
+      flex: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+      background: white;
+      padding: 0;
+      margin: 0;
+    }
+
+    .etiqueta {
+      display: flex;
+      flex-direction: row;
+      width: 8cm;
+      height: 4cm;
+      background: var(--bg-color, #ccd897);
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      font-size: var(--font-size, 7px);
+      overflow: hidden;
+    }
+
+    .lateral {
+      width: 33%;
+      padding: 5px;
+      box-sizing: border-box;
+      text-align: justify;
+      font-size: var(--font-size, 7px);
+    }
+
+    .central {
+      width: 34%;
+      text-align: center;
+      padding: 5px;
+      box-sizing: border-box;
+      font-size: var(--font-size, 7px);
+    }
+
+    .logo {
+      width: 50%;
+      margin-bottom: 2px;
+    }
+
+    .nombre-producto {
+      font-size: 6px;
+      font-weight: bold;
+      margin: 2px 0;
+    }
+
+    .producto {
+      height: var(--img-height, 70px);
+      width: auto;
+      margin-top: 0;
+    }
+
+    /* Contenedor oculto para PDF */
+    #pdf-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 816px;
+      height: 1056px;
+      background: white;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+      padding: 0;
+      margin: 0;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    #pdf-container .etiqueta {
+      margin: 0;
+      padding: 0;
+      box-shadow: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="formulario">
+    <h3>Crear etiqueta</h3>
+
+    <label>Nombre del producto:</label>
+    <input id="nombreProducto" value="Aceite para Masajes" oninput="generarEtiquetas()">
+
+    <label>Texto central:</label>
+    <textarea id="textoCentral" oninput="generarEtiquetas()">Con aceite de Oliva & vitamina E</textarea>
+
+    <label>Información izquierda:</label>
+    <textarea id="infoIzquierda" rows="6" oninput="generarEtiquetas()">Este delicioso aceite, especialmente formulado para cualquier tipo de masaje, humecta y acondiciona su piel. Gracias a las fragancias utilizadas se consiguen resultados vitales para el bienestar personal. Beneficios del masaje: Alivia el agotamiento del sistema nervioso y ayuda a controlar problemas de circulación, propiciando quietud y tranquilidad a su cuerpo. AROMATERAPIA: Aumenta los niveles de energía al mismo tiempo que tranquiliza el cuerpo y la mente.</textarea>
+
+    <label>Recomendaciones:</label>
+    <textarea id="recomendaciones" rows="6" oninput="generarEtiquetas()">Recomendado por especialistas. Modo de empleo: Aplique una cantidad generosa sobre sus manos y distribuya uniformemente sobre el área a masajear. Precauciones: Solo uso externo. Ingredientes: Paraffnum Liquidum, Olea Europaea Oil, Tocopheryl Acetate, Parfum, BHT.</textarea>
+
+    <label>Cantidad de etiquetas:</label>
+    <input id="cantidad" type="number" min="1" value="12" oninput="generarEtiquetas()">
+
+    <label>Logo (opcional):</label>
+    <input type="file" id="logoInput" accept="image/*" onchange="cargarLogo(event)">
+
+    <label>Imagen del producto:</label>
+    <input type="file" id="imagenInput" accept="image/*" onchange="cargarImagen(event)">
+
+    <label>Nombre archivo PDF:</label>
+    <input id="nombreArchivo" value="etiquetas_masaje">
+
+    <hr>
+
+    <label>Color de fondo:</label>
+    <input type="color" id="bgColor" value="#ccd897" onchange="actualizarEstilos()">
+
+    <label>Nombre imagen (sin ruta ni .png):</label>
+    <input id="nombreImagen" value="lavanda" oninput="generarEtiquetas()">
+
+    <label>Tamaño de fuente (px):</label>
+    <input type="number" id="fontSize" value="7" onchange="actualizarEstilos()">
+
+    <label>Altura imagen (px):</label>
+    <input type="number" id="imgHeight" value="70" onchange="actualizarEstilos()">
+
+    <button onclick="generarPDF()">Guardar como PDF</button>
+  </div>
+
+  <div class="etiqueta-container" id="etiquetas"></div>
+
+  <!-- Contenedor oculto para PDF -->
+  <div id="pdf-container"></div>
+
+  <script>
+    let logoBase64 = "images/logo.png"; // Ruta por defecto del logo
+    let productoBase64 = "etiqueta/lavanda.png"; // Ruta por defecto de la imagen del producto
+
+    function actualizarEstilos() {
+      document.documentElement.style.setProperty('--bg-color', document.getElementById('bgColor').value);
+      document.documentElement.style.setProperty('--font-size', document.getElementById('fontSize').value + 'px');
+      document.documentElement.style.setProperty('--img-height', document.getElementById('imgHeight').value + 'px');
+    }
+
+    function generarEtiquetas() {
+      const nombreProducto = document.getElementById("nombreProducto").value.trim();
+      const textoCentral = document.getElementById("textoCentral").value.trim();
+      const infoIzquierda = document.getElementById("infoIzquierda").value.trim();
+      const recomendaciones = document.getElementById("recomendaciones").value.trim();
+      const cantidad = parseInt(document.getElementById("cantidad").value) || 1;
+
+      const anchoCm = 8;
+      const altoCm = 4;
+      const anchoPx = anchoCm * 37.8;
+      const altoPx = altoCm * 37.8;
+
+      const contenedor = document.getElementById("etiquetas");
+      contenedor.innerHTML = "";
+
+      for (let i = 0; i < cantidad; i++) {
+        const etiqueta = document.createElement("div");
+        etiqueta.className = "etiqueta";
+        etiqueta.style.width = anchoPx + "px";
+        etiqueta.style.height = altoPx + "px";
+
+        etiqueta.innerHTML = `
+          <div class="lateral"><div>${infoIzquierda}</div></div>
+          <div class="central">
+            <img class="logo" src="${logoBase64}" alt="Logo">
+            <div class="nombre-producto">${nombreProducto}</div>
+            <div>${textoCentral}</div>
+            <img class="producto" src="${productoBase64}" alt="${nombreProducto}">
+          </div>
+          <div class="lateral"><div>${recomendaciones}</div></div>
+        `;
+        contenedor.appendChild(etiqueta);
+      }
+    }
+
+    function cargarLogo(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          logoBase64 = e.target.result;
+          generarEtiquetas();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function cargarImagen(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          productoBase64 = e.target.result;
+          generarEtiquetas();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    async function generarPDF() {
+      const pdfContainer = document.getElementById("pdf-container");
+      pdfContainer.innerHTML = "";
+
+      const nombreProducto = document.getElementById("nombreProducto").value.trim();
+      const textoCentral = document.getElementById("textoCentral").value.trim();
+      const infoIzquierda = document.getElementById("infoIzquierda").value.trim();
+      const recomendaciones = document.getElementById("recomendaciones").value.trim();
+      const cantidad = parseInt(document.getElementById("cantidad").value) || 1;
+
+      const anchoCm = 8;
+      const altoCm = 4;
+      const anchoPx = anchoCm * 37.8;
+      const altoPx = altoCm * 37.8;
+
+      const bgColor = document.getElementById("bgColor").value;
+      const fontSize = document.getElementById("fontSize").value;
+      const imgHeight = document.getElementById("imgHeight").value;
+
+      for (let i = 0; i < cantidad; i++) {
+        const etiqueta = document.createElement("div");
+        etiqueta.className = "etiqueta";
+        etiqueta.style.width = anchoPx + "px";
+        etiqueta.style.height = altoPx + "px";
+        etiqueta.style.backgroundColor = bgColor;
+        etiqueta.style.fontSize = fontSize + "px";
+        etiqueta.style.margin = "0";
+        etiqueta.style.padding = "0";
+
+        etiqueta.innerHTML = `
+          <div class="lateral"><div>${infoIzquierda}</div></div>
+          <div class="central">
+            <img class="logo" src="${logoBase64}" alt="Logo">
+            <div class="nombre-producto">${nombreProducto}</div>
+            <div>${textoCentral}</div>
+            <img class="producto" src="${productoBase64}" alt="${nombreProducto}" style="height:${imgHeight}px">
+          </div>
+          <div class="lateral"><div>${recomendaciones}</div></div>
+        `;
+        pdfContainer.appendChild(etiqueta);
+      }
+
+      // Esperar a que las imágenes se carguen
+      await new Promise(resolve => {
+        const images = pdfContainer.querySelectorAll('img');
+        let loaded = 0;
+        images.forEach(img => {
+          img.onload = () => {
+            loaded++;
+            if (loaded === images.length) resolve();
+          };
+        });
+        if (images.length === 0) resolve();
+      });
+
+      const filename = document.getElementById("nombreArchivo").value || 'etiqueta.pdf';
+      const opt = {
+        margin: 0,
+        filename: filename.endsWith('.pdf') ? filename : filename + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          scrollY: 0,
+          scrollX: 0,
+          useCORS: true
+        },
+        jsPDF: {
+          unit: 'px',
+          format: [816, 1056],
+          orientation: 'landscape'
+        }
+      };
+
+      html2pdf().from(pdfContainer).set(opt).save();
+    }
+
+    // Inicial
+    actualizarEstilos();
+    generarEtiquetas();
+  </script>
+</body>
+</html>
