@@ -8,6 +8,7 @@
       size: letter;
       margin: 0;
     }
+
     body {
       margin: 0;
       padding: 0;
@@ -19,26 +20,27 @@
       width: 21.59cm;
       height: 27.94cm;
       display: grid;
-      gap: 0.2cm;
-      padding: 0.6cm;
+      gap: 0.1cm;
+      padding: 0.4cm;
       box-sizing: border-box;
-      background: white;
+      background: rgb(255, 255, 255);
     }
 
     .label {
-      border: 0.5px solid #ccc;
-      padding: 0.3cm;
+      border: 0.2px solid #d4d2d2;
+      padding: 0.5cm;
       font-size: 10pt;
       box-sizing: border-box;
       position: relative;
       text-align: center;
       break-inside: avoid;
+      background: radial-gradient(125% 125% at 50% 10%, #fff 40%, rgb(75, 207, 216) 100%);
     }
 
     .label h3 {
       font-size: 11pt;
       font-weight: bold;
-      margin: 0 0 0.2cm 0;
+      margin: 0 0 0.1cm 0;
       color: black;
     }
 
@@ -63,7 +65,7 @@
       padding: 20px;
       max-width: 600px;
       margin: 30px auto;
-      background: white;
+      background: rgb(249, 248, 250);
       border: 1px solid #ccc;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
@@ -94,44 +96,39 @@
       width: 60px;
     }
 
-    #botones-flotantes {
+      #botones-flotantes {
       position: fixed;
-      top: 100px;
-      right: 20px;
-      display: none;
+      bottom: 10px;
+      right: 10px;
+      display: flex;
       flex-direction: column;
       gap: 10px;
-      z-index: 999;
+      z-index: 1000;
     }
 
     #botones-flotantes button {
-      background: #4CAF50;
+      padding: 10px;
+      background: #008080;
       color: white;
       border: none;
-      padding: 12px 16px;
-      font-size: 16px;
       border-radius: 6px;
       cursor: pointer;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      font-size: 16px;
     }
 
-    #botones-flotantes button:hover {
-      background: #45a049;
-    }
 
     @media print {
-      body {
-        background: white;
-      }
-      .label {
-        page-break-inside: avoid;
+       #botones-flotantes,
+      button,
+      .modal {
+        display: none !important;
       }
     }
   </style>
 </head>
 <body>
 
-<!-- Modal de selección de elementos visibles -->
+<!-- Modales de configuración -->
 <div id="configuracion-elementos-modal" class="modal">
   <h2>Selecciona qué elementos mostrar en la etiqueta</h2>
   <form id="form-elementos">
@@ -143,40 +140,28 @@
   </form>
 </div>
 
-<!-- Modal de configuración de tamaños -->
 <div id="configuracion-tamanos-modal" class="modal" style="display:none;">
   <h2>Configura los tamaños de las etiquetas e imágenes</h2>
   <form id="form-tamanos">
-    <label>
-      Tamaño de etiqueta (ancho en cm):
+    <label>Tamaño de etiqueta (ancho en cm):
       <input type="number" id="label-ancho" value="4" step="0.1" min="1" />
     </label><br><br>
-
-    <label>
-      Tamaño de etiqueta (alto en cm):
+    <label>Tamaño de etiqueta (alto en cm):
       <input type="number" id="label-alto" value="4" step="0.1" min="1" />
     </label><br><br>
-
-    <label>
-      Máximo ancho imagen producto (cm):
-      <input type="number" id="img-producto-ancho" value="1.2" step="0.1" min="0.5" />
+    <label>Máximo ancho imagen producto (cm):
+      <input type="number" id="img-producto-ancho" value="2.8" step="0.1" min="0.5" />
     </label><br><br>
-
-    <label>
-      Máximo ancho logo (cm):
-      <input type="number" id="img-logo-ancho" value="1.8" step="0.1" min="0.5" />
+    <label>Máximo ancho logo (cm):
+      <input type="number" id="img-logo-ancho" value="2" step="0.1" min="0.5" />
     </label><br><br>
-
-    <label>
-      Máximo ancho QR (cm):
+    <label>Máximo ancho QR (cm):
       <input type="number" id="img-qr-ancho" value="0.8" step="0.1" min="0.5" />
     </label><br><br>
-
     <button type="button" onclick="guardarTamanos()">Siguiente</button>
   </form>
 </div>
 
-<!-- Modal de cantidad (sin productos) -->
 <div id="configuracion-cantidad-modal" class="modal" style="display:none;">
   <h2>¿Cuántas etiquetas deseas generar?</h2>
   <label>
@@ -186,12 +171,11 @@
   <button type="button" onclick="generarEtiquetasDirecto()">Generar Etiquetas</button>
 </div>
 
-<!-- Modal de configuración de productos -->
 <div id="configuracion-modal" class="modal" style="display:none;">
   <h2>Selecciona la cantidad de etiquetas por producto</h2>
   <table id="tabla-productos">
     <thead>
-      <tr><th>Producto</th><th>Variantes</th><th>Cantidad</th></tr>
+      <tr><th>Producto</th><th>Cantidad</th></tr>
     </thead>
     <tbody></tbody>
   </table>
@@ -203,14 +187,16 @@
   <button onclick="exportarPDF()">📄 PDF</button>
   <button onclick="imprimirEtiquetas()">🖨️ Imprimir</button>
   <button onclick="reiniciar()">🔄 Reiniciar</button>
+  <button onclick="location.href='https://wil1979.github.io/esentia-factura/index.html'">🏠 Inicio</button>
 </div>
 
 <!-- Etiquetas -->
 <div id="etiqueta-container" class="sheet" style="display:none;"></div>
 
-<!-- Librería html2pdf -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js "></script>
+<!-- Librería -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
+<!-- Script funcional -->
 <script>
   let productos = [];
 
@@ -221,7 +207,7 @@
     mostrarNombre: true,
     anchoEtiqueta: 4,
     altoEtiqueta: 4,
-    imgProducto: 1.2,
+    imgProducto: 2.2,
     imgLogo: 1.8,
     imgQR: 0.8
   };
@@ -243,7 +229,6 @@
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${prod.nombre}</td>
-        <td>${prod.variantes.map(v => v.nombre.split(" ").pop()).join(", ")}</td>
         <td><input type="number" min="0" value="0" data-producto="${prod.nombre}"></td>
       `;
       tbody.appendChild(tr);
@@ -269,9 +254,7 @@
 
     document.getElementById("configuracion-tamanos-modal").style.display = "none";
 
-    const mostrarProducto = configuracionEtiqueta.mostrarNombre || configuracionEtiqueta.mostrarImagen;
-
-    if (mostrarProducto) {
+    if (configuracionEtiqueta.mostrarNombre || configuracionEtiqueta.mostrarImagen) {
       document.getElementById("configuracion-modal").style.display = "block";
     } else {
       document.getElementById("configuracion-cantidad-modal").style.display = "block";
@@ -286,10 +269,7 @@
       if (cantidad > 0) {
         const nombreProducto = input.dataset.producto;
         if (nombreProducto) {
-          configuracion.push({
-            nombreProducto: nombreProducto,
-            cantidad: cantidad
-          });
+          configuracion.push({ nombreProducto, cantidad });
         }
       }
     });
@@ -299,22 +279,11 @@
       return;
     }
 
-    const total = configuracion.reduce((sum, item) => sum + item.cantidad, 0);
-    const etiquetasPorHoja = 5 * 8;
-    const hojas = Math.ceil(total / etiquetasPorHoja);
+    document.getElementById("configuracion-modal").style.display = "none";
+    document.getElementById("etiqueta-container").style.display = "grid";
+    document.getElementById("botones-flotantes").style.display = "flex";
 
-    const confirmar = confirm(
-      `Se van a generar ${total} etiquetas.\n` +
-      `Caben ${etiquetasPorHoja} por hoja.\n` +
-      `Se necesitarán ${hojas} hoja(s).\n\n¿Deseas continuar?`
-    );
-
-    if (confirmar) {
-      document.getElementById("configuracion-modal").style.display = "none";
-      document.getElementById("etiqueta-container").style.display = "grid";
-      document.getElementById("botones-flotantes").style.display = "flex";
-      generarEtiquetas(configuracion);
-    }
+    generarEtiquetas(configuracion);
   }
 
   function generarEtiquetasDirecto() {
@@ -328,7 +297,7 @@
     document.getElementById("etiqueta-container").style.display = "grid";
     document.getElementById("botones-flotantes").style.display = "flex";
 
-    generarEtiquetas([{ nombreProducto: "Sin nombre", cantidad: cantidad }]);
+    generarEtiquetas([{ nombreProducto: "Sin nombre", cantidad }]);
   }
 
   function generarEtiquetas(configuracionImpresion) {
@@ -347,14 +316,12 @@
         div.style.width = `${configuracionEtiqueta.anchoEtiqueta}cm`;
         div.style.height = `${configuracionEtiqueta.altoEtiqueta}cm`;
 
-        // Nombre del producto
         if (configuracionEtiqueta.mostrarNombre) {
           const h3 = document.createElement("h3");
           h3.textContent = producto.nombre.toUpperCase();
           div.appendChild(h3);
         }
 
-        // Imagen del producto
         if (configuracionEtiqueta.mostrarImagen && producto.imagen) {
           const imgProd = document.createElement("img");
           imgProd.src = producto.imagen;
@@ -364,7 +331,6 @@
           div.appendChild(imgProd);
         }
 
-        // Logo
         if (configuracionEtiqueta.mostrarLogo) {
           const logo = document.createElement("img");
           logo.src = "images/logo.png";
@@ -374,7 +340,6 @@
           div.appendChild(logo);
         }
 
-        // QR Code
         if (configuracionEtiqueta.mostrarQR) {
           const qr = document.createElement("img");
           qr.src = "https://api.qrserver.com/v1/create-qr-code/?data=https://wil1979.github.io/esentia-factura/catalogo.html&size=100x100";
@@ -390,27 +355,31 @@
   }
 
   function exportarPDF() {
-  const contenedor = document.getElementById("etiqueta-container");
-  if (contenedor.childElementCount === 0) {
-    alert("Primero debes generar las etiquetas.");
-    return;
+    const contenedor = document.getElementById("etiqueta-container");
+    if (contenedor.childElementCount === 0) {
+      alert("Primero debes generar las etiquetas.");
+      return;
+    }
+
+    const botones = document.getElementById("botones-flotantes");
+    botones.style.display = "none";
+
+    const options = {
+      margin: 0,
+      filename: 'etiquetas_esentia.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'cm', format: 'letter', orientation: 'portrait' }
+    };
+
+    html2pdf()
+      .set(options)
+      .from(contenedor)
+      .save()
+      .then(() => {
+        botones.style.display = "flex";
+      });
   }
-
-  const options = {
-    margin: 0,
-    filename: 'etiquetas_esentia.pdf',
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'cm', format: 'letter', orientation: 'portrait' }
-  };
-
-  html2pdf().set(options).from(contenedor).outputPdf('blob').then(pdfBlob => {
-    const blobURL = URL.createObjectURL(pdfBlob);
-    const iframe = document.getElementById("visor-pdf");
-    iframe.src = blobURL;
-    iframe.style.display = "block";
-  });
-}
 
   function imprimirEtiquetas() {
     window.print();
@@ -420,14 +389,16 @@
     document.getElementById("etiqueta-container").innerHTML = '';
     document.getElementById("etiqueta-container").style.display = "none";
     document.getElementById("botones-flotantes").style.display = "none";
-
     document.getElementById("configuracion-modal").style.display = "none";
     document.getElementById("configuracion-cantidad-modal").style.display = "none";
     document.getElementById("configuracion-tamanos-modal").style.display = "none";
     document.getElementById("configuracion-elementos-modal").style.display = "block";
   }
 
-  window.onload = cargarProductos;
+  window.onload = () => {
+    cargarProductos();
+    document.getElementById("configuracion-elementos-modal").style.display = "block";
+  };
 </script>
 
 </body>

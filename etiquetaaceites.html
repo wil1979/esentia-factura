@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Etiqueta Aceite de Masaje</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 10px;
+      background: #f0f0f0;
+      display: flex;
+      gap: 0px;
+    }
+
+    .formulario {
+      flex: 1;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      max-width: 400px;
+      height: fit-content;
+    }
+
+    .formulario input, .formulario textarea, .formulario select {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 0px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .formulario button {
+      padding: 8px 16px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-right: 5px;
+    }
+
+    .etiqueta-container {
+      flex: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0px;
+    }
+    
+
+    .etiqueta {
+      display: flex;
+      flex-direction: row;
+      width: 9cm; /* 14cm a 96dpi  1323px*/
+      height: 378px;  /* 4cm a 96dpi  378px */
+      background: var(--bg-color, rgb(204, 216, 151));
+      border: 1px solid #ccc;
+      padding: 0px;
+      box-sizing: border-box;
+      font-size: var(--font-size, 21px);
+    }
+
+    .lateral {
+      width: 33%;
+      overflow: hidden;
+      padding: 10px;
+      box-sizing: border-box;
+      text-align: justify;
+    }
+
+    .central {
+      width: 34%;
+      text-align: center;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    .central img.logo {
+      width: 50%;
+      margin-bottom: 5px;
+    }
+
+    .central img.producto {
+      height: var(--img-height, 50px);
+      margin-top: 0px;
+       width: 50%;
+      height: 50px;
+    }
+
+    .nombre-producto {
+      font-size: 6px;
+      font-weight: bold;
+      margin: 5px 0;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .etiqueta-container, .etiqueta-container * {
+        visibility: visible;
+      }
+      .etiqueta-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="formulario">
+    <h3>Crear etiqueta</h3>
+
+    <label>Nombre del producto:</label>
+    <input id="nombreProducto" value="Aceite para Masajes" oninput="generarEtiquetas()">
+
+    <label>Nombre imagen (sin ruta ni .png):</label>
+    <input id="nombreImagen" value="lavanda" oninput="generarEtiquetas()">
+
+    <label>Texto central:</label>
+    <textarea id="textoCentral" oninput="generarEtiquetas()">ACEITES AROMATICOS</textarea>
+
+    <label>Información izquierda:</label>
+    <textarea id="infoIzquierda" rows="6" oninput="generarEtiquetas()">Uso: aromatizante
+mbiental. Precaución: no
+apto para ingerir, inhalar o aplicar directamente Contacto con ojos o piel: lavar la zona afectada con abundante agua. Inhalación: trasladarse a un lugar fresco y ventilado. Ingestión: enjuagar la boca y dar a beber agua (no iducir al vómito).
+Mantener fuera del alcance de los niños. Si se observa irritación o malestar solicite atención médica o llame al Centro de Intoxicaciones (506)
+2223-1028.</textarea>
+
+    <label>Recomendaciones:</label>
+    <textarea id="recomendaciones" rows="6" oninput="generarEtiquetas()">Añada 5-9 gotas al difusor • Evite derramar el aceite sobre superficies pintadas o barnizadas*Advertencias⚠️ Producto NO Comestible.🚫 No aplicar directamente sobre la piel.👨‍⚕️ Evite el contacto con los ojos..</textarea>
+
+    <label>Cantidad de etiquetas:</label>
+    <input id="cantidad" type="number" min="1" value="4" oninput="generarEtiquetas()">
+
+    <label>Nombre archivo PDF:</label>
+    <input id="nombreArchivo" value="etiquetas_masaje">
+
+    <hr>
+
+    <label>Color de fondo:</label>
+    <input type="color" id="bgColor" value="#ccd897" onchange="actualizarEstilos()">
+
+    <label>Tamaño de fuente (px):</label>
+    <input type="number" id="fontSize" value="7" onchange="actualizarEstilos()">
+
+    <label>Altura imagen (px):</label>
+    <input type="number" id="imgHeight" value="70" onchange="actualizarEstilos()">
+
+    <label>Ancho etiqueta (cm):</label>
+    <input type="number" id="anchoEtiqueta" value="8.5" step="0.1" onchange="generarEtiquetas()">
+
+    <label>Alto etiqueta (cm):</label>
+    <input type="number" id="altoEtiqueta" value="4" step="0.1" onchange="generarEtiquetas()">
+
+    <button onclick="generarPDF()">Guardar como PDF</button>
+  </div>
+
+  <div id="etiquetas" class="etiqueta-container"></div>
+
+  
+
+  <script>
+    function actualizarEstilos() {
+      document.documentElement.style.setProperty('--bg-color', document.getElementById('bgColor').value);
+      document.documentElement.style.setProperty('--font-size', document.getElementById('fontSize').value + 'px');
+      document.documentElement.style.setProperty('--img-height', document.getElementById('imgHeight').value + 'px');
+    }
+
+    function generarEtiquetas() {
+      const nombreProducto = document.getElementById("nombreProducto").value.trim();
+      const nombreImagen = document.getElementById("nombreImagen").value.trim();
+      const textoCentral = document.getElementById("textoCentral").value.trim();
+      const infoIzquierda = document.getElementById("infoIzquierda").value.trim();
+      const recomendaciones = document.getElementById("recomendaciones").value.trim();
+      const cantidad = parseInt(document.getElementById("cantidad").value) || 1;
+
+      const contenedor = document.getElementById("etiquetas");
+      contenedor.innerHTML = "";
+
+      for (let i = 0; i < cantidad; i++) {
+        const etiqueta = document.createElement("div");
+        etiqueta.className = "etiqueta";
+
+        etiqueta.innerHTML = `
+          <div class="lateral"><div>${infoIzquierda}</div></div>
+          <div class="central">
+            <img class="logo" src="images/logo.png" alt="Logo">
+            <div class="nombre-producto">${nombreProducto}</div>
+            <div>${textoCentral}</div>
+            <img class="producto" src="etiqueta/${nombreImagen}.png" alt="${nombreProducto}">
+          </div>
+          <div class="lateral"><div>${recomendaciones}</div></div>
+        `;
+        contenedor.appendChild(etiqueta);
+      }
+    }
+
+    function generarPDF() {
+      const element = document.getElementById("etiquetas");
+      const filename = document.getElementById("nombreArchivo").value || 'etiqueta.pdf';
+      const opt = {
+        margin: 0,
+        filename: filename.endsWith('.pdf') ? filename : filename + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'px', format: 'letter', orientation: 'landscape' }
+      };
+      html2pdf().from(element).set(opt).save();
+    }
+
+    function generarEtiquetas() {
+  const nombreProducto = document.getElementById("nombreProducto").value.trim();
+  const nombreImagen = document.getElementById("nombreImagen").value.trim();
+  const textoCentral = document.getElementById("textoCentral").value.trim();
+  const infoIzquierda = document.getElementById("infoIzquierda").value.trim();
+  const recomendaciones = document.getElementById("recomendaciones").value.trim();
+  const cantidad = parseInt(document.getElementById("cantidad").value) || 1;
+
+  // Dimensiones convertidas de cm a px (aproximadamente 37.8px/cm)
+  const anchoCm = parseFloat(document.getElementById("anchoEtiqueta").value) || 14;
+  const altoCm = parseFloat(document.getElementById("altoEtiqueta").value) || 4;
+  const anchoPx = anchoCm * 37.8;
+  const altoPx = altoCm * 37.8;
+
+  const contenedor = document.getElementById("etiquetas");
+  contenedor.innerHTML = "";
+
+  for (let i = 0; i < cantidad; i++) {
+    const etiqueta = document.createElement("div");
+    etiqueta.className = "etiqueta";
+    etiqueta.style.width = anchoPx + "px";
+    etiqueta.style.height = altoPx + "px";
+
+    etiqueta.innerHTML = `
+      <div class="lateral"><div>${infoIzquierda}</div></div>
+      <div class="central">
+        <img class="logo" src="images/logo.png" alt="Logo">
+        <div class="nombre-producto">${nombreProducto}</div>
+        <div>${textoCentral}</div>
+        <img class="producto" src="etiqueta/${nombreImagen}.png" alt="${nombreProducto}">
+      </div>
+      <div class="lateral"><div>${recomendaciones}</div></div>
+    `;
+    contenedor.appendChild(etiqueta);
+  }
+}
+
+
+    // Inicial
+    actualizarEstilos();
+    generarEtiquetas();
+  </script>
+
+</body>
+</html>

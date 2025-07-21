@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Etiqueta Aceite de Masaje</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 10px;
+      background: #f0f0f0;
+      display: flex;
+      gap: 10px;
+    }
+
+    .formulario {
+      flex: 1;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      max-width: 400px;
+      height: fit-content;
+    }
+
+    .formulario input,
+    .formulario textarea,
+    .formulario select,
+    .formulario button {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 4px 6px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .etiqueta-container {
+      flex: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      background: white;
+      padding: 10px;
+      margin: 0;
+    }
+
+    .etiqueta {
+      display: flex;
+      flex-direction: row;
+      width: 8cm;
+      height: 4cm;
+      background: var(--bg-color, #ccd897);
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      font-size: var(--font-size, 7px);
+      overflow: hidden;
+      color: #000; /* Asegura que el texto sea visible */
+    }
+
+    .lateral {
+      width: 33%;
+      padding: 5px;
+      box-sizing: border-box;
+      text-align: justify;
+      font-size: var(--font-size, 7px);
+    }
+
+    .central {
+      width: 34%;
+      text-align: center;
+      padding: 5px;
+      box-sizing: border-box;
+      font-size: var(--font-size, 7px);
+    }
+
+    .logo {
+      width: 50%;
+      margin-bottom: 2px;
+    }
+
+    .nombre-producto {
+      font-size: 6px;
+      font-weight: bold;
+      margin: 2px 0;
+    }
+
+    .producto {
+      height: var(--img-height, 70px);
+      width: auto;
+      margin-top: 0;
+    }
+
+    /* Estilos de impresión */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+
+      .etiqueta-container, .etiqueta-container * {
+        visibility: visible;
+      }
+
+      .etiqueta-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 21cm;
+        page-break-inside: avoid;
+        page-break-after: auto;
+      }
+
+      .formulario {
+        display: none;
+      }
+
+      @page {
+        size: auto;
+        margin: 0;
+      }
+
+      /* Forzar impresión de fondos */
+      .etiqueta {
+        -webkit-print-color-adjust: exact; /* Chrome, Safari */
+        color-adjust: exact;               /* Firefox */
+        background-color: var(--bg-color, #ccd897) !important;
+        background: var(--bg-color, #ccd897) !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="formulario">
+    <h3>Crear etiquetas</h3>
+
+    <label>Selecciona productos (separados por comas):</label>
+    <input id="productos" value="lavanda,sandia,melon" oninput="generarEtiquetas()">
+
+    <label>Cantidad por producto:</label>
+    <input id="cantidadPorProducto" type="number" min="1" value="4" oninput="generarEtiquetas()">
+
+    <label>Texto central:</label>
+    <textarea id="textoCentral" oninput="generarEtiquetas()">Con aceite de Oliva & vitamina E</textarea>
+
+    <label>Información izquierda:</label>
+    <textarea id="infoIzquierda" rows="6" oninput="generarEtiquetas()">Este delicioso aceite, especialmente formulado para cualquier tipo de masaje, humecta y acondiciona su piel. Gracias a las fragancias utilizadas se consiguen resultados vitales para el bienestar personal.</textarea>
+
+    <label>Recomendaciones:</label>
+    <textarea id="recomendaciones" rows="6" oninput="generarEtiquetas()">Recomendado por especialistas. Modo de empleo: Aplique una cantidad generosa sobre sus manos y distribuya uniformemente sobre el área a masajear. Precauciones: Solo uso externo.</textarea>
+
+    <hr>
+
+    <label>Color de fondo:</label>
+    <input type="color" id="bgColor" value="#ccd897" onchange="actualizarEstilos()">
+
+    <label>Tamaño de fuente (px):</label>
+    <input type="number" id="fontSize" value="7" onchange="actualizarEstilos()">
+
+    <label>Altura imagen (px):</label>
+    <input type="number" id="imgHeight" value="70" onchange="actualizarEstilos()">
+
+    <button onclick="generarEtiquetas()">Generar Etiquetas</button>
+    <button onclick="window.print()">Imprimir etiquetas</button>
+  </div>
+
+  <div class="etiqueta-container" id="etiquetas"></div>
+
+  <script>
+    function actualizarEstilos() {
+      document.documentElement.style.setProperty('--bg-color', document.getElementById('bgColor').value);
+      document.documentElement.style.setProperty('--font-size', document.getElementById('fontSize').value + 'px');
+      document.documentElement.style.setProperty('--img-height', document.getElementById('imgHeight').value + 'px');
+      generarEtiquetas();
+    }
+
+    function generarEtiquetas() {
+      const productos = document.getElementById("productos").value.split(',').map(p => p.trim());
+      const cantidadPorProducto = parseInt(document.getElementById("cantidadPorProducto").value) || 1;
+      const textoCentral = document.getElementById("textoCentral").value.trim();
+      const infoIzquierda = document.getElementById("infoIzquierda").value.trim();
+      const recomendaciones = document.getElementById("recomendaciones").value.trim();
+
+      const anchoCm = 8;
+      const altoCm = 4;
+      const anchoPx = anchoCm * 37.8;
+      const altoPx = altoCm * 37.8;
+
+      const contenedor = document.getElementById("etiquetas");
+      contenedor.innerHTML = "";
+
+      productos.forEach(producto => {
+        for (let i = 0; i < cantidadPorProducto; i++) {
+          const etiqueta = document.createElement("div");
+          etiqueta.className = "etiqueta";
+          etiqueta.style.width = anchoPx + "px";
+          etiqueta.style.height = altoPx + "px";
+
+          etiqueta.innerHTML = `
+            <div class="lateral"><div>${infoIzquierda}</div></div>
+            <div class="central">
+              <img class="logo" src="images/logo.png" alt="Logo">
+              <div class="nombre-producto">${producto}</div>
+              <div>${textoCentral}</div>
+              <img class="producto" src="etiqueta/${producto}.png" alt="${producto}">
+            </div>
+            <div class="lateral"><div>${recomendaciones}</div></div>
+          `;
+          contenedor.appendChild(etiqueta);
+        }
+      });
+    }
+
+    // Inicial
+    window.onload = () => {
+      generarEtiquetas();
+    };
+  </script>
+</body>
+</html>
