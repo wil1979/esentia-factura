@@ -2,8 +2,16 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Hoja de Etiquetas Esentia</title>
+  <title>Generador de Etiquetas Esentia</title>
   <style>
+    :root {
+      --ancho-etiqueta: 4cm;
+      --alto-etiqueta: 4cm;
+      --tamano-fuente: 7px;
+      --ancho-logo: 65px;
+      --tamano-qr: 45px;
+    }
+
     @page {
       size: letter;
       margin: 0;
@@ -20,29 +28,27 @@
       width: 100%;
       height: 100%;
       display: grid;
-      grid-template-columns: repeat(5, 4cm);
-      grid-template-rows: repeat(5, 4cm);
       gap: 0;
       box-sizing: border-box;
       padding: 0.5cm;
     }
 
     .etiqueta {
-      width: 4cm;
-      height: 4cm;
       box-sizing: border-box;
       padding: 4px;
       border: 0.5px solid #ccc;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      font-size: 7px;
       overflow: hidden;
+      width: var(--ancho-etiqueta);
+      height: var(--alto-etiqueta);
+      font-size: var(--tamano-fuente);
     }
 
     .titulo {
       font-weight: bold;
-      font-size: 7.5px;
+      font-size: calc(var(--tamano-fuente) + 0.5px);
       margin-bottom: 1px;
     }
 
@@ -54,68 +60,192 @@
     }
 
     .logo {
-      width: 65px;
+      width: var(--ancho-logo);
       height: auto;
     }
 
     .qr {
-      width: 45px;
-      height: 45px;
+      width: var(--tamano-qr);
+      height: var(--tamano-qr);
     }
 
     .slogan {
       text-align: center;
       font-style: italic;
-      font-size: 7px;
       margin-top: 1px;
+    }
+
+    .config-modal {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: white;
+      padding: 20px;
+      border: 1px solid #ccc;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      width: 300px;
+      transition: all 0.3s ease;
+    }
+
+    .config-modal.hidden {
+      transform: translateX(120%);
+      opacity: 0;
+    }
+
+    .config-group {
+      margin-bottom: 10px;
+    }
+
+    .config-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 12px;
+    }
+
+    .config-group input {
+      width: 100%;
+      padding: 5px;
+      margin-bottom: 5px;
+    }
+
+    @media print {
+      .config-modal {
+        display: none !important;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="hoja">
-    <!-- Repetimos la misma etiqueta 25 veces -->
-    <!-- Puedes duplicar esta sección si necesitas más -->
-    <!-- Etiqueta individual -->
-    <!-- Pegaremos esto 25 veces -->
-    <!-- Usamos una pequeña función JS abajo si deseas automatizar -->
-
-    <!-- Etiquetas manuales (25 veces) -->
-    <!-- Puedes también usar JavaScript para generarlas dinámicamente -->
-
-    <!-- INICIO ETIQUETAS -->
-    <!-- Copia-pega este bloque 25 veces si lo haces manual -->
-    <!-- O genera con JS -->
-    <!-- Aquí un ejemplo dinámico abajo -->
+<div class="config-modal">
+  <div style="display: flex; justify-content: space-between; align-items: center">
+    <h3>Configuración de Etiquetas</h3>
+    <button onclick="toggleConfig()" style="padding: 3px 8px; font-size: 12px">
+      Ocultar
+    </button>
+  </div>
+  
+  <div class="config-group">
+    <label>Dimensiones (cm):</label>
+    <input type="number" id="anchoEtiqueta" step="0.1" value="4" placeholder="Ancho">
+    <input type="number" id="altoEtiqueta" step="0.1" value="4" placeholder="Alto">
   </div>
 
-  <script>
-    const contenedor = document.querySelector('.hoja');
+  <div class="config-group">
+    <label>Tamaño de fuente (px):</label>
+    <input type="number" id="tamanoFuente" value="7">
+  </div>
 
-    for (let i = 0; i < 25; i++) {
-      const etiqueta = document.createElement('div');
-      etiqueta.classList.add('etiqueta');
-      etiqueta.innerHTML = `
-        <div>
-          <div class="titulo">Uso recomendado</div>
-• Añada 5-9 gotas al difusor.
-• Evite derramar el aceite sobre superficies pintadas o barnizadas
-          <div class="titulo">Advertencias</div>
-⚠️ Producto NO Comestible.
-🚫 No aplicar directamente sobre la piel.
-👨‍⚕️ Evite el contacto con los ojos.
+  <div class="config-group">
+    <label>Logo (URL):</label>
+    <input type="text" id="logoUrl" value="images/logo.png">
+  </div>
+
+  <div class="config-group">
+    <label>Ancho logo (px):</label>
+    <input type="number" id="anchoLogo" value="65">
+  </div>
+
+  <div class="config-group">
+    <label>Tamaño QR (px):</label>
+    <input type="number" id="tamanoQR" value="45">
+  </div>
+
+  <div class="config-group">
+    <label>Datos QR:</label>
+    <input type="text" id="qrData" value="https://wil1979.github.io/esentia-factura/catalogo.html">
+  </div>
+
+  <div class="config-group">
+    <label>Slogan:</label>
+    <input type="text" id="slogan" value="Fragancias que enamoran">
+  </div>
+
+  <button onclick="generarEtiquetas()">Aplicar Cambios</button>
+  <button onclick="window.print()">Imprimir</button>
+</div>
+
+<div class="hoja"></div>
+
+<script>
+function generarEtiquetas() {
+  const config = {
+    ancho: parseFloat(document.getElementById('anchoEtiqueta').value) || 4,
+    alto: parseFloat(document.getElementById('altoEtiqueta').value) || 4,
+    fuente: parseInt(document.getElementById('tamanoFuente').value) || 7,
+    logo: document.getElementById('logoUrl').value,
+    anchoLogo: parseInt(document.getElementById('anchoLogo').value) || 65,
+    qrSize: parseInt(document.getElementById('tamanoQR').value) || 45,
+    qrData: encodeURIComponent(document.getElementById('qrData').value),
+    slogan: document.getElementById('slogan').value
+  };
+
+  document.documentElement.style.setProperty('--ancho-etiqueta', `${config.ancho}cm`);
+  document.documentElement.style.setProperty('--alto-etiqueta', `${config.alto}cm`);
+  document.documentElement.style.setProperty('--tamano-fuente', `${config.fuente}px`);
+  document.documentElement.style.setProperty('--ancho-logo', `${config.anchoLogo}px`);
+  document.documentElement.style.setProperty('--tamano-qr', `${config.qrSize}px`);
+
+  const contenedor = document.querySelector('.hoja');
+  contenedor.innerHTML = '';
+  
+  const columnas = Math.floor(21.59 / config.ancho);
+  contenedor.style.gridTemplateColumns = `repeat(${columnas}, ${config.ancho}cm)`;
+
+  for (let i = 0; i < 30; i++) {
+    const etiqueta = document.createElement('div');
+    etiqueta.className = 'etiqueta';
+    etiqueta.innerHTML = `
+      <div>
+        <div class="titulo">Uso recomendado</div>
+        • Añada 5-9 gotas al difusor.<br>
+        • Evite derramar el aceite sobre superficies pintadas o barnizadas
+        <div class="titulo">Advertencias</div>
+        ⚠️ Producto NO Comestible.<br>
+        🚫 No aplicar directamente sobre la piel.<br>
+        👨‍⚕️ Evite el contacto con los ojos.
+      </div>
+      <div>
+        <div class="logo-qr">
+          <img src="${config.logo}" alt="Logo" class="logo">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=${config.qrSize}x${config.qrSize}&data=${config.qrData}" 
+               alt="QR" class="qr">
         </div>
-        <div>
-          <div class="logo-qr">
-            <img src="images/logo.png" alt="Logo Esentia" class="logo" />
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://wil1979.github.io/esentia-factura/catalogo.html" alt="QR" class="qr" />
-          </div>
-          <div class="slogan">Fragancias que enamoran</div>
-        </div>
-      `;
-      contenedor.appendChild(etiqueta);
-    }
-  </script>
+        <div class="slogan">${config.slogan}</div>
+      </div>
+    `;
+    contenedor.appendChild(etiqueta);
+  }
+}
+
+function toggleConfig() {
+  const modal = document.querySelector('.config-modal');
+  modal.classList.toggle('hidden');
+  localStorage.setItem('configVisible', !modal.classList.contains('hidden'));
+}
+
+window.addEventListener('load', () => {
+  const visible = localStorage.getItem('configVisible') !== 'false';
+  document.querySelector('.config-modal').classList.toggle('hidden', !visible);
+  generarEtiquetas();
+});
+
+window.addEventListener('beforeprint', () => {
+  document.querySelector('.config-modal').classList.add('hidden');
+});
+
+window.addEventListener('afterprint', () => {
+  document.querySelector('.config-modal').classList.remove('hidden');
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key.toLowerCase() === 'h') {
+    toggleConfig();
+    e.preventDefault();
+  }
+});
+</script>
 
 </body>
 </html>
