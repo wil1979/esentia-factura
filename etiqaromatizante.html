@@ -62,7 +62,7 @@
       padding: 5px;
       box-sizing: border-box;
       text-align: justify;
-      font-size: var(--font-size, 7px);
+      font-size: var(--font-size, 8.4px);
     }
 
     .central {
@@ -74,7 +74,7 @@
     }
 
       .logo {
-      width: var(--logo-width, 50%);
+      width: var(--logo-width, 150%);
       margin-bottom: 2px;
       }
 
@@ -86,7 +86,7 @@
     }
 
      .producto {
-      height: var(--img-height, 70px);
+      height: var(--img-height, 86px);
       width: var(--img-width, auto);
       margin-top: 0;
     }
@@ -135,24 +135,24 @@
     <h3>Crear etiquetas</h3>
 
     <label>Selecciona productos (separados por comas):</label>
-    <input id="productos" value="melonvainilla,citronela" oninput="generarEtiquetas()">
+    <input id="productos" value="bambu,naranja,citrus,vainilla,cocomenta,cocovainilla,eucalipto,lemoncake,ylang,pinacolada,cipres,libertad" oninput="generarEtiquetas()">
 
     <label>Cantidad por producto:</label>
-    <input id="cantidadPorProducto" type="number" min="1" value="6" oninput="generarEtiquetas()">
+    <input id="cantidadPorProducto" type="number" min="1" value="4" oninput="generarEtiquetas()">
 
     <label>Texto central:</label>
     <textarea id="textoCentral" oninput="generarEtiquetas()">Aceite Aromatico Ambiental</textarea>
 
     <label>Información izquierda:</label>
     <textarea id="infoIzquierda" rows="4" oninput="generarEtiquetas()"><b>Indicaciones de Uso</b>
-Añada 5-9 gotas en un quemador cerámico, candela o difusor eléctrico para difundir inmediatamente su aroma en el ambiente
-Evite derramar el aceite sobre superficies pintadas o barnizadas
+                        Añada 5-9 gotas en un quemador cerámico, candela o difusor eléctrico para difundir inmediatamente su aroma en el ambiente
+                        Evite derramar el aceite sobre superficies pintadas o barnizadas
 
-<b>NOTA</b>: no son consumibles ni aplicables directamente en la piel</textarea>
+                        <b>NOTA</b>: no son consumibles ni aplicables directamente en la piel</textarea>
 
-    <label>Recomendaciones:</label>
+                        <label>Recomendaciones:</label>
 
-    <textarea id="recomendaciones" rows="6" oninput="generarEtiquetas()">https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=https://wil1979.github.io/esentia-factura/catalogo.html</textarea>
+                        <textarea id="recomendaciones" rows="6" oninput="generarEtiquetas()">https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=https://wil1979.github.io/esentia-factura/catalogo.html</textarea>
 
     <hr>
 
@@ -171,10 +171,10 @@ Evite derramar el aceite sobre superficies pintadas o barnizadas
     <input type="number" id="fontSize" value="8.4" onchange="actualizarEstilos()">
 
     <label>Ancho logo (%):</label>
-    <input type="number" id="logoWidth" value="104" min="1" max="150" onchange="actualizarEstilos()">
+    <input type="number" id="logoWidth" value="150" min="1" max="300" onchange="actualizarEstilos()">
 
     <label>Altura imagen (px):</label>
-    <input type="number" id="imgHeight" value="45" onchange="actualizarEstilos()">
+    <input type="number" id="imgHeight" value="86" onchange="actualizarEstilos()">
 
     <label>Ancho imagen (px):</label>
     <input type="text" id="imgWidth" value="auto" onchange="actualizarEstilos()" placeholder="Ej: 100px, 50% o auto">
@@ -229,14 +229,18 @@ Evite derramar el aceite sobre superficies pintadas o barnizadas
         <img class="logo" src="images/logo.png" alt="Logo">
         <div class="nombre-producto">${producto}</div>
         <div>${textoCentral}</div>
-        <img class="producto" src="etiqueta/${producto}.png" alt="${producto}">
+       
       </div>
       <div class="lateral">
         <div>
+          
           ${isURL(recomendaciones) 
+          
             ? `<img src="${recomendaciones}" alt="Código QR" 
                  style="max-width: 100%; height: auto; display: block; margin: 0 auto;">` 
             : recomendaciones}
+
+             <img class="producto" src="etiqueta/${producto}.png" alt="${producto}">
         </div>
       </div>
     `;
