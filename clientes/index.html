@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Esentia Créditos</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 2rem;
+      background: #f8f8fc;
+    }
+    h1 {
+      color: #6c4ba3;
+    }
+    input, textarea, button, select {
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      width: 100%;
+    }
+    .cliente {
+      border: 1px solid #ccc;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 10px;
+      background: #fff;
+    }
+    #seccion-productos {
+      background: #fff;
+    }
+    .producto-seleccionado {
+      border: 1px dashed #ccc;
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📋 Esentia - Registro de Créditos</h1>
+
+  <h2>➕ Nuevo Cliente</h2>
+  <input id="nombre" placeholder="Nombre completo">
+  <input id="telefono" placeholder="Teléfono con código (ej: 50688889999)">
+  <button onclick="agregarCliente()">Agregar Cliente</button>
+
+  <hr>
+
+  <h2>👥 Clientes</h2>
+  <div id="clientes"></div>
+
+  <!-- Sección de compra desde JSON -->
+  <template id="producto-template">
+    <div class="producto-seleccionado">
+      <strong class="producto-nombre"></strong><br>
+      <select class="presentacion"></select>
+      <select class="aroma"></select>
+      <button class="quitar-producto">❌ Quitar</button>
+      <br><br>
+    </div>
+  </template>
+
+  <div id="seccion-productos" style="display:none; border: 1px solid #ccc; padding: 1rem; margin-top: 2rem; border-radius: 10px;">
+    <h3>🛍️ Agregar productos desde catálogo</h3>
+    <select id="select-producto"></select>
+    <button onclick="agregarAlCarrito()">Agregar</button>
+
+    <div id="carrito" style="margin-top:1rem;"></div>
+    <strong>Total ₡<span id="total-compra">0</span></strong>
+    <br><br>
+    <button onclick="guardarCompraDesdeCarrito()">Guardar Compra</button>
+  </div>
+
+  <!-- Firebase y lógica -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    // Tu configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+    authDomain: "esentiacreditos-8345f.firebaseapp.com",
+    projectId: "esentiacreditos-8345f",
+    storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+    messagingSenderId: "888658236080",
+    appId: "1:888658236080:web:506e5e2085b5a452dba175"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const clientesRef = collection(db, "clientes");
+
+    async function agregarCliente() {
+      const nombre = document.getElementById("nombre").value.trim();
+      const telefono = document.getElementById("telefono").value.trim();
+      if (!nombre || !telefono) {
+        alert("Completa ambos campos.");
+        return;
+      }
+      await addDoc(clientesRef, { nombre, telefono, compras: [] });
+      document.getElementById("nombre").value = "";
+      document.getElementById("telefono").value = "";
+      cargarClientes();
+    }
+
+    async function cargarClientes() {
+      const cont = document.getElementById("clientes");
+      cont.innerHTML = "";
+      const snapshot = await getDocs(clientesRef);
+      snapshot.forEach(docSnap => {
+        const cliente = docSnap.data();
+        const id = docSnap.id;
+        let totalPendiente = 0;
+        const compras = cliente.compras || [];
+        compras.forEach(c => totalPendiente += (c.monto || 0) - (c.pagado || 0));
+        const div = document.createElement("div");
+        div.className = "cliente";
+        div.innerHTML = `
+          <strong>${cliente.nombre}</strong><br>
+          📞 <a href="https://wa.me/${cliente.telefono}" target="_blank">${cliente.telefono}</a><br>
+          💸 Pendiente: ₡${totalPendiente}<br><br>
+          <button onclick="mostrarAgregarCompra('${id}')">➕ Agregar compra desde productos</button>
+          <br><br>
+          <button onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${totalPendiente})">📲 Recordatorio por WhatsApp</button>
+        `;
+        cont.appendChild(div);
+      });
+    }
+
+    function enviarWhatsApp(telefono, nombre, deuda) {
+      const mensaje = `Hola ${nombre}, te recordamos que tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por tu compra en Esentia 💜`;
+      const url = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, "_blank");
+    }
+
+    // Productos desde JSON (Esencia + Limpieza)
+    //const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
+    //const URL_LIMPIEZA = "https://wil1979.github.io/esentia-factura/productos_limpieza_completo.json";
+    const URL_ESENCIA = "/productos_esentia.json";
+    const URL_LIMPIEZA = "/productos_limpieza_completo.json";
+
+    let todosLosProductos = [];
+    let carrito = [];
+    let clienteSeleccionadoId = null;
+
+    async function cargarProductosJSON() {
+      const [res1, res2] = await Promise.all([fetch(URL_ESENCIA), fetch(URL_LIMPIEZA)]);
+      const [aromas, limpieza] = await Promise.all([res1.json(), res2.json()]);
+      todosLosProductos = [...aromas, ...limpieza].filter(p => p.disponible);
+      const select = document.getElementById("select-producto");
+      select.innerHTML = "";
+      todosLosProductos.forEach((p, i) => {
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.textContent = p.nombre;
+        select.appendChild(opt);
+      });
+    }
+
+    function mostrarAgregarCompra(idCliente) {
+      clienteSeleccionadoId = idCliente;
+      carrito = [];
+      document.getElementById("carrito").innerHTML = "";
+      document.getElementById("total-compra").textContent = "0";
+      document.getElementById("seccion-productos").style.display = "block";
+    }
+
+    function agregarAlCarrito() {
+      const index = parseInt(document.getElementById("select-producto").value);
+      const producto = todosLosProductos[index];
+      const template = document.getElementById("producto-template").content.cloneNode(true);
+      const contenedor = document.createElement("div");
+      contenedor.dataset.index = index;
+      template.querySelector(".producto-nombre").textContent = producto.nombre;
+      const selPres = template.querySelector(".presentacion");
+      selPres.innerHTML = "";
+      if (producto.variantes) {
+        producto.variantes.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v.precio;
+          opt.textContent = v.nombre;
+          selPres.appendChild(opt);
+        });
+      } else {
+        const opt = document.createElement("option");
+        opt.value = producto.precioPublico;
+        opt.textContent = producto.nombre;
+        selPres.appendChild(opt);
+        selPres.style.display = "none";
+      }
+
+      const selAroma = template.querySelector(".aroma");
+      if (producto.aromas && producto.aromas.length > 0) {
+        producto.aromas.forEach(a => {
+          const opt = document.createElement("option");
+          opt.value = a;
+          opt.textContent = a;
+          selAroma.appendChild(opt);
+        });
+      } else {
+        selAroma.style.display = "none";
+      }
+
+      template.querySelector(".quitar-producto").onclick = () => {
+        contenedor.remove();
+        actualizarTotal();
+      };
+
+      contenedor.appendChild(template);
+      document.getElementById("carrito").appendChild(contenedor);
+      actualizarTotal();
+    }
+
+    function actualizarTotal() {
+      const items = document.querySelectorAll("#carrito > div");
+      let total = 0;
+      items.forEach(div => {
+        const precio = parseFloat(div.querySelector(".presentacion").value || 0);
+        total += precio;
+      });
+      document.getElementById("total-compra").textContent = total;
+    }
+
+    async function guardarCompraDesdeCarrito() {
+      if (!clienteSeleccionadoId) return;
+      const clienteDoc = doc(db, "clientes", clienteSeleccionadoId);
+      const snap = await getDocs(clientesRef);
+      let comprasActuales = [];
+      snap.forEach(s => {
+        if (s.id === clienteSeleccionadoId) {
+          comprasActuales = s.data().compras || [];
+        }
+      });
+
+      const productos = [];
+      const items = document.querySelectorAll("#carrito > div");
+      let total = 0;
+
+      items.forEach(div => {
+        const index = parseInt(div.dataset.index);
+        const prod = todosLosProductos[index];
+        const presentacionSel = div.querySelector(".presentacion");
+        const aromaSel = div.querySelector(".aroma");
+
+        const nombre = prod.nombre;
+        const presentacion = presentacionSel?.options[presentacionSel.selectedIndex]?.textContent;
+        const precio = parseFloat(presentacionSel?.value || 0);
+        const aroma = aromaSel?.value || null;
+
+        productos.push({ nombre, presentacion, aroma, precio });
+        total += precio;
+      });
+
+      comprasActuales.push({
+        fecha: new Date().toISOString().slice(0, 10),
+        productos,
+        monto: total,
+        pagado: 0
+      });
+
+      await updateDoc(clienteDoc, { compras: comprasActuales });
+      document.getElementById("seccion-productos").style.display = "none";
+      cargarClientes();
+    }
+
+    cargarClientes();
+    cargarProductosJSON();
+  </script>
+
+</body>
+</html>
