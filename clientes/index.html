@@ -76,32 +76,45 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-    // Tu configuración de Firebase
+    // 🔐 NUEVA configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
-    authDomain: "esentiacreditos-8345f.firebaseapp.com",
-    projectId: "esentiacreditos-8345f",
-    storageBucket: "esentiacreditos-8345f.firebasestorage.app",
-    messagingSenderId: "888658236080",
-    appId: "1:888658236080:web:506e5e2085b5a452dba175"
+      authDomain: "esentiacreditos-8345f.firebaseapp.com",
+      projectId: "esentiacreditos-8345f",
+      storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+      messagingSenderId: "888658236080",
+      appId: "1:888658236080:web:506e5e2085b5a452dba175"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const clientesRef = collection(db, "clientes");
 
-    async function agregarCliente() {
-      const nombre = document.getElementById("nombre").value.trim();
-      const telefono = document.getElementById("telefono").value.trim();
-      if (!nombre || !telefono) {
-        alert("Completa ambos campos.");
-        return;
-      }
-      await addDoc(clientesRef, { nombre, telefono, compras: [] });
-      document.getElementById("nombre").value = "";
-      document.getElementById("telefono").value = "";
-      cargarClientes();
-    }
+   async function agregarCliente() {
+  const nombre = document.getElementById("nombre").value.trim();
+  const telefono = document.getElementById("telefono").value.trim();
+
+  if (!nombre || !telefono) {
+    alert("⚠️ Completa ambos campos.");
+    return;
+  }
+
+  try {
+    await addDoc(clientesRef, {
+      nombre,
+      telefono,
+      compras: []
+    });
+    alert("✅ Cliente agregado exitosamente.");
+    document.getElementById("nombre").value = "";
+    document.getElementById("telefono").value = "";
+    cargarClientes();
+  } catch (error) {
+    alert("❌ Error al agregar cliente: " + error.message);
+    console.error("Error al agregar cliente:", error);
+  }
+}
+
 
     async function cargarClientes() {
       const cont = document.getElementById("clientes");
@@ -128,15 +141,16 @@
     }
 
     function enviarWhatsApp(telefono, nombre, deuda) {
+      const limpio = telefono.replace(/\D/g, '');
       const mensaje = `Hola ${nombre}, te recordamos que tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por tu compra en Esentia 💜`;
-      const url = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+      const url = `https://wa.me/${limpio}?text=${encodeURIComponent(mensaje)}`;
       window.open(url, "_blank");
     }
 
     // Productos desde JSON (Esencia + Limpieza)
     const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
     const URL_LIMPIEZA = "https://wil1979.github.io/esentia-factura/productos_limpieza_completo.json";
-   
+
     let todosLosProductos = [];
     let carrito = [];
     let clienteSeleccionadoId = null;
@@ -160,6 +174,12 @@
       carrito = [];
       document.getElementById("carrito").innerHTML = "";
       document.getElementById("total-compra").textContent = "0";
+
+      // mover modal debajo del cliente correspondiente
+      const clienteDiv = [...document.querySelectorAll(".cliente")].find(div =>
+        div.innerHTML.includes(`mostrarAgregarCompra('${idCliente}')`)
+      );
+      clienteDiv.appendChild(document.getElementById("seccion-productos"));
       document.getElementById("seccion-productos").style.display = "block";
     }
 
@@ -169,7 +189,9 @@
       const template = document.getElementById("producto-template").content.cloneNode(true);
       const contenedor = document.createElement("div");
       contenedor.dataset.index = index;
+
       template.querySelector(".producto-nombre").textContent = producto.nombre;
+
       const selPres = template.querySelector(".presentacion");
       selPres.innerHTML = "";
       if (producto.variantes) {
