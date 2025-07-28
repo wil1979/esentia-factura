@@ -265,16 +265,20 @@
   const container = document.createElement("div");
   container.style.fontFamily = "sans-serif";
   container.style.padding = "20px";
-  container.style.backgroundColor = "white";
+  container.style.backgroundColor = "white"; // Asegurar fondo blanco
 
-  // Encabezado
+  // Encabezado con logo
   const header = document.createElement("div");
-   
   header.innerHTML = `
-    <h2 style="color:#6c4ba3;">🧾 Esentia - Historial de Compras</h2>
-    <p><strong>Cliente:</strong> ${nombre}</p>
-    <p><strong>Teléfono:</strong> ${clienteData.telefono}</p>
-    <p><strong>Fecha de reporte:</strong> ${new Date().toLocaleDateString()}</p>
+    <div style="display: flex; align-items: center; margin-bottom: 20px;">
+      <img src="images/logo.png" alt="Logo Esentia" style="max-height: 60px; margin-right: 20px;">
+      <div>
+        <h2 style="color:#6c4ba3; margin: 0;">🧾 Esentia - Historial de Compras</h2>
+        <p style="margin: 5px 0 0 0;"><strong>Cliente:</strong> ${nombre}</p>
+        <p style="margin: 5px 0 0 0;"><strong>Teléfono:</strong> ${clienteData.telefono}</p>
+        <p style="margin: 5px 0 0 0;"><strong>Fecha de reporte:</strong> ${new Date().toLocaleDateString()}</p>
+      </div>
+    </div>
     <hr>
   `;
   container.appendChild(header);
@@ -337,7 +341,10 @@
     const worker = html2pdf().set({
       margin: 10,
       filename: `Historial_${nombre.replace(/\s+/g, "_")}.pdf`,
-      html2canvas: { scale: 2 },
+      html2canvas: { 
+        scale: 2,
+        useCORS: true // Permitir carga de imágenes externas
+      },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
     });
     
@@ -349,10 +356,6 @@
     
     // Abrimos en una nueva pestaña
     window.open(url, '_blank');
-    
-    // Liberamos la URL del objeto cuando ya no se necesite (opcional)
-    // Se podría hacer con setTimeout si queremos que se libere después de un tiempo
-    // setTimeout(() => URL.revokeObjectURL(url), 10000);
     
   } catch (error) {
     console.error("Error generando PDF:", error);
