@@ -5,50 +5,103 @@
   <title>Esentia Créditos</title>
   <style>
     body {
-      font-family: sans-serif;
-      margin: 2rem;
-      background: #f8f8fc;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 20px;
+      background-color: #f3f2f7;
+      color: #333;
     }
     h1 {
       color: #6c4ba3;
-    }
-    input, textarea, button, select {
-      margin: 0.5rem 0;
-      padding: 0.5rem;
-      width: 100%;
+      text-align: center;
     }
     .cliente {
-      border: 1px solid #ccc;
-      padding: 1rem;
-      margin-bottom: 1rem;
+      border: 1px solid #ddd;
       border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
       background: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s;
+    }
+    .cliente:hover {
+      transform: scale(1.01);
+    }
+    .botones-derecha {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      margin-top: 0.5rem;
+    }
+    .boton-accion {
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      border: none;
+      background: #6c4ba3;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex: 1 1 auto;
+      min-width: fit-content;
+    }
+    .boton-accion:hover {
+      background-color: #573993;
     }
     #seccion-productos {
+      display: none;
+      margin-top: 20px;
+      padding: 15px;
       background: #fff;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    .producto-seleccionado {
-      border: 1px dashed #ccc;
-      margin-bottom: 1rem;
-      padding: 0.5rem;
-      border-radius: 5px;
+    input, select {
+      padding: 8px;
+      margin-right: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+    button {
+      font-family: inherit;
+    }
+    .editar-cliente {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .editar-cliente input {
+      flex: 1;
+      min-width: 150px;
+    }
+    /* Responsive */
+    @media (max-width: 480px) {
+      .botones-derecha {
+        flex-direction: column;
+      }
+      .boton-accion {
+        width: 100%;
+        margin-left: 0;
+        margin-bottom: 5px;
+      }
+      .editar-cliente {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 <body>
-
   <h1>📋 Esentia - Registro de Créditos</h1>
-
   <h2>➕ Nuevo Cliente</h2>
   <input id="nombre" placeholder="Nombre completo">
-  <input id="telefono" placeholder="Teléfono con código (ej: 50688889999)">
+  <input id="telefono" placeholder="Teléfono (ej: 88889999)">
   <button onclick="agregarCliente()">Agregar Cliente</button>
-
   <hr>
-
   <h2>👥 Clientes</h2>
   <div id="clientes"></div>
-
   <!-- Sección de compra desde JSON -->
   <template id="producto-template">
     <div class="producto-seleccionado">
@@ -59,23 +112,23 @@
       <br><br>
     </div>
   </template>
-
   <div id="seccion-productos" style="display:none; border: 1px solid #ccc; padding: 1rem; margin-top: 2rem; border-radius: 10px;">
     <h3>🛍️ Agregar productos desde catálogo</h3>
     <select id="select-producto"></select>
     <button onclick="agregarAlCarrito()">Agregar</button>
-
     <div id="carrito" style="margin-top:1rem;"></div>
+    <div>
+      <label for="descuento">Descuento: ₡</label>
+      <input type="number" id="descuento" value="0" min="0">
+    </div>
     <strong>Total ₡<span id="total-compra">0</span></strong>
     <br><br>
     <button onclick="guardarCompraDesdeCarrito()">Guardar Compra</button>
   </div>
-
   <!-- Firebase y lógica -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
     // 🔐 NUEVA configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
@@ -85,37 +138,33 @@
       messagingSenderId: "888658236080",
       appId: "1:888658236080:web:506e5e2085b5a452dba175"
     };
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const clientesRef = collection(db, "clientes");
-
-   async function agregarCliente() {
-  const nombre = document.getElementById("nombre").value.trim();
-  const telefono = document.getElementById("telefono").value.trim();
-
-  if (!nombre || !telefono) {
-    alert("⚠️ Completa ambos campos.");
-    return;
-  }
-
-  try {
-    await addDoc(clientesRef, {
-      nombre,
-      telefono,
-      compras: []
-    });
-    alert("✅ Cliente agregado exitosamente.");
-    document.getElementById("nombre").value = "";
-    document.getElementById("telefono").value = "";
-    cargarClientes();
-  } catch (error) {
-    alert("❌ Error al agregar cliente: " + error.message);
-    console.error("Error al agregar cliente:", error);
-  }
-}
-
-
+    
+    async function agregarCliente() {
+      const nombre = document.getElementById("nombre").value.trim();
+      const telefono = document.getElementById("telefono").value.trim();
+      if (!nombre || !telefono) {
+        alert("⚠️ Completa ambos campos.");
+        return;
+      }
+      try {
+        await addDoc(clientesRef, {
+          nombre,
+          telefono,
+          compras: []
+        });
+        alert("✅ Cliente agregado exitosamente.");
+        document.getElementById("nombre").value = "";
+        document.getElementById("telefono").value = "";
+        cargarClientes();
+      } catch (error) {
+        alert("❌ Error al agregar cliente: " + error.message);
+        console.error("Error al agregar cliente:", error);
+      }
+    }
+    
     async function cargarClientes() {
       const cont = document.getElementById("clientes");
       cont.innerHTML = "";
@@ -125,36 +174,167 @@
         const id = docSnap.id;
         let totalPendiente = 0;
         const compras = cliente.compras || [];
-        compras.forEach(c => totalPendiente += (c.monto || 0) - (c.pagado || 0));
+        compras.forEach(c => {
+          const totalCompra = (c.monto || 0) - (c.descuento || 0);
+          totalPendiente += totalCompra - (c.pagado || 0);
+        });
+        
         const div = document.createElement("div");
         div.className = "cliente";
         div.innerHTML = `
           <strong>${cliente.nombre}</strong><br>
           📞 <a href="https://wa.me/${cliente.telefono}" target="_blank">${cliente.telefono}</a><br>
-          💸 Pendiente: ₡${totalPendiente}<br><br>
-          <button onclick="mostrarAgregarCompra('${id}')">➕ Agregar compra desde productos</button>
-          <br><br>
-          <button onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${totalPendiente})">📲 Recordatorio por WhatsApp</button>
+          💸 Pendiente: ₡${totalPendiente}<br>
+          <div class="editar-cliente" id="editar-${id}" style="display:none;">
+            <input type="text" id="edit-nombre-${id}" value="${cliente.nombre}">
+            <input type="text" id="edit-telefono-${id}" value="${cliente.telefono}">
+            <button class="boton-accion" onclick="guardarEdicion('${id}')">💾 Guardar</button>
+            <button class="boton-accion" onclick="cancelarEdicion('${id}')">❌ Cancelar</button>
+          </div>
+          <div class="botones-derecha">
+            <button class="boton-accion" onclick="editarCliente('${id}')">✏️ Editar</button>
+            <button class="boton-accion" onclick="mostrarAgregarCompra('${id}')">➕ Productos</button>
+            <button class="boton-accion" onclick="registrarPago('${id}', '${cliente.nombre}')">💰 Pago</button>
+            <button class="boton-accion" onclick="exportarPDF('${id}', '${cliente.nombre}')">📄 PDF</button>
+            <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${totalPendiente})">📲 WhatsApp</button>
+          </div>
         `;
         cont.appendChild(div);
       });
     }
-
+    
+    function editarCliente(clienteId) {
+      // Ocultar todos los formularios de edición
+      document.querySelectorAll('.editar-cliente').forEach(div => {
+        div.style.display = 'none';
+      });
+      // Mostrar el formulario de edición para este cliente
+      document.getElementById(`editar-${clienteId}`).style.display = 'flex';
+    }
+    
+    async function guardarEdicion(clienteId) {
+      const nuevoNombre = document.getElementById(`edit-nombre-${clienteId}`).value.trim();
+      const nuevoTelefono = document.getElementById(`edit-telefono-${clienteId}`).value.trim();
+      
+      if (!nuevoNombre || !nuevoTelefono) {
+        alert("⚠️ Completa ambos campos.");
+        return;
+      }
+      
+      try {
+        const clienteDoc = doc(db, "clientes", clienteId);
+        await updateDoc(clienteDoc, {
+          nombre: nuevoNombre,
+          telefono: nuevoTelefono
+        });
+        alert("✅ Cliente actualizado exitosamente.");
+        cargarClientes();
+      } catch (error) {
+        alert("❌ Error al actualizar cliente: " + error.message);
+        console.error("Error al actualizar cliente:", error);
+      }
+    }
+    
+    function cancelarEdicion(clienteId) {
+      document.getElementById(`editar-${clienteId}`).style.display = 'none';
+    }
+    
     function enviarWhatsApp(telefono, nombre, deuda) {
       const limpio = telefono.replace(/\D/g, '');
       const mensaje = `Hola ${nombre}, te recordamos que tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por tu compra en Esentia 💜`;
-      const url = `https://wa.me/${limpio}?text=${encodeURIComponent(mensaje)}`;
+      const url = `https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`;
       window.open(url, "_blank");
     }
-
+    
+    // Función corregida y única para exportar PDF
+    window.exportarPDF = async function(clienteId, nombre) {
+      const snap = await getDocs(clientesRef);
+      let clienteData = null;
+      snap.forEach(docSnap => {
+        if (docSnap.id === clienteId) {
+          clienteData = docSnap.data();
+        }
+      });
+      if (!clienteData) {
+        alert("Cliente no encontrado");
+        return;
+      }
+      const compras = clienteData.compras || [];
+      // Crear un contenedor temporal en memoria (no se agrega al DOM)
+      const container = document.createElement("div");
+      container.style.fontFamily = "sans-serif";
+      container.style.padding = "20px";
+      // Encabezado
+      const header = document.createElement("div");
+      header.innerHTML = `
+        <h2 style="color:#6c4ba3;">🧾 Esentia - Historial de Compras</h2>
+        <p><strong>Cliente:</strong> ${nombre}</p>
+        <p><strong>Teléfono:</strong> ${clienteData.telefono}</p>
+        <p><strong>Fecha de reporte:</strong> ${new Date().toLocaleDateString()}</p>
+        <hr>
+      `;
+      container.appendChild(header);
+      let total = 0;
+      let pagado = 0;
+      let totalDescuentos = 0;
+      // Iterar por las compras
+      compras.forEach((compra, i) => {
+        const compraDiv = document.createElement("div");
+        const title = document.createElement("h4");
+        title.textContent = `📅 Compra ${i + 1} - ${compra.fecha}`;
+        compraDiv.appendChild(title);
+        // Lista de productos
+        if (compra.productos && compra.productos.length > 0) {
+            const productList = document.createElement("ul");
+            compra.productos.forEach(prod => {
+                const item = document.createElement("li");
+                item.textContent = `${prod.nombre} - ${prod.presentacion || ''} ${prod.aroma ? `(${prod.aroma})` : ''} - ₡${prod.precio}`;
+                productList.appendChild(item);
+            });
+            compraDiv.appendChild(productList);
+        }
+        // Totales de la compra
+        const montoCompra = (compra.monto || 0) - (compra.descuento || 0);
+        const totals = document.createElement("p");
+        totals.innerHTML = `
+          <strong>Monto:</strong> ₡${compra.monto || 0} | 
+          <strong>Descuento:</strong> ₡${compra.descuento || 0} | 
+          <strong>Total:</strong> ₡${montoCompra} | 
+          <strong>Pagado:</strong> ₡${compra.pagado || 0}
+        `;
+        compraDiv.appendChild(totals);
+        const hr = document.createElement("hr");
+        compraDiv.appendChild(hr);
+        container.appendChild(compraDiv);
+        total += montoCompra;
+        pagado += compra.pagado || 0;
+        totalDescuentos += compra.descuento || 0;
+      });
+      // Totales finales
+      const footer = document.createElement("div");
+      footer.innerHTML = `
+        <h3>Total Compras: ₡${total}</h3>
+        <h3>Total Descuentos: ₡${totalDescuentos}</h3>
+        <h3>Total Pagado: ₡${pagado}</h3>
+        <h3 style="color: ${total - pagado > 0 ? 'red' : 'green'};">Saldo Pendiente: ₡${total - pagado}</h3>
+      `;
+      container.appendChild(footer);
+      // Generar PDF usando html2pdf
+      html2pdf().set({
+        margin: 10,
+        filename: `Historial_${nombre.replace(/\s+/g, "_")}.pdf`,
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+      }).from(container).save();
+    };
+    
     // Productos desde JSON (Esencia + Limpieza)
     const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
     const URL_LIMPIEZA = "https://wil1979.github.io/esentia-factura/productos_limpieza_completo.json";
-
     let todosLosProductos = [];
     let carrito = [];
     let clienteSeleccionadoId = null;
-
+    
     async function cargarProductosJSON() {
       const [res1, res2] = await Promise.all([fetch(URL_ESENCIA), fetch(URL_LIMPIEZA)]);
       const [aromas, limpieza] = await Promise.all([res1.json(), res2.json()]);
@@ -168,13 +348,13 @@
         select.appendChild(opt);
       });
     }
-
+    
     function mostrarAgregarCompra(idCliente) {
       clienteSeleccionadoId = idCliente;
       carrito = [];
       document.getElementById("carrito").innerHTML = "";
       document.getElementById("total-compra").textContent = "0";
-
+      document.getElementById("descuento").value = "0";
       // mover modal debajo del cliente correspondiente
       const clienteDiv = [...document.querySelectorAll(".cliente")].find(div =>
         div.innerHTML.includes(`mostrarAgregarCompra('${idCliente}')`)
@@ -182,16 +362,14 @@
       clienteDiv.appendChild(document.getElementById("seccion-productos"));
       document.getElementById("seccion-productos").style.display = "block";
     }
-
+    
     function agregarAlCarrito() {
       const index = parseInt(document.getElementById("select-producto").value);
       const producto = todosLosProductos[index];
       const template = document.getElementById("producto-template").content.cloneNode(true);
       const contenedor = document.createElement("div");
       contenedor.dataset.index = index;
-
       template.querySelector(".producto-nombre").textContent = producto.nombre;
-
       const selPres = template.querySelector(".presentacion");
       selPres.innerHTML = "";
       if (producto.variantes) {
@@ -208,7 +386,6 @@
         selPres.appendChild(opt);
         selPres.style.display = "none";
       }
-
       const selAroma = template.querySelector(".aroma");
       if (producto.aromas && producto.aromas.length > 0) {
         producto.aromas.forEach(a => {
@@ -220,17 +397,15 @@
       } else {
         selAroma.style.display = "none";
       }
-
       template.querySelector(".quitar-producto").onclick = () => {
         contenedor.remove();
         actualizarTotal();
       };
-
       contenedor.appendChild(template);
       document.getElementById("carrito").appendChild(contenedor);
       actualizarTotal();
     }
-
+    
     function actualizarTotal() {
       const items = document.querySelectorAll("#carrito > div");
       let total = 0;
@@ -238,9 +413,13 @@
         const precio = parseFloat(div.querySelector(".presentacion").value || 0);
         total += precio;
       });
-      document.getElementById("total-compra").textContent = total;
+      const descuento = parseFloat(document.getElementById("descuento").value) || 0;
+      const totalConDescuento = Math.max(0, total - descuento);
+      document.getElementById("total-compra").textContent = totalConDescuento;
     }
-
+    
+    document.getElementById("descuento").addEventListener("input", actualizarTotal);
+    
     async function guardarCompraDesdeCarrito() {
       if (!clienteSeleccionadoId) return;
       const clienteDoc = doc(db, "clientes", clienteSeleccionadoId);
@@ -251,41 +430,94 @@
           comprasActuales = s.data().compras || [];
         }
       });
-
       const productos = [];
       const items = document.querySelectorAll("#carrito > div");
       let total = 0;
-
       items.forEach(div => {
         const index = parseInt(div.dataset.index);
         const prod = todosLosProductos[index];
         const presentacionSel = div.querySelector(".presentacion");
         const aromaSel = div.querySelector(".aroma");
-
         const nombre = prod.nombre;
         const presentacion = presentacionSel?.options[presentacionSel.selectedIndex]?.textContent;
         const precio = parseFloat(presentacionSel?.value || 0);
         const aroma = aromaSel?.value || null;
-
         productos.push({ nombre, presentacion, aroma, precio });
         total += precio;
       });
-
+      
+      const descuento = parseFloat(document.getElementById("descuento").value) || 0;
+      
       comprasActuales.push({
         fecha: new Date().toISOString().slice(0, 10),
         productos,
         monto: total,
+        descuento: descuento,
         pagado: 0
       });
-
       await updateDoc(clienteDoc, { compras: comprasActuales });
       document.getElementById("seccion-productos").style.display = "none";
       cargarClientes();
     }
-
+    
+    window.registrarPago = async function(clienteId, nombre) {
+      const snap = await getDocs(clientesRef);
+      let clienteData = null;
+      snap.forEach(docSnap => {
+        if (docSnap.id === clienteId) {
+          clienteData = docSnap.data();
+        }
+      });
+      if (!clienteData) {
+        alert("Cliente no encontrado");
+        return;
+      }
+      const compras = clienteData.compras || [];
+      // Buscar la última compra pendiente (saldo > 0)
+      const ultimaPendienteIndex = [...compras].reverse().findIndex(compra => {
+        const totalCompra = (compra.monto || 0) - (compra.descuento || 0);
+        return totalCompra > (compra.pagado || 0);
+      });
+      if (ultimaPendienteIndex === -1) {
+        alert("🎉 El cliente no tiene pagos pendientes.");
+        return;
+      }
+      // Ubicación real en el array
+      const indexReal = compras.length - 1 - ultimaPendienteIndex;
+      const compra = compras[indexReal];
+      const totalCompra = (compra.monto || 0) - (compra.descuento || 0);
+      const saldo = totalCompra - (compra.pagado || 0);
+      const pago = prompt(`💰 Pago para ${nombre}:
+Saldo pendiente: ₡${saldo}
+Ingresa el monto a registrar:`);
+      if (!pago) return;
+      const pagoNum = parseFloat(pago);
+      if (isNaN(pagoNum) || pagoNum <= 0) {
+        alert("⚠️ Ingresá un monto válido.");
+        return;
+      }
+      // Aplicar pago sin pasarse del saldo
+      compra.pagado = Math.min((compra.pagado || 0) + pagoNum, totalCompra);
+      compras[indexReal] = compra;
+      const clienteDoc = doc(db, "clientes", clienteId);
+      await updateDoc(clienteDoc, { compras });
+      alert("✅ Pago registrado correctamente.");
+      cargarClientes();
+    };
+    
+    // Hacer funciones accesibles desde HTML
+    window.agregarCliente = agregarCliente;
+    window.mostrarAgregarCompra = mostrarAgregarCompra;
+    window.enviarWhatsApp = enviarWhatsApp;
+    window.agregarAlCarrito = agregarAlCarrito;
+    window.guardarCompraDesdeCarrito = guardarCompraDesdeCarrito;
+    window.editarCliente = editarCliente;
+    window.guardarEdicion = guardarEdicion;
+    window.cancelarEdicion = cancelarEdicion;
+    
     cargarClientes();
     cargarProductosJSON();
   </script>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </body>
 </html>
