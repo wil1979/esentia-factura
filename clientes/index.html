@@ -319,17 +319,8 @@
         <h3 style="color: ${total - pagado > 0 ? 'red' : 'green'};">Saldo Pendiente: ₡${total - pagado}</h3>
       `;
       container.appendChild(footer);
-      // Generar PDF usando html2pdf
-      html2pdf().set({
-    margin: 10,
-    filename: `Historial_${nombre.replace(/\s+/g, "_")}.pdf`,
-    html2pdf().set({
-        margen: 10,
-        nombre de archivo: `Historial_${nombre.replace(/\s+/g, "_")}.pdf`,
-        html2canvas: { escala: 2 },
-        jsPDF: { unidad: "mm", formato: "carta", orientación: "vertical" }
-      }).from(contenedor).open();
-    };
+      // Generar PDF usando html2pdf 
+html2pdf().set({ margen: 10, nombre de archivo: `Historial_${nombre.replace(/\s+/g, "_")}.pdf`, html2canvas: { escala: 2 }, jsPDF: { unidad: "mm", formato: "a4", orientación: "retrato" } }).from(container).save(); }; bb 
     
     // Productos desde JSON (Esencia + Limpieza)
     const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
