@@ -247,86 +247,102 @@
     }
     
     // Función corregida y única para exportar PDF
-    window.exportarPDF = async function(clienteId, nombre) {
-      const snap = await getDocs(clientesRef);
-      let clienteData = null;
-      snap.forEach(docSnap => {
-        if (docSnap.id === clienteId) {
-          clienteData = docSnap.data();
-        }
-      });
-      if (!clienteData) {
-        alert("Cliente no encontrado");
-        return;
-      }
-      const compras = clienteData.compras || [];
-      // Crear un contenedor temporal en memoria (no se agrega al DOM)
-      const container = document.createElement("div");
-      container.style.fontFamily = "sans-serif";
-      container.style.padding = "20px";
-      // Encabezado
-      const header = document.createElement("div");
-      header.innerHTML = `
-        <h2 style="color:#6c4ba3;">🧾 Esentia - Historial de Compras</h2>
-        <p><strong>Cliente:</strong> ${nombre}</p>
-        <p><strong>Teléfono:</strong> ${clienteData.telefono}</p>
-        <p><strong>Fecha de reporte:</strong> ${new Date().toLocaleDateString()}</p>
-        <hr>
-      `;
-      container.appendChild(header);
-      let total = 0;
-      let pagado = 0;
-      let totalDescuentos = 0;
-      // Iterar por las compras
-      compras.forEach((compra, i) => {
-        const compraDiv = document.createElement("div");
-        const title = document.createElement("h4");
-        title.textContent = `📅 Compra ${i + 1} - ${compra.fecha}`;
-        compraDiv.appendChild(title);
-        // Lista de productos
-        if (compra.productos && compra.productos.length > 0) {
-            const productList = document.createElement("ul");
-            compra.productos.forEach(prod => {
-                const item = document.createElement("li");
-                item.textContent = `${prod.nombre} - ${prod.presentacion || ''} ${prod.aroma ? `(${prod.aroma})` : ''} - ₡${prod.precio}`;
-                productList.appendChild(item);
-            });
-            compraDiv.appendChild(productList);
-        }
-        // Totales de la compra
-        const montoCompra = (compra.monto || 0) - (compra.descuento || 0);
-        const totals = document.createElement("p");
-        totals.innerHTML = `
-          <strong>Monto:</strong> ₡${compra.monto || 0} | 
-          <strong>Descuento:</strong> ₡${compra.descuento || 0} | 
-          <strong>Total:</strong> ₡${montoCompra} | 
-          <strong>Pagado:</strong> ₡${compra.pagado || 0}
-        `;
-        compraDiv.appendChild(totals);
-        const hr = document.createElement("hr");
-        compraDiv.appendChild(hr);
-        container.appendChild(compraDiv);
-        total += montoCompra;
-        pagado += compra.pagado || 0;
-        totalDescuentos += compra.descuento || 0;
-      });
-      // Totales finales
-      const footer = document.createElement("div");
-      footer.innerHTML = `
-        <h3>Total Compras: ₡${total}</h3>
-        <h3>Total Descuentos: ₡${totalDescuentos}</h3>
-        <h3>Total Pagado: ₡${pagado}</h3>
-        <h3 style="color: ${total - pagado > 0 ? 'red' : 'green'};">Saldo Pendiente: ₡${total - pagado}</h3>
-      `;
-      container.appendChild(footer);
-      // Generar PDF usando html2pdf
-      html2pdf().set({
-        margin: 10,
-        filename: `Historial_${nombre.replace(/\s+/g, "_")}.pdf`,
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-      }).from(container).save();
-    };
+ window.exportarPDF = async function(clienteId, nombre) {
+  const snap = await getDocs(clientesRef);
+  let clienteData = null;
+  snap.forEach(docSnap => {
+    if (docSnap.id === clienteId) {
+      clienteData = docSnap.data();
+    }
+  });
+  if (!clienteData) {
+    alert("Cliente no encontrado");
+    return;
+  }
+  const compras = clienteData.compras || [];
+
+  // Crear un contenedor temporal en memoria (no se agrega al DOM)
+  const container = document.createElement("div");
+  container.style.fontFamily = "sans-serif";
+  container.style.padding = "20px";
+
+  // Encabezado
+  const header = document.createElement("div");
+  header.innerHTML = `
+    <h2 style="color:#6c4ba3;">🧾 Esentia - Historial de Compras</h2>
+    <p><strong>Cliente:</strong> ${nombre}</p>
+    <p><strong>Teléfono:</strong> ${clienteData.telefono}</p>
+    <p><strong>Fecha de reporte:</strong> ${new Date().toLocaleDateString()}</p>
+    <hr>
+  `;
+  container.appendChild(header);
+
+  let total = 0;
+  let pagado = 0;
+  let totalDescuentos = 0;
+
+  // Iterar por las compras
+  compras.forEach((compra, i) => {
+    const compraDiv = document.createElement("div");
+    const title = document.createElement("h4");
+    title.textContent = `📅 Compra ${i + 1} - ${compra.fecha}`;
+    compraDiv.appendChild(title);
+
+    // Lista de productos
+    if (compra.productos && compra.productos.length > 0) {
+        const productList = document.createElement("ul");
+        compra.productos.forEach(prod => {
+            const item = document.createElement("li");
+            item.textContent = `${prod.nombre} - ${prod.presentacion || ''} ${prod.aroma ? `(${prod.aroma})` : ''} - ₡${prod.precio}`;
+            productList.appendChild(item);
+        });
+        compraDiv.appendChild(productList);
+    }
+
+    // Totales de la compra
+    const montoCompra = (compra.monto || 0) - (compra.descuento || 0);
+    const totals = document.createElement("p");
+    totals.innerHTML = `
+      <strong>Monto:</strong> ₡${compra.monto || 0} | 
+      <strong>Descuento:</strong> ₡${compra.descuento || 0} | 
+      <strong>Total:</strong> ₡${montoCompra} | 
+      <strong>Pagado:</strong> ₡${compra.pagado || 0}
+    `;
+    compraDiv.appendChild(totals);
+
+    const hr = document.createElement("hr");
+    compraDiv.appendChild(hr);
+
+    container.appendChild(compraDiv);
+
+    total += montoCompra;
+    pagado += compra.pagado || 0;
+    totalDescuentos += compra.descuento || 0;
+  });
+
+  // Totales finales
+  const footer = document.createElement("div");
+  footer.innerHTML = `
+    <h3>Total Compras: ₡${total}</h3>
+    <h3>Total Descuentos: ₡${totalDescuentos}</h3>
+    <h3>Total Pagado: ₡${pagado}</h3>
+    <h3 style="color: ${total - pagado > 0 ? 'red' : 'green'};">Saldo Pendiente: ₡${total - pagado}</h3>
+  `;
+  container.appendChild(footer);
+
+  // Generar PDF y mostrarlo en el navegador
+  html2pdf().set({
+    margin: 10,
+    filename: `Historial_${nombre.replace(/\s+/g, "_")}.pdf`,
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+  }).from(container).outputPdf().then(pdf => {
+    // Abrir el PDF en una nueva pestaña
+    const blob = new Blob([pdf], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  });
+};
     
     // Productos desde JSON (Esencia + Limpieza)
     const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
