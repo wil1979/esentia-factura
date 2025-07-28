@@ -97,7 +97,7 @@
   <h1>📋 Esentia - Registro de Créditos</h1>
   <h2>➕ Nuevo Cliente</h2>
   <input id="nombre" placeholder="Nombre completo">
-  <input id="telefono" placeholder="Teléfono (ej: 88889999)">
+  <input id="telefono" placeholder="Teléfono con código (ej: 88889999)">
   <button onclick="agregarCliente()">Agregar Cliente</button>
   <hr>
   <h2>👥 Clientes</h2>
@@ -241,7 +241,7 @@
     
     function enviarWhatsApp(telefono, nombre, deuda) {
       const limpio = telefono.replace(/\D/g, '');
-      const mensaje = `Hola ${nombre}, Agradesemos tu preferencia y te recordamos que tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por tu compra en Esentia 💜`;
+      const mensaje = `Hola ${nombre}, te recordamos que tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por tu compra en Esentia 💜`;
       const url = `https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`;
       window.open(url, "_blank");
     }
@@ -319,8 +319,14 @@
         <h3 style="color: ${total - pagado > 0 ? 'red' : 'green'};">Saldo Pendiente: ₡${total - pagado}</h3>
       `;
       container.appendChild(footer);
-      // Generar PDF usando html2pdf 
-html2pdf().set({ margen: 10, nombre de archivo: `Historial_${nombre.replace(/\s+/g, "_")}.pdf`, html2canvas: { escala: 2 }, jsPDF: { unidad: "mm", formato: "a4", orientación: "retrato" } }).from(container).save(); }; bb 
+      // Generar PDF usando html2pdf
+      html2pdf().set({
+        margin: 10,
+        filename: `Historial_${nombre.replace(/\s+/g, "_")}.pdf`,
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+      }).from(container).save();
+    };
     
     // Productos desde JSON (Esencia + Limpieza)
     const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
