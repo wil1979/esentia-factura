@@ -321,12 +321,16 @@
       container.appendChild(footer);
       // Generar PDF usando html2pdf
       html2pdf().set({
-        margin: 10,
-        filename: `Historial_${nombre.replace(/\s+/g, "_")}.pdf`,
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-      }).from(container).save();
-    };
+    margin: 10,
+    filename: `Historial_${nombre.replace(/\s+/g, "_")}.pdf`,
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: "mm", format: "letter", orientation: "portrait" }
+}).from(container).outputPdf(function(pdf) {
+    const blob = pdf.output('blob');
+    const url = URL.createObjectURL(blob);
+    const iframe = document.getElementById('pdfViewer'); // Asume que tienes un <iframe id="pdfViewer">
+    iframe.src = url;
+});
     
     // Productos desde JSON (Esencia + Limpieza)
     const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
