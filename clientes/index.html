@@ -77,6 +77,63 @@
       flex: 1;
       min-width: 150px;
     }
+    /* Sección de reportes */
+    #seccion-reportes {
+      margin-top: 30px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .filtros-reportes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+      align-items: end;
+    }
+    .filtro-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .filtro-item label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #6c4ba3;
+    }
+    .tabla-reportes {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    .tabla-reportes th, .tabla-reportes td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+    .tabla-reportes th {
+      background-color: #6c4ba3;
+      color: white;
+    }
+    .tabla-reportes tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .tabla-reportes tr:hover {
+      background-color: #f5f5f5;
+    }
+    .deuda-alta {
+      color: #d32f2f;
+      font-weight: bold;
+    }
+    .deuda-media {
+      color: #f57c00;
+      font-weight: bold;
+    }
+    .deuda-baja {
+      color: #388e3c;
+      font-weight: bold;
+    }
     /* Responsive */
     @media (max-width: 480px) {
       .botones-derecha {
@@ -88,6 +145,9 @@
         margin-bottom: 5px;
       }
       .editar-cliente {
+        flex-direction: column;
+      }
+      .filtros-reportes {
         flex-direction: column;
       }
     }
@@ -102,6 +162,44 @@
   <hr>
   <h2>👥 Clientes</h2>
   <div id="clientes"></div>
+  
+  <!-- Sección de Reportes -->
+  <div id="seccion-reportes">
+    <h2>📊 Reporte General de Clientes</h2>
+    <div class="filtros-reportes">
+      <div class="filtro-item">
+        <label for="filtro-nombre">Nombre:</label>
+        <input type="text" id="filtro-nombre" placeholder="Buscar por nombre">
+      </div>
+      <div class="filtro-item">
+        <label for="filtro-deuda-min">Deuda Mínima:</label>
+        <input type="number" id="filtro-deuda-min" placeholder="₡0" min="0">
+      </div>
+      <div class="filtro-item">
+        <label for="filtro-deuda-max">Deuda Máxima:</label>
+        <input type="number" id="filtro-deuda-max" placeholder="Sin límite" min="0">
+      </div>
+      <div class="filtro-item">
+        <label for="filtro-orden">Ordenar por:</label>
+        <select id="filtro-orden">
+          <option value="nombre-asc">Nombre (A-Z)</option>
+          <option value="nombre-desc">Nombre (Z-A)</option>
+          <option value="deuda-desc">Deuda (Mayor a Menor)</option>
+          <option value="deuda-asc">Deuda (Menor a Mayor)</option>
+        </select>
+      </div>
+      <div class="filtro-item">
+        <button class="boton-accion" onclick="generarReporte()" style="margin-top: 22px;">🔍 Filtrar</button>
+      </div>
+      <div class="filtro-item">
+        <button class="boton-accion" onclick="exportarReportePDF()" style="margin-top: 22px;">📄 PDF</button>
+      </div>
+    </div>
+    <div id="resultados-reportes">
+      <p>Haz clic en "Filtrar" para generar el reporte.</p>
+    </div>
+  </div>
+
   <!-- Sección de compra desde JSON -->
   <template id="producto-template">
     <div class="producto-seleccionado">
@@ -141,7 +239,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const clientesRef = collection(db, "clientes");
-    
     async function agregarCliente() {
       const nombre = document.getElementById("nombre").value.trim();
       const telefono = document.getElementById("telefono").value.trim();
@@ -164,7 +261,6 @@
         console.error("Error al agregar cliente:", error);
       }
     }
-    
     async function cargarClientes() {
       const cont = document.getElementById("clientes");
       cont.innerHTML = "";
@@ -178,7 +274,6 @@
           const totalCompra = (c.monto || 0) - (c.descuento || 0);
           totalPendiente += totalCompra - (c.pagado || 0);
         });
-        
         const div = document.createElement("div");
         div.className = "cliente";
         div.innerHTML = `
@@ -202,7 +297,6 @@
         cont.appendChild(div);
       });
     }
-    
     function editarCliente(clienteId) {
       // Ocultar todos los formularios de edición
       document.querySelectorAll('.editar-cliente').forEach(div => {
@@ -211,16 +305,13 @@
       // Mostrar el formulario de edición para este cliente
       document.getElementById(`editar-${clienteId}`).style.display = 'flex';
     }
-    
     async function guardarEdicion(clienteId) {
       const nuevoNombre = document.getElementById(`edit-nombre-${clienteId}`).value.trim();
       const nuevoTelefono = document.getElementById(`edit-telefono-${clienteId}`).value.trim();
-      
       if (!nuevoNombre || !nuevoTelefono) {
         alert("⚠️ Completa ambos campos.");
         return;
       }
-      
       try {
         const clienteDoc = doc(db, "clientes", clienteId);
         await updateDoc(clienteDoc, {
@@ -234,18 +325,15 @@
         console.error("Error al actualizar cliente:", error);
       }
     }
-    
     function cancelarEdicion(clienteId) {
       document.getElementById(`editar-${clienteId}`).style.display = 'none';
     }
-    
     function enviarWhatsApp(telefono, nombre, deuda) {
       const limpio = telefono.replace(/\D/g, '');
       const mensaje = `Hola ${nombre}, te recordamos que tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por tu compra en Esentia 💜`;
       const url = `https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`;
       window.open(url, "_blank");
     }
-    
     // Función corregida y única para exportar PDF
  window.exportarPDF = async function(clienteId, nombre) {
   const snap = await getDocs(clientesRef);
@@ -260,13 +348,11 @@
     return;
   }
   const compras = clienteData.compras || [];
-
   // Crear un contenedor temporal en memoria (no se agrega al DOM)
   const container = document.createElement("div");
   container.style.fontFamily = "sans-serif";
   container.style.padding = "20px";
   container.style.backgroundColor = "white"; // Asegurar fondo blanco
-
   // Encabezado con logo
   const header = document.createElement("div");
   header.innerHTML = `
@@ -282,18 +368,15 @@
     <hr>
   `;
   container.appendChild(header);
-
   let total = 0;
   let pagado = 0;
   let totalDescuentos = 0;
-
   // Iterar por las compras
   compras.forEach((compra, i) => {
     const compraDiv = document.createElement("div");
     const title = document.createElement("h4");
     title.textContent = `📅 Compra ${i + 1} - ${compra.fecha}`;
     compraDiv.appendChild(title);
-
     // Lista de productos
     if (compra.productos && compra.productos.length > 0) {
         const productList = document.createElement("ul");
@@ -304,7 +387,6 @@
         });
         compraDiv.appendChild(productList);
     }
-
     // Totales de la compra
     const montoCompra = (compra.monto || 0) - (compra.descuento || 0);
     const totals = document.createElement("p");
@@ -315,17 +397,13 @@
       <strong>Pagado:</strong> ₡${compra.pagado || 0}
     `;
     compraDiv.appendChild(totals);
-
     const hr = document.createElement("hr");
     compraDiv.appendChild(hr);
-
     container.appendChild(compraDiv);
-
     total += montoCompra;
     pagado += compra.pagado || 0;
     totalDescuentos += compra.descuento || 0;
   });
-
   // Totales finales
   const footer = document.createElement("div");
   footer.innerHTML = `
@@ -335,7 +413,6 @@
     <h3 style="color: ${total - pagado > 0 ? 'red' : 'green'};">Saldo Pendiente: ₡${total - pagado}</h3>
   `;
   container.appendChild(footer);
-
   // Generar PDF y mostrarlo en el navegador
   try {
     const worker = html2pdf().set({
@@ -347,29 +424,23 @@
       },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
     });
-    
     // Primero generamos el PDF como blob
     const pdfBlob = await worker.from(container).outputPdf('blob');
-    
     // Creamos una URL para el blob
     const url = URL.createObjectURL(pdfBlob);
-    
     // Abrimos en una nueva pestaña
     window.open(url, '_blank');
-    
   } catch (error) {
     console.error("Error generando PDF:", error);
     alert("Error al generar el PDF. Por favor, inténtalo de nuevo.");
   }
 };
-    
     // Productos desde JSON (Esencia + Limpieza)
     const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
     const URL_LIMPIEZA = "https://wil1979.github.io/esentia-factura/productos_limpieza_completo.json";
     let todosLosProductos = [];
     let carrito = [];
     let clienteSeleccionadoId = null;
-    
     async function cargarProductosJSON() {
       const [res1, res2] = await Promise.all([fetch(URL_ESENCIA), fetch(URL_LIMPIEZA)]);
       const [aromas, limpieza] = await Promise.all([res1.json(), res2.json()]);
@@ -383,7 +454,6 @@
         select.appendChild(opt);
       });
     }
-    
     function mostrarAgregarCompra(idCliente) {
       clienteSeleccionadoId = idCliente;
       carrito = [];
@@ -397,64 +467,64 @@
       clienteDiv.appendChild(document.getElementById("seccion-productos"));
       document.getElementById("seccion-productos").style.display = "block";
     }
-    
     function agregarAlCarrito() {
-      const index = parseInt(document.getElementById("select-producto").value);
-      const producto = todosLosProductos[index];
-      const template = document.getElementById("producto-template").content.cloneNode(true);
-      const contenedor = document.createElement("div");
-      contenedor.dataset.index = index;
-      template.querySelector(".producto-nombre").textContent = producto.nombre;
-      const selPres = template.querySelector(".presentacion");
-      selPres.innerHTML = "";
-      if (producto.variantes) {
-        producto.variantes.forEach(v => {
-          const opt = document.createElement("option");
-          opt.value = v.precio;
-          opt.textContent = v.nombre;
-          selPres.appendChild(opt);
-        });
-      } else {
-        const opt = document.createElement("option");
-        opt.value = producto.precioPublico;
-        opt.textContent = producto.nombre;
-        selPres.appendChild(opt);
-        selPres.style.display = "none";
-      }
-      const selAroma = template.querySelector(".aroma");
-      if (producto.aromas && producto.aromas.length > 0) {
-        producto.aromas.forEach(a => {
-          const opt = document.createElement("option");
-          opt.value = a;
-          opt.textContent = a;
-          selAroma.appendChild(opt);
-        });
-      } else {
-        selAroma.style.display = "none";
-      }
-      template.querySelector(".quitar-producto").onclick = () => {
-        contenedor.remove();
-        actualizarTotal();
-      };
-      contenedor.appendChild(template);
-      document.getElementById("carrito").appendChild(contenedor);
-      actualizarTotal();
-    }
-    
+  const index = parseInt(document.getElementById("select-producto").value);
+  const producto = todosLosProductos[index];
+  const template = document.getElementById("producto-template").content.cloneNode(true);
+  const contenedor = document.createElement("div");
+  contenedor.dataset.index = index;
+  template.querySelector(".producto-nombre").textContent = producto.nombre;
+  const selPres = template.querySelector(".presentacion");
+  selPres.innerHTML = "";
+  if (producto.variantes) {
+    producto.variantes.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v.precio;
+      opt.textContent = v.nombre;
+      selPres.appendChild(opt);
+    });
+  } else {
+    const opt = document.createElement("option");
+    opt.value = producto.precioPublico;
+    opt.textContent = producto.nombre;
+    selPres.appendChild(opt);
+    selPres.style.display = "none";
+  }
+  const selAroma = template.querySelector(".aroma");
+  if (producto.aromas && producto.aromas.length > 0) {
+    producto.aromas.forEach(a => {
+      const opt = document.createElement("option");
+      opt.value = a;
+      opt.textContent = a;
+      selAroma.appendChild(opt);
+    });
+  } else {
+    selAroma.style.display = "none";
+  }
+  template.querySelector(".quitar-producto").onclick = () => {
+    contenedor.remove();
+    actualizarTotal();
+  };
+  contenedor.appendChild(template);
+  document.getElementById("carrito").appendChild(contenedor);
+  
+  // Añadir evento para actualizar total cuando cambia la presentación
+  selPres.addEventListener("change", actualizarTotal);
+  
+  actualizarTotal();
+}
     function actualizarTotal() {
-      const items = document.querySelectorAll("#carrito > div");
-      let total = 0;
-      items.forEach(div => {
-        const precio = parseFloat(div.querySelector(".presentacion").value || 0);
-        total += precio;
-      });
-      const descuento = parseFloat(document.getElementById("descuento").value) || 0;
-      const totalConDescuento = Math.max(0, total - descuento);
-      document.getElementById("total-compra").textContent = totalConDescuento;
-    }
-    
+  const items = document.querySelectorAll("#carrito > div");
+  let total = 0;
+  items.forEach(div => {
+    const precio = parseFloat(div.querySelector(".presentacion").value || 0);
+    total += precio;
+  });
+  const descuento = parseFloat(document.getElementById("descuento").value) || 0;
+  const totalConDescuento = Math.max(0, total - descuento);
+  document.getElementById("total-compra").textContent = totalConDescuento;
+}
     document.getElementById("descuento").addEventListener("input", actualizarTotal);
-    
     async function guardarCompraDesdeCarrito() {
       if (!clienteSeleccionadoId) return;
       const clienteDoc = doc(db, "clientes", clienteSeleccionadoId);
@@ -480,9 +550,7 @@
         productos.push({ nombre, presentacion, aroma, precio });
         total += precio;
       });
-      
       const descuento = parseFloat(document.getElementById("descuento").value) || 0;
-      
       comprasActuales.push({
         fecha: new Date().toISOString().slice(0, 10),
         productos,
@@ -494,7 +562,6 @@
       document.getElementById("seccion-productos").style.display = "none";
       cargarClientes();
     }
-    
     window.registrarPago = async function(clienteId, nombre) {
       const snap = await getDocs(clientesRef);
       let clienteData = null;
@@ -540,6 +607,236 @@ Ingresa el monto a registrar:`);
       cargarClientes();
     };
     
+    // Funciones para reportes
+    async function generarReporte() {
+      const contResultados = document.getElementById("resultados-reportes");
+      contResultados.innerHTML = "<p> Generando reporte...</p>";
+      
+      try {
+        const snapshot = await getDocs(clientesRef);
+        let clientes = [];
+        
+        // Recopilar datos de todos los clientes
+        snapshot.forEach(docSnap => {
+          const cliente = docSnap.data();
+          const id = docSnap.id;
+          let totalCompras = 0;
+          let totalPagado = 0;
+          let totalDescuentos = 0;
+          let totalPendiente = 0;
+          
+          const compras = cliente.compras || [];
+          compras.forEach(c => {
+            const totalCompra = (c.monto || 0) - (c.descuento || 0);
+            totalCompras += totalCompra;
+            totalPagado += c.pagado || 0;
+            totalDescuentos += c.descuento || 0;
+            totalPendiente += totalCompra - (c.pagado || 0);
+          });
+          
+          clientes.push({
+            id,
+            nombre: cliente.nombre,
+            telefono: cliente.telefono,
+            totalCompras,
+            totalPagado,
+            totalDescuentos,
+            totalPendiente
+          });
+        });
+        
+        // Aplicar filtros
+        const filtroNombre = document.getElementById("filtro-nombre").value.toLowerCase();
+        const filtroDeudaMin = parseFloat(document.getElementById("filtro-deuda-min").value) || 0;
+        const filtroDeudaMax = parseFloat(document.getElementById("filtro-deuda-max").value) || Infinity;
+        
+        clientes = clientes.filter(cliente => {
+          // Filtro por nombre
+          if (filtroNombre && !cliente.nombre.toLowerCase().includes(filtroNombre)) {
+            return false;
+          }
+          
+          // Filtro por rango de deuda
+          if (cliente.totalPendiente < filtroDeudaMin || cliente.totalPendiente > filtroDeudaMax) {
+            return false;
+          }
+          
+          return true;
+        });
+        
+        // Aplicar ordenamiento
+        const orden = document.getElementById("filtro-orden").value;
+        switch(orden) {
+          case "nombre-asc":
+            clientes.sort((a, b) => a.nombre.localeCompare(b.nombre));
+            break;
+          case "nombre-desc":
+            clientes.sort((a, b) => b.nombre.localeCompare(a.nombre));
+            break;
+          case "deuda-desc":
+            clientes.sort((a, b) => b.totalPendiente - a.totalPendiente);
+            break;
+          case "deuda-asc":
+            clientes.sort((a, b) => a.totalPendiente - b.totalPendiente);
+            break;
+        }
+        
+        // Mostrar resultados
+        if (clientes.length === 0) {
+          contResultados.innerHTML = "<p>No se encontraron clientes con los filtros aplicados.</p>";
+          return;
+        }
+        
+        // Calcular totales generales
+        let totalGeneralCompras = 0;
+        let totalGeneralPagado = 0;
+        let totalGeneralPendiente = 0;
+        
+        clientes.forEach(cliente => {
+          totalGeneralCompras += cliente.totalCompras;
+          totalGeneralPagado += cliente.totalPagado;
+          totalGeneralPendiente += cliente.totalPendiente;
+        });
+        
+        // Generar tabla HTML
+        let tablaHTML = `
+          <table class="tabla-reportes">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Teléfono</th>
+                <th>Total Compras</th>
+                <th>Total Pagado</th>
+                <th>Descuentos</th>
+                <th>Saldo Pendiente</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        
+        clientes.forEach(cliente => {
+          // Determinar clase de deuda para color
+          let claseDeuda = "";
+          if (cliente.totalPendiente > 50000) {
+            claseDeuda = "deuda-alta";
+          } else if (cliente.totalPendiente > 20000) {
+            claseDeuda = "deuda-media";
+          } else if (cliente.totalPendiente > 0) {
+            claseDeuda = "deuda-baja";
+          }
+          
+          tablaHTML += `
+            <tr>
+              <td>${cliente.nombre}</td>
+              <td>${cliente.telefono}</td>
+              <td>₡${cliente.totalCompras.toLocaleString()}</td>
+              <td>₡${cliente.totalPagado.toLocaleString()}</td>
+              <td>₡${cliente.totalDescuentos.toLocaleString()}</td>
+              <td class="${claseDeuda}">₡${cliente.totalPendiente.toLocaleString()}</td>
+              <td>
+                <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${cliente.totalPendiente})" style="padding: 3px 6px; font-size: 0.75rem;">📲</button>
+                <button class="boton-accion" onclick="exportarPDF('${cliente.id}', '${cliente.nombre}')" style="padding: 3px 6px; font-size: 0.75rem;">📄</button>
+              </td>
+            </tr>
+          `;
+        });
+        
+        tablaHTML += `
+            </tbody>
+          </table>
+          <div style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 5px;">
+            <h3>Resumen General:</h3>
+            <p><strong>Total en Compras:</strong> ₡${totalGeneralCompras.toLocaleString()}</p>
+            <p><strong>Total Pagado:</strong> ₡${totalGeneralPagado.toLocaleString()}</p>
+            <p><strong>Total Pendiente:</strong> ₡${totalGeneralPendiente.toLocaleString()}</p>
+          </div>
+        `;
+        
+        contResultados.innerHTML = tablaHTML;
+        
+      } catch (error) {
+        console.error("Error generando reporte:", error);
+        contResultados.innerHTML = "<p>Error al generar el reporte. Por favor, inténtalo de nuevo.</p>";
+      }
+    }
+    
+    // Función para exportar reporte a PDF
+    window.exportarReportePDF = async function() {
+      // Verificar si hay resultados en el reporte
+      const resultados = document.getElementById("resultados-reportes");
+      if (!resultados.innerHTML || resultados.innerHTML.includes("Generando reporte") || resultados.innerHTML.includes("No se encontraron clientes")) {
+        alert("Primero debes generar un reporte con filtros.");
+        return;
+      }
+      
+      // Crear un contenedor temporal para el PDF del reporte
+      const container = document.createElement("div");
+      container.style.fontFamily = "sans-serif";
+      container.style.padding = "20px";
+      container.style.backgroundColor = "white";
+      container.style.width = "100%";
+      
+      // Encabezado con logo
+      const header = document.createElement("div");
+      header.innerHTML = `
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+          <img src="../images/logo.png" alt="Logo Esentia" style="max-height: 60px; margin-right: 20px;">
+          <div>
+            <h2 style="color:#6c4ba3; margin: 0;">📊 Reporte General de Clientes</h2>
+            <p style="margin: 5px 0 0 0;"><strong>Fecha de reporte:</strong> ${new Date().toLocaleDateString()}</p>
+          </div>
+        </div>
+        <hr>
+      `;
+      container.appendChild(header);
+      
+      // Copiar el contenido de los resultados del reporte
+      const resultadosClone = resultados.cloneNode(true);
+      
+      // Remover botones de acciones del clon
+      resultadosClone.querySelectorAll('.boton-accion').forEach(btn => btn.remove());
+      
+      // Remover el resumen general para ponerlo al final
+      const resumenGeneral = resultadosClone.querySelector('div[style*="background-color: #f5f5f5"]');
+      if (resumenGeneral) {
+        resumenGeneral.remove();
+      }
+      
+      container.appendChild(resultadosClone);
+      
+      // Agregar resumen general al final
+      if (resumenGeneral) {
+        container.appendChild(resumenGeneral);
+      }
+      
+      // Generar PDF y mostrarlo en el navegador
+      try {
+        const worker = html2pdf().set({
+          margin: 10,
+          filename: `Reporte_Clientes_${new Date().toISOString().slice(0, 10)}.pdf`,
+          html2canvas: { 
+            scale: 2,
+            useCORS: true
+          },
+          jsPDF: { unit: "mm", format: "a4", orientation: "landscape" } // Landscape para mejor visualización de tabla
+        });
+        
+        // Primero generamos el PDF como blob
+        const pdfBlob = await worker.from(container).outputPdf('blob');
+        
+        // Creamos una URL para el blob
+        const url = URL.createObjectURL(pdfBlob);
+        
+        // Abrimos en una nueva pestaña
+        window.open(url, '_blank');
+        
+      } catch (error) {
+        console.error("Error generando PDF del reporte:", error);
+        alert("Error al generar el PDF del reporte. Por favor, inténtalo de nuevo.");
+      }
+    };
+    
     // Hacer funciones accesibles desde HTML
     window.agregarCliente = agregarCliente;
     window.mostrarAgregarCompra = mostrarAgregarCompra;
@@ -549,6 +846,8 @@ Ingresa el monto a registrar:`);
     window.editarCliente = editarCliente;
     window.guardarEdicion = guardarEdicion;
     window.cancelarEdicion = cancelarEdicion;
+    window.generarReporte = generarReporte;
+    window.exportarReportePDF = exportarReportePDF;
     
     cargarClientes();
     cargarProductosJSON();
