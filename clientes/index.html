@@ -226,7 +226,7 @@
   <!-- Firebase y lógica -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
     // 🔐 NUEVA configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
@@ -330,106 +330,134 @@
     }
     function enviarWhatsApp(telefono, nombre, deuda) {
       const limpio = telefono.replace(/\D/g, '');
-      const mensaje = `Hola ${nombre}, te recordamos que tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por tu compra en Esentia 💜`;
+      const mensaje = `Hola ${nombre}, Agradesemos tu preferencia y te recordamos que tienes un saldo pendiente de ₡${deuda.toLocaleString()}.  Gracias por confiar en Esentia 💜 \n\n💳 Formas de pago:\n1. SINPE 72952454 Wilber Calderón M.\n3. BAC: CR59010200009453897656\n\n🌿`;
       const url = `https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`;
       window.open(url, "_blank");
     }
     // Función corregida y única para exportar PDF
  window.exportarPDF = async function(clienteId, nombre) {
-  const snap = await getDocs(clientesRef);
-  let clienteData = null;
-  snap.forEach(docSnap => {
-    if (docSnap.id === clienteId) {
-      clienteData = docSnap.data();
-    }
-  });
-  if (!clienteData) {
-    alert("Cliente no encontrado");
-    return;
-  }
-  const compras = clienteData.compras || [];
-  // Crear un contenedor temporal en memoria (no se agrega al DOM)
-  const container = document.createElement("div");
-  container.style.fontFamily = "sans-serif";
-  container.style.padding = "20px";
-  container.style.backgroundColor = "white"; // Asegurar fondo blanco
-  // Encabezado con logo
-  const header = document.createElement("div");
-  header.innerHTML = `
-    <div style="display: flex; align-items: center; margin-bottom: 20px;">
-      <img src="../images/logo.png" alt="Logo Esentia" style="max-height: 60px; margin-right: 20px;">
-      <div>
-        <h2 style="color:#6c4ba3; margin: 0;">🧾 Esentia - Historial de Compras</h2>
-        <p style="margin: 5px 0 0 0;"><strong>Cliente:</strong> ${nombre}</p>
-        <p style="margin: 5px 0 0 0;"><strong>Teléfono:</strong> ${clienteData.telefono}</p>
-        <p style="margin: 5px 0 0 0;"><strong>Fecha de reporte:</strong> ${new Date().toLocaleDateString()}</p>
-      </div>
-    </div>
-    <hr>
-  `;
-  container.appendChild(header);
-  let total = 0;
-  let pagado = 0;
-  let totalDescuentos = 0;
-  // Iterar por las compras
-  compras.forEach((compra, i) => {
-    const compraDiv = document.createElement("div");
-    const title = document.createElement("h4");
-    title.textContent = `📅 Compra ${i + 1} - ${compra.fecha}`;
-    compraDiv.appendChild(title);
-    // Lista de productos
-    if (compra.productos && compra.productos.length > 0) {
-        const productList = document.createElement("ul");
-        compra.productos.forEach(prod => {
-            const item = document.createElement("li");
-            item.textContent = `${prod.nombre} - ${prod.presentacion || ''} ${prod.aroma ? `(${prod.aroma})` : ''} - ₡${prod.precio}`;
-            productList.appendChild(item);
-        });
-        compraDiv.appendChild(productList);
-    }
-    // Totales de la compra
-    const montoCompra = (compra.monto || 0) - (compra.descuento || 0);
-    const totals = document.createElement("p");
-    totals.innerHTML = `
-      <strong>Monto:</strong> ₡${compra.monto || 0} | 
-      <strong>Descuento:</strong> ₡${compra.descuento || 0} | 
-      <strong>Total:</strong> ₡${montoCompra} | 
-      <strong>Pagado:</strong> ₡${compra.pagado || 0}
-    `;
-    compraDiv.appendChild(totals);
-    const hr = document.createElement("hr");
-    compraDiv.appendChild(hr);
-    container.appendChild(compraDiv);
-    total += montoCompra;
-    pagado += compra.pagado || 0;
-    totalDescuentos += compra.descuento || 0;
-  });
-  // Totales finales
-  const footer = document.createElement("div");
-  footer.innerHTML = `
-    <h3>Total Compras: ₡${total}</h3>
-    <h3>Total Descuentos: ₡${totalDescuentos}</h3>
-    <h3>Total Pagado: ₡${pagado}</h3>
-    <h3 style="color: ${total - pagado > 0 ? 'red' : 'green'};">Saldo Pendiente: ₡${total - pagado}</h3>
-  `;
-  container.appendChild(footer);
-  // Generar PDF y mostrarlo en el navegador
   try {
+    // Obtener datos frescos directamente de Firestore
+    const docRef = doc(db, "clientes", clienteId);
+    const docSnap = await getDoc(docRef);
+    
+    if (!docSnap.exists()) {
+      alert("Cliente no encontrado");
+      return;
+    }
+    
+    const clienteData = docSnap.data();
+    const compras = clienteData.compras || [];
+
+    // Crear un contenedor temporal en memoria (no se agrega al DOM)
+    const container = document.createElement("div");
+    container.style.fontFamily = "sans-serif";
+    container.style.padding = "20px";
+    container.style.backgroundColor = "white";
+    container.style.width = "100%";
+
+    // Encabezado con logo
+    const header = document.createElement("div");
+    header.innerHTML = `
+      <div style="display: flex; align-items: center; margin-bottom: 20px;">
+        <img src="../images/logo.png" alt="Logo Esentia" style="max-height: 60px; margin-right: 20px;">
+        <div>
+          <h2 style="color:#6c4ba3; margin: 0;">🧾 Esentia - Historial de Compras</h2>
+          <p style="margin: 5px 0 0 0;"><strong>Cliente:</strong> ${clienteData.nombre || nombre}</p>
+          <p style="margin: 5px 0 0 0;"><strong>Teléfono:</strong> ${clienteData.telefono || 'No disponible'}</p>
+          <p style="margin: 5px 0 0 0;"><strong>Fecha de reporte:</strong> ${new Date().toLocaleDateString()}</p>
+        </div>
+      </div>
+      <hr>
+    `;
+    container.appendChild(header);
+
+    let total = 0;
+    let pagado = 0;
+    let totalDescuentos = 0;
+
+    // Iterar por las compras
+    if (compras.length === 0) {
+      const noCompras = document.createElement("div");
+      noCompras.innerHTML = `<p style="text-align: center; color: #666; font-style: italic;">No hay compras registradas para este cliente.</p>`;
+      container.appendChild(noCompras);
+    } else {
+      compras.forEach((compra, i) => {
+        const compraDiv = document.createElement("div");
+        const title = document.createElement("h4");
+        title.textContent = `📅 Compra ${i + 1} - ${compra.fecha || 'Fecha no disponible'}`;
+        compraDiv.appendChild(title);
+
+        // Lista de productos
+        if (compra.productos && compra.productos.length > 0) {
+            const productList = document.createElement("ul");
+            compra.productos.forEach(prod => {
+                const item = document.createElement("li");
+                item.textContent = `${prod.nombre || 'Producto sin nombre'} - ${prod.presentacion || ''} ${prod.aroma ? `(${prod.aroma})` : ''} - ₡${prod.precio || 0}`;
+                productList.appendChild(item);
+            });
+            compraDiv.appendChild(productList);
+        } else {
+            const noProductos = document.createElement("p");
+            noProductos.textContent = "No hay productos en esta compra";
+            noProductos.style.fontStyle = "italic";
+            noProductos.style.color = "#666";
+            compraDiv.appendChild(noProductos);
+        }
+
+        // Totales de la compra
+        const montoOriginal = compra.monto || 0;
+        const descuento = compra.descuento || 0;
+        const montoCompra = montoOriginal - descuento;
+        const pagadoCompra = compra.pagado || 0;
+        
+        const totals = document.createElement("p");
+        totals.innerHTML = `
+          <strong>Monto:</strong> ₡${montoOriginal} | 
+          <strong>Descuento:</strong> ₡${descuento} | 
+          <strong>Total:</strong> ₡${montoCompra} | 
+          <strong>Pagado:</strong> ₡${pagadoCompra}
+        `;
+        compraDiv.appendChild(totals);
+
+        const hr = document.createElement("hr");
+        compraDiv.appendChild(hr);
+
+        container.appendChild(compraDiv);
+
+        total += montoCompra;
+        pagado += pagadoCompra;
+        totalDescuentos += descuento;
+      });
+    }
+
+    // Totales finales
+    const footer = document.createElement("div");
+    footer.innerHTML = `
+      <h3>Total Compras: ₡${total}</h3>
+      <h3>Total Descuentos: ₡${totalDescuentos}</h3>
+      <h3>Total Pagado: ₡${pagado}</h3>
+      <h3 style="color: ${total - pagado > 0 ? 'red' : 'green'};">Saldo Pendiente: ₡${total - pagado}</h3>
+    `;
+    container.appendChild(footer);
+
+    // Generar PDF y mostrarlo en el navegador
     const worker = html2pdf().set({
       margin: 10,
-      filename: `Historial_${nombre.replace(/\s+/g, "_")}.pdf`,
+      filename: `Historial_${(clienteData.nombre || nombre).replace(/\s+/g, "_")}.pdf`,
       html2canvas: { 
         scale: 2,
-        useCORS: true // Permitir carga de imágenes externas
+        useCORS: true,
+        logging: false
       },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
     });
-    // Primero generamos el PDF como blob
+    
+    // Generar PDF como blob y abrir en nueva pestaña
     const pdfBlob = await worker.from(container).outputPdf('blob');
-    // Creamos una URL para el blob
     const url = URL.createObjectURL(pdfBlob);
-    // Abrimos en una nueva pestaña
     window.open(url, '_blank');
+    
   } catch (error) {
     console.error("Error generando PDF:", error);
     alert("Error al generar el PDF. Por favor, inténtalo de nuevo.");
@@ -468,62 +496,62 @@
       document.getElementById("seccion-productos").style.display = "block";
     }
     function agregarAlCarrito() {
-  const index = parseInt(document.getElementById("select-producto").value);
-  const producto = todosLosProductos[index];
-  const template = document.getElementById("producto-template").content.cloneNode(true);
-  const contenedor = document.createElement("div");
-  contenedor.dataset.index = index;
-  template.querySelector(".producto-nombre").textContent = producto.nombre;
-  const selPres = template.querySelector(".presentacion");
-  selPres.innerHTML = "";
-  if (producto.variantes) {
-    producto.variantes.forEach(v => {
-      const opt = document.createElement("option");
-      opt.value = v.precio;
-      opt.textContent = v.nombre;
-      selPres.appendChild(opt);
-    });
-  } else {
-    const opt = document.createElement("option");
-    opt.value = producto.precioPublico;
-    opt.textContent = producto.nombre;
-    selPres.appendChild(opt);
-    selPres.style.display = "none";
-  }
-  const selAroma = template.querySelector(".aroma");
-  if (producto.aromas && producto.aromas.length > 0) {
-    producto.aromas.forEach(a => {
-      const opt = document.createElement("option");
-      opt.value = a;
-      opt.textContent = a;
-      selAroma.appendChild(opt);
-    });
-  } else {
-    selAroma.style.display = "none";
-  }
-  template.querySelector(".quitar-producto").onclick = () => {
-    contenedor.remove();
-    actualizarTotal();
-  };
-  contenedor.appendChild(template);
-  document.getElementById("carrito").appendChild(contenedor);
-  
-  // Añadir evento para actualizar total cuando cambia la presentación
-  selPres.addEventListener("change", actualizarTotal);
-  
-  actualizarTotal();
-}
+      const index = parseInt(document.getElementById("select-producto").value);
+      const producto = todosLosProductos[index];
+      const template = document.getElementById("producto-template").content.cloneNode(true);
+      const contenedor = document.createElement("div");
+      contenedor.dataset.index = index;
+      template.querySelector(".producto-nombre").textContent = producto.nombre;
+      const selPres = template.querySelector(".presentacion");
+      selPres.innerHTML = "";
+      if (producto.variantes) {
+        producto.variantes.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v.precio;
+          opt.textContent = v.nombre;
+          selPres.appendChild(opt);
+        });
+      } else {
+        const opt = document.createElement("option");
+        opt.value = producto.precioPublico;
+        opt.textContent = producto.nombre;
+        selPres.appendChild(opt);
+        selPres.style.display = "none";
+      }
+      const selAroma = template.querySelector(".aroma");
+      if (producto.aromas && producto.aromas.length > 0) {
+        producto.aromas.forEach(a => {
+          const opt = document.createElement("option");
+          opt.value = a;
+          opt.textContent = a;
+          selAroma.appendChild(opt);
+        });
+      } else {
+        selAroma.style.display = "none";
+      }
+      template.querySelector(".quitar-producto").onclick = () => {
+        contenedor.remove();
+        actualizarTotal();
+      };
+      contenedor.appendChild(template);
+      document.getElementById("carrito").appendChild(contenedor);
+      
+      // Añadir evento para actualizar total cuando cambia la presentación
+      selPres.addEventListener("change", actualizarTotal);
+      
+      actualizarTotal();
+    }
     function actualizarTotal() {
-  const items = document.querySelectorAll("#carrito > div");
-  let total = 0;
-  items.forEach(div => {
-    const precio = parseFloat(div.querySelector(".presentacion").value || 0);
-    total += precio;
-  });
-  const descuento = parseFloat(document.getElementById("descuento").value) || 0;
-  const totalConDescuento = Math.max(0, total - descuento);
-  document.getElementById("total-compra").textContent = totalConDescuento;
-}
+      const items = document.querySelectorAll("#carrito > div");
+      let total = 0;
+      items.forEach(div => {
+        const precio = parseFloat(div.querySelector(".presentacion").value || 0);
+        total += precio;
+      });
+      const descuento = parseFloat(document.getElementById("descuento").value) || 0;
+      const totalConDescuento = Math.max(0, total - descuento);
+      document.getElementById("total-compra").textContent = totalConDescuento;
+    }
     document.getElementById("descuento").addEventListener("input", actualizarTotal);
     async function guardarCompraDesdeCarrito() {
       if (!clienteSeleccionadoId) return;
@@ -698,7 +726,7 @@ Ingresa el monto a registrar:`);
           totalGeneralPendiente += cliente.totalPendiente;
         });
         
-        // Generar tabla HTML
+        // Generar tabla HTML 
         let tablaHTML = `
           <table class="tabla-reportes">
             <thead>
@@ -709,7 +737,7 @@ Ingresa el monto a registrar:`);
                 <th>Total Pagado</th>
                 <th>Descuentos</th>
                 <th>Saldo Pendiente</th>
-                <th>Acciones</th>
+                
               </tr>
             </thead>
             <tbody>
@@ -718,9 +746,9 @@ Ingresa el monto a registrar:`);
         clientes.forEach(cliente => {
           // Determinar clase de deuda para color
           let claseDeuda = "";
-          if (cliente.totalPendiente > 50000) {
+          if (cliente.totalPendiente > 5000) {
             claseDeuda = "deuda-alta";
-          } else if (cliente.totalPendiente > 20000) {
+          } else if (cliente.totalPendiente > 2000) {
             claseDeuda = "deuda-media";
           } else if (cliente.totalPendiente > 0) {
             claseDeuda = "deuda-baja";
@@ -734,10 +762,12 @@ Ingresa el monto a registrar:`);
               <td>₡${cliente.totalPagado.toLocaleString()}</td>
               <td>₡${cliente.totalDescuentos.toLocaleString()}</td>
               <td class="${claseDeuda}">₡${cliente.totalPendiente.toLocaleString()}</td>
+              
               <td>
                 <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${cliente.totalPendiente})" style="padding: 3px 6px; font-size: 0.75rem;">📲</button>
                 <button class="boton-accion" onclick="exportarPDF('${cliente.id}', '${cliente.nombre}')" style="padding: 3px 6px; font-size: 0.75rem;">📄</button>
-              </td>
+                
+                </td>
             </tr>
           `;
         });
