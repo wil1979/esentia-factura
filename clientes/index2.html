@@ -447,72 +447,109 @@
     }
 
     // ✅ Exportar PDF del cliente
-    window.exportarPDF = async function(clienteId, nombre) {
-      try {
-        const docRef = doc(db, "clientes", clienteId);
-        const docSnap = await getDoc(docRef);
-        if (!docSnap.exists()) {
-          alert("Cliente no encontrado");
-          return;
-        }
-        const clienteData = docSnap.data();
-        const compras = clienteData.compras || [];
-        const container = document.createElement("div");
-        container.style.fontFamily = "sans-serif";
-        container.style.padding = "20px";
-        container.style.backgroundColor = "white";
-        container.style.width = "100%";
+    window.exportarReportePDF = async function() {
+  const resultados = document.getElementById("resultados-reportes");
 
-        container.innerHTML = `
-          <div style="display: flex; align-items: center; margin-bottom: 20px;">
-            <img src="../images/logo.png" alt="Logo Esentia" style="max-height: 60px; margin-right: 20px;">
-            <div>
-              <h2 style="color:#6c4ba3; margin: 0;">🧾 Historial de Compras</h2>
-              <p><strong>Cliente:</strong> ${clienteData.nombre}</p>
-              <p><strong>Teléfono:</strong> ${clienteData.telefono}</p>
-              <p><strong>Fecha:</strong> ${new Date().toLocaleDateString()}</p>
-            </div>
-          </div>
-          <hr>
-        `;
+  // Validar que hay un reporte generado
+  if (!resultados || !resultados.querySelector("table")) {
+    alert("⚠️ Primero genera un reporte para poder exportarlo.");
+    return;
+  }
 
-        let total = 0, pagado = 0, descuentos = 0;
-        if (compras.length === 0) {
-          container.innerHTML += `<p style="text-align:center; color:#666;">No hay compras registradas.</p>`;
-        } else {
-          compras.forEach((c, i) => {
-            const monto = c.monto || 0;
-            const desc = c.descuento || 0;
-            const pago = c.pagado || 0;
-            const neto = monto - desc;
-            total += neto;
-            pagado += pago;
-            descuentos += desc;
+  // Crear un contenedor temporal en memoria (no visible en pantalla)
+  const container = document.createElement("div");
+  container.style.fontFamily = "Arial, sans-serif";
+  container.style.padding = "20px";
+  container.style.backgroundColor = "white";
+  container.style.width = "210mm"; // A4 width
+  container.style.margin = "0 auto";
+  container.style.boxSizing = "border-box";
 
-            container.innerHTML += `
-              <h4>📅 Compra ${i+1} - ${c.fecha}</h4>
-              <ul>${c.productos?.map(p => `<li>${p.nombre} - ${p.presentacion} ${p.aroma ? '('+p.aroma+')' : ''} - ₡${p.precio}</li>`).join('') || '<li>Sin productos</li>'}</ul>
-              <p><strong>Total:</strong> ₡${neto} | <strong>Pagado:</strong> ₡${pago}</p>
-              <hr>
-            `;
-          });
-        }
+  // === ENCABEZADO ===
+  const header = document.createElement("div");
+  header.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+      <img src="https://wil1979.github.io/esentia-factura/images/logo.png" 
+           alt="Logo Esentia" 
+           style="max-height: 60px; width: auto;">
+      <div>
+        <h2 style="color: #6c4ba3; margin: 0; font-size: 1.5rem;">📊 Reporte General de Clientes</h2>
+        <p style="margin: 5px 0 0 0; color: #555;">
+          <strong>Fecha:</strong> ${new Date().toLocaleDateString('es-CR')}
+        </p>
+      </div>
+    </div>
+    <hr style="border: 1px solid #ddd;">
+  `;
+  container.appendChild(header);
 
-        container.innerHTML += `
-          <h3>Total Compras: ₡${total}</h3>
-          <h3>Descuentos: ₡${descuentos}</h3>
-          <h3>Pagado: ₡${pagado}</h3>
-          <h3 style="color: ${total - pagado > 0 ? 'red' : 'green'};">Saldo: ₡${total - pagado}</h3>
-        `;
+  // === CLONAR TABLA DEL REPORTE ===
+  const tablaClone = resultados.querySelector("table").cloneNode(true);
+  // Asegurarse de que los estilos de color se mantengan
+  const celdasDeuda = tablaClone.querySelectorAll(".deuda-alta, .deuda-media, .deuda-baja");
+  celdasDeuda.forEach(celda => {
+    if (celda.classList.contains("deuda-alta")) {
+      celda.style.color = "#d32f2f";
+    } else if (celda.classList.contains("deuda-media")) {
+      celda.style.color = "#f57c00";
+    } else if (celda.classList.contains("deuda-baja")) {
+      celda.style.color = "#388e3c";
+    }
+    celda.style.fontWeight = "bold";
+  });
+  container.appendChild(tablaClone);
 
-        const pdfBlob = await html2pdf().from(container).outputPdf('blob');
-        const url = URL.createObjectURL(pdfBlob);
-        window.open(url, '_blank');
-      } catch (error) {
-        alert("Error generando PDF.");
-        console.error(error);
-      }
+  // === RESUMEN GENERAL (si existe) ===
+  const resumen = resultados.querySelector('div[style*="background-color: #f5f5f5"]');
+  if (resumen) {
+    const resumenClone = resumen.cloneNode(true);
+    // Asegurar estilos
+    resumenClone.style.backgroundColor = "#f5f5f5";
+    resumenClone.style.padding = "15px";
+    resumenClone.style.borderRadius = "5px";
+    resumenClone.style.marginTop = "20px";
+    container.appendChild(resumenClone);
+  }
+
+  // === CONFIGURACIÓN Y GENERACIÓN DEL PDF ===
+  try {
+    // Añadir temporalmente el contenedor al DOM (oculto pero presente)
+    container.style.position = "absolute";
+    container.style.left = "-9999px";
+    container.style.top = "-9999px";
+    document.body.appendChild(container);
+
+    // Usar html2pdf con configuración robusta
+    const opt = {
+      margin: 10,
+      filename: `Reporte_Clientes_${new Date().toISOString().slice(0, 10)}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 3, // Alta resolución
+        useCORS: true,
+        logging: false,
+        width: container.offsetWidth,
+        scrollY: -window.scrollY
+      },
+      jsPDF: {
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'landscape'
+      },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
+
+    // Generar PDF y abrir en nueva pestaña
+    const pdf = await html2pdf().set(opt).from(container).save();
+
+    // Opcional: limpiar el contenedor temporal
+    document.body.removeChild(container);
+
+  } catch (error) {
+    console.error("Error al generar el PDF del reporte:", error);
+    alert("❌ Ocurrió un error al generar el PDF. Detalle: " + error.message);
+  }
+};
 
     // Cargar productos desde JSON
     const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
