@@ -994,32 +994,50 @@
     window.generarReporteModal = generarReporteModal;
 
     function imprimirModal() {
-      const contenido = document.getElementById("resultado-modal").innerHTML; // Get content from result-modal
-      const ventana = window.open('', '_blank', 'width=800,height=600');
-      ventana.document.write(`
-        <html>
-          <head>
-            <title>Reporte Esentia</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 20px; }
-              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-              th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-              th { background-color: #6c4ba3; color: white; }
-              .deuda-alta { color: #d32f2f; font-weight: bold; }
-              .deuda-media { color: #f57c00; font-weight: bold; }
-              .deuda-baja { color: #388e3c; font-weight: bold; }
-            </style>
-          </head>
-          <body>
-            <h2>📊 Reporte General de Clientes</h2>
-            <p><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-CR')}</p>
-            ${contenido}
-            <script>setTimeout(() => window.print(), 500);</script>
-          </body>
-        </html>
-      `);
-      ventana.document.close();
-    }
+  const contenido = document.getElementById("modal-impresion").querySelector("div").innerHTML;
+  const ventana = window.open('', '_blank', 'width=800,height=600');
+  ventana.document.write(`
+    <html>
+      <head>
+        <title>Reporte General de Clientes</title>
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            color: #333; 
+          }
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 20px 0; 
+          }
+          th, td { 
+            border: 1px solid #ddd; 
+            padding: 12px; 
+            text-align: left; 
+          }
+          th { 
+            background-color: #6c4ba3; 
+            color: white; 
+          }
+          .deuda-alta { color: #d32f2f; font-weight: bold; }
+          .deuda-media { color: #f57c00; font-weight: bold; }
+          .deuda-baja { color: #388e3c; font-weight: bold; }
+          @media print {
+            button { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <h2>📊 Reporte General de Clientes</h2>
+        <p><strong>Fecha:</strong> ${new Date().toLocaleDateString()}</p>
+        ${contenido}
+        <button onclick="window.print()" style="padding: 10px; background: #6c4ba3; color: white; border: none; border-radius: 5px; margin-top: 20px;">🖨️ Imprimir</button>
+      </body>
+    </html>
+  `);
+  ventana.document.close();
+}
     window.imprimirModal = imprimirModal;
 
     // === IMPRESIÓN MODAL DEL HISTORIAL INDIVIDUAL ===
@@ -1088,31 +1106,54 @@
     window.cerrarModalHistorial = cerrarModalHistorial;
 
     function imprimirModalHistorial() {
-      const contenido = document.getElementById("contenido-historial").innerHTML;
-      const ventana = window.open('', '_blank', 'width=800,height=600');
-      ventana.document.write(`
-        <html>
-          <head>
-            <title>Historial de Compras</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 20px; }
-              div { margin-bottom: 20px; padding: 10px; border: 1px solid #eee; border-radius: 6px; }
-              ul { list-style: none; padding: 0; margin-left: 20px; }
-              li { margin-bottom: 5px; }
-              hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
-              p strong { font-weight: bold; }
-              h3 { color: #6c4ba3; }
-              .deuda-alta { color: #d32f2f; font-weight: bold; }
-              .deuda-media { color: #f57c00; font-weight: bold; }
-              .deuda-baja { color: #388e3c; font-weight: bold; }
-            </style>
-          </head>
-          <body>
-            ${contenido}
-            <script>setTimeout(() => window.print(), 500);</script>
-          </body>
-        </html>
-      `);
+  const contenido = document.getElementById("contenido-historial").innerHTML;
+  const ventana = window.open('', '_blank', 'width=800,height=600');
+  ventana.document.write(`
+    <html>
+      <head>
+        <title>Historial de ${document.getElementById("contenido-historial").querySelector('strong').textContent}</title>
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            color: #333; 
+          }
+          h2, h3 { 
+            color: #6c4ba3; 
+          }
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 15px 0; 
+          }
+          td, th { 
+            border: 1px solid #ddd; 
+            padding: 8px; 
+          }
+          .resumen { 
+            margin-top: 20px; 
+            padding: 15px; 
+            background: #f5f5f5; 
+            border-radius: 6px; 
+            font-weight: bold; 
+          }
+          @media print {
+            button { display: none; }
+            body { -webkit-print-color-adjust: exact; }
+          }
+        </style>
+      </head>
+      <body>
+        <h2>📋 Historial de Compras</h2>
+        ${contenido}
+        <button onclick="window.print()" style="padding: 10px; margin-top: 20px; background: #6c4ba3; color: white; border: none; border-radius: 5px;">🖨️ Imprimir</button>
+        <script>
+          // Permite imprimir desde la nueva ventana
+          document.querySelector('button[onclick="window.print()"]').onclick = () => window.print();
+        </script>
+      </body>
+    </html>
+  `);
       ventana.document.close();
     }
     window.imprimirModalHistorial = imprimirModalHistorial;
