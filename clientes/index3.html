@@ -373,7 +373,7 @@
         div.className = "cliente";
         div.innerHTML = `
           <strong>${cliente.nombre}</strong><br>
-          📞 <a href="https://wa.me/${cliente.telefono}" target="_blank">${cliente.telefono}</a><br>
+          📞 <a href="https://wa.me/${cliente.telefono}" target="_blank" title="${cliente.telefono}">${ocultarTelefono(cliente.telefono)}</a><br>
           💸 Pendiente: ₡${totalPendiente}<br>
           <div class="editar-cliente" id="editar-${id}" style="display:none;">
             <input type="text" id="edit-nombre-${id}" value="${cliente.nombre}">
@@ -1101,6 +1101,10 @@ async function guardarEdicion(clienteId) {
     window.generarReporteModal = generarReporteModal;
     window.imprimirModal = imprimirModal;
     window.eliminarCliente = eliminarCliente;
+    window.abrirModalHistorial = abrirModalHistorial;
+window.cerrarModalHistorial = cerrarModalHistorial;
+window.imprimirModalHistorial = imprimirModalHistorial;
+window.guardarEdicion = guardarEdicion; // ya estaba, pero ahora está actualizada
 
     // Inicializar
     await cargarClientes();
