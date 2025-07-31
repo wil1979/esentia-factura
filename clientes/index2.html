@@ -95,8 +95,8 @@
       padding: 0;
     }
     .historial-compras li {
-      margin-bottom: 10px;
-      padding-bottom: 8px;
+      margin-bottom: 12px;
+      padding: 8px;
       border-bottom: 1px solid #eee;
     }
     /* Sección de reportes */
@@ -156,6 +156,28 @@
       color: #388e3c;
       font-weight: bold;
     }
+    /* Modal de impresión */
+    #modal-impresion {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    #modal-impresion > div {
+      background: white;
+      width: 90%;
+      max-width: 1000px;
+      border-radius: 10px;
+      padding: 20px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
     /* Responsive */
     @media (max-width: 480px) {
       .botones-derecha {
@@ -214,7 +236,7 @@
         <button class="boton-accion" onclick="generarReporte()" style="margin-top: 22px;">🔍 Filtrar</button>
       </div>
       <div class="filtro-item">
-        <button class="boton-accion" onclick="exportarReportePDF()" style="margin-top: 22px;">📄 PDF</button>
+        <button class="boton-accion" onclick="abrirModalImpresion()" style="margin-top: 22px;">🖨️ Imprimir</button>
       </div>
     </div>
     <div id="resultados-reportes">
@@ -248,10 +270,50 @@
     <button onclick="guardarCompraDesdeCarrito()">Guardar Compra</button>
   </div>
 
+  <!-- Modal de impresión -->
+  <div id="modal-impresion" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: white; width: 90%; max-width: 1000px; border-radius: 10px; padding: 20px; max-height: 90vh; overflow-y: auto;">
+      <h2>🖨️ Imprimir Reporte</h2>
+      <div class="filtros-reportes" style="margin-bottom: 20px;">
+        <div class="filtro-item">
+          <label for="filtro-nombre-modal">Nombre:</label>
+          <input type="text" id="filtro-nombre-modal" placeholder="Buscar por nombre">
+        </div>
+        <div class="filtro-item">
+          <label for="filtro-deuda-min-modal">Deuda Mínima:</label>
+          <input type="number" id="filtro-deuda-min-modal" placeholder="₡0" min="0">
+        </div>
+        <div class="filtro-item">
+          <label for="filtro-deuda-max-modal">Deuda Máxima:</label>
+          <input type="number" id="filtro-deuda-max-modal" placeholder="Sin límite" min="0">
+        </div>
+        <div class="filtro-item">
+          <label for="filtro-orden-modal">Ordenar por:</label>
+          <select id="filtro-orden-modal">
+            <option value="nombre-asc">Nombre (A-Z)</option>
+            <option value="nombre-desc">Nombre (Z-A)</option>
+            <option value="deuda-desc">Deuda (Mayor a Menor)</option>
+            <option value="deuda-asc">Deuda (Menor a Mayor)</option>
+          </select>
+        </div>
+        <div class="filtro-item">
+          <button class="boton-accion" onclick="generarReporteModal()">🔍 Filtrar</button>
+        </div>
+      </div>
+      <div id="resultado-modal" style="margin-top: 20px;">
+        <p>Haz clic en "Filtrar" para ver los resultados.</p>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
+        <button class="boton-accion" onclick="cerrarModalImpresion()">❌ Cerrar</button>
+        <button class="boton-accion" onclick="imprimirModal()">🖨️ Imprimir</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase y lógica -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
@@ -266,7 +328,7 @@
     const db = getFirestore(app);
     const clientesRef = collection(db, "clientes");
 
-    // ✅ 1. Agregar cliente y abrir automáticamente el modal de productos
+    // ✅ Agregar cliente
     async function agregarCliente() {
       const nombre = document.getElementById("nombre").value.trim();
       const telefono = document.getElementById("telefono").value.trim();
@@ -275,7 +337,7 @@
         return;
       }
       try {
-        const docRef = await addDoc(clientesRef, {
+        await addDoc(clientesRef, {
           nombre,
           telefono,
           compras: []
@@ -283,19 +345,14 @@
         alert("✅ Cliente agregado exitosamente.");
         document.getElementById("nombre").value = "";
         document.getElementById("telefono").value = "";
-
-        // ✅ Recargar clientes y abrir modal de compra
         await cargarClientes();
-        setTimeout(() => {
-          mostrarAgregarCompra(docRef.id);
-        }, 100);
       } catch (error) {
         alert("❌ Error al agregar cliente: " + error.message);
         console.error("Error al agregar cliente:", error);
       }
     }
 
-    // ✅ 2. Cargar clientes con historial de compras y botón de edición
+    // ✅ Cargar clientes
     async function cargarClientes() {
       const cont = document.getElementById("clientes");
       cont.innerHTML = "";
@@ -305,7 +362,6 @@
         const id = docSnap.id;
         let totalPendiente = 0;
         const compras = cliente.compras || [];
-
         compras.forEach(c => {
           const totalCompra = (c.monto || 0) - (c.descuento || 0);
           totalPendiente += totalCompra - (c.pagado || 0);
@@ -316,7 +372,7 @@
         div.innerHTML = `
           <strong>${cliente.nombre}</strong><br>
           📞 <a href="https://wa.me/${cliente.telefono}" target="_blank">${cliente.telefono}</a><br>
-          💸 Pendiente: ₡${totalPendiente.toLocaleString()}<br>
+          💸 Pendiente: ₡${totalPendiente}<br>
           <div class="editar-cliente" id="editar-${id}" style="display:none;">
             <input type="text" id="edit-nombre-${id}" value="${cliente.nombre}">
             <input type="text" id="edit-telefono-${id}" value="${cliente.telefono}">
@@ -327,8 +383,8 @@
             <button class="boton-accion" onclick="editarCliente('${id}')">✏️ Editar</button>
             <button class="boton-accion" onclick="mostrarAgregarCompra('${id}')">➕ Productos</button>
             <button class="boton-accion" onclick="registrarPago('${id}', '${cliente.nombre}')">💰 Pago</button>
-            <button class="boton-accion" onclick="exportarPDF('${id}', '${cliente.nombre}')">📄 PDF</button>
             <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${totalPendiente})">📲 WhatsApp</button>
+            <button class="boton-accion" onclick="eliminarCliente('${id}', '${cliente.nombre}')">🗑️ Eliminar</button>
           </div>
         `;
         cont.appendChild(div);
@@ -356,6 +412,10 @@
                         onclick="editarCompra('${id}', ${index})">
                   ✏️ Editar
                 </button>
+                <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px; background: #d32f2f;" 
+                        onclick="eliminarCompra('${id}', ${index})">
+                  🗑️ Eliminar
+                </button>
               </li>`;
           });
 
@@ -366,7 +426,7 @@
       });
     }
 
-    // ✅ Editar datos del cliente
+    // ✅ Editar cliente
     function editarCliente(clienteId) {
       document.querySelectorAll('.editar-cliente').forEach(div => div.style.display = 'none');
       document.getElementById(`editar-${clienteId}`).style.display = 'flex';
@@ -383,7 +443,7 @@
         const clienteDoc = doc(db, "clientes", clienteId);
         await updateDoc(clienteDoc, { nombre: nuevoNombre, telefono: nuevoTelefono });
         alert("✅ Cliente actualizado.");
-        cargarClientes();
+        await cargarClientes();
       } catch (error) {
         alert("❌ Error al actualizar: " + error.message);
         console.error("Error:", error);
@@ -394,7 +454,20 @@
       document.getElementById(`editar-${clienteId}`).style.display = 'none';
     }
 
-    // ✅ Editar compra existente
+    // ✅ Eliminar cliente
+    async function eliminarCliente(clienteId, nombre) {
+      if (!confirm(`¿Eliminar permanentemente a ${nombre}? Esta acción no se puede deshacer.`)) return;
+      try {
+        await deleteDoc(doc(db, "clientes", clienteId));
+        alert(`✅ Cliente ${nombre} eliminado.`);
+        await cargarClientes();
+      } catch (error) {
+        alert("❌ Error al eliminar cliente.");
+        console.error(error);
+      }
+    }
+
+    // ✅ Editar compra
     window.editarCompra = async function(clienteId, index) {
       const clienteDoc = doc(db, "clientes", clienteId);
       const docSnap = await getDoc(clienteDoc);
@@ -431,125 +504,287 @@
       compras[index] = { ...compra, monto, descuento, pagado };
       await updateDoc(clienteDoc, { compras });
       alert("✅ Compra actualizada.");
-      cargarClientes();
+      await cargarClientes();
     };
 
-    // Función para enviar WhatsApp
+    // ✅ Eliminar compra
+    window.eliminarCompra = async function(clienteId, index) {
+      if (!confirm("¿Eliminar esta compra? Esta acción no se puede deshacer.")) return;
+      const clienteDoc = doc(db, "clientes", clienteId);
+      const docSnap = await getDoc(clienteDoc);
+      const cliente = docSnap.data();
+      const compras = cliente.compras || [];
+      compras.splice(index, 1);
+      await updateDoc(clienteDoc, { compras });
+      alert("✅ Compra eliminada.");
+      await cargarClientes();
+    };
+
+    // ✅ Enviar WhatsApp
     function enviarWhatsApp(telefono, nombre, deuda) {
       const limpio = telefono.replace(/\D/g, '');
-      const mensaje = `Hola ${nombre}, Agradesemos tu preferencia y te recordamos que tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia 💜 
-💳 Formas de pago:
-1. SINPE 72952454 Wilber Calderón M.
-3. BAC: CR59010200009453897656
-🌿`;
+      const mensaje = `Hola ${nombre}, tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia 💜`;
       const url = `https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`;
       window.open(url, "_blank");
     }
 
-    // ✅ Exportar PDF del cliente
-    window.exportarReportePDF = async function() {
-  const resultados = document.getElementById("resultados-reportes");
+    // ✅ Registrar pago
+    window.registrarPago = async function(clienteId, nombre) {
+      const snap = await getDocs(clientesRef);
+      let clienteData = null;
+      snap.forEach(docSnap => {
+        if (docSnap.id === clienteId) {
+          clienteData = docSnap.data();
+        }
+      });
+      if (!clienteData) return;
 
-  // Validar que hay un reporte generado
-  if (!resultados || !resultados.querySelector("table")) {
-    alert("⚠️ Primero genera un reporte para poder exportarlo.");
-    return;
-  }
+      const compras = clienteData.compras || [];
+      const ultimaPendienteIndex = [...compras].reverse().findIndex(c => {
+        const total = (c.monto || 0) - (c.descuento || 0);
+        return total > (c.pagado || 0);
+      });
 
-  // Crear un contenedor temporal en memoria (no visible en pantalla)
-  const container = document.createElement("div");
-  container.style.fontFamily = "Arial, sans-serif";
-  container.style.padding = "20px";
-  container.style.backgroundColor = "white";
-  container.style.width = "210mm"; // A4 width
-  container.style.margin = "0 auto";
-  container.style.boxSizing = "border-box";
+      if (ultimaPendienteIndex === -1) {
+        alert("🎉 No hay pagos pendientes.");
+        return;
+      }
 
-  // === ENCABEZADO ===
-  const header = document.createElement("div");
-  header.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
-      <img src="https://wil1979.github.io/esentia-factura/images/logo.png" 
-           alt="Logo Esentia" 
-           style="max-height: 60px; width: auto;">
-      <div>
-        <h2 style="color: #6c4ba3; margin: 0; font-size: 1.5rem;">📊 Reporte General de Clientes</h2>
-        <p style="margin: 5px 0 0 0; color: #555;">
-          <strong>Fecha:</strong> ${new Date().toLocaleDateString('es-CR')}
-        </p>
-      </div>
-    </div>
-    <hr style="border: 1px solid #ddd;">
-  `;
-  container.appendChild(header);
-
-  // === CLONAR TABLA DEL REPORTE ===
-  const tablaClone = resultados.querySelector("table").cloneNode(true);
-  // Asegurarse de que los estilos de color se mantengan
-  const celdasDeuda = tablaClone.querySelectorAll(".deuda-alta, .deuda-media, .deuda-baja");
-  celdasDeuda.forEach(celda => {
-    if (celda.classList.contains("deuda-alta")) {
-      celda.style.color = "#d32f2f";
-    } else if (celda.classList.contains("deuda-media")) {
-      celda.style.color = "#f57c00";
-    } else if (celda.classList.contains("deuda-baja")) {
-      celda.style.color = "#388e3c";
-    }
-    celda.style.fontWeight = "bold";
-  });
-  container.appendChild(tablaClone);
-
-  // === RESUMEN GENERAL (si existe) ===
-  const resumen = resultados.querySelector('div[style*="background-color: #f5f5f5"]');
-  if (resumen) {
-    const resumenClone = resumen.cloneNode(true);
-    // Asegurar estilos
-    resumenClone.style.backgroundColor = "#f5f5f5";
-    resumenClone.style.padding = "15px";
-    resumenClone.style.borderRadius = "5px";
-    resumenClone.style.marginTop = "20px";
-    container.appendChild(resumenClone);
-  }
-
-  // === CONFIGURACIÓN Y GENERACIÓN DEL PDF ===
-  try {
-    // Añadir temporalmente el contenedor al DOM (oculto pero presente)
-    container.style.position = "absolute";
-    container.style.left = "-9999px";
-    container.style.top = "-9999px";
-    document.body.appendChild(container);
-
-    // Usar html2pdf con configuración robusta
-    const opt = {
-      margin: 10,
-      filename: `Reporte_Clientes_${new Date().toISOString().slice(0, 10)}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: {
-        scale: 3, // Alta resolución
-        useCORS: true,
-        logging: false,
-        width: container.offsetWidth,
-        scrollY: -window.scrollY
-      },
-      jsPDF: {
-        unit: 'mm',
-        format: 'a4',
-        orientation: 'landscape'
-      },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      const indexReal = compras.length - 1 - ultimaPendienteIndex;
+      const compra = compras[indexReal];
+      const total = (compra.monto || 0) - (compra.descuento || 0);
+      const saldo = total - (compra.pagado || 0);
+      const pago = prompt(`Saldo pendiente: ₡${saldo}\nIngresa el monto:`);
+      if (!pago) return;
+      const pagoNum = parseFloat(pago);
+      if (isNaN(pagoNum) || pagoNum <= 0) {
+        alert("⚠️ Monto inválido.");
+        return;
+      }
+      compra.pagado = Math.min((compra.pagado || 0) + pagoNum, total);
+      compras[indexReal] = compra;
+      await updateDoc(doc(db, "clientes", clienteId), { compras });
+      alert("✅ Pago registrado.");
+      await cargarClientes();
     };
 
-    // Generar PDF y abrir en nueva pestaña
-    const pdf = await html2pdf().set(opt).from(container).save();
+    // ✅ Reportes
+    async function generarReporte() {
+      const cont = document.getElementById("resultados-reportes");
+      cont.innerHTML = "<p>Generando...</p>";
+      const snapshot = await getDocs(clientesRef);
+      let clientes = [];
+      snapshot.forEach(docSnap => {
+        const c = docSnap.data();
+        let totalCompras = 0, totalPagado = 0, totalPendiente = 0, totalDescuentos = 0;
+        (c.compras || []).forEach(compra => {
+          const neto = (compra.monto || 0) - (compra.descuento || 0);
+          totalCompras += neto;
+          totalPagado += compra.pagado || 0;
+          totalDescuentos += compra.descuento || 0;
+          totalPendiente += neto - (compra.pagado || 0);
+        });
+        clientes.push({
+          id: docSnap.id,
+          nombre: c.nombre,
+          telefono: c.telefono,
+          totalCompras,
+          totalPagado,
+          totalDescuentos,
+          totalPendiente
+        });
+      });
 
-    // Opcional: limpiar el contenedor temporal
-    document.body.removeChild(container);
+      const filtroNombre = document.getElementById("filtro-nombre").value.toLowerCase();
+      const min = parseFloat(document.getElementById("filtro-deuda-min").value) || 0;
+      const max = parseFloat(document.getElementById("filtro-deuda-max").value) || Infinity;
+      const orden = document.getElementById("filtro-orden").value;
 
-  } catch (error) {
-    console.error("Error al generar el PDF del reporte:", error);
-    alert("❌ Ocurrió un error al generar el PDF. Detalle: " + error.message);
-  }
-};
+      clientes = clientes.filter(cli => {
+        return cli.nombre.toLowerCase().includes(filtroNombre) &&
+               cli.totalPendiente >= min &&
+               cli.totalPendiente <= max;
+      });
+
+      if (orden === "nombre-asc") clientes.sort((a, b) => a.nombre.localeCompare(b.nombre));
+      if (orden === "nombre-desc") clientes.sort((a, b) => b.nombre.localeCompare(a.nombre));
+      if (orden === "deuda-desc") clientes.sort((a, b) => b.totalPendiente - a.totalPendiente);
+      if (orden === "deuda-asc") clientes.sort((a, b) => a.totalPendiente - b.totalPendiente);
+
+      if (clientes.length === 0) {
+        cont.innerHTML = "<p>No se encontraron clientes.</p>";
+        return;
+      }
+
+      let totalGeneral = 0, totalPagadoGen = 0, totalPendienteGen = 0;
+      let tabla = `
+        <table class="tabla-reportes">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Teléfono</th>
+              <th>Total Compras</th>
+              <th>Total Pagado</th>
+              <th>Descuentos</th>
+              <th>Saldo</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      clientes.forEach(cli => {
+        totalGeneral += cli.totalCompras;
+        totalPagadoGen += cli.totalPagado;
+        totalPendienteGen += cli.totalPendiente;
+        const clase = cli.totalPendiente > 5000 ? "deuda-alta" : cli.totalPendiente > 2000 ? "deuda-media" : "deuda-baja";
+        tabla += `
+          <tr>
+            <td>${cli.nombre}</td>
+            <td>${cli.telefono}</td>
+            <td>₡${cli.totalCompras.toLocaleString()}</td>
+            <td>₡${cli.totalPagado.toLocaleString()}</td>
+            <td>₡${cli.totalDescuentos.toLocaleString()}</td>
+            <td class="${clase}">₡${cli.totalPendiente.toLocaleString()}</td>
+          </tr>
+        `;
+      });
+      tabla += `</tbody></table>
+        <div style="margin-top:20px; padding:15px; background:#f5f5f5; border-radius:5px;">
+          <h3>Resumen:</h3>
+          <p><strong>Total Compras:</strong> ₡${totalGeneral.toLocaleString()}</p>
+          <p><strong>Total Pagado:</strong> ₡${totalPagadoGen.toLocaleString()}</p>
+          <p><strong>Total Pendiente:</strong> ₡${totalPendienteGen.toLocaleString()}</p>
+        </div>`;
+      cont.innerHTML = tabla;
+    }
+
+    // === IMPRESIÓN MODAL ===
+    function abrirModalImpresion() {
+      document.getElementById("modal-impresion").style.display = "flex";
+      document.getElementById("filtro-nombre-modal").value = document.getElementById("filtro-nombre").value;
+      document.getElementById("filtro-deuda-min-modal").value = document.getElementById("filtro-deuda-min").value;
+      document.getElementById("filtro-deuda-max-modal").value = document.getElementById("filtro-deuda-max").value;
+      document.getElementById("filtro-orden-modal").value = document.getElementById("filtro-orden").value;
+    }
+
+    function cerrarModalImpresion() {
+      document.getElementById("modal-impresion").style.display = "none";
+    }
+
+    async function generarReporteModal() {
+      const cont = document.getElementById("resultado-modal");
+      cont.innerHTML = "<p>Generando...</p>";
+      const snapshot = await getDocs(clientesRef);
+      let clientes = [];
+      snapshot.forEach(docSnap => {
+        const c = docSnap.data();
+        let totalCompras = 0, totalPagado = 0, totalPendiente = 0, totalDescuentos = 0;
+        (c.compras || []).forEach(compra => {
+          const neto = (compra.monto || 0) - (compra.descuento || 0);
+          totalCompras += neto;
+          totalPagado += compra.pagado || 0;
+          totalDescuentos += compra.descuento || 0;
+          totalPendiente += neto - (compra.pagado || 0);
+        });
+        clientes.push({
+          id: docSnap.id,
+          nombre: c.nombre,
+          telefono: c.telefono,
+          totalCompras,
+          totalPagado,
+          totalDescuentos,
+          totalPendiente
+        });
+      });
+
+      const filtroNombre = document.getElementById("filtro-nombre-modal").value.toLowerCase();
+      const min = parseFloat(document.getElementById("filtro-deuda-min-modal").value) || 0;
+      const max = parseFloat(document.getElementById("filtro-deuda-max-modal").value) || Infinity;
+      const orden = document.getElementById("filtro-orden-modal").value;
+
+      clientes = clientes.filter(cli => {
+        return cli.nombre.toLowerCase().includes(filtroNombre) &&
+               cli.totalPendiente >= min &&
+               cli.totalPendiente <= max;
+      });
+
+      if (orden === "nombre-asc") clientes.sort((a, b) => a.nombre.localeCompare(b.nombre));
+      if (orden === "nombre-desc") clientes.sort((a, b) => b.nombre.localeCompare(a.nombre));
+      if (orden === "deuda-desc") clientes.sort((a, b) => b.totalPendiente - a.totalPendiente);
+      if (orden === "deuda-asc") clientes.sort((a, b) => a.totalPendiente - b.totalPendiente);
+
+      if (clientes.length === 0) {
+        cont.innerHTML = "<p>No se encontraron clientes.</p>";
+        return;
+      }
+
+      let totalGeneral = 0, totalPagadoGen = 0, totalPendienteGen = 0;
+      let tabla = `
+        <table class="tabla-reportes">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Teléfono</th>
+              <th>Total Compras</th>
+              <th>Total Pagado</th>
+              <th>Descuentos</th>
+              <th>Saldo</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      clientes.forEach(cli => {
+        totalGeneral += cli.totalCompras;
+        totalPagadoGen += cli.totalPagado;
+        totalPendienteGen += cli.totalPendiente;
+        const clase = cli.totalPendiente > 5000 ? "deuda-alta" : cli.totalPendiente > 2000 ? "deuda-media" : "deuda-baja";
+        tabla += `
+          <tr>
+            <td>${cli.nombre}</td>
+            <td>${cli.telefono}</td>
+            <td>₡${cli.totalCompras.toLocaleString()}</td>
+            <td>₡${cli.totalPagado.toLocaleString()}</td>
+            <td>₡${cli.totalDescuentos.toLocaleString()}</td>
+            <td class="${clase}">₡${cli.totalPendiente.toLocaleString()}</td>
+          </tr>
+        `;
+      });
+      tabla += `</tbody></table>
+        <div style="margin-top:20px; padding:15px; background:#f5f5f5; border-radius:5px;">
+          <h3>Resumen:</h3>
+          <p><strong>Total Compras:</strong> ₡${totalGeneral.toLocaleString()}</p>
+          <p><strong>Total Pagado:</strong> ₡${totalPagadoGen.toLocaleString()}</p>
+          <p><strong>Total Pendiente:</strong> ₡${totalPendienteGen.toLocaleString()}</p>
+        </div>`;
+      cont.innerHTML = tabla;
+    }
+
+    function imprimirModal() {
+      const contenido = document.getElementById("modal-impresion").querySelector("div").innerHTML;
+      const ventana = window.open('', '_blank', 'width=800,height=600');
+      ventana.document.write(`
+        <html>
+          <head>
+            <title>Reporte Esentia</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+              th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+              th { background-color: #6c4ba3; color: white; }
+              .deuda-alta { color: #d32f2f; font-weight: bold; }
+              .deuda-media { color: #f57c00; font-weight: bold; }
+              .deuda-baja { color: #388e3c; font-weight: bold; }
+            </style>
+          </head>
+          <body>
+            <h2>📊 Reporte General de Clientes</h2>
+            <p><strong>Fecha:</strong> ${new Date().toLocaleDateString()}</p>
+            ${contenido}
+            <script>
+              setTimeout(() => window.print(), 500);
+          
+      `);
+      ventana.document.close();
+    }
 
     // Cargar productos desde JSON
     const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
@@ -680,170 +915,10 @@
 
       await updateDoc(clienteDoc, { compras: comprasActuales });
       document.getElementById("seccion-productos").style.display = "none";
-      cargarClientes();
+      await cargarClientes();
     }
 
-    window.registrarPago = async function(clienteId, nombre) {
-      const snap = await getDocs(clientesRef);
-      let clienteData = null;
-      snap.forEach(docSnap => {
-        if (docSnap.id === clienteId) {
-          clienteData = docSnap.data();
-        }
-      });
-      if (!clienteData) return;
-
-      const compras = clienteData.compras || [];
-      const ultimaPendienteIndex = [...compras].reverse().findIndex(c => {
-        const total = (c.monto || 0) - (c.descuento || 0);
-        return total > (c.pagado || 0);
-      });
-
-      if (ultimaPendienteIndex === -1) {
-        alert("🎉 No hay pagos pendientes.");
-        return;
-      }
-
-      const indexReal = compras.length - 1 - ultimaPendienteIndex;
-      const compra = compras[indexReal];
-      const total = (compra.monto || 0) - (compra.descuento || 0);
-      const saldo = total - (compra.pagado || 0);
-      const pago = prompt(`Saldo pendiente: ₡${saldo}\nIngresa el monto:`);
-      if (!pago) return;
-      const pagoNum = parseFloat(pago);
-      if (isNaN(pagoNum) || pagoNum <= 0) {
-        alert("⚠️ Monto inválido.");
-        return;
-      }
-      compra.pagado = Math.min((compra.pagado || 0) + pagoNum, total);
-      compras[indexReal] = compra;
-      await updateDoc(doc(db, "clientes", clienteId), { compras });
-      alert("✅ Pago registrado.");
-      cargarClientes();
-    };
-
-    // Reportes
-    async function generarReporte() {
-      const cont = document.getElementById("resultados-reportes");
-      cont.innerHTML = "<p>Generando...</p>";
-      const snapshot = await getDocs(clientesRef);
-      let clientes = [];
-      snapshot.forEach(docSnap => {
-        const c = docSnap.data();
-        let totalCompras = 0, totalPagado = 0, totalPendiente = 0, totalDescuentos = 0;
-        (c.compras || []).forEach(compra => {
-          const neto = (compra.monto || 0) - (compra.descuento || 0);
-          totalCompras += neto;
-          totalPagado += compra.pagado || 0;
-          totalDescuentos += compra.descuento || 0;
-          totalPendiente += neto - (compra.pagado || 0);
-        });
-        clientes.push({
-          id: docSnap.id,
-          nombre: c.nombre,
-          telefono: c.telefono,
-          totalCompras,
-          totalPagado,
-          totalDescuentos,
-          totalPendiente
-        });
-      });
-
-      const filtroNombre = document.getElementById("filtro-nombre").value.toLowerCase();
-      const min = parseFloat(document.getElementById("filtro-deuda-min").value) || 0;
-      const max = parseFloat(document.getElementById("filtro-deuda-max").value) || Infinity;
-      const orden = document.getElementById("filtro-orden").value;
-
-      clientes = clientes.filter(cli => {
-        return cli.nombre.toLowerCase().includes(filtroNombre) &&
-               cli.totalPendiente >= min &&
-               cli.totalPendiente <= max;
-      });
-
-      clientes.sort((a, b) => {
-        if (orden === "nombre-asc") return a.nombre.localeCompare(b.nombre);
-        if (orden === "nombre-desc") return b.nombre.localeCompare(a.nombre);
-        if (orden === "deuda-desc") return b.totalPendiente - a.totalPendiente;
-        if (orden === "deuda-asc") return a.totalPendiente - b.totalPendiente;
-        return 0;
-      });
-
-      if (clientes.length === 0) {
-        cont.innerHTML = "<p>No se encontraron clientes.</p>";
-        return;
-      }
-
-      let totalGeneral = 0, totalPagadoGen = 0, totalPendienteGen = 0;
-      let tabla = `
-        <table class="tabla-reportes">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Teléfono</th>
-              <th>Total Compras</th>
-              <th>Total Pagado</th>
-              <th>Descuentos</th>
-              <th>Saldo</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-      clientes.forEach(cli => {
-        totalGeneral += cli.totalCompras;
-        totalPagadoGen += cli.totalPagado;
-        totalPendienteGen += cli.totalPendiente;
-        const clase = cli.totalPendiente > 5000 ? "deuda-alta" : cli.totalPendiente > 2000 ? "deuda-media" : "deuda-baja";
-        tabla += `
-          <tr>
-            <td>${cli.nombre}</td>
-            <td>${cli.telefono}</td>
-            <td>₡${cli.totalCompras.toLocaleString()}</td>
-            <td>₡${cli.totalPagado.toLocaleString()}</td>
-            <td>₡${cli.totalDescuentos.toLocaleString()}</td>
-            <td class="${clase}">₡${cli.totalPendiente.toLocaleString()}</td>
-            <td>
-              <button class="boton-accion" onclick="enviarWhatsApp('${cli.telefono}', '${cli.nombre}', ${cli.totalPendiente})" style="padding:3px 6px; font-size:0.75rem;">📲</button>
-              <button class="boton-accion" onclick="exportarPDF('${cli.id}', '${cli.nombre}')" style="padding:3px 6px; font-size:0.75rem;">📄</button>
-            </td>
-          </tr>
-        `;
-      });
-      tabla += `</tbody></table>
-        <div style="margin-top:20px; padding:15px; background:#f5f5f5; border-radius:5px;">
-          <h3>Resumen:</h3>
-          <p><strong>Total Compras:</strong> ₡${totalGeneral.toLocaleString()}</p>
-          <p><strong>Total Pagado:</strong> ₡${totalPagadoGen.toLocaleString()}</p>
-          <p><strong>Total Pendiente:</strong> ₡${totalPendienteGen.toLocaleString()}</p>
-        </div>`;
-      cont.innerHTML = tabla;
-    }
-
-    window.exportarReportePDF = async function() {
-      const resultados = document.getElementById("resultados-reportes");
-      if (!resultados.innerHTML.includes("table")) {
-        alert("Primero genera un reporte.");
-        return;
-      }
-      const container = document.createElement("div");
-      container.style.fontFamily = "sans-serif";
-      container.style.padding = "20px";
-      container.innerHTML = `
-        <div style="display:flex; align-items:center; margin-bottom:20px;">
-          <img src="../images/logo.png" alt="Logo" style="max-height:60px; margin-right:20px;">
-          <h2>📊 Reporte General de Clientes</h2>
-        </div>
-        <hr>
-      `;
-      const clone = resultados.cloneNode(true);
-      clone.querySelectorAll('.boton-accion').forEach(btn => btn.remove());
-      container.appendChild(clone);
-      const pdfBlob = await html2pdf().from(container).outputPdf('blob');
-      const url = URL.createObjectURL(pdfBlob);
-      window.open(url, '_blank');
-    };
-
-    // Hacer funciones accesibles
+    // Hacer funciones globales
     window.agregarCliente = agregarCliente;
     window.mostrarAgregarCompra = mostrarAgregarCompra;
     window.enviarWhatsApp = enviarWhatsApp;
@@ -852,13 +927,17 @@
     window.editarCliente = editarCliente;
     window.guardarEdicion = guardarEdicion;
     window.cancelarEdicion = cancelarEdicion;
+    window.registrarPago = registrarPago;
     window.generarReporte = generarReporte;
-    window.exportarReportePDF = exportarReportePDF;
+    window.abrirModalImpresion = abrirModalImpresion;
+    window.cerrarModalImpresion = cerrarModalImpresion;
+    window.generarReporteModal = generarReporteModal;
+    window.imprimirModal = imprimirModal;
+    window.eliminarCliente = eliminarCliente;
 
     // Inicializar
-    cargarClientes();
-    cargarProductosJSON();
+    await cargarClientes();
+    await cargarProductosJSON();
   </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </body>
 </html>
