@@ -851,6 +851,18 @@ const categorias = [
     ]
   }
 ];
+
+
+  function filtrarProductos() {
+    const input = document.getElementById('buscador').value.toLowerCase();
+    const productos = document.querySelectorAll('#productos-hogar .producto');
+
+    productos.forEach(producto => {
+      const nombre = producto.innerText.toLowerCase();
+      producto.style.display = nombre.includes(input) ? 'block' : 'none';
+    });
+  }
+
 function renderizarProductos() {
   const container = document.getElementById("productos-hogar");
   if (!container) return;
