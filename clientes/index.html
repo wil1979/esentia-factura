@@ -77,6 +77,28 @@
       flex: 1;
       min-width: 150px;
     }
+    /* Historial de compras */
+    .historial-compras {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f9f9f9;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      border: 1px dashed #ccc;
+    }
+    .historial-compras h4 {
+      margin: 0 0 10px 0;
+      color: #555;
+    }
+    .historial-compras ul {
+      list-style: none;
+      padding: 0;
+    }
+    .historial-compras li {
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eee;
+    }
     /* Sección de reportes */
     #seccion-reportes {
       margin-top: 30px;
@@ -162,7 +184,7 @@
   <hr>
   <h2>👥 Clientes</h2>
   <div id="clientes"></div>
-  
+
   <!-- Sección de Reportes -->
   <div id="seccion-reportes">
     <h2>📊 Reporte General de Clientes</h2>
@@ -200,7 +222,7 @@
     </div>
   </div>
 
-  <!-- Sección de compra desde JSON -->
+  <!-- Template para productos en carrito -->
   <template id="producto-template">
     <div class="producto-seleccionado">
       <strong class="producto-nombre"></strong><br>
@@ -210,6 +232,8 @@
       <br><br>
     </div>
   </template>
+
+  <!-- Sección de compra -->
   <div id="seccion-productos" style="display:none; border: 1px solid #ccc; padding: 1rem; margin-top: 2rem; border-radius: 10px;">
     <h3>🛍️ Agregar productos desde catálogo</h3>
     <select id="select-producto"></select>
@@ -223,11 +247,12 @@
     <br><br>
     <button onclick="guardarCompraDesdeCarrito()">Guardar Compra</button>
   </div>
+
   <!-- Firebase y lógica -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-    // 🔐 NUEVA configuración de Firebase
+    import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
       authDomain: "esentiacreditos-8345f.firebaseapp.com",
@@ -236,9 +261,12 @@
       messagingSenderId: "888658236080",
       appId: "1:888658236080:web:506e5e2085b5a452dba175"
     };
+
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const clientesRef = collection(db, "clientes");
+
+    // ✅ 1. Agregar cliente y abrir automáticamente el modal de productos
     async function agregarCliente() {
       const nombre = document.getElementById("nombre").value.trim();
       const telefono = document.getElementById("telefono").value.trim();
@@ -247,7 +275,7 @@
         return;
       }
       try {
-        await addDoc(clientesRef, {
+        const docRef = await addDoc(clientesRef, {
           nombre,
           telefono,
           compras: []
@@ -255,12 +283,19 @@
         alert("✅ Cliente agregado exitosamente.");
         document.getElementById("nombre").value = "";
         document.getElementById("telefono").value = "";
-        cargarClientes();
+
+        // ✅ Recargar clientes y abrir modal de compra
+        await cargarClientes();
+        setTimeout(() => {
+          mostrarAgregarCompra(docRef.id);
+        }, 100);
       } catch (error) {
         alert("❌ Error al agregar cliente: " + error.message);
         console.error("Error al agregar cliente:", error);
       }
     }
+
+    // ✅ 2. Cargar clientes con historial de compras y botón de edición
     async function cargarClientes() {
       const cont = document.getElementById("clientes");
       cont.innerHTML = "";
@@ -270,16 +305,18 @@
         const id = docSnap.id;
         let totalPendiente = 0;
         const compras = cliente.compras || [];
+
         compras.forEach(c => {
           const totalCompra = (c.monto || 0) - (c.descuento || 0);
           totalPendiente += totalCompra - (c.pagado || 0);
         });
+
         const div = document.createElement("div");
         div.className = "cliente";
         div.innerHTML = `
           <strong>${cliente.nombre}</strong><br>
           📞 <a href="https://wa.me/${cliente.telefono}" target="_blank">${cliente.telefono}</a><br>
-          💸 Pendiente: ₡${totalPendiente}<br>
+          💸 Pendiente: ₡${totalPendiente.toLocaleString()}<br>
           <div class="editar-cliente" id="editar-${id}" style="display:none;">
             <input type="text" id="edit-nombre-${id}" value="${cliente.nombre}">
             <input type="text" id="edit-telefono-${id}" value="${cliente.telefono}">
@@ -295,16 +332,46 @@
           </div>
         `;
         cont.appendChild(div);
+
+        // ✅ Mostrar historial de compras
+        if (compras.length > 0) {
+          const historial = document.createElement("div");
+          historial.className = "historial-compras";
+          let html = "<h4>🛒 Historial de Compras:</h4><ul>";
+
+          compras.forEach((compra, index) => {
+            const total = (compra.monto || 0) - (compra.descuento || 0);
+            const saldo = total - (compra.pagado || 0);
+            html += `
+              <li>
+                <strong>📅 ${compra.fecha}</strong> | 
+                Total: ₡${total.toLocaleString()} | 
+                Pagado: ₡${(compra.pagado || 0).toLocaleString()} | 
+                Saldo: ₡${saldo.toLocaleString()}
+                <br>
+                <small><strong>Productos:</strong> 
+                  ${compra.productos?.map(p => `${p.nombre} (${p.presentacion || ''}${p.aroma ? ' - ' + p.aroma : ''})`).join(', ') || 'Sin productos'}
+                </small><br>
+                <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px;" 
+                        onclick="editarCompra('${id}', ${index})">
+                  ✏️ Editar
+                </button>
+              </li>`;
+          });
+
+          html += "</ul>";
+          historial.innerHTML = html;
+          div.appendChild(historial);
+        }
       });
     }
+
+    // ✅ Editar datos del cliente
     function editarCliente(clienteId) {
-      // Ocultar todos los formularios de edición
-      document.querySelectorAll('.editar-cliente').forEach(div => {
-        div.style.display = 'none';
-      });
-      // Mostrar el formulario de edición para este cliente
+      document.querySelectorAll('.editar-cliente').forEach(div => div.style.display = 'none');
       document.getElementById(`editar-${clienteId}`).style.display = 'flex';
     }
+
     async function guardarEdicion(clienteId) {
       const nuevoNombre = document.getElementById(`edit-nombre-${clienteId}`).value.trim();
       const nuevoTelefono = document.getElementById(`edit-telefono-${clienteId}`).value.trim();
@@ -314,161 +381,183 @@
       }
       try {
         const clienteDoc = doc(db, "clientes", clienteId);
-        await updateDoc(clienteDoc, {
-          nombre: nuevoNombre,
-          telefono: nuevoTelefono
-        });
-        alert("✅ Cliente actualizado exitosamente.");
+        await updateDoc(clienteDoc, { nombre: nuevoNombre, telefono: nuevoTelefono });
+        alert("✅ Cliente actualizado.");
         cargarClientes();
       } catch (error) {
-        alert("❌ Error al actualizar cliente: " + error.message);
-        console.error("Error al actualizar cliente:", error);
+        alert("❌ Error al actualizar: " + error.message);
+        console.error("Error:", error);
       }
     }
+
     function cancelarEdicion(clienteId) {
       document.getElementById(`editar-${clienteId}`).style.display = 'none';
     }
+
+    // ✅ Editar compra existente
+    window.editarCompra = async function(clienteId, index) {
+      const clienteDoc = doc(db, "clientes", clienteId);
+      const docSnap = await getDoc(clienteDoc);
+      if (!docSnap.exists()) {
+        alert("Cliente no encontrado.");
+        return;
+      }
+
+      const cliente = docSnap.data();
+      const compras = cliente.compras || [];
+      const compra = compras[index];
+      if (!compra) return;
+
+      const nuevoMonto = prompt("Editar monto total:", compra.monto);
+      const nuevoDescuento = prompt("Editar descuento:", compra.descuento || 0);
+      const nuevoPagado = prompt("Editar monto pagado:", compra.pagado || 0);
+
+      if ([nuevoMonto, nuevoDescuento, nuevoPagado].some(v => v === null)) return;
+
+      const monto = parseFloat(nuevoMonto);
+      const descuento = parseFloat(nuevoDescuento);
+      const pagado = parseFloat(nuevoPagado);
+
+      if (isNaN(monto) || isNaN(descuento) || isNaN(pagado)) {
+        alert("⚠️ Todos los valores deben ser números.");
+        return;
+      }
+
+      if (pagado > monto - descuento) {
+        alert("⚠️ El pago no puede superar el total después del descuento.");
+        return;
+      }
+
+      compras[index] = { ...compra, monto, descuento, pagado };
+      await updateDoc(clienteDoc, { compras });
+      alert("✅ Compra actualizada.");
+      cargarClientes();
+    };
+
+    // Función para enviar WhatsApp
     function enviarWhatsApp(telefono, nombre, deuda) {
       const limpio = telefono.replace(/\D/g, '');
-      const mensaje = `Hola ${nombre}, Agradesemos tu preferencia y te recordamos que tienes un saldo pendiente de ₡${deuda.toLocaleString()}.  Gracias por confiar en Esentia 💜 \n\n💳 Formas de pago:\n1. SINPE 72952454 Wilber Calderón M.\n3. BAC: CR59010200009453897656\n\n🌿`;
+      const mensaje = `Hola ${nombre}, Agradesemos tu preferencia y te recordamos que tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia 💜 
+💳 Formas de pago:
+1. SINPE 72952454 Wilber Calderón M.
+3. BAC: CR59010200009453897656
+🌿`;
       const url = `https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`;
       window.open(url, "_blank");
     }
-    // Función corregida y única para exportar PDF
- window.exportarPDF = async function(clienteId, nombre) {
-  try {
-    // Obtener datos frescos directamente de Firestore
-    const docRef = doc(db, "clientes", clienteId);
-    const docSnap = await getDoc(docRef);
-    
-    if (!docSnap.exists()) {
-      alert("Cliente no encontrado");
-      return;
-    }
-    
-    const clienteData = docSnap.data();
-    const compras = clienteData.compras || [];
 
-    // Crear un contenedor temporal en memoria (no se agrega al DOM)
-    const container = document.createElement("div");
-    container.style.fontFamily = "sans-serif";
-    container.style.padding = "20px";
-    container.style.backgroundColor = "white";
-    container.style.width = "100%";
+    // ✅ Exportar PDF del cliente
+    window.exportarReportePDF = async function() {
+  const resultados = document.getElementById("resultados-reportes");
 
-    // Encabezado con logo
-    const header = document.createElement("div");
-    header.innerHTML = `
-      <div style="display: flex; align-items: center; margin-bottom: 20px;">
-        <img src="../images/logo.png" alt="Logo Esentia" style="max-height: 60px; margin-right: 20px;">
-        <div>
-          <h2 style="color:#6c4ba3; margin: 0;">🧾 Esentia - Historial de Compras</h2>
-          <p style="margin: 5px 0 0 0;"><strong>Cliente:</strong> ${clienteData.nombre || nombre}</p>
-          <p style="margin: 5px 0 0 0;"><strong>Teléfono:</strong> ${clienteData.telefono || 'No disponible'}</p>
-          <p style="margin: 5px 0 0 0;"><strong>Fecha de reporte:</strong> ${new Date().toLocaleDateString()}</p>
-        </div>
+  // Validar que hay un reporte generado
+  if (!resultados || !resultados.querySelector("table")) {
+    alert("⚠️ Primero genera un reporte para poder exportarlo.");
+    return;
+  }
+
+  // Crear un contenedor temporal en memoria (no visible en pantalla)
+  const container = document.createElement("div");
+  container.style.fontFamily = "Arial, sans-serif";
+  container.style.padding = "20px";
+  container.style.backgroundColor = "white";
+  container.style.width = "210mm"; // A4 width
+  container.style.margin = "0 auto";
+  container.style.boxSizing = "border-box";
+
+  // === ENCABEZADO ===
+  const header = document.createElement("div");
+  header.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+      <img src="https://wil1979.github.io/esentia-factura/images/logo.png" 
+           alt="Logo Esentia" 
+           style="max-height: 60px; width: auto;">
+      <div>
+        <h2 style="color: #6c4ba3; margin: 0; font-size: 1.5rem;">📊 Reporte General de Clientes</h2>
+        <p style="margin: 5px 0 0 0; color: #555;">
+          <strong>Fecha:</strong> ${new Date().toLocaleDateString('es-CR')}
+        </p>
       </div>
-      <hr>
-    `;
-    container.appendChild(header);
+    </div>
+    <hr style="border: 1px solid #ddd;">
+  `;
+  container.appendChild(header);
 
-    let total = 0;
-    let pagado = 0;
-    let totalDescuentos = 0;
-
-    // Iterar por las compras
-    if (compras.length === 0) {
-      const noCompras = document.createElement("div");
-      noCompras.innerHTML = `<p style="text-align: center; color: #666; font-style: italic;">No hay compras registradas para este cliente.</p>`;
-      container.appendChild(noCompras);
-    } else {
-      compras.forEach((compra, i) => {
-        const compraDiv = document.createElement("div");
-        const title = document.createElement("h4");
-        title.textContent = `📅 Compra ${i + 1} - ${compra.fecha || 'Fecha no disponible'}`;
-        compraDiv.appendChild(title);
-
-        // Lista de productos
-        if (compra.productos && compra.productos.length > 0) {
-            const productList = document.createElement("ul");
-            compra.productos.forEach(prod => {
-                const item = document.createElement("li");
-                item.textContent = `${prod.nombre || 'Producto sin nombre'} - ${prod.presentacion || ''} ${prod.aroma ? `(${prod.aroma})` : ''} - ₡${prod.precio || 0}`;
-                productList.appendChild(item);
-            });
-            compraDiv.appendChild(productList);
-        } else {
-            const noProductos = document.createElement("p");
-            noProductos.textContent = "No hay productos en esta compra";
-            noProductos.style.fontStyle = "italic";
-            noProductos.style.color = "#666";
-            compraDiv.appendChild(noProductos);
-        }
-
-        // Totales de la compra
-        const montoOriginal = compra.monto || 0;
-        const descuento = compra.descuento || 0;
-        const montoCompra = montoOriginal - descuento;
-        const pagadoCompra = compra.pagado || 0;
-        
-        const totals = document.createElement("p");
-        totals.innerHTML = `
-          <strong>Monto:</strong> ₡${montoOriginal} | 
-          <strong>Descuento:</strong> ₡${descuento} | 
-          <strong>Total:</strong> ₡${montoCompra} | 
-          <strong>Pagado:</strong> ₡${pagadoCompra}
-        `;
-        compraDiv.appendChild(totals);
-
-        const hr = document.createElement("hr");
-        compraDiv.appendChild(hr);
-
-        container.appendChild(compraDiv);
-
-        total += montoCompra;
-        pagado += pagadoCompra;
-        totalDescuentos += descuento;
-      });
+  // === CLONAR TABLA DEL REPORTE ===
+  const tablaClone = resultados.querySelector("table").cloneNode(true);
+  // Asegurarse de que los estilos de color se mantengan
+  const celdasDeuda = tablaClone.querySelectorAll(".deuda-alta, .deuda-media, .deuda-baja");
+  celdasDeuda.forEach(celda => {
+    if (celda.classList.contains("deuda-alta")) {
+      celda.style.color = "#d32f2f";
+    } else if (celda.classList.contains("deuda-media")) {
+      celda.style.color = "#f57c00";
+    } else if (celda.classList.contains("deuda-baja")) {
+      celda.style.color = "#388e3c";
     }
+    celda.style.fontWeight = "bold";
+  });
+  container.appendChild(tablaClone);
 
-    // Totales finales
-    const footer = document.createElement("div");
-    footer.innerHTML = `
-      <h3>Total Compras: ₡${total}</h3>
-      <h3>Total Descuentos: ₡${totalDescuentos}</h3>
-      <h3>Total Pagado: ₡${pagado}</h3>
-      <h3 style="color: ${total - pagado > 0 ? 'red' : 'green'};">Saldo Pendiente: ₡${total - pagado}</h3>
-    `;
-    container.appendChild(footer);
+  // === RESUMEN GENERAL (si existe) ===
+  const resumen = resultados.querySelector('div[style*="background-color: #f5f5f5"]');
+  if (resumen) {
+    const resumenClone = resumen.cloneNode(true);
+    // Asegurar estilos
+    resumenClone.style.backgroundColor = "#f5f5f5";
+    resumenClone.style.padding = "15px";
+    resumenClone.style.borderRadius = "5px";
+    resumenClone.style.marginTop = "20px";
+    container.appendChild(resumenClone);
+  }
 
-    // Generar PDF y mostrarlo en el navegador
-    const worker = html2pdf().set({
+  // === CONFIGURACIÓN Y GENERACIÓN DEL PDF ===
+  try {
+    // Añadir temporalmente el contenedor al DOM (oculto pero presente)
+    container.style.position = "absolute";
+    container.style.left = "-9999px";
+    container.style.top = "-9999px";
+    document.body.appendChild(container);
+
+    // Usar html2pdf con configuración robusta
+    const opt = {
       margin: 10,
-      filename: `Historial_${(clienteData.nombre || nombre).replace(/\s+/g, "_")}.pdf`,
-      html2canvas: { 
-        scale: 2,
+      filename: `Reporte_Clientes_${new Date().toISOString().slice(0, 10)}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 3, // Alta resolución
         useCORS: true,
-        logging: false
+        logging: false,
+        width: container.offsetWidth,
+        scrollY: -window.scrollY
       },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-    });
-    
-    // Generar PDF como blob y abrir en nueva pestaña
-    const pdfBlob = await worker.from(container).outputPdf('blob');
-    const url = URL.createObjectURL(pdfBlob);
-    window.open(url, '_blank');
-    
+      jsPDF: {
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'landscape'
+      },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    // Generar PDF y abrir en nueva pestaña
+    const pdf = await html2pdf().set(opt).from(container).save();
+
+    // Opcional: limpiar el contenedor temporal
+    document.body.removeChild(container);
+
   } catch (error) {
-    console.error("Error generando PDF:", error);
-    alert("Error al generar el PDF. Por favor, inténtalo de nuevo.");
+    console.error("Error al generar el PDF del reporte:", error);
+    alert("❌ Ocurrió un error al generar el PDF. Detalle: " + error.message);
   }
 };
-    // Productos desde JSON (Esencia + Limpieza)
+
+    // Cargar productos desde JSON
     const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
     const URL_LIMPIEZA = "https://wil1979.github.io/esentia-factura/productos_limpieza_completo.json";
     let todosLosProductos = [];
     let carrito = [];
     let clienteSeleccionadoId = null;
+
     async function cargarProductosJSON() {
       const [res1, res2] = await Promise.all([fetch(URL_ESENCIA), fetch(URL_LIMPIEZA)]);
       const [aromas, limpieza] = await Promise.all([res1.json(), res2.json()]);
@@ -482,19 +571,20 @@
         select.appendChild(opt);
       });
     }
+
     function mostrarAgregarCompra(idCliente) {
       clienteSeleccionadoId = idCliente;
       carrito = [];
       document.getElementById("carrito").innerHTML = "";
       document.getElementById("total-compra").textContent = "0";
       document.getElementById("descuento").value = "0";
-      // mover modal debajo del cliente correspondiente
       const clienteDiv = [...document.querySelectorAll(".cliente")].find(div =>
         div.innerHTML.includes(`mostrarAgregarCompra('${idCliente}')`)
       );
       clienteDiv.appendChild(document.getElementById("seccion-productos"));
       document.getElementById("seccion-productos").style.display = "block";
     }
+
     function agregarAlCarrito() {
       const index = parseInt(document.getElementById("select-producto").value);
       const producto = todosLosProductos[index];
@@ -535,24 +625,23 @@
       };
       contenedor.appendChild(template);
       document.getElementById("carrito").appendChild(contenedor);
-      
-      // Añadir evento para actualizar total cuando cambia la presentación
       selPres.addEventListener("change", actualizarTotal);
-      
       actualizarTotal();
     }
+
     function actualizarTotal() {
       const items = document.querySelectorAll("#carrito > div");
       let total = 0;
       items.forEach(div => {
-        const precio = parseFloat(div.querySelector(".presentacion").value || 0);
-        total += precio;
+        total += parseFloat(div.querySelector(".presentacion").value || 0);
       });
       const descuento = parseFloat(document.getElementById("descuento").value) || 0;
       const totalConDescuento = Math.max(0, total - descuento);
-      document.getElementById("total-compra").textContent = totalConDescuento;
+      document.getElementById("total-compra").textContent = totalConDescuento.toLocaleString();
     }
+
     document.getElementById("descuento").addEventListener("input", actualizarTotal);
+
     async function guardarCompraDesdeCarrito() {
       if (!clienteSeleccionadoId) return;
       const clienteDoc = doc(db, "clientes", clienteSeleccionadoId);
@@ -563,6 +652,7 @@
           comprasActuales = s.data().compras || [];
         }
       });
+
       const productos = [];
       const items = document.querySelectorAll("#carrito > div");
       let total = 0;
@@ -578,18 +668,21 @@
         productos.push({ nombre, presentacion, aroma, precio });
         total += precio;
       });
+
       const descuento = parseFloat(document.getElementById("descuento").value) || 0;
       comprasActuales.push({
         fecha: new Date().toISOString().slice(0, 10),
         productos,
         monto: total,
-        descuento: descuento,
+        descuento,
         pagado: 0
       });
+
       await updateDoc(clienteDoc, { compras: comprasActuales });
       document.getElementById("seccion-productos").style.display = "none";
       cargarClientes();
     }
+
     window.registrarPago = async function(clienteId, nombre) {
       const snap = await getDocs(clientesRef);
       let clienteData = null;
@@ -598,276 +691,159 @@
           clienteData = docSnap.data();
         }
       });
-      if (!clienteData) {
-        alert("Cliente no encontrado");
-        return;
-      }
+      if (!clienteData) return;
+
       const compras = clienteData.compras || [];
-      // Buscar la última compra pendiente (saldo > 0)
-      const ultimaPendienteIndex = [...compras].reverse().findIndex(compra => {
-        const totalCompra = (compra.monto || 0) - (compra.descuento || 0);
-        return totalCompra > (compra.pagado || 0);
+      const ultimaPendienteIndex = [...compras].reverse().findIndex(c => {
+        const total = (c.monto || 0) - (c.descuento || 0);
+        return total > (c.pagado || 0);
       });
+
       if (ultimaPendienteIndex === -1) {
-        alert("🎉 El cliente no tiene pagos pendientes.");
+        alert("🎉 No hay pagos pendientes.");
         return;
       }
-      // Ubicación real en el array
+
       const indexReal = compras.length - 1 - ultimaPendienteIndex;
       const compra = compras[indexReal];
-      const totalCompra = (compra.monto || 0) - (compra.descuento || 0);
-      const saldo = totalCompra - (compra.pagado || 0);
-      const pago = prompt(`💰 Pago para ${nombre}:
-Saldo pendiente: ₡${saldo}
-Ingresa el monto a registrar:`);
+      const total = (compra.monto || 0) - (compra.descuento || 0);
+      const saldo = total - (compra.pagado || 0);
+      const pago = prompt(`Saldo pendiente: ₡${saldo}\nIngresa el monto:`);
       if (!pago) return;
       const pagoNum = parseFloat(pago);
       if (isNaN(pagoNum) || pagoNum <= 0) {
-        alert("⚠️ Ingresá un monto válido.");
+        alert("⚠️ Monto inválido.");
         return;
       }
-      // Aplicar pago sin pasarse del saldo
-      compra.pagado = Math.min((compra.pagado || 0) + pagoNum, totalCompra);
+      compra.pagado = Math.min((compra.pagado || 0) + pagoNum, total);
       compras[indexReal] = compra;
-      const clienteDoc = doc(db, "clientes", clienteId);
-      await updateDoc(clienteDoc, { compras });
-      alert("✅ Pago registrado correctamente.");
+      await updateDoc(doc(db, "clientes", clienteId), { compras });
+      alert("✅ Pago registrado.");
       cargarClientes();
     };
-    
-    // Funciones para reportes
+
+    // Reportes
     async function generarReporte() {
-      const contResultados = document.getElementById("resultados-reportes");
-      contResultados.innerHTML = "<p> Generando reporte...</p>";
-      
-      try {
-        const snapshot = await getDocs(clientesRef);
-        let clientes = [];
-        
-        // Recopilar datos de todos los clientes
-        snapshot.forEach(docSnap => {
-          const cliente = docSnap.data();
-          const id = docSnap.id;
-          let totalCompras = 0;
-          let totalPagado = 0;
-          let totalDescuentos = 0;
-          let totalPendiente = 0;
-          
-          const compras = cliente.compras || [];
-          compras.forEach(c => {
-            const totalCompra = (c.monto || 0) - (c.descuento || 0);
-            totalCompras += totalCompra;
-            totalPagado += c.pagado || 0;
-            totalDescuentos += c.descuento || 0;
-            totalPendiente += totalCompra - (c.pagado || 0);
-          });
-          
-          clientes.push({
-            id,
-            nombre: cliente.nombre,
-            telefono: cliente.telefono,
-            totalCompras,
-            totalPagado,
-            totalDescuentos,
-            totalPendiente
-          });
+      const cont = document.getElementById("resultados-reportes");
+      cont.innerHTML = "<p>Generando...</p>";
+      const snapshot = await getDocs(clientesRef);
+      let clientes = [];
+      snapshot.forEach(docSnap => {
+        const c = docSnap.data();
+        let totalCompras = 0, totalPagado = 0, totalPendiente = 0, totalDescuentos = 0;
+        (c.compras || []).forEach(compra => {
+          const neto = (compra.monto || 0) - (compra.descuento || 0);
+          totalCompras += neto;
+          totalPagado += compra.pagado || 0;
+          totalDescuentos += compra.descuento || 0;
+          totalPendiente += neto - (compra.pagado || 0);
         });
-        
-        // Aplicar filtros
-        const filtroNombre = document.getElementById("filtro-nombre").value.toLowerCase();
-        const filtroDeudaMin = parseFloat(document.getElementById("filtro-deuda-min").value) || 0;
-        const filtroDeudaMax = parseFloat(document.getElementById("filtro-deuda-max").value) || Infinity;
-        
-        clientes = clientes.filter(cliente => {
-          // Filtro por nombre
-          if (filtroNombre && !cliente.nombre.toLowerCase().includes(filtroNombre)) {
-            return false;
-          }
-          
-          // Filtro por rango de deuda
-          if (cliente.totalPendiente < filtroDeudaMin || cliente.totalPendiente > filtroDeudaMax) {
-            return false;
-          }
-          
-          return true;
+        clientes.push({
+          id: docSnap.id,
+          nombre: c.nombre,
+          telefono: c.telefono,
+          totalCompras,
+          totalPagado,
+          totalDescuentos,
+          totalPendiente
         });
-        
-        // Aplicar ordenamiento
-        const orden = document.getElementById("filtro-orden").value;
-        switch(orden) {
-          case "nombre-asc":
-            clientes.sort((a, b) => a.nombre.localeCompare(b.nombre));
-            break;
-          case "nombre-desc":
-            clientes.sort((a, b) => b.nombre.localeCompare(a.nombre));
-            break;
-          case "deuda-desc":
-            clientes.sort((a, b) => b.totalPendiente - a.totalPendiente);
-            break;
-          case "deuda-asc":
-            clientes.sort((a, b) => a.totalPendiente - b.totalPendiente);
-            break;
-        }
-        
-        // Mostrar resultados
-        if (clientes.length === 0) {
-          contResultados.innerHTML = "<p>No se encontraron clientes con los filtros aplicados.</p>";
-          return;
-        }
-        
-        // Calcular totales generales
-        let totalGeneralCompras = 0;
-        let totalGeneralPagado = 0;
-        let totalGeneralPendiente = 0;
-        
-        clientes.forEach(cliente => {
-          totalGeneralCompras += cliente.totalCompras;
-          totalGeneralPagado += cliente.totalPagado;
-          totalGeneralPendiente += cliente.totalPendiente;
-        });
-        
-        // Generar tabla HTML 
-        let tablaHTML = `
-          <table class="tabla-reportes">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Teléfono</th>
-                <th>Total Compras</th>
-                <th>Total Pagado</th>
-                <th>Descuentos</th>
-                <th>Saldo Pendiente</th>
-                
-              </tr>
-            </thead>
-            <tbody>
-        `;
-        
-        clientes.forEach(cliente => {
-          // Determinar clase de deuda para color
-          let claseDeuda = "";
-          if (cliente.totalPendiente > 5000) {
-            claseDeuda = "deuda-alta";
-          } else if (cliente.totalPendiente > 2000) {
-            claseDeuda = "deuda-media";
-          } else if (cliente.totalPendiente > 0) {
-            claseDeuda = "deuda-baja";
-          }
-          
-          tablaHTML += `
-            <tr>
-              <td>${cliente.nombre}</td>
-              <td>${cliente.telefono}</td>
-              <td>₡${cliente.totalCompras.toLocaleString()}</td>
-              <td>₡${cliente.totalPagado.toLocaleString()}</td>
-              <td>₡${cliente.totalDescuentos.toLocaleString()}</td>
-              <td class="${claseDeuda}">₡${cliente.totalPendiente.toLocaleString()}</td>
-              
-              <td>
-                <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${cliente.totalPendiente})" style="padding: 3px 6px; font-size: 0.75rem;">📲</button>
-                <button class="boton-accion" onclick="exportarPDF('${cliente.id}', '${cliente.nombre}')" style="padding: 3px 6px; font-size: 0.75rem;">📄</button>
-                
-                </td>
-            </tr>
-          `;
-        });
-        
-        tablaHTML += `
-            </tbody>
-          </table>
-          <div style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 5px;">
-            <h3>Resumen General:</h3>
-            <p><strong>Total en Compras:</strong> ₡${totalGeneralCompras.toLocaleString()}</p>
-            <p><strong>Total Pagado:</strong> ₡${totalGeneralPagado.toLocaleString()}</p>
-            <p><strong>Total Pendiente:</strong> ₡${totalGeneralPendiente.toLocaleString()}</p>
-          </div>
-        `;
-        
-        contResultados.innerHTML = tablaHTML;
-        
-      } catch (error) {
-        console.error("Error generando reporte:", error);
-        contResultados.innerHTML = "<p>Error al generar el reporte. Por favor, inténtalo de nuevo.</p>";
-      }
-    }
-    
-    // Función para exportar reporte a PDF
-    window.exportarReportePDF = async function() {
-      // Verificar si hay resultados en el reporte
-      const resultados = document.getElementById("resultados-reportes");
-      if (!resultados.innerHTML || resultados.innerHTML.includes("Generando reporte") || resultados.innerHTML.includes("No se encontraron clientes")) {
-        alert("Primero debes generar un reporte con filtros.");
+      });
+
+      const filtroNombre = document.getElementById("filtro-nombre").value.toLowerCase();
+      const min = parseFloat(document.getElementById("filtro-deuda-min").value) || 0;
+      const max = parseFloat(document.getElementById("filtro-deuda-max").value) || Infinity;
+      const orden = document.getElementById("filtro-orden").value;
+
+      clientes = clientes.filter(cli => {
+        return cli.nombre.toLowerCase().includes(filtroNombre) &&
+               cli.totalPendiente >= min &&
+               cli.totalPendiente <= max;
+      });
+
+      clientes.sort((a, b) => {
+        if (orden === "nombre-asc") return a.nombre.localeCompare(b.nombre);
+        if (orden === "nombre-desc") return b.nombre.localeCompare(a.nombre);
+        if (orden === "deuda-desc") return b.totalPendiente - a.totalPendiente;
+        if (orden === "deuda-asc") return a.totalPendiente - b.totalPendiente;
+        return 0;
+      });
+
+      if (clientes.length === 0) {
+        cont.innerHTML = "<p>No se encontraron clientes.</p>";
         return;
       }
-      
-      // Crear un contenedor temporal para el PDF del reporte
+
+      let totalGeneral = 0, totalPagadoGen = 0, totalPendienteGen = 0;
+      let tabla = `
+        <table class="tabla-reportes">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Teléfono</th>
+              <th>Total Compras</th>
+              <th>Total Pagado</th>
+              <th>Descuentos</th>
+              <th>Saldo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      clientes.forEach(cli => {
+        totalGeneral += cli.totalCompras;
+        totalPagadoGen += cli.totalPagado;
+        totalPendienteGen += cli.totalPendiente;
+        const clase = cli.totalPendiente > 5000 ? "deuda-alta" : cli.totalPendiente > 2000 ? "deuda-media" : "deuda-baja";
+        tabla += `
+          <tr>
+            <td>${cli.nombre}</td>
+            <td>${cli.telefono}</td>
+            <td>₡${cli.totalCompras.toLocaleString()}</td>
+            <td>₡${cli.totalPagado.toLocaleString()}</td>
+            <td>₡${cli.totalDescuentos.toLocaleString()}</td>
+            <td class="${clase}">₡${cli.totalPendiente.toLocaleString()}</td>
+            <td>
+              <button class="boton-accion" onclick="enviarWhatsApp('${cli.telefono}', '${cli.nombre}', ${cli.totalPendiente})" style="padding:3px 6px; font-size:0.75rem;">📲</button>
+              <button class="boton-accion" onclick="exportarPDF('${cli.id}', '${cli.nombre}')" style="padding:3px 6px; font-size:0.75rem;">📄</button>
+            </td>
+          </tr>
+        `;
+      });
+      tabla += `</tbody></table>
+        <div style="margin-top:20px; padding:15px; background:#f5f5f5; border-radius:5px;">
+          <h3>Resumen:</h3>
+          <p><strong>Total Compras:</strong> ₡${totalGeneral.toLocaleString()}</p>
+          <p><strong>Total Pagado:</strong> ₡${totalPagadoGen.toLocaleString()}</p>
+          <p><strong>Total Pendiente:</strong> ₡${totalPendienteGen.toLocaleString()}</p>
+        </div>`;
+      cont.innerHTML = tabla;
+    }
+
+    window.exportarReportePDF = async function() {
+      const resultados = document.getElementById("resultados-reportes");
+      if (!resultados.innerHTML.includes("table")) {
+        alert("Primero genera un reporte.");
+        return;
+      }
       const container = document.createElement("div");
       container.style.fontFamily = "sans-serif";
       container.style.padding = "20px";
-      container.style.backgroundColor = "white";
-      container.style.width = "100%";
-      
-      // Encabezado con logo
-      const header = document.createElement("div");
-      header.innerHTML = `
-        <div style="display: flex; align-items: center; margin-bottom: 20px;">
-          <img src="../images/logo.png" alt="Logo Esentia" style="max-height: 60px; margin-right: 20px;">
-          <div>
-            <h2 style="color:#6c4ba3; margin: 0;">📊 Reporte General de Clientes</h2>
-            <p style="margin: 5px 0 0 0;"><strong>Fecha de reporte:</strong> ${new Date().toLocaleDateString()}</p>
-          </div>
+      container.innerHTML = `
+        <div style="display:flex; align-items:center; margin-bottom:20px;">
+          <img src="../images/logo.png" alt="Logo" style="max-height:60px; margin-right:20px;">
+          <h2>📊 Reporte General de Clientes</h2>
         </div>
         <hr>
       `;
-      container.appendChild(header);
-      
-      // Copiar el contenido de los resultados del reporte
-      const resultadosClone = resultados.cloneNode(true);
-      
-      // Remover botones de acciones del clon
-      resultadosClone.querySelectorAll('.boton-accion').forEach(btn => btn.remove());
-      
-      // Remover el resumen general para ponerlo al final
-      const resumenGeneral = resultadosClone.querySelector('div[style*="background-color: #f5f5f5"]');
-      if (resumenGeneral) {
-        resumenGeneral.remove();
-      }
-      
-      container.appendChild(resultadosClone);
-      
-      // Agregar resumen general al final
-      if (resumenGeneral) {
-        container.appendChild(resumenGeneral);
-      }
-      
-      // Generar PDF y mostrarlo en el navegador
-      try {
-        const worker = html2pdf().set({
-          margin: 10,
-          filename: `Reporte_Clientes_${new Date().toISOString().slice(0, 10)}.pdf`,
-          html2canvas: { 
-            scale: 2,
-            useCORS: true
-          },
-          jsPDF: { unit: "mm", format: "a4", orientation: "landscape" } // Landscape para mejor visualización de tabla
-        });
-        
-        // Primero generamos el PDF como blob
-        const pdfBlob = await worker.from(container).outputPdf('blob');
-        
-        // Creamos una URL para el blob
-        const url = URL.createObjectURL(pdfBlob);
-        
-        // Abrimos en una nueva pestaña
-        window.open(url, '_blank');
-        
-      } catch (error) {
-        console.error("Error generando PDF del reporte:", error);
-        alert("Error al generar el PDF del reporte. Por favor, inténtalo de nuevo.");
-      }
+      const clone = resultados.cloneNode(true);
+      clone.querySelectorAll('.boton-accion').forEach(btn => btn.remove());
+      container.appendChild(clone);
+      const pdfBlob = await html2pdf().from(container).outputPdf('blob');
+      const url = URL.createObjectURL(pdfBlob);
+      window.open(url, '_blank');
     };
-    
-    // Hacer funciones accesibles desde HTML
+
+    // Hacer funciones accesibles
     window.agregarCliente = agregarCliente;
     window.mostrarAgregarCompra = mostrarAgregarCompra;
     window.enviarWhatsApp = enviarWhatsApp;
@@ -878,7 +854,8 @@ Ingresa el monto a registrar:`);
     window.cancelarEdicion = cancelarEdicion;
     window.generarReporte = generarReporte;
     window.exportarReportePDF = exportarReportePDF;
-    
+
+    // Inicializar
     cargarClientes();
     cargarProductosJSON();
   </script>
