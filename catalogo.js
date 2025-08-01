@@ -557,22 +557,7 @@ const categorias = [
       { nombre: "Herbal 50ml", precio: 6500 }
     ]
   },
-  {
-    nombre: "Limón",
-    precioOriginal: 7000,
-    precioOferta: 6500,
-    imagen: "etiqueta/limon.png",
-    info: "AROMATERAPIA: Cítrico y fresco, estimula la creatividad.",
-    beneficios: "Energizante, purifica el aire.",
-    usoRecomendado: "Cocinas, oficinas y baños.",
-    disponible: true ,// ✅ Mostrará u ocultará el producto,
-    calificacion: 4.5, // ⭐ Agregado
-    variantes: [
-      { nombre: "Limón 5ml", precio: 1500 },
-      { nombre: "Limón 30ml", precio: 3000 },
-      { nombre: "Limón 50ml", precio: 6500 }
-    ]
-  },
+  
   {
     nombre: "Manzana",
     precioOriginal: 7000,
@@ -669,22 +654,7 @@ const categorias = [
       { nombre: "Menta 50ml", precio: 6500 }
     ]
   },
-  {
-    nombre: "Naranja",
-    precioOriginal: 7000,
-    precioOferta: 6500,
-    imagen: "etiqueta/naranja.png",
-    info: "AROMATERAPIA: Cítrica y alegre, levanta el ánimo.",
-    beneficios: "Energizante y relajante a la vez.",
-    usoRecomendado: "Cocinas y áreas sociales.",
-     disponible: true ,// ✅ Mostrará u ocultará el producto,
-     calificacion: 4.5, // ⭐ Agregado
-    variantes: [
-      { nombre: "Naranja 5ml", precio: 1500 },
-      { nombre: "Naranja 30ml", precio: 3000 },
-      { nombre: "Naranja 50ml", precio: 6500 }
-    ]
-  },
+  
   {
     nombre: "Pepino",
     precioOriginal: 7000,
