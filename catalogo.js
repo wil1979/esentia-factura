@@ -55,7 +55,7 @@ const categorias = [
 
   {
     
-        nombre: "🚗 Ambientadores para Auto",
+        nombre: "🚗 ⭐ Ambientadores",
   productos: [
     {
       nombre: "Ambientador Auto + Aroma a escoger",
