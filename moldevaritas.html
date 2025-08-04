@@ -193,12 +193,11 @@
   <br><br>
   <label><input type="checkbox" id="mostrarLogo" checked> Mostrar logo</label>
   <label><input type="checkbox" id="mostrarImagen" checked> Mostrar imagen del producto</label>
-  <!--<label><input type="checkbox" id="mostrarNombre" checked> Mostrar nombre</label>
-  <label><input type="checkbox" id="mostrarSolapas" checked> Mostrar solapas</label>-->
+  <label><input type="checkbox" id="mostrarNombre" checked> Mostrar nombre</label>
+  <label><input type="checkbox" id="mostrarSolapas" checked> Mostrar solapas</label>
   <br><br>
-  <!--<button id="generarTodos">Generar todos los moldes</button>-->
+  <button id="generarTodos">Generar todos los moldes</button>
   <button id="abrirModal">Ajustar posiciones</button>
-<button id="btnImprimir">🖨️ Imprimir molde</button>
 </div>
 
 <div id="contenedorMoldes"></div>
@@ -276,7 +275,7 @@
   };
 
   // Intentar cargar el JSON, usar datos de prueba si falla
-  fetch('./productos_esentia.json')
+  fetch('productos_esentia.json')
     .then(res => {
       if (!res.ok) throw new Error(`Error ${res.status}: archivo no encontrado`);
       return res.json();
@@ -451,71 +450,6 @@
   };
 
   
-  // --- IMPRIMIR ---
-  btnImprimir.addEventListener('click', () => {
-    const contenedor = document.getElementById('contenedorMoldes');
-    if (contenedor.children.length === 0) {
-      alert("Primero genera un molde para imprimir.");
-      return;
-    }
-
-    const w = window.open('', '_blank');
-    const printContent = `
-      <html>
-        <head>
-          <title>Imprimir Molde de Caja</title>
-          <style>
-            body {
-              font-family: sans-serif;
-              margin: 1cm;
-              background: white;
-            }
-            .molde {
-              width: ${configuracion.generalWidth}cm !important;
-              height: ${configuracion.generalHeight}cm !important;
-              margin: 2rem auto !important;
-              box-shadow: none !important;
-              border: 1px solid #000;
-              page-break-inside: avoid;
-            }
-            .cara {
-              border: 1px solid #888 !important;
-            }
-            .solapa {
-              background-color: #eee !important;
-              border: 1px dashed #555 !important;
-            }
-            img {
-              max-height: 100%;
-              width: auto;
-            }
-            @page {
-              size: A4 portrait;
-              margin: 1cm;
-            }
-            @media print {
-              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            }
-            #opciones, .error, button, .modal {
-              display: none !important;
-            }
-          </style>
-        </head>
-        <body>
-          <h1 style="text-align: center;">Molde de Caja - Promocionales Esentia</h1>
-          ${contenedor.innerHTML}
-        </body>
-      </html>
-    `;
-
-    w.document.write(printContent);
-    w.document.close();
-
-    w.addEventListener('load', () => {
-      w.focus();
-       setTimeout(() => w.print(), 300);
-    });
-  });
 </script>
 </body>
 </html>
