@@ -197,11 +197,15 @@
 </head>
 <body>
   <h1>📋 Esentia - Registro de Créditos</h1>
+  <h2>👥 Clientes</h2>
+<input type="text" id="filtro-clientes" placeholder="🔎 Buscar cliente por nombre..." style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
+<div id="clientes"></div>
+
   <h2>➕ Nuevo Cliente</h2>
   <input id="nombre" placeholder="Nombre completo">
   <input id="telefono" placeholder="Teléfono con código (ej: 88889999)">
   <button onclick="agregarCliente()">Agregar Cliente</button>
-  <hr>
+  <hr>  
   <h2>👥 Clientes</h2>
   <div id="clientes"></div>
 
@@ -362,81 +366,98 @@
       }
     }
 
-    // ✅ Cargar clientes
-    async function cargarClientes() {
-      const cont = document.getElementById("clientes");
-      cont.innerHTML = "";
-      const snapshot = await getDocs(clientesRef);
-      snapshot.forEach(docSnap => {
-        const cliente = docSnap.data();
-        const id = docSnap.id;
-        let totalPendiente = 0;
-        const compras = cliente.compras || [];
-        compras.forEach(c => {
-          const totalCompra = (c.monto || 0) - (c.descuento || 0);
-          totalPendiente += totalCompra - (c.pagado || 0);
-        });
+   // ✅ Cargar clientes con filtro en tiempo real
+async function cargarClientes() {
+  const cont = document.getElementById("clientes");
+  const filtroInput = document.getElementById("filtro-clientes");
 
-        const div = document.createElement("div");
-        div.className = "cliente";
-        div.innerHTML = `
-          <strong>${cliente.nombre}</strong><br>
-          📞 <a href="https://wa.me/${cliente.telefono}" target="_blank" title="${cliente.telefono}">${ocultarTelefono(cliente.telefono)}</a><br>
-          💸 Pendiente: ₡${totalPendiente}<br>
-          <div class="editar-cliente" id="editar-${id}" style="display:none;">
-            <input type="text" id="edit-nombre-${id}" value="${cliente.nombre}">
-            <input type="text" id="edit-telefono-${id}" value="${cliente.telefono}">
-            <button class="boton-accion" onclick="guardarEdicion('${id}')">💾 Guardar</button>
-            <button class="boton-accion" onclick="cancelarEdicion('${id}')">❌ Cancelar</button>
-          </div>
-          <div class="botones-derecha">
-            <button class="boton-accion" onclick="editarCliente('${id}')">✏️ Editar</button>
-            <button class="boton-accion" onclick="mostrarAgregarCompra('${id}')">➕ Productos</button>
-            <button class="boton-accion" onclick="registrarPago('${id}', '${cliente.nombre}')">💰 Pago</button>
-            <button class="boton-accion" onclick="abrirModalHistorial('${id}', '${cliente.nombre}')">🖨️ Imprimir</button>
-            <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${totalPendiente})">📲 WhatsApp</button>
-            <button class="boton-accion" onclick="eliminarCliente('${id}', '${cliente.nombre}')">🗑️ Eliminar</button>
-          </div>
-        `;
-        cont.appendChild(div);
+  // Función para renderizar clientes según el filtro
+  const renderizarClientes = () => {
+    cont.innerHTML = "";
+    const snapshot = getDocs(clientesRef);
+    const filtroTexto = filtroInput.value.toLowerCase().trim();
 
-        // ✅ Mostrar historial de compras
-        if (compras.length > 0) {
-          const historial = document.createElement("div");
-          historial.className = "historial-compras";
-          let html = "<h4>🛒 Historial de Compras:</h4><ul>";
+    snapshot.forEach(docSnap => {
+      const cliente = docSnap.data();
+      const id = docSnap.id;
 
-          compras.forEach((compra, index) => {
-            const total = (compra.monto || 0) - (compra.descuento || 0);
-            const saldo = total - (compra.pagado || 0);
-            html += `
-              <li>
-                <strong>📅 ${compra.fecha}</strong> | 
-                Total: ₡${total.toLocaleString()} | 
-                Pagado: ₡${(compra.pagado || 0).toLocaleString()} | 
-                Saldo: ₡${saldo.toLocaleString()}
-                <br>
-                <small><strong>Productos:</strong> 
-                  ${compra.productos?.map(p => `${p.nombre} (${p.presentacion || ''}${p.aroma ? ' - ' + p.aroma : ''})`).join(', ') || 'Sin productos'}
-                </small><br>
-                <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px;" 
-                        onclick="editarCompra('${id}', ${index})">
-                  ✏️ Editar
-                </button>
-                <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px; background: #d32f2f;" 
-                        onclick="eliminarCompra('${id}', ${index})">
-                  🗑️ Eliminar
-                </button>
-              </li>`;
-          });
+      // Filtrar por nombre
+      if (!cliente.nombre.toLowerCase().includes(filtroTexto)) {
+        return; // No mostrar si no coincide
+      }
 
-          html += "</ul>";
-          historial.innerHTML = html;
-          div.appendChild(historial);
-        }
+      let totalPendiente = 0;
+      const compras = cliente.compras || [];
+      compras.forEach(c => {
+        const totalCompra = (c.monto || 0) - (c.descuento || 0);
+        totalPendiente += totalCompra - (c.pagado || 0);
       });
-    }
 
+      const div = document.createElement("div");
+      div.className = "cliente";
+      div.innerHTML = `
+        <strong>${cliente.nombre}</strong><br>
+        📞 <a href="https://wa.me/${cliente.telefono}" target="_blank" title="${cliente.telefono}">${ocultarTelefono(cliente.telefono)}</a><br>
+        💸 Pendiente: ₡${totalPendiente.toLocaleString()}<br>
+        <div class="editar-cliente" id="editar-${id}" style="display:none;">
+          <input type="text" id="edit-nombre-${id}" value="${cliente.nombre}">
+          <input type="text" id="edit-telefono-${id}" value="${cliente.telefono}">
+          <button class="boton-accion" onclick="guardarEdicion('${id}')">💾 Guardar</button>
+          <button class="boton-accion" onclick="cancelarEdicion('${id}')">❌ Cancelar</button>
+        </div>
+        <div class="botones-derecha">
+          <button class="boton-accion" onclick="editarCliente('${id}')">✏️ Editar</button>
+          <button class="boton-accion" onclick="mostrarAgregarCompra('${id}')">➕ Productos</button>
+          <button class="boton-accion" onclick="registrarPago('${id}', '${cliente.nombre}')">💰 Pago</button>
+          <button class="boton-accion" onclick="abrirModalHistorial('${id}', '${cliente.nombre}')">🖨️ Imprimir</button>
+          <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${totalPendiente})">📲 WhatsApp</button>
+          <button class="boton-accion" onclick="eliminarCliente('${id}', '${cliente.nombre}')">🗑️ Eliminar</button>
+        </div>
+      `;
+      cont.appendChild(div);
+
+      // ✅ Mostrar historial de compras
+      if (compras.length > 0) {
+        const historial = document.createElement("div");
+        historial.className = "historial-compras";
+        let html = "<h4>🛒 Historial de Compras:</h4><ul>";
+        compras.forEach((compra, index) => {
+          const total = (compra.monto || 0) - (compra.descuento || 0);
+          const saldo = total - (compra.pagado || 0);
+          html += `
+            <li>
+              <strong>📅 ${compra.fecha}</strong> | 
+              Total: ₡${total.toLocaleString()} | 
+              Pagado: ₡${(compra.pagado || 0).toLocaleString()} | 
+              Saldo: ₡${saldo.toLocaleString()}
+              <br>
+              <small><strong>Productos:</strong> 
+                ${compra.productos?.map(p => `${p.nombre} (${p.presentacion || ''}${p.aroma ? ' - ' + p.aroma : ''})`).join(', ') || 'Sin productos'}
+              </small><br>
+              <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px;" 
+                      onclick="editarCompra('${id}', ${index})">
+                ✏️ Editar
+              </button>
+              <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px; background: #d32f2f;" 
+                      onclick="eliminarCompra('${id}', ${index})">
+                🗑️ Eliminar
+              </button>
+            </li>`;
+        });
+        html += "</ul>";
+        historial.innerHTML = html;
+        div.appendChild(historial);
+      }
+    });
+  };
+
+  // Cargar todos los clientes al inicio
+  const snapshot = await getDocs(clientesRef);
+  renderizarClientes();
+
+  // Escuchar cambios en el filtro
+  filtroInput.addEventListener("input", renderizarClientes);
+}
     // ✅ Editar cliente
     function editarCliente(clienteId) {
       document.querySelectorAll('.editar-cliente').forEach(div => div.style.display = 'none');
@@ -584,7 +605,7 @@
     // ✅ Enviar WhatsApp
     function enviarWhatsApp(telefono, nombre, deuda) {
       const limpio = telefono.replace(/\D/g, '');
-      const mensaje = `Hola ${nombre}, Agradecemos tu preferencia con nosotros por eso te comentamos que tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia 💜  💳 Formas de pago:\n1. SINPE 72952454 Wilber Calderón M.\n2. BAC: CR59010200009453897656  🌿`;
+      const mensaje = `Hola ${nombre}, tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia 💜`;
       const url = `https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`;
       window.open(url, "_blank");
     }
