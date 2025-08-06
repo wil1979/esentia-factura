@@ -371,10 +371,10 @@ async function cargarClientes() {
   const cont = document.getElementById("clientes");
   const filtroInput = document.getElementById("filtro-clientes");
 
-  // Función para renderizar clientes según el filtro
-  const renderizarClientes = () => {
+  // Función asíncrona para renderizar
+  const renderizarClientes = async () => {
     cont.innerHTML = "";
-    const snapshot = getDocs(clientesRef);
+    const snapshot = await getDocs(clientesRef); // ✅ Ahora sí: esperamos los datos
     const filtroTexto = filtroInput.value.toLowerCase().trim();
 
     snapshot.forEach(docSnap => {
@@ -383,7 +383,7 @@ async function cargarClientes() {
 
       // Filtrar por nombre
       if (!cliente.nombre.toLowerCase().includes(filtroTexto)) {
-        return; // No mostrar si no coincide
+        return;
       }
 
       let totalPendiente = 0;
@@ -451,12 +451,12 @@ async function cargarClientes() {
     });
   };
 
-  // Cargar todos los clientes al inicio
-  const snapshot = await getDocs(clientesRef);
-  renderizarClientes();
+  // Cargar los clientes al inicio
+  await renderizarClientes(); // ✅ Llamada inicial
 
   // Escuchar cambios en el filtro
   filtroInput.addEventListener("input", renderizarClientes);
+
 }
     // ✅ Editar cliente
     function editarCliente(clienteId) {
