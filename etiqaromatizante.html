@@ -73,11 +73,10 @@
       font-size: var(--font-size, 7px);
     }
 
-      .logo {
+    .logo {
       width: var(--logo-width, 150%);
       margin-bottom: 2px;
-      }
-
+    }
 
     .nombre-producto {
       font-size: 6px;
@@ -85,7 +84,7 @@
       margin: 2px 0;
     }
 
-     .producto {
+    .producto {
       height: var(--img-height, 86px);
       width: var(--img-width, auto);
       margin-top: 0;
@@ -105,7 +104,12 @@
         position: absolute;
         left: 0;
         top: 0;
-        width: 21cm;
+        width: 100%;
+        page-break-inside: avoid;
+        page-break-after: auto;
+      }
+
+      .etiqueta {
         page-break-inside: avoid;
         page-break-after: auto;
       }
@@ -115,14 +119,15 @@
       }
 
       @page {
-        size: auto;
-        margin: 0;
+        size: var(--page-size, auto);
+        margin: 0.5cm;
+        -webkit-print-color-adjust: exact;
+        color-adjust: exact;
       }
 
-      /* Forzar impresión de fondos */
       .etiqueta {
-        -webkit-print-color-adjust: exact; /* Chrome, Safari */
-        color-adjust: exact;               /* Firefox */
+        -webkit-print-color-adjust: exact;
+        color-adjust: exact;
         background-color: var(--bg-color, #f6f7f4) !important;
         background: var(--bg-color, #f6f7f4) !important;
       }
@@ -134,8 +139,25 @@
   <div class="formulario">
     <h3>Crear etiquetas</h3>
 
+    <label>Tamaño de hoja:</label>
+    <select id="tamanoHoja" onchange="actualizarTamanoHoja()">
+      <option value="carta">Carta (8.5x11")</option>
+      <option value="13x19" selected>13x19 pulgadas (33x48 cm)</option>
+      <option value="a4">A4 (21x29.7 cm)</option>
+      <option value="personalizado">Personalizado</option>
+    </select>
+
+    <!-- Campos visibles solo si es personalizado -->
+    <div id="camposPersonalizados" style="display: none;">
+      <label>Ancho hoja (cm):</label>
+      <input type="number" id="anchoHojaCm" value="33" step="0.1" oninput="generarEtiquetas()">
+
+      <label>Alto hoja (cm):</label>
+      <input type="number" id="altoHojaCm" value="48" step="0.1" oninput="generarEtiquetas()">
+    </div>
+
     <label>Selecciona productos (separados por comas):</label>
-    <input id="productos" value="bambu,naranja,citrus,vainilla,cocomenta,cocovainilla,eucalipto,lemoncake,ylang,pinacolada,cipres,libertad" oninput="generarEtiquetas()">
+    <input id="productos" value="bambu,naranja,vainilla,cocovainilla,coco,manzanaverde,kiwi,navidad,limon,sandia,fresa,cherry,melonvainilla,citronela" oninput="generarEtiquetas()">
 
     <label>Cantidad por producto:</label>
     <input id="cantidadPorProducto" type="number" min="1" value="4" oninput="generarEtiquetas()">
@@ -145,27 +167,24 @@
 
     <label>Información izquierda:</label>
     <textarea id="infoIzquierda" rows="4" oninput="generarEtiquetas()"><b>Indicaciones de Uso</b>
-                        Añada 5-9 gotas en un quemador cerámico, candela o difusor eléctrico para difundir inmediatamente su aroma en el ambiente
-                        Evite derramar el aceite sobre superficies pintadas o barnizadas
+Añada 5-9 gotas en un quemador cerámico, candela o difusor eléctrico para difundir inmediatamente su aroma en el ambiente
+Evite derramar el aceite sobre superficies pintadas o barnizadas
 
-                        <b>NOTA</b>: no son consumibles ni aplicables directamente en la piel</textarea>
+<b>NOTA</b>: no son consumibles ni aplicables directamente en la piel</textarea>
 
-                        <label>Recomendaciones:</label>
-
-                        <textarea id="recomendaciones" rows="6" oninput="generarEtiquetas()">https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=https://wil1979.github.io/esentia-factura/catalogo.html</textarea>
+    <label>Recomendaciones (URL o texto):</label>
+    <textarea id="recomendaciones" rows="6" oninput="generarEtiquetas()">https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=https://wil1979.github.io/esentia-factura/catalogo.html</textarea>
 
     <hr>
 
-   <hr>
-    
     <label>Color de fondo:</label>
     <input type="color" id="bgColor" value="#f0f0f0" onchange="actualizarEstilos()">
 
     <label>Ancho etiqueta (cm):</label>
-    <input type="number" id="anchoCm" value="8" step="0.1" onchange="actualizarEstilos()">
+    <input type="number" id="anchoCm" value="8" step="0.1" oninput="actualizarEstilos(); generarEtiquetas();">
 
     <label>Alto etiqueta (cm):</label>
-    <input type="number" id="altoCm" value="4" step="0.1" onchange="actualizarEstilos()">
+    <input type="number" id="altoCm" value="4" step="0.1" oninput="actualizarEstilos(); generarEtiquetas();">
 
     <label>Tamaño de fuente (px):</label>
     <input type="number" id="fontSize" value="8.4" onchange="actualizarEstilos()">
@@ -176,7 +195,7 @@
     <label>Altura imagen (px):</label>
     <input type="number" id="imgHeight" value="86" onchange="actualizarEstilos()">
 
-    <label>Ancho imagen (px):</label>
+    <label>Ancho imagen (px o %):</label>
     <input type="text" id="imgWidth" value="auto" onchange="actualizarEstilos()" placeholder="Ej: 100px, 50% o auto">
 
     <button onclick="generarEtiquetas()">Generar Etiquetas</button>
@@ -186,6 +205,30 @@
   <div class="etiqueta-container" id="etiquetas"></div>
 
   <script>
+    // Mapeo de tamaños de hoja
+    const tamanosHoja = {
+      carta: { w: 21.6, h: 27.9, name: "letter" },
+      "13x19": { w: 33, h: 48, name: "330mm 480mm" },
+      a4: { w: 21, h: 29.7, name: "A4" },
+      personalizado: { w: 33, h: 48, name: "custom" }
+    };
+
+    function actualizarTamanoHoja() {
+      const tipo = document.getElementById("tamanoHoja").value;
+      const divPersonalizado = document.getElementById("camposPersonalizados");
+      if (tipo === "personalizado") {
+        divPersonalizado.style.display = "block";
+      } else {
+        divPersonalizado.style.display = "none";
+      }
+      // Aplicar tamaño de página en CSS
+      const tam = tamanosHoja[tipo];
+      if (tipo !== "personalizado") {
+        document.documentElement.style.setProperty('--page-size', tam.name);
+      }
+      generarEtiquetas();
+    }
+
     function actualizarEstilos() {
       document.documentElement.style.setProperty('--bg-color', document.getElementById('bgColor').value);
       document.documentElement.style.setProperty('--etiqueta-width', document.getElementById('anchoCm').value + 'cm');
@@ -195,62 +238,79 @@
       document.documentElement.style.setProperty('--img-height', document.getElementById('imgHeight').value + 'px');
       document.documentElement.style.setProperty('--img-width', document.getElementById('imgWidth').value);
     }
+
     function isURL(str) {
-    return /^(https?:\/\/)/.test(str);
-  }
+      return /^(https?:\/\/)/.test(str);
+    }
 
     function generarEtiquetas() {
-      // Obtener valores de los inputs
-      const anchoCm = parseFloat(document.getElementById('anchoCm').value) || 8;
-      const altoCm = parseFloat(document.getElementById('altoCm').value) || 4;
-      const anchoPx = anchoCm * 37.8;
-      const altoPx = altoCm * 37.8;
+      actualizarEstilos(); // Asegurar que los estilos se actualicen
+
+      const tipoHoja = document.getElementById("tamanoHoja").value;
+      let anchoHojaCm, altoHojaCm;
+
+      if (tipoHoja === "personalizado") {
+        anchoHojaCm = parseFloat(document.getElementById('anchoHojaCm').value) || 33;
+        altoHojaCm = parseFloat(document.getElementById('altoHojaCm').value) || 48;
+        document.documentElement.style.setProperty('--page-size', `${anchoHojaCm}cm ${altoHojaCm}cm`);
+      } else {
+        const tam = tamanosHoja[tipoHoja];
+        anchoHojaCm = tam.w;
+        altoHojaCm = tam.h;
+        document.documentElement.style.setProperty('--page-size', tam.name);
+      }
+
+      const anchoEtiquetaCm = parseFloat(document.getElementById('anchoCm').value) || 8;
+      const altoEtiquetaCm = parseFloat(document.getElementById('altoCm').value) || 4;
+
       const productos = document.getElementById("productos").value.split(',').map(p => p.trim());
       const cantidadPorProducto = parseInt(document.getElementById("cantidadPorProducto").value) || 1;
       const textoCentral = document.getElementById("textoCentral").value.trim();
       const infoIzquierda = document.getElementById("infoIzquierda").value.trim();
       const recomendaciones = document.getElementById("recomendaciones").value.trim();
 
-      
-
       const contenedor = document.getElementById("etiquetas");
       contenedor.innerHTML = "";
+
+      // Calcular cuántas etiquetas caben por fila y columna
+      const etiquetasPorFila = Math.floor(anchoHojaCm / anchoEtiquetaCm);
+      const margen = 0.3; // margen entre etiquetas en cm
+      const espacioTotal = anchoHojaCm - (etiquetasPorFila * anchoEtiquetaCm);
+      const gapHorizontal = espacioTotal / (etiquetasPorFila > 1 ? etiquetasPorFila - 1 : 1);
+
+      // Ajustar contenedor para centrar etiquetas
+      contenedor.style.width = '100%';
+      contenedor.style.justifyContent = 'center';
 
       productos.forEach(producto => {
         for (let i = 0; i < cantidadPorProducto; i++) {
           const etiqueta = document.createElement("div");
           etiqueta.className = "etiqueta";
-          etiqueta.style.width = anchoPx + "px";
-          etiqueta.style.height = altoPx + "px";
 
           etiqueta.innerHTML = `
-      <div class="lateral"><div>${infoIzquierda}</div></div>
-      <div class="central">
-        <img class="logo" src="images/logo.png" alt="Logo">
-        <div class="nombre-producto">${producto}</div>
-        <div>${textoCentral}</div>
-       
-      </div>
-      <div class="lateral">
-        <div>
-          
-          ${isURL(recomendaciones) 
-          
-            ? `<img src="${recomendaciones}" alt="Código QR" 
-                 style="max-width: 100%; height: auto; display: block; margin: 0 auto;">` 
-            : recomendaciones}
-
-             <img class="producto" src="etiqueta/${producto}.png" alt="${producto}">
-        </div>
-      </div>
-    `;
+            <div class="lateral"><div>${infoIzquierda}</div></div>
+            <div class="central">
+              <img class="logo" src="images/logo.png" alt="Logo">
+              <div class="nombre-producto">${producto}</div>
+              <div>${textoCentral}</div>
+            </div>
+            <div class="lateral">
+              <div>
+                ${isURL(recomendaciones) 
+                  ? `<img src="${recomendaciones}" alt="Código QR" style="max-width: 100%; height: auto; display: block; margin: 0 auto;">` 
+                  : recomendaciones}
+                <img class="producto" src="etiqueta/${producto}.png" alt="${producto}">
+              </div>
+            </div>
+          `;
           contenedor.appendChild(etiqueta);
         }
       });
     }
 
-    // Inicial
+    // Inicializar
     window.onload = () => {
+      actualizarTamanoHoja(); // Configurar tamaño de página
       generarEtiquetas();
     };
   </script>
