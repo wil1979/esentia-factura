@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>📦 Esentia - Compras a Proveedores</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 20px;
+      background-color: #f3f2f7;
+      color: #333;
+    }
+    h1 {
+      color: #6c4ba3;
+      text-align: center;
+    }
+    h2 {
+      color: #555;
+      border-bottom: 2px solid #6c4ba3;
+      padding-bottom: 8px;
+      margin-top: 30px;
+    }
+    .item {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .botones-derecha {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      margin-top: 0.5rem;
+    }
+    .boton-accion {
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      border: none;
+      background: #6c4ba3;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex: 1 1 auto;
+      min-width: fit-content;
+    }
+    .boton-accion:hover {
+      background-color: #573993;
+    }
+    .boton-rojo {
+      background: #d32f2f;
+    }
+    .boton-rojo:hover {
+      background: #b71c1c;
+    }
+    input, select, button {
+      font-family: inherit;
+      border-radius: 6px;
+    }
+    input, select {
+      padding: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+      width: 100%;
+    }
+    button {
+      padding: 10px;
+    }
+    .producto-item {
+      border: 1px dashed #ccc;
+      padding: 8px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      background: #f9f9f9;
+    }
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-contenido {
+      background: white;
+      width: 90%;
+      max-width: 600px;
+      border-radius: 10px;
+      padding: 20px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .cerrar-modal {
+      float: right;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #999;
+    }
+    .cerrar-modal:hover {
+      color: #000;
+    }
+    /* Responsive */
+    @media (max-width: 480px) {
+      .boton-accion {
+        width: 100%;
+        margin-bottom: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📦 Esentia - Compras a Proveedores</h1>
+
+  <!-- Sección de Proveedores -->
+  <h2>🏢 Proveedores</h2>
+  <button class="boton-accion" onclick="abrirModalProveedor()">➕ Nuevo Proveedor</button>
+  <div id="lista-proveedores"></div>
+
+  <!-- Sección de Compras -->
+  <h2>🛒 Compras a Proveedores</h2>
+  <button class="boton-accion" onclick="abrirModalCompra()">➕ Registrar Compra</button>
+  <div id="lista-compras"></div>
+
+  <!-- Modal: Nuevo Proveedor -->
+  <div id="modal-proveedor" class="modal">
+    <div class="modal-contenido">
+      <span class="cerrar-modal" onclick="cerrarModalProveedor()">&times;</span>
+      <h3>➕ Nuevo Proveedor</h3>
+      <input type="text" id="nombre-proveedor" placeholder="Nombre del proveedor">
+      <input type="text" id="telefono-proveedor" placeholder="Teléfono (opcional)">
+      <input type="email" id="correo-proveedor" placeholder="Correo (opcional)">
+      <input type="text" id="sitio-proveedor" placeholder="Sitio web (opcional)">
+      <textarea id="notas-proveedor" placeholder="Notas adicionales" style="height: 80px;"></textarea>
+      <div class="botones-derecha">
+        <button class="boton-accion" onclick="cerrarModalProveedor()">❌ Cancelar</button>
+        <button class="boton-accion" onclick="guardarProveedor()">💾 Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Nueva Compra -->
+  <div id="modal-compra" class="modal">
+    <div class="modal-contenido">
+      <span class="cerrar-modal" onclick="cerrarModalCompra()">&times;</span>
+      <h3 id="titulo-modal-compra">🛒 Nueva Compra</h3>
+      <label>Proveedor:</label>
+      <select id="select-proveedor"></select>
+      <label>Fecha:</label>
+      <input type="date" id="fecha-compra" value="">
+      <label>Factura (opcional):</label>
+      <input type="text" id="factura-compra" placeholder="FAC-001">
+      <label>Forma de pago:</label>
+      <select id="forma-pago">
+        <option>Efectivo</option>
+        <option>SINPE</option>
+        <option>Tarjeta</option>
+        <option>Crédito</option>
+      </select>
+      <label>Notas (opcional):</label>
+      <input type="text" id="notas-compra" placeholder="Detalles adicionales">
+
+      <h4>Productos Comprados</h4>
+      <div id="productos-compra"></div>
+      <button class="boton-accion" onclick="agregarProducto()">+ Agregar Producto</button>
+
+      <br><br>
+      <strong>Total: ₡<span id="total-compra">0</span></strong>
+      <br><br>
+      <div class="botones-derecha">
+        <button class="boton-accion" onclick="cerrarModalCompra()">❌ Cancelar</button>
+        <button class="boton-accion" onclick="guardarCompra()">💾 Guardar Compra</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    // 🔥 Tu configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+      authDomain: "esentiacreditos-8345f.firebaseapp.com",
+      projectId: "esentiacreditos-8345f",
+      storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+      messagingSenderId: "888658236080",
+      appId: "1:888658236080:web:506e5e2085b5a452dba175"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Referencias
+    const proveedoresRef = collection(db, "proveedores");
+    const comprasRef = collection(db, "comprasProveedor");
+
+    // Variables globales
+    let proveedores = [];
+    let todosLosProductos = [];
+
+    // URLs de productos
+    const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
+    const URL_LIMPIEZA = "https://wil1979.github.io/esentia-factura/productos_limpieza_completo.json";
+
+    // Cargar datos al inicio
+    window.onload = async () => {
+      await cargarProductosJSON();
+      await cargarProveedores();
+      await cargarCompras();
+    };
+
+    // ========================
+    // CARGAR PRODUCTOS DESDE JSON
+    // ========================
+    async function cargarProductosJSON() {
+      try {
+        const [res1, res2] = await Promise.all([fetch(URL_ESENCIA), fetch(URL_LIMPIEZA)]);
+        const [aromas, limpieza] = await Promise.all([res1.json(), res2.json()]);
+        todosLosProductos = [...aromas, ...limpieza].filter(p => p.disponible);
+        console.log("✅ Productos cargados:", todosLosProductos.length);
+      } catch (error) {
+        console.error("❌ Error al cargar productos:", error);
+        alert("No se pudieron cargar los productos. Verifica la conexión.");
+      }
+    }
+
+    // ========================
+    // PROVEEDORES
+    // ========================
+    async function cargarProveedores() {
+      const cont = document.getElementById("lista-proveedores");
+      cont.innerHTML = "<p>Cargando proveedores...</p>";
+
+      try {
+        const snapshot = await getDocs(proveedoresRef);
+        proveedores = [];
+        snapshot.forEach(docSnap => {
+          const p = docSnap.data();
+          p.id = docSnap.id;
+          proveedores.push(p);
+        });
+
+        if (proveedores.length === 0) {
+          cont.innerHTML = "<p>No hay proveedores registrados.</p>";
+          return;
+        }
+
+        cont.innerHTML = "";
+        proveedores.forEach(p => {
+          const div = document.createElement("div");
+          div.className = "item";
+          div.innerHTML = `
+            <strong>🏢 ${p.nombre}</strong><br>
+            📞 ${p.telefono || 'Sin teléfono'}<br>
+            ✉️ ${p.correo || 'Sin correo'}<br>
+            🌐 ${p.sitioWeb || 'Sin sitio'}<br>
+            📝 ${p.notas || 'Sin notas'}
+            <div class="botones-derecha">
+              <button class="boton-accion" onclick="editarProveedor('${p.id}')">✏️ Editar</button>
+              <button class="boton-accion boton-rojo" onclick="eliminarProveedor('${p.id}', '${p.nombre}')">🗑️ Eliminar</button>
+            </div>
+          `;
+          cont.appendChild(div);
+        });
+      } catch (error) {
+        cont.innerHTML = "<p>Error al cargar proveedores.</p>";
+        console.error("Error:", error);
+      }
+    }
+
+    function abrirModalProveedor() {
+      document.getElementById("modal-proveedor").style.display = "flex";
+      document.getElementById("nombre-proveedor").value = "";
+      document.getElementById("telefono-proveedor").value = "";
+      document.getElementById("correo-proveedor").value = "";
+      document.getElementById("sitio-proveedor").value = "";
+      document.getElementById("notas-proveedor").value = "";
+    }
+
+    function cerrarModalProveedor() {
+      document.getElementById("modal-proveedor").style.display = "none";
+    }
+
+    async function guardarProveedor() {
+      const nombre = document.getElementById("nombre-proveedor").value.trim();
+      if (!nombre) {
+        alert("⚠️ El nombre es obligatorio.");
+        return;
+      }
+
+      const telefono = document.getElementById("telefono-proveedor").value.trim();
+      const correo = document.getElementById("correo-proveedor").value.trim();
+      const sitioWeb = document.getElementById("sitio-proveedor").value.trim();
+      const notas = document.getElementById("notas-proveedor").value.trim();
+
+      try {
+        await addDoc(proveedoresRef, {
+          nombre,
+          telefono,
+          correo,
+          sitioWeb,
+          notas
+        });
+        alert("✅ Proveedor agregado.");
+        cerrarModalProveedor();
+        await cargarProveedores();
+      } catch (error) {
+        alert("❌ Error: " + error.message);
+      }
+    }
+
+    async function editarProveedor(id) {
+      const docSnap = await getDoc(doc(db, "proveedores", id));
+      if (!docSnap.exists()) return;
+      const p = docSnap.data();
+
+      const nombre = prompt("Nombre:", p.nombre);
+      if (!nombre) return;
+      const telefono = prompt("Teléfono:", p.telefono || "");
+      const correo = prompt("Correo:", p.correo || "");
+      const sitioWeb = prompt("Sitio web:", p.sitioWeb || "");
+      const notas = prompt("Notas:", p.notas || "");
+
+      await updateDoc(doc(db, "proveedores", id), {
+        nombre,
+        telefono,
+        correo,
+        sitioWeb,
+        notas
+      });
+      alert("✅ Proveedor actualizado.");
+      await cargarProveedores();
+    }
+
+    async function eliminarProveedor(id, nombre) {
+      if (!confirm(`¿Eliminar a ${nombre}?`)) return;
+      await deleteDoc(doc(db, "proveedores", id));
+      alert(`✅ ${nombre} eliminado.`);
+      await cargarProveedores();
+    }
+
+    // ========================
+    // COMPRAS
+    // ========================
+    async function abrirModalCompra(editId = null) {
+      const select = document.getElementById("select-proveedor");
+      select.innerHTML = "";
+      proveedores.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.nombre;
+        select.appendChild(opt);
+      });
+
+      document.getElementById("fecha-compra").value = new Date().toISOString().slice(0,10);
+      document.getElementById("factura-compra").value = "";
+      document.getElementById("notas-compra").value = "";
+      document.getElementById("forma-pago").value = "Efectivo";
+
+      // Limpiar productos
+      document.getElementById("productos-compra").innerHTML = "";
+      document.getElementById("total-compra").textContent = "0";
+
+      const modal = document.getElementById("modal-compra");
+
+      if (editId) {
+        // Modo edición
+        const docSnap = await getDoc(doc(db, "comprasProveedor", editId));
+        if (!docSnap.exists()) return;
+        const compra = docSnap.data();
+
+        select.value = compra.proveedorId;
+        document.getElementById("fecha-compra").value = compra.fecha;
+        document.getElementById("factura-compra").value = compra.factura || "";
+        document.getElementById("notas-compra").value = compra.notas || "";
+        document.getElementById("forma-pago").value = compra.formaPago;
+        document.getElementById("titulo-modal-compra").textContent = "✏️ Editar Compra";
+
+        compra.productos.forEach(prod => {
+          const div = document.createElement("div");
+          div.className = "producto-item";
+
+          const selProd = document.createElement("select");
+          selProd.classList.add("prod-seleccion");
+          selProd.innerHTML = "<option value=''>Selecciona un producto</option>";
+          todosLosProductos.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p.nombre;
+            opt.textContent = p.nombre;
+            if (p.nombre === prod.nombre) opt.selected = true;
+            selProd.appendChild(opt);
+          });
+
+          const cantInput = document.createElement("input");
+          cantInput.type = "number";
+          cantInput.placeholder = "Cantidad";
+          cantInput.value = prod.cantidad;
+          cantInput.min = "1";
+          cantInput.classList.add("prod-cant");
+
+          const precioInput = document.createElement("input");
+          precioInput.type = "number";
+          precioInput.placeholder = "Precio de compra por unidad";
+          precioInput.value = prod.precioUnitario;
+          precioInput.min = "0";
+          precioInput.classList.add("prod-precio");
+
+          const totalSpan = document.createElement("span");
+          totalSpan.classList.add("total-producto");
+          totalSpan.textContent = `₡${(prod.cantidad * prod.precioUnitario).toLocaleString()}`;
+
+          const btnQuitar = document.createElement("button");
+          btnQuitar.textContent = "❌ Quitar";
+          btnQuitar.classList.add("boton-accion", "boton-rojo");
+          btnQuitar.onclick = () => {
+            div.remove();
+            actualizarTotalCompra();
+          };
+
+          function actualizar() {
+            const nombre = selProd.value;
+            const cantidad = parseFloat(cantInput.value) || 0;
+            const precio = parseFloat(precioInput.value) || 0;
+            const total = cantidad * precio;
+            totalSpan.textContent = `₡${total.toLocaleString()}`;
+            actualizarTotalCompra();
+          }
+
+          selProd.addEventListener("change", actualizar);
+          cantInput.addEventListener("input", actualizar);
+          precioInput.addEventListener("input", actualizar);
+
+          div.appendChild(selProd);
+          div.appendChild(cantInput);
+          div.appendChild(document.createElement("br"));
+          div.appendChild(precioInput);
+          div.appendChild(document.createElement("br"));
+          div.appendChild(document.createTextNode("Total: "));
+          div.appendChild(totalSpan);
+          div.appendChild(document.createElement("br"));
+          div.appendChild(btnQuitar);
+
+          document.getElementById("productos-compra").appendChild(div);
+          actualizar();
+        });
+
+        actualizarTotalCompra();
+        modal.dataset.editId = editId;
+      } else {
+        // Modo nuevo
+        agregarProducto();
+        document.getElementById("titulo-modal-compra").textContent = "🛒 Nueva Compra";
+        delete modal.dataset.editId;
+      }
+
+      modal.style.display = "flex";
+    }
+
+    function cerrarModalCompra() {
+      document.getElementById("modal-compra").style.display = "none";
+      const modal = document.getElementById("modal-compra");
+      if (modal.dataset.editId) {
+        delete modal.dataset.editId;
+      }
+    }
+
+    function agregarProducto() {
+      const cont = document.getElementById("productos-compra");
+      const div = document.createElement("div");
+      div.className = "producto-item";
+
+      const selProd = document.createElement("select");
+      selProd.classList.add("prod-seleccion");
+      selProd.innerHTML = "<option value=''>Selecciona un producto</option>";
+      todosLosProductos.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.nombre;
+        opt.textContent = p.nombre;
+        selProd.appendChild(opt);
+      });
+
+      const cantInput = document.createElement("input");
+      cantInput.type = "number";
+      cantInput.placeholder = "Cantidad";
+      cantInput.value = "1";
+      cantInput.min = "1";
+      cantInput.classList.add("prod-cant");
+
+      const precioInput = document.createElement("input");
+      precioInput.type = "number";
+      precioInput.placeholder = "Precio de compra por unidad";
+      precioInput.value = "0";
+      precioInput.min = "0";
+      precioInput.classList.add("prod-precio");
+
+      const totalSpan = document.createElement("span");
+      totalSpan.classList.add("total-producto");
+      totalSpan.textContent = "₡0";
+
+      const btnQuitar = document.createElement("button");
+      btnQuitar.textContent = "❌ Quitar";
+      btnQuitar.classList.add("boton-accion", "boton-rojo");
+      btnQuitar.onclick = () => {
+        div.remove();
+        actualizarTotalCompra();
+      };
+
+      function actualizar() {
+        const nombre = selProd.value;
+        const cantidad = parseFloat(cantInput.value) || 0;
+        const precio = parseFloat(precioInput.value) || 0;
+        const total = cantidad * precio;
+        totalSpan.textContent = `₡${total.toLocaleString()}`;
+        actualizarTotalCompra();
+      }
+
+      selProd.addEventListener("change", actualizar);
+      cantInput.addEventListener("input", actualizar);
+      precioInput.addEventListener("input", actualizar);
+
+      div.appendChild(selProd);
+      div.appendChild(cantInput);
+      div.appendChild(document.createElement("br"));
+      div.appendChild(precioInput);
+      div.appendChild(document.createElement("br"));
+      div.appendChild(document.createTextNode("Total: "));
+      div.appendChild(totalSpan);
+      div.appendChild(document.createElement("br"));
+      div.appendChild(btnQuitar);
+
+      cont.appendChild(div);
+      actualizar();
+    }
+
+    function actualizarTotalCompra() {
+      const productos = document.querySelectorAll("#productos-compra > div");
+      let total = 0;
+      productos.forEach(div => {
+        const totalSpan = div.querySelector(".total-producto").textContent.replace(/[₡,]/g, '');
+        total += parseFloat(totalSpan) || 0;
+      });
+      document.getElementById("total-compra").textContent = total.toLocaleString();
+    }
+
+    async function guardarCompra() {
+      const modal = document.getElementById("modal-compra");
+      const editId = modal.dataset.editId;
+      const esEdicion = !!editId; // ✅ SIN TILDE
+
+      const proveedorId = document.getElementById("select-proveedor").value;
+      const fecha = document.getElementById("fecha-compra").value;
+      const factura = document.getElementById("factura-compra").value;
+      const formaPago = document.getElementById("forma-pago").value;
+      const notas = document.getElementById("notas-compra").value;
+
+      if (!proveedorId || !fecha) {
+        alert("⚠️ Completa todos los campos obligatorios.");
+        return;
+      }
+
+      const proveedor = proveedores.find(p => p.id === proveedorId);
+      const productos = [];
+      let totalCompra = 0;
+
+      document.querySelectorAll("#productos-compra > div").forEach(div => {
+        const nombre = div.querySelector(".prod-seleccion").value;
+        const cantidad = parseFloat(div.querySelector(".prod-cant").value) || 0;
+        const precioUnitario = parseFloat(div.querySelector(".prod-precio").value) || 0;
+        const total = cantidad * precioUnitario;
+
+        if (!nombre || cantidad <= 0 || precioUnitario < 0) {
+          alert("⚠️ Producto incompleto: verifica nombre, cantidad y precio.");
+          return;
+        }
+
+        productos.push({
+          nombre,
+          cantidad,
+          precioUnitario,
+          total
+        });
+        totalCompra += total;
+      });
+
+      if (productos.length === 0) {
+        alert("⚠️ Agrega al menos un producto.");
+        return;
+      }
+
+      try {
+        const data = {
+          proveedorId,
+          proveedorNombre: proveedor.nombre,
+          fecha,
+          factura,
+          formaPago,
+          notas,
+          productos,
+          totalCompra
+        };
+
+        if (esEdicion) {
+          await updateDoc(doc(db, "comprasProveedor", editId), data);
+          alert("✅ Compra actualizada exitosamente.");
+        } else {
+          await addDoc(comprasRef, data);
+          alert("✅ Compra registrada exitosamente.");
+        }
+
+        cerrarModalCompra();
+        await cargarCompras();
+      } catch (error) {
+        alert("❌ Error al guardar: " + error.message);
+      }
+    }
+
+    async function cargarCompras() {
+      const cont = document.getElementById("lista-compras");
+      cont.innerHTML = "<p>Cargando compras...</p>";
+
+      try {
+        const snapshot = await getDocs(comprasRef);
+        const compras = [];
+
+        snapshot.forEach(docSnap => {
+          const c = docSnap.data();
+          c.id = docSnap.id;
+          compras.push(c);
+        });
+
+        // Ordenar por fecha (reciente primero)
+        compras.sort((a, b) => b.fecha.localeCompare(a.fecha));
+
+        if (compras.length === 0) {
+          cont.innerHTML = "<p>No hay compras registradas.</p>";
+          return;
+        }
+
+        cont.innerHTML = "";
+        compras.forEach(c => {
+          const div = document.createElement("div");
+          div.className = "item";
+          let productosHTML = "";
+          c.productos.forEach(p => {
+            productosHTML += `<li>${p.cantidad}x ${p.nombre} - ₡${p.precioUnitario}/ud = ₡${p.total}</li>`;
+          });
+
+          div.innerHTML = `
+            <strong>📦 ${c.proveedorNombre}</strong> | 📅 ${c.fecha} | 💵 ₡${c.totalCompra.toLocaleString()}
+            <br>
+            <small>📄 ${c.factura || 'Sin factura'} | 💳 ${c.formaPago}</small>
+            <br>
+            <details>
+              <summary>Ver productos (${c.productos.length})</summary>
+              <ul>${productosHTML}</ul>
+              <p><strong>Notas:</strong> ${c.notas || 'Ninguna'}</p>
+            </details>
+            <div class="botones-derecha">
+              <button class="boton-accion" onclick="abrirModalCompra('${c.id}')">✏️ Editar</button>
+              <button class="boton-accion boton-rojo" onclick="eliminarCompra('${c.id}')">🗑️ Eliminar</button>
+            </div>
+          `;
+          cont.appendChild(div);
+        });
+      } catch (error) {
+        cont.innerHTML = "<p>Error al cargar compras.</p>";
+        console.error("Error:", error);
+      }
+    }
+
+    async function eliminarCompra(id) {
+      if (!confirm("¿Eliminar esta compra?")) return;
+      try {
+        await deleteDoc(doc(db, "comprasProveedor", id));
+        alert("✅ Compra eliminada.");
+        await cargarCompras();
+      } catch (error) {
+        alert("❌ Error al eliminar.");
+      }
+    }
+
+    // Hacer funciones globales
+    window.abrirModalProveedor = abrirModalProveedor;
+    window.cerrarModalProveedor = cerrarModalProveedor;
+    window.guardarProveedor = guardarProveedor;
+    window.editarProveedor = editarProveedor;
+    window.eliminarProveedor = eliminarProveedor;
+    window.abrirModalCompra = abrirModalCompra;
+    window.cerrarModalCompra = cerrarModalCompra;
+    window.agregarProducto = agregarProducto;
+    window.actualizarTotalProducto = function() {}; // No usada directamente
+    window.actualizarTotalCompra = actualizarTotalCompra;
+    window.guardarCompra = guardarCompra;
+    window.eliminarCompra = eliminarCompra;
+  </script>
+</body>
+</html>

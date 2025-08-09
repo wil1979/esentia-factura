@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>📊 Esentia - Reporte de Rentabilidad</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 20px;
+      background-color: #f3f2f7;
+      color: #333;
+    }
+    h1 {
+      color: #6c4ba3;
+      text-align: center;
+    }
+    h2 {
+      color: #555;
+      border-bottom: 2px solid #6c4ba3;
+      padding-bottom: 8px;
+      margin-top: 30px;
+    }
+    .filtro-item {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 15px;
+    }
+    .filtro-item label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #6c4ba3;
+    }
+    .boton-accion {
+      padding: 10px 15px;
+      font-size: 1rem;
+      border: none;
+      background: #6c4ba3;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .boton-accion:hover {
+      background: #573993;
+    }
+    .resumen {
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .resumen h3 {
+      margin-top: 0;
+      color: #555;
+    }
+    .tabla-reportes {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .tabla-reportes th, .tabla-reportes td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+    .tabla-reportes th {
+      background-color: #6c4ba3;
+      color: white;
+    }
+    .tabla-reportes tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .deuda-alta {
+      color: #d32f2f;
+      font-weight: bold;
+    }
+    .deuda-media {
+      color: #f57c00;
+      font-weight: bold;
+    }
+    .deuda-baja {
+      color: #388e3c;
+      font-weight: bold;
+    }
+    .alerta {
+      color: #d32f2f;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📊 Esentia - Reporte de Rentabilidad</h1>
+
+  <div style="max-width: 600px;">
+    <div class="filtro-item">
+      <label for="mes-reporte">Mes:</label>
+      <select id="mes-reporte">
+        <option value="0">Enero</option>
+        <option value="1">Febrero</option>
+        <option value="2">Marzo</option>
+        <option value="3">Abril</option>
+        <option value="4">Mayo</option>
+        <option value="5">Junio</option>
+        <option value="6">Julio</option>
+        <option value="7">Agosto</option>
+        <option value="8">Septiembre</option>
+        <option value="9">Octubre</option>
+        <option value="10">Noviembre</option>
+        <option value="11">Diciembre</option>
+        <option value="todos" selected>Todo el año</option>
+      </select>
+    </div>
+    <button class="boton-accion" onclick="generarReporte()">📊 Generar Reporte</button>
+  </div>
+
+  <div id="resultado-reporte" style="margin-top: 30px;">
+    <p>Haz clic en "Generar Reporte" para ver los resultados.</p>
+  </div>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    // 🔥 Tu configuración de Firebase (igual en todos los archivos)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+      authDomain: "esentiacreditos-8345f.firebaseapp.com",
+      projectId: "esentiacreditos-8345f",
+      storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+      messagingSenderId: "888658236080",
+      appId: "1:888658236080:web:506e5e2085b5a452dba175"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Referencias
+    const clientesRef = collection(db, "clientes");
+    const comprasProveedorRef = collection(db, "comprasProveedor");
+
+    // ✅ Generar Reporte de Rentabilidad
+    async function generarReporte() {
+      const cont = document.getElementById("resultado-reporte");
+      cont.innerHTML = "<p>📊 Calculando rentabilidad...</p>";
+
+      const mesSeleccionado = document.getElementById("mes-reporte").value;
+
+      // 1. Calcular ingresos (ventas a clientes)
+      let totalVentas = 0;
+      let totalPagado = 0;
+      let totalPendiente = 0;
+
+      try {
+        const snapshotClientes = await getDocs(clientesRef);
+        snapshotClientes.forEach(docSnap => {
+          const cliente = docSnap.data();
+          const compras = cliente.compras || [];
+          compras.forEach(compra => {
+            const fecha = new Date(compra.fecha);
+            const mes = fecha.getMonth();
+            const incluir = mesSeleccionado === "todos" || parseInt(mesSeleccionado) === mes;
+
+            if (incluir) {
+              const totalNeto = (compra.monto || 0) - (compra.descuento || 0);
+              totalVentas += totalNeto;
+              totalPagado += compra.pagado || 0;
+              totalPendiente += totalNeto - (compra.pagado || 0);
+            }
+          });
+        });
+
+        // 2. Calcular gastos (compras a proveedores)
+        let totalGastos = 0;
+        const snapshotProveedores = await getDocs(comprasProveedorRef);
+        snapshotProveedores.forEach(docSnap => {
+          const compra = docSnap.data();
+          const fecha = new Date(compra.fecha);
+          const mes = fecha.getMonth();
+          const incluir = mesSeleccionado === "todos" || parseInt(mesSeleccionado) === mes;
+
+          if (incluir) {
+            totalGastos += compra.totalCompra || 0;
+          }
+        });
+
+        // 3. Calcular utilidad
+        const utilidadBruta = totalVentas - totalGastos;
+        const margen = totalVentas > 0 ? (utilidadBruta / totalVentas) * 100 : 0;
+
+        // 4. Mostrar resultados
+        const mesTexto = mesSeleccionado === "todos" 
+          ? "Todo el año" 
+          : new Date(2025, mesSeleccionado).toLocaleString('es-ES', { month: 'long' });
+
+        let html = `
+          <div class="resumen">
+            <h3>📈 Rentabilidad (${mesTexto.charAt(0).toUpperCase() + mesTexto.slice(1)})</h3>
+            <table class="tabla-reportes">
+              <tr>
+                <th>Concepto</th>
+                <th>Monto</th>
+              </tr>
+              <tr>
+                <td><strong>Ventas Totales</strong></td>
+                <td>₡${totalVentas.toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td><strong>Gastos (Compras)</strong></td>
+                <td>₡${totalGastos.toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td><strong>Utilidad Bruta</strong></td>
+                <td class="${utilidadBruta >= 0 ? 'deuda-baja' : 'deuda-alta'}">
+                  ₡${utilidadBruta.toLocaleString()}
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Margen de Utilidad</strong></td>
+                <td class="${margen >= 30 ? 'deuda-baja' : margen >= 15 ? 'deuda-media' : 'deuda-alta'}">
+                  ${margen.toFixed(2)}%
+                </td>
+              </tr>
+            </table>
+          </div>
+        `;
+
+        // 5. Detalle por mes (solo si es "todo el año")
+        if (mesSeleccionado === "todos") {
+          html += `
+            <h2>📋 Detalle Mensual</h2>
+            <table class="tabla-reportes">
+              <thead>
+                <tr>
+                  <th>Mes</th>
+                  <th>Ventas</th>
+                  <th>Gastos</th>
+                  <th>Utilidad</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+
+          for (let m = 0; m <= 11; m++) {
+            let ventasMes = 0, gastosMes = 0;
+
+            // Ventas por mes
+            snapshotClientes.forEach(docSnap => {
+              const cliente = docSnap.data();
+              (cliente.compras || []).forEach(compra => {
+                const fecha = new Date(compra.fecha);
+                if (fecha.getMonth() === m) {
+                  ventasMes += (compra.monto || 0) - (compra.descuento || 0);
+                }
+              });
+            });
+
+            // Gastos por mes
+            snapshotProveedores.forEach(docSnap => {
+              const compra = docSnap.data();
+              const fecha = new Date(compra.fecha);
+              if (fecha.getMonth() === m) {
+                gastosMes += compra.totalCompra || 0;
+              }
+            });
+
+            const utilidadMes = ventasMes - gastosMes;
+            const nombreMes = new Date(2025, m).toLocaleString('es-ES', { month: 'short' });
+
+            html += `
+              <tr>
+                <td><strong>${nombreMes}</strong></td>
+                <td>₡${ventasMes.toLocaleString()}</td>
+                <td>₡${gastosMes.toLocaleString()}</td>
+                <td class="${utilidadMes >= 0 ? 'deuda-baja' : 'deuda-alta'}">₡${utilidadMes.toLocaleString()}</td>
+              </tr>
+            `;
+          }
+
+          html += `
+              </tbody>
+            </table>
+          `;
+        }
+
+        // 6. Alerta si hay inconsistencias
+        if (totalVentas === 0 && totalGastos === 0) {
+          html += `<p class="alerta">⚠️ No se encontraron datos de ventas ni gastos.</p>`;
+        }
+
+        cont.innerHTML = html;
+
+      } catch (error) {
+        cont.innerHTML = `<p class="alerta">❌ Error al generar el reporte: ${error.message}</p>`;
+        console.error("Error:", error);
+      }
+    }
+  </script>
+</body>
+</html>
