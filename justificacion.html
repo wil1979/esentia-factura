@@ -1,489 +1,165 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Control de Puntualidad y Asistencia - Formulario</title>
-<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<meta charset="UTF-8">
+<title>Control de Puntualidad y Asistencia</title>
 <style>
-  :root{
-    --border:#222;
-    --muted:#666;
-    --paper:#fff;
+  @page {
+    size: letter;
+    margin: 10mm;
   }
-  body{
-    font-family: "Segoe UI", Roboto, Arial, sans-serif;
-    background:#e9eef6;
-    margin:20px;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
   }
-  .wrap{
-    max-width:900px;
-    margin:0 auto;
+  .page {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
   }
-  header{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    margin-bottom:12px;
+  .formulario {
+    display: flex;
+    flex-direction: row;
+    height: 50%;
+    border: 1px solid #000;
+    margin-bottom: 10mm;
+    padding: 5mm;
+    box-sizing: border-box;
+    position: relative;
   }
-  header img{ width:60px; height:60px; object-fit:contain; }
-  header h1{
-    font-size:18px;
-    margin:0;
+  .logo {
+    width: 80px;
+    height: auto;
+    margin-right: 10px;
   }
-
-  .form-card{
-    background:var(--paper);
-    padding:14px;
-    border:2px solid var(--border);
-    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+  .encabezado {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
   }
-
-  table.form-table{
-    width:100%;
-    border-collapse:collapse;
-    table-layout:fixed;
-    font-size:13px;
+  .institucion {
+    font-style: italic;
+    font-size: 12px;
+    line-height: 1.2;
   }
-  table.form-table td, table.form-table th{
-    border:1px solid var(--border);
-    padding:6px;
-    vertical-align:top;
+  .titulo {
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    margin: 5px 0 15px 0;
   }
-  table.form-table th{
-    background:#f5f5f5;
-    text-align:left;
-    font-weight:600;
+  .contenido {
+    flex: 1;
+    padding-left: 10px;
   }
-  input[type="text"], input[type="number"], input[type="date"], textarea, select{
-    width:100%;
-    box-sizing:border-box;
-    padding:6px;
-    font-size:13px;
-    border:1px solid #bbb;
-    border-radius:3px;
+  .campo {
+    margin-bottom: 8px;
+    position: relative;
   }
-  .small{ font-size:12px; }
-  .row{
-    display:flex;
-    gap:8px;
+  .linea {
+    border-bottom: 1px solid #000;
+    display: inline-block;
+    width: 80%;
+    height: 18px;
   }
-  .col{ flex:1; }
-  .actions{
-    margin-top:12px;
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
+  input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: none;
+    background: transparent;
+    width: 80%;
+    font-size: 14px;
+    outline: none;
   }
-  button{
-    padding:8px 12px;
-    border:0;
-    background:#0b63d6;
-    color:white;
-    border-radius:6px;
-    cursor:pointer;
+  .firmas {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
   }
-  button.secondary{ background:#666; }
-  button.warn{ background:#c75a00; }
-  .list{
-    margin-top:12px;
-    max-height:180px;
-    overflow:auto;
-    border:1px dashed #aaa;
-    padding:8px;
-    background:#fbfbfb;
+  .firma {
+    text-align: center;
+    width: 45%;
   }
-  .list button{
-    margin:4px 4px 4px 0;
-    padding:6px 8px;
-    background:#0b63d6;
-    border-radius:4px;
-    font-size:13px;
+  .firma .linea {
+    width: 100%;
   }
-
-  /* Print adjustments: hide UI controls */
-  @media print{
-    body{ background:white; margin:0; }
-    .actions, .controls, .list, header { display:none !important; }
-    .form-card{ border: none; box-shadow:none; }
-  }
-
-  /* Make the visual form more like the image (vertical column left) */
-  .signature-box{
-    height:56px;
-    border:1px solid var(--border);
-    padding:6px;
-    font-size:12px;
-  }
-  label.checkbox{
-    display:flex;
-    align-items:center;
-    gap:6px;
-    font-size:13px;
-  }
-  .two-cols{ display:flex; gap:8px; }
-  .two-cols > * { flex:1; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <!-- puedes reemplazar por tu logo -->
-    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='100%' height='100%' fill='%230b63d6'/><text x='50%' y='55%' font-size='18' fill='white' text-anchor='middle' font-family='Segoe UI'>LOGO</text></svg>" alt="logo">
+<div class="page">
+  <!-- Primer formulario -->
+  <div class="formulario">
     <div>
-      <h1>Control de Puntualidad y Asistencia</h1>
-      <div class="small">Formato local — guardar, generar PDF e imprimir</div>
+      <img src="logo_ccss.png" alt="Logo CCSS" class="logo">
+      <div class="institucion">
+        Caja Costarricense de Seguro Social<br>
+        Área de Salud Paraíso Cervantes
+      </div>
     </div>
-  </header>
-
-  <div class="form-card" id="formArea">
-    <table class="form-table">
-      <tbody>
-        <tr>
-          <th style="width:18%;">Nombre:</th>
-          <td colspan="3"><input id="nombre" type="text" placeholder="Nombre completo"></td>
-          <th style="width:12%;">Lugar:</th>
-          <td><input id="lugar" type="text" placeholder="Lugar"></td>
-        </tr>
-
-        <tr>
-          <th># de Tarjeta:</th>
-          <td><input id="tarjeta" type="text"></td>
-          <th>Fecha de la Falta:</th>
-          <td><input id="fechaFalta" type="date"></td>
-          <th>Fecha:</th>
-          <td><input id="fechaRegistro" type="date"></td>
-        </tr>
-
-        <tr>
-          <th>Dejó de Marcar:</th>
-          <td colspan="2">
-            <div class="two-cols">
-              <div>
-                <label class="small">Entrada</label>
-                <input id="dejoEntrada" type="text" placeholder="hh:mm">
-              </div>
-              <div>
-                <label class="small">Salida</label>
-                <input id="dejoSalida" type="text" placeholder="hh:mm">
-              </div>
-            </div>
-          </td>
-
-          <th>Falto al Trabajo:</th>
-          <td colspan="2">
-            <label class="checkbox"><input id="faltoTrabajo" type="checkbox"> Falto al Trabajo</label>
-          </td>
-        </tr>
-
-        <tr>
-          <th>Mañana llego tarde / salida anti.:</th>
-          <td colspan="2">
-            <label class="small">Llegó Tarde (minutos)</label>
-            <input id="llegoTardeMin" type="number" min="0" placeholder="min">
-          </td>
-          <th>Motivo:</th>
-          <td colspan="2"><input id="motivo" type="text" placeholder="Motivo (breve)"></td>
-        </tr>
-
-        <tr>
-          <th>Otros (entrada/salida):</th>
-          <td colspan="2">
-            <div class="two-cols">
-              <input id="otrosEntrada" placeholder="Entrada hh:mm" type="text">
-              <input id="otrosSalida" placeholder="Salida hh:mm" type="text">
-            </div>
-          </td>
-          <th>Criterio de la Jefatura:</th>
-          <td colspan="2">
-            <div class="two-cols">
-              <label class="checkbox"><input id="justificada" type="checkbox"> Justificada</label>
-              <label class="checkbox"><input id="injustificada" type="checkbox"> Injustificada</label>
-            </div>
-          </td>
-        </tr>
-
-        <tr>
-          <th>Firma:</th>
-          <td colspan="2" class="signature-box"><input id="firma" type="text" placeholder="Firma (nombre)"></td>
-          <th>Razón:</th>
-          <td colspan="2"><textarea id="razon" rows="2" placeholder="Razón / observaciones"></textarea></td>
-        </tr>
-
-        <tr>
-          <th style="width:18%;">Registro ID:</th>
-          <td colspan="5"><input id="idRegistro" type="text" readonly></td>
-        </tr>
-
-      </tbody>
-    </table>
+    <div class="contenido">
+      <div class="titulo">Control de Puntualidad y Asistencia</div>
+      <div class="campo">
+        Nombre: <span class="linea"></span>
+        <input type="text" name="nombre1">
+      </div>
+      <div class="campo">
+        Fecha: <span class="linea"></span>
+        <input type="text" name="fecha1">
+      </div>
+      <div class="campo">
+        Observaciones: <span class="linea" style="width:90%"></span>
+        <input type="text" name="obs1" style="width:90%">
+      </div>
+      <div class="firmas">
+        <div class="firma">
+          <span class="linea"></span><br>
+          Firma del trabajador
+        </div>
+        <div class="firma">
+          <span class="linea"></span><br>
+          Firma del supervisor
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="controls">
-    <div class="actions">
-      <button id="btnSave">Guardar registro</button>
-      <button id="btnNew" class="secondary">Nuevo (limpiar)</button>
-      <button id="btnPdf" class="warn">Generar PDF</button>
-      <button id="btnPrint" class="secondary">Imprimir</button>
-      <button id="btnExport" class="secondary">Exportar JSON</button>
-      <button id="btnImport" class="secondary">Importar JSON</button>
+  <!-- Segundo formulario -->
+  <div class="formulario">
+    <div>
+      <img src="logo_ccss.png" alt="Logo CCSS" class="logo">
+      <div class="institucion">
+        Caja Costarricense de Seguro Social<br>
+        Área de Salud Paraíso Cervantes
+      </div>
     </div>
-
-    <div style="margin-top:8px;">
-      <strong>Registros guardados:</strong>
-      <div class="list" id="savedList"></div>
+    <div class="contenido">
+      <div class="titulo">Control de Puntualidad y Asistencia</div>
+      <div class="campo">
+        Nombre: <span class="linea"></span>
+        <input type="text" name="nombre2">
+      </div>
+      <div class="campo">
+        Fecha: <span class="linea"></span>
+        <input type="text" name="fecha2">
+      </div>
+      <div class="campo">
+        Observaciones: <span class="linea" style="width:90%"></span>
+        <input type="text" name="obs2" style="width:90%">
+      </div>
+      <div class="firmas">
+        <div class="firma">
+          <span class="linea"></span><br>
+          Firma del trabajador
+        </div>
+        <div class="firma">
+          <span class="linea"></span><br>
+          Firma del supervisor
+        </div>
+      </div>
     </div>
   </div>
 </div>
-
-<!-- Librería para convertir HTML a PDF (incluye html2canvas + jsPDF) -->
-<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.9.3/dist/html2pdf.bundle.min.js"></script>
-
-<script>
-  const STORAGE_KEY = 'controlPuntualidad_registros_v1';
-
-  // Obtener elementos
-  const elems = {
-    nombre: document.getElementById('nombre'),
-    lugar: document.getElementById('lugar'),
-    tarjeta: document.getElementById('tarjeta'),
-    fechaFalta: document.getElementById('fechaFalta'),
-    fechaRegistro: document.getElementById('fechaRegistro'),
-    dejoEntrada: document.getElementById('dejoEntrada'),
-    dejoSalida: document.getElementById('dejoSalida'),
-    llegoTardeMin: document.getElementById('llegoTardeMin'),
-    motivo: document.getElementById('motivo'),
-    otrosEntrada: document.getElementById('otrosEntrada'),
-    otrosSalida: document.getElementById('otrosSalida'),
-    justo: document.getElementById('justificada'),
-    injusto: document.getElementById('injustificada'),
-    firma: document.getElementById('firma'),
-    razon: document.getElementById('razon'),
-    idRegistro: document.getElementById('idRegistro'),
-    savedList: document.getElementById('savedList'),
-    formArea: document.getElementById('formArea'),
-    btnSave: document.getElementById('btnSave'),
-    btnNew: document.getElementById('btnNew'),
-    btnPdf: document.getElementById('btnPdf'),
-    btnPrint: document.getElementById('btnPrint'),
-    btnExport: document.getElementById('btnExport'),
-    btnImport: document.getElementById('btnImport')
-  };
-
-  // Cargar lista desde storage
-  function loadAll(){
-    const raw = localStorage.getItem(STORAGE_KEY);
-    try{
-      return raw ? JSON.parse(raw) : [];
-    }catch(e){
-      console.error('JSON parse error', e);
-      return [];
-    }
-  }
-
-  function saveAll(arr){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-  }
-
-  function generateId(){
-    return 'R-' + Date.now().toString(36);
-  }
-
-  function getFormData(){
-    return {
-      id: elems.idRegistro.value || generateId(),
-      nombre: elems.nombre.value || '',
-      lugar: elems.lugar.value || '',
-      tarjeta: elems.tarjeta.value || '',
-      fechaFalta: elems.fechaFalta.value || '',
-      fechaRegistro: elems.fechaRegistro.value || '',
-      dejoEntrada: elems.dejoEntrada.value || '',
-      dejoSalida: elems.dejoSalida.value || '',
-      llegoTardeMin: elems.llegoTardeMin.value || '',
-      motivo: elems.motivo.value || '',
-      otrosEntrada: elems.otrosEntrada.value || '',
-      otrosSalida: elems.otrosSalida.value || '',
-      justificada: elems.justo.checked,
-      injustificada: elems.injusto.checked,
-      firma: elems.firma.value || '',
-      razon: elems.razon.value || ''
-    };
-  }
-
-  function setFormData(data){
-    elems.idRegistro.value = data.id || '';
-    elems.nombre.value = data.nombre || '';
-    elems.lugar.value = data.lugar || '';
-    elems.tarjeta.value = data.tarjeta || '';
-    elems.fechaFalta.value = data.fechaFalta || '';
-    elems.fechaRegistro.value = data.fechaRegistro || '';
-    elems.dejoEntrada.value = data.dejoEntrada || '';
-    elems.dejoSalida.value = data.dejoSalida || '';
-    elems.llegoTardeMin.value = data.llegoTardeMin || '';
-    elems.motivo.value = data.motivo || '';
-    elems.otrosEntrada.value = data.otrosEntrada || '';
-    elems.otrosSalida.value = data.otrosSalida || '';
-    elems.justo.checked = !!data.justificada;
-    elems.injusto.checked = !!data.injustificada;
-    elems.firma.value = data.firma || '';
-    elems.razon.value = data.razon || '';
-  }
-
-  function clearForm(){
-    setFormData({
-      id: '',
-      nombre: '', lugar:'', tarjeta:'', fechaFalta:'', fechaRegistro:'',
-      dejoEntrada:'', dejoSalida:'', llegoTardeMin:'', motivo:'',
-      otrosEntrada:'', otrosSalida:'', justificada:false, injustificada:false,
-      firma:'', razon:''
-    });
-  }
-
-  function renderList(){
-    const arr = loadAll();
-    elems.savedList.innerHTML = '';
-    if(arr.length === 0){
-      elems.savedList.innerHTML = '<div class="small" style="color:#666">No hay registros guardados.</div>';
-      return;
-    }
-    // mostrar botones por registro
-    arr.slice().reverse().forEach(item=>{
-      const btnLoad = document.createElement('button');
-      btnLoad.textContent = `${item.id} — ${item.nombre || '(sin nombre)'} `;
-      btnLoad.title = 'Cargar este registro';
-      btnLoad.onclick = ()=> {
-        setFormData(item);
-        window.scrollTo({top:0, behavior:'smooth'});
-      };
-
-      const btnDel = document.createElement('button');
-      btnDel.textContent = 'Eliminar';
-      btnDel.style.background = '#b52424';
-      btnDel.onclick = ()=> {
-        if(!confirm('Eliminar este registro?')) return;
-        const updated = loadAll().filter(r=>r.id !== item.id);
-        saveAll(updated);
-        renderList();
-      };
-
-      const btnPdf = document.createElement('button');
-      btnPdf.textContent = 'PDF';
-      btnPdf.style.background = '#c75a00';
-      btnPdf.onclick = ()=> {
-        setFormData(item);
-        setTimeout(()=> generatePdf(), 200);
-      };
-
-      const div = document.createElement('div');
-      div.style.display = 'inline-flex';
-      div.style.gap = '6px';
-      div.style.marginBottom = '6px';
-      div.appendChild(btnLoad);
-      div.appendChild(btnPdf);
-      div.appendChild(btnDel);
-
-      elems.savedList.appendChild(div);
-    });
-  }
-
-  // Guardar o actualizar registro
-  elems.btnSave.addEventListener('click', ()=>{
-    const arr = loadAll();
-    const rec = getFormData();
-    const exists = arr.findIndex(r=>r.id === rec.id);
-    if(exists >= 0){
-      arr[exists] = rec;
-    }else{
-      arr.push(rec);
-    }
-    saveAll(arr);
-    alert('Registro guardado localmente.');
-    renderList();
-    elems.idRegistro.value = rec.id;
-  });
-
-  elems.btnNew.addEventListener('click', ()=> {
-    if(!confirm('Limpiar formulario?')) return;
-    clearForm();
-  });
-
-  // Generar PDF con html2pdf
-  function generatePdf(){
-    // ajustar opciones: tamaño carta vertical pero puedes cambiar a landscape si necesitas
-    const opt = {
-      margin:       10,
-      filename:     (elems.idRegistro.value || 'control') + '.pdf',
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'pt', format: 'letter', orientation: 'portrait' }
-    };
-    // Clonar la zona y quitar controles si fuese necesario
-    const element = document.getElementById('formArea');
-    html2pdf().set(opt).from(element).save();
-  }
-
-  elems.btnPdf.addEventListener('click', ()=>{
-    // generar PDF del formulario actual
-    generatePdf();
-  });
-
-  elems.btnPrint.addEventListener('click', ()=>{
-    // imprimir (usa CSS @media print)
-    window.print();
-  });
-
-  // Exportar JSON
-  elems.btnExport.addEventListener('click', ()=>{
-    const arr = loadAll();
-    const blob = new Blob([JSON.stringify(arr, null, 2)], {type:'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'control_puntualidad_export.json';
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-
-  // Importar JSON
-  elems.btnImport.addEventListener('click', ()=>{
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/json';
-    input.onchange = e => {
-      const f = e.target.files[0];
-      if(!f) return;
-      const reader = new FileReader();
-      reader.onload = ev => {
-        try{
-          const data = JSON.parse(ev.target.result);
-          if(!Array.isArray(data)) throw new Error('Formato inválido: se esperaba un array de registros.');
-          if(!confirm('Sobrescribir registros guardados con este archivo? (Cancelar = añadir)')) {
-            // añadir
-            const current = loadAll();
-            const merged = current.concat(data);
-            saveAll(merged);
-          } else {
-            // sobrescribir
-            saveAll(data);
-          }
-          renderList();
-          alert('Importación finalizada.');
-        }catch(err){
-          alert('Error al importar JSON: ' + err.message);
-        }
-      };
-      reader.readAsText(f);
-    };
-    input.click();
-  });
-
-  // Al inicio
-  renderList();
-  // crear nuevo por defecto
-  clearForm();
-
-</script>
 </body>
 </html>
