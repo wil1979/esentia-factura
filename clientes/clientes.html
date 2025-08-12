@@ -192,6 +192,29 @@
       .filtros-reportes {
         flex-direction: column;
       }
+      .historial-compras details {
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px;
+}
+
+.historial-compras summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 5px;
+}
+
+.historial-compras summary::-webkit-details-marker {
+    display: none;
+}
+
+.historial-compras summary h4 {
+    margin: 0;
+    display: inline;
+    color: #2c3e50;
+}
+
     }
   </style>
 </head>
@@ -396,41 +419,52 @@ async function cargarClientes() {
       const div = document.createElement("div");
       div.className = "cliente";
       div.innerHTML = `
-        <strong>${cliente.nombre}</strong><br>
-        📞 <a href="https://wa.me/${cliente.telefono}" target="_blank" title="${cliente.telefono}">${ocultarTelefono(cliente.telefono)}</a><br>
-        💸 Pendiente: ₡${totalPendiente.toLocaleString()}<br>
-        <div class="editar-cliente" id="editar-${id}" style="display:none;">
-          <input type="text" id="edit-nombre-${id}" value="${cliente.nombre}">
-          <input type="text" id="edit-telefono-${id}" value="${cliente.telefono}">
-          <button class="boton-accion" onclick="guardarEdicion('${id}')">💾 Guardar</button>
-          <button class="boton-accion" onclick="cancelarEdicion('${id}')">❌ Cancelar</button>
-        </div>
-        <div class="botones-derecha">
-          <button class="boton-accion" onclick="editarCliente('${id}')">✏️ Editar</button>
-          <button class="boton-accion" onclick="mostrarAgregarCompra('${id}')">➕ Productos</button>
-          <button class="boton-accion" onclick="registrarPago('${id}', '${cliente.nombre}')">💰 Pago</button>
-          <button class="boton-accion" onclick="abrirModalHistorial('${id}', '${cliente.nombre}')">🖨️ Imprimir</button>
-          <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${totalPendiente})">📲 WhatsApp</button>
-          <button class="boton-accion" onclick="eliminarCliente('${id}', '${cliente.nombre}')">🗑️ Eliminar</button>
-        </div>
+        <details>
+    <summary><strong>${cliente.nombre}</strong></summary>
+    📞 <a href="https://wa.me/${cliente.telefono}" target="_blank" title="${cliente.telefono}">${ocultarTelefono(cliente.telefono)}</a><br>
+    💸 Pendiente: ₡${totalPendiente.toLocaleString()}<br>
+    <div class="editar-cliente" id="editar-${id}" style="display:none;">
+      <input type="text" id="edit-nombre-${id}" value="${cliente.nombre}">
+      <input type="text" id="edit-telefono-${id}" value="${cliente.telefono}">
+      <button class="boton-accion" onclick="guardarEdicion('${id}')">💾 Guardar</button>
+      <button class="boton-accion" onclick="cancelarEdicion('${id}')">❌ Cancelar</button>
+    </div>
+    <div class="botones-derecha">
+      <button class="boton-accion" onclick="editarCliente('${id}')">✏️ Editar</button>
+      <button class="boton-accion" onclick="mostrarAgregarCompra('${id}')">➕ Productos</button>
+      <button class="boton-accion" onclick="registrarPago('${id}', '${cliente.nombre}')">💰 Pago</button>
+      <button class="boton-accion" onclick="abrirModalHistorial('${id}', '${cliente.nombre}')">🖨️ Imprimir</button>
+      <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${totalPendiente})">📲 WhatsApp</button>
+      <button class="boton-accion" onclick="eliminarCliente('${id}', '${cliente.nombre}')">🗑️ Eliminar</button>
+    </div>
+  </details>
+        
       `;
       cont.appendChild(div);
+      
 
       // ✅ Mostrar historial de compras
       if (compras.length > 0) {
         const historial = document.createElement("div");
-        historial.className = "historial-compras";
-        let html = "<h4>🛒 Historial de Compras:</h4><ul>";
+        historial.className = "historial-compras";        
+       let html = `
+        <details>
+            <summary><h4 style="display: inline;">🛒 Historial de Compras (${compras.length})</h4></summary>
+            <ul>`;
+    
+        
         compras.forEach((compra, index) => {
           const total = (compra.monto || 0) - (compra.descuento || 0);
-          const saldo = total - (compra.pagado || 0);
+          const saldo = total - (compra.pagado || 0);      
+
           html += `
-            <li>
+            <li>             
               <strong>📅 ${compra.fecha}</strong> | 
               Total: ₡${total.toLocaleString()} | 
               Pagado: ₡${(compra.pagado || 0).toLocaleString()} | 
               Saldo: ₡${saldo.toLocaleString()}
               <br>
+              
               <small><strong>Productos:</strong> 
                 ${compra.productos?.map(p => `${p.nombre} (${p.presentacion || ''}${p.aroma ? ' - ' + p.aroma : ''})`).join(', ') || 'Sin productos'}
               </small><br>
@@ -441,11 +475,14 @@ async function cargarClientes() {
               <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px; background: #d32f2f;" 
                       onclick="eliminarCompra('${id}', ${index})">
                 🗑️ Eliminar
+                
               </button>
+              
             </li>`;
         });
-        html += "</ul>";
-        historial.innerHTML = html;
+         html += `</ul></details>`;
+    historial.innerHTML = html;
+
         div.appendChild(historial);
       }
     });
