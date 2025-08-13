@@ -35,18 +35,13 @@
       justify-content: flex-end;
       margin-top: 0.5rem;
     }
-    .boton-accion {
-      padding: 6px 10px;
-      font-size: 0.85rem;
-      border: none;
-      background: #6c4ba3;
-      color: white;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.2s;
-      flex: 1 1 auto;
-      min-width: fit-content;
-    }
+   .boton-accion {
+  padding: 2px 4px;
+  font-size: 0.7rem;
+  line-height: 1;
+  border-radius: 4px;
+}
+
     .boton-accion:hover {
       background-color: #573993;
     }
@@ -112,6 +107,14 @@
         margin-bottom: 5px;
       }
     }
+    #contenedor-proveedores {
+  display: none;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 15px;
+  background: #f9f9f9;
+  margin-bottom: 30px;
+}
   </style>
 </head>
 <body>
@@ -119,9 +122,18 @@
   <h1>📦 Esentia - Compras a Proveedores</h1>
 
   <!-- Sección de Proveedores -->
-  <h2>🏢 Proveedores</h2>
-  <button class="boton-accion" onclick="abrirModalProveedor()">➕ Nuevo Proveedor</button>
+<div id="contenedor-proveedores">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <h2>🏢 Proveedores</h2>
+    <button class="boton-accion" onclick="abrirModalProveedor()">➕ Nuevo Proveedor</button>
+  </div>
   <div id="lista-proveedores"></div>
+</div>
+
+<!-- Botón para mostrar/ocultar -->
+<button class="boton-accion" style="margin-bottom: 20px;" onclick="toggleProveedores()">
+  👁️ <span id="texto-toggle">Mostrar Proveedores</span>
+</button>
 
   <!-- Sección de Compras -->
   <h2>🛒 Compras a Proveedores</h2>
@@ -389,15 +401,15 @@
           div.className = "producto-item";
 
           const selProd = document.createElement("select");
-          selProd.classList.add("prod-seleccion");
-          selProd.innerHTML = "<option value=''>Selecciona un producto</option>";
-          todosLosProductos.forEach(p => {
-            const opt = document.createElement("option");
-            opt.value = p.nombre;
-            opt.textContent = p.nombre;
-            if (p.nombre === prod.nombre) opt.selected = true;
-            selProd.appendChild(opt);
-          });
+selProd.classList.add("prod-seleccion");
+selProd.innerHTML = "<option value=''>Selecciona un producto</option>";
+
+todosLosProductos.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.nombre;
+    opt.textContent = p.nombre;  // Agrega todos los productos
+    selProd.appendChild(opt);    // Sin verificar condición
+});
 
           const cantInput = document.createElement("input");
           cantInput.type = "number";
@@ -686,6 +698,19 @@
         alert("❌ Error al eliminar.");
       }
     }
+    // ✅ Mostrar u ocultar sección de proveedores
+function toggleProveedores() {
+  const cont = document.getElementById("contenedor-proveedores");
+  const texto = document.getElementById("texto-toggle");
+  
+  if (cont.style.display === "block") {
+    cont.style.display = "none";
+    texto.textContent = "Mostrar Proveedores";
+  } else {
+    cont.style.display = "block";
+    texto.textContent = "Ocultar Proveedores";
+  }
+}
 
     // Hacer funciones globales
     window.abrirModalProveedor = abrirModalProveedor;
@@ -700,6 +725,7 @@
     window.actualizarTotalCompra = actualizarTotalCompra;
     window.guardarCompra = guardarCompra;
     window.eliminarCompra = eliminarCompra;
+    window.toggleProveedores = toggleProveedores;
   </script>
 </body>
 </html>
