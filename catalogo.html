@@ -76,36 +76,39 @@
     }
 
     /* ===== DISEÑO DE DOS COLUMNAS ===== */
-    .contenedor-dos {
-      display: flex;
-      gap: 2rem;
-      padding: 1.5rem;
-      max-width: 1200px;
-      margin: 2rem auto;
-    }
+   .contenedor-dos {
+    display: flex;
+    gap: 2rem;
+    padding: 1.5rem;
+    max-width: 1200px;
+    margin: 2rem auto;
+  }
 
-    .lista-productos {
-      flex: 1;
-      max-height: 40vh;
-      overflow-y: auto;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: white;
-      padding: 1rem;
-      box-shadow: var(--shadow);
-    }
+  .lista-productos {
+    flex: 1; /* Ancho pequeño */
+    max-width: 200px; /* Limita el ancho máximo */
+    max-height: 70vh;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: white;
+    padding: 1rem;
+    box-shadow: var(--shadow);
+  }
 
-    .producto-item {
-      padding: 12px;
-      margin: 4px 0;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: var(--transition);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.95rem;
-    }
+  .detalle-producto {
+    flex: 3; /* Ocupa el 75% del espacio */
+    background: white;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
 
     .producto-item:hover {
       background: var(--primary-light);
@@ -354,25 +357,21 @@
       background: var(--primary-dark);
       transform: translateY(-50%) scale(1.1);
     }
-
      /* ===== RESPONSIVE ===== */
-    @media (max-width: 480px) {
-      .logo { width: 130px; }
-      h1 { font-size: 1.4rem; }
-      .producto { width: calc(50% - 0.8rem); max-width: 150px; }
-      .producto h3 { font-size: 0.9rem; }
-      .producto img { height: 110px; }
-      .producto button { padding: 8px; font-size: 0.85rem; }
-      .recomendar input, .recomendar button { font-size: 1rem; }
-      .btn-regresar { font-size: 1.3rem; padding: 0.5rem 0.7rem; }
-    }
-
-    @media (max-width: 360px) {
-      .producto { width: calc(50% - 0.6rem); }
-      h1 { font-size: 1.3rem; }
-      .recomendar { padding: 1rem; }
-      #botonCarrito { width: 56px; height: 56px; font-size: 1.6rem; }
-    }
+    @media (max-width: 768px) {
+  .contenedor-dos {
+    flex-direction: column;
+  }
+  .lista-productos {
+    max-width: none;
+    width: 100%;
+    max-height: 300px;
+  }
+  .detalle-producto {
+    flex: 1;
+    width: 100%;
+  }
+}
   </style>
 </head>
 <body class="modo-claro">
@@ -463,10 +462,18 @@
         const esNuevo = prod.fechaLanzamiento && esProductoNuevo(prod.fechaLanzamiento);
         const item = document.createElement("div");
         item.className = "producto-item";
-        item.innerHTML = `
-  <img src="${prod.imagen}" alt="${prod.nombre}">
-  ${esNuevo ? '<span class="nuevo-badge">🌟 Nuevo</span>' : ''}
+        /*item.innerHTML = `
+          <img src="${prod.imagen}" alt="${prod.nombre}">
+          ${prod.nombre}
+          ${esNuevo ? '<span class="nuevo-badge">🌟 Nuevo</span>' : ''}
+        `;*/
+          item.innerHTML = `
+  <div style="text-align: center;">
+    <img src="${prod.imagen}" alt="${prod.nombre}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 8px; margin-bottom: 4px;">
+    ${esNuevo ? '<span style="font-size: 0.7rem; background: #ec4899; color: white; padding: 2px 6px; border-radius: 4px;">🌟 Nuevo</span>' : ''}
+  </div>
 `;
+
         item.onclick = () => mostrarDetalleProducto(prod);
         lista.appendChild(item);
       });
@@ -666,7 +673,4 @@
     &copy; 2025 Esentia - Desarrollado por Wilber Calderón M.
   </footer>
 </body>
-
 </html>
-
-
