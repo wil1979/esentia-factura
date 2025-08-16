@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Catálogo Esentia</title>
+  <link rel="stylesheet" href="catalogo.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body class="modo-claro">
+  <!-- Pop-up -->
+  <div id="popup" class="popup-overlay">
+    <div class="popup-content">
+      <h2>¡Recomienda a un amigo!</h2>
+      <p>Invita a tus amigos y recibe descuentos exclusivos.</p>
+      <button id="popup-close">Cerrar</button>
+    </div>
+  </div>
+
+  <header>
+    <div class="logo-container">
+      <img src="images/logo.png" alt="Logo de Esentia" class="logo" />
+    </div>
+    <h1>Catálogo de Productos Disponibles</h1>
+  </header>
+
+  <main>
+    <div class="contenedor">
+      <section class="categoria">
+        <h2>🏠 Aromatizantes para el Hogar</h2>
+        <div class="productos">
+          <input type="text" id="buscador" placeholder="🔍 Buscar aroma..." oninput="filtrarProductos()" style="width: 100%; padding: 10px; font-size: 1rem; margin-bottom: 1rem;" />
+          <div id="productos-hogar" class="productos"></div>
+        </div>
+      </section>
+
+      <p class="mensaje-info">
+        📩 ¿Buscas otro aroma? Escríbenos por WhatsApp y con gusto te ayudamos a encontrarlo:
+        <a href="https://wa.me/50672952454?text=Hola,%20mi%20nombre%20es%20[Tu%20Nombre]%20y%20me%20gustaría%20el%20aroma%20de:" target="_blank" style="color: #25D366; font-weight: bold;">Enviar mensaje</a>
+      </p>
+
+      <div class="recomendar" style="margin-bottom: 100px;">
+        <h3>📢 Recomienda a un amigo y gana descuentos</h3>
+        <input type="tel" id="numeroAmigo" placeholder="Número de WhatsApp (8 digitos)" />
+        <button onclick="recomendarAmigo()">Recomendar</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Opciones de pago -->
+  <div id="modalPago" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; max-width:350px; padding:24px 18px; margin:auto; position:relative; box-shadow:0 4px 24px rgba(0,0,0,0.18);">
+      <button onclick="document.getElementById('modalPago').style.display='none'" style="position:absolute; top:8px; right:12px; background:none; border:none; font-size:22px; cursor:pointer;">×</button>
+      <h2 style="margin-top:0;">Opciones de Pago</h2>
+      <ol style="padding-left:18px;">
+        <li style="margin-bottom:10px;"><strong>Efectivo contra entrega</strong></li>
+        <li style="margin-bottom:10px;">
+          <strong>SINPE Móvil</strong><br>
+          <span style="font-size:15px;">Número: <b>72952454</b><br>Nombre: Wilber Calderón M.</span>
+        </li>
+        <li>
+          <strong>Depósito Bancario</strong><br>
+          <span style="font-size:15px;">Cuenta IBAN: <b>CR59010200009453897656</b></span>
+        </li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- Botones flotantes 
+  <div id="botonWrapper" style="position: fixed; top: 50%; right: 20px; transform: translateY(-50%); z-index: 999;">
+    <button id="iconoBoton" onclick="toggleBoton()" style="background:#266e3c; color:#fff; border:none; border-radius:50%; padding:12px; font-size:1.5em; cursor:pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">💳</button>
+    <button id="botonCompleto" onclick="document.getElementById('modalPago').style.display='flex'" style="display:none; background:#09db1b; color:#fff; border:none; border-radius:6px; padding:12px 28px; font-size:1.1em; font-weight:bold; cursor:pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2); margin-top:10px;">Ver Opciones de Pago</button>
+  </div>-->
+  
+
+  <!-- Botón de Modo Oscuro -->
+  <button id="modoOscuroBtn" onclick="toggleModoOscuro()" style="position: fixed; top: 90px; right: 20px; background: #333; color: white; border: none; padding: 10px 16px; border-radius: 6px; z-index: 1000;">🌙 Modo Oscuro</button>
+
+  
+
+ <!-- Modal de Información del Producto -->
+<div id="modalProducto" class="modal-carrito">
+  <div class="modal-contenido" style="max-width: 500px;">
+    <span onclick="cerrarModalProducto()" style="position: absolute; top: 10px; right: 15px;">&times;</span>
+    
+    <h2 id="modalProductoNombre">Nombre del Producto</h2>
+    <img id="modalProductoImagen" src="" alt="Imagen del producto" style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px; margin: 10px 0;" />
+    
+    <p id="modalProductoInfo" style="font-size: 1rem; line-height: 1.5;"></p>
+    <p id="modalProductoUso" style="font-size: 1rem; color: #555;"></p>
+    <p id="modalProductoPrecio" style="font-size: 1.1rem; color: var(--verde); font-weight: bold;"></p>
+    <div id="modalProductoCalificacion" class="estrellas" style="margin-bottom: 10px;"></div>
+
+
+    <!-- Aquí va el selector de presentaciones -->
+    <div id="selectorVariante"></div>
+
+    <!-- Botón para agregar -->
+    <button id="botonAgregarDesdeModal" onclick="agregarDesdeModal()" disabled>
+      🛒 Agregar al carrito
+    </button>
+  </div>
+</div>
+
+  <!-- Modal del Carrito -->
+  <div id="modalCarrito" class="modal-carrito">
+    <button onclick="vaciarCarrito()" style="background: #e53935; color: white; border: none; padding: 8px 16px; border-radius: 6px; margin-bottom: 10px;">🗑️ Vaciar carrito</button>
+    <div class="modal-contenido">
+      <span id="cerrarModalCarrito" onclick="cerrarModalCarrito()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer;">&times;</span>
+      <h2 style="margin-top: 0;">🛒 Tu Carrito</h2>
+      <ul id="listaCarritoModal"></ul>
+      <p id="totalModal"><strong>Total:</strong> ₡0</p>
+      <input type="text" id="cupon" placeholder="Código de cupón" style="width: 100%; padding: 8px; margin-bottom: 10px;" />
+      <button onclick="aplicarCupon()" style="width: 100%; padding: 8px; margin-bottom: 15px;">Aplicar cupón</button>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="finalizarPedido()" style="flex:1; background: var(--naranja); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold;">Enviar Pedido</button>
+        <button onclick="cerrarModalCarrito()" style="flex:1; background: #ccc; color: #333; border: none; padding: 10px; border-radius: 6px;">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Selección de Aroma -->
+<div id="modalSeleccionAroma" class="modal-carrito">
+  <div class="modal-contenido" style="max-width: 400px;">
+    <span onclick="cerrarModalSeleccionAroma()" style="position: absolute; top: 10px; right: 15px;">&times;</span>
+    <h2>Elige un Aroma</h2>
+    <p>Seleccione un aroma para combinar con su difusor o ambientador:</p>
+    <div id="listaAromas" style="display: flex; flex-direction: column; gap: 10px;"></div>
+  </div>
+</div>
+
+<!-- Botón flotante del carrito -->
+<button id="botonCarrito" onclick="abrirModalCarrito()">
+  🛒 <span id="contadorCarrito">0</span>
+</button>
+
+<!-- Toast de notificaciones -->
+
+
+
+  <div id="toast" style="position:fixed; bottom:20px; right:20px; background:#4caf50; color:white; padding:14px 18px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.3); display:none; z-index:9999; font-size:1rem;">
+  ¡Mensaje enviado por WhatsApp!
+</div>
+</div>
+
+
+ <strong>Indicaciones de Uso</strong><br />
+    Añada 5-9 gotas en un quemador cerámico, candela o difusor eléctrico para difundir inmediatamente su aroma en el ambiente<br />
+    Evite derramar el aceite sobre superficies pintadas o barnizadas<br />
+    <br />
+    <strong>NOTA:</strong> no son consumibles ni aplicables directamente en la piel.
+   <br /> &copy; 2025 Esentia - Desarrollado por Wilber Calderón M.
+  </footer>
+
+    <a href="https://wil1979.github.io/esentia-factura/limpieza/limpieza.html" class="btn-regresar" title="Volver al inicio">🏠</a>
+
+  <script src="catalogo.js"></script>
+<script src="factura.js"></script>
+</body>
+</html>
