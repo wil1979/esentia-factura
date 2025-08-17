@@ -2,20 +2,395 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Catálogo Esentia</title>
-  <link rel="stylesheet" href="catalogo.css" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Catálogo Esentia - Aromas para el Hogar</title>
+  <style>
+    :root {
+      --primary: #15803d;
+      --primary-dark: #166534;
+      --primary-light: #f7f6ef;
+      --secondary: #c8e2a5;
+      --accent: #ff9800;
+      --text: #333;
+      --text-light: #555;
+      --bg: #f9f9f9;
+      --bg-dark: #1e1e1e;
+      --card-bg: #ffffff;
+      --card-bg-dark: #2c2c2c;
+      --border: #e0e0e0;
+      --border-dark: #444;
+      --shadow: 0 4px 12px rgba(0,0,0,0.1);
+      --shadow-hover: 0 8px 24px rgba(0,0,0,0.15);
+      --transition: all 0.3s ease;
+      --radius: 12px;
+      --font-main: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    }
+
+    body {
+    /* background: url('https://wil1979.github.io/esentia-factura/images/fondo1.webp') center center/cover fixed no-repeat;*/
+  background: linear-gradient(to top, #f5f0e6, #e8dcc5);
+  background-size: cover;
+  min-height: 100vh;
+  margin: 0;
+  font-family: var(--font-main);
+  color: var(--text);
+  /* Opcional: agregar textura sutil como overlay */
+  background-image: 
+    linear-gradient(to top, #f1cd85, #f0efed),
+    url("https://wil1979.github.io/esentia-factura/images/fondo.webp"); /* Textura opcional */
+  background-blend-mode: overlay, normal;
+    }
+
+    body.modo-oscuro {
+      background: linear-gradient(135deg, #121212, #1e1e1e);
+      color: #eee;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+  background: url('https://wil1979.github.io/esentia-factura/images/fondo3.webp') center/cover no-repeat;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: white;
+  border-bottom: 1px solid #ddd;
+  position: relative;
+  z-index: 1;
+    }
+
+    .logo-container {
+      margin-bottom: 0.5rem;
+    }
+
+    .logo {
+      width: 180px;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      color: var(--primary);
+      margin: 0.5rem 0 0;
+      font-weight: 600;
+    }
+
+    /* ===== DISEÑO DE DOS COLUMNAS ===== */
+   .contenedor-dos {
+    display: flex;
+    gap: 2rem;
+    padding: 1.5rem;
+    max-width: 1200px;
+    margin: 2rem auto;
+  }
+
+  .lista-productos {
+    flex: 1; /* Ancho pequeño */
+    max-width: 200px; /* Limita el ancho máximo */
+    max-height: 70vh;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: white;
+    padding: 1rem;
+    box-shadow: var(--shadow);
+  }
+
+  .detalle-producto {
+    flex: 3; /* Ocupa el 75% del espacio */
+    background: white;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+
+    .producto-item:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .producto-item img {
+      width: 20px;
+      height: 20px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    body.modo-oscuro .producto-item {
+      color: #ccc;
+    }
+
+    body.modo-oscuro .producto-item:hover {
+      background: rgba(33, 150, 243, 0.2);
+      color: #fff;
+    }
+
+    .detalle-producto {
+      flex: 2;
+      background: white;
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      min-height: 600px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .detalle-producto img {
+      width: 100%;
+      max-width: 250px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .detalle-producto h2 {
+      color: var(--primary);
+      margin: 0.5rem 0;
+    }
+
+    .estrellas {
+      font-size: 1.1rem;
+      color: gold;
+      margin: 0.3rem 0;
+    }
+
+    .detalle-producto p {
+      margin: 0.5rem 0;
+      line-height: 1.5;
+    }
+
+    .detalle-producto .info {
+      color: var(--text-light);
+      font-size: 0.95rem;
+    }
+
+    .detalle-producto .beneficios {
+      color: #2e7d32;
+      font-weight: 500;
+    }
+
+    .detalle-producto .uso {
+      color: #1976d2;
+      font-size: 0.9rem;
+    }
+
+    #selectorVariante {
+      margin: 1rem 0;
+      width: 100%;
+    }
+
+    #selectorVariante select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    .boton-agregar {
+      margin-top: 1rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: var(--transition);
+      width: 100%;
+    }
+
+    .boton-agregar:hover {
+      background: var(--primary-dark);
+      transform: scale(1.03);
+    }
+
+    .boton-agregar:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .nuevo-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: #ec4899;
+      color: white;
+      font-size: 0.8rem;
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 6px;
+      z-index: 10;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .detalle-vacio {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 300px;
+      color: var(--text-light);
+      font-size: 1.1rem;
+    }
+
+    .recomendar {
+        text-align: center;
+    margin: 3rem auto;
+    max-width: 500px;
+    padding: 1.5rem;
+    background: var(--primary-light);
+    border-radius: var(--radius);
+}
+    
+
+    body.modo-oscuro .recomendar {
+      background: rgba(33, 150, 243, 0.1);
+    }
+
+    .recomendar input, .recomendar button {
+      margin: 0.5rem 0;
+      padding: 10px;
+    }
+
+    .recomendar input {
+      width: 100%;
+      max-width: 300px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .recomendar button {
+      background: var(--secondary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .recomendar button:hover {
+      background: #c8d38a;
+    }
+
+    #botonCarrito {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--primary);
+      color: white;
+      width: 60px;
+      height: 60px;
+      border: none;
+      border-radius: 50%;
+      font-size: 1.8rem;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(21, 128, 61, 0.4);
+      z-index: 1000;
+      transition: var(--transition);
+    }
+
+    #botonCarrito:hover {
+      background: var(--primary-dark);
+      transform: scale(1.1);
+    }
+
+    #contadorCarrito {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: #ef4444;
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-size: 0.9rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      padding: 1.5rem 1rem;
+      color: var(--text-light);
+      font-size: 0.9rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn-regresar {
+      position: fixed;
+      top: 50%;
+      right: 0;
+      transform: translateY(-50%);
+      background: var(--primary);
+      color: white;
+      font-size: 1.8rem;
+      text-align: center;
+      padding: 0.6rem 1rem;
+      border-top-left-radius: 12px;
+      border-bottom-left-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      text-decoration: none;
+      z-index: 999;
+      transition: background 0.3s, transform 0.3s;
+    }
+
+    .btn-regresar:hover {
+      background: var(--primary-dark);
+      transform: translateY(-50%) scale(1.1);
+    }
+     /* ===== RESPONSIVE ===== */
+    @media (max-width: 480px) {
+      .logo { width: 130px; }
+      h1 { font-size: 1.4rem; }
+      .producto { width: calc(50% - 0.8rem); max-width: 150px; }
+      .producto h3 { font-size: 0.9rem; }
+      .producto img { height: 110px; }
+      .producto button { padding: 8px; font-size: 0.85rem; }
+      .recomendar input, .recomendar button { font-size: 1rem; }
+      .btn-regresar { font-size: 1.3rem; padding: 0.5rem 0.7rem; }
+    }
+
+    @media (max-width: 360px) {
+      .producto { width: calc(50% - 0.6rem); }
+      h1 { font-size: 1.3rem; }
+      .recomendar { padding: 1rem; }
+      #botonCarrito { width: 56px; height: 56px; font-size: 1.6rem; }
+    }
+
+    @media (max-width: 768px) {
+      .contenedor-dos {
+        flex-direction: column;
+        padding: 1rem;
+      }
+      .lista-productos, .detalle-producto {
+        width: 100%;
+      }
+      .recomendar {
+        margin: 2rem 1rem;
+      }
+    }
+  </style>
 </head>
 <body class="modo-claro">
-  <!-- Pop-up -->
-  <div id="popup" class="popup-overlay">
-    <div class="popup-content">
-      <h2>¡Recomienda a un amigo!</h2>
-      <p>Invita a tus amigos y recibe descuentos exclusivos.</p>
-      <button id="popup-close">Cerrar</button>
-    </div>
-  </div>
-
   <header>
     <div class="logo-container">
       <img src="images/logo.png" alt="Logo de Esentia" class="logo" />
@@ -23,137 +398,295 @@
     <h1>Catálogo de Productos Disponibles</h1>
   </header>
 
-  <main>
-    <div class="contenedor">
-      <section class="categoria">
-        <h2>🏠 Aromatizantes para el Hogar</h2>
-        <div class="productos">
-          <input type="text" id="buscador" placeholder="🔍 Buscar aroma..." oninput="filtrarProductos()" style="width: 100%; padding: 10px; font-size: 1rem; margin-bottom: 1rem;" />
-          <div id="productos-hogar" class="productos"></div>
-        </div>
-      </section>
+  <main class="contenedor-dos">
+    <!-- Lista de productos -->
+    <div class="lista-productos" id="listaProductos">
+      <p style="text-align:center; color:#666;">Cargando productos...</p>
+    </div>
 
-      <p class="mensaje-info">
-        📩 ¿Buscas otro aroma? Escríbenos por WhatsApp y con gusto te ayudamos a encontrarlo:
-        <a href="https://wa.me/50672952454?text=Hola,%20mi%20nombre%20es%20[Tu%20Nombre]%20y%20me%20gustaría%20el%20aroma%20de:" target="_blank" style="color: #25D366; font-weight: bold;">Enviar mensaje</a>
-      </p>
-
-      <div class="recomendar" style="margin-bottom: 100px;">
-        <h3>📢 Recomienda a un amigo y gana descuentos</h3>
-        <input type="tel" id="numeroAmigo" placeholder="Número de WhatsApp (8 digitos)" />
-        <button onclick="recomendarAmigo()">Recomendar</button>
+    <!-- Detalle del producto seleccionado -->
+    <div class="detalle-producto" id="detalleProducto">
+      <div class="detalle-vacio">
+        <p>👆 Selecciona un producto para ver su información</p>
       </div>
     </div>
   </main>
 
-  <!-- Opciones de pago -->
-  <div id="modalPago" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;">
-    <div style="background:#fff; border-radius:12px; max-width:350px; padding:24px 18px; margin:auto; position:relative; box-shadow:0 4px 24px rgba(0,0,0,0.18);">
-      <button onclick="document.getElementById('modalPago').style.display='none'" style="position:absolute; top:8px; right:12px; background:none; border:none; font-size:22px; cursor:pointer;">×</button>
-      <h2 style="margin-top:0;">Opciones de Pago</h2>
-      <ol style="padding-left:18px;">
-        <li style="margin-bottom:10px;"><strong>Efectivo contra entrega</strong></li>
-        <li style="margin-bottom:10px;">
-          <strong>SINPE Móvil</strong><br>
-          <span style="font-size:15px;">Número: <b>72952454</b><br>Nombre: Wilber Calderón M.</span>
-        </li>
-        <li>
-          <strong>Depósito Bancario</strong><br>
-          <span style="font-size:15px;">Cuenta IBAN: <b>CR59010200009453897656</b></span>
-        </li>
-      </ol>
-    </div>
+  <!-- Recomendar a un amigo -->
+  <div class="recomendar">
+    <h3>📢 Recomienda a un amigo y gana descuentos</h3>
+    <input type="tel" id="numeroAmigo" placeholder="Número de WhatsApp (8 dígitos)" />
+    <button onclick="recomendarAmigo()">Recomendar</button>
   </div>
 
-  <!-- Botones flotantes 
-  <div id="botonWrapper" style="position: fixed; top: 50%; right: 20px; transform: translateY(-50%); z-index: 999;">
-    <button id="iconoBoton" onclick="toggleBoton()" style="background:#266e3c; color:#fff; border:none; border-radius:50%; padding:12px; font-size:1.5em; cursor:pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">💳</button>
-    <button id="botonCompleto" onclick="document.getElementById('modalPago').style.display='flex'" style="display:none; background:#09db1b; color:#fff; border:none; border-radius:6px; padding:12px 28px; font-size:1.1em; font-weight:bold; cursor:pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2); margin-top:10px;">Ver Opciones de Pago</button>
-  </div>-->
-  
+  <!-- Botón flotante del carrito -->
+  <button id="botonCarrito" onclick="abrirModalCarrito()">
+    🛒 <span id="contadorCarrito">0</span>
+  </button>
 
-  <!-- Botón de Modo Oscuro -->
-  <button id="modoOscuroBtn" onclick="toggleModoOscuro()" style="position: fixed; top: 90px; right: 20px; background: #333; color: white; border: none; padding: 10px 16px; border-radius: 6px; z-index: 1000;">🌙 Modo Oscuro</button>
-
-  
-
- <!-- Modal de Información del Producto -->
-<div id="modalProducto" class="modal-carrito">
-  <div class="modal-contenido" style="max-width: 500px;">
-    <span onclick="cerrarModalProducto()" style="position: absolute; top: 10px; right: 15px;">&times;</span>
-    
-    <h2 id="modalProductoNombre">Nombre del Producto</h2>
-    <img id="modalProductoImagen" src="" alt="Imagen del producto" style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px; margin: 10px 0;" />
-    
-    <p id="modalProductoInfo" style="font-size: 1rem; line-height: 1.5;"></p>
-    <p id="modalProductoUso" style="font-size: 1rem; color: #555;"></p>
-    <p id="modalProductoPrecio" style="font-size: 1.1rem; color: var(--verde); font-weight: bold;"></p>
-    <div id="modalProductoCalificacion" class="estrellas" style="margin-bottom: 10px;"></div>
-
-
-    <!-- Aquí va el selector de presentaciones -->
-    <div id="selectorVariante"></div>
-
-    <!-- Botón para agregar -->
-    <button id="botonAgregarDesdeModal" onclick="agregarDesdeModal()" disabled>
-      🛒 Agregar al carrito
-    </button>
+  <!-- Toast -->
+  <div id="toast" style="position:fixed; bottom:80px; right:20px; background:#4caf50; color:white; padding:14px 18px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.3); display:none; z-index:9999; font-size:1rem;">
+    ¡Producto agregado!
   </div>
-</div>
 
   <!-- Modal del Carrito -->
-  <div id="modalCarrito" class="modal-carrito">
-    <button onclick="vaciarCarrito()" style="background: #e53935; color: white; border: none; padding: 8px 16px; border-radius: 6px; margin-bottom: 10px;">🗑️ Vaciar carrito</button>
-    <div class="modal-contenido">
-      <span id="cerrarModalCarrito" onclick="cerrarModalCarrito()" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer;">&times;</span>
-      <h2 style="margin-top: 0;">🛒 Tu Carrito</h2>
-      <ul id="listaCarritoModal"></ul>
-      <p id="totalModal"><strong>Total:</strong> ₡0</p>
-      <input type="text" id="cupon" placeholder="Código de cupón" style="width: 100%; padding: 8px; margin-bottom: 10px;" />
-      <button onclick="aplicarCupon()" style="width: 100%; padding: 8px; margin-bottom: 15px;">Aplicar cupón</button>
-      <div style="display: flex; gap: 10px;">
-        <button onclick="finalizarPedido()" style="flex:1; background: var(--naranja); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold;">Enviar Pedido</button>
-        <button onclick="cerrarModalCarrito()" style="flex:1; background: #ccc; color: #333; border: none; padding: 10px; border-radius: 6px;">Cerrar</button>
-      </div>
+  <div id="modalCarrito" class="modal-carrito" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.7); overflow:auto;">
+    <div style="background:#fff; margin:8% auto; padding:24px; border-radius:12px; width:90%; max-width:400px; position:relative; box-shadow:0 4px 24px rgba(0,0,0,0.2);">
+      <span onclick="cerrarModalCarrito()" style="position:absolute; top:15px; right:20px; font-size:1.5rem; cursor:pointer;">&times;</span>
+      <h2>🛒 Tu Carrito</h2>
+      <button onclick="vaciarCarrito()" style="background:#e53935; color:white; border:none; padding:6px 12px; border-radius:6px; margin-bottom:10px;">🗑️ Vaciar</button>
+      <ul id="listaCarritoModal" style="list-style:none; padding:0; margin:10px 0;"></ul>
+      <p id="totalModal" style="font-size:1.2rem; font-weight:bold; margin:10px 0;"></p>
+      <input type="text" id="cupon" placeholder="Código de cupón" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin:8px 0;" />
+      <button onclick="aplicarCupon()" style="width:100%; padding:10px; background:var(--accent); color:white; border:none; border-radius:8px; margin-bottom:10px;">Aplicar cupón</button>
+      <button onclick="finalizarPedido()" style="width:100%; padding:12px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold;">Enviar Pedido por WhatsApp</button>
     </div>
   </div>
 
-  <!-- Modal de Selección de Aroma -->
-<div id="modalSeleccionAroma" class="modal-carrito">
-  <div class="modal-contenido" style="max-width: 400px;">
-    <span onclick="cerrarModalSeleccionAroma()" style="position: absolute; top: 10px; right: 15px;">&times;</span>
-    <h2>Elige un Aroma</h2>
-    <p>Seleccione un aroma para combinar con su difusor o ambientador:</p>
-    <div id="listaAromas" style="display: flex; flex-direction: column; gap: 10px;"></div>
-  </div>
-</div>
-
-<!-- Botón flotante del carrito -->
-<button id="botonCarrito" onclick="abrirModalCarrito()">
-  🛒 <span id="contadorCarrito">0</span>
-</button>
-
-<!-- Toast de notificaciones -->
-
-
-
-  <div id="toast" style="position:fixed; bottom:20px; right:20px; background:#4caf50; color:white; padding:14px 18px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.3); display:none; z-index:9999; font-size:1rem;">
-  ¡Mensaje enviado por WhatsApp!
-</div>
-</div>
-
-
- <strong>Indicaciones de Uso</strong><br />
-    Añada 5-9 gotas en un quemador cerámico, candela o difusor eléctrico para difundir inmediatamente su aroma en el ambiente<br />
-    Evite derramar el aceite sobre superficies pintadas o barnizadas<br />
-    <br />
-    <strong>NOTA:</strong> no son consumibles ni aplicables directamente en la piel.
-   <br /> &copy; 2025 Esentia - Desarrollado por Wilber Calderón M.
+  <footer>
+    
   </footer>
 
-    <a href="https://wil1979.github.io/esentia-factura/limpieza/limpieza.html" class="btn-regresar" title="Volver al inicio">🏠</a>
+<!--<a href="https://wil1979.github.io/esentia-factura/limpieza/limpieza.html" class="btn-regresar" title="Volver al inicio">🏠</a>-->
 
-  <script src="catalogo.js"></script>
-<script src="factura.js"></script>
+  <script>
+    let carrito = [];
+    let cuponActivo = false;
+    let productoSeleccionado = null;
+
+    // URLs de los JSON
+    const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
+
+    // Cargar productos desde JSON
+    async function cargarProductos() {
+      try {
+        const res = await fetch(URL_ESENCIA);
+        if (!res.ok) throw new Error("Error al cargar productos");
+        const productos = await res.json();
+        renderizarLista(productos);
+      } catch (error) {
+        console.error("Error al cargar productos:", error);
+        document.getElementById("listaProductos").innerHTML = "<p style='color:red;'>❌ Error al cargar productos. Intenta más tarde.</p>";
+      }
+    }
+
+    function renderizarLista(productos) {
+      const lista = document.getElementById("listaProductos");
+      lista.innerHTML = "";
+      productos.forEach(prod => {
+        if (!prod.disponible) return;
+        const esNuevo = prod.fechaLanzamiento && esProductoNuevo(prod.fechaLanzamiento);
+        const item = document.createElement("div");
+        item.className = "producto-item";
+        /*item.innerHTML = `
+          <img src="${prod.imagen}" alt="${prod.nombre}">
+          ${prod.nombre}
+          ${esNuevo ? '<span class="nuevo-badge">🌟 Nuevo</span>' : ''}
+        `;*/
+          item.innerHTML = `
+  <div style="text-align: center;">
+    <img src="${prod.imagen}" alt="${prod.nombre}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 8px; margin-bottom: 4px;">
+    ${esNuevo ? '<span style="font-size: 0.7rem; background: #ec4899; color: white; padding: 2px 6px; border-radius: 4px;">🌟 Nuevo</span>' : ''}
+  </div>
+`;
+
+        item.onclick = () => mostrarDetalleProducto(prod);
+        lista.appendChild(item);
+      });
+    }
+
+    function esProductoNuevo(fechaLanzamiento, dias = 30) {
+      const hoy = new Date();
+      const lanzamiento = new Date(fechaLanzamiento);
+      const diferenciaMs = hoy - lanzamiento;
+      const diferenciaDias = Math.floor(diferenciaMs / (1000 * 60 * 60 * 24));
+      return diferenciaDias <= dias;
+    }
+
+    function mostrarDetalleProducto(producto) {
+      const detalle = document.getElementById("detalleProducto");
+      productoSeleccionado = producto;
+
+      // Calificación en estrellas
+      let estrellasHTML = '';
+      const estrellasLlenas = Math.floor(producto.calificacion || 0);
+      const mediaEstrella = (producto.calificacion || 0) % 1 >= 0.5;
+      for (let i = 0; i < estrellasLlenas; i++) estrellasHTML += '⭐';
+      if (mediaEstrella) estrellasHTML += '✨';
+      while (estrellasHTML.length < 5) estrellasHTML += '☆';
+
+      // Selector de variantes
+      let selectorHTML = '';
+      if (producto.variantes && producto.variantes.length > 0) {
+        selectorHTML = `<div id="selectorVariante">
+          <select id="varianteSelect" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+            <option value="">-- Selecciona presentación --</option>`;
+        producto.variantes.forEach(v => {
+          selectorHTML += `<option value='${JSON.stringify(v)}'>${v.nombre} – ₡${v.precio.toLocaleString()}</option>`;
+        });
+        selectorHTML += `</select></div>`;
+      } else {
+        selectorHTML = `<p><strong>Precio:</strong> ₡${producto.precio.toLocaleString()}</p>`;
+      }
+
+      detalle.innerHTML = `
+        <img src="${producto.imagen}" alt="${producto.nombre}">
+        <h2>${producto.nombre}</h2>
+        <div class="estrellas">${estrellasHTML} <small>(${(producto.calificacion || 0).toFixed(1)})</small></div>
+        <p class="info">${producto.info}</p>
+        <p class="beneficios">🧠 ${producto.beneficios}</p>
+        <p class="uso">🏠 ${producto.usoRecomendado}</p>
+        ${selectorHTML}
+        <button class="boton-agregar" onclick="agregarDesdeDetalle()">🛒 Agregar al carrito</button>
+      `;
+    }
+
+    function agregarDesdeDetalle() {
+      const select = document.getElementById("varianteSelect");
+      if (select && select.value === "") {
+        mostrarToast("⚠️ Por favor, selecciona una presentación", "#e53935");
+        return;
+      }
+
+      if (select && select.value) {
+        const variante = JSON.parse(select.value);
+        agregarCarrito(`${productoSeleccionado.nombre} - ${variante.nombre}`, variante.precio);
+      } else {
+        agregarCarrito(productoSeleccionado.nombre, productoSeleccionado.precio);
+      }
+    }
+
+    function agregarCarrito(nombre, precio) {
+      const item = carrito.find(i => i.nombre === nombre);
+      if (item) item.cantidad++;
+      else carrito.push({ nombre, precio, cantidad: 1 });
+
+      const btn = document.getElementById("botonCarrito");
+      btn.classList.add("animado");
+      setTimeout(() => btn.classList.remove("animado"), 300);
+
+      renderCarrito();
+      mostrarToast(`✅ ${nombre} agregado al carrito`);
+    }
+
+    function renderCarrito() {
+      const lista = document.getElementById("listaCarritoModal");
+      lista.innerHTML = "";
+      let total = 0;
+      carrito.forEach((item, i) => {
+        const subtotal = item.precio * item.cantidad;
+        total += subtotal;
+        const li = document.createElement("li");
+        li.innerHTML = `${item.nombre} x${item.cantidad} - ₡${subtotal.toLocaleString()} <button onclick="carrito.splice(${i},1); renderCarrito();" style="color:red;">❌</button>`;
+        lista.appendChild(li);
+      });
+
+      if (cuponActivo === "ESENTIA10") total *= 0.9;
+      if (cuponActivo === "AMIGO15") total *= 0.85;
+
+      document.getElementById("totalModal").textContent = `Total: ₡${Math.round(total).toLocaleString()}`;
+      document.getElementById("contadorCarrito").textContent = carrito.reduce((a, b) => a + b.cantidad, 0);
+    }
+
+    function aplicarCupon() {
+      const cupon = document.getElementById("cupon").value.trim().toUpperCase();
+      if (cupon === "ESENTIA10") {
+        cuponActivo = "ESENTIA10";
+        mostrarToast("✅ 10% de descuento aplicado");
+      } else if (cupon === "AMIGO15") {
+        cuponActivo = "AMIGO15";
+        mostrarToast("✅ 15% de descuento aplicado");
+      } else {
+        cuponActivo = false;
+        mostrarToast("❌ Cupón inválido", "#e53935");
+      }
+      renderCarrito();
+    }
+
+    function finalizarPedido() {
+      if (carrito.length === 0) return mostrarToast("🛒 El carrito está vacío", "#e53935");
+      let msg = "Hola Wilber 👋%0AQuiero hacer el siguiente pedido:%0A%0A";
+      carrito.forEach(i => msg += `🧴 ${i.nombre} x${i.cantidad} - ₡${(i.precio*i.cantidad).toLocaleString()}%0A`);
+      const total = carrito.reduce((a, b) => a + b.precio * b.cantidad, 0);
+      msg += `%0A💰 Total: ₡${Math.round(total).toLocaleString()}%0A¡Gracias! 🌿`;
+      window.open(`https://wa.me/50672952454?text=${msg}`, "_blank");
+    }
+
+    function abrirModalCarrito() {
+      renderCarrito();
+      document.getElementById("modalCarrito").style.display = "block";
+    }
+
+    function cerrarModalCarrito() {
+      document.getElementById("modalCarrito").style.display = "none";
+    }
+
+    function recomendarAmigo() {
+      const num = document.getElementById("numeroAmigo").value.trim();
+      if (!num.match(/^\d{8,12}$/)) return mostrarToast("⚠️ Número inválido", "#e53935");
+      const msg = "Hola 👋, quiero recomendarte este catálogo de Esentia: https://wil1979.github.io/esentia-factura/catalogo.html";
+      window.open(`https://wa.me/506${num}?text=${encodeURIComponent(msg)}`, "_blank");
+      document.getElementById("numeroAmigo").value = "";
+      mostrarToast("✅ Mensaje listo en WhatsApp");
+    }
+
+    function mostrarToast(mensaje, color = "#4caf50") {
+      const toast = document.getElementById("toast");
+      toast.textContent = mensaje;
+      toast.style.backgroundColor = color;
+      toast.style.display = "block";
+      setTimeout(() => toast.style.opacity = "0", 3000);
+      setTimeout(() => { toast.style.display = "none"; toast.style.opacity = "1"; }, 3500);
+    }
+
+    /* Modo oscuro
+    function toggleModoOscuro() {
+      document.body.classList.toggle("modo-oscuro");
+      const btn = document.getElementById("modoOscuroBtn");
+      if (document.body.classList.contains("modo-oscuro")) {
+        btn.textContent = "☀️ Modo Claro";
+        localStorage.setItem("modo", "oscuro");
+      } else {
+        btn.textContent = "🌙 Modo Oscuro";
+        localStorage.setItem("modo", "claro");
+      }
+    }*/
+
+    // Cargar todo al inicio
+    window.onload = () => {
+      cargarProductos();
+      renderCarrito();
+
+      // Botón de modo oscuro
+      const btnModo = document.createElement("button");
+      btnModo.id = "modoOscuroBtn";
+      btnModo.onclick = toggleModoOscuro;
+      btnModo.style.position = "fixed";
+      btnModo.style.top = "90px";
+      btnModo.style.right = "20px";
+      btnModo.style.background = "#333";
+      btnModo.style.color = "white";
+      btnModo.style.border = "none";
+      btnModo.style.padding = "10px 16px";
+      btnModo.style.borderRadius = "6px";
+      btnModo.style.zIndex = "1000";
+     // btnModo.textContent = localStorage.getItem("modo") === "oscuro" ? "☀️ Modo Claro" : "🌙 Modo Oscuro";
+      document.body.appendChild(btnModo);
+
+      // Restaurar modo
+      if (localStorage.getItem("modo") === "oscuro") {
+        document.body.classList.add("modo-oscuro");
+      }
+    };
+  </script>
+
+
+   <footer>
+    <strong>Informacion inportante:</strong><br />
+    ✨ Esentia ofrece productos que mejoran la experiencia diaria a través de aromas que evocan sensaciones positivas y placenteras. 
+    🌟 Beneficios de los Aromas La aromaterapia puede contribuir a disminuir el estrés y mejorar el bienestar general. 
+    💡 Consejos de Uso Para maximizar la efectividad de los aromas, es recomendable utilizarlos en ambientes tranquilos y ventilados.
+    &copy; 2025 Esentia - Desarrollado por Wilber Calderón M.
+  </footer>
 </body>
 </html>
