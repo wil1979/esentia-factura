@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>📊 Esentia - Reporte de Rentabilidad</title>
+  <title>📊 Esentia - Reporte de Inventario Real</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -95,42 +95,177 @@
       gap: 10px;
       flex-wrap: wrap;
     }
+
+     .scroll-buttons {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 999;
+    }
+    
+    .scroll-btn {
+      padding: 15px 20px;
+      border: none;
+      border-radius: 25px;
+      background: #2196F3;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+
+    .scroll-btn:hover {
+      background: #1976D2;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 8px rgba(0,0,0,0.2);
+    }
+    
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #666;
+      border-bottom: 3px solid transparent;
+    }
+    
+    .tab.active {
+      color: #6c4ba3;
+      border-bottom: 3px solid #6c4ba3;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .producto-detalle {
+      margin: 10px 0;
+      padding: 10px;
+      background: #f9f9f9;
+      border-left: 4px solid #6c4ba3;
+      border-radius: 4px;
+    }
+    
+    .producto-detalle h4 {
+      margin: 0 0 5px 0;
+      color: #555;
+    }
+    
+    .producto-detalle p {
+      margin: 3px 0;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
 
-  <h1>📊 Esentia - Reporte de Rentabilidad</h1>
+  <div class="scroll-buttons">
+    <button class="scroll-btn" onclick="scrollToTop()">↑ </button>
+    <button class="scroll-btn" onclick="scrollToBottom()">↓ </button>
+  </div>
 
-  <div style="max-width: 600px;">
-    <div class="filtro-item">
-      <label for="mes-reporte">Mes:</label>
-      <select id="mes-reporte">
-        <option value="0">Enero</option>
-        <option value="1">Febrero</option>
-        <option value="2">Marzo</option>
-        <option value="3">Abril</option>
-        <option value="4">Mayo</option>
-        <option value="5">Junio</option>
-        <option value="6">Julio</option>
-        <option value="7">Agosto</option>
-        <option value="8">Septiembre</option>
-        <option value="9">Octubre</option>
-        <option value="10">Noviembre</option>
-        <option value="11">Diciembre</option>
-        <option value="todos" selected>Todo el año</option>
-      </select>
+  <h1>📊 Esentia - Reporte de Inventario Real</h1>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('inventario')">📦 Inventario Actual</div>
+    <div class="tab" onclick="switchTab('movimientos')">🔄 Movimientos</div>
+    <div class="tab" onclick="switchTab('rentabilidad')">💰 Rentabilidad</div>
+  </div>
+
+  <!-- Pestaña de Inventario Actual -->
+  <div id="inventario" class="tab-content active">
+    <div style="max-width: 600px;">
+      <div class="filtro-item">
+        <label for="categoria-filtro">Filtrar por Categoría:</label>
+        <select id="categoria-filtro" onchange="generarReporteInventario()">
+          <option value="todas">Todas las categorías</option>
+          <option value="aromas">Aromas</option>
+          <option value="limpieza">Limpieza</option>
+          <option value="cuidado">Cuidado Personal</option>
+        </select>
+      </div>
+      <button class="boton-accion" onclick="generarReporteInventario()">📊 Generar Reporte</button>
     </div>
-    <button class="boton-accion" onclick="generarReporte()">📊 Generar Reporte</button>
+
+    <div id="resultado-inventario" style="margin-top: 30px;">
+      <p>Haz clic en "Generar Reporte" para ver el inventario actual.</p>
+    </div>
+  </div>
+
+  <!-- Pestaña de Movimientos -->
+  <div id="movimientos" class="tab-content">
+    <div style="max-width: 600px;">
+      <div class="filtro-item">
+        <label for="mes-movimientos">Mes:</label>
+        <select id="mes-movimientos">
+          <option value="0">Enero</option>
+          <option value="1">Febrero</option>
+          <option value="2">Marzo</option>
+          <option value="3">Abril</option>
+          <option value="4">Mayo</option>
+          <option value="5">Junio</option>
+          <option value="6">Julio</option>
+          <option value="7">Agosto</option>
+          <option value="8">Septiembre</option>
+          <option value="9">Octubre</option>
+          <option value="10">Noviembre</option>
+          <option value="11">Diciembre</option>
+          <option value="todos" selected>Todo el año</option>
+        </select>
+      </div>
+      <button class="boton-accion" onclick="generarReporteMovimientos()">📊 Generar Reporte de Movimientos</button>
+    </div>
+
+    <div id="resultado-movimientos" style="margin-top: 30px;">
+      <p>Haz clic en "Generar Reporte de Movimientos" para ver las entradas y salidas.</p>
+    </div>
+  </div>
+
+  <!-- Pestaña de Rentabilidad -->
+  <div id="rentabilidad" class="tab-content">
+    <div style="max-width: 600px;">
+      <div class="filtro-item">
+        <label for="mes-rentabilidad">Mes:</label>
+        <select id="mes-rentabilidad">
+          <option value="0">Enero</option>
+          <option value="1">Febrero</option>
+          <option value="2">Marzo</option>
+          <option value="3">Abril</option>
+          <option value="4">Mayo</option>
+          <option value="5">Junio</option>
+          <option value="6">Julio</option>
+          <option value="7">Agosto</option>
+          <option value="8">Septiembre</option>
+          <option value="9">Octubre</option>
+          <option value="10">Noviembre</option>
+          <option value="11">Diciembre</option>
+          <option value="todos" selected>Todo el año</option>
+        </select>
+      </div>
+      <button class="boton-accion" onclick="generarReporteRentabilidad()">📊 Generar Reporte de Rentabilidad</button>
+    </div>
+
+    <div id="resultado-rentabilidad" style="margin-top: 30px;">
+      <p>Haz clic en "Generar Reporte de Rentabilidad" para ver las utilidades.</p>
+    </div>
   </div>
 
   <!-- Botones adicionales -->
   <div class="acciones">
-    <button class="boton-accion" onclick="generarReportePorProducto()">📦 Rentabilidad por Producto</button>
-    <button class="boton-accion" onclick="exportarCSV()">⬇️ Exportar a Excel</button>
-  </div>
-
-  <div id="resultado-reporte" style="margin-top: 30px;">
-    <p>Haz clic en "Generar Reporte" para ver los resultados.</p>
+    <button class="boton-accion" onclick="exportarCSVInventario()">⬇️ Exportar Inventario a CSV</button>
+    <button class="boton-accion" onclick="imprimirReporte()">🖨️ Imprimir Reporte Actual</button>
   </div>
 
   <!-- Firebase -->
@@ -152,51 +287,163 @@
     const db = getFirestore(app);
 
     // Referencias
+    const stockRef = collection(db, "stock");
     const clientesRef = collection(db, "clientes");
     const comprasProveedorRef = collection(db, "comprasProveedor");
 
-    // Variables globales para reutilizar en exportación
-    let totalVentas = 0;
-    let totalGastos = 0;
-    let utilidadBruta = 0;
-    let margen = 0;
-    let ventasPorMes = Array(12).fill(0);
-    let gastosPorMes = Array(12).fill(0);
-    let utilidadPorMes = Array(12).fill(0);
+    // Variables globales
+    let inventarioActual = {};
+    let movimientosData = {}; // Variable corregida - estaba faltando
+    let rentabilidadData = {};
 
-    // ✅ Generar Reporte de Rentabilidad
-    async function generarReporte() {
-      const cont = document.getElementById("resultado-reporte");
-      cont.innerHTML = "<p>📊 Calculando rentabilidad...</p>";
+    // Cambiar entre pestañas
+    window.switchTab = function(tabName) {
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      document.getElementById(tabName).classList.add('active');
+      document.querySelector(`.tab:nth-child(${tabName === 'inventario' ? 1 : tabName === 'movimientos' ? 2 : 3})`).classList.add('active');
+    }
 
-      const mesSeleccionado = document.getElementById("mes-reporte").value;
+    // ✅ Generar Reporte de Inventario Actual
+    async function generarReporteInventario() {
+      const cont = document.getElementById("resultado-inventario");
+      cont.innerHTML = "<p>📊 Calculando inventario actual...</p>";
 
-      // Reiniciar contadores
-      totalVentas = 0;
-      totalGastos = 0;
-      ventasPorMes = Array(12).fill(0);
-      gastosPorMes = Array(12).fill(0);
+      const categoriaFiltro = document.getElementById("categoria-filtro").value;
 
       try {
-        // 1. Calcular ingresos (ventas a clientes)
+        // 1. Obtener stock actual
+        const snapshotStock = await getDocs(stockRef);
+        let inventario = {};
+        
+        snapshotStock.forEach(docSnap => {
+          const producto = docSnap.data();
+          const categoria = producto.categoria || 'otro';
+          
+          // Aplicar filtro de categoría
+          if (categoriaFiltro !== 'todas' && categoria !== categoriaFiltro) {
+            return;
+          }
+          
+          inventario[producto.nombre] = {
+            nombre: producto.nombre,
+            cantidad: producto.cantidad || 0,
+            categoria: categoria,
+            precio: producto.precio || 0,
+            valorTotal: (producto.cantidad || 0) * (producto.precio || 0)
+          };
+        });
+
+        // 2. Calcular totales
+        const totalProductos = Object.keys(inventario).length;
+        const totalUnidades = Object.values(inventario).reduce((sum, prod) => sum + prod.cantidad, 0);
+        const valorInventario = Object.values(inventario).reduce((sum, prod) => sum + prod.valorTotal, 0);
+
+        // 3. Ordenar por nombre
+        const inventarioOrdenado = Object.values(inventario).sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+        // 4. Mostrar resultados
+        let html = `
+          <div class="resumen">
+            <h3>📦 Inventario Actual ${categoriaFiltro !== 'todas' ? `(${categoriaFiltro.charAt(0).toUpperCase() + categoriaFiltro.slice(1)})` : ''}</h3>
+            <table class="tabla-reportes">
+              <tr>
+                <th>Concepto</th>
+                <th>Valor</th>
+              </tr>
+              <tr>
+                <td><strong>Productos Diferentes</strong></td>
+                <td>${totalProductos}</td>
+              </tr>
+              <tr>
+                <td><strong>Total de Unidades</strong></td>
+                <td>${totalUnidades}</td>
+              </tr>
+              <tr>
+                <td><strong>Valor del Inventario</strong></td>
+                <td>₡${valorInventario.toLocaleString()}</td>
+              </tr>
+            </table>
+          </div>
+        `;
+
+        // 5. Detalle por producto
+        html += `
+          <h2>📋 Detalle de Productos</h2>
+          <table class="tabla-reportes">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Stock</th>
+                <th>Precio Venta</th>
+                <th>Valor Total</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        inventarioOrdenado.forEach(prod => {
+          const claseStock = prod.cantidad <= 5 ? 'deuda-alta' : prod.cantidad <= 10 ? 'deuda-media' : 'deuda-baja';
+          html += `
+            <tr>
+              <td><strong>${prod.nombre}</strong></td>
+              <td>${prod.categoria}</td>
+              <td class="${claseStock}">${prod.cantidad}</td>
+              <td>₡${prod.precio.toLocaleString()}</td>
+              <td>₡${prod.valorTotal.toLocaleString()}</td>
+            </tr>
+          `;
+        });
+
+        html += `</tbody></table>`;
+        cont.innerHTML = html;
+
+        // Guardar para exportación
+        inventarioActual = inventario;
+
+      } catch (error) {
+        cont.innerHTML = `<p class="alerta">❌ Error al generar el reporte: ${error.message}</p>`;
+        console.error("Error:", error);
+      }
+    }
+
+    // ✅ Generar Reporte de Movimientos
+    async function generarReporteMovimientos() {
+      const cont = document.getElementById("resultado-movimientos");
+      cont.innerHTML = "<p>📊 Calculando movimientos de inventario...</p>";
+
+      const mesSeleccionado = document.getElementById("mes-movimientos").value;
+
+      try {
+        // Estructura para movimientos: { nombre: { entradas: 0, salidas: 0 } }
+        movimientosData = {}; // Inicializar la variable global
+
+        // 1. Salidas (ventas a clientes)
         const snapshotClientes = await getDocs(clientesRef);
         snapshotClientes.forEach(docSnap => {
           const cliente = docSnap.data();
-          const compras = cliente.compras || [];
-          compras.forEach(compra => {
+          (cliente.compras || []).forEach(compra => {
             const fecha = new Date(compra.fecha);
             const mes = fecha.getMonth();
             const incluir = mesSeleccionado === "todos" || parseInt(mesSeleccionado) === mes;
 
             if (incluir) {
-              const totalNeto = (compra.monto || 0) - (compra.descuento || 0);
-              totalVentas += totalNeto;
-              ventasPorMes[mes] += totalNeto;
+              (compra.productos || []).forEach(prod => {
+                const nombre = prod.nombre;
+                if (!movimientosData[nombre]) movimientosData[nombre] = { entradas: 0, salidas: 0 };
+                movimientosData[nombre].salidas += prod.cantidad || 0;
+              });
             }
           });
         });
 
-        // 2. Calcular gastos (compras a proveedores)
+        // 2. Entradas (compras a proveedores)
         const snapshotProveedores = await getDocs(comprasProveedorRef);
         snapshotProveedores.forEach(docSnap => {
           const compra = docSnap.data();
@@ -205,19 +452,166 @@
           const incluir = mesSeleccionado === "todos" || parseInt(mesSeleccionado) === mes;
 
           if (incluir) {
-            totalGastos += compra.totalCompra || 0;
-            gastosPorMes[mes] += compra.totalCompra || 0;
+            (compra.productos || []).forEach(prod => {
+              const nombre = prod.nombre;
+              if (!movimientosData[nombre]) movimientosData[nombre] = { entradas: 0, salidas: 0 };
+              movimientosData[nombre].entradas += prod.cantidad || 0;
+            });
+          }
+        });
+
+        // 3. Obtener stock actual para comparar
+        const snapshotStock = await getDocs(stockRef);
+        const stockActual = {};
+        snapshotStock.forEach(docSnap => {
+          const data = docSnap.data();
+          stockActual[data.nombre] = data.cantidad || 0;
+        });
+
+        // 4. Calcular totales
+        const totalEntradas = Object.values(movimientosData).reduce((sum, m) => sum + m.entradas, 0);
+        const totalSalidas = Object.values(movimientosData).reduce((sum, m) => sum + m.salidas, 0);
+        const rotacion = totalSalidas / (Object.keys(movimientosData).length || 1);
+
+        // 5. Mostrar resultados
+        const mesTexto = mesSeleccionado === "todos" 
+          ? "Todo el año" 
+          : new Date(2025, mesSeleccionado).toLocaleString('es-ES', { month: 'long' });
+
+        let html = `
+          <div class="resumen">
+            <h3>🔄 Movimientos de Inventario (${mesTexto.charAt(0).toUpperCase() + mesTexto.slice(1)})</h3>
+            <table class="tabla-reportes">
+              <tr>
+                <th>Concepto</th>
+                <th>Cantidad</th>
+              </tr>
+              <tr>
+                <td><strong>Productos con Movimiento</strong></td>
+                <td>${Object.keys(movimientosData).length}</td>
+              </tr>
+              <tr>
+                <td><strong>Total de Entradas</strong></td>
+                <td>${totalEntradas}</td>
+              </tr>
+              <tr>
+                <td><strong>Total de Salidas</strong></td>
+                <td>${totalSalidas}</td>
+              </tr>
+              <tr>
+                <td><strong>Rotación Promedio</strong></td>
+                <td>${rotacion.toFixed(1)}</td>
+              </tr>
+            </table>
+          </div>
+        `;
+
+        // 6. Detalle por producto
+        const movimientosOrdenados = Object.keys(movimientosData)
+          .map(nombre => ({ nombre, ...movimientosData[nombre] }))
+          .sort((a, b) => (b.salidas + b.entradas) - (a.salidas + a.entradas));
+
+        html += `
+          <h2>📋 Detalle de Movimientos</h2>
+          <table class="tabla-reportes">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Entradas</th>
+                <th>Salidas</th>
+                <th>Stock Actual</th>
+                <th>Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        movimientosOrdenados.forEach(m => {
+          const stock = stockActual[m.nombre] || 0;
+          const balance = m.entradas - m.salidas;
+          const claseBalance = balance > 0 ? 'deuda-baja' : balance < 0 ? 'deuda-alta' : '';
+          
+          html += `
+            <tr>
+              <td><strong>${m.nombre}</strong></td>
+              <td>${m.entradas}</td>
+              <td>${m.salidas}</td>
+              <td>${stock}</td>
+              <td class="${claseBalance}">${balance > 0 ? '+' : ''}${balance}</td>
+            </tr>
+          `;
+        });
+
+        html += `</tbody></table>`;
+        cont.innerHTML = html;
+
+      } catch (error) {
+        cont.innerHTML = `<p class="alerta">❌ Error al generar el reporte: ${error.message}</p>`;
+        console.error("Error:", error);
+      }
+    }
+
+    // ✅ Generar Reporte de Rentabilidad
+    async function generarReporteRentabilidad() {
+      const cont = document.getElementById("resultado-rentabilidad");
+      cont.innerHTML = "<p>📊 Calculando rentabilidad...</p>";
+
+      const mesSeleccionado = document.getElementById("mes-rentabilidad").value;
+
+      try {
+        // Estructura: { nombre: { ventas: 0, costos: 0, utilidad: 0 } }
+        const productos = {};
+
+        // 1. Ventas (de clientes)
+        const snapshotClientes = await getDocs(clientesRef);
+        snapshotClientes.forEach(docSnap => {
+          const cliente = docSnap.data();
+          (cliente.compras || []).forEach(compra => {
+            const fecha = new Date(compra.fecha);
+            const mes = fecha.getMonth();
+            const incluir = mesSeleccionado === "todos" || parseInt(mesSeleccionado) === mes;
+
+            if (incluir) {
+              (compra.productos || []).forEach(prod => {
+                const nombre = prod.nombre;
+                if (!productos[nombre]) productos[nombre] = { ventas: 0, costos: 0 };
+                productos[nombre].ventas += (prod.precio || 0) * (prod.cantidad || 1);
+              });
+            }
+          });
+        });
+
+        // 2. Costos (de compras a proveedores)
+        const snapshotProveedores = await getDocs(comprasProveedorRef);
+        snapshotProveedores.forEach(docSnap => {
+          const compra = docSnap.data();
+          const fecha = new Date(compra.fecha);
+          const mes = fecha.getMonth();
+          const incluir = mesSeleccionado === "todos" || parseInt(mesSeleccionado) === mes;
+
+          if (incluir) {
+            (compra.productos || []).forEach(prod => {
+              const nombre = prod.nombre;
+              if (!productos[nombre]) productos[nombre] = { ventas: 0, costos: 0 };
+              const costoUnitario = (prod.total || 0) / (prod.cantidad || 1);
+              productos[nombre].costos += costoUnitario * (prod.cantidad || 1);
+            });
           }
         });
 
         // 3. Calcular utilidad
-        utilidadBruta = totalVentas - totalGastos;
-        margen = totalVentas > 0 ? (utilidadBruta / totalVentas) * 100 : 0;
+        let totalVentas = 0;
+        let totalCostos = 0;
+        let totalUtilidad = 0;
+        
+        Object.values(productos).forEach(p => {
+          totalVentas += p.ventas;
+          totalCostos += p.costos;
+          p.utilidad = p.ventas - p.costos;
+          totalUtilidad += p.utilidad;
+        });
 
-        // Calcular utilidad por mes
-        for (let m = 0; m < 12; m++) {
-          utilidadPorMes[m] = ventasPorMes[m] - gastosPorMes[m];
-        }
+        const margen = totalVentas > 0 ? (totalUtilidad / totalVentas) * 100 : 0;
 
         // 4. Mostrar resultados
         const mesTexto = mesSeleccionado === "todos" 
@@ -226,7 +620,7 @@
 
         let html = `
           <div class="resumen">
-            <h3>📈 Rentabilidad (${mesTexto.charAt(0).toUpperCase() + mesTexto.slice(1)})</h3>
+            <h3>💰 Rentabilidad (${mesTexto.charAt(0).toUpperCase() + mesTexto.slice(1)})</h3>
             <table class="tabla-reportes">
               <tr>
                 <th>Concepto</th>
@@ -237,13 +631,13 @@
                 <td>₡${totalVentas.toLocaleString()}</td>
               </tr>
               <tr>
-                <td><strong>Gastos (Compras)</strong></td>
-                <td>₡${totalGastos.toLocaleString()}</td>
+                <td><strong>Costo de Ventas</strong></td>
+                <td>₡${totalCostos.toLocaleString()}</td>
               </tr>
               <tr>
                 <td><strong>Utilidad Bruta</strong></td>
-                <td class="${utilidadBruta >= 0 ? 'deuda-baja' : 'deuda-alta'}">
-                  ₡${utilidadBruta.toLocaleString()}
+                <td class="${totalUtilidad >= 0 ? 'deuda-baja' : 'deuda-alta'}">
+                  ₡${totalUtilidad.toLocaleString()}
                 </td>
               </tr>
               <tr>
@@ -256,126 +650,40 @@
           </div>
         `;
 
-        // 5. Detalle por mes (solo si es "todo el año")
-        if (mesSeleccionado === "todos") {
-          html += `
-            <h2>📋 Detalle Mensual</h2>
-            <table class="tabla-reportes">
-              <thead>
-                <tr>
-                  <th>Mes</th>
-                  <th>Ventas</th>
-                  <th>Gastos</th>
-                  <th>Utilidad</th>
-                </tr>
-              </thead>
-              <tbody>
-          `;
-
-          for (let m = 0; m <= 11; m++) {
-            const utilidadMes = ventasPorMes[m] - gastosPorMes[m];
-            const nombreMes = new Date(2025, m).toLocaleString('es-ES', { month: 'short' });
-
-            html += `
-              <tr>
-                <td><strong>${nombreMes}</strong></td>
-                <td>₡${ventasPorMes[m].toLocaleString()}</td>
-                <td>₡${gastosPorMes[m].toLocaleString()}</td>
-                <td class="${utilidadMes >= 0 ? 'deuda-baja' : 'deuda-alta'}">₡${utilidadMes.toLocaleString()}</td>
-              </tr>
-            `;
-          }
-
-          html += `
-              </tbody>
-            </table>
-          `;
-        }
-
-        // 6. Alerta si hay inconsistencias
-        if (totalVentas === 0 && totalGastos === 0) {
-          html += `<p class="alerta">⚠️ No se encontraron datos de ventas ni gastos.</p>`;
-        }
-
-        cont.innerHTML = html;
-
-      } catch (error) {
-        cont.innerHTML = `<p class="alerta">❌ Error al generar el reporte: ${error.message}</p>`;
-        console.error("Error:", error);
-      }
-    }
-
-    // ✅ Generar reporte por producto
-    async function generarReportePorProducto() {
-      const cont = document.getElementById("resultado-reporte");
-      cont.innerHTML = "<p>📊 Calculando rentabilidad por producto...</p>";
-
-      // Estructura: { nombre: { ventas: 0, compras: 0, utilidad: 0 } }
-      const productos = {};
-
-      try {
-        // 1. Ventas (de clientes)
-        const snapshotClientes = await getDocs(clientesRef);
-        snapshotClientes.forEach(docSnap => {
-          const cliente = docSnap.data();
-          (cliente.compras || []).forEach(compra => {
-            (compra.productos || []).forEach(prod => {
-              const nombre = prod.nombre;
-              if (!productos[nombre]) productos[nombre] = { ventas: 0, compras: 0 };
-              productos[nombre].ventas += prod.precio || 0;
-            });
-          });
-        });
-
-        // 2. Compras (a proveedores)
-        const snapshotProveedores = await getDocs(comprasProveedorRef);
-        snapshotProveedores.forEach(docSnap => {
-          const compra = docSnap.data();
-          (compra.productos || []).forEach(prod => {
-            const nombre = prod.nombre;
-            if (!productos[nombre]) productos[nombre] = { ventas: 0, compras: 0 };
-            productos[nombre].compras += prod.total || 0;
-          });
-        });
-
-        // 3. Calcular utilidad
-        let totalUtilidad = 0;
+        // 5. Detalle por producto
         const lista = Object.keys(productos)
           .map(nombre => {
-            const venta = productos[nombre].ventas;
-            const compra = productos[nombre].compras;
-            const utilidad = venta - compra;
-            totalUtilidad += utilidad;
-            return { nombre, venta, compra, utilidad };
+            const p = productos[nombre];
+            const margenProd = p.ventas > 0 ? (p.utilidad / p.ventas) * 100 : 0;
+            return { nombre, ...p, margen: margenProd };
           })
           .sort((a, b) => b.utilidad - a.utilidad); // Ordenar por utilidad
 
-        // 4. Mostrar tabla
-        let html = `
-          <div class="resumen">
-            <h3>📦 Rentabilidad por Producto</h3>
-            <p><strong>Total de utilidad por productos:</strong> ₡${totalUtilidad.toLocaleString()}</p>
-          </div>
+        html += `
+          <h2>📋 Rentabilidad por Producto</h2>
           <table class="tabla-reportes">
             <thead>
               <tr>
                 <th>Producto</th>
-                <th>Ventas (₡)</th>
-                <th>Compras (₡)</th>
-                <th>Utilidad (₡)</th>
+                <th>Ventas</th>
+                <th>Costos</th>
+                <th>Utilidad</th>
+                <th>Margen</th>
               </tr>
             </thead>
             <tbody>
         `;
 
         lista.forEach(p => {
-          const clase = p.utilidad >= 0 ? "deuda-baja" : "deuda-alta";
+          const claseUtilidad = p.utilidad >= 0 ? "deuda-baja" : "deuda-alta";
+          const claseMargen = p.margen >= 30 ? "deuda-baja" : p.margen >= 15 ? "deuda-media" : "deuda-alta";
           html += `
             <tr>
               <td><strong>${p.nombre}</strong></td>
-              <td>₡${p.venta.toLocaleString()}</td>
-              <td>₡${p.compra.toLocaleString()}</td>
-              <td class="${clase}">₡${p.utilidad.toLocaleString()}</td>
+              <td>₡${p.ventas.toLocaleString()}</td>
+              <td>₡${p.costos.toLocaleString()}</td>
+              <td class="${claseUtilidad}">₡${p.utilidad.toLocaleString()}</td>
+              <td class="${claseMargen}">${p.margen.toFixed(1)}%</td>
             </tr>
           `;
         });
@@ -383,71 +691,139 @@
         html += `</tbody></table>`;
         cont.innerHTML = html;
 
+        // Guardar para exportación
+        rentabilidadData = { productos: lista, totalVentas, totalCostos, totalUtilidad, margen };
+
       } catch (error) {
         cont.innerHTML = `<p class="alerta">❌ Error: ${error.message}</p>`;
+        console.error("Error:", error);
       }
     }
 
-    // ✅ Exportar a CSV
-    function exportarCSV() {
-      if (totalVentas === 0 && totalGastos === 0) {
-        alert("⚠️ No hay datos para exportar. Genera un reporte primero.");
-        return;
-      }
+    // ✅ Exportar Inventario a CSV
+    function exportarCSVInventario() {
+      const activeTab = document.querySelector('.tab.active');
+      if (!activeTab) return;
 
-      const mesSeleccionado = document.getElementById("mes-reporte").value;
-      const mesTexto = mesSeleccionado === "todos" 
-        ? "Todo el año" 
-        : new Date(2025, mesSeleccionado).toLocaleString('es-ES', { month: 'long' });
+      let datos = [];
+      let nombreArchivo = '';
 
-      let filas = [
-        ["Reporte de Rentabilidad", mesTexto],
-        [],
-        ["Concepto", "Monto"],
-        ["Ventas Totales", totalVentas],
-        ["Gastos (Compras)", totalGastos],
-        ["Utilidad Bruta", utilidadBruta],
-        ["Margen de Utilidad", `${margen.toFixed(2)}%`],
-        [],
-        ["Mes", "Ventas", "Gastos", "Utilidad"]
-      ];
+      if (activeTab.textContent.includes('Inventario')) {
+        if (Object.keys(inventarioActual).length === 0) {
+          alert("⚠️ No hay datos de inventario para exportar. Genera un reporte primero.");
+          return;
+        }
 
-      // Detalle mensual
-      for (let m = 0; m <= 11; m++) {
-        if (mesSeleccionado !== "todos" && parseInt(mesSeleccionado) !== m) continue;
-        const nombreMes = new Date(2025, m).toLocaleString('es-ES', { month: 'short' });
-        const utilidadMes = ventasPorMes[m] - gastosPorMes[m];
-        filas.push([
-          nombreMes,
-          ventasPorMes[m],
-          gastosPorMes[m],
-          utilidadMes
-        ]);
+        datos = [
+          ["Reporte de Inventario", new Date().toLocaleDateString()],
+          [],
+          ["Producto", "Categoría", "Stock", "Precio Venta", "Valor Total"]
+        ];
+
+        Object.values(inventarioActual).sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(prod => {
+          datos.push([
+            prod.nombre,
+            prod.categoria,
+            prod.cantidad,
+            prod.precio,
+            prod.valorTotal
+          ]);
+        });
+
+        nombreArchivo = `inventario_${new Date().toISOString().slice(0,10)}.csv`;
+
+      } else if (activeTab.textContent.includes('Movimientos')) {
+        if (Object.keys(movimientosData).length === 0) {
+          alert("⚠️ No hay datos de movimientos para exportar. Genera un reporte primero.");
+          return;
+        }
+
+        datos = [
+          ["Reporte de Movimientos", new Date().toLocaleDateString()],
+          [],
+          ["Producto", "Entradas", "Salidas", "Balance"]
+        ];
+
+        Object.keys(movimientosData).forEach(nombre => {
+          const m = movimientosData[nombre];
+          const balance = m.entradas - m.salidas;
+          datos.push([
+            nombre,
+            m.entradas,
+            m.salidas,
+            balance
+          ]);
+        });
+
+        nombreArchivo = `movimientos_${new Date().toISOString().slice(0,10)}.csv`;
+
+      } else if (activeTab.textContent.includes('Rentabilidad')) {
+        if (!rentabilidadData.productos) {
+          alert("⚠️ No hay datos de rentabilidad para exportar. Genera un reporte primero.");
+          return;
+        }
+
+        datos = [
+          ["Reporte de Rentabilidad", new Date().toLocaleDateString()],
+          [],
+          ["Producto", "Ventas", "Costos", "Utilidad", "Margen (%)"]
+        ];
+
+        rentabilidadData.productos.forEach(p => {
+          datos.push([
+            p.nombre,
+            p.ventas,
+            p.costos,
+            p.utilidad,
+            p.margen.toFixed(2)
+          ]);
+        });
+
+        datos.push([]);
+        datos.push(["TOTALES", rentabilidadData.totalVentas, rentabilidadData.totalCostos, rentabilidadData.totalUtilidad, `${rentabilidadData.margen.toFixed(2)}%`]);
+
+        nombreArchivo = `rentabilidad_${new Date().toISOString().slice(0,10)}.csv`;
       }
 
       // Convertir a CSV
-      const csv = filas.map(fila => fila.join(",")).join("\n");
+      const csv = datos.map(fila => fila.join(",")).join("\n");
       const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
-      const fecha = new Date().toISOString().slice(0,10);
       link.setAttribute("href", URL.createObjectURL(blob));
-      link.setAttribute("download", `reporte-rentabilidad-${fecha}.csv`);
+      link.setAttribute("download", nombreArchivo);
       link.click();
     }
 
-    // ✅ Mejorar impresión
-    function imprimirModal() {
-      const contenido = document.getElementById("resultado-reporte").innerHTML;
-      const mesSeleccionado = document.getElementById("mes-reporte").value;
-      const mesTexto = mesSeleccionado === "todos" 
-        ? "Todo el año" 
-        : new Date(2025, mesSeleccionado).toLocaleString('es-ES', { month: 'long' });
+    // ✅ Imprimir Reporte Actual
+    function imprimirReporte() {
+      const activeTab = document.querySelector('.tab.active');
+      if (!activeTab) return;
+
+      let contenido = '';
+      let titulo = '';
+      let fechaReporte = new Date().toLocaleDateString();
+
+      if (activeTab.textContent.includes('Inventario')) {
+        contenido = document.getElementById("resultado-inventario").innerHTML;
+        titulo = "Reporte de Inventario";
+      } else if (activeTab.textContent.includes('Movimientos')) {
+        contenido = document.getElementById("resultado-movimientos").innerHTML;
+        titulo = "Reporte de Movimientos de Inventario";
+      } else if (activeTab.textContent.includes('Rentabilidad')) {
+        contenido = document.getElementById("resultado-rentabilidad").innerHTML;
+        titulo = "Reporte de Rentabilidad";
+      }
+
+      if (!contenido || contenido.includes('Haz clic en')) {
+        alert("⚠️ No hay datos para imprimir. Genera un reporte primero.");
+        return;
+      }
 
       const ventana = window.open('', '_blank', 'width=800,height=600');
       ventana.document.write(`
         <html>
           <head>
-            <title>Reporte de Rentabilidad</title>
+            <title>${titulo}</title>
             <style>
               body { 
                 font-family: Arial, sans-serif; 
@@ -501,9 +877,8 @@
           </head>
           <body>
             <div class="encabezado">
-              <h2>📊 Reporte de Rentabilidad</h2>
-              <p class="fecha"><strong>Periodo:</strong> ${mesTexto}</p>
-              <p class="fecha"><strong>Fecha de impresión:</strong> ${new Date().toLocaleDateString()}</p>
+              <h2>📊 ${titulo}</h2>
+              <p class="fecha"><strong>Fecha de generación:</strong> ${fechaReporte}</p>
             </div>
             ${contenido}
             <button onclick="window.print()" style="padding: 10px; background: #6c4ba3; color: white; border: none; border-radius: 5px; margin-top: 20px;">🖨️ Imprimir</button>
@@ -513,14 +888,35 @@
       ventana.document.close();
     }
 
-    // Hacer funciones globales
-    window.generarReporte = generarReporte;
-    window.generarReportePorProducto = generarReportePorProducto;
-    window.exportarCSV = exportarCSV;
-    window.imprimirModal = imprimirModal;
-  </script>
+    // Función para desplazamiento suave
+    function scrollToTop() {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
 
-  <!-- Botón de impresión adicional -->
-  <button class="boton-accion" onclick="imprimirModal()">🖨️ Imprimir Reporte</button>
+    function scrollToBottom() {
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+
+    // Hacer funciones globales
+    window.generarReporteInventario = generarReporteInventario;
+    window.generarReporteMovimientos = generarReporteMovimientos;
+    window.generarReporteRentabilidad = generarReporteRentabilidad;
+    window.exportarCSVInventario = exportarCSVInventario;
+    window.imprimirReporte = imprimirReporte;
+    window.switchTab = switchTab;
+    window.scrollToTop = scrollToTop;
+    window.scrollToBottom = scrollToBottom;
+
+    // Generar reporte inicial
+    document.addEventListener('DOMContentLoaded', () => {
+      generarReporteInventario();
+    });
+  </script>
 </body>
 </html>
