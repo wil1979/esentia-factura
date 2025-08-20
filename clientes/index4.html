@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Clientes y Stock</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f4; }
+    h2 { margin-top: 30px; }
+    .cliente { background: white; padding: 10px; margin: 10px 0; border-radius: 5px; }
+    .boton { background: #007bff; color: white; padding: 5px 10px; border: none; cursor: pointer; margin: 5px; border-radius: 3px; }
+    .boton:hover { background: #0056b3; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+    .modal-content { background: white; padding: 20px; border-radius: 5px; width: 80%; max-height: 80%; overflow-y: auto; }
+    .cerrar { float: right; cursor: pointer; color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Gestión de Clientes y Control de Stock</h1>
+
+  <input type="text" id="busqueda" placeholder="Buscar cliente...">
+  <button class="boton" onclick="nuevoCliente()">➕ Nuevo Cliente</button>
+  <div id="clientes"></div>
+
+  <!-- 📌 Modal Historial -->
+  <div class="modal" id="modal-historial">
+    <div class="modal-content">
+      <span class="cerrar" onclick="cerrarModal()">&times;</span>
+      <h2>Historial del Cliente</h2>
+      <div id="historial"></div>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+  <script>
+    // 🔧 Configuración Firebase (reemplaza con tus credenciales)
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_PROJECT.firebaseapp.com",
+      projectId: "TU_PROJECT",
+      storageBucket: "TU_PROJECT.appspot.com",
+      messagingSenderId: "XXX",
+      appId: "XXX"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // 📌 Mostrar clientes
+    function cargarClientes() {
+      db.collection("clientes").onSnapshot(snapshot => {
+        let html = "";
+        snapshot.forEach(doc => {
+          let cliente = doc.data();
+          html += `
+            <div class="cliente">
+              <strong>${cliente.nombre}</strong> - Tel: ${cliente.telefono}
+              <button class="boton" onclick="abrirHistorial('${doc.id}')">📜 Historial</button>
+              <button class="boton" onclick="registrarVenta('${doc.id}')">💰 Venta</button>
+            </div>
+          `;
+        });
+        document.getElementById("clientes").innerHTML = html;
+      });
+    }
+    cargarClientes();
+
+    // 📌 Nuevo Cliente
+    function nuevoCliente() {
+      let nombre = prompt("Nombre del cliente:");
+      let telefono = prompt("Teléfono:");
+      if (nombre && telefono) {
+        db.collection("clientes").add({ nombre, telefono, historial: [] });
+      }
+    }
+
+    // 📌 Abrir historial
+    async function abrirHistorial(clienteId) {
+      const cliente = await db.collection("clientes").doc(clienteId).get();
+      let data = cliente.data();
+      let historialHtml = "";
+      (data.historial || []).forEach(h => {
+        historialHtml += `<p>${h.fecha.toDate().toLocaleString()} - ${h.tipo}: ${h.producto} (${h.cantidad}) - Total: ₡${h.total}</p>`;
+      });
+      document.getElementById("historial").innerHTML = historialHtml || "<p>Sin movimientos.</p>";
+      document.getElementById("modal-historial").style.display = "flex";
+    }
+
+    function cerrarModal() {
+      document.getElementById("modal-historial").style.display = "none";
+    }
+
+    // 📌 Registrar Venta (con actualización en stock)
+    async function registrarVenta(clienteId) {
+      const productoId = prompt("ID del producto:");
+      const cantidadVendida = parseInt(prompt("Cantidad vendida:"));
+      if (!productoId || isNaN(cantidadVendida)) return;
+
+      const stockRef = db.collection("stock").doc(productoId);
+      const clienteRef = db.collection("clientes").doc(clienteId);
+
+      try {
+        await db.runTransaction(async (transaction) => {
+          const stockDoc = await transaction.get(stockRef);
+          if (!stockDoc.exists) throw "El producto no existe en inventario.";
+
+          const stockActual = stockDoc.data().cantidad;
+          if (stockActual < cantidadVendida) throw "Stock insuficiente.";
+
+          const precioUnitario = stockDoc.data().precio || 0;
+
+          // Descontar stock
+          transaction.update(stockRef, { cantidad: stockActual - cantidadVendida });
+
+          // Guardar venta en historial cliente
+          transaction.update(clienteRef, {
+            historial: firebase.firestore.FieldValue.arrayUnion({
+              tipo: "venta",
+              producto: productoId,
+              cantidad: cantidadVendida,
+              precioUnitario,
+              total: cantidadVendida * precioUnitario,
+              fecha: new Date()
+            })
+          });
+        });
+
+        alert("✅ Venta registrada y stock actualizado.");
+      } catch (e) {
+        alert("❌ Error: " + e);
+        console.error(e);
+      }
+    }
+  </script>
+</body>
+</html>
