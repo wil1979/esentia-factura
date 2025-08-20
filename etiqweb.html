@@ -21,7 +21,6 @@
       border: 1px solid #aaa;
       background-size: cover;
       background-position: center;
-      
       margin-top: 1rem;
     }
     .etiqueta img.producto {
@@ -60,14 +59,19 @@
   <label><input type="checkbox" id="mostrarNombre" checked> Mostrar nombre</label>
   <br><br>
   <button id="generarTodos">Generar todas las etiquetas</button>
+  <button id="guardarTodas">Guardar todas en PNG</button>
 </div>
 
 <div id="contenedorEtiquetas"></div>
+
+<!-- Librería html2canvas -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <script>
   const selectProducto = document.getElementById('producto');
   const contenedor = document.getElementById('contenedorEtiquetas');
   const botonGenerarTodos = document.getElementById('generarTodos');
+  const botonGuardarTodas = document.getElementById('guardarTodas');
 
   let productos = [];
 
@@ -99,6 +103,18 @@
     });
   });
 
+  botonGuardarTodas.addEventListener('click', () => {
+    const etiquetas = document.querySelectorAll('.etiqueta');
+    etiquetas.forEach((etiqueta, index) => {
+      html2canvas(etiqueta).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `etiqueta_${index + 1}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    });
+  });
+
   function mostrarProducto(index) {
     contenedor.innerHTML = ''; // Limpiar
     const prod = productos[index];
@@ -110,8 +126,6 @@
     etiqueta.className = 'etiqueta';
     etiqueta.style.backgroundImage = "url('../etiqueta/defaul.png')";
 
-   
-
     if (document.getElementById('mostrarImagen').checked) {
       const img = document.createElement('img');
       img.src = prod.imagen;
@@ -119,7 +133,7 @@
       etiqueta.appendChild(img);
     }
 
-     if (document.getElementById('mostrarLogo').checked) {
+    if (document.getElementById('mostrarLogo').checked) {
       const logo = document.createElement('img');
       logo.src = 'images/logo.png';
       logo.className = 'logo';
