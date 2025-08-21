@@ -1,72 +1,309 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Esentia Créditos</title>
   <style>
-    body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin:20px; background:#f3f2f7; color:#333; }
-    h1 { color:#6c4ba3; text-align:center; }
-    .cliente { border:1px solid #ddd; border-radius:10px; padding:12px; margin-bottom:12px; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.1); transition:transform .2s; }
-    .cliente:hover { transform:scale(1.01); }
-    .botones-derecha { display:flex; flex-wrap:wrap; gap:.5rem; justify-content:flex-end; margin-top:.5rem; }
-    .boton-accion { padding:6px 10px; font-size:.85rem; border:none; background:#6c4ba3; color:#fff; border-radius:6px; cursor:pointer; transition:background .2s; flex:1 1 auto; min-width:fit-content; }
-    .boton-accion:hover { background:#573993; }
-    #seccion-productos { display:none; margin-top:20px; padding:15px; background:#fff; border-radius:10px; border:1px solid #ddd; box-shadow:0 2px 4px rgba(0,0,0,.1); }
-    input, select { padding:8px; margin-right:8px; border-radius:6px; border:1px solid #ccc; font-size:1rem; }
-    button { font-family:inherit; }
-    .editar-cliente { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
-    .editar-cliente input { flex:1; min-width:150px; }
 
-    /* Historial */
-    .historial-compras { margin-top:10px; padding:10px; background:#f9f9f9; border-radius:6px; font-size:.9rem; border:1px dashed #ccc; }
-    .historial-compras h4 { margin:0 0 10px 0; color:#555; }
-    .historial-compras ul { list-style:none; padding:0; }
-    .historial-compras li { margin-bottom:12px; padding:8px; border-bottom:1px solid #eee; }
+     .scroll-buttons {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 999;
+    }
+    
+    .scroll-btn {
+      padding: 15px 20px;
+      border: none;
+      border-radius: 25px;
+      background: #2196F3;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
 
-    /* Reportes */
-    #seccion-reportes { margin-top:30px; padding:20px; background:#fff; border-radius:10px; border:1px solid #ddd; box-shadow:0 2px 4px rgba(0,0,0,.1); }
-    .filtros-reportes { display:flex; flex-wrap:wrap; gap:15px; margin-bottom:20px; align-items:end; }
-    .filtro-item { display:flex; flex-direction:column; }
-    .filtro-item label { font-weight:bold; margin-bottom:5px; color:#6c4ba3; }
-    .tabla-reportes { width:100%; border-collapse:collapse; margin-top:20px; }
-    .tabla-reportes th, .tabla-reportes td { border:1px solid #ddd; padding:12px; text-align:left; }
-    .tabla-reportes th { background:#6c4ba3; color:#fff; }
-    .tabla-reportes tr:nth-child(even){ background:#f9f9f9; }
-    .tabla-reportes tr:hover{ background:#f5f5f5; }
-    .deuda-alta{ color:#d32f2f; font-weight:bold; }
-    .deuda-media{ color:#f57c00; font-weight:bold; }
-    .deuda-baja{ color:#388e3c; font-weight:bold; }
-
-    /* Modales */
-    #modal-impresion, #modal-historial { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.7); z-index:1000; justify-content:center; align-items:center; }
-    #modal-impresion>div, #modal-historial>div { background:#fff; width:90%; max-width:1000px; border-radius:10px; padding:20px; max-height:90vh; overflow-y:auto; }
-
+    .scroll-btn:hover {
+      background: #1976D2;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 8px rgba(0,0,0,0.2);
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 20px;
+      background-color: #f3f2f7;
+      color: #333;
+    }
+    h1 {
+      color: #6c4ba3;
+      text-align: center;
+    }
+    .cliente {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s;
+    }
+    .cliente:hover {
+      transform: scale(1.01);
+    }
+    .botones-derecha {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      margin-top: 0.5rem;
+    }
+    .boton-accion {
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      border: none;
+      background: #6c4ba3;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex: 1 1 auto;
+      min-width: fit-content;
+    }
+    .boton-accion:hover {
+      background-color: #573993;
+    }
+    /* Historial de compras */
+    .historial-compras {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f9f9f9;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      border: 1px dashed #ccc;
+    }
+    .historial-compras h4 {
+      margin: 0 0 10px 0;
+      color: #555;
+    }
+    .historial-compras ul {
+      list-style: none;
+      padding: 0;
+    }
+    .historial-compras li {
+      margin-bottom: 12px;
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    /* Sección de reportes */
+    #seccion-reportes {
+      margin-top: 30px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .filtros-reportes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+      align-items: end;
+    }
+    .filtro-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .filtro-item label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #6c4ba3;
+    }
+    .tabla-reportes {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    .tabla-reportes th, .tabla-reportes td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+    .tabla-reportes th {
+      background-color: #6c4ba3;
+      color: white;
+    }
+    .tabla-reportes tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .tabla-reportes tr:hover {
+      background-color: #f5f5f5;
+    }
+    .deuda-alta {
+      color: #d32f2f;
+      font-weight: bold;
+    }
+    .deuda-media {
+      color: #f57c00;
+      font-weight: bold;
+    }
+    .deuda-baja {
+      color: #388e3c;
+      font-weight: bold;
+    }
+    /* Modal de productos */
+    #modal-productos {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    #modal-productos > div {
+      background: white;
+      width: 90%;
+      max-width: 800px;
+      border-radius: 10px;
+      padding: 20px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .producto-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      margin-bottom: 5px;
+    }
+    .producto-info {
+      flex: 1;
+    }
+    .producto-cantidad {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: 20px;
+    }
+    .cantidad-control {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-cantidad {
+      width: 30px;
+      height: 30px;
+      border: 1px solid #ddd;
+      background: #f9f9f9;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .cantidad-display {
+      width: 50px;
+      text-align: center;
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .resumen-total {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    .acciones-modal {
+      margin-top: 20px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .precio-personalizado {
+      width: 100px;
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-left: 10px;
+    }
+    /* Modal de impresión */
+    #modal-impresion, #modal-historial {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    #modal-impresion > div, #modal-historial > div {
+      background: white;
+      width: 90%;
+      max-width: 1000px;
+      border-radius: 10px;
+      padding: 20px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
     /* Responsive */
-    @media (max-width:480px){
-      .botones-derecha{ flex-direction:column; }
-      .boton-accion{ width:100%; margin-left:0; margin-bottom:5px; }
-      .editar-cliente{ flex-direction:column; }
-      .filtros-reportes{ flex-direction:column; }
-      .historial-compras details{ margin-top:10px; border:1px solid #ddd; border-radius:4px; padding:8px; }
-      .historial-compras summary{ cursor:pointer; list-style:none; padding:5px; }
-      .historial-compras summary::-webkit-details-marker{ display:none; }
-      .historial-compras summary h4{ margin:0; display:inline; color:#2c3e50; }
+    @media (max-width: 480px) {
+      .botones-derecha {
+        flex-direction: column;
+      }
+      .boton-accion {
+        width: 100%;
+        margin-left: 0;
+        margin-bottom: 5px;
+      }
+      .editar-cliente {
+        flex-direction: column;
+      }
+      .filtros-reportes {
+        flex-direction: column;
+      }
+      .producto-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .producto-cantidad {
+        margin-top: 10px;
+        margin-left: 0;
+      }
+     
+
     }
   </style>
 </head>
 <body>
+
+  <div class="scroll-buttons">
+    <button class="scroll-btn" onclick="scrollToTop()">↑</button>
+    <button class="scroll-btn" onclick="scrollToBottom()">↓</button>
+  </div>
+  
   <h1>📋 Esentia - Registro de Créditos</h1>
-
   <h2>👥 Clientes</h2>
-  <input type="text" id="filtro-clientes" placeholder="🔎 Buscar cliente por nombre..." style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc; font-size:1rem;">
-  <div id="clientes"></div> <!-- ✅ Único contenedor de clientes -->
-
+  <input type="text" id="filtro-clientes" placeholder="🔎 Buscar cliente por nombre..." style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
+  <div id="clientes"></div>
   <h2>➕ Nuevo Cliente</h2>
   <input id="nombre" placeholder="Nombre completo">
   <input id="telefono" placeholder="Teléfono con código (ej: 88889999)">
   <button onclick="agregarCliente()">Agregar Cliente</button>
-  <hr>
+  <hr>  
 
+   
+
+  <h2>👥 Clientes</h2>
+  <div id="clientes"></div>
   <!-- Sección de Reportes -->
   <div id="seccion-reportes">
     <h2>📊 Reporte General de Clientes</h2>
@@ -93,52 +330,57 @@
         </select>
       </div>
       <div class="filtro-item">
-        <button class="boton-accion" onclick="generarReporte()" style="margin-top:22px;">🔍 Filtrar</button>
+        <button class="boton-accion" onclick="generarReporte()" style="margin-top: 22px;">🔍 Filtrar</button>
       </div>
       <div class="filtro-item">
-        <button class="boton-accion" onclick="abrirModalImpresion()" style="margin-top:22px;">🖨️ Imprimir</button>
+        <button class="boton-accion" onclick="abrirModalImpresion()" style="margin-top: 22px;">🖨️ Imprimir</button>
       </div>
     </div>
     <div id="resultados-reportes">
       <p>Haz clic en "Filtrar" para generar el reporte.</p>
     </div>
   </div>
-
-  <!-- Template para productos en carrito (✅ ahora con cantidad) -->
-  <template id="producto-template">
-    <div class="producto-seleccionado" style="margin-bottom:10px; padding:10px; border:1px solid #eee; border-radius:8px;">
-      <strong class="producto-nombre"></strong><br>
-      <select class="presentacion"></select>
-      <select class="aroma"></select>
-      <input type="number" class="cantidad" min="1" value="1" style="width:80px;" />
-      <button class="quitar-producto">❌ Quitar</button>
-      <br><br>
-    </div>
-  </template>
-
-  <!-- Sección de compra -->
-  <div id="seccion-productos" style="display:none; border:1px solid #ccc; padding:1rem; margin-top:2rem; border-radius:10px;">
-    <h3>🛍️ Agregar productos desde catálogo</h3>
-    <select id="select-producto"></select>
-    <button onclick="agregarAlCarrito()">Agregar</button>
-    <div id="carrito" style="margin-top:1rem;"></div>
+  <!-- Modal de productos -->
+  <div id="modal-productos">
     <div>
-      <label for="descuento">Descuento: ₡</label>
-      <input type="number" id="descuento" value="0" min="0">
+      <h2>🛍️ Agregar Productos al Cliente</h2>
+      <div style="margin-bottom: 20px;">
+        <label for="select-producto">Seleccionar producto:</label>
+        <select id="select-producto"></select>
+        <button onclick="agregarAlCarritoModal()" style="margin-left: 10px;">Agregar</button>
+      </div>
+      <div id="carrito-modal"></div>
+      <div style="margin: 15px 0;">
+        <label for="descuento">Descuento: ₡</label>
+        <input type="number" id="descuento" value="0" min="0">
+      </div>
+      <div class="resumen-total">
+        <span>Total:</span>
+        <span>₡<span id="total-compra">0</span></span>
+      </div>
+      <div class="acciones-modal">
+        <button class="boton-accion" onclick="cerrarModalProductos()" style="background: #666;">❌ Cancelar</button>
+        <button class="boton-accion" onclick="guardarCompraDesdeCarrito()">Guardar Compra</button>
+      </div>
     </div>
-    <strong>Total ₡<span id="total-compra">0</span></strong>
-    <br><br>
-    <button onclick="guardarCompraDesdeCarrito()">Guardar Compra</button>
   </div>
-
   <!-- Modal de impresión del reporte -->
   <div id="modal-impresion">
     <div>
       <h2>🖨️ Imprimir Reporte</h2>
-      <div class="filtros-reportes" style="margin-bottom:20px;">
-        <div class="filtro-item"><label for="filtro-nombre-modal">Nombre:</label><input type="text" id="filtro-nombre-modal" placeholder="Buscar por nombre"></div>
-        <div class="filtro-item"><label for="filtro-deuda-min-modal">Deuda Mínima:</label><input type="number" id="filtro-deuda-min-modal" placeholder="₡0" min="0"></div>
-        <div class="filtro-item"><label for="filtro-deuda-max-modal">Deuda Máxima:</label><input type="number" id="filtro-deuda-max-modal" placeholder="Sin límite" min="0"></div>
+      <div class="filtros-reportes" style="margin-bottom: 20px;">
+        <div class="filtro-item">
+          <label for="filtro-nombre-modal">Nombre:</label>
+          <input type="text" id="filtro-nombre-modal" placeholder="Buscar por nombre">
+        </div>
+        <div class="filtro-item">
+          <label for="filtro-deuda-min-modal">Deuda Mínima:</label>
+          <input type="number" id="filtro-deuda-min-modal" placeholder="₡0" min="0">
+        </div>
+        <div class="filtro-item">
+          <label for="filtro-deuda-max-modal">Deuda Máxima:</label>
+          <input type="number" id="filtro-deuda-max-modal" placeholder="Sin límite" min="0">
+        </div>
         <div class="filtro-item">
           <label for="filtro-orden-modal">Ordenar por:</label>
           <select id="filtro-orden-modal">
@@ -148,36 +390,34 @@
             <option value="deuda-asc">Deuda (Menor a Mayor)</option>
           </select>
         </div>
-        <div class="filtro-item"><button class="boton-accion" onclick="generarReporteModal()">🔍 Filtrar</button></div>
+        <div class="filtro-item">
+          <button class="boton-accion" onclick="generarReporteModal()">🔍 Filtrar</button>
+        </div>
       </div>
-      <div id="resultado-modal" style="margin-top:20px;"><p>Haz clic en "Filtrar" para ver los resultados.</p></div>
-      <div style="display:flex; gap:10px; margin-top:20px; justify-content:flex-end;">
+      <div id="resultado-modal" style="margin-top: 20px;">
+        <p>Haz clic en "Filtrar" para ver los resultados.</p>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
         <button class="boton-accion" onclick="cerrarModalImpresion()">❌ Cerrar</button>
         <button class="boton-accion" onclick="imprimirModal()">🖨️ Imprimir</button>
       </div>
     </div>
   </div>
-
   <!-- Modal de historial individual -->
   <div id="modal-historial">
     <div>
       <h2>📋 Historial de Compras</h2>
       <div id="contenido-historial"></div>
-      <div style="display:flex; gap:10px; margin-top:20px; justify-content:flex-end;">
+      <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
         <button class="boton-accion" onclick="cerrarModalHistorial()">❌ Cerrar</button>
         <button class="boton-accion" onclick="imprimirModalHistorial()">🖨️ Imprimir</button>
       </div>
     </div>
   </div>
-
   <!-- Firebase y lógica -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import {
-      getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc,
-      query, where, runTransaction
-    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-
+    import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
     const firebaseConfig = {
       apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
       authDomain: "esentiacreditos-8345f.firebaseapp.com",
@@ -186,19 +426,23 @@
       messagingSenderId: "888658236080",
       appId: "1:888658236080:web:506e5e2085b5a452dba175"
     };
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const clientesRef = collection(db, "clientes");
-    const stockRef = collection(db, "stock");
-
     // ✅ Agregar cliente
     async function agregarCliente() {
       const nombre = document.getElementById("nombre").value.trim();
       const telefono = document.getElementById("telefono").value.trim();
-      if (!nombre || !telefono) { alert("⚠️ Completa ambos campos."); return; }
+      if (!nombre || !telefono) {
+        alert("⚠️ Completa ambos campos.");
+        return;
+      }
       try {
-        await addDoc(clientesRef, { nombre, telefono, compras: [] });
+        await addDoc(clientesRef, {
+          nombre,
+          telefono,
+          compras: []
+        });
         alert("✅ Cliente agregado exitosamente.");
         document.getElementById("nombre").value = "";
         document.getElementById("telefono").value = "";
@@ -209,115 +453,114 @@
       }
     }
 
-    // ✅ Cargar clientes con filtro en tiempo real
-    async function cargarClientes() {
-      const cont = document.getElementById("clientes");
-      const filtroInput = document.getElementById("filtro-clientes");
 
-      const renderizarClientes = async () => {
-        cont.innerHTML = "";
-        const snapshot = await getDocs(clientesRef);
-        const filtroTexto = (filtroInput.value || "").toLowerCase().trim();
+    
 
-        snapshot.forEach(docSnap => {
-          const cliente = docSnap.data();
-          const id = docSnap.id;
-
-          // Filtrar por nombre
-          if (!cliente.nombre?.toLowerCase().includes(filtroTexto)) return;
-
-          let totalPendiente = 0;
-          const compras = cliente.compras || [];
-          compras.forEach(c => {
-            const totalCompra = (c.monto || 0) - (c.descuento || 0);
-            totalPendiente += totalCompra - (c.pagado || 0);
-          });
-
-          const div = document.createElement("div");
-          div.className = "cliente";
-          div.innerHTML = `
-            <details>
-              <summary><strong>${cliente.nombre}</strong></summary>
-              📞 <a href="https://wa.me/${cliente.telefono}" target="_blank" title="${cliente.telefono}">${ocultarTelefono(cliente.telefono)}</a><br>
-              💸 Pendiente: ₡${totalPendiente.toLocaleString()}<br>
-              <div class="editar-cliente" id="editar-${id}" style="display:none;">
-                <input type="text" id="edit-nombre-${id}" value="${cliente.nombre || ''}">
-                <input type="text" id="edit-telefono-${id}" value="${cliente.telefono || ''}">
-                <button class="boton-accion" onclick="guardarEdicion('${id}')">💾 Guardar</button>
-                <button class="boton-accion" onclick="cancelarEdicion('${id}')">❌ Cancelar</button>
-              </div>
-              <div class="botones-derecha">
-                <button class="boton-accion" onclick="editarCliente('${id}')">✏️ Editar</button>
-                <button class="boton-accion" onclick="mostrarAgregarCompra('${id}')">➕ Productos</button>
-                <button class="boton-accion" onclick="registrarPago('${id}', '${cliente.nombre || ''}')">💰 Pago</button>
-                <button class="boton-accion" onclick="abrirModalHistorial('${id}', '${cliente.nombre || ''}')">🖨️ Imprimir</button>
-                <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono || ''}', '${cliente.nombre || ''}', ${totalPendiente})">📲 WhatsApp</button>
-                <button class="boton-accion" onclick="eliminarCliente('${id}', '${cliente.nombre || ''}')">🗑️ Eliminar</button>
-              </div>
-            </details>
-          `;
-          cont.appendChild(div);
-
-          // Historial
-          if (compras.length > 0) {
-            const historial = document.createElement("div");
-            historial.className = "historial-compras";
-            let html = `
-              <details>
-                <summary><h4 style="display:inline;">🛒 Historial de Compras (${compras.length})</h4></summary>
-                <ul>`;
-            compras.forEach((compra, index) => {
-              const total = (compra.monto || 0) - (compra.descuento || 0);
-              const saldo = total - (compra.pagado || 0);
-              html += `
-                <li>
-                  <strong>📅 ${compra.fecha}</strong> |
-                  Total: ₡${total.toLocaleString()} |
-                  Pagado: ₡${(compra.pagado || 0).toLocaleString()} |
-                  Saldo: ₡${saldo.toLocaleString()}
-                  <br>
-                  <small><strong>Productos:</strong>
-                    ${
-                      compra.productos?.map(p =>
-                        `${p.nombre} (${p.presentacion || ''}${p.aroma ? ' - ' + p.aroma : ''}) x${p.cantidad || 1}`
-                      ).join(', ') || 'Sin productos'
-                    }
-                  </small><br>
-                  <button class="boton-accion" style="padding:3px 6px; font-size:.75rem; margin-top:5px;"
-                          onclick="editarCompra('${id}', ${index})">✏️ Editar</button>
-                  <button class="boton-accion" style="padding:3px 6px; font-size:.75rem; margin-top:5px; background:#d32f2f;"
-                          onclick="eliminarCompra('${id}', ${index})">🗑️ Eliminar</button>
-                </li>`;
-            });
-            html += `</ul></details>`;
-            historial.innerHTML = html;
-            div.appendChild(historial);
-          }
+   // ✅ Cargar clientes con filtro en tiempo real
+async function cargarClientes() {
+  const cont = document.getElementById("clientes");
+  const filtroInput = document.getElementById("filtro-clientes");
+  // Función asíncrona para renderizar
+  const renderizarClientes = async () => {
+    cont.innerHTML = "";
+    const snapshot = await getDocs(clientesRef); // ✅ Ahora sí: esperamos los datos
+    const filtroTexto = filtroInput.value.toLowerCase().trim();
+    snapshot.forEach(docSnap => {
+      const cliente = docSnap.data();
+      const id = docSnap.id;
+      // Filtrar por nombre
+      if (!cliente.nombre.toLowerCase().includes(filtroTexto)) {
+        return;
+      }
+      let totalPendiente = 0;
+      const compras = cliente.compras || [];
+      compras.forEach(c => {
+        const totalCompra = (c.monto || 0) - (c.descuento || 0);
+        totalPendiente += totalCompra - (c.pagado || 0);
+      });
+      const div = document.createElement("div");
+      div.className = "cliente";
+      div.innerHTML = `
+        <strong>${cliente.nombre}</strong><br>
+        📞 <a href="https://wa.me/${cliente.telefono}" target="_blank" title="${cliente.telefono}">${ocultarTelefono(cliente.telefono)}</a><br>
+        💸 Pendiente: ₡${totalPendiente.toLocaleString()}<br>
+        <div class="editar-cliente" id="editar-${id}" style="display:none;">
+          <input type="text" id="edit-nombre-${id}" value="${cliente.nombre}">
+          <input type="text" id="edit-telefono-${id}" value="${cliente.telefono}">
+          <button class="boton-accion" onclick="guardarEdicion('${id}')">💾 Guardar</button>
+          <button class="boton-accion" onclick="cancelarEdicion('${id}')">❌ Cancelar</button>
+        </div>
+        <div class="botones-derecha">
+          <button class="boton-accion" onclick="editarCliente('${id}')">✏️ Editar</button>
+          <button class="boton-accion" onclick="abrirModalProductos('${id}')">➕ Productos</button>
+          <button class="boton-accion" onclick="registrarPago('${id}', '${cliente.nombre}')">💰 Pago</button>
+          <button class="boton-accion" onclick="abrirModalHistorial('${id}', '${cliente.nombre}')">🖨️ Imprimir</button>
+          <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${totalPendiente})">📲 WhatsApp</button>
+          <button class="boton-accion" onclick="eliminarCliente('${id}', '${cliente.nombre}')">🗑️ Eliminar</button>
+        </div>
+      `;
+      cont.appendChild(div);
+      // ✅ Mostrar historial de compras
+      if (compras.length > 0) {
+        const historial = document.createElement("div");
+        historial.className = "historial-compras";
+        let html = "<h4>🛒 Historial de Compras:</h4><ul>";
+        compras.forEach((compra, index) => {
+          const total = (compra.monto || 0) - (compra.descuento || 0);
+          const saldo = total - (compra.pagado || 0);
+          html += `
+            <li>
+              <strong>📅 ${compra.fecha}</strong> | 
+              Total: ₡${total.toLocaleString()} | 
+              Pagado: ₡${(compra.pagado || 0).toLocaleString()} | 
+              Saldo: ₡${saldo.toLocaleString()}
+              <br>
+              <small><strong>Productos:</strong> 
+                ${compra.productos?.map(p => `${p.cantidad}x ${p.nombre} (${p.presentacion || ''}${p.aroma ? ' - ' + p.aroma : ''})`).join(', ') || 'Sin productos'}
+              </small><br>
+              <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px;" 
+                      onclick="editarCompra('${id}', ${index})">
+                ✏️ Editar
+              </button>
+              <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px; background: #d32f2f;" 
+                      onclick="eliminarCompra('${id}', ${index})">
+                🗑️ Eliminar
+              </button>
+            </li>`;
         });
-      };
-
-      await renderizarClientes();
-      filtroInput.addEventListener("input", renderizarClientes);
-    }
-
+        html += "</ul>";
+        historial.innerHTML = html;
+        div.appendChild(historial);
+      }
+    });
+  };
+  // Cargar los clientes al inicio
+  await renderizarClientes(); // ✅ Llamada inicial
+  // Escuchar cambios en el filtro
+  filtroInput.addEventListener("input", renderizarClientes);
+}
     // ✅ Editar cliente
     function editarCliente(clienteId) {
       document.querySelectorAll('.editar-cliente').forEach(div => div.style.display = 'none');
       document.getElementById(`editar-${clienteId}`).style.display = 'flex';
     }
-
+    // ✅ Guardar edición con validación de teléfono
     async function guardarEdicion(clienteId) {
       const nuevoNombre = document.getElementById(`edit-nombre-${clienteId}`).value.trim();
       let nuevoTelefono = document.getElementById(`edit-telefono-${clienteId}`).value.trim();
-      if (!nuevoNombre) { alert("⚠️ Completa el nombre."); return; }
-
+      if (!nuevoNombre) {
+        alert("⚠️ Completa el nombre.");
+        return;
+      }
       const telefonoLimpio = nuevoTelefono.replace(/\D/g, '');
       if (!telefonoLimpio || telefonoLimpio === "00000000" || telefonoLimpio.length < 8) {
         const nuevo = prompt("El número no es válido. Ingresa un número de teléfono válido (8 dígitos):");
-        if (!nuevo) { alert("Se requiere un número válido."); return; }
+        if (!nuevo) {
+          alert("Se requiere un número válido.");
+          return;
+        }
         nuevoTelefono = nuevo;
       }
-
       try {
         const clienteDoc = doc(db, "clientes", clienteId);
         await updateDoc(clienteDoc, { nombre: nuevoNombre, telefono: nuevoTelefono });
@@ -328,11 +571,9 @@
         console.error("Error:", error);
       }
     }
-
     function cancelarEdicion(clienteId) {
       document.getElementById(`editar-${clienteId}`).style.display = 'none';
     }
-
     // ✅ Eliminar cliente
     async function eliminarCliente(clienteId, nombre) {
       if (!confirm(`¿Eliminar a ${nombre}? Esta acción no se puede deshacer.`)) return;
@@ -345,37 +586,35 @@
         console.error(error);
       }
     }
-
     // ✅ Editar compra
     window.editarCompra = async function(clienteId, index) {
       const clienteDoc = doc(db, "clientes", clienteId);
       const docSnap = await getDoc(clienteDoc);
       if (!docSnap.exists()) return;
-
       const cliente = docSnap.data();
       const compras = cliente.compras || [];
       const compra = compras[index];
       if (!compra) return;
-
       const nuevoMonto = prompt("Editar monto total:", compra.monto);
       const nuevoDescuento = prompt("Editar descuento:", compra.descuento || 0);
       const nuevoPagado = prompt("Editar pago:", compra.pagado || 0);
-
       if ([nuevoMonto, nuevoDescuento, nuevoPagado].some(v => v === null)) return;
-
       const monto = parseFloat(nuevoMonto);
       const descuento = parseFloat(nuevoDescuento);
       const pagado = parseFloat(nuevoPagado);
-
-      if (isNaN(monto) || isNaN(descuento) || isNaN(pagado)) { alert("⚠️ Todos los valores deben ser números."); return; }
-      if (pagado > monto - descuento) { alert("⚠️ El pago no puede superar el total."); return; }
-
+      if (isNaN(monto) || isNaN(descuento) || isNaN(pagado)) {
+        alert("⚠️ Todos los valores deben ser números.");
+        return;
+      }
+      if (pagado > monto - descuento) {
+        alert("⚠️ El pago no puede superar el total.");
+        return;
+      }
       compras[index] = { ...compra, monto, descuento, pagado };
       await updateDoc(clienteDoc, { compras });
       alert("✅ Compra actualizada.");
       await cargarClientes();
     };
-
     // ✅ Eliminar compra
     window.eliminarCompra = async function(clienteId, index) {
       if (!confirm("¿Eliminar esta compra?")) return;
@@ -388,47 +627,51 @@
       alert("✅ Compra eliminada.");
       await cargarClientes();
     };
-
     // ✅ Registrar pago
-    window.registrarPago = async function(clienteId) {
-      const clienteDoc = doc(db, "clientes", clienteId);
-      const docSnap = await getDoc(clienteDoc);
-      if (!docSnap.exists()) return;
-
-      const cliente = docSnap.data();
-      const compras = cliente.compras || [];
+    window.registrarPago = async function(clienteId, nombre) {
+      const snap = await getDocs(clientesRef);
+      let clienteData = null;
+      snap.forEach(docSnap => {
+        if (docSnap.id === clienteId) {
+          clienteData = docSnap.data();
+        }
+      });
+      if (!clienteData) return;
+      const compras = clienteData.compras || [];
       const ultimaPendienteIndex = [...compras].reverse().findIndex(c => {
         const total = (c.monto || 0) - (c.descuento || 0);
         return total > (c.pagado || 0);
       });
-
-      if (ultimaPendienteIndex === -1) { alert("🎉 No hay pagos pendientes."); return; }
-
+      if (ultimaPendienteIndex === -1) {
+        alert("🎉 No hay pagos pendientes.");
+        return;
+      }
       const indexReal = compras.length - 1 - ultimaPendienteIndex;
       const compra = compras[indexReal];
       const total = (compra.monto || 0) - (compra.descuento || 0);
       const saldo = total - (compra.pagado || 0);
-      const pago = prompt(`Saldo: ₡${saldo}\nMonto a pagar:`);
+      const pago = prompt(`Saldo: ₡${saldo}
+Monto a pagar:`);
       if (!pago) return;
       const pagoNum = parseFloat(pago);
-      if (isNaN(pagoNum) || pagoNum <= 0) { alert("⚠️ Monto inválido."); return; }
-
+      if (isNaN(pagoNum) || pagoNum <= 0) {
+        alert("⚠️ Monto inválido.");
+        return;
+      }
       compra.pagado = Math.min((compra.pagado || 0) + pagoNum, total);
       compras[indexReal] = compra;
-      await updateDoc(clienteDoc, { compras });
+      await updateDoc(doc(db, "clientes", clienteId), { compras });
       alert("✅ Pago registrado.");
       await cargarClientes();
     };
-
-    // ✅ WhatsApp
+    // ✅ Enviar WhatsApp
     function enviarWhatsApp(telefono, nombre, deuda) {
-      const limpio = (telefono || "").replace(/\D/g, '');
-      const mensaje = `Hola ${nombre}, tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia 💜`;
+      const limpio = telefono.replace(/\D/g, '');
+      const mensaje = `Hola ${nombre}, Agradecemos tu preferencia y queremos comentarte que tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia llenando tu vida de fragancias que enamoran. 💜`;
       const url = `https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`;
       window.open(url, "_blank");
     }
-
-    // ✅ Reportes (igual que antes)
+    // ✅ Reportes
     async function generarReporte() {
       const cont = document.getElementById("resultados-reportes");
       cont.innerHTML = "<p>Generando...</p>";
@@ -448,37 +691,48 @@
           id: docSnap.id,
           nombre: c.nombre,
           telefono: c.telefono,
-          totalCompras, totalPagado, totalDescuentos, totalPendiente
+          totalCompras,
+          totalPagado,
+          totalDescuentos,
+          totalPendiente
         });
       });
-
-      const filtroNombre = (document.getElementById("filtro-nombre").value || "").toLowerCase();
+      const filtroNombre = document.getElementById("filtro-nombre").value.toLowerCase();
       const min = parseFloat(document.getElementById("filtro-deuda-min").value) || 0;
       const max = parseFloat(document.getElementById("filtro-deuda-max").value) || Infinity;
       const orden = document.getElementById("filtro-orden").value;
-
-      clientes = clientes.filter(cli =>
-        cli.nombre?.toLowerCase().includes(filtroNombre) &&
-        cli.totalPendiente >= min && cli.totalPendiente <= max
-      );
-
-      if (orden === "nombre-asc") clientes.sort((a,b)=>a.nombre.localeCompare(b.nombre));
-      if (orden === "nombre-desc") clientes.sort((a,b)=>b.nombre.localeCompare(a.nombre));
-      if (orden === "deuda-desc") clientes.sort((a,b)=>b.totalPendiente - a.totalPendiente);
-      if (orden === "deuda-asc") clientes.sort((a,b)=>a.totalPendiente - b.totalPendiente);
-
-      if (clientes.length === 0) { cont.innerHTML = "<p>No se encontraron clientes.</p>"; return; }
-
-      let totalGeneral=0, totalPagadoGen=0, totalPendienteGen=0;
+      clientes = clientes.filter(cli => {
+        return cli.nombre.toLowerCase().includes(filtroNombre) &&
+               cli.totalPendiente >= min &&
+               cli.totalPendiente <= max;
+      });
+      if (orden === "nombre-asc") clientes.sort((a, b) => a.nombre.localeCompare(b.nombre));
+      if (orden === "nombre-desc") clientes.sort((a, b) => b.nombre.localeCompare(a.nombre));
+      if (orden === "deuda-desc") clientes.sort((a, b) => b.totalPendiente - a.totalPendiente);
+      if (orden === "deuda-asc") clientes.sort((a, b) => a.totalPendiente - b.totalPendiente);
+      if (clientes.length === 0) {
+        cont.innerHTML = "<p>No se encontraron clientes.</p>";
+        return;
+      }
+      let totalGeneral = 0, totalPagadoGen = 0, totalPendienteGen = 0;
       let tabla = `
         <table class="tabla-reportes">
           <thead>
             <tr>
-              <th>Nombre</th><th>Teléfono</th><th>Total Compras</th><th>Total Pagado</th><th>Descuentos</th><th>Saldo</th>
+              <th>Nombre</th>
+              <th>Teléfono</th>
+              <th>Total Compras</th>
+              <th>Total Pagado</th>
+              <th>Descuentos</th>
+              <th>Saldo</th>
             </tr>
-          </thead><tbody>`;
+          </thead>
+          <tbody>
+      `;
       clientes.forEach(cli => {
-        totalGeneral += cli.totalCompras; totalPagadoGen += cli.totalPagado; totalPendienteGen += cli.totalPendiente;
+        totalGeneral += cli.totalCompras;
+        totalPagadoGen += cli.totalPagado;
+        totalPendienteGen += cli.totalPendiente;
         const clase = cli.totalPendiente > 5000 ? "deuda-alta" : cli.totalPendiente > 2000 ? "deuda-media" : "deuda-baja";
         tabla += `
           <tr>
@@ -488,7 +742,8 @@
             <td>₡${cli.totalPagado.toLocaleString()}</td>
             <td>₡${cli.totalDescuentos.toLocaleString()}</td>
             <td class="${clase}">₡${cli.totalPendiente.toLocaleString()}</td>
-          </tr>`;
+          </tr>
+        `;
       });
       tabla += `</tbody></table>
         <div style="margin-top:20px; padding:15px; background:#f5f5f5; border-radius:5px;">
@@ -499,7 +754,7 @@
         </div>`;
       cont.innerHTML = tabla;
     }
-
+    // === IMPRESIÓN MODAL DEL REPORTE ===
     function abrirModalImpresion() {
       document.getElementById("modal-impresion").style.display = "flex";
       document.getElementById("filtro-nombre-modal").value = document.getElementById("filtro-nombre").value;
@@ -507,8 +762,9 @@
       document.getElementById("filtro-deuda-max-modal").value = document.getElementById("filtro-deuda-max").value;
       document.getElementById("filtro-orden-modal").value = document.getElementById("filtro-orden").value;
     }
-    function cerrarModalImpresion() { document.getElementById("modal-impresion").style.display = "none"; }
-
+    function cerrarModalImpresion() {
+      document.getElementById("modal-impresion").style.display = "none";
+    }
     async function generarReporteModal() {
       const cont = document.getElementById("resultado-modal");
       cont.innerHTML = "<p>Generando...</p>";
@@ -516,39 +772,60 @@
       let clientes = [];
       snapshot.forEach(docSnap => {
         const c = docSnap.data();
-        let totalCompras=0, totalPagado=0, totalPendiente=0, totalDescuentos=0;
+        let totalCompras = 0, totalPagado = 0, totalPendiente = 0, totalDescuentos = 0;
         (c.compras || []).forEach(compra => {
           const neto = (compra.monto || 0) - (compra.descuento || 0);
-          totalCompras += neto; totalPagado += compra.pagado || 0; totalDescuentos += compra.descuento || 0;
+          totalCompras += neto;
+          totalPagado += compra.pagado || 0;
+          totalDescuentos += compra.descuento || 0;
           totalPendiente += neto - (compra.pagado || 0);
         });
-        clientes.push({ id:docSnap.id, nombre:c.nombre, telefono:c.telefono, totalCompras, totalPagado, totalDescuentos, totalPendiente });
+        clientes.push({
+          id: docSnap.id,
+          nombre: c.nombre,
+          telefono: c.telefono,
+          totalCompras,
+          totalPagado,
+          totalDescuentos,
+          totalPendiente
+        });
       });
-
-      const filtroNombre = (document.getElementById("filtro-nombre-modal").value || "").toLowerCase();
+      const filtroNombre = document.getElementById("filtro-nombre-modal").value.toLowerCase();
       const min = parseFloat(document.getElementById("filtro-deuda-min-modal").value) || 0;
       const max = parseFloat(document.getElementById("filtro-deuda-max-modal").value) || Infinity;
       const orden = document.getElementById("filtro-orden-modal").value;
-
-      clientes = clientes.filter(cli =>
-        cli.nombre?.toLowerCase().includes(filtroNombre) && cli.totalPendiente >= min && cli.totalPendiente <= max
-      );
-
-      if (orden === "nombre-asc") clientes.sort((a,b)=>a.nombre.localeCompare(b.nombre));
-      if (orden === "nombre-desc") clientes.sort((a,b)=>b.nombre.localeCompare(a.nombre));
-      if (orden === "deuda-desc") clientes.sort((a,b)=>b.totalPendiente - a.totalPendiente);
-      if (orden === "deuda-asc") clientes.sort((a,b)=>a.totalPendiente - b.totalPendiente);
-
-      if (clientes.length === 0) { cont.innerHTML = "<p>No se encontraron clientes.</p>"; return; }
-
-      let totalGeneral=0, totalPagadoGen=0, totalPendienteGen=0;
+      clientes = clientes.filter(cli => {
+        return cli.nombre.toLowerCase().includes(filtroNombre) &&
+               cli.totalPendiente >= min &&
+               cli.totalPendiente <= max;
+      });
+      if (orden === "nombre-asc") clientes.sort((a, b) => a.nombre.localeCompare(b.nombre));
+      if (orden === "nombre-desc") clientes.sort((a, b) => b.nombre.localeCompare(a.nombre));
+      if (orden === "deuda-desc") clientes.sort((a, b) => b.totalPendiente - a.totalPendiente);
+      if (orden === "deuda-asc") clientes.sort((a, b) => a.totalPendiente - b.totalPendiente);
+      if (clientes.length === 0) {
+        cont.innerHTML = "<p>No se encontraron clientes.</p>";
+        return;
+      }
+      let totalGeneral = 0, totalPagadoGen = 0, totalPendienteGen = 0;
       let tabla = `
         <table class="tabla-reportes">
-          <thead><tr>
-            <th>Nombre</th><th>Teléfono</th><th>Total Compras</th><th>Total Pagado</th><th>Descuentos</th><th>Saldo</th>
-          </tr></thead><tbody>`;
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Teléfono</th>
+              <th>Total Compras</th>
+              <th>Total Pagado</th>
+              <th>Descuentos</th>
+              <th>Saldo</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
       clientes.forEach(cli => {
-        totalGeneral += cli.totalCompras; totalPagadoGen += cli.totalPagado; totalPendienteGen += cli.totalPendiente;
+        totalGeneral += cli.totalCompras;
+        totalPagadoGen += cli.totalPagado;
+        totalPendienteGen += cli.totalPendiente;
         const clase = cli.totalPendiente > 5000 ? "deuda-alta" : cli.totalPendiente > 2000 ? "deuda-media" : "deuda-baja";
         tabla += `
           <tr>
@@ -558,7 +835,8 @@
             <td>₡${cli.totalPagado.toLocaleString()}</td>
             <td>₡${cli.totalDescuentos.toLocaleString()}</td>
             <td class="${clase}">₡${cli.totalPendiente.toLocaleString()}</td>
-          </tr>`;
+          </tr>
+        `;
       });
       tabla += `</tbody></table>
         <div style="margin-top:20px; padding:15px; background:#f5f5f5; border-radius:5px;">
@@ -569,62 +847,83 @@
         </div>`;
       cont.innerHTML = tabla;
     }
-
     function imprimirModal() {
       const contenido = document.getElementById("modal-impresion").querySelector("div").innerHTML;
       const ventana = window.open('', '_blank', 'width=800,height=600');
       ventana.document.write(`
-        <html><head><title>Reporte General de Clientes</title>
-          <style>
-            body{ font-family:Arial, sans-serif; padding:20px; color:#333; }
-            table{ width:100%; border-collapse:collapse; margin:20px 0; }
-            th, td{ border:1px solid #ddd; padding:12px; text-align:left; }
-            th{ background:#6c4ba3; color:#fff; }
-            .deuda-alta{ color:#d32f2f; font-weight:bold; }
-            .deuda-media{ color:#f57c00; font-weight:bold; }
-            .deuda-baja{ color:#388e3c; font-weight:bold; }
-            @media print{ button{ display:none; } }
-          </style>
-        </head>
-        <body>
-          <h2>📊 Reporte General de Clientes</h2>
-          <p><strong>Fecha:</strong> ${new Date().toLocaleDateString()}</p>
-          ${contenido}
-          <button onclick="window.print()" style="padding:10px; background:#6c4ba3; color:#fff; border:none; border-radius:5px; margin-top:20px;">🖨️ Imprimir</button>
-        </body></html>
+        <html>
+          <head>
+            <title>Reporte General de Clientes</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                padding: 20px; 
+                color: #333; 
+              }
+              table { 
+                width: 100%; 
+                border-collapse: collapse; 
+                margin: 20px 0; 
+              }
+              th, td { 
+                border: 1px solid #ddd; 
+                padding: 12px; 
+                text-align: left; 
+              }
+              th { 
+                background-color: #6c4ba3; 
+                color: white; 
+              }
+              .deuda-alta { color: #d32f2f; font-weight: bold; }
+              .deuda-media { color: #f57c00; font-weight: bold; }
+              .deuda-baja { color: #388e3c; font-weight: bold; }
+              @media print {
+                button { display: none; }
+              }
+            </style>
+          </head>
+          <body>
+            <h2>📊 Reporte General de Clientes</h2>
+            <p><strong>Fecha:</strong> ${new Date().toLocaleDateString()}</p>
+            ${contenido}
+            <button onclick="window.print()" style="padding: 10px; background: #6c4ba3; color: white; border: none; border-radius: 5px; margin-top: 20px;">🖨️ Imprimir</button>
+          </body>
+        </html>
       `);
       ventana.document.close();
     }
-
     // === IMPRESIÓN MODAL DEL HISTORIAL INDIVIDUAL ===
-    window.abrirModalHistorial = async function(clienteId) {
+    window.abrirModalHistorial = async function(clienteId, nombre) {
       const clienteDoc = doc(db, "clientes", clienteId);
       const docSnap = await getDoc(clienteDoc);
-      if (!docSnap.exists()) { alert("Cliente no encontrado."); return; }
-
+      if (!docSnap.exists()) {
+        alert("Cliente no encontrado.");
+        return;
+      }
       const cliente = docSnap.data();
       const compras = cliente.compras || [];
       let totalCompras = 0, totalPagado = 0, totalPendiente = 0;
       let html = "";
-
       if (compras.length === 0) {
         html = '<p>No hay compras registradas.</p>';
       } else {
         compras.forEach((compra, index) => {
           const total = (compra.monto || 0) - (compra.descuento || 0);
           const saldo = total - (compra.pagado || 0);
-          totalCompras += total; totalPagado += compra.pagado || 0; totalPendiente += saldo;
+          totalCompras += total;
+          totalPagado += compra.pagado || 0;
+          totalPendiente += saldo;
           html += `
-            <div style="margin-bottom:20px; padding:10px; border:1px solid #eee; border-radius:6px;">
+            <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #eee; border-radius: 6px;">
               <h4>📅 Compra #${index+1} - ${compra.fecha}</h4>
-              <ul style="margin-left:20px;">
-                ${compra.productos?.map(p => `<li>${p.nombre} - ${p.presentacion || ''} ${p.aroma ? '('+p.aroma+')' : ''} - x${p.cantidad || 1} - ₡${p.precio}</li>`).join('') || '<li>Sin productos</li>'}
+              <ul style="margin-left: 20px;">
+                ${compra.productos?.map(p => `<li>${p.cantidad}x ${p.nombre} - ${p.presentacion || ''} ${p.aroma ? '('+p.aroma+')' : ''} - ₡${p.precio} (Total: ₡${p.precio * p.cantidad})</li>`).join('') || '<li>Sin productos</li>'}
               </ul>
               <p><strong>Total:</strong> ₡${total} | <strong>Pagado:</strong> ₡${compra.pagado || 0} | <strong>Saldo:</strong> ₡${saldo}</p>
-            </div>`;
+            </div>
+          `;
         });
       }
-
       const contenido = document.getElementById("contenido-historial");
       contenido.innerHTML = `
         <p><strong>Cliente:</strong> ${cliente.nombre}</p>
@@ -632,59 +931,72 @@
         <p><strong>Fecha:</strong> ${new Date().toLocaleDateString()}</p>
         <hr>
         ${html}
-        <div style="margin-top:20px; padding:15px; background:#f5f5f5; border-radius:5px;">
+        <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 5px;">
           <h3>Resumen</h3>
           <p><strong>Total Compras:</strong> ₡${totalCompras.toLocaleString()}</p>
           <p><strong>Total Pagado:</strong> ₡${totalPagado.toLocaleString()}</p>
-          <p style="color:${totalPendiente>0?'red':'green'}; font-weight:bold;">
+          <p style="color: ${totalPendiente > 0 ? 'red' : 'green'}; font-weight: bold;">
             <strong>Saldo Pendiente:</strong> ₡${totalPendiente.toLocaleString()}
           </p>
         </div>
       `;
-
       document.getElementById("modal-historial").style.display = "flex";
     };
-
     function cerrarModalHistorial() {
       document.getElementById("modal-historial").style.display = "none";
     }
-
     function imprimirModalHistorial() {
       const contenido = document.getElementById("contenido-historial").innerHTML;
-      const ventana = window.open('', '_blank', 'width=800,height=600');
+      const ventana = window.open('', '_blank', 'width:800,height:600');
       ventana.document.write(`
-        <html><head><title>Historial de Compras</title>
-          <style>
-            body{ font-family:Arial, sans-serif; padding:20px; color:#333; }
-            h2, h3{ color:#6c4ba3; }
-            .resumen{ margin-top:20px; padding:15px; background:#f5f5f5; border-radius:6px; font-weight:bold; }
-            @media print{ button{ display:none; } }
-          </style>
-        </head>
-        <body>
-          <h2>📋 Historial de Compras</h2>
-          ${contenido}
-          <button onclick="window.print()" style="padding:10px; margin-top:20px; background:#6c4ba3; color:#fff; border:none; border-radius:5px;">🖨️ Imprimir</button>
-        </body></html>
+        <html>
+          <head>
+            <title>Historial de Compras - ${document.getElementById("contenido-historial").querySelector("p").textContent}</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                padding: 20px; 
+                color: #333; 
+              }
+              h2, h3 { 
+                color: #6c4ba3; 
+              }
+              .resumen { 
+                margin-top: 20px; 
+                padding: 15px; 
+                background: #f5f5f5; 
+                border-radius: 6px; 
+                font-weight: bold; 
+              }
+              @media print {
+                button { display: none; }
+              }
+            </style>
+          </head>
+          <body>
+            <h2>📋 Historial de Compras</h2>
+            ${contenido}
+            <button onclick="window.print()" style="padding: 10px; margin-top: 20px; background: #6c4ba3; color: white; border: none; border-radius: 5px;">🖨️ Imprimir</button>
+          </body>
+        </html>
       `);
       ventana.document.close();
     }
-
     // ✅ Ocultar teléfono
     function ocultarTelefono(telefono) {
       if (!telefono || telefono === "00000000" || telefono === "0") {
-        return "<span style='color:red;'>Número no válido</span>";
+        return "<span style='color: red;'>Número no válido</span>";
       }
       const limpio = telefono.replace(/\D/g, '');
       return limpio.length < 4 ? telefono : `****${limpio.slice(-4)}`;
     }
-
-    // === Catálogo / carrito ===
+    // Cargar productos desde JSON
     const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
     const URL_LIMPIEZA = "https://wil1979.github.io/esentia-factura/productos_limpieza_completo.json";
     let todosLosProductos = [];
+    let carrito = [];
     let clienteSeleccionadoId = null;
-
+    
     async function cargarProductosJSON() {
       const [res1, res2] = await Promise.all([fetch(URL_ESENCIA), fetch(URL_LIMPIEZA)]);
       const [aromas, limpieza] = await Promise.all([res1.json(), res2.json()]);
@@ -698,213 +1010,177 @@
         select.appendChild(opt);
       });
     }
-
-    function mostrarAgregarCompra(idCliente) {
+    
+    function abrirModalProductos(idCliente) {
       clienteSeleccionadoId = idCliente;
-      document.getElementById("carrito").innerHTML = "";
+      carrito = [];
+      document.getElementById("carrito-modal").innerHTML = "";
       document.getElementById("total-compra").textContent = "0";
       document.getElementById("descuento").value = "0";
-      const clienteDiv = [...document.querySelectorAll(".cliente")].find(div =>
-        div.innerHTML.includes(`mostrarAgregarCompra('${idCliente}')`)
-      );
-      clienteDiv.appendChild(document.getElementById("seccion-productos"));
-      document.getElementById("seccion-productos").style.display = "block";
+      document.getElementById("modal-productos").style.display = "flex";
     }
-
-    function agregarAlCarrito() {
+    
+    function cerrarModalProductos() {
+      document.getElementById("modal-productos").style.display = "none";
+    }
+    
+    function agregarAlCarritoModal() {
       const index = parseInt(document.getElementById("select-producto").value);
       const producto = todosLosProductos[index];
-      const template = document.getElementById("producto-template").content.cloneNode(true);
-      const contenedor = document.createElement("div");
-      contenedor.dataset.index = index;
-
-      template.querySelector(".producto-nombre").textContent = producto.nombre;
-
-      // Presentación
-      const selPres = template.querySelector(".presentacion");
-      selPres.innerHTML = "";
-      if (producto.variantes) {
-        producto.variantes.forEach(v => {
-          const opt = document.createElement("option");
-          opt.value = v.precio;
-          opt.textContent = v.nombre;
-          selPres.appendChild(opt);
-        });
-      } else {
-        const opt = document.createElement("option");
-        opt.value = producto.precioPublico;
-        opt.textContent = producto.nombre;
-        selPres.appendChild(opt);
-        selPres.style.display = "none";
+      
+      if (carrito.some(item => item.index === index)) {
+        alert("Este producto ya está en el carrito.");
+        return;
       }
-
-      // Aroma
-      const selAroma = template.querySelector(".aroma");
-      if (producto.aromas && producto.aromas.length > 0) {
-        producto.aromas.forEach(a => {
-          const opt = document.createElement("option");
-          opt.value = a;
-          opt.textContent = a;
-          selAroma.appendChild(opt);
-        });
-      } else {
-        selAroma.style.display = "none";
+      
+      const precioSugerido = producto.precioPublico || 0;
+      
+      const item = {
+        index: index,
+        producto: producto,
+        cantidad: 1,
+        precioUnitario: precioSugerido
+      };
+      
+      carrito.push(item);
+      renderizarCarrito();
+    }
+    
+    function renderizarCarrito() {
+      const contenedor = document.getElementById("carrito-modal");
+      contenedor.innerHTML = "";
+      
+      if (carrito.length === 0) {
+        contenedor.innerHTML = "<p>No hay productos en el carrito.</p>";
+        actualizarTotal();
+        return;
       }
-
-      // Cantidad
-      const inputCantidad = template.querySelector(".cantidad");
-      inputCantidad.addEventListener("input", actualizarTotal);
-
-      // Quitar
-      template.querySelector(".quitar-producto").onclick = () => { contenedor.remove(); actualizarTotal(); };
-
-      contenedor.appendChild(template);
-      document.getElementById("carrito").appendChild(contenedor);
-
-      selPres.addEventListener("change", actualizarTotal);
+      
+      carrito.forEach((item, i) => {
+        const div = document.createElement("div");
+        div.className = "producto-item";
+        div.innerHTML = `
+          <div class="producto-info">
+            <strong>${item.producto.nombre}</strong>
+            <div>
+              <label>Precio unitario: ₡</label>
+              <input type="number" class="precio-personalizado" value="${item.precioUnitario}" 
+                     onchange="actualizarPrecio(${i}, this.value)">
+            </div>
+          </div>
+          <div class="producto-cantidad">
+            <div class="cantidad-control">
+              <button class="btn-cantidad" onclick="cambiarCantidad(${i}, -1)">−</button>
+              <input type="text" class="cantidad-display" value="${item.cantidad}" readonly>
+              <button class="btn-cantidad" onclick="cambiarCantidad(${i}, 1)">+</button>
+            </div>
+            <button class="boton-accion" onclick="quitarDelCarrito(${i})" style="background: #d32f2f; padding: 5px 10px;">Eliminar</button>
+          </div>
+        `;
+        contenedor.appendChild(div);
+      });
+      
       actualizarTotal();
     }
-
+    
+    window.actualizarPrecio = function(index, nuevoPrecio) {
+      const precio = parseFloat(nuevoPrecio);
+      if (!isNaN(precio) && precio >= 0) {
+        carrito[index].precioUnitario = precio;
+        renderizarCarrito();
+      }
+    };
+    
+    window.cambiarCantidad = function(index, delta) {
+      const nuevoValor = carrito[index].cantidad + delta;
+      if (nuevoValor > 0) {
+        carrito[index].cantidad = nuevoValor;
+        renderizarCarrito();
+      }
+    };
+    
+    window.quitarDelCarrito = function(index) {
+      carrito.splice(index, 1);
+      renderizarCarrito();
+    };
+    
     function actualizarTotal() {
-      const items = document.querySelectorAll("#carrito > div");
       let total = 0;
-      items.forEach(div => {
-        const precio = parseFloat(div.querySelector(".presentacion")?.value || 0);
-        const cantidad = Math.max(1, parseInt(div.querySelector(".cantidad")?.value || "1", 10));
-        total += precio * cantidad;
+      carrito.forEach(item => {
+        total += item.precioUnitario * item.cantidad;
       });
+      
       const descuento = parseFloat(document.getElementById("descuento").value) || 0;
       const totalConDescuento = Math.max(0, total - descuento);
       document.getElementById("total-compra").textContent = totalConDescuento.toLocaleString();
     }
-
+    
     document.getElementById("descuento").addEventListener("input", actualizarTotal);
-
-    // === 🔗 Venta + descuento de stock (transacción) ===
-    // Busca el doc de stock por nombre+presentación+(aroma)
-    async function findStockDocRef({ nombre, presentacion, aroma }) {
-      let q = query(
-        stockRef,
-        where("nombre", "==", nombre),
-        where("presentacion", "==", presentacion)
-      );
-      // Si el item tiene aroma en el carrito, lo usamos para buscar
-      if (aroma) {
-        q = query(stockRef,
-          where("nombre", "==", nombre),
-          where("presentacion", "==", presentacion),
-          where("aroma", "==", aroma)
-        );
-      }
-      const snap = await getDocs(q);
-      if (snap.empty) return null;           // no existe en stock
-      // Si hay varios, usamos el primero (puedes ajustar aquí si manejas lotes/sedes)
-      const first = snap.docs[0];
-      return doc(db, "stock", first.id);
-    }
-
+    
     async function guardarCompraDesdeCarrito() {
       if (!clienteSeleccionadoId) return;
-
-      // Recolectar ítems del carrito
-      const productos = [];
-      const items = document.querySelectorAll("#carrito > div");
-      if (items.length === 0) { alert("Agrega al menos un producto."); return; }
-
-      let total = 0;
-      for (const div of items) {
-        const index = parseInt(div.dataset.index);
-        const prod = todosLosProductos[index];
-        const presentacionSel = div.querySelector(".presentacion");
-        const aromaSel = div.querySelector(".aroma");
-        const cantidadInput = div.querySelector(".cantidad");
-
-        const nombre = prod.nombre;
-        const presentacion = presentacionSel?.options[presentacionSel.selectedIndex]?.textContent || "";
-        const precioUnit = parseFloat(presentacionSel?.value || 0);
-        const aroma = aromaSel && aromaSel.style.display !== "none" ? (aromaSel.value || null) : null;
-        const cantidad = Math.max(1, parseInt(cantidadInput?.value || "1", 10));
-
-        productos.push({ nombre, presentacion, aroma, precio: precioUnit, cantidad });
-        total += precioUnit * cantidad;
+      if (carrito.length === 0) {
+        alert("No hay productos en el carrito.");
+        return;
       }
-
-      const descuento = parseFloat(document.getElementById("descuento").value) || 0;
-      const fecha = new Date().toISOString().slice(0, 10);
-
-      // 1) Resolver refs de stock de todos los productos (fuera de la transacción)
-      const stockRefs = [];
-      for (const p of productos) {
-        const sref = await findStockDocRef(p);
-        if (!sref) {
-          alert(`❌ No encontré en inventario: ${p.nombre} (${p.presentacion}${p.aroma ? ' - ' + p.aroma : ''}). Regístralo en "stock" primero.`);
-          return;
+      
+      const clienteDoc = doc(db, "clientes", clienteSeleccionadoId);
+      const snap = await getDocs(clientesRef);
+      let comprasActuales = [];
+      snap.forEach(s => {
+        if (s.id === clienteSeleccionadoId) {
+          comprasActuales = s.data().compras || [];
         }
-        stockRefs.push(sref);
-      }
-
-      // 2) Transacción atómica: verifica stock, descuenta y guarda compra en cliente
-      const clienteDocRef = doc(db, "clientes", clienteSeleccionadoId);
-
-      try {
-        await runTransaction(db, async (tx) => {
-          // Leer cliente
-          const clienteSnap = await tx.get(clienteDocRef);
-          if (!clienteSnap.exists()) throw new Error("Cliente no existe.");
-
-          const comprasActuales = clienteSnap.data().compras || [];
-
-          // Verificar y preparar actualizaciones de stock
-          for (let i = 0; i < productos.length; i++) {
-            const p = productos[i];
-            const sref = stockRefs[i];
-            const sSnap = await tx.get(sref);
-            if (!sSnap.exists()) throw new Error(`Stock no encontrado para ${p.nombre}`);
-
-            const disponible = parseFloat(sSnap.data().cantidad || 0);
-            if (isNaN(disponible)) throw new Error(`Cantidad inválida en stock de ${p.nombre}`);
-            if (disponible < p.cantidad) {
-              throw new Error(`Stock insuficiente: ${p.nombre} (${p.presentacion}${p.aroma ? ' - ' + p.aroma : ''}). Disponible: ${disponible}, requerido: ${p.cantidad}`);
-            }
-          }
-
-          // Descontar stock
-          for (let i = 0; i < productos.length; i++) {
-            const p = productos[i];
-            const sref = stockRefs[i];
-            const sSnap = await tx.get(sref);
-            const disponible = parseFloat(sSnap.data().cantidad || 0);
-            tx.update(sref, { cantidad: disponible - p.cantidad });
-          }
-
-          // Registrar compra en el cliente
-          const compra = {
-            fecha,
-            productos,                 // incluye cantidad por ítem
-            monto: total,
-            descuento,
-            pagado: 0
-          };
-          const nuevasCompras = [...comprasActuales, compra];
-          tx.update(clienteDocRef, { compras: nuevasCompras });
+      });
+      
+      const productos = [];
+      let total = 0;
+      
+      carrito.forEach(item => {
+        const producto = item.producto;
+        const cantidad = item.cantidad;
+        const precio = item.precioUnitario;
+        const totalProducto = precio * cantidad;
+        
+        productos.push({ 
+          nombre: producto.nombre,
+          presentacion: producto.presentacion || '',
+          aroma: producto.aroma || null,
+          precio: precio,
+          cantidad: cantidad,
+          total: totalProducto
         });
-
-        // Éxito
-        document.getElementById("seccion-productos").style.display = "none";
-        await cargarClientes();
-        alert("✅ Compra guardada y stock actualizado.");
-      } catch (err) {
-        console.error(err);
-        alert("❌ No se pudo completar la venta: " + err.message);
-      }
+        
+        total += totalProducto;
+      });
+      
+      const descuento = parseFloat(document.getElementById("descuento").value) || 0;
+      comprasActuales.push({
+        fecha: new Date().toISOString().slice(0, 10),
+        productos,
+        monto: total,
+        descuento,
+        pagado: 0
+      });
+      
+      await updateDoc(clienteDoc, { compras: comprasActuales });
+      document.getElementById("modal-productos").style.display = "none";
+      await cargarClientes();
+      alert("✅ Compra guardada exitosamente.");
     }
+
+    
 
     // Hacer funciones globales
     window.agregarCliente = agregarCliente;
-    window.mostrarAgregarCompra = mostrarAgregarCompra;
-    window.enviarWhatsApp = enviarWhatsApp;
-    window.agregarAlCarrito = agregarAlCarrito;
+    window.abrirModalProductos = abrirModalProductos;
+    window.cerrarModalProductos = cerrarModalProductos;
+    window.agregarAlCarritoModal = agregarAlCarritoModal;
     window.guardarCompraDesdeCarrito = guardarCompraDesdeCarrito;
+    window.cambiarCantidad = cambiarCantidad;
+    window.quitarDelCarrito = quitarDelCarrito;
+    window.actualizarPrecio = actualizarPrecio;
+    window.enviarWhatsApp = enviarWhatsApp;
     window.editarCliente = editarCliente;
     window.guardarEdicion = guardarEdicion;
     window.cancelarEdicion = cancelarEdicion;
@@ -918,10 +1194,31 @@
     window.abrirModalHistorial = abrirModalHistorial;
     window.cerrarModalHistorial = cerrarModalHistorial;
     window.imprimirModalHistorial = imprimirModalHistorial;
-
+    
     // Inicializar
     await cargarClientes();
     await cargarProductosJSON();
   </script>
+   <script>
+    function scrollToTop() {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+
+    function scrollToBottom() {
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  </script>
+
+
+
+<P>✨ Esentia ofrece productos que mejoran la experiencia diaria a través de aromas que evocan sensaciones positivas y placenteras. 
+🌟 Beneficios de los Aromas La aromaterapia puede contribuir a disminuir el estrés y mejorar el bienestar general. 
+💡 Consejos de Uso Para maximizar la efectividad de los aromas, es recomendable utilizarlos en ambientes tranquilos y ventilados.</P>
 </body>
 </html>
