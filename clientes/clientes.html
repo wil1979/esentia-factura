@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Esentia Créditos</title>
   <style>
-     .scroll-buttons {
+    .scroll-buttons {
       position: fixed;
       bottom: 20px;
       right: 20px;
@@ -49,6 +49,18 @@
     }
     .cliente:hover {
       transform: scale(1.01);
+    }
+    .cliente-no-deudor {
+      opacity: 0.65;
+      background: #f8f8f8;
+      border-color: #e0e0e0;
+    }
+    .cliente-no-deudor .botones-derecha {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+    .cliente-no-deudor:hover {
+      transform: none;
     }
     .botones-derecha {
       display: flex;
@@ -280,20 +292,45 @@
 </head>
 <body>
   <div class="scroll-buttons">
+    <div class="nueva-venta-btn">
+  <button class="scroll-btn" style="background: #4CAF50;" onclick="abrirModalNuevaVenta()">
+    ➕ Nueva Venta
+  </button>
+</div>
+
+<style>
+  .nueva-venta-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 999;
+  }
+</style>
     <button class="scroll-btn" onclick="scrollToTop()">↑</button>
     <button class="scroll-btn" onclick="scrollToBottom()">↓</button>
   </div>
   <h1>📋 Esentia - Registro de Créditos</h1>
   <h2>👥 Clientes</h2>
-  <input type="text" id="filtro-clientes" placeholder="🔎 Buscar cliente por nombre..." style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
+
+  <!-- Filtros de visualización -->
+  <div style="margin-bottom: 10px;">
+    <input type="text" id="filtro-clientes" placeholder="🔎 Buscar cliente por nombre..." style="width: 60%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
+    <button class="boton-accion" style="background: #4CAF50; margin-left: 10px;" onclick="cargarClientes(true)">
+      💳 Solo Deudores
+    </button>
+    <button class="boton-accion" style="background: #2196F3; margin-left: 10px;" onclick="cargarClientes(false)">
+      👥 Mostrar Todos
+    </button>
+  </div>
+
   <div id="clientes"></div>
+
   <h2>➕ Nuevo Cliente</h2>
   <input id="nombre" placeholder="Nombre completo">
   <input id="telefono" placeholder="Teléfono con código (ej: 88889999)">
   <button onclick="agregarCliente()">Agregar Cliente</button>
-  <hr>  
-  <h2>👥 Clientes</h2>
-  <div id="clientes"></div>
+
+  <hr>
   <!-- Sección de Reportes -->
   <div id="seccion-reportes">
     <h2>📊 Reporte General de Clientes</h2>
@@ -330,6 +367,7 @@
       <p>Haz clic en "Filtrar" para generar el reporte.</p>
     </div>
   </div>
+
   <!-- Modal de productos -->
   <div id="modal-productos">
     <div>
@@ -354,6 +392,7 @@
       </div>
     </div>
   </div>
+
   <!-- Modal de impresión del reporte -->
   <div id="modal-impresion">
     <div>
@@ -393,6 +432,7 @@
       </div>
     </div>
   </div>
+
   <!-- Modal de historial individual -->
   <div id="modal-historial">
     <div>
@@ -404,10 +444,12 @@
       </div>
     </div>
   </div>
+
   <!-- Firebase y lógica -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
       authDomain: "esentiacreditos-8345f.firebaseapp.com",
@@ -419,7 +461,70 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const clientesRef = collection(db, "clientes");
-    
+
+
+    // ✅ Abrir modal para seleccionar cliente
+async function abrirModalNuevaVenta() {
+  const modal = document.getElementById("modal-seleccionar-cliente");
+  const lista = document.getElementById("lista-clientes-modal");
+  const filtro = document.getElementById("filtro-cliente-modal");
+  lista.innerHTML = "<p>Cargando clientes...</p>";
+
+  const snapshot = await getDocs(clientesRef);
+  const clientes = [];
+
+  snapshot.forEach(docSnap => {
+    const data = docSnap.data();
+    clientes.push({
+      id: docSnap.id,
+      nombre: data.nombre,
+      telefono: data.telefono
+    });
+  });
+
+  const renderizar = () => {
+    lista.innerHTML = "";
+    const filtroTexto = filtro.value.toLowerCase().trim();
+    const filtrados = clientes.filter(c => c.nombre.toLowerCase().includes(filtroTexto));
+
+    if (filtrados.length === 0) {
+      lista.innerHTML = "<p>No se encontraron clientes.</p>";
+      return;
+    }
+
+    filtrados.forEach(cliente => {
+      const div = document.createElement("div");
+      div.style.padding = "10px";
+      div.style.margin = "5px 0";
+      div.style.border = "1px solid #eee";
+      div.style.borderRadius = "6px";
+      div.style.cursor = "pointer";
+      div.style.backgroundColor = "#f9f9f9";
+      div.onmouseover = () => div.style.backgroundColor = "#f0f0f0";
+      div.onmouseout = () => div.style.backgroundColor = "#f9f9f9";
+      div.innerHTML = `<strong>${cliente.nombre}</strong><br><small>${ocultarTelefono(cliente.telefono)}</small>`;
+      div.onclick = () => {
+        cerrarModalSeleccionarCliente();
+        abrirModalProductos(cliente.id); // Abre el modal de productos
+      };
+      lista.appendChild(div);
+    });
+  };
+
+  renderizar();
+  filtro.addEventListener("input", renderizar);
+  modal.style.display = "flex";
+}
+
+// ✅ Cerrar modal
+function cerrarModalSeleccionarCliente() {
+  document.getElementById("modal-seleccionar-cliente").style.display = "none";
+}
+
+// Hacer funciones globales
+window.abrirModalNuevaVenta = abrirModalNuevaVenta;
+window.cerrarModalSeleccionarCliente = cerrarModalSeleccionarCliente;
+
     // ✅ Agregar cliente
     async function agregarCliente() {
       const nombre = document.getElementById("nombre").value.trim();
@@ -437,26 +542,31 @@
         alert("✅ Cliente agregado exitosamente.");
         document.getElementById("nombre").value = "";
         document.getElementById("telefono").value = "";
-        await cargarClientes();
+        await cargarClientes(false); // Recargar con todos visibles
       } catch (error) {
         alert("❌ Error al agregar cliente: " + error.message);
         console.error("Error al agregar cliente:", error);
       }
     }
 
-    // ✅ Cargar clientes con filtro en tiempo real
-    async function cargarClientes() {
+    // ✅ Cargar clientes con filtro
+    async function cargarClientes(filtrarDeudores = true) {
       const cont = document.getElementById("clientes");
       const filtroInput = document.getElementById("filtro-clientes");
+
       const renderizarClientes = async () => {
         cont.innerHTML = "";
         const snapshot = await getDocs(clientesRef);
         const filtroTexto = filtroInput.value.toLowerCase().trim();
+
         snapshot.forEach(docSnap => {
           const cliente = docSnap.data();
           const id = docSnap.id;
+
+          // Filtrar por nombre
           if (!cliente.nombre.toLowerCase().includes(filtroTexto)) return;
 
+          // Calcular saldo pendiente
           let totalPendiente = 0;
           const compras = cliente.compras || [];
           compras.forEach(c => {
@@ -464,8 +574,15 @@
             totalPendiente += totalCompra - (c.pagado || 0);
           });
 
+          // Filtrar por deuda si se solicita
+          if (filtrarDeudores && totalPendiente <= 0) return;
+
+          // Clase para deshabilitado
+          const esDeudor = totalPendiente > 0;
+          const claseCliente = esDeudor ? "" : "cliente-no-deudor";
+
           const div = document.createElement("div");
-          div.className = "cliente";
+          div.className = `cliente ${claseCliente}`.trim();
           div.innerHTML = `
             <strong>${cliente.nombre}</strong><br>
             📞 <a href="https://wa.me/${cliente.telefono}" target="_blank" title="${cliente.telefono}">${ocultarTelefono(cliente.telefono)}</a><br>
@@ -587,8 +704,6 @@
             cantidad: nuevaCantidad,
             ultimaActualizacion: new Date().toISOString()
           });
-
-          console.log(`✅ Inventario actualizado: ${nombreProducto} → ${nuevaCantidad}`);
         }
 
         // Marcar como actualizado
@@ -596,7 +711,7 @@
         await updateDoc(clienteDoc, { compras });
 
         alert("✅ Inventario actualizado correctamente.");
-        await cargarClientes(); // Refrescar UI
+        await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]').style.background === 'rgb(76, 175, 80)');
       } catch (error) {
         console.error("Error al actualizar inventario:", error);
         alert("❌ Hubo un error al actualizar el inventario.");
@@ -652,8 +767,6 @@
             cantidad: nuevaCantidad,
             ultimaActualizacion: new Date().toISOString()
           });
-
-          console.log(`🔁 Inventario revertido: ${nombreProducto} → ${nuevaCantidad}`);
         }
 
         // Desmarcar como actualizado
@@ -661,7 +774,7 @@
         await updateDoc(clienteDoc, { compras });
 
         alert("✅ Inventario revertido correctamente.");
-        await cargarClientes(); // Refrescar UI
+        await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
       } catch (error) {
         console.error("Error al revertir inventario:", error);
         alert("❌ Hubo un error al revertir el inventario.");
@@ -694,7 +807,7 @@
         const clienteDoc = doc(db, "clientes", clienteId);
         await updateDoc(clienteDoc, { nombre: nuevoNombre, telefono: nuevoTelefono });
         alert("✅ Cliente actualizado.");
-        await cargarClientes();
+        await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
       } catch (error) {
         alert("❌ Error al actualizar: " + error.message);
         console.error("Error:", error);
@@ -711,7 +824,7 @@
       try {
         await deleteDoc(doc(db, "clientes", clienteId));
         alert(`✅ ${nombre} eliminado.`);
-        await cargarClientes();
+        await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
       } catch (error) {
         alert("❌ Error al eliminar.");
         console.error(error);
@@ -745,7 +858,7 @@
       compras[index] = { ...compra, monto, descuento, pagado };
       await updateDoc(clienteDoc, { compras });
       alert("✅ Compra actualizada.");
-      await cargarClientes();
+      await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
     };
 
     // ✅ Eliminar compra
@@ -758,7 +871,7 @@
       compras.splice(index, 1);
       await updateDoc(clienteDoc, { compras });
       alert("✅ Compra eliminada.");
-      await cargarClientes();
+      await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
     };
 
     // ✅ Registrar pago
@@ -784,8 +897,7 @@
       const compra = compras[indexReal];
       const total = (compra.monto || 0) - (compra.descuento || 0);
       const saldo = total - (compra.pagado || 0);
-      const pago = prompt(`Saldo: ₡${saldo}
-Monto a pagar:`);
+      const pago = prompt(`Saldo: ₡${saldo}\nMonto a pagar:`);
       if (!pago) return;
       const pagoNum = parseFloat(pago);
       if (isNaN(pagoNum) || pagoNum <= 0) {
@@ -796,7 +908,7 @@ Monto a pagar:`);
       compras[indexReal] = compra;
       await updateDoc(doc(db, "clientes", clienteId), { compras });
       alert("✅ Pago registrado.");
-      await cargarClientes();
+      await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
     };
 
     // ✅ Enviar WhatsApp
@@ -1307,7 +1419,7 @@ Monto a pagar:`);
       });
       await updateDoc(clienteDoc, { compras: comprasActuales });
       document.getElementById("modal-productos").style.display = "none";
-      await cargarClientes();
+      await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
       alert("✅ Compra guardada exitosamente.");
     }
 
@@ -1337,8 +1449,8 @@ Monto a pagar:`);
     window.actualizarInventario = actualizarInventario;
     window.revertirInventario = revertirInventario;
 
-    // Inicializar
-    await cargarClientes();
+    // Inicializar: cargar solo deudores al inicio
+    await cargarClientes(false);
     await cargarProductosJSON();
   </script>
   <script>
@@ -1354,7 +1466,26 @@ Monto a pagar:`);
         behavior: 'smooth'
       });
     }
+
+    
   </script>
+
+<!-- Modal para seleccionar cliente -->
+<div id="modal-seleccionar-cliente" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+  <div style="background: white; width: 90%; max-width: 600px; border-radius: 10px; padding: 20px; max-height: 80vh; overflow-y: auto;">
+    <h2>➕ Seleccionar Cliente</h2>
+    <input type="text" id="filtro-cliente-modal" placeholder="Buscar cliente..." style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #ddd;">
+    <div id="lista-clientes-modal" style="max-height: 400px; overflow-y: auto;">
+      <!-- Se llenará dinámicamente -->
+    </div>
+    <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
+      <button class="boton-accion" onclick="cerrarModalSeleccionarCliente()" style="background: #666;">❌ Cerrar</button>
+    </div>
+  </div>
+</div>
+
+
+
   <p>✨ Esentia ofrece productos que mejoran la experiencia diaria a través de aromas que evocan sensaciones positivas y placenteras. 
   🌟 Beneficios de los Aromas La aromaterapia puede contribuir a disminuir el estrés y mejorar el bienestar general. 
   💡 Consejos de Uso Para maximizar la efectividad de los aromas, es recomendable utilizarlos en ambientes tranquilos y ventilados.</p>
