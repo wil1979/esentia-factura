@@ -11,7 +11,7 @@
       --ancho-logo: 65px;
       --tamano-qr: 45px;
       --page-size: letter;
-      --border-radius: 0;
+      --border-radius: 2;
     }
 
     @page {
@@ -21,7 +21,7 @@
 
     body {
       margin: 0;
-      padding: 0;
+      padding: 4;
       font-family: 'Open Sans', sans-serif;
       background: #fff;
     }
@@ -30,14 +30,14 @@
       width: 100%;
       height: 100%;
       display: grid;
-      gap: 0;
+      gap: 2mm;
       box-sizing: border-box;
-      padding: 0.5cm;
+      padding: 1.5cm;
     }
 
     .etiqueta {
       box-sizing: border-box;
-      padding: 2px;
+      padding: 2ch;
       border: 0.5px solid #ccc;
       display: flex;
       flex-direction: column;
@@ -100,10 +100,15 @@
     }
     
     @media print {
-      .config-modal {
-        display: none !important;
-      }
-    }
+  .hoja {
+    gap: 5mm;
+    padding: 1.5cm;
+  }
+  .etiqueta {
+    break-inside: avoid; /* Evita que se corte una etiqueta en página */
+  }
+}
+   
   </style>
 </head>
 <body>
@@ -153,8 +158,8 @@
   <!-- Dimensiones de etiqueta -->
   <div class="config-group">
     <label>Dimensiones etiqueta (cm):</label>
-    <input type="number" id="anchoEtiqueta" step="0.1" value="2" placeholder="Ancho" oninput="generarEtiquetas()">
-    <input type="number" id="altoEtiqueta" step="0.1" value="2" placeholder="Alto" oninput="generarEtiquetas()">
+    <input type="number" id="anchoEtiqueta" step="0.1" value="3" placeholder="Ancho" oninput="generarEtiquetas()">
+    <input type="number" id="altoEtiqueta" step="0.1" value="3" placeholder="Alto" oninput="generarEtiquetas()">
   </div>
 
   <div class="config-group">
@@ -187,7 +192,7 @@
   <div class="config-group">
     <label>Productos (separados por comas):</label>
     <input type="text" id="listaProductos" 
-      value="bambu,naranja,vainilla,cocovainilla,coco,manzanaverde,kiwi,navidad,limon,sandia,fresa,cherry,melonvainilla,citronela" 
+      value="lavanda,menta,pino,cipres,navidad,magnolia" 
       oninput="generarEtiquetas()">
   </div>
 

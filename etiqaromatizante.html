@@ -92,9 +92,14 @@
 
     /* Estilos de impresión */
     @media print {
-      body * {
-        visibility: hidden;
-      }
+  .hoja {
+    gap: 5mm;
+    padding: 1.5cm;
+  }
+  .etiqueta {
+    break-inside: avoid; /* Evita que se corte una etiqueta en página */
+  }
+}
 
       .etiqueta-container, .etiqueta-container * {
         visibility: visible;
@@ -126,12 +131,22 @@
       }
 
       .etiqueta {
-        -webkit-print-color-adjust: exact;
-        color-adjust: exact;
+        /*-webkit-print-color-adjust: exact;
+        color-adjust: exact;*/
         background-color: var(--bg-color, #f6f7f4) !important;
         background: var(--bg-color, #f6f7f4) !important;
+        break-inside: avoid; /* Evita que se corte una etiqueta en página */
+  }
+
+  .hoja {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  gap: 5mm; /* ✅ Separación entre etiquetas */
+  box-sizing: border-box;
+  padding: 1.5cm;
       }
-    }
+   
   </style>
 </head>
 <body>
