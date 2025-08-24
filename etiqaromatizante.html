@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Etiqueta Aceite de Masaje</title>
+  <title>Generador de Etiquetas - Esentia</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -20,6 +20,8 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
       max-width: 400px;
       height: fit-content;
+      overflow-y: auto;
+      max-height: 90vh;
     }
 
     .formulario input,
@@ -40,8 +42,9 @@
       flex-wrap: wrap;
       gap: 10px;
       background: white;
-      padding: 10px;
+      padding: 15px;
       margin: 0;
+      justify-content: center;
     }
 
     .etiqueta {
@@ -50,11 +53,14 @@
       width: var(--etiqueta-width, 8cm);
       height: var(--etiqueta-height, 4cm);
       background: var(--bg-color, #f3f3f0);
-      border: 1px solid #e6e4e4;
+      border: 1px var(--border-style, solid) var(--border-color, #e6e4e4);
+      border-radius: var(--border-radius, 0);
       box-sizing: border-box;
       font-size: var(--font-size, 9px);
       overflow: hidden;
-      color: #000;
+      color: var(--text-color, #000);
+      box-shadow: var(--box-shadow, none);
+      transition: all 0.2s ease;
     }
 
     .lateral {
@@ -63,6 +69,11 @@
       box-sizing: border-box;
       text-align: justify;
       font-size: var(--font-size, 8.4px);
+      line-height: 1.2;
+    }
+
+    .lateral b, .lateral strong {
+      color: var(--link-color, #0066cc);
     }
 
     .central {
@@ -74,7 +85,7 @@
     }
 
     .logo {
-      width: var(--logo-width, 150%);
+      width: var(--logo-width, 120%);
       margin-bottom: 2px;
     }
 
@@ -92,19 +103,12 @@
 
     /* Estilos de impresión */
     @media print {
-  .hoja {
-    gap: 5mm;
-    padding: 1.5cm;
-  }
-  .etiqueta {
-    break-inside: avoid; /* Evita que se corte una etiqueta en página */
-  }
-}
-
+      body * {
+        visibility: hidden;
+      }
       .etiqueta-container, .etiqueta-container * {
         visibility: visible;
       }
-
       .etiqueta-container {
         position: absolute;
         left: 0;
@@ -113,40 +117,45 @@
         page-break-inside: avoid;
         page-break-after: auto;
       }
-
       .etiqueta {
         page-break-inside: avoid;
         page-break-after: auto;
+        -webkit-print-color-adjust: exact;
+        color-adjust: exact;
       }
-
       .formulario {
         display: none;
       }
-
       @page {
         size: var(--page-size, auto);
         margin: 0.5cm;
         -webkit-print-color-adjust: exact;
         color-adjust: exact;
       }
+    }
 
-      .etiqueta {
-        /*-webkit-print-color-adjust: exact;
-        color-adjust: exact;*/
-        background-color: var(--bg-color, #f6f7f4) !important;
-        background: var(--bg-color, #f6f7f4) !important;
-        break-inside: avoid; /* Evita que se corte una etiqueta en página */
-  }
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      margin-bottom: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 5px;
+      border-radius: 5px;
+    }
 
-  .hoja {
-  width: 100%;
-  height: 100%;
-  display: grid;
-  gap: 5mm; /* ✅ Separación entre etiquetas */
-  box-sizing: border-box;
-  padding: 1.5cm;
-      }
-   
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .checkbox-item input {
+      margin-right: 5px;
+      width: auto;
+    }
   </style>
 </head>
 <body>
@@ -154,6 +163,7 @@
   <div class="formulario">
     <h3>Crear etiquetas</h3>
 
+    <!-- Selección de tamaño de hoja -->
     <label>Tamaño de hoja:</label>
     <select id="tamanoHoja" onchange="actualizarTamanoHoja()">
       <option value="carta">Carta (8.5x11")</option>
@@ -162,7 +172,6 @@
       <option value="personalizado">Personalizado</option>
     </select>
 
-    <!-- Campos visibles solo si es personalizado -->
     <div id="camposPersonalizados" style="display: none;">
       <label>Ancho hoja (cm):</label>
       <input type="number" id="anchoHojaCm" value="33" step="0.1" oninput="generarEtiquetas()">
@@ -171,9 +180,18 @@
       <input type="number" id="altoHojaCm" value="48" step="0.1" oninput="generarEtiquetas()">
     </div>
 
-    <label>Selecciona productos (separados por comas):</label>
-    <input id="productos" value="bambu,naranja,vainilla,cocovainilla,coco,manzanaverde,kiwi,navidad,limon,sandia,fresa,cherry,melonvainilla,citronela" oninput="generarEtiquetas()">
+    <!-- Selección de productos por checkbox -->
+    <h4>Selecciona productos:</h4>
+    <button type="button" onclick="seleccionarTodos(true)">✅ Seleccionar Todos</button>
+    <button type="button" onclick="seleccionarTodos(false)">❌ Deseleccionar Todos</button>
+    <div class="checkbox-group" id="checkboxContainer"></div>
 
+    <!-- Lista manual opcional -->
+    <hr>
+    <label>Lista manual (opcional, separados por comas):</label>
+    <input id="productosManual" placeholder="Ej: vainilla,limon" oninput="generarEtiquetas()">
+
+    <!-- Configuración básica -->
     <label>Cantidad por producto:</label>
     <input id="cantidadPorProducto" type="number" min="1" value="4" oninput="generarEtiquetas()">
 
@@ -182,15 +200,50 @@
 
     <label>Información izquierda:</label>
     <textarea id="infoIzquierda" rows="4" oninput="generarEtiquetas()"><b>Indicaciones de Uso</b>
-Añada 5-9 gotas en un quemador cerámico, candela o difusor eléctrico para difundir inmediatamente su aroma en el ambiente
+Añada 5-9 gotas en un quemador cerámico, candela o difusor eléctrico para difundir inmediatamente su aroma en el ambiente.
 Evite derramar el aceite sobre superficies pintadas o barnizadas
 
-<b>NOTA</b>: no son consumibles ni aplicables directamente en la piel</textarea>
+<b>NOTA</b>: No son consumibles ni aplicables directamente en la piel</textarea>
 
     <label>Recomendaciones (URL o texto):</label>
     <textarea id="recomendaciones" rows="6" oninput="generarEtiquetas()">https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=https://wil1979.github.io/esentia-factura/catalogo.html</textarea>
 
     <hr>
+
+    <!-- Estilos personalizables -->
+    <h4>Estilo de Etiqueta</h4>
+
+    <label>Tema de color:</label>
+    <select id="temaEtiqueta" onchange="actualizarEstilos()">
+      <option value="default">Por defecto</option>
+      <option value="pastel">Pastel</option>
+      <option value="oscuro">Oscuro</option>
+      <option value="navideño">Navideño 🎄</option>
+    </select>
+
+    <label>Forma / Borde:</label>
+    <select id="formaEtiqueta" onchange="actualizarEstilos()">
+      <option value="sharp">Rectangular (esquinas rectas)</option>
+      <option value="rounded" selected>Redondeado (suave)</option>
+      <option value="pill">Ovalado (tipo pastilla)</option>
+      <option value="vintage">Vintage (borde decorativo)</option>
+      <option value="minimal">Minimalista (sin bordes)</option>
+    </select>
+
+    <label>Radio de borde personalizado (cm):</label>
+    <input type="number" id="borderRadius" value="0.5" min="0" max="5" step="0.1" oninput="actualizarEstilos()">
+
+    <label>Estilo de borde:</label>
+    <select id="borderStyle" onchange="actualizarEstilos()">
+      <option value="solid">Línea continua</option>
+      <option value="dashed">Línea punteada</option>
+      <option value="dotted">Puntos</option>
+      <option value="double">Doble línea</option>
+      <option value="none">Sin borde</option>
+    </select>
+
+    <label>Color del borde:</label>
+    <input type="color" id="borderColor" value="#e6e4e4" onchange="actualizarEstilos()">
 
     <label>Color de fondo:</label>
     <input type="color" id="bgColor" value="#f0f0f0" onchange="actualizarEstilos()">
@@ -213,13 +266,21 @@ Evite derramar el aceite sobre superficies pintadas o barnizadas
     <label>Ancho imagen (px o %):</label>
     <input type="text" id="imgWidth" value="auto" onchange="actualizarEstilos()" placeholder="Ej: 100px, 50% o auto">
 
-    <button onclick="generarEtiquetas()">Generar Etiquetas</button>
-    <button onclick="window.print()">Imprimir etiquetas</button>
+    <button onclick="generarEtiquetas()">🔄 Generar Etiquetas</button>
+    <button onclick="window.print()">🖨️ Imprimir etiquetas</button>
   </div>
 
   <div class="etiqueta-container" id="etiquetas"></div>
 
   <script>
+    // Lista completa de productos
+    const productosLista = [
+      "Fresa", "PinaColada", "MelonVainilla","Lavanda", "Magnolia", "Gardenia", "Rosa", "Violeta", "Limon", "Naranja",
+      "Citronela", "Eucalipto", "Pino", "Navidad", "Baby","Cherry", "Chicle", "Cipres", "navidad", "Cocomenta",
+      "CocoVainilla", "Frutal", "Herbal", "Manzana", "Manzana Canela","Manzanaverde", "maracuya", "Melocoton", "Menta",
+      "Vainilla","Primaveral", "Sabila", "Sandia", "ChocoMenta", "Kiwi", "Floral", "Coco", "Bambu", "Blanc"
+    ];
+
     // Mapeo de tamaños de hoja
     const tamanosHoja = {
       carta: { w: 21.6, h: 27.9, name: "letter" },
@@ -228,38 +289,177 @@ Evite derramar el aceite sobre superficies pintadas o barnizadas
       personalizado: { w: 33, h: 48, name: "custom" }
     };
 
-    function actualizarTamanoHoja() {
-      const tipo = document.getElementById("tamanoHoja").value;
-      const divPersonalizado = document.getElementById("camposPersonalizados");
-      if (tipo === "personalizado") {
-        divPersonalizado.style.display = "block";
-      } else {
-        divPersonalizado.style.display = "none";
+    // Inicialización
+    window.onload = () => {
+      // Crear checkboxes
+      const container = document.getElementById("checkboxContainer");
+      productosLista.forEach(prod => {
+        const div = document.createElement("div");
+        div.className = "checkbox-item";
+        div.innerHTML = `
+          <input type="checkbox" id="chk_${prod.replace(/[^a-zA-Z0-9]/g, '')}" value="${prod}">
+          <label for="chk_${prod.replace(/[^a-zA-Z0-9]/g, '')}">${prod}</label>
+        `;
+        container.appendChild(div);
+      });
+
+      // Cargar configuración guardada
+      const saved = localStorage.getItem('configEtiqueta');
+      if (saved) {
+        const config = JSON.parse(saved);
+        Object.keys(config).forEach(key => {
+          const el = document.getElementById(key);
+          if (el) el.value = config[key];
+        });
       }
-      // Aplicar tamaño de página en CSS
-      const tam = tamanosHoja[tipo];
-      if (tipo !== "personalizado") {
-        document.documentElement.style.setProperty('--page-size', tam.name);
-      }
+
+      actualizarTamanoHoja();
+      actualizarEstilos();
+      generarEtiquetas();
+    };
+
+    function seleccionarTodos(checked) {
+      document.querySelectorAll('.checkbox-item input[type="checkbox"]').forEach(cb => {
+        cb.checked = checked;
+      });
       generarEtiquetas();
     }
 
-    function actualizarEstilos() {
-      document.documentElement.style.setProperty('--bg-color', document.getElementById('bgColor').value);
-      document.documentElement.style.setProperty('--etiqueta-width', document.getElementById('anchoCm').value + 'cm');
-      document.documentElement.style.setProperty('--etiqueta-height', document.getElementById('altoCm').value + 'cm');
-      document.documentElement.style.setProperty('--font-size', document.getElementById('fontSize').value + 'px');
-      document.documentElement.style.setProperty('--logo-width', document.getElementById('logoWidth').value + '%');
-      document.documentElement.style.setProperty('--img-height', document.getElementById('imgHeight').value + 'px');
-      document.documentElement.style.setProperty('--img-width', document.getElementById('imgWidth').value);
+    function actualizarTamanoHoja() {
+      const tipo = document.getElementById("tamanoHoja").value;
+      const divPersonalizado = document.getElementById("camposPersonalizados");
+      divPersonalizado.style.display = tipo === "personalizado" ? "block" : "none";
+
+      const tam = tamanosHoja[tipo];
+      document.documentElement.style.setProperty('--page-size', tam.name);
+      generarEtiquetas();
     }
 
     function isURL(str) {
       return /^(https?:\/\/)/.test(str);
     }
 
+    function actualizarEstilos() {
+      // Estilos generales
+      document.documentElement.style.setProperty('--etiqueta-width', document.getElementById('anchoCm').value + 'cm');
+      document.documentElement.style.setProperty('--etiqueta-height', document.getElementById('altoCm').value + 'cm');
+      document.documentElement.style.setProperty('--font-size', document.getElementById('fontSize').value + 'px');      
+      document.documentElement.style.setProperty('--img-height', document.getElementById('imgHeight').value + 'px');
+      document.documentElement.style.setProperty('--img-width', document.getElementById('imgWidth').value);
+      document.documentElement.style.setProperty('--logo-width', document.getElementById('logoWidth').value + '%');
+
+      // Tema de color
+      const tema = document.getElementById('temaEtiqueta').value;
+      let bgColor = document.getElementById('bgColor').value;
+      let textColor = '#000';
+      let borderColor = document.getElementById('borderColor').value;
+      let borderStyle = document.getElementById('borderStyle').value;
+      let boxShadow = 'none';
+      let linkColor = '#0066cc';
+
+      switch (tema) {
+        case 'pastel':
+          bgColor = '#fdf6f0';
+          textColor = '#5c4b51';
+          borderColor = '#d4ccc5';
+          borderStyle = 'solid';
+          linkColor = '#b5838d';
+          break;
+        case 'oscuro':
+          bgColor = '#1e1e1e';
+          textColor = '#e0e0e0';
+          borderColor = '#555';
+          borderStyle = 'solid';
+          linkColor = '#66bbff';
+          boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+          break;
+        case 'navideño':
+          bgColor = '#0a3622';
+          textColor = '#fff';
+          borderColor = '#c41e1e';
+          borderStyle = 'double';
+          linkColor = '#ffeb3b';
+          boxShadow = '0 0 10px rgba(255, 200, 0, 0.3)';
+          break;
+        case 'default':
+        default:
+          bgColor = document.getElementById('bgColor').value;
+          textColor = '#000';
+          borderColor = document.getElementById('borderColor').value;
+          borderStyle = document.getElementById('borderStyle').value;
+          break;
+      }
+
+      document.documentElement.style.setProperty('--bg-color', bgColor);
+      document.documentElement.style.setProperty('--text-color', textColor);
+      document.documentElement.style.setProperty('--border-color', borderColor);
+      document.documentElement.style.setProperty('--border-style', borderStyle);
+      document.documentElement.style.setProperty('--box-shadow', boxShadow);
+      document.documentElement.style.setProperty('--link-color', linkColor);
+
+      // Forma / Bordes
+      const forma = document.getElementById('formaEtiqueta').value;
+      let borderRadius = document.getElementById('borderRadius').value + 'cm';
+
+      if (document.getElementById('borderRadius').value == 0) {
+        switch (forma) {
+          case 'sharp': borderRadius = '0cm'; break;
+          case 'rounded': borderRadius = '0.8cm'; break;
+          case 'pill': borderRadius = '5cm'; break;
+          case 'vintage':
+            borderRadius = '0.6cm';
+            borderColor = '#b8a594';
+            borderStyle = 'solid';
+            boxShadow = 'inset 0 0 8px #b8a594, 0 0 2px #ccc';
+            break;
+          case 'minimal':
+            borderRadius = '0.2cm';
+            borderStyle = 'none';
+            boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            break;
+        }
+        document.documentElement.style.setProperty('--border-color', borderColor);
+        document.documentElement.style.setProperty('--border-style', borderStyle);
+        document.documentElement.style.setProperty('--box-shadow', boxShadow);
+      }
+
+      document.documentElement.style.setProperty('--border-radius', borderRadius);
+
+      // Aplicar estilos dinámicos
+      let style = document.getElementById('tema-dinamico');
+      if (!style) {
+        style = document.createElement('style');
+        style.id = 'tema-dinamico';
+        document.head.appendChild(style);
+      }
+      style.innerHTML = `
+        .etiqueta { color: ${textColor} !important; }
+        .etiqueta b, .etiqueta strong, .etiqueta a { color: ${linkColor} !important; }
+        @media print {
+          .etiqueta { -webkit-print-color-adjust: exact; color-adjust: exact; }
+        }
+      `;
+
+      // Guardar configuración
+      const config = {
+        temaEtiqueta: tema,
+        formaEtiqueta: forma,
+        borderRadius: document.getElementById('borderRadius').value,
+        borderStyle: borderStyle,
+        borderColor: borderColor,
+        bgColor: bgColor,
+        anchoCm: document.getElementById('anchoCm').value,
+        altoCm: document.getElementById('altoCm').value,
+        fontSize: document.getElementById('fontSize').value,
+        logoWidth: document.getElementById('logoWidth').value,
+        imgHeight: document.getElementById('imgHeight').value,
+        imgWidth: document.getElementById('imgWidth').value
+      };
+      localStorage.setItem('configEtiqueta', JSON.stringify(config));
+    }
+
     function generarEtiquetas() {
-      actualizarEstilos(); // Asegurar que los estilos se actualicen
+      actualizarEstilos();
 
       const tipoHoja = document.getElementById("tamanoHoja").value;
       let anchoHojaCm, altoHojaCm;
@@ -278,29 +478,45 @@ Evite derramar el aceite sobre superficies pintadas o barnizadas
       const anchoEtiquetaCm = parseFloat(document.getElementById('anchoCm').value) || 8;
       const altoEtiquetaCm = parseFloat(document.getElementById('altoCm').value) || 4;
 
-      const productos = document.getElementById("productos").value.split(',').map(p => p.trim());
+      // Obtener productos
+      const productosCheckboxes = [];
+      document.querySelectorAll('.checkbox-item input[type="checkbox"]:checked').forEach(cb => {
+        productosCheckboxes.push(cb.value.trim());
+      });
+
+      const productosManual = document.getElementById("productosManual").value
+        .split(',')
+        .map(p => p.trim())
+        .filter(p => p !== "");
+
+      const productos = productosManual.length > 0 ? productosManual : productosCheckboxes;
+
+      if (productos.length === 0) {
+        document.getElementById("etiquetas").innerHTML = "<p style='color:red;'>⚠️ Selecciona al menos un producto.</p>";
+        return;
+      }
+
       const cantidadPorProducto = parseInt(document.getElementById("cantidadPorProducto").value) || 1;
-      const textoCentral = document.getElementById("textoCentral").value.trim();
+      let textoCentral = document.getElementById("textoCentral").value.trim();
       const infoIzquierda = document.getElementById("infoIzquierda").value.trim();
       const recomendaciones = document.getElementById("recomendaciones").value.trim();
 
+      // Texto navideño automático
+      const tema = document.getElementById('temaEtiqueta').value;
+      if (tema === 'navideño' && !textoCentral.toLowerCase().includes('navidad')) {
+        textoCentral = '✨ ' + textoCentral + ' ✨';
+      }
+
       const contenedor = document.getElementById("etiquetas");
       contenedor.innerHTML = "";
-
-      // Calcular cuántas etiquetas caben por fila y columna
-      const etiquetasPorFila = Math.floor(anchoHojaCm / anchoEtiquetaCm);
-      const margen = 0.3; // margen entre etiquetas en cm
-      const espacioTotal = anchoHojaCm - (etiquetasPorFila * anchoEtiquetaCm);
-      const gapHorizontal = espacioTotal / (etiquetasPorFila > 1 ? etiquetasPorFila - 1 : 1);
-
-      // Ajustar contenedor para centrar etiquetas
-      contenedor.style.width = '100%';
-      contenedor.style.justifyContent = 'center';
 
       productos.forEach(producto => {
         for (let i = 0; i < cantidadPorProducto; i++) {
           const etiqueta = document.createElement("div");
           etiqueta.className = "etiqueta";
+
+          // Normalizar nombre de archivo
+          const imgSrc = `etiqueta/${producto.replace(/ /g, '').replace(/&/g, 'y').replace(/ñ/g, 'n').toLowerCase()}.png`;
 
           etiqueta.innerHTML = `
             <div class="lateral"><div>${infoIzquierda}</div></div>
@@ -314,7 +530,7 @@ Evite derramar el aceite sobre superficies pintadas o barnizadas
                 ${isURL(recomendaciones) 
                   ? `<img src="${recomendaciones}" alt="Código QR" style="max-width: 100%; height: auto; display: block; margin: 0 auto;">` 
                   : recomendaciones}
-                <img class="producto" src="etiqueta/${producto}.png" alt="${producto}">
+                <img class="producto" src="${imgSrc}" alt="${producto}">
               </div>
             </div>
           `;
@@ -322,12 +538,6 @@ Evite derramar el aceite sobre superficies pintadas o barnizadas
         }
       });
     }
-
-    // Inicializar
-    window.onload = () => {
-      actualizarTamanoHoja(); // Configurar tamaño de página
-      generarEtiquetas();
-    };
   </script>
 </body>
 </html>
