@@ -131,7 +131,7 @@
     <select id="tamanoHoja" onchange="actualizarHoja()">
       <option value="letter">Carta (8.5x11")</option>
       <option value="a4">A4 (21x29.7 cm)</option>
-      <option value="13x19">13x19 cm</option>
+      <option value="13x19">13x19 pulgadas</option>
     </select>
   </div>
 
@@ -148,7 +148,7 @@
 
   <div class="config-group">
     <label>Logo (URL):</label>
-    <input type="text" id="logoUrl" value="images/logo.png">
+    <input type="text" id="logoUrl" value="https://wil1979.github.io/esentia-factura/images/logo.png">
   </div>
 
   <div class="config-group">
@@ -178,11 +178,11 @@
 <div class="hoja"></div>
 
 <script>
-// Tamaños de hoja en cm
+// Tamaños de hoja en cm (ancho, alto)
 const tamanosHoja = {
   letter: { ancho: 21.59, alto: 27.94 }, // 8.5 x 11 pulgadas
   a4: { ancho: 21.0, alto: 29.7 },
-  '13x19': { ancho: 13, alto: 19 }
+  '13x19': { ancho: 33.02, alto: 48.26 } // 13 x 19 pulgadas → cm
 };
 
 function actualizarHoja() {
@@ -191,13 +191,15 @@ function actualizarHoja() {
   const style = document.getElementById('page-size-style') || document.createElement('style');
   style.id = 'page-size-style';
   style.innerHTML = `@page { size: ${tamano.ancho}cm ${tamano.alto}cm; margin: 0; }`;
-  if (!document.getElementById('page-size-style')) document.head.appendChild(style);
+  if (!document.getElementById('page-size-style')) {
+    document.head.appendChild(style);
+  }
 }
 
 function generarEtiquetas() {
   const tipoHoja = document.getElementById('tamanoHoja').value;
   const tamanoHoja = tamanosHoja[tipoHoja];
-  const anchoHojaUsable = tamanoHoja.ancho - 1.0; // 0.5cm de padding en cada lado
+  const anchoHojaUsable = tamanoHoja.ancho - 1.0; // 0.5cm de padding
 
   const config = {
     ancho: parseFloat(document.getElementById('anchoEtiqueta').value) || 4,
@@ -220,13 +222,12 @@ function generarEtiquetas() {
   const contenedor = document.querySelector('.hoja');
   contenedor.innerHTML = '';
 
-  // Calcular columnas según ancho útil
+  // Calcular columnas y filas
   const columnas = Math.floor(anchoHojaUsable / config.ancho);
-  contenedor.style.gridTemplateColumns = `repeat(${columnas}, ${config.ancho}cm)`;
-
-  // Generar etiquetas (ajustar cantidad según hoja)
-  const filas = tipoHoja === '13x19' ? 4 : 6; // Ajuste aproximado
+  const filas = Math.floor((tamanoHoja.alto - 1.0) / config.alto); // alto útil
   const totalEtiquetas = columnas * filas;
+
+  contenedor.style.gridTemplateColumns = `repeat(${columnas}, ${config.ancho}cm)`;
 
   for (let i = 0; i < totalEtiquetas; i++) {
     const etiqueta = document.createElement('div');
@@ -253,7 +254,7 @@ function generarEtiquetas() {
     contenedor.appendChild(etiqueta);
   }
 
-  // Actualizar tamaño de página
+  // Ajustar tamaño de página
   actualizarHoja();
 }
 
