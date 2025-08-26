@@ -167,6 +167,46 @@
       margin: 3px 0;
       font-size: 0.9rem;
     }
+    
+    .cliente-compra {
+      background: #f0f8ff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 10px;
+      margin: 10px 0;
+    }
+    
+    .cliente-compra h4 {
+      margin: 0 0 10px 0;
+      color: #6c4ba3;
+    }
+    
+    .cliente-compra p {
+      margin: 5px 0;
+      font-size: 0.9rem;
+    }
+    
+    .detalle-producto {
+      background: #f9f9f9;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      padding: 8px;
+      margin: 5px 0;
+    }
+    
+    .detalle-producto strong {
+      color: #555;
+    }
+    
+    .cliente-info {
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .compra-info {
+      color: #666;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -182,6 +222,8 @@
     <div class="tab active" onclick="switchTab('inventario')">📦 Inventario Actual</div>
     <div class="tab" onclick="switchTab('movimientos')">🔄 Movimientos</div>
     <div class="tab" onclick="switchTab('rentabilidad')">💰 Rentabilidad</div>
+    <div class="tab" onclick="switchTab('clientes')">👥 Por Cliente</div>
+    <div class="tab" onclick="switchTab('productos')">🛍️ Por Producto</div>
   </div>
 
   <!-- Pestaña de Inventario Actual -->
@@ -191,9 +233,6 @@
         <label for="categoria-filtro">Filtrar por Categoría:</label>
         <select id="categoria-filtro" onchange="generarReporteInventario()">
           <option value="todas">Todas las categorías</option>
-          <option value="aromas">Aromas</option>
-          <option value="limpieza">Limpieza</option>
-          <option value="cuidado">Cuidado Personal</option>
         </select>
       </div>
       <button class="boton-accion" onclick="generarReporteInventario()">📊 Generar Reporte</button>
@@ -262,9 +301,43 @@
     </div>
   </div>
 
+  <!-- Pestaña de Reporte por Cliente -->
+  <div id="clientes" class="tab-content">
+    <div style="max-width: 600px;">
+      <div class="filtro-item">
+        <label for="cliente-selector">Seleccionar Cliente:</label>
+        <select id="cliente-selector" onchange="generarReportePorCliente()">
+          <option value="todos">Todos los clientes</option>
+        </select>
+      </div>
+      <button class="boton-accion" onclick="generarReportePorCliente()">🔍 Generar Reporte por Cliente</button>
+    </div>
+
+    <div id="resultado-clientes" style="margin-top: 30px;">
+      <p>Haz clic en "Generar Reporte por Cliente" para ver el historial de compras.</p>
+    </div>
+  </div>
+
+  <!-- Pestaña de Reporte por Producto -->
+  <div id="productos" class="tab-content">
+    <div style="max-width: 600px;">
+      <div class="filtro-item">
+        <label for="producto-selector">Seleccionar Producto:</label>
+        <select id="producto-selector" onchange="generarReportePorProducto()">
+          <option value="todos">Todos los productos</option>
+        </select>
+      </div>
+      <button class="boton-accion" onclick="generarReportePorProducto()">🔍 Generar Reporte por Producto</button>
+    </div>
+
+    <div id="resultado-productos" style="margin-top: 30px;">
+      <p>Haz clic en "Generar Reporte por Producto" para ver a quiénes se les ha vendido.</p>
+    </div>
+  </div>
+
   <!-- Botones adicionales -->
   <div class="acciones">
-    <button class="boton-accion" onclick="exportarCSVInventario()">⬇️ Exportar Inventario a CSV</button>
+    <button class="boton-accion" onclick="exportarCSVInventario()">⬇️ Exportar Reporte a CSV</button>
     <button class="boton-accion" onclick="imprimirReporte()">🖨️ Imprimir Reporte Actual</button>
   </div>
 
@@ -293,8 +366,10 @@
 
     // Variables globales
     let inventarioActual = {};
-    let movimientosData = {}; // Variable corregida - estaba faltando
+    let movimientosData = {};
     let rentabilidadData = {};
+    let clientesData = {};
+    let productosData = {};
 
     // Cambiar entre pestañas
     window.switchTab = function(tabName) {
@@ -306,7 +381,14 @@
       });
       
       document.getElementById(tabName).classList.add('active');
-      document.querySelector(`.tab:nth-child(${tabName === 'inventario' ? 1 : tabName === 'movimientos' ? 2 : 3})`).classList.add('active');
+      const tabIndex = {
+        'inventario': 1,
+        'movimientos': 2,
+        'rentabilidad': 3,
+        'clientes': 4,
+        'productos': 5
+      };
+      document.querySelector(`.tab:nth-child(${tabIndex[tabName]})`).classList.add('active');
     }
 
     // ✅ Generar Reporte de Inventario Actual
@@ -700,7 +782,480 @@
       }
     }
 
-    // ✅ Exportar Inventario a CSV
+    // ✅ Generar Reporte por Cliente
+    async function generarReportePorCliente() {
+      const cont = document.getElementById("resultado-clientes");
+      cont.innerHTML = "<p>🔍 Buscando historial de compras...</p>";
+
+      const clienteSeleccionado = document.getElementById("cliente-selector").value;
+
+      try {
+        // Obtener todos los clientes
+        const snapshotClientes = await getDocs(clientesRef);
+        const clientes = [];
+        snapshotClientes.forEach(docSnap => {
+          const data = docSnap.data();
+          clientes.push({
+            id: docSnap.id,
+            nombre: data.nombre,
+            telefono: data.telefono,
+            email: data.email,
+            compras: data.compras || []
+          });
+        });
+
+        // Filtrar cliente si se seleccionó uno específico
+        const clientesFiltrados = clienteSeleccionado === 'todos' 
+          ? clientes 
+          : clientes.filter(c => c.id === clienteSeleccionado);
+
+        // Calcular estadísticas
+        let totalClientes = clientesFiltrados.length;
+        let totalCompras = 0;
+        let valorTotalVentas = 0;
+
+        // Generar HTML
+        let html = '';
+
+        if (clienteSeleccionado === 'todos') {
+          // Resumen general
+          clientes.forEach(cliente => {
+            cliente.compras.forEach(compra => {
+              totalCompras++;
+              compra.productos.forEach(prod => {
+                valorTotalVentas += (prod.precio || 0) * (prod.cantidad || 1);
+              });
+            });
+          });
+
+          html += `
+            <div class="resumen">
+              <h3>👥 Resumen de Clientes</h3>
+              <table class="tabla-reportes">
+                <tr>
+                  <th>Concepto</th>
+                  <th>Valor</th>
+                </tr>
+                <tr>
+                  <td><strong>Total de Clientes</strong></td>
+                  <td>${clientes.length}</td>
+                </tr>
+                <tr>
+                  <td><strong>Total de Compras</strong></td>
+                  <td>${totalCompras}</td>
+                </tr>
+                <tr>
+                  <td><strong>Valor Total de Ventas</strong></td>
+                  <td>₡${valorTotalVentas.toLocaleString()}</td>
+                </tr>
+              </table>
+            </div>
+            <h2>📋 Historial de Todos los Clientes</h2>
+          `;
+
+          // Lista de clientes
+          clientes.sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(cliente => {
+            const totalComprasCliente = cliente.compras.reduce((sum, compra) => sum + (compra.productos || []).length, 0);
+            const valorCliente = cliente.compras.reduce((sum, compra) => {
+              return sum + (compra.productos || []).reduce((prodSum, prod) => {
+                return prodSum + (prod.precio || 0) * (prod.cantidad || 1);
+              }, 0);
+            }, 0);
+
+            html += `
+              <div class="cliente-compra">
+                <h4>${cliente.nombre}</h4>
+                <p><strong>Teléfono:</strong> ${cliente.telefono || 'No registrado'}</p>
+                <p><strong>Email:</strong> ${cliente.email || 'No registrado'}</p>
+                <p><strong>Total de Compras:</strong> ${totalComprasCliente}</p>
+                <p><strong>Valor Total Comprado:</strong> ₡${valorCliente.toLocaleString()}</p>
+              </div>
+            `;
+          });
+        } else {
+          // Detalle de cliente específico
+          const cliente = clientesFiltrados[0];
+          const totalComprasCliente = cliente.compras.reduce((sum, compra) => sum + (compra.productos || []).length, 0);
+          const valorCliente = cliente.compras.reduce((sum, compra) => {
+            return sum + (compra.productos || []).reduce((prodSum, prod) => {
+              return prodSum + (prod.precio || 0) * (prod.cantidad || 1);
+            }, 0);
+          }, 0);
+
+          html += `
+            <div class="resumen">
+              <h3>👤 Historial de ${cliente.nombre}</h3>
+              <table class="tabla-reportes">
+                <tr>
+                  <th>Información</th>
+                  <th>Detalles</th>
+                </tr>
+                <tr>
+                  <td><strong>Teléfono</strong></td>
+                  <td>${cliente.telefono || 'No registrado'}</td>
+                </tr>
+                <tr>
+                  <td><strong>Email</strong></td>
+                  <td>${cliente.email || 'No registrado'}</td>
+                </tr>
+                <tr>
+                  <td><strong>Total de Compras</strong></td>
+                  <td>${totalComprasCliente}</td>
+                </tr>
+                <tr>
+                  <td><strong>Valor Total Comprado</strong></td>
+                  <td>₡${valorCliente.toLocaleString()}</td>
+                </tr>
+              </table>
+            </div>
+            <h2>📋 Detalle de Compras</h2>
+          `;
+
+          // Historial de compras del cliente
+          if (cliente.compras.length === 0) {
+            html += '<p class="alerta">Este cliente no tiene historial de compras.</p>';
+          } else {
+            cliente.compras.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).forEach(compra => {
+              const fecha = new Date(compra.fecha);
+              const totalCompra = (compra.productos || []).reduce((sum, prod) => {
+                return sum + (prod.precio || 0) * (prod.cantidad || 1);
+              }, 0);
+
+              html += `
+                <div class="cliente-compra">
+                  <h4>Compra #${compra.id}</h4>
+                  <p class="compra-info"><strong>Fecha:</strong> ${fecha.toLocaleDateString('es-ES')}</p>
+                  <p class="compra-info"><strong>Total:</strong> ₡${totalCompra.toLocaleString()}</p>
+                  <p class="compra-info"><strong>Método de pago:</strong> ${compra.metodoPago || 'No especificado'}</p>
+              `;
+
+              (compra.productos || []).forEach(prod => {
+                html += `
+                  <div class="detalle-producto">
+                    <strong>${prod.nombre}</strong> - ${prod.cantidad} x ₡${(prod.precio || 0).toLocaleString()} = ₡${((prod.precio || 0) * (prod.cantidad || 1)).toLocaleString()}
+                  </div>
+                `;
+              });
+
+              html += `</div>`;
+            });
+          }
+        }
+
+        cont.innerHTML = html;
+        clientesData = clientes;
+
+      } catch (error) {
+        cont.innerHTML = `<p class="alerta">❌ Error al generar el reporte: ${error.message}</p>`;
+        console.error("Error:", error);
+      }
+    }
+
+    // ✅ Generar Reporte por Producto
+    async function generarReportePorProducto() {
+      const cont = document.getElementById("resultado-productos");
+      cont.innerHTML = "<p>🔍 Buscando ventas por producto...</p>";
+
+      const productoSeleccionado = document.getElementById("producto-selector").value;
+
+      try {
+        // Obtener stock para información del producto
+        const snapshotStock = await getDocs(stockRef);
+        const productosStock = {};
+        snapshotStock.forEach(docSnap => {
+          const data = docSnap.data();
+          productosStock[data.nombre] = {
+            cantidad: data.cantidad || 0,
+            precio: data.precio || 0,
+            categoria: data.categoria || 'Sin categoría'
+          };
+        });
+
+        // Obtener todas las compras de clientes
+        const snapshotClientes = await getDocs(clientesRef);
+        const ventasPorProducto = {};
+
+        snapshotClientes.forEach(docSnap => {
+          const cliente = docSnap.data();
+          (cliente.compras || []).forEach(compra => {
+            (compra.productos || []).forEach(prod => {
+              const nombreProducto = prod.nombre;
+              if (!ventasPorProducto[nombreProducto]) {
+                ventasPorProducto[nombreProducto] = {
+                  nombre: nombreProducto,
+                  totalVendido: 0,
+                  valorTotal: 0,
+                  clientes: []
+                };
+              }
+              
+              // Agregar venta
+              ventasPorProducto[nombreProducto].totalVendido += prod.cantidad || 1;
+              ventasPorProducto[nombreProducto].valorTotal += (prod.precio || 0) * (prod.cantidad || 1);
+              
+              // Registrar cliente
+              const clienteInfo = {
+                nombre: cliente.nombre,
+                id: docSnap.id,
+                cantidad: prod.cantidad || 1,
+                precio: prod.precio || 0,
+                fecha: compra.fecha
+              };
+              ventasPorProducto[nombreProducto].clientes.push(clienteInfo);
+            });
+          });
+        });
+
+        // Filtrar producto si se seleccionó uno específico
+        const productosFiltrados = productoSeleccionado === 'todos' 
+          ? Object.values(ventasPorProducto).sort((a, b) => b.totalVendido - a.totalVendido)
+          : [ventasPorProducto[productoSeleccionado]].filter(Boolean);
+
+        if (productosFiltrados.length === 0) {
+          cont.innerHTML = '<p class="alerta">No se encontraron ventas para este producto.</p>';
+          return;
+        }
+
+        // Generar HTML
+        let html = '';
+
+        if (productoSeleccionado === 'todos') {
+          // Resumen general
+          const totalProductos = Object.keys(ventasPorProducto).length;
+          const totalVendido = Object.values(ventasPorProducto).reduce((sum, p) => sum + p.totalVendido, 0);
+          const valorTotal = Object.values(ventasPorProducto).reduce((sum, p) => sum + p.valorTotal, 0);
+
+          html += `
+            <div class="resumen">
+              <h3>🛍️ Resumen de Ventas por Producto</h3>
+              <table class="tabla-reportes">
+                <tr>
+                  <th>Concepto</th>
+                  <th>Valor</th>
+                </tr>
+                <tr>
+                  <td><strong>Productos Vendidos</strong></td>
+                  <td>${totalProductos}</td>
+                </tr>
+                <tr>
+                  <td><strong>Total de Unidades Vendidas</strong></td>
+                  <td>${totalVendido}</td>
+                </tr>
+                <tr>
+                  <td><strong>Valor Total de Ventas</strong></td>
+                  <td>₡${valorTotal.toLocaleString()}</td>
+                </tr>
+              </table>
+            </div>
+            <h2>📋 Productos Más Vendidos</h2>
+            <table class="tabla-reportes">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Categoría</th>
+                  <th>Stock Actual</th>
+                  <th>Unidades Vendidas</th>
+                  <th>Valor Total</th>
+                  <th>Clientes</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+
+          productosFiltrados.forEach(prod => {
+            const stockInfo = productosStock[prod.nombre] || {};
+            html += `
+              <tr>
+                <td><strong>${prod.nombre}</strong></td>
+                <td>${stockInfo.categoria}</td>
+                <td>${stockInfo.cantidad}</td>
+                <td>${prod.totalVendido}</td>
+                <td>₡${prod.valorTotal.toLocaleString()}</td>
+                <td>${prod.clientes.length}</td>
+              </tr>
+            `;
+          });
+
+          html += `</tbody></table>`;
+        } else {
+          // Detalle de producto específico
+          const producto = productosFiltrados[0];
+          const stockInfo = productosStock[producto.nombre] || {};
+          
+          // Agrupar clientes por frecuencia
+          const clientesAgrupados = {};
+          producto.clientes.forEach(cliente => {
+            if (!clientesAgrupados[cliente.id]) {
+              clientesAgrupados[cliente.id] = {
+                ...cliente,
+                vecesComprado: 1
+              };
+            } else {
+              clientesAgrupados[cliente.id].vecesComprado++;
+            }
+          });
+
+          const clientesOrdenados = Object.values(clientesAgrupados).sort((a, b) => b.vecesComprado - a.vecesComprado);
+
+          html += `
+            <div class="resumen">
+              <h3>📦 Detalle de Ventas: ${producto.nombre}</h3>
+              <table class="tabla-reportes">
+                <tr>
+                  <th>Información</th>
+                  <th>Detalles</th>
+                </tr>
+                <tr>
+                  <td><strong>Categoría</strong></td>
+                  <td>${stockInfo.categoria}</td>
+                </tr>
+                <tr>
+                  <td><strong>Precio de Venta</strong></td>
+                  <td>₡${stockInfo.precio.toLocaleString()}</td>
+                </tr>
+                <tr>
+                  <td><strong>Stock Actual</strong></td>
+                  <td>${stockInfo.cantidad}</td>
+                </tr>
+                <tr>
+                  <td><strong>Total Vendido</strong></td>
+                  <td>${producto.totalVendido} unidades</td>
+                </tr>
+                <tr>
+                  <td><strong>Valor Total de Ventas</strong></td>
+                  <td>₡${producto.valorTotal.toLocaleString()}</td>
+                </tr>
+                <tr>
+                  <td><strong>Clientes Diferentes</strong></td>
+                  <td>${clientesOrdenados.length}</td>
+                </tr>
+              </table>
+            </div>
+            <h2>📋 Clientes que han comprado este producto</h2>
+          `;
+
+          if (clientesOrdenados.length === 0) {
+            html += '<p class="alerta">Ningún cliente ha comprado este producto.</p>';
+          } else {
+            html += `
+              <table class="tabla-reportes">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Cantidad Comprada</th>
+                    <th>Precio Promedio</th>
+                    <th>Veces Comprado</th>
+                    <th>Última Compra</th>
+                  </tr>
+                </thead>
+                <tbody>
+            `;
+
+            clientesOrdenados.forEach(cliente => {
+              const ultimaCompra = new Date(Math.max(...producto.clientes
+                .filter(c => c.id === cliente.id)
+                .map(c => new Date(c.fecha))));
+              
+              html += `
+                <tr>
+                  <td><strong>${cliente.nombre}</strong></td>
+                  <td>${cliente.cantidad}</td>
+                  <td>₡${cliente.precio.toLocaleString()}</td>
+                  <td>${cliente.vecesComprado}</td>
+                  <td>${ultimaCompra.toLocaleDateString('es-ES')}</td>
+                </tr>
+              `;
+            });
+
+            html += `</tbody></table>`;
+          }
+        }
+
+        cont.innerHTML = html;
+        productosData = ventasPorProducto;
+
+      } catch (error) {
+        cont.innerHTML = `<p class="alerta">❌ Error al generar el reporte: ${error.message}</p>`;
+        console.error("Error:", error);
+      }
+    }
+
+    // ✅ Cargar selectores dinámicamente
+    async function cargarSelectores() {
+      try {
+        // Cargar clientes para el selector
+        const snapshotClientes = await getDocs(clientesRef);
+        const clienteSelector = document.getElementById("cliente-selector");
+        
+        // Limpiar opciones existentes excepto la primera
+        while (clienteSelector.options.length > 1) {
+          clienteSelector.remove(1);
+        }
+        
+        const clientes = [];
+        snapshotClientes.forEach(docSnap => {
+          const data = docSnap.data();
+          clientes.push({ id: docSnap.id, nombre: data.nombre });
+        });
+        
+        clientes.sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(cliente => {
+          const option = document.createElement("option");
+          option.value = cliente.id;
+          option.textContent = cliente.nombre;
+          clienteSelector.appendChild(option);
+        });
+
+        // Cargar productos para el selector
+        const snapshotStock = await getDocs(stockRef);
+        const productoSelector = document.getElementById("producto-selector");
+        
+        // Limpiar opciones existentes excepto la primera
+        while (productoSelector.options.length > 1) {
+          productoSelector.remove(1);
+        }
+        
+        const productos = [];
+        snapshotStock.forEach(docSnap => {
+          const data = docSnap.data();
+          productos.push(data.nombre);
+        });
+        
+        productos.sort().forEach(nombre => {
+          const option = document.createElement("option");
+          option.value = nombre;
+          option.textContent = nombre;
+          productoSelector.appendChild(option);
+        });
+
+        // Cargar categorías para el filtro de inventario
+        const categoriaFiltro = document.getElementById("categoria-filtro");
+        
+        // Obtener categorías únicas
+        const categorias = new Set();
+        snapshotStock.forEach(docSnap => {
+          const data = docSnap.data();
+          const categoria = data.categoria || 'otro';
+          categorias.add(categoria);
+        });
+        
+        // Limpiar opciones existentes excepto la primera
+        while (categoriaFiltro.options.length > 1) {
+          categoriaFiltro.remove(1);
+        }
+        
+        Array.from(categorias).sort().forEach(categoria => {
+          const option = document.createElement("option");
+          option.value = categoria;
+          option.textContent = categoria;
+          categoriaFiltro.appendChild(option);
+        });
+
+      } catch (error) {
+        console.error("Error al cargar selectores:", error);
+      }
+    }
+
+    // ✅ Exportar CSV mejorado
     function exportarCSVInventario() {
       const activeTab = document.querySelector('.tab.active');
       if (!activeTab) return;
@@ -783,6 +1338,60 @@
         datos.push(["TOTALES", rentabilidadData.totalVentas, rentabilidadData.totalCostos, rentabilidadData.totalUtilidad, `${rentabilidadData.margen.toFixed(2)}%`]);
 
         nombreArchivo = `rentabilidad_${new Date().toISOString().slice(0,10)}.csv`;
+
+      } else if (activeTab.textContent.includes('Por Cliente')) {
+        if (Object.keys(clientesData).length === 0) {
+          alert("⚠️ No hay datos de clientes para exportar. Genera un reporte primero.");
+          return;
+        }
+
+        datos = [
+          ["Reporte por Cliente", new Date().toLocaleDateString()],
+          [],
+          ["Nombre", "Teléfono", "Email", "Total Compras", "Valor Total"]
+        ];
+
+        clientesData.forEach(cliente => {
+          const totalCompras = cliente.compras.reduce((sum, compra) => sum + (compra.productos || []).length, 0);
+          const valorTotal = cliente.compras.reduce((sum, compra) => {
+            return sum + (compra.productos || []).reduce((prodSum, prod) => {
+              return prodSum + (prod.precio || 0) * (prod.cantidad || 1);
+            }, 0);
+          }, 0);
+
+          datos.push([
+            cliente.nombre,
+            cliente.telefono || '',
+            cliente.email || '',
+            totalCompras,
+            valorTotal
+          ]);
+        });
+
+        nombreArchivo = `clientes_${new Date().toISOString().slice(0,10)}.csv`;
+
+      } else if (activeTab.textContent.includes('Por Producto')) {
+        if (Object.keys(productosData).length === 0) {
+          alert("⚠️ No hay datos de productos para exportar. Genera un reporte primero.");
+          return;
+        }
+
+        datos = [
+          ["Reporte por Producto", new Date().toLocaleDateString()],
+          [],
+          ["Producto", "Total Vendido", "Valor Total", "Clientes"]
+        ];
+
+        Object.values(productosData).forEach(prod => {
+          datos.push([
+            prod.nombre,
+            prod.totalVendido,
+            prod.valorTotal,
+            prod.clientes.length
+          ]);
+        });
+
+        nombreArchivo = `productos_${new Date().toISOString().slice(0,10)}.csv`;
       }
 
       // Convertir a CSV
@@ -812,6 +1421,12 @@
       } else if (activeTab.textContent.includes('Rentabilidad')) {
         contenido = document.getElementById("resultado-rentabilidad").innerHTML;
         titulo = "Reporte de Rentabilidad";
+      } else if (activeTab.textContent.includes('Por Cliente')) {
+        contenido = document.getElementById("resultado-clientes").innerHTML;
+        titulo = "Reporte por Cliente";
+      } else if (activeTab.textContent.includes('Por Producto')) {
+        contenido = document.getElementById("resultado-productos").innerHTML;
+        titulo = "Reporte por Producto";
       }
 
       if (!contenido || contenido.includes('Haz clic en')) {
@@ -869,6 +1484,20 @@
                 border-radius: 8px;
                 margin: 20px 0;
               }
+              .cliente-compra {
+                background: #f0f8ff;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                padding: 10px;
+                margin: 10px 0;
+              }
+              .detalle-producto {
+                background: #f9f9f9;
+                border: 1px solid #eee;
+                border-radius: 6px;
+                padding: 8px;
+                margin: 5px 0;
+              }
               @media print {
                 button { display: none; }
                 body { padding: 0; margin: 20px; }
@@ -907,14 +1536,17 @@
     window.generarReporteInventario = generarReporteInventario;
     window.generarReporteMovimientos = generarReporteMovimientos;
     window.generarReporteRentabilidad = generarReporteRentabilidad;
+    window.generarReportePorCliente = generarReportePorCliente;
+    window.generarReportePorProducto = generarReportePorProducto;
     window.exportarCSVInventario = exportarCSVInventario;
     window.imprimirReporte = imprimirReporte;
     window.switchTab = switchTab;
     window.scrollToTop = scrollToTop;
     window.scrollToBottom = scrollToBottom;
 
-    // Generar reporte inicial
-    document.addEventListener('DOMContentLoaded', () => {
+    // Generar reporte inicial y cargar selectores
+    document.addEventListener('DOMContentLoaded', async () => {
+      await cargarSelectores();
       generarReporteInventario();
     });
   </script>
