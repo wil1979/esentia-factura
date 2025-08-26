@@ -103,7 +103,7 @@
       font-size: 12px;
     }
 
-    .config-group input {
+    .config-group input, .config-group select {
       width: 100%;
       padding: 5px;
       margin-bottom: 5px;
@@ -127,7 +127,16 @@
   </div>
   
   <div class="config-group">
-    <label>Dimensiones (cm):</label>
+    <label>Tamaño de hoja:</label>
+    <select id="tamanoHoja" onchange="actualizarHoja()">
+      <option value="letter">Carta (8.5x11")</option>
+      <option value="a4">A4 (21x29.7 cm)</option>
+      <option value="13x19">13x19 cm</option>
+    </select>
+  </div>
+
+  <div class="config-group">
+    <label>Dimensiones etiqueta (cm):</label>
     <input type="number" id="anchoEtiqueta" step="0.1" value="4" placeholder="Ancho">
     <input type="number" id="altoEtiqueta" step="0.1" value="4" placeholder="Alto">
   </div>
@@ -169,7 +178,27 @@
 <div class="hoja"></div>
 
 <script>
+// Tamaños de hoja en cm
+const tamanosHoja = {
+  letter: { ancho: 21.59, alto: 27.94 }, // 8.5 x 11 pulgadas
+  a4: { ancho: 21.0, alto: 29.7 },
+  '13x19': { ancho: 13, alto: 19 }
+};
+
+function actualizarHoja() {
+  const tipo = document.getElementById('tamanoHoja').value;
+  const tamano = tamanosHoja[tipo];
+  const style = document.getElementById('page-size-style') || document.createElement('style');
+  style.id = 'page-size-style';
+  style.innerHTML = `@page { size: ${tamano.ancho}cm ${tamano.alto}cm; margin: 0; }`;
+  if (!document.getElementById('page-size-style')) document.head.appendChild(style);
+}
+
 function generarEtiquetas() {
+  const tipoHoja = document.getElementById('tamanoHoja').value;
+  const tamanoHoja = tamanosHoja[tipoHoja];
+  const anchoHojaUsable = tamanoHoja.ancho - 1.0; // 0.5cm de padding en cada lado
+
   const config = {
     ancho: parseFloat(document.getElementById('anchoEtiqueta').value) || 4,
     alto: parseFloat(document.getElementById('altoEtiqueta').value) || 4,
@@ -177,10 +206,11 @@ function generarEtiquetas() {
     logo: document.getElementById('logoUrl').value,
     anchoLogo: parseInt(document.getElementById('anchoLogo').value) || 65,
     qrSize: parseInt(document.getElementById('tamanoQR').value) || 45,
-    qrData: encodeURIComponent(document.getElementById('qrData').value),
+    qrData: encodeURIComponent(document.getElementById('qrData').value.trim()),
     slogan: document.getElementById('slogan').value
   };
 
+  // Aplicar estilos dinámicos
   document.documentElement.style.setProperty('--ancho-etiqueta', `${config.ancho}cm`);
   document.documentElement.style.setProperty('--alto-etiqueta', `${config.alto}cm`);
   document.documentElement.style.setProperty('--tamano-fuente', `${config.fuente}px`);
@@ -189,11 +219,16 @@ function generarEtiquetas() {
 
   const contenedor = document.querySelector('.hoja');
   contenedor.innerHTML = '';
-  
-  const columnas = Math.floor(21.59 / config.ancho);
+
+  // Calcular columnas según ancho útil
+  const columnas = Math.floor(anchoHojaUsable / config.ancho);
   contenedor.style.gridTemplateColumns = `repeat(${columnas}, ${config.ancho}cm)`;
 
-  for (let i = 0; i < 30; i++) {
+  // Generar etiquetas (ajustar cantidad según hoja)
+  const filas = tipoHoja === '13x19' ? 4 : 6; // Ajuste aproximado
+  const totalEtiquetas = columnas * filas;
+
+  for (let i = 0; i < totalEtiquetas; i++) {
     const etiqueta = document.createElement('div');
     etiqueta.className = 'etiqueta';
     etiqueta.innerHTML = `
@@ -217,6 +252,9 @@ function generarEtiquetas() {
     `;
     contenedor.appendChild(etiqueta);
   }
+
+  // Actualizar tamaño de página
+  actualizarHoja();
 }
 
 function toggleConfig() {
@@ -228,6 +266,7 @@ function toggleConfig() {
 window.addEventListener('load', () => {
   const visible = localStorage.getItem('configVisible') !== 'false';
   document.querySelector('.config-modal').classList.toggle('hidden', !visible);
+  actualizarHoja(); // Aplicar tamaño inicial
   generarEtiquetas();
 });
 
