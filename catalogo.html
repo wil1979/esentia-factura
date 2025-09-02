@@ -5,29 +5,14 @@
   <title>Catálogo Esentia</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="catalogo.css" />
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    header { background: #6c4ba3; color: white; padding: 1rem; text-align: center; }
-    .contenedor { padding: 1rem; }
-    .productos { display: flex; flex-wrap: wrap; gap: 1rem; }
-    .producto { border: 1px solid #ccc; border-radius: 8px; padding: 1rem; width: 200px; text-align: center; background: #fff; }
-    .producto img { width: 100%; height: 150px; object-fit: cover; border-radius: 6px; cursor: pointer; }
-    .precio-original { text-decoration: line-through; color: #999; margin-right: 5px; }
-    button { cursor: pointer; padding: 8px 12px; border: none; border-radius: 6px; }
-    .btn-agregar { background: #6c4ba3; color: white; margin-top: 8px; }
-    #botonCarrito { position: fixed; bottom: 20px; right: 20px; background: #ff9800; color: white; border: none; padding: 12px 18px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; }
-    #contadorCarrito { background: red; border-radius: 50%; padding: 2px 6px; margin-left: 5px; }
-    /* Modal */
-    .modal-carrito { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 9999; }
-    .modal-contenido { background: #fff; padding: 20px; border-radius: 10px; max-width: 500px; width: 90%; position: relative; }
-    .modal-contenido img { max-width: 100%; border-radius: 8px; }
-    .fade-in { animation: fadeIn 0.3s; } .fade-out { animation: fadeOut 0.3s; }
-    @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
-    @keyframes fadeOut { from {opacity: 1;} to {opacity: 0;} }
-  </style>
+ 
 </head>
 <body>
   <header>
+    <div class="logo-container">
+      <img src="images/logo.png" alt="Logo de Esentia" class="logo" />
+    </div>
+
     <h1>🌿 Catálogo de Productos Esentia</h1>
   </header>
 
@@ -116,7 +101,7 @@
         const boton = card.querySelector(".btn-agregar");
 
         if (stock > 0) {
-          stockLabel.textContent = `✅ Disponible: ${stock}`;
+            stockLabel.innerHTML = `<span style="color:green;">✅ Disponible: ${stock}</span>`;
           if (boton) boton.disabled = false;
         } else {
           stockLabel.textContent = `❌ Agotado`;
