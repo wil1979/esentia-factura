@@ -8,28 +8,40 @@ const URL_LIMPIEZA = "https://wil1979.github.io/esentia-factura/productos_limpie
 function cargarProductosEnFacturacion() {
   fetch(URL_ESENCIA)
     .then(res => res.json())
-    .then(categorias => {
+    .then(data => {
       const sel = document.getElementById("productoSelect");
       if (!sel) return;
 
       sel.innerHTML = '<option value="">-- Selecciona un producto --</option>';
 
-      categorias.forEach(categoria => {
-        const grupo = document.createElement("optgroup");
-        grupo.label = categoria.nombre;
+      // Caso 1: Si tiene categorías
+      if (Array.isArray(data) && data[0] && data[0].productos) {
+        data.forEach(categoria => {
+          const grupo = document.createElement("optgroup");
+          grupo.label = categoria.nombre;
 
-        categoria.productos.forEach(producto => {
+          categoria.productos.forEach(producto => {
+            if (!producto.disponible) return;
+            const precioFinal = producto.precioOferta || producto.precio;
+            const option = document.createElement("option");
+            option.value = `${producto.nombre}|${precioFinal}`;
+            option.textContent = `${producto.nombre} – ₡${precioFinal.toLocaleString()}`;
+            grupo.appendChild(option);
+          });
+
+          sel.appendChild(grupo);
+        });
+      } else {
+        // Caso 2: Lista plana de productos
+        data.forEach(producto => {
           if (!producto.disponible) return;
-
           const precioFinal = producto.precioOferta || producto.precio;
           const option = document.createElement("option");
           option.value = `${producto.nombre}|${precioFinal}`;
           option.textContent = `${producto.nombre} – ₡${precioFinal.toLocaleString()}`;
-          grupo.appendChild(option);
+          sel.appendChild(option);
         });
-
-        sel.appendChild(grupo);
-      });
+      }
 
       $('#productoSelect').select2({
         placeholder: "Busca un producto",
@@ -40,22 +52,43 @@ function cargarProductosEnFacturacion() {
     .catch(err => console.error("Error cargando productos de Esencia:", err));
 }
 
+
 // Cargar productos de Limpieza
 function cargarProductosLimpieza() {
   fetch(URL_LIMPIEZA)
     .then(res => res.json())
-    .then(productos => {
+    .then(data => {
       const select = document.getElementById("productoLimpiezaSelect");
       select.innerHTML = '<option value="">-- Selecciona un producto --</option>';
 
-      productos.forEach(prod => {
-        if (!prod.disponible) return;
+      // Caso 1: Con categorías
+      if (Array.isArray(data) && data[0] && data[0].productos) {
+        data.forEach(categoria => {
+          const grupo = document.createElement("optgroup");
+          grupo.label = categoria.nombre;
 
-        const option = document.createElement("option");
-        option.value = `${prod.nombre}|${prod.precioPublico}`;
-        option.textContent = `${prod.nombre} – ₡${prod.precioPublico.toLocaleString()}`;
-        select.appendChild(option);
-      });
+          categoria.productos.forEach(prod => {
+            if (!prod.disponible) return;
+            const precioFinal = prod.precioOferta || prod.precioPublico || prod.precio;
+            const option = document.createElement("option");
+            option.value = `${prod.nombre}|${precioFinal}`;
+            option.textContent = `${prod.nombre} – ₡${precioFinal.toLocaleString()}`;
+            grupo.appendChild(option);
+          });
+
+          select.appendChild(grupo);
+        });
+      } else {
+        // Caso 2: Lista plana
+        data.forEach(prod => {
+          if (!prod.disponible) return;
+          const precioFinal = prod.precioOferta || prod.precioPublico || prod.precio;
+          const option = document.createElement("option");
+          option.value = `${prod.nombre}|${precioFinal}`;
+          option.textContent = `${prod.nombre} – ₡${precioFinal.toLocaleString()}`;
+          select.appendChild(option);
+        });
+      }
 
       $('#productoLimpiezaSelect').select2({
         placeholder: "Buscar producto de limpieza",
@@ -65,6 +98,7 @@ function cargarProductosLimpieza() {
     })
     .catch(err => console.error("Error cargando productos de Limpieza:", err));
 }
+
 
 // Generar número de factura automático
 function generarNumeroFactura() {
