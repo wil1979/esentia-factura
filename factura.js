@@ -1,56 +1,71 @@
 let productosFactura = [];
 
-// Cargar productos desde el catálogo
+// URLs de los productos en GitHub
+const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
+const URL_LIMPIEZA = "https://wil1979.github.io/esentia-factura/productos_limpieza_completo.json";
+
+// Cargar productos de Aromatizantes (Esencia)
 function cargarProductosEnFacturacion() {
-  setTimeout(() => {
-    const sel = document.getElementById("productoSelect");
-    if (!sel) return;
+  fetch(URL_ESENCIA)
+    .then(res => res.json())
+    .then(categorias => {
+      const sel = document.getElementById("productoSelect");
+      if (!sel) return;
 
-    sel.innerHTML = '<option value="">-- Selecciona un producto --</option>';
+      sel.innerHTML = '<option value="">-- Selecciona un producto --</option>';
 
-    categorias.forEach(categoria => {
-      const grupo = document.createElement("optgroup");
-      grupo.label = categoria.nombre;
+      categorias.forEach(categoria => {
+        const grupo = document.createElement("optgroup");
+        grupo.label = categoria.nombre;
 
-      
-      categoria.productos.forEach(producto => {
-  // 👇 Solo agregar productos disponibles
-  if (!producto.disponible) return;
+        categoria.productos.forEach(producto => {
+          if (!producto.disponible) return;
 
-  const precioFinal = producto.precioOferta || producto.precio;
-  const option = document.createElement("option");
-  option.value = `${producto.nombre}|${precioFinal}`;
-  option.textContent = `${producto.nombre} – ₡${precioFinal.toLocaleString()}`;
-  grupo.appendChild(option);
-});
-
-     /* categoria.productos.forEach(producto => {
-        if (producto.variantes && producto.variantes.length > 0) {
-          producto.variantes.forEach(variante => {
-            const option = document.createElement("option");
-            option.value = `${variante.nombre}|${variante.precio}`;
-            option.textContent = `${variante.nombre} – ₡${variante.precio.toLocaleString()}`;
-            grupo.appendChild(option);
-          });
-        } else {
           const precioFinal = producto.precioOferta || producto.precio;
           const option = document.createElement("option");
           option.value = `${producto.nombre}|${precioFinal}`;
           option.textContent = `${producto.nombre} – ₡${precioFinal.toLocaleString()}`;
           grupo.appendChild(option);
-        }
-      });*/
+        });
 
-      sel.appendChild(grupo);
-    });
+        sel.appendChild(grupo);
+      });
 
-    $('#productoSelect').select2({
-      placeholder: "Busca un producto",
-      allowClear: true,
-      width: '100%'
-    });
-  }, 500);
+      $('#productoSelect').select2({
+        placeholder: "Busca un producto",
+        allowClear: true,
+        width: '100%'
+      });
+    })
+    .catch(err => console.error("Error cargando productos de Esencia:", err));
 }
+
+// Cargar productos de Limpieza
+function cargarProductosLimpieza() {
+  fetch(URL_LIMPIEZA)
+    .then(res => res.json())
+    .then(productos => {
+      const select = document.getElementById("productoLimpiezaSelect");
+      select.innerHTML = '<option value="">-- Selecciona un producto --</option>';
+
+      productos.forEach(prod => {
+        if (!prod.disponible) return;
+
+        const option = document.createElement("option");
+        option.value = `${prod.nombre}|${prod.precioPublico}`;
+        option.textContent = `${prod.nombre} – ₡${prod.precioPublico.toLocaleString()}`;
+        select.appendChild(option);
+      });
+
+      $('#productoLimpiezaSelect').select2({
+        placeholder: "Buscar producto de limpieza",
+        allowClear: true,
+        width: '100%'
+      });
+    })
+    .catch(err => console.error("Error cargando productos de Limpieza:", err));
+}
+
 // Generar número de factura automático
 function generarNumeroFactura() {
   const consecutivoKey = "esentia_factura_consecutivo";
@@ -70,6 +85,19 @@ function agregarProducto() {
   const cantidad = parseInt(document.getElementById("cantidadSelect").value) || 1;
 
   if (!nombre) return alert("Por favor selecciona un producto válido");
+
+  productosFactura.push({ nombre, precio: parseInt(precio), cantidad });
+  actualizarVista();
+  actualizarTotal();
+}
+
+// Agregar producto de limpieza al carrito
+function agregarProductoLimpieza() {
+  const select = document.getElementById("productoLimpiezaSelect");
+  const [nombre, precio] = select.value.split("|");
+  const cantidad = parseInt(document.getElementById("cantidadLimpieza").value) || 1;
+
+  if (!nombre) return alert("Selecciona un producto válido");
 
   productosFactura.push({ nombre, precio: parseInt(precio), cantidad });
   actualizarVista();
@@ -132,9 +160,11 @@ Es un placer ayudarte a crear espacios más limpios, frescos y armoniosos con nu
 
   const url = `https://wa.me/506${numero}?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
+
+  guardarFacturaActual();
 }
 
-// Generar PDF y abrir en nueva ventana
+// Generar PDF
 function generarFacturaPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
@@ -148,12 +178,10 @@ function generarFacturaPDF() {
   const descuentoPorcentaje = parseFloat(document.getElementById("descuentoPorcentaje").value) || 0;
   const total = subtotal - (descuento + (subtotal * descuentoPorcentaje / 100));
 
-  // Logo
   try {
     doc.addImage("images/logo.png", "PNG", 15, 10, 40, 20);
   } catch {}
 
-  // Encabezado
   doc.setFontSize(16);
   doc.text(" Factura - Esentia", 60, 20);
 
@@ -162,14 +190,12 @@ function generarFacturaPDF() {
   doc.text(`Fecha: ${fecha}`, 15, 50);
   doc.text(`Cliente: ${cliente}`, 15, 60);
 
-  // Productos
   let y = 70;
   productosFactura.forEach(p => {
     doc.text(`• ${p.nombre} x${p.cantidad} – ₡${(p.precio * p.cantidad).toLocaleString()}`, 15, y);
     y += 10;
   });
 
-  // Totales
   y += 10;
   doc.text(`Subtotal: ₡${subtotal.toLocaleString()}`, 15, y);
   y += 10;
@@ -177,7 +203,6 @@ function generarFacturaPDF() {
   y += 10;
   doc.text(`Total: ₡${total.toLocaleString()}`, 15, y);
 
-  // Nota de agradecimiento y formas de pago
   y += 20;
   doc.setFontSize(14);
   doc.text("🙏 ¡Gracias por tu confianza!", 15, y);
@@ -194,12 +219,26 @@ Formas de pago:
   y += 10;
   doc.text(nota, 15, y + 10);
 
-  // Mostrar en nueva ventana
   doc.save(`factura-${factura}.pdf`);
- // doc.output('dataurlnewwindow');
+
+  guardarFacturaActual();
 }
 
-// Historial de facturas
+// Guardar factura en historial
+function guardarFacturaActual() {
+  const factura = document.getElementById("factura").value;
+  const cliente = document.getElementById("cliente").value;
+  const fecha = document.getElementById("fecha").value;
+
+  const subtotal = productosFactura.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
+  const descuento = parseFloat(document.getElementById("descuentoCantidad").value) || 0;
+  const descuentoPorcentaje = parseFloat(document.getElementById("descuentoPorcentaje").value) || 0;
+  const total = subtotal - (descuento + (subtotal * descuentoPorcentaje / 100));
+
+  const facturaData = { factura, cliente, fecha, total };
+  guardarEnHistorial(facturaData);
+}
+
 function guardarEnHistorial(facturaData) {
   let historial = JSON.parse(localStorage.getItem("facturas")) || [];
   historial.unshift(facturaData);
@@ -234,7 +273,7 @@ function borrarHistorial() {
   }
 }
 
-// Conectar con API de Hacienda
+// Consultar API de Hacienda
 document.getElementById("idCliente").addEventListener("blur", () => {
   const cedula = document.getElementById("idCliente").value.trim().replace(/\D/g, '');
   if (!cedula || !/^(\d{9}|\d{12})$/.test(cedula)) {
@@ -260,60 +299,31 @@ document.getElementById("idCliente").addEventListener("blur", () => {
     });
 });
 
-// Generar número de factura al cargar la página
+// Nueva factura
+function nuevaFactura() {
+  productosFactura = [];
+  document.getElementById("listaProductos").innerHTML = "";
+  document.getElementById("descuentoCantidad").value = 0;
+  document.getElementById("descuentoPorcentaje").value = 0;
+  document.getElementById("totalDisplay").textContent = "";
+  document.getElementById("cliente").value = "";
+  document.getElementById("idCliente").value = "";
+  document.getElementById("numeroWhatsApp").value = "";
+  document.getElementById("factura").value = generarNumeroFactura();
+}
+
+// Inicialización al cargar la página
 window.addEventListener("DOMContentLoaded", () => {
-  // Fecha actual
   const fechaInput = document.getElementById("fecha");
   if (fechaInput && !fechaInput.value) {
-    const hoy = new Date().toISOString().split("T")[0];
-    fechaInput.value = hoy;
+    fechaInput.value = new Date().toISOString().split("T")[0];
   }
 
-  // Número de factura
   const facturaInput = document.getElementById("factura");
   if (facturaInput && !facturaInput.value) {
     facturaInput.value = generarNumeroFactura();
   }
 
-  // Cargar productos
   cargarProductosEnFacturacion();
-
   cargarProductosLimpieza();
 });
-
-function cargarProductosLimpieza() {
-  fetch('./productos_limpieza_completo.json')
-    .then(res => res.json())
-    .then(productos => {
-      const select = document.getElementById("productoLimpiezaSelect");
-      select.innerHTML = '<option value="">-- Selecciona un producto --</option>';
-
-      productos.forEach(prod => {
-        if (!prod.disponible) return;
-
-        const option = document.createElement("option");
-        option.value = `${prod.nombre}|${prod.precioPublico}`;
-        option.textContent = `${prod.nombre} – ₡${prod.precioPublico.toLocaleString()}`;
-        select.appendChild(option);
-      });
-
-      $('#productoLimpiezaSelect').select2({
-        placeholder: "Buscar producto de limpieza",
-        allowClear: true,
-        width: '100%'
-      });
-    });
-}
-
-function agregarProductoLimpieza() {
-  const select = document.getElementById("productoLimpiezaSelect");
-  const [nombre, precio] = select.value.split("|");
-  const cantidad = parseInt(document.getElementById("cantidadLimpieza").value) || 1;
-
-  if (!nombre) return alert("Selecciona un producto válido");
-
-  productosFactura.push({ nombre, precio: parseInt(precio), cantidad });
-  actualizarVista();
-  actualizarTotal();
-}
-
