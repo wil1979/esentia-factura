@@ -23,6 +23,14 @@
           <h2 class="card-title">📦 Inventario de Productos</h2>
           <button class="btn-primary" onclick="loadProducts()">↻ Actualizar</button>
         </div>
+
+        <!-- Toggle para filtrar por stock > 1 -->
+        <div style="margin: 15px 0; padding: 10px; background: var(--secondary); border-radius: 8px;">
+          <label style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="filterStockAboveOne" onchange="toggleStockFilter()">
+            <span>Mostrar solo productos con stock > 1 unidad</span>
+          </label>
+        </div>
         
         <div class="inventory-summary">
           <div class="summary-card">
@@ -226,7 +234,8 @@
     let allProducts = [];
     let currentSource = 'esencia';
     let currentEditProductId = null;
-    
+    let cachedInventory = []; // ← NUEVO: Almacena inventario completo sin filtros
+
     // Función para cambiar de pestaña
     window.switchTab = function(tabName) {
       // Ocultar todos los contenidos
@@ -326,30 +335,24 @@
       document.getElementById('productPreview').style.display = 'block';
     });
     
-    // Buscar productos
+    // Buscar productos (ahora respeta el filtro de stock > 1)
     window.searchProducts = function() {
       const searchTerm = document.getElementById('searchProduct').value.toLowerCase();
-      
-      // Filtrar productos del inventario
-      const filteredProducts = Array.from(document.querySelectorAll('#inventoryBody tr')).filter(row => {
-        const text = row.textContent.toLowerCase();
-        return text.includes(searchTerm);
-      });
-      
-      // Ocultar todas las filas
-      document.querySelectorAll('#inventoryBody tr').forEach(row => {
-        row.style.display = 'none';
-      });
-      
-      // Mostrar filas filtradas
-      filteredProducts.forEach(row => {
-        row.style.display = 'table-row';
-      });
-      
-      // Si no hay resultados, mostrar mensaje
-      if (filteredProducts.length === 0 && document.getElementById('inventoryBody').children.length > 0) {
-        document.getElementById('inventoryBody').innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-light);">No se encontraron productos</td></tr>';
+      let productsToRender = [...cachedInventory];
+
+      // Aplicar filtro de stock > 1 si está activado
+      if (document.getElementById('filterStockAboveOne')?.checked) {
+        productsToRender = productsToRender.filter(p => p.cantidad > 1);
       }
+
+      // Aplicar búsqueda
+      if (searchTerm) {
+        productsToRender = productsToRender.filter(product =>
+          product.nombre.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      renderInventory(productsToRender);
     }
     
     // Cargar productos del inventario
@@ -363,25 +366,26 @@
             ...doc.data()
           });
         });
-        
-        renderInventory(products);
-        updateInventorySummary(products);
+
+        cachedInventory = products; // Guardar copia sin filtros
+        applyFilters(); // Renderizar con filtros actuales
+        updateInventorySummary(products); // Resumen muestra datos reales (sin filtro)
       } catch (error) {
         console.error("Error al cargar inventario:", error);
         alert("Error al cargar el inventario. Por favor, intenta de nuevo.");
       }
     }
     
-    // Renderizar inventario
+    // Renderizar inventario (recibe productos ya filtrados)
     function renderInventory(products) {
       const tbody = document.getElementById('inventoryBody');
       tbody.innerHTML = '';
-      
+
       if (products.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-light);">No hay productos en el inventario</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-light);">No hay productos que coincidan con los filtros</td></tr>';
         return;
       }
-      
+
       products.forEach(product => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -396,13 +400,30 @@
       });
     }
     
-    // Actualizar resumen del inventario
+    // Actualizar resumen del inventario (usa datos SIN FILTRO)
     function updateInventorySummary(products) {
       const totalProducts = products.length;
       const totalStock = products.reduce((sum, product) => sum + product.cantidad, 0);
       
       document.getElementById('totalProducts').textContent = totalProducts;
       document.getElementById('totalStock').textContent = totalStock.toLocaleString();
+    }
+    
+    // Aplicar filtros y renderizar
+    function applyFilters() {
+      let productsToRender = [...cachedInventory];
+
+      // Aplicar filtro de stock > 1  CAMBIAR AQUI FILTRO
+      if (document.getElementById('filterStockAboveOne')?.checked) {
+        productsToRender = productsToRender.filter(p => p.cantidad >0);
+      }
+
+      renderInventory(productsToRender);
+    }
+
+    // Toggle del filtro de stock > 1
+    window.toggleStockFilter = function() {
+      applyFilters();
     }
     
     // Agregar producto seleccionado al inventario
