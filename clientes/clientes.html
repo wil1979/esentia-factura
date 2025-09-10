@@ -315,12 +315,12 @@
   <!-- Filtros de visualización -->
   <div style="margin-bottom: 10px;">
     <input type="text" id="filtro-clientes" placeholder="🔎 Buscar cliente por nombre..." style="width: 60%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
-    <button class="boton-accion" style="background: #4CAF50; margin-left: 10px;" onclick="cargarClientes(true)">
-      💳 Solo Deudores
-    </button>
-    <button class="boton-accion" style="background: #2196F3; margin-left: 10px;" onclick="cargarClientes(false)">
-      👥 Mostrar Todos
-    </button>
+    <button class="boton-accion" style="background: #4CAF50; margin-left: 10px;" onclick="filtroDeudoresActivo(true)">
+  💳 Solo Deudores
+</button>
+<button class="boton-accion" style="background: #2196F3; margin-left: 10px;" onclick="cargarClientes(false)">
+  👥 Mostrar Todos
+</button>
   </div>
 
   <div id="clientes"></div>
@@ -542,7 +542,7 @@ window.cerrarModalSeleccionarCliente = cerrarModalSeleccionarCliente;
         alert("✅ Cliente agregado exitosamente.");
         document.getElementById("nombre").value = "";
         document.getElementById("telefono").value = "";
-        await cargarClientes(false); // Recargar con todos visibles
+        await cargarClientes(filtroDeudoresActivo); // Recargar con todos visibles
       } catch (error) {
         alert("❌ Error al agregar cliente: " + error.message);
         console.error("Error al agregar cliente:", error);
@@ -551,6 +551,7 @@ window.cerrarModalSeleccionarCliente = cerrarModalSeleccionarCliente;
 
     // ✅ Cargar clientes con filtro
     async function cargarClientes(filtrarDeudores = true) {
+      filtroDeudoresActivo = filtrarDeudores;
       const cont = document.getElementById("clientes");
       const filtroInput = document.getElementById("filtro-clientes");
 
@@ -604,52 +605,67 @@ window.cerrarModalSeleccionarCliente = cerrarModalSeleccionarCliente;
           `;
           cont.appendChild(div);
 
-          if (compras.length > 0) {
-            const historial = document.createElement("div");
-            historial.className = "historial-compras";
-            let html = "<h4>🛒 Historial de Compras:</h4><ul>";
-            compras.forEach((compra, index) => {
-              const total = (compra.monto || 0) - (compra.descuento || 0);
-              const saldo = total - (compra.pagado || 0);
-              const estadoInv = compra.inventarioActualizado ? 
-                `<small style="color: green;">✅ Inventario actualizado</small>` : 
-                `<small style="color: orange;">🔸 Pendiente</small>`;
-              html += `
-                <li>
-                  <strong>📅 ${compra.fecha}</strong> | 
-                  Total: ₡${total.toLocaleString()} | 
-                  Pagado: ₡${(compra.pagado || 0).toLocaleString()} | 
-                  Saldo: ₡${saldo.toLocaleString()}
-                  <br>
-                  <small><strong>Productos:</strong> 
-                    ${compra.productos?.map(p => `${p.cantidad}x ${p.nombre} (${p.presentacion || ''}${p.aroma ? ' - ' + p.aroma : ''})`).join(', ') || 'Sin productos'}
-                  </small><br>
-                  ${estadoInv}
-                  <br>
-                  <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px;" 
-                          onclick="editarCompra('${id}', ${index})">
-                    ✏️ Editar
-                  </button>
-                  <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px; background: #d32f2f;" 
-                          onclick="eliminarCompra('${id}', ${index})">
-                    🗑️ Eliminar
-                  </button>
-                  <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px; background: #6c4ba3;"
-                          onclick="actualizarInventario('${id}', ${index})">
-                    📦 Actualizar Inventario
-                  </button>
-                  ${compra.inventarioActualizado ? `
-                  <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px; background: #757575;"
-                          onclick="revertirInventario('${id}', ${index})">
-                    🔁 Revertir Inventario
-                  </button>
-                  ` : ''}
-                </li>`;
-            });
-            html += "</ul>";
-            historial.innerHTML = html;
-            div.appendChild(historial);
-          }
+         // Botón para mostrar/ocultar historial
+const btnToggleHistorial = document.createElement("button");
+btnToggleHistorial.className = "boton-accion";
+btnToggleHistorial.style.marginTop = "10px";
+btnToggleHistorial.textContent = "📋 Ver/Ocultar Historial";
+btnToggleHistorial.onclick = function() {
+  const historialDiv = this.nextElementSibling;
+  if (historialDiv && historialDiv.classList.contains("historial-compras")) {
+    historialDiv.style.display = historialDiv.style.display === "none" ? "block" : "none";
+  }
+};
+div.appendChild(btnToggleHistorial);
+
+if (compras.length > 0) {
+  const historial = document.createElement("div");
+  historial.className = "historial-compras";
+  historial.style.display = "none"; // Oculto por defecto
+  let html = "<h4>🛒 Historial de Compras:</h4><ul>";
+  compras.forEach((compra, index) => {
+    const total = (compra.monto || 0) - (compra.descuento || 0);
+    const saldo = total - (compra.pagado || 0);
+    const estadoInv = compra.inventarioActualizado ? 
+      `<small style="color: green;">✅ Inventario actualizado</small>` : 
+      `<small style="color: orange;">🔸 Pendiente</small>`;
+    html += `
+      <li>
+    <strong>📅 ${compra.fecha}</strong> | 
+    Total: ₡${total.toLocaleString()} | 
+    Descuento: ₡${(compra.descuento || 0).toLocaleString()} | 
+    Pagado: ₡${(compra.pagado || 0).toLocaleString()} | 
+    Saldo: ₡${saldo.toLocaleString()}
+    <br>
+        <small><strong>Productos:</strong> 
+          ${compra.productos?.map(p => `${p.cantidad}x ${p.nombre} (${p.presentacion || ''}${p.aroma ? ' - ' + p.aroma : ''})`).join(', ') || 'Sin productos'}
+        </small><br>
+        ${estadoInv}
+        <br>
+        <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px;" 
+                onclick="editarCompra('${id}', ${index})">
+          ✏️ Editar
+        </button>
+        <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px; background: #d32f2f;" 
+                onclick="eliminarCompra('${id}', ${index})">
+          🗑️ Eliminar
+        </button>
+        <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px; background: #6c4ba3;"
+                onclick="actualizarInventario('${id}', ${index})">
+          📦 Actualizar Inventario
+        </button>
+        ${compra.inventarioActualizado ? `
+        <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px; background: #757575;"
+                onclick="revertirInventario('${id}', ${index})">
+          🔁 Revertir Inventario
+        </button>
+        ` : ''}
+      </li>`;
+  });
+  html += "</ul>";
+  historial.innerHTML = html;
+  div.appendChild(historial);
+}
         });
       };
 
@@ -914,7 +930,7 @@ window.cerrarModalSeleccionarCliente = cerrarModalSeleccionarCliente;
     // ✅ Enviar WhatsApp
     function enviarWhatsApp(telefono, nombre, deuda) {
       const limpio = telefono.replace(/\D/g, '');
-      const mensaje = `Hola ${nombre}, Agradecemos tu preferencia y queremos comentarte que tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia llenando tu vida de fragancias que enamoran. 💳 Formas de pago:\ SINPE 72952454 Wilber Calderón M💜`;
+      const mensaje = `Hola ${nombre}, Agradecemos tu preferencia y queremos comentarte que tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia llenando tu vida de fragancias que enamoran. 💜`;
       const url = `https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`;
       window.open(url, "_blank");
     }
@@ -973,11 +989,11 @@ window.cerrarModalSeleccionarCliente = cerrarModalSeleccionarCliente;
           <thead>
             <tr>
               <th>Nombre</th>
-              <th>Teléfono</th>
-              <th>Total Compras</th>
-              <th>Total Pagado</th>
-              <th>Descuentos</th>
-              <th>Saldo</th>
+    <th>Teléfono</th>
+    <th>Total Compras</th>
+    <th>Total Pagado</th>
+    <th>Descuentos</th>
+    <th>Saldo</th>
             </tr>
           </thead>
           <tbody>
@@ -988,14 +1004,14 @@ window.cerrarModalSeleccionarCliente = cerrarModalSeleccionarCliente;
         totalPendienteGen += cli.totalPendiente;
         const clase = cli.totalPendiente > 5000 ? "deuda-alta" : cli.totalPendiente > 2000 ? "deuda-media" : "deuda-baja";
         tabla += `
-          <tr>
-            <td>${cli.nombre}</td>
-            <td>${cli.telefono}</td>
-            <td>₡${cli.totalCompras.toLocaleString()}</td>
-            <td>₡${cli.totalPagado.toLocaleString()}</td>
-            <td>₡${cli.totalDescuentos.toLocaleString()}</td>
-            <td class="${clase}">₡${cli.totalPendiente.toLocaleString()}</td>
-          </tr>
+           <tr>
+    <td>${cli.nombre}</td>
+    <td>${cli.telefono}</td>
+    <td>₡${cli.totalCompras.toLocaleString()}</td>
+    <td>₡${cli.totalPagado.toLocaleString()}</td>
+    <td>₡${cli.totalDescuentos.toLocaleString()}</td>
+    <td class="${clase}">₡${cli.totalPendiente.toLocaleString()}</td>
+  </tr>
         `;
       });
       tabla += `</tbody></table>
@@ -1003,6 +1019,7 @@ window.cerrarModalSeleccionarCliente = cerrarModalSeleccionarCliente;
           <h3>Resumen:</h3>
           <p><strong>Total Compras:</strong> ₡${totalGeneral.toLocaleString()}</p>
           <p><strong>Total Pagado:</strong> ₡${totalPagadoGen.toLocaleString()}</p>
+          <p><strong>Total Descuentos:</strong> ₡${totalDescuentosGen.toLocaleString()}</p>
           <p><strong>Total Pendiente:</strong> ₡${totalPendienteGen.toLocaleString()}</p>
         </div>`;
       cont.innerHTML = tabla;
@@ -1176,16 +1193,16 @@ window.cerrarModalSeleccionarCliente = cerrarModalSeleccionarCliente;
           totalCompras += total;
           totalPagado += compra.pagado || 0;
           totalPendiente += saldo;
-          html += `
-            <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #eee; border-radius: 6px;">
-              <h4>📅 Compra #${index+1} - ${compra.fecha}</h4>
-              <ul style="margin-left: 20px;">
-                ${compra.productos?.map(p => `<li>${p.cantidad}x ${p.nombre} - ${p.presentacion || ''} ${p.aroma ? '('+p.aroma+')' : ''} - ₡${p.precio} (Total: ₡${p.precio * p.cantidad})</li>`).join('') || '<li>Sin productos</li>'}
-              </ul>
-              <p><strong>Total:</strong> ₡${total} | <strong>Pagado:</strong> ₡${compra.pagado || 0} | <strong>Saldo:</strong> ₡${saldo}</p>
-              ${compra.inventarioActualizado ? '<p style="color: green;">✅ Inventario actualizado</p>' : ''}
-            </div>
-          `;
+         html += `
+  <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #eee; border-radius: 6px;">
+    <h4>📅 Compra #${index+1} - ${compra.fecha}</h4>
+    <ul style="margin-left: 20px;">
+      ${compra.productos?.map(p => `<li>${p.cantidad}x ${p.nombre} - ${p.presentacion || ''} ${p.aroma ? '('+p.aroma+')' : ''} - ₡${p.precio} (Total: ₡${p.precio * p.cantidad})</li>`).join('') || '<li>Sin productos</li>'}
+    </ul>
+    <p><strong>Total:</strong> ₡${total} | <strong>Descuento:</strong> ₡${(compra.descuento || 0).toLocaleString()} | <strong>Pagado:</strong> ₡${compra.pagado || 0} | <strong>Saldo:</strong> ₡${saldo}</p>
+    ${compra.inventarioActualizado ? '<p style="color: green;">✅ Inventario actualizado</p>' : ''}
+  </div>
+`;
         });
       }
       const contenido = document.getElementById("contenido-historial");
@@ -1264,6 +1281,7 @@ window.cerrarModalSeleccionarCliente = cerrarModalSeleccionarCliente;
     let todosLosProductos = [];
     let carrito = [];
     let clienteSeleccionadoId = null;
+    let filtroDeudoresActivo = true; // o false, según tu preferencia inicial
 
     async function cargarProductosJSON() {
       const [res1, res2] = await Promise.all([fetch(URL_ESENCIA), fetch(URL_LIMPIEZA)]);
@@ -1450,7 +1468,7 @@ window.cerrarModalSeleccionarCliente = cerrarModalSeleccionarCliente;
     window.revertirInventario = revertirInventario;
 
     // Inicializar: cargar solo deudores al inicio
-    await cargarClientes(false);
+    await cargarClientes(filtroDeudoresActivo);
     await cargarProductosJSON();
   </script>
   <script>
