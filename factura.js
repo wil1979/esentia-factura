@@ -3,7 +3,7 @@
 // ==============================
 let productosFactura = [];
 
-// URLs de los productos en GitHub
+// URLs de los productos en GitHub (¡SIN ESPACIOS!)
 const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
 const URL_LIMPIEZA = "https://wil1979.github.io/esentia-factura/productos_limpieza_completo.json";
 
@@ -233,7 +233,7 @@ function actualizarTotal() {
 }
 
 // ==============================
-// 📲 ENVIAR FACTURA POR WHATSAPP
+// 📲 ENVIAR FACTURA POR WHATSAPP (CON CONFIRMACIÓN)
 // ==============================
 async function enviarFacturaPorWhatsApp() {
   if (!validarFactura()) return;
@@ -260,12 +260,20 @@ async function enviarFacturaPorWhatsApp() {
   mensaje += `\n💰 Subtotal: ₡${subtotal.toLocaleString()}`;
   mensaje += `\n🔖 Descuento: ₡${descuento.toLocaleString()}`;
   mensaje += `\n✅ Total a pagar: ₡${total.toLocaleString()}`;
-  mensaje += `\n\n💳 Formas de pago:\n1. Efectivo contra entrega\n2. SINPE 72952454 Wilber Calderón M.\n3. BAC: CR59010200009453897656\n\n🌿 Estamos encantados de atenderte...`;
+  mensaje += `\n\n💳 Formas de pago:\n1. Efectivo contra entrega\n2. SINPE 72952454 Wilber Calderón M.\n3. BAC: CR59010200009453897656\n\n🌿 Estamos encantados de atenderte.
+Es un placer ayudarte a crear espacios más limpios,
+frescos y armoniosos con nuestras fragancias y productos de limpieza.`;
 
+  // ✅ URL CORREGIDA: SIN ESPACIOS
   const url = `https://wa.me/506${numero}?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
 
-  await guardarFacturaActual();
+  // Preguntar si desea guardar la factura
+  if (confirm("✅ Factura enviada por WhatsApp.\n\n¿Deseas guardar esta factura en la base de datos?")) {
+    await guardarFacturaActual();
+  } else {
+    mostrarToast("ℹ️ Factura no guardada en la nube", "#ff9800");
+  }
 }
 
 // ==============================
@@ -316,7 +324,8 @@ async function generarFacturaPDF() {
 
   const nota = `
 Estamos encantados de atenderte.
-Es un placer ayudarte a crear espacios más limpios, frescos y armoniosos con nuestras fragancias y productos de limpieza.
+Es un placer ayudarte a crear espacios más limpios,
+frescos y armoniosos con nuestras fragancias y productos de limpieza.
 
 Formas de pago:
 1. Efectivo contra entrega
@@ -411,7 +420,12 @@ async function mostrarHistorial() {
   contenedor.innerHTML = "<p>Cargando...</p>";
 
   try {
-    // Primero: Obtener últimas 5 facturas de Firestore
+    // Verificar que db esté disponible
+    if (!window.db) {
+      contenedor.innerHTML = "<p style='color: #e53935;'>⚠️ Firestore no está inicializado. Recarga la página.</p>";
+      return;
+    }
+
     const facturasRef = collection(db, "facturas");
     const q = query(facturasRef, orderBy("fechaCreacion", "desc"), limit(5));
     const snapshot = await getDocs(q);
@@ -433,7 +447,7 @@ async function mostrarHistorial() {
       });
     }
 
-    // Segundo: Obtener historial local
+    // Historial local
     const historialLocal = JSON.parse(localStorage.getItem("facturas")) || [];
     if (historialLocal.length > 0) {
       html += "<h4>💾 Historial local:</h4>";
@@ -456,8 +470,342 @@ async function mostrarHistorial() {
 
   } catch (error) {
     console.error("Error cargando historial:", error);
-    contenedor.innerHTML = "<p style='color: #e53935;'>⚠️ Error al cargar historial. Revisa la consola.</p>";
+    contenedor.innerHTML = `<p style='color: #e53935;'>⚠️ Error: ${error.message}</p>`;
   }
+}
+
+// ==============================
+// 📊 PANEL DE ESTADÍSTICAS (VERSIÓN MEJORADA)
+// ==============================
+async function cargarEstadisticas() {
+  const panel = document.getElementById("panelEstadisticas");
+  panel.style.display = "block";
+  panel.innerHTML = "<p>Cargando estadísticas...</p>";
+
+  try {
+    if (!window.db) {
+      panel.innerHTML = "<p style='color: #e53935;'>⚠️ Firestore no está inicializado. Recarga la página.</p>";
+      return;
+    }
+
+    const facturasRef = collection(db, "facturas");
+    const snapshot = await getDocs(facturasRef);
+
+    if (snapshot.empty) {
+      panel.innerHTML = "<p>📊 No hay datos suficientes para mostrar estadísticas.</p>";
+      return;
+    }
+
+    let totalVentas = 0;
+    let totalFacturas = 0;
+    const ventasPorDia = {};
+    const productosVendidos = {};
+
+    snapshot.docs.forEach(doc => {
+      const f = doc.data();
+      totalVentas += f.total;
+      totalFacturas++;
+
+      f.productos.forEach(p => {
+        if (!productosVendidos[p.nombre]) {
+          productosVendidos[p.nombre] = { cantidad: 0, total: 0 };
+        }
+        productosVendidos[p.nombre].cantidad += p.cantidad;
+        productosVendidos[p.nombre].total += p.precio * p.cantidad;
+      });
+
+      const fecha = f.fecha.split('T')[0];
+      if (!ventasPorDia[fecha]) {
+        ventasPorDia[fecha] = 0;
+      }
+      ventasPorDia[fecha] += f.total;
+    });
+
+    const productosOrdenados = Object.entries(productosVendidos)
+      .sort((a, b) => b[1].cantidad - a[1].cantidad)
+      .slice(0, 5);
+
+    const hoy = new Date();
+    const fechas = [];
+    const valores = [];
+    for (let i = 6; i >= 0; i--) {
+      const fecha = new Date();
+      fecha.setDate(hoy.getDate() - i);
+      const fechaStr = fecha.toISOString().split('T')[0];
+      fechas.push(fechaStr);
+      valores.push(ventasPorDia[fechaStr] || 0);
+    }
+
+    const maxValor = Math.max(...valores) || 1;
+    let graficoHTML = "";
+    let leyendaHTML = "";
+    fechas.forEach((fecha, i) => {
+      const altura = (valores[i] / maxValor) * 180 || 0;
+      const color = altura > 0 ? "#4caf50" : "#ccc";
+      graficoHTML += `<div style="width: 30px; height: ${altura}px; background: ${color}; border-radius: 4px 4px 0 0;"></div>`;
+      leyendaHTML += `<span style="display: inline-block; width: 40px; text-align: center; font-size: 0.8rem;">${fecha.split('-')[2]}</span>`;
+    });
+
+    panel.innerHTML = `
+      <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
+        <div style="flex: 1; min-width: 300px; background: #f0f7ff; padding: 1rem; border-radius: 8px;">
+          <h4>📈 Ventas por día (últimos 7 días)</h4>
+          <div style="height: 200px; display: flex; align-items: flex-end; gap: 4px; margin-top: 1rem;">
+            ${graficoHTML}
+          </div>
+          <div style="margin-top: 0.5rem; font-size: 0.9rem;">
+            ${leyendaHTML}
+          </div>
+        </div>
+
+        <div style="flex: 1; min-width: 300px; background: #fff0f0; padding: 1rem; border-radius: 8px;">
+          <h4>🏆 Productos más vendidos</h4>
+          <ul style="margin-top: 1rem; max-height: 200px; overflow-y: auto; padding-left: 20px;">
+            ${productosOrdenados.map(([nombre, data]) => `
+              <li><strong>${nombre}</strong> - ${data.cantidad} uds - ₡${data.total.toLocaleString()}</li>
+            `).join('')}
+          </ul>
+        </div>
+      </div>
+
+      <div style="margin-top: 1rem; background: #f0fff0; padding: 1rem; border-radius: 8px;">
+        <h4>💰 Resumen general</h4>
+        <p><strong>Total facturas:</strong> ${totalFacturas}</p>
+        <p><strong>Total vendido:</strong> ₡${totalVentas.toLocaleString()}</p>
+        <p><strong>Promedio por factura:</strong> ₡${totalFacturas ? Math.round(totalVentas / totalFacturas).toLocaleString() : 0}</p>
+      </div>
+    `;
+
+  } catch (error) {
+    console.error("Error cargando estadísticas:", error);
+    panel.innerHTML = `<p style='color: #e53935;'>⚠️ Error: ${error.message}</p>`;
+  }
+}
+
+// ==============================
+// 👥 CARGAR CLIENTES GUARDADOS (MEJORADO)
+// ==============================
+async function cargarClientesGuardados() {
+  try {
+    if (!window.db) {
+      alert("Firestore no está inicializado. Recarga la página.");
+      return;
+    }
+
+    const clientesRef = collection(db, "clientes");
+    const snapshot = await getDocs(clientesRef);
+
+    if (snapshot.empty) {
+      alert("No hay clientes guardados.");
+      return;
+    }
+
+    // Guardamos todos los clientes en un array para filtrar
+    const clientes = [];
+    snapshot.docs.forEach(doc => {
+      const cliente = doc.data();
+      clientes.push({
+        telefono: cliente.telefono,
+        nombre: cliente.nombre,
+        cedula: cliente.cedula || ""
+      });
+    });
+
+    // Creamos el modal con buscador y lista filtrable
+    const resultado = await promptClienteFiltrable(clientes);
+    
+    if (resultado) {
+      document.getElementById("cliente").value = resultado.nombre;
+      document.getElementById("numeroWhatsApp").value = resultado.telefono;
+      if (resultado.cedula) {
+        document.getElementById("idCliente").value = resultado.cedula;
+      }
+      mostrarToast(`✅ Cliente "${resultado.nombre}" cargado`, "#4caf50");
+    }
+
+  } catch (error) {
+    console.error("Error cargando clientes:", error);
+    alert("Error al cargar clientes: " + error.message);
+  }
+}
+
+// ==============================
+// 🎯 PROMPT CLIENTE FILTRABLE (NUEVA VERSIÓN)
+// ==============================
+function promptClienteFiltrable(clientes) {
+  return new Promise(resolve => {
+    const div = document.createElement("div");
+    div.style.position = "fixed";
+    div.style.top = "50%";
+    div.style.left = "50%";
+    div.style.transform = "translate(-50%, -50%)";
+    div.style.backgroundColor = "white";
+    div.style.padding = "20px";
+    div.style.borderRadius = "8px";
+    div.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
+    div.style.zIndex = "10000";
+    div.style.width = "90%";
+    div.style.maxWidth = "500px";
+    div.style.maxHeight = "80vh";
+    div.style.overflow = "hidden";
+
+    div.innerHTML = `
+      <h3 style="margin: 0 0 15px 0;">Selecciona un cliente</h3>
+      <input type="text" id="buscadorClientes" placeholder="Buscar por nombre o teléfono..." style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px;">
+      <div style="max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; padding: 5px;">
+        <ul id="listaClientes" style="list-style: none; padding: 0; margin: 0;"></ul>
+      </div>
+      <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button id="btnCancelar" style="padding: 8px 16px; background: #ccc; border: none; border-radius: 4px; cursor: pointer;">Cancelar</button>
+        <button id="btnAceptar" style="padding: 8px 16px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer;" disabled>Aceptar</button>
+      </div>
+    `;
+
+    document.body.appendChild(div);
+
+    const buscador = div.querySelector("#buscadorClientes");
+    const lista = div.querySelector("#listaClientes");
+    const btnAceptar = div.querySelector("#btnAceptar");
+    let clienteSeleccionado = null;
+
+    // Renderizar lista inicial
+    function renderizarLista(clientesFiltrados) {
+      lista.innerHTML = "";
+      if (clientesFiltrados.length === 0) {
+        lista.innerHTML = "<li style='padding: 10px; text-align: center; color: #999;'>No se encontraron clientes</li>";
+        return;
+      }
+
+      clientesFiltrados.forEach(cliente => {
+        const li = document.createElement("li");
+        li.style.padding = "10px";
+        li.style.cursor = "pointer";
+        li.style.borderBottom = "1px solid #eee";
+        li.style.transition = "background 0.2s";
+        
+        li.innerHTML = `
+          <strong>${cliente.nombre}</strong><br>
+          <small>Tel: ${cliente.telefono} ${cliente.cedula ? `| Céd: ${cliente.cedula}` : ''}</small>
+        `;
+
+        li.addEventListener("click", () => {
+          // Quitar selección de otros
+          lista.querySelectorAll("li").forEach(item => {
+            item.style.backgroundColor = "";
+            item.style.fontWeight = "normal";
+          });
+          
+          // Seleccionar este
+          li.style.backgroundColor = "#e3f2fd";
+          li.style.fontWeight = "bold";
+          clienteSeleccionado = cliente;
+          btnAceptar.disabled = false;
+        });
+
+        lista.appendChild(li);
+      });
+    }
+
+    // Filtrar clientes
+    function filtrarClientes() {
+  const termino = buscador.value.toLowerCase().trim();
+  const clientesFiltrados = clientes.filter(cliente => 
+    cliente.nombre.toLowerCase().includes(termino) || 
+    cliente.telefono.includes(termino) ||
+    (cliente.cedula && cliente.cedula.includes(termino))
+  );
+  renderizarLista(clientesFiltrados);
+}
+    // Eventos
+    buscador.addEventListener("input", filtrarClientes);
+    div.querySelector("#btnCancelar").onclick = () => {
+      document.body.removeChild(div);
+      resolve(null);
+    };
+
+    btnAceptar.onclick = () => {
+      document.body.removeChild(div);
+      resolve(clienteSeleccionado);
+    };
+
+    // Inicializar
+    renderizarLista(clientes);
+  });
+}
+
+// ==============================
+// 🎯 PROMPT CLIENTE (CORREGIDO)
+// ==============================
+function promptCliente(select) {
+  return new Promise(resolve => {
+    const div = document.createElement("div");
+    div.style.position = "fixed";
+    div.style.top = "50%";
+    div.style.left = "50%";
+    div.style.transform = "translate(-50%, -50%)";
+    div.style.backgroundColor = "white";
+    div.style.padding = "20px";
+    div.style.borderRadius = "8px";
+    div.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
+    div.style.zIndex = "10000";
+    div.innerHTML = `
+      <h3>Selecciona un cliente</h3>
+      ${select.outerHTML}
+      <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button id="btnCancelar" style="padding: 8px 16px; background: #ccc; border: none; border-radius: 4px; cursor: pointer;">Cancelar</button>
+        <button id="btnAceptar" style="padding: 8px 16px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer;">Aceptar</button>
+      </div>
+    `;
+
+    document.body.appendChild(div);
+
+    div.querySelector("#btnCancelar").onclick = () => {
+      document.body.removeChild(div);
+      resolve(null); // Resolvemos con null si cancela
+    };
+
+    div.querySelector("#btnAceptar").onclick = () => {
+      const selectElement = div.querySelector("select");
+      const valor = selectElement.value;
+      document.body.removeChild(div);
+      resolve(valor || null); // ✅ Resolvemos con el valor seleccionado (string)
+    };
+  });
+}
+function promptCliente(select) {
+  return new Promise(resolve => {
+    const div = document.createElement("div");
+    div.style.position = "fixed";
+    div.style.top = "50%";
+    div.style.left = "50%";
+    div.style.transform = "translate(-50%, -50%)";
+    div.style.backgroundColor = "white";
+    div.style.padding = "20px";
+    div.style.borderRadius = "8px";
+    div.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
+    div.style.zIndex = "10000";
+    div.innerHTML = `
+      <h3>Selecciona un cliente</h3>
+      ${select.outerHTML}
+      <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button id="btnCancelar" style="padding: 8px 16px; background: #ccc; border: none; border-radius: 4px; cursor: pointer;">Cancelar</button>
+        <button id="btnAceptar" style="padding: 8px 16px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer;">Aceptar</button>
+      </div>
+    `;
+
+    document.body.appendChild(div);
+
+    div.querySelector("#btnCancelar").onclick = () => {
+      document.body.removeChild(div);
+      resolve(null);
+    };
+
+    div.querySelector("#btnAceptar").onclick = () => {
+      const valor = div.querySelector("select").value;
+      document.body.removeChild(div);
+      resolve(valor || null);
+    };
+  });
 }
 
 // ==============================
@@ -566,119 +914,10 @@ function mostrarResultadoCliente(cliente, contenedor) {
   contenedor.style.display = "block";
 }
 
+// ✅ URL CORREGIDA: SIN ESPACIOS
 function reenviarPorWhatsApp(telefono, numeroFactura) {
   const mensaje = `Hola! Aquí tienes tu factura ${numeroFactura} de Esentia. ¡Gracias por tu compra! 🌿`;
   window.open(`https://wa.me/506${telefono}?text=${encodeURIComponent(mensaje)}`, "_blank");
-}
-
-// ==============================
-// 📊 PANEL DE ESTADÍSTICAS
-// ==============================
-async function cargarEstadisticas() {
-  const panel = document.getElementById("panelEstadisticas");
-  panel.style.display = "block";
-  panel.innerHTML = "<p>Cargando estadísticas...</p>";
-
-  try {
-    const hoy = new Date();
-    const hace7Dias = new Date();
-    hace7Dias.setDate(hoy.getDate() - 7);
-
-    // Obtener facturas
-    const facturasRef = collection(db, "facturas");
-    const snapshot = await getDocs(facturasRef);
-
-    let totalVentas = 0;
-    let totalFacturas = 0;
-    const ventasPorDia = {};
-    const productosVendidos = {};
-
-    snapshot.docs.forEach(doc => {
-      const f = doc.data();
-      totalVentas += f.total;
-      totalFacturas++;
-
-      // Contar productos
-      f.productos.forEach(p => {
-        if (!productosVendidos[p.nombre]) {
-          productosVendidos[p.nombre] = { cantidad: 0, total: 0 };
-        }
-        productosVendidos[p.nombre].cantidad += p.cantidad;
-        productosVendidos[p.nombre].total += p.precio * p.cantidad;
-      });
-
-      // Agrupar por día
-      const fecha = f.fecha.split('T')[0]; // "YYYY-MM-DD"
-      if (!ventasPorDia[fecha]) {
-        ventasPorDia[fecha] = 0;
-      }
-      ventasPorDia[fecha] += f.total;
-    });
-
-    // Ordenar productos más vendidos
-    const productosOrdenados = Object.entries(productosVendidos)
-      .sort((a, b) => b[1].cantidad - a[1].cantidad)
-      .slice(0, 5);
-
-    // Generar gráfico de barras simple para últimos 7 días
-    const fechas = [];
-    const valores = [];
-    for (let i = 6; i >= 0; i--) {
-      const fecha = new Date();
-      fecha.setDate(hoy.getDate() - i);
-      const fechaStr = fecha.toISOString().split('T')[0];
-      fechas.push(fechaStr);
-      valores.push(ventasPorDia[fechaStr] || 0);
-    }
-
-    const maxValor = Math.max(...valores) || 1;
-
-    let graficoHTML = "";
-    let leyendaHTML = "";
-    fechas.forEach((fecha, i) => {
-      const altura = (valores[i] / maxValor) * 180 || 0;
-      const color = altura > 0 ? "#4caf50" : "#ccc";
-      graficoHTML += `<div style="width: 30px; height: ${altura}px; background: ${color}; border-radius: 4px 4px 0 0;"></div>`;
-      leyendaHTML += `<span style="display: inline-block; width: 40px; text-align: center; font-size: 0.8rem;">${fecha.split('-')[2]}</span>`;
-    });
-
-    // HTML final
-    panel.innerHTML = `
-      <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
-        <div style="flex: 1; min-width: 300px; background: #f0f7ff; padding: 1rem; border-radius: 8px;">
-          <h4>📈 Ventas por día (últimos 7 días)</h4>
-          <div id="graficoVentasDia" style="height: 200px; display: flex; align-items: flex-end; gap: 4px; margin-top: 1rem;">
-            ${graficoHTML}
-          </div>
-          <div id="leyendaVentasDia" style="margin-top: 0.5rem; font-size: 0.9rem;">
-            ${leyendaHTML}
-          </div>
-        </div>
-
-        <div style="flex: 1; min-width: 300px; background: #fff0f0; padding: 1rem; border-radius: 8px;">
-          <h4>🏆 Productos más vendidos</h4>
-          <ul id="listaProductosTop" style="margin-top: 1rem; max-height: 200px; overflow-y: auto; padding-left: 20px;">
-            ${productosOrdenados.map(([nombre, data]) => `
-              <li><strong>${nombre}</strong> - ${data.cantidad} uds - ₡${data.total.toLocaleString()}</li>
-            `).join('')}
-          </ul>
-        </div>
-      </div>
-
-      <div style="margin-top: 1rem; background: #f0fff0; padding: 1rem; border-radius: 8px;">
-        <h4>💰 Resumen general</h4>
-        <div id="resumenGeneral">
-          <p><strong>Total facturas:</strong> ${totalFacturas}</p>
-          <p><strong>Total vendido:</strong> ₡${totalVentas.toLocaleString()}</p>
-          <p><strong>Promedio por factura:</strong> ₡${totalFacturas ? Math.round(totalVentas / totalFacturas).toLocaleString() : 0}</p>
-        </div>
-      </div>
-    `;
-
-  } catch (error) {
-    console.error("Error cargando estadísticas:", error);
-    panel.innerHTML = "<p style='color: #e53935;'>⚠️ Error al cargar estadísticas.</p>";
-  }
 }
 
 // ==============================
