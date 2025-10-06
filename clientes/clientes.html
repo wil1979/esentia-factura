@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <title>Esentia Créditos</title>
   <style>
+
+    .boton-accion.activo {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
+}
+
     .scroll-buttons {
       position: fixed;
       bottom: 20px;
@@ -34,6 +40,24 @@
       background-color: #f3f2f7;
       color: #333;
     }
+
+    /* Estilos para el logo */
+.logo-container {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.logo {
+  max-width: 200px; /* Ajusta este valor según lo grande que quieras el logo */
+  height: auto;
+  border-radius: 8px; /* Opcional: esquinas redondeadas */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Opcional: sombra suave */
+  transition: transform 0.3s ease;
+}
+
+.logo:hover {
+  transform: scale(1.05); /* Efecto al pasar el mouse */
+}
     h1 {
       color: #6c4ba3;
       text-align: center;
@@ -69,18 +93,18 @@
       justify-content: flex-end;
       margin-top: 0.5rem;
     }
-    .boton-accion {
-      padding: 6px 10px;
-      font-size: 0.85rem;
-      border: none;
-      background: #6c4ba3;
-      color: white;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.2s;
-      flex: 1 1 auto;
-      min-width: fit-content;
-    }
+   .boton-accion {
+  padding: 4px 8px;           /* 👈 Menos padding (más pequeño) */
+  font-size: 0.75rem;         /* 👈 Fuente más pequeña */
+  border: none;
+  background: #6c4ba3;
+  color: white;
+  border-radius: 4px;         /* 👈 Bordes ligeramente menos redondeados */
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;        /* 👈 Evita que el texto se envuelva en dos líneas */
+  min-width: auto;            /* 👈 Permite que el botón sea tan pequeño como su contenido */
+}
     .boton-accion:hover {
       background-color: #573993;
     }
@@ -265,9 +289,17 @@
     }
     /* Responsive */
     @media (max-width: 480px) {
-      .botones-derecha {
-        flex-direction: column;
+      .boton-accion {
+    font-size: 0.7rem;        /* 👈 Aún más pequeño en móvil */
+    padding: 3px 6px;
       }
+      .botones-derecha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;                /* 👈 Menos espacio entre botones */
+  justify-content: flex-end;
+  margin-top: 0.3rem;         /* 👈 Menos margen superior */
+}
       .boton-accion {
         width: 100%;
         margin-left: 0;
@@ -289,6 +321,9 @@
       }
     }
   </style>
+
+  <div class="logo-container">
+    <img src="https://wil1979.github.io/esentia-factura/images/logo.png" alt="Esentia Logo" class="logo">
 </head>
 <body>
   <div class="scroll-buttons">
@@ -315,20 +350,22 @@
   <!-- Filtros de visualización -->
   <div style="margin-bottom: 10px;">
     <input type="text" id="filtro-clientes" placeholder="🔎 Buscar cliente por nombre..." style="width: 60%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
-    <button class="boton-accion" style="background: #4CAF50; margin-left: 10px;" onclick="filtroDeudoresActivo(true)">
+    <button id="btn-solo-deudores" class="boton-accion" style="background: #4CAF50; margin-left: 10px;" onclick="cargarClientes(true)">
   💳 Solo Deudores
 </button>
-<button class="boton-accion" style="background: #2196F3; margin-left: 10px;" onclick="cargarClientes(false)">
+<button id="btn-mostrar-todos" class="boton-accion" style="background: #2196F3; margin-left: 10px;" onclick="cargarClientes(false)">
   👥 Mostrar Todos
 </button>
+
   </div>
 
   <div id="clientes"></div>
 
   <h2>➕ Nuevo Cliente</h2>
-  <input id="nombre" placeholder="Nombre completo">
-  <input id="telefono" placeholder="Teléfono con código (ej: 88889999)">
-  <button onclick="agregarCliente()">Agregar Cliente</button>
+<input id="nombre" placeholder="Nombre completo" style="width: 48%;">
+<input id="cedula" placeholder="Cédula (opcional)" style="width: 48%; margin-left: 2%;">
+<input id="telefono" placeholder="Teléfono con código (ej: 88889999)" style="width: 100%; margin-top: 10px;">
+<button onclick="agregarCliente()">Agregar Cliente</button>
 
   <hr>
   <!-- Sección de Reportes -->
@@ -502,11 +539,22 @@ async function abrirModalNuevaVenta() {
       div.style.backgroundColor = "#f9f9f9";
       div.onmouseover = () => div.style.backgroundColor = "#f0f0f0";
       div.onmouseout = () => div.style.backgroundColor = "#f9f9f9";
-      div.innerHTML = `<strong>${cliente.nombre}</strong><br><small>${ocultarTelefono(cliente.telefono)}</small>`;
-      div.onclick = () => {
-        cerrarModalSeleccionarCliente();
-        abrirModalProductos(cliente.id); // Abre el modal de productos
-      };
+      div.innerHTML = `
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <strong>${cliente.nombre}</strong><br>
+      <small>${ocultarTelefono(cliente.telefono)}</small>
+    </div>
+    <button class="boton-accion" style="padding: 4px 8px; font-size: 0.7rem; background: #FF9800;" 
+            onclick="event.stopPropagation(); editarClienteDesdeModal('${cliente.id}');">
+      ✏️ Editar
+    </button>
+  </div>
+`;
+div.onclick = () => {
+  cerrarModalSeleccionarCliente();
+  abrirModalProductos(cliente.id); // Abre el modal de productos
+};
       lista.appendChild(div);
     });
   };
@@ -525,33 +573,49 @@ function cerrarModalSeleccionarCliente() {
 window.abrirModalNuevaVenta = abrirModalNuevaVenta;
 window.cerrarModalSeleccionarCliente = cerrarModalSeleccionarCliente;
 
-    // ✅ Agregar cliente
-    async function agregarCliente() {
-      const nombre = document.getElementById("nombre").value.trim();
-      const telefono = document.getElementById("telefono").value.trim();
-      if (!nombre || !telefono) {
-        alert("⚠️ Completa ambos campos.");
-        return;
-      }
-      try {
-        await addDoc(clientesRef, {
-          nombre,
-          telefono,
-          compras: []
-        });
-        alert("✅ Cliente agregado exitosamente.");
-        document.getElementById("nombre").value = "";
-        document.getElementById("telefono").value = "";
-        await cargarClientes(filtroDeudoresActivo); // Recargar con todos visibles
-      } catch (error) {
-        alert("❌ Error al agregar cliente: " + error.message);
-        console.error("Error al agregar cliente:", error);
-      }
-    }
+
+
+
+   // ✅ Agregar cliente (con cédula)
+async function agregarCliente() {
+  const nombre = document.getElementById("nombre").value.trim();
+  const telefono = document.getElementById("telefono").value.trim();
+  const cedula = document.getElementById("cedula").value.trim();
+  if (!nombre || !telefono) {
+    alert("⚠️ Completa al menos nombre y teléfono.");
+    return;
+  }
+  try {
+    await addDoc(clientesRef, {
+      nombre,
+      telefono,
+      cedula: cedula || null, // Guardar como null si está vacío
+      compras: []
+    });
+    alert("✅ Cliente agregado exitosamente.");
+    document.getElementById("nombre").value = "";
+    document.getElementById("telefono").value = "";
+    document.getElementById("cedula").value = "";
+    await cargarClientes(filtroDeudoresActivo);
+  } catch (error) {
+    alert("❌ Error al agregar cliente: " + error.message);
+    console.error("Error al agregar cliente:", error);
+  }
+}
+
+function marcarBotones() {
+const btnDeud = document.getElementById('btn-solo-deudores');
+const btnTodos = document.getElementById('btn-mostrar-todos');
+if (!btnDeud || !btnTodos) return;
+btnDeud.classList.toggle('activo', filtroDeudoresActivo === true);
+btnTodos.classList.toggle('activo', filtroDeudoresActivo === false);
+}
+
 
     // ✅ Cargar clientes con filtro
     async function cargarClientes(filtrarDeudores = true) {
       filtroDeudoresActivo = filtrarDeudores;
+      marcarBotones();
       const cont = document.getElementById("clientes");
       const filtroInput = document.getElementById("filtro-clientes");
 
@@ -586,22 +650,25 @@ window.cerrarModalSeleccionarCliente = cerrarModalSeleccionarCliente;
           div.className = `cliente ${claseCliente}`.trim();
           div.innerHTML = `
             <strong>${cliente.nombre}</strong><br>
-            📞 <a href="https://wa.me/${cliente.telefono}" target="_blank" title="${cliente.telefono}">${ocultarTelefono(cliente.telefono)}</a><br>
-            💸 Pendiente: ₡${totalPendiente.toLocaleString()}<br>
+📞 <a href="https://wa.me/${cliente.telefono}" target="_blank" title="${cliente.telefono}">${ocultarTelefono(cliente.telefono)}</a><br>
+${cliente.cedula ? `🆔 Cédula: ${cliente.cedula}<br>` : ''}
+💸 Pendiente: ₡${totalPendiente.toLocaleString()}<br>
             <div class="editar-cliente" id="editar-${id}" style="display:none;">
-              <input type="text" id="edit-nombre-${id}" value="${cliente.nombre}">
-              <input type="text" id="edit-telefono-${id}" value="${cliente.telefono}">
-              <button class="boton-accion" onclick="guardarEdicion('${id}')">💾 Guardar</button>
-              <button class="boton-accion" onclick="cancelarEdicion('${id}')">❌ Cancelar</button>
-            </div>
-            <div class="botones-derecha">
-              <button class="boton-accion" onclick="editarCliente('${id}')">✏️ Editar</button>
-              <button class="boton-accion" onclick="abrirModalProductos('${id}')">➕ Productos</button>
-              <button class="boton-accion" onclick="registrarPago('${id}', '${cliente.nombre}')">💰 Pago</button>
-              <button class="boton-accion" onclick="abrirModalHistorial('${id}', '${cliente.nombre}')">🖨️ Imprimir</button>
-              <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${totalPendiente})">📲 WhatsApp</button>
-              <button class="boton-accion" onclick="eliminarCliente('${id}', '${cliente.nombre}')">🗑️ Eliminar</button>
-            </div>
+  <input type="text" id="edit-nombre-${id}" value="${cliente.nombre}" placeholder="Nombre">
+  <input type="text" id="edit-cedula-${id}" value="${cliente.cedula || ''}" placeholder="Cédula (opcional)">
+  <input type="text" id="edit-telefono-${id}" value="${cliente.telefono}" placeholder="Teléfono">
+  <button class="boton-accion" onclick="guardarEdicion('${id}')">💾 Guardar</button>
+  <button class="boton-accion" onclick="cancelarEdicion('${id}')">❌ Cancelar</button>
+</div>
+           <div class="botones-derecha">
+  <button class="boton-accion" onclick="editarCliente('${id}')">✏️ Editar</button>
+  <button class="boton-accion" onclick="abrirModalProductos('${id}')">➕ Productos</button>
+  <button class="boton-accion" style="background: #4CAF50;" onclick="guardarCompraDirecta('${id}', '${cliente.nombre}')">💾 Guardar Factura</button>
+  <button class="boton-accion" onclick="registrarPago('${id}', '${cliente.nombre}')">💰 Pago</button>
+  <button class="boton-accion" onclick="abrirModalHistorial('${id}', '${cliente.nombre}')">🖨️ Imprimir</button>
+  <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${totalPendiente})">📲 WhatsApp</button>
+  <button class="boton-accion" onclick="eliminarCliente('${id}', '${cliente.nombre}')">🗑️ Eliminar</button>
+</div>
           `;
           cont.appendChild(div);
 
@@ -804,31 +871,36 @@ if (compras.length > 0) {
     }
 
     async function guardarEdicion(clienteId) {
-      const nuevoNombre = document.getElementById(`edit-nombre-${clienteId}`).value.trim();
-      let nuevoTelefono = document.getElementById(`edit-telefono-${clienteId}`).value.trim();
-      if (!nuevoNombre) {
-        alert("⚠️ Completa el nombre.");
-        return;
-      }
-      const telefonoLimpio = nuevoTelefono.replace(/\D/g, '');
-      if (!telefonoLimpio || telefonoLimpio === "00000000" || telefonoLimpio.length < 8) {
-        const nuevo = prompt("El número no es válido. Ingresa un número de teléfono válido (8 dígitos):");
-        if (!nuevo) {
-          alert("Se requiere un número válido.");
-          return;
-        }
-        nuevoTelefono = nuevo;
-      }
-      try {
-        const clienteDoc = doc(db, "clientes", clienteId);
-        await updateDoc(clienteDoc, { nombre: nuevoNombre, telefono: nuevoTelefono });
-        alert("✅ Cliente actualizado.");
-        await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
-      } catch (error) {
-        alert("❌ Error al actualizar: " + error.message);
-        console.error("Error:", error);
-      }
+  const nuevoNombre = document.getElementById(`edit-nombre-${clienteId}`).value.trim();
+  const nuevaCedula = document.getElementById(`edit-cedula-${clienteId}`).value.trim();
+  let nuevoTelefono = document.getElementById(`edit-telefono-${clienteId}`).value.trim();
+  if (!nuevoNombre) {
+    alert("⚠️ Completa el nombre.");
+    return;
+  }
+  const telefonoLimpio = nuevoTelefono.replace(/\D/g, '');
+  if (!telefonoLimpio || telefonoLimpio === "00000000" || telefonoLimpio.length < 8) {
+    const nuevo = prompt("El número no es válido. Ingresa un número de teléfono válido (8 dígitos):");
+    if (!nuevo) {
+      alert("Se requiere un número válido.");
+      return;
     }
+    nuevoTelefono = nuevo;
+  }
+  try {
+    const clienteDoc = doc(db, "clientes", clienteId);
+    await updateDoc(clienteDoc, { 
+      nombre: nuevoNombre, 
+      telefono: nuevoTelefono,
+      cedula: nuevaCedula || null
+    });
+    alert("✅ Cliente actualizado.");
+    await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
+  } catch (error) {
+    alert("❌ Error al actualizar: " + error.message);
+    console.error("Error:", error);
+  }
+}
 
     function cancelarEdicion(clienteId) {
       document.getElementById(`editar-${clienteId}`).style.display = 'none';
@@ -983,36 +1055,39 @@ if (compras.length > 0) {
         return;
       }
 
-      let totalGeneral = 0, totalPagadoGen = 0, totalPendienteGen = 0;
+      let totalGeneral = 0, totalPagadoGen = 0, totalPendienteGen = 0, totalDescuentosGen = 0;
       let tabla = `
         <table class="tabla-reportes">
           <thead>
-            <tr>
-              <th>Nombre</th>
+  <tr>
+    <th>Nombre</th>
     <th>Teléfono</th>
+    <th>Cédula</th>
     <th>Total Compras</th>
     <th>Total Pagado</th>
     <th>Descuentos</th>
     <th>Saldo</th>
-            </tr>
-          </thead>
+  </tr>
+</thead>
           <tbody>
       `;
       clientes.forEach(cli => {
         totalGeneral += cli.totalCompras;
         totalPagadoGen += cli.totalPagado;
         totalPendienteGen += cli.totalPendiente;
+        totalDescuentosGen += cli.totalDescuentos; // ✅ ¡Agrega esta línea!
         const clase = cli.totalPendiente > 5000 ? "deuda-alta" : cli.totalPendiente > 2000 ? "deuda-media" : "deuda-baja";
-        tabla += `
-           <tr>
+       tabla += `
+  <tr>
     <td>${cli.nombre}</td>
     <td>${cli.telefono}</td>
+    <td>${cli.cedula || '—'}</td>
     <td>₡${cli.totalCompras.toLocaleString()}</td>
     <td>₡${cli.totalPagado.toLocaleString()}</td>
     <td>₡${cli.totalDescuentos.toLocaleString()}</td>
     <td class="${clase}">₡${cli.totalPendiente.toLocaleString()}</td>
   </tr>
-        `;
+`;
       });
       tabla += `</tbody></table>
         <div style="margin-top:20px; padding:15px; background:#f5f5f5; border-radius:5px;">
@@ -1041,6 +1116,8 @@ if (compras.length > 0) {
     async function generarReporteModal() {
       const cont = document.getElementById("resultado-modal");
       cont.innerHTML = "<p>Generando...</p>";
+
+      try {
       const snapshot = await getDocs(clientesRef);
       let clientes = [];
       snapshot.forEach(docSnap => {
@@ -1124,7 +1201,11 @@ if (compras.length > 0) {
           <p><strong>Total Pendiente:</strong> ₡${totalPendienteGen.toLocaleString()}</p>
         </div>`;
       cont.innerHTML = tabla;
-    }
+      } catch (error) {
+    console.error("Error en generarReporte:", error);
+    cont.innerHTML = `<p style="color: red;">❌ Error: ${error.message}</p>`;
+  }
+}
 
     function imprimirModal() {
       const contenido = document.getElementById("modal-impresion").querySelector("div").innerHTML;
@@ -1440,6 +1521,93 @@ if (compras.length > 0) {
       await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
       alert("✅ Compra guardada exitosamente.");
     }
+
+
+    // ✅ Editar cliente directamente desde el modal de selección
+window.editarClienteDesdeModal = async function(clienteId) {
+  const clienteDoc = doc(db, "clientes", clienteId);
+  const docSnap = await getDoc(clienteDoc);
+  if (!docSnap.exists()) {
+    alert("Cliente no encontrado.");
+    return;
+  }
+  const cliente = docSnap.data();
+
+  // Crear un modal simple para edición rápida
+  const modalEdit = document.createElement("div");
+  modalEdit.style.position = "fixed";
+  modalEdit.style.top = "50%";
+  modalEdit.style.left = "50%";
+  modalEdit.style.transform = "translate(-50%, -50%)";
+  modalEdit.style.backgroundColor = "white";
+  modalEdit.style.padding = "20px";
+  modalEdit.style.borderRadius = "10px";
+  modalEdit.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
+  modalEdit.style.zIndex = "10000";
+  modalEdit.style.width = "90%";
+  modalEdit.style.maxWidth = "400px";
+
+  modalEdit.innerHTML = `
+    <h3 style="margin: 0 0 15px 0;">✏️ Editar Cliente</h3>
+    <input type="text" id="edit-nombre-modal" value="${cliente.nombre}" placeholder="Nombre" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;">
+    <input type="text" id="edit-cedula-modal" value="${cliente.cedula || ''}" placeholder="Cédula (opcional)" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;">
+    <input type="text" id="edit-telefono-modal" value="${cliente.telefono}" placeholder="Teléfono" style="width: 100%; padding: 8px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 4px;">
+    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+      <button class="boton-accion" style="background: #666;" onclick="document.body.removeChild(this.closest('div'));">❌ Cancelar</button>
+      <button class="boton-accion" style="background: #4CAF50;" onclick="guardarEdicionDesdeModal('${clienteId}')">💾 Guardar</button>
+    </div>
+  `;
+
+  document.body.appendChild(modalEdit);
+
+  // Centrar el foco en el primer campo
+  modalEdit.querySelector("#edit-nombre-modal").focus();
+};
+
+// ✅ Guardar edición desde el modal emergente
+window.guardarEdicionDesdeModal = async function(clienteId) {
+  const nuevoNombre = document.getElementById("edit-nombre-modal").value.trim();
+  const nuevaCedula = document.getElementById("edit-cedula-modal").value.trim();
+  let nuevoTelefono = document.getElementById("edit-telefono-modal").value.trim();
+
+  if (!nuevoNombre) {
+    alert("⚠️ Completa el nombre.");
+    return;
+  }
+
+  const telefonoLimpio = nuevoTelefono.replace(/\D/g, '');
+  if (!telefonoLimpio || telefonoLimpio === "00000000" || telefonoLimpio.length < 8) {
+    const nuevo = prompt("El número no es válido. Ingresa un número de teléfono válido (8 dígitos):");
+    if (!nuevo) {
+      alert("Se requiere un número válido.");
+      return;
+    }
+    nuevoTelefono = nuevo;
+  }
+
+  try {
+    const clienteDoc = doc(db, "clientes", clienteId);
+    await updateDoc(clienteDoc, { 
+      nombre: nuevoNombre, 
+      telefono: nuevoTelefono,
+      cedula: nuevaCedula || null
+    });
+    alert("✅ Cliente actualizado.");
+    
+    // Cerrar el modal de edición
+    const modalEdit = document.querySelector('div[style*="z-index: 10000"]');
+    if (modalEdit) document.body.removeChild(modalEdit);
+
+    // Opcional: Recargar la lista de clientes en el modal de selección
+    const filtro = document.getElementById("filtro-cliente-modal");
+    if (filtro) {
+      filtro.dispatchEvent(new Event('input')); // Dispara el evento 'input' para recargar
+    }
+  } catch (error) {
+    alert("❌ Error al actualizar: " + error.message);
+    console.error("Error:", error);
+  }
+};
 
     // Hacer funciones globales
     window.agregarCliente = agregarCliente;
