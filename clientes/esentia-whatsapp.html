@@ -202,17 +202,19 @@
           }
 
           // Lista editable
-          const li = document.createElement("li");
-          li.innerHTML = `
-            <strong>${data.titulo}</strong>
-            <em> [${categoria}]</em>
-            <br><small>${data.mensaje.substring(0, 60)}...</small>
-            <div class="botones-accion">
-              <button onclick="editarRespuesta('${id}', \`${data.titulo.replaceAll('`', '\\`')}\`, \`${data.mensaje.replaceAll('`', '\\`')}\`, \`${(data.categoria || "General").replaceAll('`', '\\`')}\`)">✏️ Editar</button>
-              <button onclick="eliminarRespuesta('${id}')">🗑️ Eliminar</button>
-            </div>
-          `;
-          lista.appendChild(li);
+          // Dentro del bucle snapshot.forEach(...)
+const li = document.createElement("li");
+li.innerHTML = `
+  <strong>${data.titulo}</strong>
+  <em> [${categoria}]</em>
+  <br><small>${data.mensaje.substring(0, 60)}...</small>
+  <div class="botones-accion">
+    <button onclick="editarRespuesta('${id}', \`${data.titulo.replaceAll('`', '\\`')}\`, \`${data.mensaje.replaceAll('`', '\\`')}\`, \`${(data.categoria || "General").replaceAll('`', '\\`')}\`)">✏️ Editar</button>
+    <button onclick="eliminarRespuesta('${id}')">🗑️ Eliminar</button>
+    <button onclick="cargarMensaje(\`${data.mensaje.replaceAll('`', '\\`')}\`)">📤 Cargar mensaje</button>
+  </div>
+`;
+lista.appendChild(li);
         });
       } catch (e) {
         console.error("Error al cargar respuestas:", e);
