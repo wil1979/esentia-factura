@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Esentia - WhatsApp Rápido</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f7fa;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #25D366;
+    }
+    .seccion {
+      background: white;
+      padding: 18px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      font-size: 15px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+    textarea {
+      height: 80px;
+      resize: vertical;
+    }
+    button {
+      background: #25D366;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .enlaces button {
+      background: #1877f2;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .botones-accion {
+      margin-top: 6px;
+    }
+    .botones-accion button {
+      display: inline-block;
+      width: auto;
+      padding: 4px 10px;
+      font-size: 13px;
+      margin-right: 6px;
+    }
+    .botones-accion button:nth-child(2) {
+      background: #e74c3c;
+    }
+    small {
+      color: #777;
+    }
+    optgroup {
+      font-weight: bold;
+      color: #2c3e50;
+    }
+  </style>
+</head>
+<body>
+  <h1>💬 Esentia - WhatsApp Rápido</h1>
+
+  <!-- Enviar mensaje -->
+  <div class="seccion">
+    <h2>Enviar mensaje a cliente</h2>
+    <input type="text" id="telefono" placeholder="Número de WhatsApp (solo dígitos, sin 506)" />
+    <select id="respuestaRapida">
+      <option value="">-- Cargando respuestas... --</option>
+    </select>
+    <button onclick="enviarWhatsApp()">Enviar por WhatsApp</button>
+  </div>
+
+  <!-- Accesos rápidos -->
+  <div class="seccion enlaces">
+    <h2>Accesos Rápidos</h2>
+    <button onclick="window.open('https://wil1979.github.io/esentia-factura/catalogo.html', '_blank')">Ver Catálogo</button>
+    <button onclick="window.open('https://www.facebook.com/profile.php?id=61579078480913', '_blank')">Ir a Facebook</button>
+    <button onclick="window.open('https://wil1979.github.io/esentia-factura/factura.html', '_blank')">Facturación Contado</button>
+    <button onclick="window.open('https://wil1979.github.io/esentia-factura/clientes/clientes.html', '_blank')">Registro Crédito</button>
+  </div>
+
+  <!-- Agregar respuesta -->
+  <div class="seccion">
+    <h2>➕ Agregar Nueva Respuesta</h2>
+    <input type="text" id="nuevoTitulo" placeholder="Título (ej. Catálogo de aromas)" />
+    <textarea id="nuevoMensaje" placeholder="Mensaje a enviar por WhatsApp"></textarea>
+    <select id="nuevaCategoria">
+      <option value="General">General</option>
+      <option value="Navidad">Navidad</option>
+      <option value="Temporada">Temporada</option>
+      <option value="Promocional">Promocional</option>
+      <option value="Descuentos">Descuentos</option>
+      <option value="Ofertas">Ofertas</option>
+      <option value="Recomendaciones">Recomendaciones</option>
+    </select>
+    <button onclick="guardarRespuesta()">Guardar Respuesta</button>
+  </div>
+
+  <!-- Gestionar respuestas -->
+  <div class="seccion">
+    <h2>🗑️ Gestionar Respuestas</h2>
+    <ul id="listaRespuestas"><li>Cargando...</li></ul>
+  </div>
+
+  <!-- Historial -->
+  <div class="seccion">
+    <h2>📜 Historial de Envíos (últimos 10)</h2>
+    <ul id="historialEnvios"><li>Cargando...</li></ul>
+  </div>
+
+  <!-- Firebase + Lógica -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc,
+      query, orderBy, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+      authDomain: "esentiacreditos-8345f.firebaseapp.com",
+      projectId: "esentiacreditos-8345f",
+      storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+      messagingSenderId: "888658236080",
+      appId: "1:888658236080:web:506e5e2085b5a452dba175"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Lista de categorías predefinidas
+    const CATEGORIAS = [
+      "General", "Navidad", "Temporada", "Promocional",
+      "Descuentos", "Ofertas", "Recomendaciones"
+    ];
+
+    // =============== FUNCIONES ===============
+    async function cargarRespuestas() {
+      const select = document.getElementById("respuestaRapida");
+      const lista = document.getElementById("listaRespuestas");
+      select.innerHTML = '<option value="">-- Cargando... --</option>';
+      lista.innerHTML = "<li>Cargando...</li>";
+
+      try {
+        const q = query(collection(db, "respuestasRapidas"), orderBy("fechaCreacion", "desc"));
+        const snapshot = await getDocs(q);
+
+        // Limpiar select y preparar grupos
+        select.innerHTML = '<option value="">-- Selecciona una respuesta --</option>';
+        const grupos = {};
+        CATEGORIAS.forEach(cat => {
+          grupos[cat] = document.createElement("optgroup");
+          grupos[cat].label = cat;
+          select.appendChild(grupos[cat]);
+        });
+
+        // Para respuestas sin categoría reconocida (por si hay datos antiguos)
+        const otros = document.createElement("optgroup");
+        otros.label = "Otros";
+        select.appendChild(otros);
+
+        lista.innerHTML = "";
+
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const id = doc.id;
+          const categoria = data.categoria && CATEGORIAS.includes(data.categoria) 
+            ? data.categoria 
+            : "Otros";
+
+          // Añadir al select (dentro del grupo correcto)
+          const opt = document.createElement("option");
+          opt.value = data.mensaje;
+          opt.textContent = data.titulo;
+          if (categoria === "Otros") {
+            otros.appendChild(opt);
+          } else {
+            grupos[categoria].appendChild(opt);
+          }
+
+          // Lista editable
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <strong>${data.titulo}</strong>
+            <em> [${categoria}]</em>
+            <br><small>${data.mensaje.substring(0, 60)}...</small>
+            <div class="botones-accion">
+              <button onclick="editarRespuesta('${id}', \`${data.titulo.replaceAll('`', '\\`')}\`, \`${data.mensaje.replaceAll('`', '\\`')}\`, \`${(data.categoria || "General").replaceAll('`', '\\`')}\`)">✏️ Editar</button>
+              <button onclick="eliminarRespuesta('${id}')">🗑️ Eliminar</button>
+            </div>
+          `;
+          lista.appendChild(li);
+        });
+      } catch (e) {
+        console.error("Error al cargar respuestas:", e);
+        select.innerHTML = '<option value="">❌ Error</option>';
+        lista.innerHTML = "<li>Error al cargar.</li>";
+      }
+    }
+
+    async function guardarRespuesta() {
+      const titulo = document.getElementById("nuevoTitulo").value.trim();
+      const mensaje = document.getElementById("nuevoMensaje").value.trim();
+      const categoria = document.getElementById("nuevaCategoria").value;
+
+      if (!titulo || !mensaje) {
+        alert("Título y mensaje son obligatorios.");
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "respuestasRapidas"), {
+          titulo,
+          mensaje,
+          categoria: categoria || "General",
+          fechaCreacion: serverTimestamp()
+        });
+        alert("✅ Respuesta guardada.");
+        document.getElementById("nuevoTitulo").value = "";
+        document.getElementById("nuevoMensaje").value = "";
+        document.getElementById("nuevaCategoria").value = "General";
+        cargarRespuestas();
+      } catch (e) {
+        console.error("Error al guardar:", e);
+        alert("❌ Error al guardar.");
+      }
+    }
+
+    window.editarRespuesta = async (id, titulo, mensaje, categoria) => {
+      const nuevoTitulo = prompt("Editar título:", titulo);
+      const nuevoMensaje = prompt("Editar mensaje:", mensaje);
+      const nuevaCat = prompt(
+        "Editar categoría (usa una de las predefinidas):",
+        categoria
+      );
+
+      if (nuevoTitulo === null || nuevoMensaje === null) return;
+
+      // Validar que la categoría sea una de las permitidas (opcional)
+      const catValida = CATEGORIAS.includes(nuevaCat) ? nuevaCat : "General";
+
+      try {
+        await updateDoc(doc(db, "respuestasRapidas", id), {
+          titulo: nuevoTitulo.trim() || titulo,
+          mensaje: nuevoMensaje.trim() || mensaje,
+          categoria: catValida
+        });
+        alert("✅ Actualizado.");
+        cargarRespuestas();
+      } catch (e) {
+        console.error("Error al editar:", e);
+        alert("❌ Error al actualizar.");
+      }
+    };
+
+    window.eliminarRespuesta = async (id) => {
+      if (!confirm("¿Eliminar esta respuesta?")) return;
+      try {
+        await deleteDoc(doc(db, "respuestasRapidas", id));
+        alert("✅ Eliminada.");
+        cargarRespuestas();
+      } catch (e) {
+        console.error("Error al eliminar:", e);
+        alert("❌ Error al eliminar.");
+      }
+    };
+
+    window.enviarWhatsApp = async () => {
+      const tel = document.getElementById("telefono").value.trim();
+      const msg = document.getElementById("respuestaRapida").value;
+
+      if (!tel || !msg) {
+        alert("Completa el número y selecciona un mensaje.");
+        return;
+      }
+      if (!/^\d+$/.test(tel)) {
+        alert("Solo dígitos (sin +, guiones ni 506).");
+        return;
+      }
+
+      const numero = "506" + tel;
+      const url = `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`;
+      window.open(url, "_blank");
+
+      try {
+        await addDoc(collection(db, "historialEnvios"), {
+          telefono: numero,
+          mensaje: msg,
+          fecha: serverTimestamp()
+        });
+        cargarHistorial();
+      } catch (e) {
+        console.warn("No se guardó el historial:", e);
+      }
+    };
+
+    async function cargarHistorial() {
+      const lista = document.getElementById("historialEnvios");
+      lista.innerHTML = "<li>Cargando...</li>";
+
+      try {
+        const q = query(collection(db, "historialEnvios"), orderBy("fecha", "desc"), limit(10));
+        const snap = await getDocs(q);
+        lista.innerHTML = "";
+        snap.forEach((doc) => {
+          const d = doc.data();
+          const fecha = d.fecha?.toDate?.().toLocaleString("es-CR") || "Sin fecha";
+          const li = document.createElement("li");
+          li.innerHTML = `<small>${fecha}</small><br><strong>${d.telefono}</strong><br>${d.mensaje.substring(0, 70)}...`;
+          lista.appendChild(li);
+        });
+        if (snap.empty) lista.innerHTML = "<li>No hay envíos recientes.</li>";
+      } catch (e) {
+        console.error("Error al cargar historial:", e);
+        lista.innerHTML = "<li>Error al cargar historial.</li>";
+      }
+    }
+
+    // Exponer funciones globales
+    window.guardarRespuesta = guardarRespuesta;
+    window.enviarWhatsApp = enviarWhatsApp;
+
+    // Iniciar
+    cargarRespuestas();
+    cargarHistorial();
+  </script>
+</body>
+</html>
