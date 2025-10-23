@@ -71,6 +71,9 @@
     .botones-accion button:nth-child(2) {
       background: #e74c3c;
     }
+    .botones-accion button:nth-child(3) {
+      background: #3498db;
+    }
     small {
       color: #777;
     }
@@ -105,7 +108,7 @@
   <!-- Agregar respuesta -->
   <div class="seccion">
     <h2>➕ Agregar Nueva Respuesta</h2>
-    <input type="text" id="nuevoTitulo" placeholder="Título (ej. Catálogo de aromas)" />
+    <input type="text" id="nuevoTitulo" placeholder="Título (ej. Aromas Navideños)" />
     <textarea id="nuevoMensaje" placeholder="Mensaje a enviar por WhatsApp"></textarea>
     <select id="nuevaCategoria">
       <option value="General">General</option>
@@ -136,7 +139,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import {
       getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc,
-      query, orderBy, serverTimestamp
+      query, orderBy, serverTimestamp, limit
     } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -151,13 +154,11 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Lista de categorías predefinidas
     const CATEGORIAS = [
       "General", "Navidad", "Temporada", "Promocional",
       "Descuentos", "Ofertas", "Recomendaciones"
     ];
 
-    // =============== FUNCIONES ===============
     async function cargarRespuestas() {
       const select = document.getElementById("respuestaRapida");
       const lista = document.getElementById("listaRespuestas");
@@ -168,7 +169,6 @@
         const q = query(collection(db, "respuestasRapidas"), orderBy("fechaCreacion", "desc"));
         const snapshot = await getDocs(q);
 
-        // Limpiar select y preparar grupos
         select.innerHTML = '<option value="">-- Selecciona una respuesta --</option>';
         const grupos = {};
         CATEGORIAS.forEach(cat => {
@@ -176,8 +176,6 @@
           grupos[cat].label = cat;
           select.appendChild(grupos[cat]);
         });
-
-        // Para respuestas sin categoría reconocida (por si hay datos antiguos)
         const otros = document.createElement("optgroup");
         otros.label = "Otros";
         select.appendChild(otros);
@@ -191,7 +189,6 @@
             ? data.categoria 
             : "Otros";
 
-          // Añadir al select (dentro del grupo correcto)
           const opt = document.createElement("option");
           opt.value = data.mensaje;
           opt.textContent = data.titulo;
@@ -201,20 +198,23 @@
             grupos[categoria].appendChild(opt);
           }
 
-          // Lista editable
-          // Dentro del bucle snapshot.forEach(...)
-const li = document.createElement("li");
-li.innerHTML = `
-  <strong>${data.titulo}</strong>
-  <em> [${categoria}]</em>
-  <br><small>${data.mensaje.substring(0, 60)}...</small>
-  <div class="botones-accion">
-    <button onclick="editarRespuesta('${id}', \`${data.titulo.replaceAll('`', '\\`')}\`, \`${data.mensaje.replaceAll('`', '\\`')}\`, \`${(data.categoria || "General").replaceAll('`', '\\`')}\`)">✏️ Editar</button>
-    <button onclick="eliminarRespuesta('${id}')">🗑️ Eliminar</button>
-    <button onclick="cargarMensaje(\`${data.mensaje.replaceAll('`', '\\`')}\`)">📤 Cargar mensaje</button>
-  </div>
-`;
-lista.appendChild(li);
+          const li = document.createElement("li");
+          // Escapar backticks para evitar errores en onclick
+          const msgEscapado = data.mensaje.replaceAll('`', '\\`');
+          const tituloEscapado = data.titulo.replaceAll('`', '\\`');
+          const catEscapada = (data.categoria || "General").replaceAll('`', '\\`');
+
+          li.innerHTML = `
+            <strong>${data.titulo}</strong>
+            <em> [${categoria}]</em>
+            <br><small>${data.mensaje.substring(0, 60)}...</small>
+            <div class="botones-accion">
+              <button onclick="editarRespuesta('${id}', \`${tituloEscapado}\`, \`${msgEscapado}\`, \`${catEscapada}\`)">✏️ Editar</button>
+              <button onclick="eliminarRespuesta('${id}')">🗑️ Eliminar</button>
+              <button onclick="cargarMensaje(\`${msgEscapado}\`)">📤 Cargar mensaje</button>
+            </div>
+          `;
+          lista.appendChild(li);
         });
       } catch (e) {
         console.error("Error al cargar respuestas:", e);
@@ -254,14 +254,9 @@ lista.appendChild(li);
     window.editarRespuesta = async (id, titulo, mensaje, categoria) => {
       const nuevoTitulo = prompt("Editar título:", titulo);
       const nuevoMensaje = prompt("Editar mensaje:", mensaje);
-      const nuevaCat = prompt(
-        "Editar categoría (usa una de las predefinidas):",
-        categoria
-      );
+      const nuevaCat = prompt("Editar categoría:", categoria);
 
       if (nuevoTitulo === null || nuevoMensaje === null) return;
-
-      // Validar que la categoría sea una de las permitidas (opcional)
       const catValida = CATEGORIAS.includes(nuevaCat) ? nuevaCat : "General";
 
       try {
@@ -288,6 +283,11 @@ lista.appendChild(li);
         console.error("Error al eliminar:", e);
         alert("❌ Error al eliminar.");
       }
+    };
+
+    window.cargarMensaje = (mensaje) => {
+      document.getElementById("respuestaRapida").value = mensaje;
+      alert("✅ Mensaje cargado. Ingresa el número y envía.");
     };
 
     window.enviarWhatsApp = async () => {
@@ -344,6 +344,7 @@ lista.appendChild(li);
     // Exponer funciones globales
     window.guardarRespuesta = guardarRespuesta;
     window.enviarWhatsApp = enviarWhatsApp;
+    window.cargarMensaje = cargarMensaje;
 
     // Iniciar
     cargarRespuestas();
