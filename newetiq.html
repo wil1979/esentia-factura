@@ -549,19 +549,23 @@
     }
 
     function renderizarCheckboxes() {
-      const container = document.getElementById("checkboxContainer");
-      container.innerHTML = '';
-      productosDisponibles.forEach((prod, index) => {
-        const safeId = `prod_${index}`;
-        const div = document.createElement("div");
-        div.className = "checkbox-item";
-        div.innerHTML = `
-          <input type="checkbox" id="${safeId}" value="${index}">
-          <label for="${safeId}">${prod.nombre}</label>
-        `;
-        container.appendChild(div);
-      });
-    }
+  const container = document.getElementById("checkboxContainer");
+  container.innerHTML = '';
+  productosDisponibles.forEach((prod, index) => {
+    const safeId = `prod_${index}`;
+    const div = document.createElement("div");
+    div.className = "checkbox-item";
+    div.innerHTML = `
+      <input type="checkbox" id="${safeId}" value="${index}">
+      <label for="${safeId}">${prod.nombre}</label>
+    `;
+    container.appendChild(div);
+
+    // ✅ Añadir evento de cambio al checkbox
+    const checkbox = document.getElementById(safeId);
+    checkbox.addEventListener('change', generarEtiquetas);
+  });
+}
 
     window.onload = () => {
       cargarProductos();
