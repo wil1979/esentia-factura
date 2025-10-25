@@ -768,107 +768,129 @@
     }
 
     function generarEtiquetas() {
-      actualizarEstilos();
+  actualizarEstilos();
 
-      const indicesSeleccionados = Array.from(
-        document.querySelectorAll('.checkbox-item input[type="checkbox"]:checked')
-      ).map(cb => parseInt(cb.value));
+  const indicesSeleccionados = Array.from(
+    document.querySelectorAll('.checkbox-item input[type="checkbox"]:checked')
+  ).map(cb => parseInt(cb.value));
 
-      const productosManual = document.getElementById("productosManual").value
-        .split(',')
-        .map(p => p.trim())
-        .filter(p => p);
+  const productosManual = document.getElementById("productosManual").value
+    .split(',')
+    .map(p => p.trim())
+    .filter(p => p);
 
-      let productosParaEtiquetas = [];
+  let productosParaEtiquetas = [];
 
-      if (productosManual.length > 0) {
-        productosParaEtiquetas = productosManual.map(nombreManual => {
-          const encontrado = productosDisponibles.find(p => 
-            p.nombre.toLowerCase().includes(nombreManual.toLowerCase()) ||
-            nombreManual.toLowerCase().includes(p.nombre.toLowerCase())
-          );
-          return encontrado || { nombre: nombreManual, imagen: '' };
-        });
-      } else if (indicesSeleccionados.length > 0) {
-        productosParaEtiquetas = indicesSeleccionados.map(i => productosDisponibles[i]);
-      } else {
-        document.getElementById("etiquetas").innerHTML = "<p style='color:red;'>⚠️ Selecciona al menos un producto.</p>";
-        return;
+  if (productosManual.length > 0) {
+    productosParaEtiquetas = productosManual.map(nombreManual => {
+      const encontrado = productosDisponibles.find(p => 
+        p.nombre.toLowerCase().includes(nombreManual.toLowerCase()) ||
+        nombreManual.toLowerCase().includes(p.nombre.toLowerCase())
+      );
+      return encontrado || { nombre: nombreManual, imagen: '' };
+    });
+  } else if (indicesSeleccionados.length > 0) {
+    productosParaEtiquetas = indicesSeleccionados.map(i => productosDisponibles[i]);
+  } else {
+    document.getElementById("etiquetas").innerHTML = "<p style='color:red;'>⚠️ Selecciona al menos un producto.</p>";
+    return;
+  }
+
+  const cantidadPorProducto = parseInt(document.getElementById("cantidadPorProducto").value) || 1;
+  const infoIzquierda = document.getElementById("infoIzquierda").value.trim();
+  const texto1 = document.getElementById("texto1").value.trim();
+  const texto2 = document.getElementById("texto2").value.trim();
+  const texto3 = document.getElementById("texto3").value.trim();
+
+  const contenedor = document.getElementById("etiquetas");
+  contenedor.innerHTML = "";
+
+  // ✅ Obtener la URL del fondo actual
+  let fondoUrl = null;
+  const fondoTipo = document.getElementById('fondoTipo').value;
+  if (fondoTipo === 'predefinido') {
+    const nombreFondo = localStorage.getItem('fondoNombre') || 'fondo_previa.jpg';
+    fondoUrl = `fondos/${nombreFondo}`;
+  } else if (fondoTipo === 'subir') {
+    // El fondo subido ya está en una variable CSS, pero necesitamos su URL
+    // Como no la guardamos explícitamente, usamos un truco:
+    const computedStyle = getComputedStyle(document.documentElement);
+    const bgImage = computedStyle.getPropertyValue('--fondo-imagen').trim();
+    if (bgImage && bgImage !== 'none' && bgImage.startsWith('url(')) {
+      fondoUrl = bgImage.slice(4, -1).replace(/"/g, "");
+    }
+  }
+
+  productosParaEtiquetas.forEach(producto => {
+    if (!producto || !producto.nombre) return;
+
+    for (let i = 0; i < cantidadPorProducto; i++) {
+      const imgSrc = producto.imagen || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24"><rect width="24" height="24" fill="%23ccc"/><text x="12" y="16" font-family="Arial" font-size="8" text-anchor="middle" fill="%23999">Sin imagen</text></svg>';
+      const etiqueta = document.createElement("div");
+      etiqueta.className = "etiqueta";
+
+      // ✅ Construir el fondo como imagen si existe
+      let fondoHtml = '';
+      if (fondoUrl) {
+        fondoHtml = `<img class="fondo-etiqueta" src="${fondoUrl}" alt="Fondo">`;
       }
 
-      const cantidadPorProducto = parseInt(document.getElementById("cantidadPorProducto").value) || 1;
-      const infoIzquierda = document.getElementById("infoIzquierda").value.trim();
+      let htmlAdicional = '';
+      if (texto1) htmlAdicional += `<div class="texto-adicional-1">${texto1}</div>`;
+      if (texto2) htmlAdicional += `<div class="texto-adicional-2">${texto2}</div>`;
+      if (texto3) htmlAdicional += `<div class="texto-adicional-3">${texto3}</div>`;
+      if (imagenAdicionalDataUrl) {
+        htmlAdicional += `<img class="imagen-adicional" src="${imagenAdicionalDataUrl}" alt="Adicional">`;
+      }
 
-      // ✅ Obtener textos adicionales
-      const texto1 = document.getElementById("texto1").value.trim();
-      const texto2 = document.getElementById("texto2").value.trim();
-      const texto3 = document.getElementById("texto3").value.trim();
+      etiqueta.innerHTML = `
+        <div class="etiqueta-content">
+          ${fondoHtml}
+          <img class="producto-imagen" src="${imgSrc}" alt="${producto.nombre}" onerror="this.style.display='none'">
+          <div class="nombre-producto">${producto.nombre}</div>
+          ${infoIzquierda ? `<div class="instrucciones">${infoIzquierda}</div>` : ''}
+          ${htmlAdicional}
+        </div>
+        <div class="download-overlay">🔽 Click para descargar</div>
+      `;
 
-      const contenedor = document.getElementById("etiquetas");
-      contenedor.innerHTML = "";
-
-      productosParaEtiquetas.forEach(producto => {
-        if (!producto || !producto.nombre) return;
-
-        for (let i = 0; i < cantidadPorProducto; i++) {
-          const imgSrc = producto.imagen || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24"><rect width="24" height="24" fill="%23ccc"/><text x="12" y="16" font-family="Arial" font-size="8" text-anchor="middle" fill="%23999">Sin imagen</text></svg>';
-          const etiqueta = document.createElement("div");
-          etiqueta.className = "etiqueta";
-
-          let htmlAdicional = '';
-
-          // ✅ Agregar textos si existen
-          if (texto1) htmlAdicional += `<div class="texto-adicional-1">${texto1}</div>`;
-          if (texto2) htmlAdicional += `<div class="texto-adicional-2">${texto2}</div>`;
-          if (texto3) htmlAdicional += `<div class="texto-adicional-3">${texto3}</div>`;
-
-          // ✅ Agregar imagen adicional si existe
-          if (imagenAdicionalDataUrl) {
-            htmlAdicional += `<img class="imagen-adicional" src="${imagenAdicionalDataUrl}" alt="Adicional">`;
-          }
-
-          etiqueta.innerHTML = `
-            <div class="etiqueta-content">
-              <img class="producto-imagen" src="${imgSrc}" alt="${producto.nombre}" onerror="this.style.display='none'">
-              <div class="nombre-producto">${producto.nombre}</div>
-              ${infoIzquierda ? `<div class="instrucciones">${infoIzquierda}</div>` : ''}
-              ${htmlAdicional}
-            </div>
-            <div class="download-overlay">🔽 Click para descargar</div>
-          `;
-
-          etiqueta.addEventListener('click', function () {
-            const content = etiqueta.querySelector('.etiqueta-content');
-            html2canvas(content, { scale: 3, backgroundColor: null, useCORS: true }).then(canvas => {
-              const link = document.createElement('a');
-              link.download = `etiqueta-${producto.nombre.replace(/[^a-z0-9]/gi, '_')}.png`;
-              link.href = canvas.toDataURL('image/png');
-              link.click();
-            }).catch(err => {
-              console.error("Error al generar imagen:", err);
-              alert("Error al generar imagen. Verifica que las imágenes carguen.");
-            });
-          });
-
-          const nombreEl = etiqueta.querySelector('.nombre-producto');
-          nombreEl.addEventListener('dblclick', function (e) {
-            e.stopPropagation();
-            this.contentEditable = true;
-            this.focus();
-            this.style.outline = '2px solid #0066cc';
-          });
-
-          nombreEl.addEventListener('blur', function () {
-            this.contentEditable = false;
-            this.style.outline = 'none';
-          });
-
-          nombreEl.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault() && e.target.blur());
-
-          contenedor.appendChild(etiqueta);
-        }
+      etiqueta.addEventListener('click', function () {
+        const content = etiqueta.querySelector('.etiqueta-content');
+        html2canvas(content, { 
+          scale: 3, 
+          backgroundColor: null, 
+          useCORS: true,
+          allowTaint: true
+        }).then(canvas => {
+          const link = document.createElement('a');
+          link.download = `etiqueta-${producto.nombre.replace(/[^a-z0-9]/gi, '_')}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        }).catch(err => {
+          console.error("Error al generar imagen:", err);
+          alert("Error al generar imagen. Verifica que las imágenes carguen.");
+        });
       });
+
+      const nombreEl = etiqueta.querySelector('.nombre-producto');
+      nombreEl.addEventListener('dblclick', function (e) {
+        e.stopPropagation();
+        this.contentEditable = true;
+        this.focus();
+        this.style.outline = '2px solid #0066cc';
+      });
+
+      nombreEl.addEventListener('blur', function () {
+        this.contentEditable = false;
+        this.style.outline = 'none';
+      });
+
+      nombreEl.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault() && e.target.blur());
+
+      contenedor.appendChild(etiqueta);
     }
+  });
+}
 
     async function descargarTodasComoImagen() {
       const etiquetas = document.querySelectorAll('.etiqueta-content');
