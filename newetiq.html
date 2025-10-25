@@ -1,10 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <title>Generador de Etiquetas - Esentia</title>
 
-  <!-- Librerías para descarga (¡sin espacios al final!) -->
+  <!-- Librerías para descarga -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -157,7 +158,7 @@
       text-overflow: ellipsis;
     }
 
-    /* Instrucciones (opcional) */
+    /* Instrucciones */
     .instrucciones {
       position: absolute;
       top: var(--instrucciones-top, 10%);
@@ -175,13 +176,60 @@
       word-wrap: break-word;
     }
 
-    /* ✅ Estilos de impresión corregidos */
+    /* ✅ Nuevos textos adicionales */
+    .texto-adicional-1,
+    .texto-adicional-2,
+    .texto-adicional-3 {
+      position: absolute;
+      text-align: center;
+      z-index: 3;
+      white-space: nowrap;
+      max-width: 80%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .texto-adicional-1 {
+      font-size: var(--texto1-font-size, 6px);
+      color: var(--texto1-color, #000);
+      top: var(--texto1-top, 90%);
+      left: var(--texto1-left, 50%);
+      transform: translate(-50%, -50%) rotate(var(--texto1-rotacion, 0deg));
+    }
+
+    .texto-adicional-2 {
+      font-size: var(--texto2-font-size, 6px);
+      color: var(--texto2-color, #000);
+      top: var(--texto2-top, 90%);
+      left: var(--texto2-left, 50%);
+      transform: translate(-50%, -50%) rotate(var(--texto2-rotacion, 0deg));
+    }
+
+    .texto-adicional-3 {
+      font-size: var(--texto3-font-size, 6px);
+      color: var(--texto3-color, #000);
+      top: var(--texto3-top, 90%);
+      left: var(--texto3-left, 50%);
+      transform: translate(-50%, -50%) rotate(var(--texto3-rotacion, 0deg));
+    }
+
+    /* ✅ Imagen adicional */
+    .imagen-adicional {
+      position: absolute;
+      width: var(--img-adicional-width, 30px);
+      height: var(--img-adicional-height, 30px);
+      top: var(--img-adicional-top, 10%);
+      left: var(--img-adicional-left, 90%);
+      transform: translate(-50%, -50%) rotate(var(--img-adicional-rotacion, 0deg));
+      object-fit: contain;
+      z-index: 2;
+    }
+
+    /* Estilos de impresión */
     @media print {
-      /* Ocultar todo excepto el contenedor de etiquetas */
       body > *:not(.etiqueta-container) {
         display: none !important;
       }
-
       .etiqueta-container {
         position: static !important;
         width: 100% !important;
@@ -190,7 +238,6 @@
         background: none !important;
         display: block !important;
       }
-
       .etiqueta {
         page-break-inside: avoid;
         -webkit-print-color-adjust: exact !important;
@@ -200,7 +247,6 @@
         padding: 0 !important;
         border: none !important;
       }
-
       @page {
         margin: 0.5cm;
       }
@@ -272,6 +318,16 @@
       padding: 4px 8px;
       font-size: 12px;
     }
+
+    .seccion-adicional {
+      border-top: 1px solid #ccc;
+      margin-top: 10px;
+      padding-top: 10px;
+    }
+
+    body.modo-oscuro .seccion-adicional {
+      border-top-color: #555;
+    }
   </style>
 </head>
 <body>
@@ -291,7 +347,6 @@
     <div id="camposPersonalizados" style="display: none;">
       <label>Ancho hoja (cm):</label>
       <input type="number" id="anchoHojaCm" value="33" step="0.1" oninput="generarEtiquetas()">
-
       <label>Alto hoja (cm):</label>
       <input type="number" id="altoHojaCm" value="48" step="0.1" oninput="generarEtiquetas()">
     </div>
@@ -328,10 +383,8 @@
 
     <label>Tamaño texto instrucciones (px):</label>
     <input type="number" id="instruccionesFontSize" value="6" min="4" max="12" step="0.5" oninput="actualizarEstilos()">
-
     <label>Color texto instrucciones:</label>
     <input type="color" id="instruccionesColor" value="#ffffff" onchange="actualizarEstilos()">
-
     <label>Orientación texto instrucciones:</label>
     <select id="instruccionesRotacion" onchange="actualizarEstilos()">
       <option value="0">0° (normal)</option>
@@ -344,7 +397,6 @@
     <h4>Posición de instrucciones</h4>
     <label>Posición X (%) :</label>
     <input type="number" id="instruccionesLeft" value="5" min="0" max="100" step="1" oninput="actualizarEstilos()">
-
     <label>Posición Y (%) :</label>
     <input type="number" id="instruccionesTop" value="10" min="0" max="100" step="1" oninput="actualizarEstilos()">
 
@@ -353,7 +405,6 @@
     <h4>Tamaño de etiqueta</h4>
     <label>Ancho etiqueta (cm):</label>
     <input type="number" id="anchoCm" value="8" step="0.1" min="1" oninput="actualizarEstilos(); generarEtiquetas();">
-
     <label>Alto etiqueta (cm):</label>
     <input type="number" id="altoCm" value="4" step="0.1" min="1" oninput="actualizarEstilos(); generarEtiquetas();">
 
@@ -362,16 +413,12 @@
     <h4>Imagen del producto</h4>
     <label>Ancho imagen producto (px):</label>
     <input type="number" id="imgWidth" value="60" min="20" max="100" step="1" oninput="actualizarEstilos()">
-
     <label>Alto imagen producto (px):</label>
     <input type="number" id="imgHeight" value="60" min="20" max="100" step="1" oninput="actualizarEstilos()">
-
     <label>Posición X (%) imagen:</label>
     <input type="number" id="imgLeft" value="50" min="0" max="100" step="1" oninput="actualizarEstilos()">
-
     <label>Posición Y (%) imagen:</label>
     <input type="number" id="imgTop" value="50" min="0" max="100" step="1" oninput="actualizarEstilos()">
-
     <label>Rotación imagen (grados):</label>
     <input type="number" id="imgRotacion" value="0" min="-180" max="180" step="1" oninput="actualizarEstilos()">
 
@@ -380,18 +427,79 @@
     <h4>Nombre del producto</h4>
     <label>Tamaño nombre producto (px):</label>
     <input type="number" id="nombreFontSize" value="8" min="4" max="16" step="0.5" oninput="actualizarEstilos()">
-
     <label>Color nombre producto:</label>
     <input type="color" id="nombreColor" value="#000000" onchange="actualizarEstilos()">
-
     <label>Posición X (%) nombre:</label>
     <input type="number" id="nombreLeft" value="50" min="0" max="100" step="1" oninput="actualizarEstilos()">
-
     <label>Posición Y (%) nombre:</label>
     <input type="number" id="nombreTop" value="70" min="0" max="100" step="1" oninput="actualizarEstilos()">
-
     <label>Rotación nombre (grados):</label>
     <input type="number" id="nombreRotacion" value="0" min="-180" max="180" step="1" oninput="actualizarEstilos()">
+
+    <!-- ✅ Nuevos textos adicionales -->
+    <div class="seccion-adicional">
+      <h4>Texto Adicional 1</h4>
+      <input type="text" id="texto1" placeholder="Ej: Hecho a mano" oninput="generarEtiquetas()">
+      <label>Tamaño (px):</label>
+      <input type="number" id="texto1FontSize" value="6" min="4" max="16" step="0.5" oninput="actualizarEstilos()">
+      <label>Color:</label>
+      <input type="color" id="texto1Color" value="#000000" onchange="actualizarEstilos()">
+      <label>Posición X (%):</label>
+      <input type="number" id="texto1Left" value="50" min="0" max="100" step="1" oninput="actualizarEstilos()">
+      <label>Posición Y (%):</label>
+      <input type="number" id="texto1Top" value="90" min="0" max="100" step="1" oninput="actualizarEstilos()">
+      <label>Rotación (°):</label>
+      <input type="number" id="texto1Rotacion" value="0" min="-180" max="180" step="1" oninput="actualizarEstilos()">
+    </div>
+
+    <div class="seccion-adicional">
+      <h4>Texto Adicional 2</h4>
+      <input type="text" id="texto2" placeholder="Ej: 100% natural" oninput="generarEtiquetas()">
+      <label>Tamaño (px):</label>
+      <input type="number" id="texto2FontSize" value="6" min="4" max="16" step="0.5" oninput="actualizarEstilos()">
+      <label>Color:</label>
+      <input type="color" id="texto2Color" value="#000000" onchange="actualizarEstilos()">
+      <label>Posición X (%):</label>
+      <input type="number" id="texto2Left" value="50" min="0" max="100" step="1" oninput="actualizarEstilos()">
+      <label>Posición Y (%):</label>
+      <input type="number" id="texto2Top" value="95" min="0" max="100" step="1" oninput="actualizarEstilos()">
+      <label>Rotación (°):</label>
+      <input type="number" id="texto2Rotacion" value="0" min="-180" max="180" step="1" oninput="actualizarEstilos()">
+    </div>
+
+    <div class="seccion-adicional">
+      <h4>Texto Adicional 3</h4>
+      <input type="text" id="texto3" placeholder="Ej: www.esentia.com" oninput="generarEtiquetas()">
+      <label>Tamaño (px):</label>
+      <input type="number" id="texto3FontSize" value="6" min="4" max="16" step="0.5" oninput="actualizarEstilos()">
+      <label>Color:</label>
+      <input type="color" id="texto3Color" value="#000000" onchange="actualizarEstilos()">
+      <label>Posición X (%):</label>
+      <input type="number" id="texto3Left" value="50" min="0" max="100" step="1" oninput="actualizarEstilos()">
+      <label>Posición Y (%):</label>
+      <input type="number" id="texto3Top" value="5" min="0" max="100" step="1" oninput="actualizarEstilos()">
+      <label>Rotación (°):</label>
+      <input type="number" id="texto3Rotacion" value="0" min="-180" max="180" step="1" oninput="actualizarEstilos()">
+    </div>
+
+    <!-- ✅ Imagen adicional -->
+    <div class="seccion-adicional">
+      <h4>Imagen Adicional (logo, sello, etc.)</h4>
+      <input type="file" id="imagenAdicionalFile" accept="image/*" onchange="cargarImagenAdicional(event)">
+      <div id="previewImagenAdicional" style="display:none; margin:5px 0;">
+        <img id="imgPreviewAdicional" src="" alt="Vista previa" style="max-height:50px; max-width:100%;">
+      </div>
+      <label>Ancho (px):</label>
+      <input type="number" id="imgAdicionalWidth" value="30" min="10" max="100" step="1" oninput="actualizarEstilos()">
+      <label>Alto (px):</label>
+      <input type="number" id="imgAdicionalHeight" value="30" min="10" max="100" step="1" oninput="actualizarEstilos()">
+      <label>Posición X (%):</label>
+      <input type="number" id="imgAdicionalLeft" value="90" min="0" max="100" step="1" oninput="actualizarEstilos()">
+      <label>Posición Y (%):</label>
+      <input type="number" id="imgAdicionalTop" value="10" min="0" max="100" step="1" oninput="actualizarEstilos()">
+      <label>Rotación (°):</label>
+      <input type="number" id="imgAdicionalRotacion" value="0" min="-180" max="180" step="1" oninput="actualizarEstilos()">
+    </div>
 
     <!-- Fondo de etiqueta -->
     <hr>
@@ -417,8 +525,8 @@
   <div class="etiqueta-container" id="etiquetas"></div>
 
   <script>
-    // ✅ Productos se cargarán desde JSON
     let productosDisponibles = [];
+    let imagenAdicionalDataUrl = null;
 
     const tamanosHoja = {
       carta: { w: 21.6, h: 27.9, name: "letter" },
@@ -427,7 +535,6 @@
       personalizado: { w: 33, h: 48, name: "custom" }
     };
 
-    // ✅ Cargar productos desde JSON
     async function cargarProductos() {
       try {
         const response = await fetch('etiquetas.json');
@@ -466,6 +573,11 @@
           const el = document.getElementById(key);
           if (el && el.value !== undefined) el.value = config[key];
         });
+        if (config.imagenAdicional) {
+          imagenAdicionalDataUrl = config.imagenAdicional;
+          document.getElementById('imgPreviewAdicional').src = imagenAdicionalDataUrl;
+          document.getElementById('previewImagenAdicional').style.display = 'block';
+        }
         actualizarEstilos();
       }
 
@@ -477,6 +589,21 @@
 
       actualizarTamanoHoja();
     };
+
+    function cargarImagenAdicional(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          imagenAdicionalDataUrl = e.target.result;
+          document.getElementById('imgPreviewAdicional').src = imagenAdicionalDataUrl;
+          document.getElementById('previewImagenAdicional').style.display = 'block';
+          guardarConfiguracion();
+          generarEtiquetas();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
 
     function seleccionarTodos(checked) {
       document.querySelectorAll('.checkbox-item input[type="checkbox"]').forEach(cb => {
@@ -492,27 +619,57 @@
     }
 
     function actualizarEstilos() {
+      // Etiqueta base
       document.documentElement.style.setProperty('--etiqueta-width', document.getElementById('anchoCm').value + 'cm');
       document.documentElement.style.setProperty('--etiqueta-height', document.getElementById('altoCm').value + 'cm');
 
+      // Imagen producto
       document.documentElement.style.setProperty('--img-width', document.getElementById('imgWidth').value + 'px');
       document.documentElement.style.setProperty('--img-height', document.getElementById('imgHeight').value + 'px');
       document.documentElement.style.setProperty('--img-left', document.getElementById('imgLeft').value + '%');
       document.documentElement.style.setProperty('--img-top', document.getElementById('imgTop').value + '%');
       document.documentElement.style.setProperty('--img-rotacion', document.getElementById('imgRotacion').value + 'deg');
 
+      // Nombre producto
       document.documentElement.style.setProperty('--nombre-font-size', document.getElementById('nombreFontSize').value + 'px');
       document.documentElement.style.setProperty('--nombre-color', document.getElementById('nombreColor').value);
       document.documentElement.style.setProperty('--nombre-left', document.getElementById('nombreLeft').value + '%');
       document.documentElement.style.setProperty('--nombre-top', document.getElementById('nombreTop').value + '%');
       document.documentElement.style.setProperty('--nombre-rotacion', document.getElementById('nombreRotacion').value + 'deg');
 
+      // Instrucciones
       document.documentElement.style.setProperty('--instrucciones-font-size', document.getElementById('instruccionesFontSize').value + 'px');
       document.documentElement.style.setProperty('--instrucciones-color', document.getElementById('instruccionesColor').value);
       document.documentElement.style.setProperty('--instrucciones-rotacion', document.getElementById('instruccionesRotacion').value + 'deg');
       document.documentElement.style.setProperty('--instrucciones-top', document.getElementById('instruccionesTop').value + '%');
       document.documentElement.style.setProperty('--instrucciones-left', document.getElementById('instruccionesLeft').value + '%');
       document.documentElement.style.setProperty('--instrucciones-width', '30%');
+
+      // ✅ Textos adicionales
+      document.documentElement.style.setProperty('--texto1-font-size', document.getElementById('texto1FontSize').value + 'px');
+      document.documentElement.style.setProperty('--texto1-color', document.getElementById('texto1Color').value);
+      document.documentElement.style.setProperty('--texto1-left', document.getElementById('texto1Left').value + '%');
+      document.documentElement.style.setProperty('--texto1-top', document.getElementById('texto1Top').value + '%');
+      document.documentElement.style.setProperty('--texto1-rotacion', document.getElementById('texto1Rotacion').value + 'deg');
+
+      document.documentElement.style.setProperty('--texto2-font-size', document.getElementById('texto2FontSize').value + 'px');
+      document.documentElement.style.setProperty('--texto2-color', document.getElementById('texto2Color').value);
+      document.documentElement.style.setProperty('--texto2-left', document.getElementById('texto2Left').value + '%');
+      document.documentElement.style.setProperty('--texto2-top', document.getElementById('texto2Top').value + '%');
+      document.documentElement.style.setProperty('--texto2-rotacion', document.getElementById('texto2Rotacion').value + 'deg');
+
+      document.documentElement.style.setProperty('--texto3-font-size', document.getElementById('texto3FontSize').value + 'px');
+      document.documentElement.style.setProperty('--texto3-color', document.getElementById('texto3Color').value);
+      document.documentElement.style.setProperty('--texto3-left', document.getElementById('texto3Left').value + '%');
+      document.documentElement.style.setProperty('--texto3-top', document.getElementById('texto3Top').value + '%');
+      document.documentElement.style.setProperty('--texto3-rotacion', document.getElementById('texto3Rotacion').value + 'deg');
+
+      // ✅ Imagen adicional
+      document.documentElement.style.setProperty('--img-adicional-width', document.getElementById('imgAdicionalWidth').value + 'px');
+      document.documentElement.style.setProperty('--img-adicional-height', document.getElementById('imgAdicionalHeight').value + 'px');
+      document.documentElement.style.setProperty('--img-adicional-left', document.getElementById('imgAdicionalLeft').value + '%');
+      document.documentElement.style.setProperty('--img-adicional-top', document.getElementById('imgAdicionalTop').value + '%');
+      document.documentElement.style.setProperty('--img-adicional-rotacion', document.getElementById('imgAdicionalRotacion').value + 'deg');
 
       guardarConfiguracion();
     }
@@ -582,7 +739,30 @@
         fondoTipo: document.getElementById('fondoTipo').value,
         fondoNombre: localStorage.getItem('fondoNombre'),
         instruccionesTop: document.getElementById('instruccionesTop').value,
-        instruccionesLeft: document.getElementById('instruccionesLeft').value
+        instruccionesLeft: document.getElementById('instruccionesLeft').value,
+        // ✅ Nuevos campos
+        texto1: document.getElementById('texto1').value,
+        texto1FontSize: document.getElementById('texto1FontSize').value,
+        texto1Color: document.getElementById('texto1Color').value,
+        texto1Left: document.getElementById('texto1Left').value,
+        texto1Top: document.getElementById('texto1Top').value,
+        texto1Rotacion: document.getElementById('texto1Rotacion').value,
+
+        texto2: document.getElementById('texto2').value,
+        texto2FontSize: document.getElementById('texto2FontSize').value,
+        texto2Color: document.getElementById('texto2Color').value,
+        texto2Left: document.getElementById('texto2Left').value,
+        texto2Top: document.getElementById('texto2Top').value,
+        texto2Rotacion: document.getElementById('texto2Rotacion').value,
+
+        texto3: document.getElementById('texto3').value,
+        texto3FontSize: document.getElementById('texto3FontSize').value,
+        texto3Color: document.getElementById('texto3Color').value,
+        texto3Left: document.getElementById('texto3Left').value,
+        texto3Top: document.getElementById('texto3Top').value,
+        texto3Rotacion: document.getElementById('texto3Rotacion').value,
+
+        imagenAdicional: imagenAdicionalDataUrl
       };
       localStorage.setItem('configEtiqueta', JSON.stringify(config));
     }
@@ -619,6 +799,11 @@
       const cantidadPorProducto = parseInt(document.getElementById("cantidadPorProducto").value) || 1;
       const infoIzquierda = document.getElementById("infoIzquierda").value.trim();
 
+      // ✅ Obtener textos adicionales
+      const texto1 = document.getElementById("texto1").value.trim();
+      const texto2 = document.getElementById("texto2").value.trim();
+      const texto3 = document.getElementById("texto3").value.trim();
+
       const contenedor = document.getElementById("etiquetas");
       contenedor.innerHTML = "";
 
@@ -630,11 +815,24 @@
           const etiqueta = document.createElement("div");
           etiqueta.className = "etiqueta";
 
+          let htmlAdicional = '';
+
+          // ✅ Agregar textos si existen
+          if (texto1) htmlAdicional += `<div class="texto-adicional-1">${texto1}</div>`;
+          if (texto2) htmlAdicional += `<div class="texto-adicional-2">${texto2}</div>`;
+          if (texto3) htmlAdicional += `<div class="texto-adicional-3">${texto3}</div>`;
+
+          // ✅ Agregar imagen adicional si existe
+          if (imagenAdicionalDataUrl) {
+            htmlAdicional += `<img class="imagen-adicional" src="${imagenAdicionalDataUrl}" alt="Adicional">`;
+          }
+
           etiqueta.innerHTML = `
             <div class="etiqueta-content">
               <img class="producto-imagen" src="${imgSrc}" alt="${producto.nombre}" onerror="this.style.display='none'">
               <div class="nombre-producto">${producto.nombre}</div>
               ${infoIzquierda ? `<div class="instrucciones">${infoIzquierda}</div>` : ''}
+              ${htmlAdicional}
             </div>
             <div class="download-overlay">🔽 Click para descargar</div>
           `;
