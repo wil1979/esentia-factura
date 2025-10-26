@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -87,7 +86,7 @@
       position: relative;
       width: var(--etiqueta-width, 8cm);
       height: var(--etiqueta-height, 4cm);
-      background-image: var(--fondo-imagen, url('fondos/fondo_previa.jpg'));
+      background-image: var(--fondo-imagen, none);
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -103,6 +102,17 @@
       position: relative;
       width: 100%;
       height: 100%;
+    }
+
+    /* ✅ Fondo como imagen real para html2canvas */
+    .fondo-etiqueta {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
     }
 
     .download-overlay {
@@ -176,7 +186,7 @@
       word-wrap: break-word;
     }
 
-    /* ✅ Nuevos textos adicionales */
+    /* Textos adicionales */
     .texto-adicional-1,
     .texto-adicional-2,
     .texto-adicional-3 {
@@ -208,12 +218,12 @@
     .texto-adicional-3 {
       font-size: var(--texto3-font-size, 6px);
       color: var(--texto3-color, #000);
-      top: var(--texto3-top, 90%);
+      top: var(--texto3-top, 5%);
       left: var(--texto3-left, 50%);
       transform: translate(-50%, -50%) rotate(var(--texto3-rotacion, 0deg));
     }
 
-    /* ✅ Imagen adicional */
+    /* Imagen adicional */
     .imagen-adicional {
       position: absolute;
       width: var(--img-adicional-width, 30px);
@@ -436,7 +446,7 @@
     <label>Rotación nombre (grados):</label>
     <input type="number" id="nombreRotacion" value="0" min="-180" max="180" step="1" oninput="actualizarEstilos()">
 
-    <!-- ✅ Nuevos textos adicionales -->
+    <!-- Textos adicionales -->
     <div class="seccion-adicional">
       <h4>Texto Adicional 1</h4>
       <input type="text" id="texto1" placeholder="Ej: Hecho a mano" oninput="generarEtiquetas()">
@@ -482,7 +492,7 @@
       <input type="number" id="texto3Rotacion" value="0" min="-180" max="180" step="1" oninput="actualizarEstilos()">
     </div>
 
-    <!-- ✅ Imagen adicional -->
+    <!-- Imagen adicional -->
     <div class="seccion-adicional">
       <h4>Imagen Adicional (logo, sello, etc.)</h4>
       <input type="file" id="imagenAdicionalFile" accept="image/*" onchange="cargarImagenAdicional(event)">
@@ -527,6 +537,7 @@
   <script>
     let productosDisponibles = [];
     let imagenAdicionalDataUrl = null;
+    let fondoActualUrl = null; // ✅ Variable para fondo
 
     const tamanosHoja = {
       carta: { w: 21.6, h: 27.9, name: "letter" },
@@ -549,23 +560,22 @@
     }
 
     function renderizarCheckboxes() {
-  const container = document.getElementById("checkboxContainer");
-  container.innerHTML = '';
-  productosDisponibles.forEach((prod, index) => {
-    const safeId = `prod_${index}`;
-    const div = document.createElement("div");
-    div.className = "checkbox-item";
-    div.innerHTML = `
-      <input type="checkbox" id="${safeId}" value="${index}">
-      <label for="${safeId}">${prod.nombre}</label>
-    `;
-    container.appendChild(div);
+      const container = document.getElementById("checkboxContainer");
+      container.innerHTML = '';
+      productosDisponibles.forEach((prod, index) => {
+        const safeId = `prod_${index}`;
+        const div = document.createElement("div");
+        div.className = "checkbox-item";
+        div.innerHTML = `
+          <input type="checkbox" id="${safeId}" value="${index}">
+          <label for="${safeId}">${prod.nombre}</label>
+        `;
+        container.appendChild(div);
 
-    // ✅ Añadir evento de cambio al checkbox
-    const checkbox = document.getElementById(safeId);
-    checkbox.addEventListener('change', generarEtiquetas);
-  });
-}
+        // ✅ Generar etiquetas automáticamente al cambiar checkbox
+        document.getElementById(safeId).addEventListener('change', generarEtiquetas);
+      });
+    }
 
     window.onload = () => {
       cargarProductos();
@@ -577,11 +587,23 @@
           const el = document.getElementById(key);
           if (el && el.value !== undefined) el.value = config[key];
         });
+
+        // ✅ Restaurar fondo
+        if (config.fondoTipo === 'subir' && config.fondoDataUrl) {
+          fondoActualUrl = config.fondoDataUrl;
+          aplicarFondo(`url(${config.fondoDataUrl})`);
+        } else if (config.fondoTipo === 'predefinido' && config.fondoNombre) {
+          fondoActualUrl = `fondos/${config.fondoNombre}`;
+          aplicarFondo(`url('fondos/${config.fondoNombre}')`);
+        }
+
+        // Restaurar imagen adicional
         if (config.imagenAdicional) {
           imagenAdicionalDataUrl = config.imagenAdicional;
           document.getElementById('imgPreviewAdicional').src = imagenAdicionalDataUrl;
           document.getElementById('previewImagenAdicional').style.display = 'block';
         }
+
         actualizarEstilos();
       }
 
@@ -649,7 +671,7 @@
       document.documentElement.style.setProperty('--instrucciones-left', document.getElementById('instruccionesLeft').value + '%');
       document.documentElement.style.setProperty('--instrucciones-width', '30%');
 
-      // ✅ Textos adicionales
+      // Textos adicionales
       document.documentElement.style.setProperty('--texto1-font-size', document.getElementById('texto1FontSize').value + 'px');
       document.documentElement.style.setProperty('--texto1-color', document.getElementById('texto1Color').value);
       document.documentElement.style.setProperty('--texto1-left', document.getElementById('texto1Left').value + '%');
@@ -668,7 +690,7 @@
       document.documentElement.style.setProperty('--texto3-top', document.getElementById('texto3Top').value + '%');
       document.documentElement.style.setProperty('--texto3-rotacion', document.getElementById('texto3Rotacion').value + 'deg');
 
-      // ✅ Imagen adicional
+      // Imagen adicional
       document.documentElement.style.setProperty('--img-adicional-width', document.getElementById('imgAdicionalWidth').value + 'px');
       document.documentElement.style.setProperty('--img-adicional-height', document.getElementById('imgAdicionalHeight').value + 'px');
       document.documentElement.style.setProperty('--img-adicional-left', document.getElementById('imgAdicionalLeft').value + '%');
@@ -694,7 +716,9 @@
         fileInput.style.display = 'none';
         predefContainer.style.display = 'none';
         aplicarFondo(null);
+        fondoActualUrl = null;
         guardarConfiguracion();
+        generarEtiquetas();
       }
     }
 
@@ -703,16 +727,23 @@
       if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-          aplicarFondo(`url(${e.target.result})`);
+          const url = e.target.result;
+          aplicarFondo(`url(${url})`);
+          fondoActualUrl = url;
+          guardarConfiguracion();
+          generarEtiquetas();
         };
         reader.readAsDataURL(file);
       }
     }
 
     function seleccionarFondoPredefinido(nombre) {
-      aplicarFondo(`url('fondos/${nombre}')`);
+      const url = `fondos/${nombre}`;
+      aplicarFondo(`url('${url}')`);
+      fondoActualUrl = url;
       localStorage.setItem('fondoNombre', nombre);
       guardarConfiguracion();
+      generarEtiquetas();
     }
 
     function aplicarFondo(url) {
@@ -740,161 +771,143 @@
         instruccionesFontSize: document.getElementById('instruccionesFontSize').value,
         instruccionesColor: document.getElementById('instruccionesColor').value,
         instruccionesRotacion: document.getElementById('instruccionesRotacion').value,
-        fondoTipo: document.getElementById('fondoTipo').value,
-        fondoNombre: localStorage.getItem('fondoNombre'),
         instruccionesTop: document.getElementById('instruccionesTop').value,
         instruccionesLeft: document.getElementById('instruccionesLeft').value,
-        // ✅ Nuevos campos
         texto1: document.getElementById('texto1').value,
         texto1FontSize: document.getElementById('texto1FontSize').value,
         texto1Color: document.getElementById('texto1Color').value,
         texto1Left: document.getElementById('texto1Left').value,
         texto1Top: document.getElementById('texto1Top').value,
         texto1Rotacion: document.getElementById('texto1Rotacion').value,
-
         texto2: document.getElementById('texto2').value,
         texto2FontSize: document.getElementById('texto2FontSize').value,
         texto2Color: document.getElementById('texto2Color').value,
         texto2Left: document.getElementById('texto2Left').value,
         texto2Top: document.getElementById('texto2Top').value,
         texto2Rotacion: document.getElementById('texto2Rotacion').value,
-
         texto3: document.getElementById('texto3').value,
         texto3FontSize: document.getElementById('texto3FontSize').value,
         texto3Color: document.getElementById('texto3Color').value,
         texto3Left: document.getElementById('texto3Left').value,
         texto3Top: document.getElementById('texto3Top').value,
         texto3Rotacion: document.getElementById('texto3Rotacion').value,
-
-        imagenAdicional: imagenAdicionalDataUrl
+        imagenAdicional: imagenAdicionalDataUrl,
+        // ✅ Guardar fondo explícitamente
+        fondoTipo: document.getElementById('fondoTipo').value,
+        fondoNombre: localStorage.getItem('fondoNombre'),
+        fondoDataUrl: (document.getElementById('fondoTipo').value === 'subir') ? fondoActualUrl : null
       };
       localStorage.setItem('configEtiqueta', JSON.stringify(config));
     }
 
     function generarEtiquetas() {
-  actualizarEstilos();
+      actualizarEstilos();
 
-  const indicesSeleccionados = Array.from(
-    document.querySelectorAll('.checkbox-item input[type="checkbox"]:checked')
-  ).map(cb => parseInt(cb.value));
+      const indicesSeleccionados = Array.from(
+        document.querySelectorAll('.checkbox-item input[type="checkbox"]:checked')
+      ).map(cb => parseInt(cb.value));
 
-  const productosManual = document.getElementById("productosManual").value
-    .split(',')
-    .map(p => p.trim())
-    .filter(p => p);
+      const productosManual = document.getElementById("productosManual").value
+        .split(',')
+        .map(p => p.trim())
+        .filter(p => p);
 
-  let productosParaEtiquetas = [];
+      let productosParaEtiquetas = [];
 
-  if (productosManual.length > 0) {
-    productosParaEtiquetas = productosManual.map(nombreManual => {
-      const encontrado = productosDisponibles.find(p => 
-        p.nombre.toLowerCase().includes(nombreManual.toLowerCase()) ||
-        nombreManual.toLowerCase().includes(p.nombre.toLowerCase())
-      );
-      return encontrado || { nombre: nombreManual, imagen: '' };
-    });
-  } else if (indicesSeleccionados.length > 0) {
-    productosParaEtiquetas = indicesSeleccionados.map(i => productosDisponibles[i]);
-  } else {
-    document.getElementById("etiquetas").innerHTML = "<p style='color:red;'>⚠️ Selecciona al menos un producto.</p>";
-    return;
-  }
-
-  const cantidadPorProducto = parseInt(document.getElementById("cantidadPorProducto").value) || 1;
-  const infoIzquierda = document.getElementById("infoIzquierda").value.trim();
-  const texto1 = document.getElementById("texto1").value.trim();
-  const texto2 = document.getElementById("texto2").value.trim();
-  const texto3 = document.getElementById("texto3").value.trim();
-
-  const contenedor = document.getElementById("etiquetas");
-  contenedor.innerHTML = "";
-
-  // ✅ Obtener la URL del fondo actual
-  let fondoUrl = null;
-  const fondoTipo = document.getElementById('fondoTipo').value;
-  if (fondoTipo === 'predefinido') {
-    const nombreFondo = localStorage.getItem('fondoNombre') || 'fondo_previa.jpg';
-    fondoUrl = `fondos/${nombreFondo}`;
-  } else if (fondoTipo === 'subir') {
-    // El fondo subido ya está en una variable CSS, pero necesitamos su URL
-    // Como no la guardamos explícitamente, usamos un truco:
-    const computedStyle = getComputedStyle(document.documentElement);
-    const bgImage = computedStyle.getPropertyValue('--fondo-imagen').trim();
-    if (bgImage && bgImage !== 'none' && bgImage.startsWith('url(')) {
-      fondoUrl = bgImage.slice(4, -1).replace(/"/g, "");
-    }
-  }
-
-  productosParaEtiquetas.forEach(producto => {
-    if (!producto || !producto.nombre) return;
-
-    for (let i = 0; i < cantidadPorProducto; i++) {
-      const imgSrc = producto.imagen || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24"><rect width="24" height="24" fill="%23ccc"/><text x="12" y="16" font-family="Arial" font-size="8" text-anchor="middle" fill="%23999">Sin imagen</text></svg>';
-      const etiqueta = document.createElement("div");
-      etiqueta.className = "etiqueta";
-
-      // ✅ Construir el fondo como imagen si existe
-      let fondoHtml = '';
-      if (fondoUrl) {
-        fondoHtml = `<img class="fondo-etiqueta" src="${fondoUrl}" alt="Fondo">`;
-      }
-
-      let htmlAdicional = '';
-      if (texto1) htmlAdicional += `<div class="texto-adicional-1">${texto1}</div>`;
-      if (texto2) htmlAdicional += `<div class="texto-adicional-2">${texto2}</div>`;
-      if (texto3) htmlAdicional += `<div class="texto-adicional-3">${texto3}</div>`;
-      if (imagenAdicionalDataUrl) {
-        htmlAdicional += `<img class="imagen-adicional" src="${imagenAdicionalDataUrl}" alt="Adicional">`;
-      }
-
-      etiqueta.innerHTML = `
-        <div class="etiqueta-content">
-          ${fondoHtml}
-          <img class="producto-imagen" src="${imgSrc}" alt="${producto.nombre}" onerror="this.style.display='none'">
-          <div class="nombre-producto">${producto.nombre}</div>
-          ${infoIzquierda ? `<div class="instrucciones">${infoIzquierda}</div>` : ''}
-          ${htmlAdicional}
-        </div>
-        <div class="download-overlay">🔽 Click para descargar</div>
-      `;
-
-      etiqueta.addEventListener('click', function () {
-        const content = etiqueta.querySelector('.etiqueta-content');
-        html2canvas(content, { 
-          scale: 3, 
-          backgroundColor: null, 
-          useCORS: true,
-          allowTaint: true
-        }).then(canvas => {
-          const link = document.createElement('a');
-          link.download = `etiqueta-${producto.nombre.replace(/[^a-z0-9]/gi, '_')}.png`;
-          link.href = canvas.toDataURL('image/png');
-          link.click();
-        }).catch(err => {
-          console.error("Error al generar imagen:", err);
-          alert("Error al generar imagen. Verifica que las imágenes carguen.");
+      if (productosManual.length > 0) {
+        productosParaEtiquetas = productosManual.map(nombreManual => {
+          const encontrado = productosDisponibles.find(p => 
+            p.nombre.toLowerCase().includes(nombreManual.toLowerCase()) ||
+            nombreManual.toLowerCase().includes(p.nombre.toLowerCase())
+          );
+          return encontrado || { nombre: nombreManual, imagen: '' };
         });
+      } else if (indicesSeleccionados.length > 0) {
+        productosParaEtiquetas = indicesSeleccionados.map(i => productosDisponibles[i]);
+      } else {
+        document.getElementById("etiquetas").innerHTML = "<p style='color:red;'>⚠️ Selecciona al menos un producto.</p>";
+        return;
+      }
+
+      const cantidadPorProducto = parseInt(document.getElementById("cantidadPorProducto").value) || 1;
+      const infoIzquierda = document.getElementById("infoIzquierda").value.trim();
+      const texto1 = document.getElementById("texto1").value.trim();
+      const texto2 = document.getElementById("texto2").value.trim();
+      const texto3 = document.getElementById("texto3").value.trim();
+
+      const contenedor = document.getElementById("etiquetas");
+      contenedor.innerHTML = "";
+
+      productosParaEtiquetas.forEach(producto => {
+        if (!producto || !producto.nombre) return;
+
+        for (let i = 0; i < cantidadPorProducto; i++) {
+          const imgSrc = producto.imagen || 'image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24"><rect width="24" height="24" fill="%23ccc"/><text x="12" y="16" font-family="Arial" font-size="8" text-anchor="middle" fill="%23999">Sin imagen</text></svg>';
+          const etiqueta = document.createElement("div");
+          etiqueta.className = "etiqueta";
+
+          // ✅ Usar fondoActualUrl directamente
+          let fondoHtml = '';
+          if (fondoActualUrl) {
+            fondoHtml = `<img class="fondo-etiqueta" src="${fondoActualUrl}" alt="Fondo">`;
+          }
+
+          let htmlAdicional = '';
+          if (texto1) htmlAdicional += `<div class="texto-adicional-1">${texto1}</div>`;
+          if (texto2) htmlAdicional += `<div class="texto-adicional-2">${texto2}</div>`;
+          if (texto3) htmlAdicional += `<div class="texto-adicional-3">${texto3}</div>`;
+          if (imagenAdicionalDataUrl) {
+            htmlAdicional += `<img class="imagen-adicional" src="${imagenAdicionalDataUrl}" alt="Adicional">`;
+          }
+
+          etiqueta.innerHTML = `
+            <div class="etiqueta-content">
+              ${fondoHtml}
+              <img class="producto-imagen" src="${imgSrc}" alt="${producto.nombre}" onerror="this.style.display='none'">
+              <div class="nombre-producto">${producto.nombre}</div>
+              ${infoIzquierda ? `<div class="instrucciones">${infoIzquierda}</div>` : ''}
+              ${htmlAdicional}
+            </div>
+            <div class="download-overlay">🔽 Click para descargar</div>
+          `;
+
+          etiqueta.addEventListener('click', function () {
+            const content = etiqueta.querySelector('.etiqueta-content');
+            html2canvas(content, { 
+              scale: 3, 
+              backgroundColor: null, 
+              useCORS: true,
+              allowTaint: true
+            }).then(canvas => {
+              const link = document.createElement('a');
+              link.download = `etiqueta-${producto.nombre.replace(/[^a-z0-9]/gi, '_')}.png`;
+              link.href = canvas.toDataURL('image/png');
+              link.click();
+            }).catch(err => {
+              console.error("Error al generar imagen:", err);
+              alert("Error al generar imagen. Verifica que las imágenes carguen.");
+            });
+          });
+
+          const nombreEl = etiqueta.querySelector('.nombre-producto');
+          nombreEl.addEventListener('dblclick', function (e) {
+            e.stopPropagation();
+            this.contentEditable = true;
+            this.focus();
+            this.style.outline = '2px solid #0066cc';
+          });
+
+          nombreEl.addEventListener('blur', function () {
+            this.contentEditable = false;
+            this.style.outline = 'none';
+          });
+
+          nombreEl.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault() && e.target.blur());
+
+          contenedor.appendChild(etiqueta);
+        }
       });
-
-      const nombreEl = etiqueta.querySelector('.nombre-producto');
-      nombreEl.addEventListener('dblclick', function (e) {
-        e.stopPropagation();
-        this.contentEditable = true;
-        this.focus();
-        this.style.outline = '2px solid #0066cc';
-      });
-
-      nombreEl.addEventListener('blur', function () {
-        this.contentEditable = false;
-        this.style.outline = 'none';
-      });
-
-      nombreEl.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault() && e.target.blur());
-
-      contenedor.appendChild(etiqueta);
     }
-  });
-}
 
     async function descargarTodasComoImagen() {
       const etiquetas = document.querySelectorAll('.etiqueta-content');
