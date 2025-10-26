@@ -104,7 +104,7 @@
       height: 100%;
     }
 
-    /* ✅ Fondo como imagen real para html2canvas */
+    /* Fondo como imagen real para html2canvas */
     .fondo-etiqueta {
       position: absolute;
       top: 0;
@@ -338,6 +338,121 @@
     body.modo-oscuro .seccion-adicional {
       border-top-color: #555;
     }
+
+    /* ✅ Estilos para el editor de instrucciones */
+    .info-editable {
+      width: 100%;
+      min-height: 150px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      background: white;
+      color: #333;
+      overflow: auto;
+      line-height: 1.4;
+    }
+
+    body.modo-oscuro .info-editable {
+      background: #3c3c3c;
+      color: #e0e0e0;
+      border-color: #555;
+    }
+
+    /* ✅ Modal de instrucciones */
+    #modalInstrucciones {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow: auto;
+    }
+
+    body.modo-oscuro .modal-content {
+      background: #2d2d2d;
+      color: #e0e0e0;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+    }
+
+    .btn-cerrar-modal {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    body.modo-oscuro .btn-cerrar-modal {
+      color: #ccc;
+    }
+
+    #editorInstrucciones {
+      width: 100%;
+      min-height: 300px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      background: white;
+      color: #333;
+      line-height: 1.4;
+    }
+
+    body.modo-oscuro #editorInstrucciones {
+      background: #3c3c3c;
+      color: #e0e0e0;
+      border-color: #555;
+    }
+
+    .modal-footer {
+      margin-top: 15px;
+      text-align: right;
+    }
+
+    .btn-modal {
+      padding: 8px 16px;
+      margin-left: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn-guardar {
+      background: #0066cc;
+      color: white;
+    }
+
+    .btn-cancelar {
+      background: #666;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -375,22 +490,10 @@
     <label>Cantidad por producto:</label>
     <input id="cantidadPorProducto" type="number" min="1" value="4" oninput="generarEtiquetas()">
 
-    <!-- Información izquierda (Instrucciones) -->
-    <label>Información izquierda (opcional):</label>
-    <textarea id="infoIzquierda" rows="8" oninput="generarEtiquetas()">Indicaciones de uso en difusor eléctrico o ambiente:
+    <!-- ✅ Botón para abrir el modal de instrucciones -->
+    <button type="button" onclick="abrirModalInstrucciones()" style="margin-bottom: 10px;">✏️ Editar Instrucciones</button>
 
-    - Utilice 5-10 gotas en difusor eléctrico según capacidad del recipiente
-    - Para uso ambiental, colocar 2-3 gotas en superficies porosas o difusores pasivos
-    - Evite derramar el aceite sobre superficies pintadas o barnizadas
-    - No aplicar directamente sobre piel, ropa o materiales delicados
-    - Mantener fuera del alcance de niños y mascotas
-    - Conservar en lugar fresco y seco, protegido de la luz solar directa
-
-    Advertencias:
-    ✖ No son consumibles ni de uso tópico
-    ✖ Evitar contacto con ojos y mucosas
-    ✖ Suspender su uso ante reacciones alérgicas</textarea>
-
+    <!-- Tamaño texto instrucciones -->
     <label>Tamaño texto instrucciones (px):</label>
     <input type="number" id="instruccionesFontSize" value="6" min="4" max="12" step="0.5" oninput="actualizarEstilos()">
     <label>Color texto instrucciones:</label>
@@ -534,10 +637,50 @@
 
   <div class="etiqueta-container" id="etiquetas"></div>
 
+  <!-- ✅ Modal de instrucciones -->
+  <div id="modalInstrucciones">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Editar Instrucciones</h3>
+        <button class="btn-cerrar-modal" onclick="cerrarModalInstrucciones()">&times;</button>
+      </div>
+      <div id="editorInstrucciones" contenteditable="true">
+        <span style="color: red; font-weight: bold;">Indicaciones de uso en difusor eléctrico o ambiente:</span><br><br>
+        - Utilice 5-10 gotas en difusor eléctrico según capacidad del recipiente<br>
+        - Para uso ambiental, colocar 2-3 gotas en superficies porosas o difusores pasivos<br>
+        - Evite derramar el aceite sobre superficies pintadas o barnizadas<br>
+        - No aplicar directamente sobre piel, ropa o materiales delicados<br>
+        - Mantener fuera del alcance de niños y mascotas<br>
+        - Conservar en lugar fresco y seco, protegido de la luz solar directa<br><br>
+        <span style="color: red; font-weight: bold;">Advertencias:</span><br>
+        ✖ No son consumibles ni de uso tópico<br>
+        ✖ Evitar contacto con ojos y mucosas<br>
+        ✖ Suspender su uso ante reacciones alérgicas
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal btn-cancelar" onclick="cerrarModalInstrucciones()">Cancelar</button>
+        <button class="btn-modal btn-guardar" onclick="guardarInstrucciones()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let productosDisponibles = [];
     let imagenAdicionalDataUrl = null;
-    let fondoActualUrl = null; // ✅ Variable para fondo
+    let fondoActualUrl = null;
+    let instruccionesHtml = `
+      <span style="color: red; font-weight: bold;">Indicaciones de uso en difusor eléctrico o ambiente:</span><br><br>
+      - Utilice 5-10 gotas en difusor eléctrico según capacidad del recipiente<br>
+      - Para uso ambiental, colocar 2-3 gotas en superficies porosas o difusores pasivos<br>
+      - Evite derramar el aceite sobre superficies pintadas o barnizadas<br>
+      - No aplicar directamente sobre piel, ropa o materiales delicados<br>
+      - Mantener fuera del alcance de niños y mascotas<br>
+      - Conservar en lugar fresco y seco, protegido de la luz solar directa<br><br>
+      <span style="color: red; font-weight: bold;">Advertencias:</span><br>
+      ✖ No son consumibles ni de uso tópico<br>
+      ✖ Evitar contacto con ojos y mucosas<br>
+      ✖ Suspender su uso ante reacciones alérgicas
+    `;
 
     const tamanosHoja = {
       carta: { w: 21.6, h: 27.9, name: "letter" },
@@ -572,7 +715,6 @@
         `;
         container.appendChild(div);
 
-        // ✅ Generar etiquetas automáticamente al cambiar checkbox
         document.getElementById(safeId).addEventListener('change', generarEtiquetas);
       });
     }
@@ -588,7 +730,11 @@
           if (el && el.value !== undefined) el.value = config[key];
         });
 
-        // ✅ Restaurar fondo
+        if (config.infoIzquierdaHtml) {
+          instruccionesHtml = config.infoIzquierdaHtml;
+        }
+
+        // Restaurar fondo
         if (config.fondoTipo === 'subir' && config.fondoDataUrl) {
           fondoActualUrl = config.fondoDataUrl;
           aplicarFondo(`url(${config.fondoDataUrl})`);
@@ -645,25 +791,21 @@
     }
 
     function actualizarEstilos() {
-      // Etiqueta base
       document.documentElement.style.setProperty('--etiqueta-width', document.getElementById('anchoCm').value + 'cm');
       document.documentElement.style.setProperty('--etiqueta-height', document.getElementById('altoCm').value + 'cm');
 
-      // Imagen producto
       document.documentElement.style.setProperty('--img-width', document.getElementById('imgWidth').value + 'px');
       document.documentElement.style.setProperty('--img-height', document.getElementById('imgHeight').value + 'px');
       document.documentElement.style.setProperty('--img-left', document.getElementById('imgLeft').value + '%');
       document.documentElement.style.setProperty('--img-top', document.getElementById('imgTop').value + '%');
       document.documentElement.style.setProperty('--img-rotacion', document.getElementById('imgRotacion').value + 'deg');
 
-      // Nombre producto
       document.documentElement.style.setProperty('--nombre-font-size', document.getElementById('nombreFontSize').value + 'px');
       document.documentElement.style.setProperty('--nombre-color', document.getElementById('nombreColor').value);
       document.documentElement.style.setProperty('--nombre-left', document.getElementById('nombreLeft').value + '%');
       document.documentElement.style.setProperty('--nombre-top', document.getElementById('nombreTop').value + '%');
       document.documentElement.style.setProperty('--nombre-rotacion', document.getElementById('nombreRotacion').value + 'deg');
 
-      // Instrucciones
       document.documentElement.style.setProperty('--instrucciones-font-size', document.getElementById('instruccionesFontSize').value + 'px');
       document.documentElement.style.setProperty('--instrucciones-color', document.getElementById('instruccionesColor').value);
       document.documentElement.style.setProperty('--instrucciones-rotacion', document.getElementById('instruccionesRotacion').value + 'deg');
@@ -671,7 +813,6 @@
       document.documentElement.style.setProperty('--instrucciones-left', document.getElementById('instruccionesLeft').value + '%');
       document.documentElement.style.setProperty('--instrucciones-width', '30%');
 
-      // Textos adicionales
       document.documentElement.style.setProperty('--texto1-font-size', document.getElementById('texto1FontSize').value + 'px');
       document.documentElement.style.setProperty('--texto1-color', document.getElementById('texto1Color').value);
       document.documentElement.style.setProperty('--texto1-left', document.getElementById('texto1Left').value + '%');
@@ -690,7 +831,6 @@
       document.documentElement.style.setProperty('--texto3-top', document.getElementById('texto3Top').value + '%');
       document.documentElement.style.setProperty('--texto3-rotacion', document.getElementById('texto3Rotacion').value + 'deg');
 
-      // Imagen adicional
       document.documentElement.style.setProperty('--img-adicional-width', document.getElementById('imgAdicionalWidth').value + 'px');
       document.documentElement.style.setProperty('--img-adicional-height', document.getElementById('imgAdicionalHeight').value + 'px');
       document.documentElement.style.setProperty('--img-adicional-left', document.getElementById('imgAdicionalLeft').value + '%');
@@ -792,10 +932,10 @@
         texto3Top: document.getElementById('texto3Top').value,
         texto3Rotacion: document.getElementById('texto3Rotacion').value,
         imagenAdicional: imagenAdicionalDataUrl,
-        // ✅ Guardar fondo explícitamente
         fondoTipo: document.getElementById('fondoTipo').value,
         fondoNombre: localStorage.getItem('fondoNombre'),
-        fondoDataUrl: (document.getElementById('fondoTipo').value === 'subir') ? fondoActualUrl : null
+        fondoDataUrl: (document.getElementById('fondoTipo').value === 'subir') ? fondoActualUrl : null,
+        infoIzquierdaHtml: instruccionesHtml
       };
       localStorage.setItem('configEtiqueta', JSON.stringify(config));
     }
@@ -830,7 +970,7 @@
       }
 
       const cantidadPorProducto = parseInt(document.getElementById("cantidadPorProducto").value) || 1;
-      const infoIzquierda = document.getElementById("infoIzquierda").value.trim();
+      const infoIzquierda = instruccionesHtml;
       const texto1 = document.getElementById("texto1").value.trim();
       const texto2 = document.getElementById("texto2").value.trim();
       const texto3 = document.getElementById("texto3").value.trim();
@@ -846,7 +986,6 @@
           const etiqueta = document.createElement("div");
           etiqueta.className = "etiqueta";
 
-          // ✅ Usar fondoActualUrl directamente
           let fondoHtml = '';
           if (fondoActualUrl) {
             fondoHtml = `<img class="fondo-etiqueta" src="${fondoActualUrl}" alt="Fondo">`;
@@ -935,6 +1074,31 @@
       const esOscuro = body.classList.toggle('modo-oscuro');
       localStorage.setItem('modoOscuro', esOscuro);
       btn.innerHTML = esOscuro ? '☀️ Desactivar Modo Oscuro' : '🌑 Activar Modo Oscuro';
+    }
+
+    // ✅ Funciones del modal de instrucciones
+    function abrirModalInstrucciones() {
+      document.getElementById('editorInstrucciones').innerHTML = instruccionesHtml;
+      document.getElementById('modalInstrucciones').style.display = 'flex';
+    }
+
+    function cerrarModalInstrucciones() {
+      document.getElementById('modalInstrucciones').style.display = 'none';
+    }
+
+    function guardarInstrucciones() {
+      instruccionesHtml = document.getElementById('editorInstrucciones').innerHTML;
+      guardarConfiguracion();
+      generarEtiquetas();
+      cerrarModalInstrucciones();
+    }
+
+    // Cerrar modal al hacer clic fuera
+    window.onclick = function(event) {
+      const modal = document.getElementById('modalInstrucciones');
+      if (event.target === modal) {
+        cerrarModalInstrucciones();
+      }
     }
   </script>
 </body>
