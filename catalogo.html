@@ -29,6 +29,12 @@
       color: white;
       border-color: #6c4ba3;
     }
+
+    /* Popup de carrito rápido */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
@@ -48,7 +54,7 @@
       </div>
     </div>
 
-    <!-- Filtros (ocultos hasta que cargue todo) -->
+    <!-- Filtros -->
     <div style="text-align:center; margin:1.5rem 0; display:none;" id="filtros-container">
       <button id="btnMostrarDisponibles" class="btn-filtro activo">📦 Disponibles</button>
       <button id="btnMostrarTodos" class="btn-filtro">📚 Ver todo el catálogo</button>
@@ -60,15 +66,12 @@
     <!-- Sección: Más opciones -->
     <div style="text-align:center; margin:2rem 0; padding:1.2rem; background:#f9f6ff; border-radius:12px; max-width:600px; margin-left:auto; margin-right:auto;">
       <h3 style="margin-top:0; color:#6c4ba3;">¿No encuentras lo que buscas?</h3>
-      
       <button onclick="solicitarAroma()" style="display:block; width:100%; padding:10px; margin:8px 0; background:#6c4ba3; color:white; border:none; border-radius:8px; cursor:pointer;">
         🌸 Solicitar un aroma especial
       </button>
-
       <button onclick="recomendarPorWhatsApp()" style="display:block; width:100%; padding:10px; margin:8px 0; background:#25D366; color:white; border:none; border-radius:8px; cursor:pointer;">
         📲 Recomendar a un amigo por WhatsApp
       </button>
-
       <button onclick="copiarEnlaceRecomendacion()" style="display:block; width:100%; padding:10px; margin:8px 0; background:#4caf50; color:white; border:none; border-radius:8px; cursor:pointer;">
         🔗 Copiar enlace para recomendar
       </button>
@@ -80,13 +83,12 @@
     <div class="modal-contenido">
       <span onclick="cerrarModalProducto()" style="position:absolute; top:10px; right:15px; cursor:pointer; font-size:22px;">&times;</span>
       <h2 id="modalProductoNombre"></h2>
-      <img id="modalProductoImagen" src="" alt="Producto">
+      <img id="modalProductoImagen" src="" alt="Producto" style="width:100%; max-height:250px; object-fit:contain; border-radius:8px; margin:10px 0; background:#fff;">
       <p id="modalProductoInfo"></p>
       <p id="modalProductoUso"></p>
       <p id="modalProductoPrecio" style="font-size:1.2rem; font-weight:bold; color:#6c4ba3;"></p>
       <div id="modalProductoCalificacion"></div>
       <div id="selectorVariante"></div>
-      <!-- Stock en modal -->
       <p id="modalProductoStock" style="font-weight:bold; margin-top:5px;"></p>
       <button id="botonAgregarDesdeModal" class="btn-agregar" onclick="agregarDesdeModal()">🛒 Agregar al carrito</button>
     </div>
@@ -111,7 +113,44 @@
   <!-- Toast -->
   <div id="toast" style="position:fixed; bottom:20px; right:20px; background:#4caf50; color:white; padding:12px 16px; border-radius:6px; display:none; z-index:10000;"></div>
 
-  <!-- 🔥 Bloque Firebase (para inventario y actualización de stock) -->
+  <!-- Popup de carrito rápido -->
+  <div id="popupCarritoRapido" style="
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10000;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    width: 320px;
+    max-width: 90vw;
+    padding: 16px;
+    font-family: var(--fuente-principal);
+    animation: fadeInUp 0.4s ease;
+  ">
+    <div style="display:flex; gap:12px;">
+      <img id="popupImagen" src="" alt="Producto" style="width:70px; height:70px; object-fit:contain; border-radius:8px; background:#fff;">
+      <div style="flex:1;">
+        <h3 id="popupNombre" style="margin:0 0 6px; font-size:1.1rem; color:#333;"></h3>
+        <p id="popupPrecio" style="margin:0 0 8px; font-weight:bold; color:#6c4ba3;"></p>
+        <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+          <label style="font-size:0.85rem;">Cantidad:</label>
+          <input type="number" id="popupCantidad" min="1" value="1" style="width:60px; padding:4px; border:1px solid #ccc; border-radius:4px;">
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:16px;">
+      <button id="popupVerCarrito" style="flex:1; padding:8px; background:#6c4ba3; color:white; border:none; border-radius:6px; cursor:pointer;">
+        🛒 Ver carrito
+      </button>
+      <button id="popupCerrar" style="flex:1; padding:8px; background:#ccc; color:#333; border:none; border-radius:6px; cursor:pointer;">
+        Cerrar
+      </button>
+    </div>
+  </div>
+
+  <!-- 🔥 Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
@@ -183,13 +222,12 @@
     document.addEventListener("DOMContentLoaded", cargarInventario);
   </script>
 
-  <!-- ✅ Script principal integrado -->
+  <!-- ✅ Script principal -->
   <script>
     let carrito = [];
-    let cuponActivo = false;
-    let productoSeleccionado = null;
     let productos = [];
     let modoVisualizacion = "disponibles";
+    let productoSeleccionado = null;
 
     const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
 
@@ -213,7 +251,6 @@
 
       loader.style.display = "none";
       if (filtrosContainer) filtrosContainer.style.display = "block";
-
       container.innerHTML = "";
 
       const fila = document.createElement("div");
@@ -243,13 +280,12 @@
 
       productosFiltrados.forEach(producto => {
         const precioFinal = producto.precioOferta || producto.precio;
-
         let estrellasHTML = "";
         if (producto.calificacion) {
-          const estrellasLlenas = Math.floor(producto.calificacion);
-          const mediaEstrella = producto.calificacion % 1 >= 0.5;
-          for (let i = 0; i < estrellasLlenas; i++) estrellasHTML += "⭐";
-          if (mediaEstrella) estrellasHTML += "✨";
+          const llenas = Math.floor(producto.calificacion);
+          const media = producto.calificacion % 1 >= 0.5;
+          for (let i = 0; i < llenas; i++) estrellasHTML += "⭐";
+          if (media) estrellasHTML += "✨";
           while (estrellasHTML.length < 5) estrellasHTML += "☆";
         }
 
@@ -257,44 +293,26 @@
           ? `<p><span class="precio-original">₡${producto.precioOriginal}</span> ₡${producto.precioOferta}</p>`
           : `<p>₡${producto.precio}</p>`;
 
-        // Escapar caracteres problemáticos para evitar errores de sintaxis
-        const nombreEscapado = producto.nombre.replace(/'/g, "\\'");
-        const infoEscapada = (producto.info || '').replace(/`/g, "\\`");
-        const beneficiosEscapados = (producto.beneficios || '').replace(/`/g, "\\`");
-        const usoEscapado = (producto.usoRecomendado || '').replace(/`/g, "\\`");
-
-        const botonHTML = `<button class="btn-agregar" onclick="mostrarInfoProducto(
-          '${nombreEscapado}',
-          ${precioFinal},
-          '${producto.imagen}',
-          \`${infoEscapada}\`,
-          \`${beneficiosEscapados}\`,
-          \`${usoEscapado}\`
-        )">Ver detalles</button>`;
+        const nombreEsc = producto.nombre.replace(/'/g, "\\'");
+        const infoEsc = (producto.info || '').replace(/`/g, "\\`");
+        const benefEsc = (producto.beneficios || '').replace(/`/g, "\\`");
+        const usoEsc = (producto.usoRecomendado || '').replace(/`/g, "\\`");
 
         const divProducto = document.createElement("div");
-        divProducto.className = producto.precioOferta
-          ? "producto oferta producto-card"
-          : "producto producto-card";
+        divProducto.className = producto.precioOferta ? "producto oferta producto-card" : "producto producto-card";
         divProducto.dataset.nombre = producto.nombre;
 
         divProducto.innerHTML = `
           <div style="position:relative;">
             <img src="${producto.imagen}" alt="${producto.nombre}"
-              onclick="mostrarInfoProducto(
-                '${nombreEscapado}',
-                ${precioFinal},
-                '${producto.imagen}',
-                \`${infoEscapada}\`,
-                \`${beneficiosEscapados}\`,
-                \`${usoEscapado}\`
-              )">
+              style="width:100%; height:200px; object-fit:contain; margin:18px auto 10px auto; border-radius:8px; background:#fff;"
+              onclick="mostrarInfoProducto('${nombreEsc}', ${precioFinal}, '${producto.imagen}', \`${infoEsc}\`, \`${benefEsc}\`, \`${usoEsc}\`)">
           </div>
           <h3>${producto.nombre}</h3>
           <div class="estrellas">${estrellasHTML}</div>
           ${precioHTML}
           <p class="stock-label">Cargando stock...</p>
-          ${botonHTML}
+          <button class="btn-agregar" onclick="mostrarInfoProducto('${nombreEsc}', ${precioFinal}, '${producto.imagen}', \`${infoEsc}\`, \`${benefEsc}\`, \`${usoEsc}\`)">Ver detalles</button>
         `;
 
         fila.appendChild(divProducto);
@@ -321,7 +339,6 @@
       document.getElementById("modalProductoUso").innerHTML = `
         <strong>🧠 Beneficios:</strong> ${beneficios}<br>
         <strong>🏠 Uso recomendado:</strong> ${usoRecomendado}`;
-
       document.getElementById("modalProductoPrecio").textContent = `₡${precio.toLocaleString()}`;
 
       const productoReal = productos.find(p => p.nombre === nombre);
@@ -333,28 +350,18 @@
       if (productoReal.variantes && productoReal.variantes.length > 0) {
         const select = document.createElement("select");
         select.id = "varianteSeleccionada";
-        select.style.width = "100%";
-        select.style.marginTop = "1rem";
-        select.style.padding = "10px";
-
-        const defaultOption = document.createElement("option");
-        defaultOption.value = "";
-        defaultOption.textContent = "-- Selecciona una presentación --";
-        select.appendChild(defaultOption);
-
+        select.style.width = "100%"; select.style.marginTop = "1rem"; select.style.padding = "10px";
+        select.innerHTML = '<option value="">-- Selecciona una presentación --</option>';
         productoReal.variantes.forEach(v => {
-          const option = document.createElement("option");
-          option.value = JSON.stringify(v);
-          option.textContent = `${v.nombre} – ₡${v.precio.toLocaleString()}`;
-          select.appendChild(option);
+          const opt = document.createElement("option");
+          opt.value = JSON.stringify(v);
+          opt.textContent = `${v.nombre} – ₡${v.precio.toLocaleString()}`;
+          select.appendChild(opt);
         });
-
         selectorContainer.appendChild(select);
       }
 
-      const modal = document.getElementById("modalProducto");
-      modal.style.display = "flex";
-
+      document.getElementById("modalProducto").style.display = "flex";
       if (typeof actualizarModalConStock === "function") {
         actualizarModalConStock(nombre);
       }
@@ -366,7 +373,6 @@
 
     function agregarDesdeModal() {
       if (!productoSeleccionado) return;
-
       const selector = document.getElementById("varianteSeleccionada");
       if (selector && selector.value === "") {
         mostrarToast("⚠️ Selecciona una presentación", "#e53935");
@@ -374,49 +380,79 @@
       }
 
       if (selector && selector.value) {
-        const variante = JSON.parse(selector.value);
-        agregarCarrito(`${productoSeleccionado.nombre} ${variante.nombre}`, variante.precio);
+        const v = JSON.parse(selector.value);
+        agregarCarrito(`${productoSeleccionado.nombre} ${v.nombre}`, v.precio, productoSeleccionado.imagen);
       } else {
-        agregarCarrito(productoSeleccionado.nombre, productoSeleccionado.precio);
+        agregarCarrito(productoSeleccionado.nombre, productoSeleccionado.precio, productoSeleccionado.imagen);
       }
-
       cerrarModalProducto();
     }
 
-    function agregarCarrito(nombre, precio) {
-      const itemExistente = carrito.find(item => item.nombre === nombre);
-      if (itemExistente) {
-        itemExistente.cantidad += 1;
+    // ✅ NUEVA FUNCIÓN: agregarCarrito con soporte para imagen
+    function agregarCarrito(nombre, precio, imagen = '') {
+      const existente = carrito.find(item => item.nombre === nombre);
+      if (existente) {
+        existente.cantidad += 1;
       } else {
-        carrito.push({ nombre, precio, cantidad: 1 });
+        carrito.push({ nombre, precio, cantidad: 1, imagen });
       }
       renderCarrito();
-      mostrarToast(`✅ "${nombre}" agregado al carrito`);
+      mostrarPopupCarrito(nombre, precio, imagen); // 🌟 Mostrar popup
+    }
+
+    // ✅ NUEVA FUNCIÓN: popup al agregar
+    function mostrarPopupCarrito(nombre, precio, imagen) {
+      const popup = document.getElementById("popupCarritoRapido");
+      document.getElementById("popupNombre").textContent = nombre;
+      document.getElementById("popupPrecio").textContent = `₡${precio.toLocaleString()}`;
+      document.getElementById("popupImagen").src = imagen || 'https://via.placeholder.com/70?text=Esentia';
+
+      const input = document.getElementById("popupCantidad");
+      const item = carrito.find(i => i.nombre === nombre);
+      input.value = item ? item.cantidad : 1;
+
+      popup.style.display = "block";
+
+      document.getElementById("popupVerCarrito").onclick = () => {
+        popup.style.display = "none";
+        abrirModalCarrito();
+      };
+      document.getElementById("popupCerrar").onclick = () => {
+        popup.style.display = "none";
+      };
+
+      input.onchange = () => {
+        const val = parseInt(input.value) || 1;
+        if (val < 1) input.value = 1;
+        const it = carrito.find(i => i.nombre === nombre);
+        if (it) it.cantidad = val;
+        renderCarrito();
+      };
+
+      const cerrarFuera = (e) => {
+        if (!popup.contains(e.target)) {
+          popup.style.display = "none";
+          document.removeEventListener("click", cerrarFuera);
+        }
+      };
+      setTimeout(() => document.addEventListener("click", cerrarFuera), 100);
     }
 
     function renderCarrito() {
-      const lista = document.getElementById("listaCarritoModal");
-      lista.innerHTML = "";
+      const ul = document.getElementById("listaCarritoModal");
+      ul.innerHTML = "";
       let total = 0;
-
       carrito.forEach((item, i) => {
-        const subtotal = item.precio * item.cantidad;
-        total += subtotal;
-
+        const sub = item.precio * item.cantidad;
+        total += sub;
         const li = document.createElement("li");
-        li.textContent = `${item.nombre} x${item.cantidad} - ₡${subtotal.toLocaleString()}`;
-
-        const btnQuitar = document.createElement("button");
-        btnQuitar.textContent = "❌";
-        btnQuitar.onclick = () => {
-          carrito.splice(i, 1);
-          renderCarrito();
-        };
-
-        li.appendChild(btnQuitar);
-        lista.appendChild(li);
+        li.textContent = `${item.nombre} x${item.cantidad} - ₡${sub.toLocaleString()}`;
+        const btn = document.createElement("button");
+        btn.textContent = "❌";
+        btn.onclick = () => { carrito.splice(i, 1); renderCarrito(); };
+        li.appendChild(btn);
+        ul.appendChild(li);
       });
-
       document.getElementById("totalModal").textContent = `Total: ₡${Math.round(total).toLocaleString()}`;
       document.getElementById("contadorCarrito").textContent = carrito.reduce((s, i) => s + i.cantidad, 0);
       localStorage.setItem("carrito", JSON.stringify(carrito));
@@ -424,92 +460,63 @@
 
     function cargarCarrito() {
       const data = localStorage.getItem("carrito");
-      if (data) {
-        carrito = JSON.parse(data);
-        renderCarrito();
-      }
-    }
-
-    function vaciarCarrito() {
-      if (confirm("¿Vaciar todo el carrito?")) {
-        carrito = [];
-        renderCarrito();
-      }
+      if (data) carrito = JSON.parse(data);
+      renderCarrito();
     }
 
     async function finalizarPedido() {
-      if (carrito.length === 0) {
-        alert("El carrito está vacío");
-        return;
-      }
+      if (carrito.length === 0) return alert("El carrito está vacío");
 
       for (const item of carrito) {
-        const nombreBase = item.nombre.split(" ")[0];
-        const stockActual = inventario[nombreBase] ?? 0;
-
-        if (stockActual < item.cantidad) {
-          mostrarToast(`❌ No hay suficiente stock de "${nombreBase}"`, "#e53935");
+        const base = item.nombre.split(" ")[0];
+        const stock = inventario[base] ?? 0;
+        if (stock < item.cantidad) {
+          mostrarToast(`❌ No hay suficiente stock de "${base}"`, "#e53935");
           return;
         }
       }
 
-      let mensaje = "Hola Wilber 👋%0AQuiero hacer el siguiente pedido:%0A%0A";
+      let msg = "Hola Wilber 👋%0AQuiero hacer el siguiente pedido:%0A%0A";
       let total = 0;
-
-      carrito.forEach(item => {
-        const subtotal = item.precio * item.cantidad;
-        mensaje += `🧴 ${item.nombre} x${item.cantidad} - ₡${subtotal.toLocaleString()}%0A`;
-        total += subtotal;
+      carrito.forEach(i => {
+        const sub = i.precio * i.cantidad;
+        msg += `🧴 ${i.nombre} x${i.cantidad} - ₡${sub.toLocaleString()}%0A`;
+        total += sub;
       });
-
-      mensaje += `%0A💰 Total: ₡${Math.round(total).toLocaleString()}%0A%0A¡Gracias por tu compra! 🌿`;
-      window.open(`https://wa.me/50672952454?text=${mensaje}`, "_blank");
+      msg += `%0A💰 Total: ₡${Math.round(total).toLocaleString()}%0A%0A¡Gracias! 🌿`;
+      window.open(`https://wa.me/50672952454?text=${encodeURIComponent(msg)}`, "_blank");
 
       try {
         for (const item of carrito) {
-          const nombreBase = item.nombre.split(" ")[0];
-          const stockActual = inventario[nombreBase] ?? 0;
-          const nuevoStock = stockActual - item.cantidad;
-
-          const querySnapshot = await getDocs(stockCollection);
-          const doc = querySnapshot.docs.find(d => d.data().nombre === nombreBase);
-
+          const base = item.nombre.split(" ")[0];
+          const nuevo = (inventario[base] ?? 0) - item.cantidad;
+          const snap = await getDocs(stockCollection);
+          const doc = snap.docs.find(d => d.data().nombre === base);
           if (doc) {
-            await updateDoc(doc.ref, { cantidad: nuevoStock });
-            inventario[nombreBase] = nuevoStock;
-          } else {
-            console.warn(`No se encontró documento para: ${nombreBase}`);
+            await updateDoc(doc.ref, { cantidad: nuevo });
+            inventario[base] = nuevo;
           }
         }
-
-        if (typeof actualizarCatalogoConStock === "function") {
-          actualizarCatalogoConStock();
-        }
-
+        if (typeof actualizarCatalogoConStock === "function") actualizarCatalogoConStock();
         carrito = [];
         renderCarrito();
         mostrarToast("✅ Pedido enviado y stock actualizado", "#4caf50");
-
-      } catch (error) {
-        console.error("Error actualizando stock:", error);
-        mostrarToast("⚠️ Error al actualizar stock. Contacta al administrador.", "#e53935");
+      } catch (e) {
+        console.error("Error:", e);
+        mostrarToast("⚠️ Error al actualizar stock", "#e53935");
       }
     }
 
     function mostrarToast(mensaje, color = "#4caf50") {
-      const toast = document.getElementById("toast");
-      toast.textContent = mensaje;
-      toast.style.backgroundColor = color;
-      toast.style.display = "block";
-      toast.style.opacity = "1";
-
+      const t = document.getElementById("toast");
+      t.textContent = mensaje;
+      t.style.backgroundColor = color;
+      t.style.display = "block";
+      t.style.opacity = "1";
       setTimeout(() => {
-        toast.style.transition = "opacity 0.5s";
-        toast.style.opacity = "0";
-        setTimeout(() => {
-          toast.style.display = "none";
-          toast.style.transition = "";
-        }, 500);
+        t.style.transition = "opacity 0.5s";
+        t.style.opacity = "0";
+        setTimeout(() => { t.style.display = "none"; t.style.transition = ""; }, 500);
       }, 3000);
     }
 
@@ -533,59 +540,36 @@
     function mostrarErrorCarga() {
       const loader = document.getElementById("loader");
       if (loader) {
-        loader.innerHTML = `
-          <div style="text-align:center;">
-            <div style="font-size:3rem; margin-bottom:10px;">⚠️</div>
-            <div>Error al cargar el catálogo. Por favor, recarga la página.</div>
-          </div>
-        `;
+        loader.innerHTML = `<div style="text-align:center;"><div style="font-size:3rem; margin-bottom:10px;">⚠️</div><div>Error al cargar el catálogo. Por favor, recarga la página.</div></div>`;
       }
     }
 
-    // ==============================
-    // 🌸 NUEVAS FUNCIONES: RECOMENDAR Y SOLICITAR
-    // ==============================
+    // 🌸 Recomendación y aromas
     function solicitarAroma() {
-      const mensaje = "Hola Wilber 👋%0A%0ANo encontré un aroma que busco en el catálogo.%0A¿Podrías ayudarme a conseguirlo?%0A%0A¡Gracias! 🌿";
-      window.open(`https://wa.me/50672952454?text=${mensaje}`, "_blank");
+      const m = "Hola Wilber 👋%0A%0ANo encontré un aroma que busco en el catálogo.%0A¿Podrías ayudarme a conseguirlo?%0A%0A¡Gracias! 🌿";
+      window.open(`https://wa.me/50672952454?text=${encodeURIComponent(m)}`, "_blank");
     }
 
     function recomendarPorWhatsApp() {
-      const urlCatalogo = encodeURIComponent(window.location.href);
-      const mensaje = "¡Hola! 👋%0AQuiero recomendarte Esentia, una marca con productos naturales y esencias hermosas 🌿%0A%0AMira su catálogo aquí:%0A" + urlCatalogo + "%0A%0A¡Vale mucho la pena! 💜";
-      window.open(`https://wa.me/?text=${mensaje}`, "_blank");
+      const url = encodeURIComponent(window.location.href);
+      const m = "¡Hola! 👋%0AQuiero recomendarte Esentia, una marca con productos naturales y esencias hermosas 🌿%0A%0AMira su catálogo aquí:%0A" + url + "%0A%0A¡Vale mucho la pena! 💜";
+      window.open(`https://wa.me/?text=${encodeURIComponent(m)}`, "_blank");
     }
 
     function copiarEnlaceRecomendacion() {
-      const url = window.location.href;
-      navigator.clipboard.writeText(url)
-        .then(() => {
-          mostrarToast("✅ Enlace copiado. ¡Compártelo con quien quieras!", "#4caf50");
-        })
-        .catch(() => {
-          mostrarToast("⚠️ No se pudo copiar el enlace", "#e53935");
-        });
+      navigator.clipboard.writeText(window.location.href)
+        .then(() => mostrarToast("✅ Enlace copiado", "#4caf50"))
+        .catch(() => mostrarToast("⚠️ No se pudo copiar", "#e53935"));
     }
 
     document.addEventListener("DOMContentLoaded", () => {
       cargarCarrito();
-
-      const btnDisponibles = document.getElementById("btnMostrarDisponibles");
-      const btnTodos = document.getElementById("btnMostrarTodos");
-
-      if (btnDisponibles) {
-        btnDisponibles.addEventListener("click", () => {
-          modoVisualizacion = "disponibles";
-          renderizarProductos();
-        });
-      }
-
-      if (btnTodos) {
-        btnTodos.addEventListener("click", () => {
-          modoVisualizacion = "todos";
-          renderizarProductos();
-        });
-      }
+      document.getElementById("btnMostrarDisponibles")?.addEventListener("click", () => {
+        modoVisualizacion = "disponibles"; renderizarProductos();
+      });
+      document.getElementById("btnMostrarTodos")?.addEventListener("click", () => {
+        modoVisualizacion = "todos"; renderizarProductos();
+      });
     });
   </script>
 </body>
