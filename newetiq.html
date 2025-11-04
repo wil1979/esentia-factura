@@ -3,12 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <title>Generador de Etiquetas - Esentia</title>
-
   <!-- Librerías para descarga -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -18,12 +16,10 @@
       gap: 10px;
       transition: background 0.3s ease;
     }
-
     body.modo-oscuro {
       background: #1a1a1a;
       color: #e0e0e0;
     }
-
     .formulario {
       flex: 1;
       background: white;
@@ -36,13 +32,11 @@
       max-height: 90vh;
       transition: background 0.3s ease, color 0.3s ease;
     }
-
     body.modo-oscuro .formulario {
       background: #2d2d2d;
       color: #e0e0e0;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     }
-
     .btn-seccion {
       width: 100%;
       padding: 10px;
@@ -59,23 +53,18 @@
       align-items: center;
       transition: background 0.2s;
     }
-
     .btn-seccion:hover {
       background: #0052a3;
     }
-
     body.modo-oscuro .btn-seccion {
       background: #4a6fa5;
     }
-
     body.modo-oscuro .btn-seccion:hover {
       background: #3a5a8a;
     }
-
     .etiqueta-container {
       flex: 2;
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
       gap: 10px;
       background: white;
       padding: 15px;
@@ -83,13 +72,10 @@
       justify-content: center;
       transition: background 0.3s ease;
     }
-
     body.modo-oscuro .etiqueta-container {
       background: #222;
     }
-
     .etiqueta {
-      display: flex;
       position: relative;
       width: var(--etiqueta-width, 8cm);
       height: var(--etiqueta-height, 4cm);
@@ -104,13 +90,11 @@
       box-shadow: none;
       transition: all 0.2s ease;
     }
-
     .etiqueta-content {
       position: relative;
       width: 100%;
       height: 100%;
     }
-
     .fondo-etiqueta {
       position: absolute;
       top: 0;
@@ -120,7 +104,6 @@
       object-fit: cover;
       z-index: 1;
     }
-
     .download-overlay {
       position: absolute;
       top: 0;
@@ -139,11 +122,9 @@
       pointer-events: none;
       border-radius: 0;
     }
-
     .etiqueta:hover .download-overlay {
       opacity: 1;
     }
-
     .producto-imagen {
       position: absolute;
       width: var(--img-width, 60px);
@@ -155,7 +136,6 @@
       border-radius: 4px;
       z-index: 2;
     }
-
     .nombre-producto {
       position: absolute;
       font-size: var(--nombre-font-size, 8px);
@@ -171,7 +151,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-
     .instrucciones {
       position: absolute;
       top: var(--instrucciones-top, 10%);
@@ -182,13 +161,12 @@
       line-height: 1.1;
       text-align: left;
       padding: 5px;
-      background: rgba(252, 250, 250, 0.123);
+      background: rgba(252, 250, 250, 0.5);
       border-radius: 2px;
       transform: rotate(var(--instrucciones-rotacion, 0deg));
       z-index: 2;
       word-wrap: break-word;
     }
-
     .texto-adicional-1,
     .texto-adicional-2,
     .texto-adicional-3 {
@@ -200,7 +178,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-
     .texto-adicional-1 {
       font-size: var(--texto1-font-size, 6px);
       color: var(--texto1-color, #000);
@@ -208,7 +185,6 @@
       left: var(--texto1-left, 50%);
       transform: translate(-50%, -50%) rotate(var(--texto1-rotacion, 0deg));
     }
-
     .texto-adicional-2 {
       font-size: var(--texto2-font-size, 6px);
       color: var(--texto2-color, #000);
@@ -216,7 +192,6 @@
       left: var(--texto2-left, 50%);
       transform: translate(-50%, -50%) rotate(var(--texto2-rotacion, 0deg));
     }
-
     .texto-adicional-3 {
       font-size: var(--texto3-font-size, 6px);
       color: var(--texto3-color, #000);
@@ -224,7 +199,6 @@
       left: var(--texto3-left, 50%);
       transform: translate(-50%, -50%) rotate(var(--texto3-rotacion, 0deg));
     }
-
     .imagen-adicional {
       position: absolute;
       width: var(--img-adicional-width, 30px);
@@ -236,29 +210,39 @@
       z-index: 2;
     }
 
+    /* ✅ ESTILOS DE IMPRESIÓN CORREGIDOS */
     @media print {
+      body {
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
       body > *:not(.etiqueta-container) {
         display: none !important;
       }
       .etiqueta-container {
         position: static !important;
-        width: 100% !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        background: none !important;
-        display: block !important;
+        width: var(--hoja-ancho-cm, 21.6cm) !important;
+        height: var(--hoja-alto-cm, 27.9cm) !important;
+        padding: 0.5cm !important;
+        margin: 0 auto !important;
+        background: white !important;
+        display: grid !important;
+        gap: 0.3cm !important;
+        page-break-after: auto;
+        box-sizing: border-box;
       }
       .etiqueta {
-        page-break-inside: avoid;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
         -webkit-print-color-adjust: exact !important;
         color-adjust: exact !important;
-        display: inline-block !important;
         margin: 0 !important;
-        padding: 0 !important;
         border: none !important;
+        box-shadow: none !important;
       }
       @page {
-        margin: 0.5cm;
+        margin: 0;
       }
     }
 
@@ -273,31 +257,25 @@
       padding: 5px;
       border-radius: 5px;
     }
-
     body.modo-oscuro .checkbox-group {
       background: #3c3c3c;
       border-color: #555;
     }
-
     .checkbox-item {
       display: flex;
       align-items: center;
       font-size: 13px;
     }
-
     .checkbox-item input {
       margin-right: 5px;
       width: auto;
     }
-
     .checkbox-item label {
       color: #333;
     }
-
     body.modo-oscuro .checkbox-item label {
       color: #e0e0e0;
     }
-
     #btnModoOscuro {
       background: #333;
       color: white;
@@ -307,13 +285,11 @@
       width: 100%;
       margin-top: 10px;
     }
-
     body.modo-oscuro #btnModoOscuro {
       background: #ffcc00;
       color: #222;
       font-weight: bold;
     }
-
     /* Modal base */
     .modal {
       display: none;
@@ -327,7 +303,6 @@
       justify-content: center;
       align-items: center;
     }
-
     .modal-content {
       background: white;
       padding: 20px;
@@ -337,12 +312,10 @@
       max-height: 85vh;
       overflow: auto;
     }
-
     body.modo-oscuro .modal-content {
       background: #2d2d2d;
       color: #e0e0e0;
     }
-
     .modal-header {
       display: flex;
       justify-content: space-between;
@@ -351,16 +324,13 @@
       padding-bottom: 10px;
       border-bottom: 1px solid #eee;
     }
-
     body.modo-oscuro .modal-header {
       border-bottom-color: #444;
     }
-
     .modal-header h3 {
       margin: 0;
       font-size: 18px;
     }
-
     .btn-cerrar-modal {
       background: none;
       border: none;
@@ -373,22 +343,18 @@
       align-items: center;
       justify-content: center;
     }
-
     body.modo-oscuro .btn-cerrar-modal {
       color: #ccc;
     }
-
     .modal-body {
       margin-bottom: 15px;
     }
-
     .modal-body label {
       display: block;
       margin: 8px 0 4px 0;
       font-weight: bold;
       font-size: 13px;
     }
-
     .modal-body input,
     .modal-body select,
     .modal-body textarea {
@@ -400,7 +366,6 @@
       background: white;
       color: #333;
     }
-
     body.modo-oscuro .modal-body input,
     body.modo-oscuro .modal-body select,
     body.modo-oscuro .modal-body textarea {
@@ -408,11 +373,9 @@
       color: #e0e0e0;
       border-color: #555;
     }
-
     .modal-footer {
       text-align: right;
     }
-
     .btn-modal {
       padding: 8px 16px;
       margin-left: 10px;
@@ -421,17 +384,14 @@
       cursor: pointer;
       font-size: 14px;
     }
-
     .btn-guardar {
       background: #0066cc;
       color: white;
     }
-
     .btn-cancelar {
       background: #666;
       color: white;
     }
-
     /* Estilos para el editor de instrucciones */
     #editorInstrucciones {
       width: 100%;
@@ -445,80 +405,65 @@
       color: #333;
       line-height: 1.4;
     }
-
     body.modo-oscuro #editorInstrucciones {
       background: #3c3c3c;
       color: #e0e0e0;
       border-color: #555;
     }
-
     .seccion-adicional {
       border-top: 1px solid #ccc;
       margin-top: 10px;
       padding-top: 10px;
     }
-
     body.modo-oscuro .seccion-adicional {
       border-top-color: #555;
     }
   </style>
 </head>
 <body>
-
   <div class="formulario">
     <h3>Generador de Etiquetas</h3>
-
     <!-- Botones de secciones -->
     <button type="button" class="btn-seccion" onclick="abrirModal('modalTamanoHoja')">
       📏 Tamaño de hoja
       <span>▼</span>
     </button>
-
     <h4>Selecciona productos:</h4>
     <button type="button" onclick="seleccionarTodos(true)" style="width:48%; margin-right:4%;">✅ Todos</button>
     <button type="button" onclick="seleccionarTodos(false)" style="width:48%;">❌ Ninguno</button>
     <div class="checkbox-group" id="checkboxContainer"></div>
-
     <button type="button" class="btn-seccion" onclick="abrirModal('modalConfiguracion')">
       ⚙️ Configuración básica
       <span>▼</span>
     </button>
-
     <button type="button" class="btn-seccion" onclick="abrirModal('modalInstrucciones')">
       📝 Instrucciones
       <span>▼</span>
     </button>
-
     <button type="button" class="btn-seccion" onclick="abrirModal('modalTamanoEtiqueta')">
       📏 Tamaño de etiqueta
       <span>▼</span>
     </button>
-
     <button type="button" class="btn-seccion" onclick="abrirModal('modalImagenProducto')">
       🖼️ Imagen del producto
       <span>▼</span>
     </button>
-
     <button type="button" class="btn-seccion" onclick="abrirModal('modalNombreProducto')">
       🏷️ Nombre del producto
       <span>▼</span>
     </button>
-
     <button type="button" class="btn-seccion" onclick="abrirModal('modalTextosAdicionales')">
       ✍️ Textos adicionales
       <span>▼</span>
     </button>
-
     <button type="button" class="btn-seccion" onclick="abrirModal('modalImagenAdicional')">
       🖼️ Imagen adicional
       <span>▼</span>
     </button>
-
     <button type="button" class="btn-seccion" onclick="abrirModal('modalFondo')">
       🎨 Fondo de etiqueta
       <span>▼</span>
     </button>
-
     <div style="margin-top: 15px;">
       <button onclick="generarEtiquetas()" style="width:100%; padding:10px; margin-bottom:8px;">🔄 Generar Etiquetas</button>
       <button onclick="window.print()" style="width:100%; padding:10px; margin-bottom:8px;">🖨️ Imprimir etiquetas</button>
@@ -526,9 +471,9 @@
       <button type="button" onclick="alternarModoOscuro()" id="btnModoOscuro">🌑 Modo Oscuro</button>
     </div>
   </div>
-
   <div class="etiqueta-container" id="etiquetas"></div>
 
+  <!-- Modales (igual que antes, no se modifican) -->
   <!-- ✅ Modal: Tamaño de hoja -->
   <div id="modalTamanoHoja" class="modal">
     <div class="modal-content">
@@ -597,7 +542,6 @@
           ✖ Evitar contacto con ojos y mucosas<br>
           ✖ Suspender su uso ante reacciones alérgicas
         </div>
-        
         <label>Tamaño texto instrucciones (px):</label>
         <input type="number" id="instruccionesFontSize" value="6" min="4" max="12" step="0.5" oninput="actualizarEstilos()">
         <label>Color texto instrucciones:</label>
@@ -712,7 +656,6 @@
           <label>Rotación (°):</label>
           <input type="number" id="texto1Rotacion" value="0" min="-180" max="180" step="1" oninput="actualizarEstilos()">
         </div>
-
         <div class="seccion-adicional">
           <h4>Texto Adicional 2</h4>
           <input type="text" id="texto2" placeholder="Ej: 100% natural" oninput="generarEtiquetas()">
@@ -727,7 +670,6 @@
           <label>Rotación (°):</label>
           <input type="number" id="texto2Rotacion" value="0" min="-180" max="180" step="1" oninput="actualizarEstilos()">
         </div>
-
         <div class="seccion-adicional">
           <h4>Texto Adicional 3</h4>
           <input type="text" id="texto3" placeholder="Ej: www.esentia.com" oninput="generarEtiquetas()">
@@ -759,8 +701,11 @@
       <div class="modal-body">
         <input type="file" id="imagenAdicionalFile" accept="image/*" onchange="cargarImagenAdicional(event)">
         <div id="previewImagenAdicional" style="display:none; margin:10px 0;">
-          <img id="imgPreviewAdicional" src="" alt="Vista previa" style="max-height:50px; max-width:100%;">
-        </div>
+  <img id="imgPreviewAdicional" src="" alt="Vista previa" style="max-height:50px; max-width:100%;">
+  <button type="button" onclick="eliminarImagenAdicional()" style="margin-top:5px; padding:4px 8px; background:#d32f2f; color:white; border:none; border-radius:4px; cursor:pointer;">
+    🗑️ Eliminar imagen
+  </button>
+</div>
         <label>Ancho (px):</label>
         <input type="number" id="imgAdicionalWidth" value="30" min="10" max="100" step="1" oninput="actualizarEstilos()">
         <label>Alto (px):</label>
@@ -820,14 +765,12 @@
       ✖ Evitar contacto con ojos y mucosas<br>
       ✖ Suspender su uso ante reacciones alérgicas
     `;
-
     const tamanosHoja = {
       carta: { w: 21.6, h: 27.9, name: "letter" },
       "13x19": { w: 33, h: 48, name: "330mm 480mm" },
       a4: { w: 21, h: 29.7, name: "A4" },
       personalizado: { w: 33, h: 48, name: "custom" }
     };
-
     async function cargarProductos() {
       try {
         const response = await fetch('etiquetas.json');
@@ -841,6 +784,14 @@
       }
     }
 
+    function eliminarImagenAdicional() {
+  imagenAdicionalDataUrl = null;
+  document.getElementById('imgPreviewAdicional').src = '';
+  document.getElementById('previewImagenAdicional').style.display = 'none';
+  document.getElementById('imagenAdicionalFile').value = ''; // Limpiar input de archivo
+  guardarConfiguracion();
+  generarEtiquetas();
+}
     function renderizarCheckboxes() {
       const container = document.getElementById("checkboxContainer");
       container.innerHTML = '';
@@ -856,7 +807,6 @@
         document.getElementById(safeId).addEventListener('change', generarEtiquetas);
       });
     }
-
     window.onload = () => {
       cargarProductos();
       const saved = localStorage.getItem('configEtiqueta');
@@ -875,10 +825,13 @@
           aplicarFondo(`url('fondos/${config.fondoNombre}')`);
         }
         if (config.imagenAdicional) {
-          imagenAdicionalDataUrl = config.imagenAdicional;
-          document.getElementById('imgPreviewAdicional').src = imagenAdicionalDataUrl;
-          document.getElementById('previewImagenAdicional').style.display = 'block';
-        }
+  imagenAdicionalDataUrl = config.imagenAdicional;
+  document.getElementById('imgPreviewAdicional').src = imagenAdicionalDataUrl;
+  document.getElementById('previewImagenAdicional').style.display = 'block';
+} else {
+  imagenAdicionalDataUrl = null;
+  document.getElementById('previewImagenAdicional').style.display = 'none';
+}
         actualizarEstilos();
       }
       const modoGuardado = localStorage.getItem('modoOscuro') === 'true';
@@ -888,16 +841,13 @@
       }
       actualizarTamanoHoja();
     };
-
     // ✅ Funciones genéricas para modales
     function abrirModal(modalId) {
       document.getElementById(modalId).style.display = 'flex';
     }
-
     function cerrarModal(modalId) {
       document.getElementById(modalId).style.display = 'none';
     }
-
     window.onclick = function(event) {
       const modales = document.querySelectorAll('.modal');
       modales.forEach(modal => {
@@ -906,7 +856,6 @@
         }
       });
     };
-
     // Funciones existentes (cargarImagenAdicional, seleccionarTodos, etc.)
     function cargarImagenAdicional(event) {
       const file = event.target.files[0];
@@ -922,20 +871,30 @@
         reader.readAsDataURL(file);
       }
     }
-
     function seleccionarTodos(checked) {
       document.querySelectorAll('.checkbox-item input[type="checkbox"]').forEach(cb => {
         cb.checked = checked;
       });
       generarEtiquetas();
     }
-
     function actualizarTamanoHoja() {
       const tipo = document.getElementById("tamanoHoja").value;
       document.getElementById("camposPersonalizados").style.display = tipo === "personalizado" ? "block" : "none";
+      
+      // ✅ Definir dimensiones físicas de la hoja para impresión
+      let anchoCm = 21.6, altoCm = 27.9;
+      if (tipo === "personalizado") {
+        anchoCm = parseFloat(document.getElementById('anchoHojaCm').value) || 21.6;
+        altoCm = parseFloat(document.getElementById('altoHojaCm').value) || 27.9;
+      } else {
+        anchoCm = tamanosHoja[tipo].w;
+        altoCm = tamanosHoja[tipo].h;
+      }
+      document.documentElement.style.setProperty('--hoja-ancho-cm', `${anchoCm}cm`);
+      document.documentElement.style.setProperty('--hoja-alto-cm', `${altoCm}cm`);
+      
       generarEtiquetas();
     }
-
     function actualizarEstilos() {
       document.documentElement.style.setProperty('--etiqueta-width', document.getElementById('anchoCm').value + 'cm');
       document.documentElement.style.setProperty('--etiqueta-height', document.getElementById('altoCm').value + 'cm');
@@ -977,7 +936,6 @@
       document.documentElement.style.setProperty('--img-adicional-rotacion', document.getElementById('imgAdicionalRotacion').value + 'deg');
       guardarConfiguracion();
     }
-
     function cambiarTipoFondo() {
       const tipo = document.getElementById('fondoTipo').value;
       const fileInput = document.getElementById('fondoImagen');
@@ -998,7 +956,6 @@
         generarEtiquetas();
       }
     }
-
     function previsualizarFondo(event) {
       const file = event.target.files[0];
       if (file) {
@@ -1013,7 +970,6 @@
         reader.readAsDataURL(file);
       }
     }
-
     function seleccionarFondoPredefinido(nombre) {
       const url = `fondos/${nombre}`;
       aplicarFondo(`url('${url}')`);
@@ -1022,7 +978,6 @@
       guardarConfiguracion();
       generarEtiquetas();
     }
-
     function aplicarFondo(url) {
       if (url) {
         document.documentElement.style.setProperty('--fondo-imagen', url);
@@ -1030,7 +985,6 @@
         document.documentElement.style.setProperty('--fondo-imagen', 'none');
       }
     }
-
     function guardarConfiguracion() {
       const config = {
         anchoCm: document.getElementById('anchoCm').value,
@@ -1083,79 +1037,154 @@
       localStorage.setItem('configEtiqueta', JSON.stringify(config));
     }
 
+    // ✅ FUNCIÓN ACTUALIZADA: Generar etiquetas en cuadrícula
     function generarEtiquetas() {
       actualizarEstilos();
+
+      // ✅ Calcular dimensiones
+      const anchoEtiquetaCm = parseFloat(document.getElementById('anchoCm').value);
+      const altoEtiquetaCm = parseFloat(document.getElementById('altoCm').value);
+      
+      let anchoHojaCm = 21.6, altoHojaCm = 27.9;
+      const tipoHoja = document.getElementById("tamanoHoja").value;
+      if (tipoHoja === "personalizado") {
+        anchoHojaCm = parseFloat(document.getElementById('anchoHojaCm').value) || 21.6;
+        altoHojaCm = parseFloat(document.getElementById('altoHojaCm').value) || 27.9;
+      } else {
+        anchoHojaCm = tamanosHoja[tipoHoja].w;
+        altoHojaCm = tamanosHoja[tipoHoja].h;
+      }
+
+      // ✅ Calcular cuántas etiquetas caben
+      const margenCm = 0.5; // Margen interno
+      const espacioUtilAncho = anchoHojaCm - 2 * margenCm;
+      const espacioUtilAlto = altoHojaCm - 2 * margenCm;
+      const columnas = Math.floor(espacioUtilAncho / anchoEtiquetaCm);
+      const filas = Math.floor(espacioUtilAlto / altoEtiquetaCm);
+
+      if (columnas <= 0 || filas <= 0) {
+        document.getElementById("etiquetas").innerHTML = "<p style='color:red;'>⚠️ La etiqueta es demasiado grande para la hoja seleccionada.</p>";
+        return;
+      }
+
+      // ✅ Crear patrón de cuadrícula
+      const patrones = [];
+      for (let f = 0; f < filas; f++) {
+        for (let c = 0; c < columnas; c++) {
+          patrones.push(`var(--etiqueta-width) var(--etiqueta-height)`);
+        }
+      }
+
+      const contenedor = document.getElementById("etiquetas");
+      contenedor.style.gridTemplateColumns = `repeat(${columnas}, var(--etiqueta-width))`;
+      contenedor.style.gridTemplateRows = `repeat(${filas}, var(--etiqueta-height))`;
+      contenedor.style.width = `${anchoHojaCm}cm`;
+      contenedor.style.height = `${altoHojaCm}cm`;
+      contenedor.style.padding = `${margenCm}cm`;
+      contenedor.style.justifyContent = "start";
+      contenedor.style.alignContent = "start";
+
+      // ✅ Generar productos
       const indicesSeleccionados = Array.from(document.querySelectorAll('.checkbox-item input[type="checkbox"]:checked')).map(cb => parseInt(cb.value));
       const productosManual = document.getElementById("productosManual").value.split(',').map(p => p.trim()).filter(p => p);
       let productosParaEtiquetas = [];
+
       if (productosManual.length > 0) {
         productosParaEtiquetas = productosManual.map(nombreManual => {
-          const encontrado = productosDisponibles.find(p => p.nombre.toLowerCase().includes(nombreManual.toLowerCase()) || nombreManual.toLowerCase().includes(p.nombre.toLowerCase()));
+          const encontrado = productosDisponibles.find(p => 
+            p.nombre.toLowerCase().includes(nombreManual.toLowerCase()) ||
+            nombreManual.toLowerCase().includes(p.nombre.toLowerCase())
+          );
           return encontrado || { nombre: nombreManual, imagen: '' };
         });
       } else if (indicesSeleccionados.length > 0) {
         productosParaEtiquetas = indicesSeleccionados.map(i => productosDisponibles[i]);
       } else {
-        document.getElementById("etiquetas").innerHTML = "<p style='color:red;'>⚠️ Selecciona al menos un producto.</p>";
+        contenedor.innerHTML = "<p style='color:red;'>⚠️ Selecciona al menos un producto.</p>";
         return;
       }
+
       const cantidadPorProducto = parseInt(document.getElementById("cantidadPorProducto").value) || 1;
       const infoIzquierda = instruccionesHtml;
       const texto1 = document.getElementById("texto1").value.trim();
       const texto2 = document.getElementById("texto2").value.trim();
       const texto3 = document.getElementById("texto3").value.trim();
-      const contenedor = document.getElementById("etiquetas");
-      contenedor.innerHTML = "";
+
+      // ✅ Crear todas las etiquetas necesarias
+      const todasEtiquetas = [];
       productosParaEtiquetas.forEach(producto => {
         if (!producto || !producto.nombre) return;
         for (let i = 0; i < cantidadPorProducto; i++) {
-          const imgSrc = producto.imagen || 'image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24"><rect width="24" height="24" fill="%23ccc"/><text x="12" y="16" font-family="Arial" font-size="8" text-anchor="middle" fill="%23999">Sin imagen</text></svg>';
-          const etiqueta = document.createElement("div");
-          etiqueta.className = "etiqueta";
-          let fondoHtml = '';
-          if (fondoActualUrl) fondoHtml = `<img class="fondo-etiqueta" src="${fondoActualUrl}" alt="Fondo">`;
-          let htmlAdicional = '';
-          if (texto1) htmlAdicional += `<div class="texto-adicional-1">${texto1}</div>`;
-          if (texto2) htmlAdicional += `<div class="texto-adicional-2">${texto2}</div>`;
-          if (texto3) htmlAdicional += `<div class="texto-adicional-3">${texto3}</div>`;
-          if (imagenAdicionalDataUrl) htmlAdicional += `<img class="imagen-adicional" src="${imagenAdicionalDataUrl}" alt="Adicional">`;
-          etiqueta.innerHTML = `
-            <div class="etiqueta-content">
-              ${fondoHtml}
-              <img class="producto-imagen" src="${imgSrc}" alt="${producto.nombre}" onerror="this.style.display='none'">
-              <div class="nombre-producto">${producto.nombre}</div>
-              ${infoIzquierda ? `<div class="instrucciones">${infoIzquierda}</div>` : ''}
-              ${htmlAdicional}
-            </div>
-            <div class="download-overlay">🔽 Click para descargar</div>
-          `;
-          etiqueta.addEventListener('click', function () {
-            const content = etiqueta.querySelector('.etiqueta-content');
-            html2canvas(content, { scale: 3, backgroundColor: null, useCORS: true, allowTaint: true }).then(canvas => {
-              const link = document.createElement('a');
-              link.download = `etiqueta-${producto.nombre.replace(/[^a-z0-9]/gi, '_')}.png`;
-              link.href = canvas.toDataURL('image/png');
-              link.click();
-            }).catch(err => {
-              console.error("Error al generar imagen:", err);
-              alert("Error al generar imagen. Verifica que las imágenes carguen.");
-            });
-          });
-          const nombreEl = etiqueta.querySelector('.nombre-producto');
-          nombreEl.addEventListener('dblclick', function (e) {
-            e.stopPropagation();
-            this.contentEditable = true;
-            this.focus();
-            this.style.outline = '2px solid #0066cc';
-          });
-          nombreEl.addEventListener('blur', function () {
-            this.contentEditable = false;
-            this.style.outline = 'none';
-          });
-          nombreEl.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault() && e.target.blur());
-          contenedor.appendChild(etiqueta);
+          todasEtiquetas.push(producto);
         }
       });
+
+      // ✅ Limitar al máximo que cabe en la hoja
+      const maxEtiquetas = columnas * filas;
+      const etiquetasAMostrar = todasEtiquetas.slice(0, maxEtiquetas);
+
+      contenedor.innerHTML = "";
+      etiquetasAMostrar.forEach(producto => {
+        const imgSrc = producto.imagen || 'image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24"><rect width="24" height="24" fill="%23ccc"/><text x="12" y="16" font-family="Arial" font-size="8" text-anchor="middle" fill="%23999">Sin imagen</text></svg>';
+        const etiqueta = document.createElement("div");
+        etiqueta.className = "etiqueta";
+
+        let fondoHtml = '';
+        if (fondoActualUrl) fondoHtml = `<img class="fondo-etiqueta" src="${fondoActualUrl}" alt="Fondo">`;
+        let htmlAdicional = '';
+        if (texto1) htmlAdicional += `<div class="texto-adicional-1">${texto1}</div>`;
+        if (texto2) htmlAdicional += `<div class="texto-adicional-2">${texto2}</div>`;
+        if (texto3) htmlAdicional += `<div class="texto-adicional-3">${texto3}</div>`;
+        if (imagenAdicionalDataUrl) htmlAdicional += `<img class="imagen-adicional" src="${imagenAdicionalDataUrl}" alt="Adicional">`;
+
+        etiqueta.innerHTML = `
+          <div class="etiqueta-content">
+            ${fondoHtml}
+            <img class="producto-imagen" src="${imgSrc}" alt="${producto.nombre}" onerror="this.style.display='none'">
+            <div class="nombre-producto">${producto.nombre}</div>
+            ${infoIzquierda ? `<div class="instrucciones">${infoIzquierda}</div>` : ''}
+            ${htmlAdicional}
+          </div>
+          <div class="download-overlay">🔽 Click para descargar</div>
+        `;
+
+        etiqueta.addEventListener('click', function () {
+          const content = etiqueta.querySelector('.etiqueta-content');
+          html2canvas(content, { scale: 3, backgroundColor: null, useCORS: true, allowTaint: true }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `etiqueta-${producto.nombre.replace(/[^a-z0-9]/gi, '_')}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+          }).catch(err => {
+            console.error("Error al generar imagen:", err);
+            alert("Error al generar imagen. Verifica que las imágenes carguen.");
+          });
+        });
+
+        const nombreEl = etiqueta.querySelector('.nombre-producto');
+        nombreEl.addEventListener('dblclick', function (e) {
+          e.stopPropagation();
+          this.contentEditable = true;
+          this.focus();
+          this.style.outline = '2px solid #0066cc';
+        });
+        nombreEl.addEventListener('blur', function () {
+          this.contentEditable = false;
+          this.style.outline = 'none';
+        });
+        nombreEl.addEventListener('keydown', e => e.key === 'Enter' && e.preventDefault() && e.target.blur());
+
+        contenedor.appendChild(etiqueta);
+      });
+
+      // ✅ Si hay menos etiquetas que espacios, rellenar con vacíos (opcional)
+      const etiquetasFaltantes = maxEtiquetas - etiquetasAMostrar.length;
+      for (let i = 0; i < etiquetasFaltantes; i++) {
+        const vacia = document.createElement("div");
+        vacia.className = "etiqueta";
+        vacia.style.visibility = "hidden";
+        contenedor.appendChild(vacia);
+      }
     }
 
     async function descargarTodasComoImagen() {
@@ -1175,7 +1204,6 @@
         alert("Error al generar ZIP."); 
       }
     }
-
     function alternarModoOscuro() {
       const body = document.body;
       const btn = document.getElementById('btnModoOscuro');
@@ -1183,7 +1211,6 @@
       localStorage.setItem('modoOscuro', esOscuro);
       btn.innerHTML = esOscuro ? '☀️ Desactivar Modo Oscuro' : '🌑 Activar Modo Oscuro';
     }
-
     function guardarInstrucciones() {
       instruccionesHtml = document.getElementById('editorInstrucciones').innerHTML;
       guardarConfiguracion();
@@ -1193,3 +1220,4 @@
   </script>
 </body>
 </html>
+
