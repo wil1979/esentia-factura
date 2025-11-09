@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Esentia Créditos</title>
+  <link rel="stylesheet" href="https://wil1979.github.io/esentia-factura/clientes/clientes.css" />
+  <style>
+    
+   
+  </style>
+</head>
+<body>
+  <div class="logo-container">
+    <img src="https://wil1979.github.io/esentia-factura/images/logo.png" alt="Esentia Logo" class="logo" />
+  </div>
+
+  <div class="scroll-buttons">
+    <button class="boton-accion" onclick="abrirModalNuevaVenta()">➕ Nueva Venta</button>
+    <button class="boton-accion" style="background: #6c4ba3;" onclick="abrirModalNuevoCliente()">👤 Nuevo Cliente</button>
+    <button class="scroll-btn" onclick="scrollToTop()">↑</button>
+    <button class="scroll-btn" onclick="scrollToBottom()">↓</button>
+  </div>
+
+  <h1>📋 Esentia - Registro de Créditos</h1>
+  <h2>👥 Clientes</h2>
+
+  <!-- Filtros de visualización -->
+  <div style="margin-bottom: 10px;">
+    <input type="text" id="filtro-clientes" placeholder="🔎 Buscar cliente por nombre..." style="width: 60%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;" />
+    <button id="btn-solo-deudores" class="boton-accion" style="background: #4CAF50; margin-left: 10px;" onclick="cargarClientes(true)">💳 Solo Deudores</button>
+    <button id="btn-mostrar-todos" class="boton-accion" style="background: #2196F3; margin-left: 10px;" onclick="cargarClientes(false)">👥 Mostrar Todos</button>
+  </div>
+
+  <div id="clientes"></div>
+
+  <hr />
+
+  <!-- Sección de Reportes -->
+  <div id="seccion-reportes">
+    <h2>📊 Reporte General de Clientes</h2>
+    <div class="filtros-reportes">
+      <div class="filtro-item">
+        <label for="filtro-nombre">Nombre:</label>
+        <input type="text" id="filtro-nombre" placeholder="Buscar por nombre" />
+      </div>
+      <div class="filtro-item">
+        <label for="filtro-deuda-min">Deuda Mínima:</label>
+        <input type="number" id="filtro-deuda-min" placeholder="₡0" min="0" />
+      </div>
+      <div class="filtro-item">
+        <label for="filtro-deuda-max">Deuda Máxima:</label>
+        <input type="number" id="filtro-deuda-max" placeholder="Sin límite" min="0" />
+      </div>
+      <div class="filtro-item">
+        <label for="filtro-orden">Ordenar por:</label>
+        <select id="filtro-orden">
+          <option value="nombre-asc">Nombre (A-Z)</option>
+          <option value="nombre-desc">Nombre (Z-A)</option>
+          <option value="deuda-desc">Deuda (Mayor a Menor)</option>
+          <option value="deuda-asc">Deuda (Menor a Mayor)</option>
+        </select>
+      </div>
+      <div class="filtro-item">
+        <button class="boton-accion" onclick="generarReporte()" style="margin-top: 22px;">🔍 Filtrar</button>
+      </div>
+      <div class="filtro-item">
+        <button class="boton-accion" onclick="abrirModalImpresion()" style="margin-top: 22px;">🖨️ Imprimir</button>
+      </div>
+    </div>
+    <div id="resultados-reportes">
+      <p>Haz clic en "Filtrar" para generar el reporte.</p>
+    </div>
+  </div>
+
+  <!-- Modal: Nuevo Cliente -->
+  <div id="modal-nuevo-cliente">
+    <div>
+      <h2>👤 Registrar Nuevo Cliente</h2>
+      <div style="margin-bottom:15px;">
+        <label>Cédula:</label>
+        <input type="text" id="modal-cedula" placeholder="Ej: 112230405" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;" />
+        <small id="nombre-desde-api" style="color:#4CAF50; display:block; margin-top:5px;"></small>
+      </div>
+      <div style="margin-bottom:15px;">
+        <label>Nombre (editable):</label>
+        <input type="text" id="modal-nombre" placeholder="Nombre del cliente" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;" />
+      </div>
+      <div style="margin-bottom:20px;">
+        <label>Teléfono (8 dígitos):</label>
+        <input type="text" id="modal-telefono" placeholder="Ej: 88889999" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;" />
+      </div>
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button class="boton-accion" style="background:#666;" onclick="cerrarModalNuevoCliente()">❌ Cancelar</button>
+        <button class="boton-accion" style="background:#4CAF50;" onclick="guardarNuevoCliente()">✅ Guardar y Agregar Productos</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de productos -->
+  <div id="modal-productos">
+    <div>
+      <h2>🛍️ Agregar Productos al Cliente</h2>
+      <div style="margin-bottom: 20px;">
+        <label for="select-producto">Seleccionar producto:</label>
+        <select id="select-producto"></select>
+        <button onclick="agregarAlCarritoModal()" style="margin-left: 10px;">Agregar</button>
+      </div>
+      <div id="vista-previa-producto" style="text-align:center; margin:15px 0; min-height:120px;">
+        <img id="img-producto-seleccionado" src="" alt="Producto" style="max-width:120px; max-height:120px; display:none; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.2);" />
+        <p id="info-producto-seleccionado" style="margin-top:8px; font-size:0.9rem; color:#555;"></p>
+      </div>
+      <div id="carrito-modal"></div>
+      <div style="margin: 15px 0;">
+        <label for="descuento">Descuento: ₡</label>
+        <input type="number" id="descuento" value="0" min="0" />
+      </div>
+      <div class="resumen-total">
+        <span>Total:</span>
+        <span>₡<span id="total-compra">0</span></span>
+      </div>
+      <div class="acciones-modal">
+        <button class="boton-accion" onclick="cerrarModalProductos()" style="background: #666;">❌ Cancelar</button>
+        <button class="boton-accion" onclick="guardarCompraDesdeCarrito()">Guardar Compra</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de impresión del reporte -->
+  <div id="modal-impresion">
+    <div>
+      <h2>🖨️ Imprimir Reporte</h2>
+      <div class="filtros-reportes" style="margin-bottom: 20px;">
+        <div class="filtro-item">
+          <label for="filtro-nombre-modal">Nombre:</label>
+          <input type="text" id="filtro-nombre-modal" placeholder="Buscar por nombre" />
+        </div>
+        <div class="filtro-item">
+          <label for="filtro-deuda-min-modal">Deuda Mínima:</label>
+          <input type="number" id="filtro-deuda-min-modal" placeholder="₡0" min="0" />
+        </div>
+        <div class="filtro-item">
+          <label for="filtro-deuda-max-modal">Deuda Máxima:</label>
+          <input type="number" id="filtro-deuda-max-modal" placeholder="Sin límite" min="0" />
+        </div>
+        <div class="filtro-item">
+          <label for="filtro-orden-modal">Ordenar por:</label>
+          <select id="filtro-orden-modal">
+            <option value="nombre-asc">Nombre (A-Z)</option>
+            <option value="nombre-desc">Nombre (Z-A)</option>
+            <option value="deuda-desc">Deuda (Mayor a Menor)</option>
+            <option value="deuda-asc">Deuda (Menor a Mayor)</option>
+          </select>
+        </div>
+        <div class="filtro-item">
+          <button class="boton-accion" onclick="generarReporteModal()">🔍 Filtrar</button>
+        </div>
+      </div>
+      <div id="resultado-modal" style="margin-top: 20px;">
+        <p>Haz clic en "Filtrar" para ver los resultados.</p>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
+        <button class="boton-accion" onclick="cerrarModalImpresion()">❌ Cerrar</button>
+        <button class="boton-accion" onclick="imprimirModal()">🖨️ Imprimir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de historial individual -->
+  <div id="modal-historial">
+    <div>
+      <h2>📋 Historial de Compras</h2>
+      <div id="contenido-historial"></div>
+      <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
+        <button class="boton-accion" onclick="cerrarModalHistorial()">❌ Cerrar</button>
+        <button class="boton-accion" onclick="imprimirModalHistorial()">🖨️ Imprimir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para seleccionar cliente -->
+  <div id="modal-seleccionar-cliente">
+    <div>
+      <h2>➕ Seleccionar Cliente</h2>
+      <input type="text" id="filtro-cliente-modal" placeholder="Buscar cliente..." style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #ddd;" />
+      <div id="lista-clientes-modal" style="max-height: 400px; overflow-y: auto;">
+        <!-- Se llenará dinámicamente -->
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
+        <button class="boton-accion" onclick="cerrarModalSeleccionarCliente()" style="background: #666;">❌ Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <p>✨ Esentia ofrece productos que mejoran la experiencia diaria a través de aromas que evocan sensaciones positivas y placenteras.<br>
+  🌟 Beneficios de los Aromas La aromaterapia puede contribuir a disminuir el estrés y mejorar el bienestar general.<br>
+  💡 Consejos de Uso Para maximizar la efectividad de los aromas, es recomendable utilizarlos en ambientes tranquilos y ventilados.</p>
+
+  <!-- Firebase y lógica principal -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+      authDomain: "esentiacreditos-8345f.firebaseapp.com",
+      projectId: "esentiacreditos-8345f",
+      storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+      messagingSenderId: "888658236080",
+      appId: "1:888658236080:web:506e5e2085b5a452dba175"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const clientesRef = collection(db, "clientes");
+
+    let todosLosProductos = [];
+    let carrito = [];
+    let clienteSeleccionadoId = null;
+    let filtroDeudoresActivo = true;
+
+    // === MODAL NUEVO CLIENTE ===
+    window.abrirModalNuevoCliente = function() {
+      document.getElementById("modal-nuevo-cliente").style.display = "flex";
+      document.getElementById("modal-cedula").value = "";
+      document.getElementById("modal-nombre").value = "";
+      document.getElementById("modal-telefono").value = "";
+      document.getElementById("nombre-desde-api").textContent = "";
+    };
+
+    window.cerrarModalNuevoCliente = function() {
+      document.getElementById("modal-nuevo-cliente").style.display = "none";
+    };
+
+    async function consultarNombreHacienda() {
+      const cedula = document.getElementById("modal-cedula").value.trim().replace(/\D/g, "");
+      const nombreApi = document.getElementById("nombre-desde-api");
+      const nombreInput = document.getElementById("modal-nombre");
+
+      if (cedula.length < 9) {
+        nombreApi.textContent = "⚠️ Cédula inválida (mínimo 9 dígitos)";
+        return;
+      }
+
+      try {
+        nombreApi.textContent = "Buscando en Hacienda...";
+        const res = await fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedula}`);
+        if (!res.ok) throw new Error("No encontrado");
+        const data = await res.json();
+        const nombreCompleto = data.nombre || data.nombre_completo || "";
+        if (nombreCompleto) {
+          nombreInput.value = nombreCompleto;
+          nombreApi.textContent = `✅ Nombre: ${nombreCompleto}`;
+          nombreApi.style.color = "#4CAF50";
+        } else {
+          nombreApi.textContent = "⚠️ No encontrado en Hacienda";
+          nombreApi.style.color = "#d32f2f";
+        }
+      } catch (err) {
+        nombreApi.textContent = "⚠️ Error de conexión o cédula no registrada";
+        nombreApi.style.color = "#d32f2f";
+      }
+    }
+
+    window.guardarNuevoCliente = async function() {
+      const cedula = document.getElementById("modal-cedula").value.trim().replace(/\D/g, "");
+      const nombre = document.getElementById("modal-nombre").value.trim();
+      const telefono = document.getElementById("modal-telefono").value.trim().replace(/\D/g, "");
+
+      if (!cedula || cedula.length < 9) { alert("⚠️ Cédula inválida (9 dígitos)"); return; }
+      if (!nombre) { alert("⚠️ Nombre requerido"); return; }
+      if (!telefono || telefono.length !== 8) { alert("⚠️ Teléfono debe tener 8 dígitos"); return; }
+
+      try {
+        const docRef = await addDoc(clientesRef, { cedula, nombre, telefono, compras: [] });
+        alert("✅ Cliente registrado.");
+        cerrarModalNuevoCliente();
+        abrirModalProductos(docRef.id);
+      } catch (error) {
+        console.error("Error al registrar cliente:", error);
+        alert("❌ Error: " + error.message);
+      }
+    };
+
+    // === CARGAR PRODUCTOS ===
+    const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
+    const URL_LIMPIEZA = "https://wil1979.github.io/esentia-factura/productos_limpieza_completo.json";
+
+    async function cargarProductosJSON() {
+      try {
+        const [res1, res2] = await Promise.all([fetch(URL_ESENCIA), fetch(URL_LIMPIEZA)]);
+        const [aromas, limpieza] = await Promise.all([res1.json(), res2.json()]);
+        todosLosProductos = [...aromas, ...limpieza].filter(p => p.disponible);
+        const select = document.getElementById("select-producto");
+        select.innerHTML = "";
+        todosLosProductos.forEach((p, i) => {
+          const opt = document.createElement("option");
+          opt.value = i;
+          opt.textContent = p.nombre;
+          select.appendChild(opt);
+        });
+
+        select.addEventListener("change", function () {
+          const index = parseInt(this.value);
+          const prod = todosLosProductos[index];
+          const img = document.getElementById("img-producto-seleccionado");
+          const info = document.getElementById("info-producto-seleccionado");
+          if (prod && prod.imagen) {
+            img.src = prod.imagen;
+            img.style.display = "inline-block";
+          } else {
+            img.style.display = "none";
+          }
+          info.innerHTML = prod ? `${prod.presentacion || ''} ${prod.aroma ? ' • ' + prod.aroma : ''}` : "";
+        });
+      } catch (err) {
+        console.error("Error cargando productos:", err);
+        document.getElementById("select-producto").innerHTML = '<option>No se pudieron cargar los productos</option>';
+      }
+    }
+
+    // === MODAL PRODUCTOS ===
+    window.abrirModalProductos = function(idCliente) {
+      clienteSeleccionadoId = idCliente;
+      carrito = [];
+      document.getElementById("carrito-modal").innerHTML = "";
+      document.getElementById("total-compra").textContent = "0";
+      document.getElementById("descuento").value = "0";
+      document.getElementById("modal-productos").style.display = "flex";
+    };
+
+    window.cerrarModalProductos = function() {
+      document.getElementById("modal-productos").style.display = "none";
+    };
+
+    window.agregarAlCarritoModal = function() {
+      const index = parseInt(document.getElementById("select-producto").value);
+      const producto = todosLosProductos[index];
+      if (carrito.some(item => item.index === index)) {
+        alert("Este producto ya está en el carrito.");
+        return;
+      }
+      const precioSugerido = producto.precioPublico || 0;
+      carrito.push({ index, producto, cantidad: 1, precioUnitario: precioSugerido });
+      renderizarCarrito();
+    };
+
+    function renderizarCarrito() {
+      const contenedor = document.getElementById("carrito-modal");
+      contenedor.innerHTML = "";
+      if (carrito.length === 0) {
+        contenedor.innerHTML = "<p>No hay productos en el carrito.</p>";
+        actualizarTotal();
+        return;
+      }
+      carrito.forEach((item, i) => {
+        const div = document.createElement("div");
+        div.className = "producto-item";
+        div.innerHTML = `
+          <div class="producto-info">
+            <strong>${item.producto.nombre}</strong>
+            <div>
+              <label>Precio unitario: ₡</label>
+              <input type="number" class="precio-personalizado" value="${item.precioUnitario}" onchange="actualizarPrecio(${i}, this.value)">
+            </div>
+          </div>
+          <div class="producto-cantidad">
+            <div class="cantidad-control">
+              <button class="btn-cantidad" onclick="cambiarCantidad(${i}, -1)">−</button>
+              <input type="text" class="cantidad-display" value="${item.cantidad}" readonly>
+              <button class="btn-cantidad" onclick="cambiarCantidad(${i}, 1)">+</button>
+            </div>
+            <button class="boton-accion" onclick="quitarDelCarrito(${i})" style="background: #d32f2f; padding: 5px 10px;">Eliminar</button>
+          </div>
+        `;
+        contenedor.appendChild(div);
+      });
+      actualizarTotal();
+    }
+
+    window.actualizarPrecio = function(index, nuevoPrecio) {
+      const precio = parseFloat(nuevoPrecio);
+      if (!isNaN(precio) && precio >= 0) {
+        carrito[index].precioUnitario = precio;
+        renderizarCarrito();
+      }
+    };
+
+    window.cambiarCantidad = function(index, delta) {
+      const nuevoValor = carrito[index].cantidad + delta;
+      if (nuevoValor > 0) {
+        carrito[index].cantidad = nuevoValor;
+        renderizarCarrito();
+      }
+    };
+
+    window.quitarDelCarrito = function(index) {
+      carrito.splice(index, 1);
+      renderizarCarrito();
+    };
+
+    function actualizarTotal() {
+      let total = 0;
+      carrito.forEach(item => total += item.precioUnitario * item.cantidad);
+      const descuento = parseFloat(document.getElementById("descuento").value) || 0;
+      const totalConDescuento = Math.max(0, total - descuento);
+      document.getElementById("total-compra").textContent = totalConDescuento.toLocaleString();
+    }
+
+    document.getElementById("descuento").addEventListener("input", actualizarTotal);
+
+    window.guardarCompraDesdeCarrito = async function() {
+      if (!clienteSeleccionadoId || carrito.length === 0) {
+        alert("No hay cliente seleccionado o productos en el carrito.");
+        return;
+      }
+      try {
+        const clienteDoc = doc(db, "clientes", clienteSeleccionadoId);
+        const docSnap = await getDoc(clienteDoc);
+        const compras = docSnap.data().compras || [];
+        const productos = carrito.map(item => ({
+          nombre: item.producto.nombre,
+          presentacion: item.producto.presentacion || '',
+          aroma: item.producto.aroma || null,
+          precio: item.precioUnitario,
+          cantidad: item.cantidad,
+          total: item.precioUnitario * item.cantidad
+        }));
+        const total = productos.reduce((sum, p) => sum + p.total, 0);
+        const descuento = parseFloat(document.getElementById("descuento").value) || 0;
+        compras.push({
+          fecha: new Date().toISOString().slice(0, 10),
+          productos,
+          monto: total,
+          descuento,
+          pagado: 0,
+          inventarioActualizado: false
+        });
+        await updateDoc(clienteDoc, { compras });
+        cerrarModalProductos();
+        await cargarClientes(filtroDeudoresActivo);
+        alert("✅ Compra guardada.");
+      } catch (error) {
+        console.error("Error al guardar compra:", error);
+        alert("❌ Error al guardar: " + error.message);
+      }
+    };
+
+    // === FUNCIONES EXISTENTES (adaptadas mínimamente) ===
+    async function cargarClientes(filtrarDeudores = true) {
+      filtroDeudoresActivo = filtrarDeudores;
+      const cont = document.getElementById("clientes");
+      const filtroInput = document.getElementById("filtro-clientes");
+      const renderizar = async () => {
+        cont.innerHTML = "";
+        const snapshot = await getDocs(clientesRef);
+        const filtroTexto = filtroInput.value.toLowerCase().trim();
+        snapshot.forEach(docSnap => {
+          const cliente = docSnap.data();
+          const id = docSnap.id;
+          if (!cliente.nombre.toLowerCase().includes(filtroTexto)) return;
+          let totalPendiente = 0;
+          (cliente.compras || []).forEach(c => {
+            const totalCompra = (c.monto || 0) - (c.descuento || 0);
+            totalPendiente += totalCompra - (c.pagado || 0);
+          });
+          if (filtrarDeudores && totalPendiente <= 0) return;
+          const esDeudor = totalPendiente > 0;
+          const div = document.createElement("div");
+          div.className = esDeudor ? "cliente" : "cliente cliente-no-deudor";
+          div.innerHTML = `
+            <strong>${cliente.nombre}</strong><br>
+            📞 <a href="https://wa.me/506${cliente.telefono}" target="_blank">${ocultarTelefono(cliente.telefono)}</a><br>
+            ${cliente.cedula ? `🆔 Cédula: ${cliente.cedula}<br>` : ''}
+            💸 Pendiente: ₡${totalPendiente.toLocaleString()}<br>
+            <button class="boton-accion" onclick="abrirModalProductos('${id}')">➕ Productos</button>
+            <button class="boton-accion" onclick="registrarPago('${id}', '${cliente.nombre}')">💰 Pago</button>
+            <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${totalPendiente})">📲 WhatsApp</button>
+          `;
+          cont.appendChild(div);
+        });
+      };
+      await renderizar();
+      filtroInput.addEventListener("input", renderizar);
+    }
+
+    // === FUNCIONES AUXILIARES ===
+    function ocultarTelefono(telefono) {
+      const limpio = (telefono || "").replace(/\D/g, "");
+      return limpio.length >= 4 ? `****${limpio.slice(-4)}` : telefono;
+    }
+
+    window.registrarPago = async function(clienteId, nombre) {
+      alert("Función de pago pendiente de implementación completa.");
+    };
+
+    window.enviarWhatsApp = function(telefono, nombre, deuda) {
+      const mensaje = `Hola ${nombre}, tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia 💜`;
+      window.open(`https://wa.me/506${telefono.replace(/\D/g, '')}?text=${encodeURIComponent(mensaje)}`, '_blank');
+    };
+
+    // Modal de selección de cliente (simplificado para esta demo)
+    window.abrirModalNuevaVenta = function() {
+      document.getElementById("modal-seleccionar-cliente").style.display = "flex";
+      // Aquí iría la lógica real para cargar clientes
+      document.getElementById("lista-clientes-modal").innerHTML = "<p>Implementación simplificada para demo. Usa 'Nuevo Cliente'.</p>";
+    };
+
+    window.cerrarModalSeleccionarCliente = function() {
+      document.getElementById("modal-seleccionar-cliente").style.display = "none";
+    };
+
+    // Reportes e impresión (mínimo para evitar errores)
+    window.generarReporte = function() { alert("Función de reportes requeriría ajustes adicionales."); };
+    window.abrirModalImpresion = function() { document.getElementById("modal-impresion").style.display = "flex"; };
+    window.cerrarModalImpresion = function() { document.getElementById("modal-impresion").style.display = "none"; };
+    window.imprimirModal = function() { window.print(); };
+    window.cerrarModalHistorial = function() { document.getElementById("modal-historial").style.display = "none"; };
+    window.imprimirModalHistorial = function() { window.print(); };
+
+    // === INICIALIZACIÓN ===
+    document.getElementById("modal-cedula").addEventListener("blur", consultarNombreHacienda);
+    await cargarClientes(true);
+    await cargarProductosJSON();
+  </script>
+
+  <script>
+    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function scrollToBottom() { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }
+  </script>
+</body>
+</html>
