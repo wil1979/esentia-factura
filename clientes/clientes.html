@@ -523,6 +523,8 @@
     const db = getFirestore(app);
     const clientesRef = collection(db, "clientes");
 
+    
+
     // ✅ Función reutilizable para consultar nombre desde cédula
 async function consultarNombreDesdeCedula(inputCedula, inputNombre, elementoMensaje) {
   const cedula = inputCedula.value.trim().replace(/\D/g, "");
@@ -844,14 +846,17 @@ btnTodos.classList.toggle('activo', filtroDeudoresActivo === false);
 📞 <a href="https://wa.me/506${cliente.telefono}" target="_blank" title="${cliente.telefono}">${ocultarTelefono(cliente.telefono)}</a><br>
 ${cliente.cedula ? `🆔 Cédula: ${cliente.cedula}<br>` : ''}
 💸 Pendiente: ₡${totalPendiente.toLocaleString()}<br>
+${cliente.ultimoRecordatorio 
+    ? `<small style="color:#6c4ba3;">📅 Último recordatorio: ${new Date(cliente.ultimoRecordatorio).toLocaleDateString()}</small><br>` 
+    : ''}
             
            <div class="botones-derecha">
   <button class="boton-accion" onclick="abrirModalEditarCliente('${id}', '${cliente.nombre.replace(/'/g, "\\'")}', '${cliente.cedula || ''}', '${cliente.telefono}')">✏️ Editar</button>
   <button class="boton-accion" onclick="abrirModalProductos('${id}')">➕ Productos</button>
   <button class="boton-accion" onclick="registrarPago('${id}', '${cliente.nombre}', '${cliente.telefono}')">💰 Pago</button>
   <button class="boton-accion" onclick="abrirModalHistorial('${id}', '${cliente.nombre}')">🖨️ Imprimir</button>
-  <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${totalPendiente})">📲 WhatsApp</button>
-  <button class="boton-accion" onclick="eliminarCliente('${id}', '${cliente.nombre}')">🗑️ Eliminar</button>
+ <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${totalPendiente}, '${id}')">📲 WhatsApp</button>
+ <button class="boton-accion" onclick="eliminarCliente('${id}', '${cliente.nombre}')">🗑️ Eliminar</button>
 </div>
           `;
           cont.appendChild(div);
@@ -1317,13 +1322,48 @@ window.imprimirDeudasPago = function() {
   win.document.close();
 };
 
-    // ✅ Enviar WhatsApp
-    function enviarWhatsApp(telefono, nombre, deuda) {
-      const limpio = telefono.replace(/\D/g, '');
-      const mensaje = `Hola ${nombre}, Agradecemos tu preferencia con ESENTIA y queremos comentarte que tienes al dia de hoy  saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia llenando tu vida de fragancias que enamoran. 💜💳 Formas de pago:\Efectivo \ SINPE 72952454 Wilber Calderón M.\ BAC: CR59010200009453897656 🌿`;
-      const url = `https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`;
-      window.open(url, "_blank");
+    // ✅ Enviar WhatsApp y registrar fecha de recordatorio
+async function enviarWhatsApp(telefono, nombre, deuda, clienteId) {
+  const limpio = telefono.replace(/\D/g, '');
+  if (!limpio || limpio.length !== 8) {
+    alert("⚠️ Teléfono no válido para WhatsApp.");
+    return;
+  }
+
+  // Verificar si ya se envió hoy
+  const hoy = new Date().setHours(0, 0, 0, 0);
+  const clienteDoc = doc(db, "clientes", clienteId);
+  const docSnap = await getDoc(clienteDoc);
+  const clienteData = docSnap.data();
+  const ultimo = clienteData?.ultimoRecordatorio ? new Date(clienteData.ultimoRecordatorio).setHours(0, 0, 0, 0) : null;
+
+  if (ultimo && ultimo >= hoy) {
+    if (!confirm("Ya se envió un recordatorio hoy. ¿Reenviar de todas formas?")) {
+      return;
     }
+  }
+
+  const mensaje = `Hola ${nombre}, Agradecemos tu preferencia con ESENTIA y queremos comentarte que tienes al día de hoy saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia llenando tu vida de fragancias que enamoran. 💜💳 Formas de pago:
+1. Efectivo contra entrega
+2. SINPE 72952454 Wilber Calderón M.
+3. BAC: CR59010200009453897656 🌿`;
+
+  const url = `https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`;
+  window.open(url, "_blank");
+
+  // 🔥 Registrar la fecha del recordatorio en Firestore
+  try {
+    const clienteDoc = doc(db, "clientes", clienteId);
+    await updateDoc(clienteDoc, {
+      ultimoRecordatorio: new Date().toISOString() // Fecha en formato ISO (ej: "2025-04-10T15:30:00.000Z")
+    });
+    // Opcional: recargar la lista para mostrar la fecha
+    await cargarClientes(filtroDeudoresActivo);
+  } catch (error) {
+    console.error("No se pudo registrar la fecha del recordatorio:", error);
+    // No bloqueamos la UX si falla solo el registro
+  }
+}
 
     // ✅ Reportes
     async function generarReporte() {
