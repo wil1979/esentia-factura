@@ -320,53 +320,77 @@
         margin-left: 0;
       }
     }
+
+     .nueva-venta-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 999;
+  }
+
+   .barra-acciones-flotante {
+    position: fixed;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 999;
+  }
+  .barra-acciones-flotante .scroll-btn {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    width: 160px;
+    text-align: center;
+  }
+  @media (max-width: 480px) {
+    .barra-acciones-flotante {
+      width: auto;
+      right: 10px;
+    }
+    .barra-acciones-flotante .scroll-btn {
+      width: 130px;
+      padding: 8px 12px;
+      font-size: 0.75rem;
+    }
+  }
   </style>
 
   <div class="logo-container">
     <img src="https://wil1979.github.io/esentia-factura/images/logo.png" alt="Esentia Logo" class="logo">
 </head>
 <body>
-  <div class="scroll-buttons">
-    <div class="nueva-venta-btn">
+  
+    <div class="barra-acciones-flotante">
+  <button class="scroll-btn" style="background: #6c4ba3;" onclick="abrirModalNuevoCliente()">
+    ➕ Nuevo Cliente
+  </button>
   <button class="scroll-btn" style="background: #4CAF50;" onclick="abrirModalNuevaVenta()">
     ➕ Nueva Venta
   </button>
+  <button class="scroll-btn" style="background: #2196F3;" onclick="cargarClientes(false)">
+    👥 Mostrar Todos
+  </button>
+  <button class="scroll-btn" style="background: #4CAF50;" onclick="cargarClientes(true)">
+    💳 Solo Deudores
+  </button>
+  <button class="scroll-btn" onclick="scrollToTop()">↑</button>
+  <button class="scroll-btn" onclick="scrollToBottom()">↓</button>
 </div>
-
-<style>
-  .nueva-venta-btn {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    z-index: 999;
-  }
-</style>
-    <button class="scroll-btn" onclick="scrollToTop()">↑</button>
-    <button class="scroll-btn" onclick="scrollToBottom()">↓</button>
   </div>
   <h1>📋 Esentia - Registro de Créditos</h1>
   <h2>👥 Clientes</h2>
 
   <!-- Filtros de visualización -->
-  <div style="margin-bottom: 10px;">
-    <input type="text" id="filtro-clientes" placeholder="🔎 Buscar cliente por nombre..." style="width: 60%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
-    <button id="btn-solo-deudores" class="boton-accion" style="background: #4CAF50; margin-left: 10px;" onclick="cargarClientes(true)">
-  💳 Solo Deudores
-</button>
-<button id="btn-mostrar-todos" class="boton-accion" style="background: #2196F3; margin-left: 10px;" onclick="cargarClientes(false)">
-  👥 Mostrar Todos
-</button>
-
-  </div>
+  <div style="margin-bottom: 15px; text-align: center;">
+  <input type="text" id="filtro-clientes" placeholder="🔎 Buscar cliente por nombre..." style="width: 90%; max-width: 500px; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
+</div>
 
   <div id="clientes"></div>
 
-  <h2>➕ Nuevo Cliente</h2>
-<input id="nombre" placeholder="Nombre completo" style="width: 48%;">
-<input id="cedula" placeholder="Cédula (opcional)" style="width: 48%; margin-left: 2%;">
-<input id="telefono" placeholder="Teléfono con código (ej: 88889999)" style="width: 100%; margin-top: 10px;">
-<button onclick="agregarCliente()">Agregar Cliente</button>
-
+  
   <hr>
   <!-- Sección de Reportes -->
   <div id="seccion-reportes">
@@ -499,6 +523,176 @@
     const db = getFirestore(app);
     const clientesRef = collection(db, "clientes");
 
+    // ✅ Función reutilizable para consultar nombre desde cédula
+async function consultarNombreDesdeCedula(inputCedula, inputNombre, elementoMensaje) {
+  const cedula = inputCedula.value.trim().replace(/\D/g, "");
+  elementoMensaje.textContent = "";
+  elementoMensaje.style.color = "#4CAF50";
+
+  if (cedula.length < 9) {
+    elementoMensaje.textContent = "⚠️ Cédula inválida (mínimo 9 dígitos)";
+    return;
+  }
+
+  try {
+    elementoMensaje.textContent = "Buscando en Hacienda...";
+    const res = await fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedula}`);
+    if (!res.ok) throw new Error("No encontrado");
+    const data = await res.json();
+    const nombreCompleto = data.nombre || data.nombre_completo || "";
+    if (nombreCompleto) {
+      inputNombre.value = nombreCompleto;
+      elementoMensaje.textContent = `✅ Nombre: ${nombreCompleto}`;
+      elementoMensaje.style.color = "#4CAF50";
+    } else {
+      elementoMensaje.textContent = "⚠️ No encontrado en Hacienda";
+      elementoMensaje.style.color = "#d32f2f";
+    }
+  } catch (err) {
+    console.warn("Error al consultar Hacienda:", err);
+    elementoMensaje.textContent = "⚠️ Error de conexión o cédula no registrada";
+    elementoMensaje.style.color = "#d32f2f";
+  }
+}
+
+    // ✅ Abrir modal de edición
+function abrirModalEditarCliente(id, nombre, cedula, telefono) {
+  document.getElementById("modal-edit-id").value = id;
+  document.getElementById("modal-edit-nombre").value = nombre;
+  document.getElementById("modal-edit-cedula").value = cedula;
+  document.getElementById("modal-edit-telefono").value = telefono;
+  document.getElementById("modal-editar-cliente").style.display = "flex";
+}
+
+// ✅ Cerrar modal
+function cerrarModalEditarCliente() {
+  document.getElementById("modal-editar-cliente").style.display = "none";
+}
+
+// ✅ Guardar edición desde modal
+async function guardarEdicionDesdeModal() {
+  const clienteId = document.getElementById("modal-edit-id").value;
+  const nuevoNombre = document.getElementById("modal-edit-nombre").value.trim();
+  const nuevaCedula = document.getElementById("modal-edit-cedula").value.trim();
+  let nuevoTelefono = document.getElementById("modal-edit-telefono").value.trim();
+
+  if (!nuevoNombre) {
+    alert("⚠️ Completa el nombre.");
+    return;
+  }
+
+  const telefonoLimpio = nuevoTelefono.replace(/\D/g, '');
+  if (!telefonoLimpio || telefonoLimpio === "00000000" || telefonoLimpio.length !== 8) {
+    const nuevo = prompt("El número no es válido. Ingresa un número de teléfono válido (8 dígitos):");
+    if (!nuevo) {
+      alert("Se requiere un número válido.");
+      return;
+    }
+    nuevoTelefono = nuevo;
+  }
+
+  try {
+    const clienteDoc = doc(db, "clientes", clienteId);
+    await updateDoc(clienteDoc, {
+      nombre: nuevoNombre,
+      telefono: nuevoTelefono,
+      cedula: nuevaCedula || null
+    });
+    alert("✅ Cliente actualizado.");
+    cerrarModalEditarCliente();
+    await cargarClientes(filtroDeudoresActivo); // ✅ Usa la variable global
+  } catch (error) {
+    console.error("Error al actualizar:", error);
+    alert("❌ Error: " + error.message);
+  }
+}
+
+    // ✅ Abrir modal nuevo cliente
+function abrirModalNuevoCliente() {
+  document.getElementById("modal-nuevo-cliente").style.display = "flex";
+  document.getElementById("modal-cedula").value = "";
+  document.getElementById("modal-nombre").value = "";
+  document.getElementById("modal-telefono").value = "";
+  document.getElementById("nombre-desde-api").textContent = "";
+  document.getElementById("modal-cedula").focus();
+
+  // Escuchar cambios en cédula para consultar Hacienda
+  const cedulaInput = document.getElementById("modal-cedula");
+  cedulaInput.addEventListener("blur", consultarNombreHacienda);
+}
+
+function cerrarModalNuevoCliente() {
+  document.getElementById("modal-nuevo-cliente").style.display = "none";
+}
+
+// ✅ Consultar API pública de Hacienda CR
+async function consultarNombreHacienda() {
+  const cedula = document.getElementById("modal-cedula").value.trim().replace(/\D/g, "");
+  const nombreApi = document.getElementById("nombre-desde-api");
+  const nombreInput = document.getElementById("modal-nombre");
+
+  if (cedula.length < 9) {
+    nombreApi.textContent = "⚠️ Cédula inválida (mínimo 9 dígitos)";
+    return;
+  }
+
+  try {
+    nombreApi.textContent = "Buscando en Hacienda...";
+    const res = await fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedula}`);
+    if (!res.ok) throw new Error("No encontrado o error en API");
+    const data = await res.json();
+    const nombreCompleto = data.nombre || data.nombre_completo || "";
+    if (nombreCompleto) {
+      nombreInput.value = nombreCompleto;
+      nombreApi.textContent = `✅ Nombre obtenido: ${nombreCompleto}`;
+      nombreApi.style.color = "#4CAF50";
+    } else {
+      nombreApi.textContent = "⚠️ No se encontró el nombre en Hacienda";
+      nombreApi.style.color = "#d32f2f";
+    }
+  } catch (err) {
+    console.warn("Error al consultar Hacienda:", err);
+    nombreApi.textContent = "⚠️ No se pudo consultar Hacienda (fuera de línea o cédula no registrada)";
+    nombreApi.style.color = "#d32f2f";
+  }
+}
+
+// ✅ Guardar cliente y abrir modal de productos
+async function guardarNuevoCliente() {
+  const cedula = document.getElementById("modal-cedula").value.trim().replace(/\D/g, "");
+  const nombre = document.getElementById("modal-nombre").value.trim();
+  const telefono = document.getElementById("modal-telefono").value.trim().replace(/\D/g, "");
+
+  if (!cedula || cedula.length < 9) {
+    alert("⚠️ Ingresa una cédula válida (9 dígitos).");
+    return;
+  }
+  if (!nombre) {
+    alert("⚠️ Ingresa un nombre válido.");
+    return;
+  }
+  if (!telefono || telefono.length !== 8) {
+    alert("⚠️ Ingresa un teléfono válido de 8 dígitos.");
+    return;
+  }
+
+  try {
+    const docRef = await addDoc(clientesRef, {
+      cedula,
+      nombre,
+      telefono,
+      compras: []
+    });
+    alert("✅ Cliente registrado con éxito.");
+    cerrarModalNuevoCliente();
+    // Abrir directamente el modal de productos con el nuevo cliente
+    abrirModalProductos(docRef.id);
+  } catch (error) {
+    console.error("Error al guardar cliente:", error);
+    alert("❌ Error al registrar cliente: " + error.message);
+  }
+}
+
 
     // ✅ Abrir modal para seleccionar cliente
 async function abrirModalNuevaVenta() {
@@ -569,9 +763,6 @@ function cerrarModalSeleccionarCliente() {
   document.getElementById("modal-seleccionar-cliente").style.display = "none";
 }
 
-// Hacer funciones globales
-window.abrirModalNuevaVenta = abrirModalNuevaVenta;
-window.cerrarModalSeleccionarCliente = cerrarModalSeleccionarCliente;
 
 
 
@@ -650,21 +841,14 @@ btnTodos.classList.toggle('activo', filtroDeudoresActivo === false);
           div.className = `cliente ${claseCliente}`.trim();
           div.innerHTML = `
             <strong>${cliente.nombre}</strong><br>
-📞 <a href="https://wa.me/${cliente.telefono}" target="_blank" title="${cliente.telefono}">${ocultarTelefono(cliente.telefono)}</a><br>
+📞 <a href="https://wa.me/506${cliente.telefono}" target="_blank" title="${cliente.telefono}">${ocultarTelefono(cliente.telefono)}</a><br>
 ${cliente.cedula ? `🆔 Cédula: ${cliente.cedula}<br>` : ''}
 💸 Pendiente: ₡${totalPendiente.toLocaleString()}<br>
-            <div class="editar-cliente" id="editar-${id}" style="display:none;">
-  <input type="text" id="edit-nombre-${id}" value="${cliente.nombre}" placeholder="Nombre">
-  <input type="text" id="edit-cedula-${id}" value="${cliente.cedula || ''}" placeholder="Cédula (opcional)">
-  <input type="text" id="edit-telefono-${id}" value="${cliente.telefono}" placeholder="Teléfono">
-  <button class="boton-accion" onclick="guardarEdicion('${id}')">💾 Guardar</button>
-  <button class="boton-accion" onclick="cancelarEdicion('${id}')">❌ Cancelar</button>
-</div>
+            
            <div class="botones-derecha">
-  <button class="boton-accion" onclick="editarCliente('${id}')">✏️ Editar</button>
+  <button class="boton-accion" onclick="abrirModalEditarCliente('${id}', '${cliente.nombre.replace(/'/g, "\\'")}', '${cliente.cedula || ''}', '${cliente.telefono}')">✏️ Editar</button>
   <button class="boton-accion" onclick="abrirModalProductos('${id}')">➕ Productos</button>
-  <button class="boton-accion" style="background: #4CAF50;" onclick="guardarCompraDirecta('${id}', '${cliente.nombre}')">💾 Guardar Factura</button>
-  <button class="boton-accion" onclick="registrarPago('${id}', '${cliente.nombre}')">💰 Pago</button>
+  <button class="boton-accion" onclick="registrarPago('${id}', '${cliente.nombre}', '${cliente.telefono}')">💰 Pago</button>
   <button class="boton-accion" onclick="abrirModalHistorial('${id}', '${cliente.nombre}')">🖨️ Imprimir</button>
   <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${totalPendiente})">📲 WhatsApp</button>
   <button class="boton-accion" onclick="eliminarCliente('${id}', '${cliente.nombre}')">🗑️ Eliminar</button>
@@ -962,47 +1146,181 @@ if (compras.length > 0) {
       await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
     };
 
-    // ✅ Registrar pago
-    window.registrarPago = async function(clienteId, nombre) {
-      const snap = await getDocs(clientesRef);
-      let clienteData = null;
-      snap.forEach(docSnap => {
-        if (docSnap.id === clienteId) {
-          clienteData = docSnap.data();
-        }
-      });
-      if (!clienteData) return;
-      const compras = clienteData.compras || [];
-      const ultimaPendienteIndex = [...compras].reverse().findIndex(c => {
-        const total = (c.monto || 0) - (c.descuento || 0);
-        return total > (c.pagado || 0);
-      });
-      if (ultimaPendienteIndex === -1) {
-        alert("🎉 No hay pagos pendientes.");
-        return;
-      }
-      const indexReal = compras.length - 1 - ultimaPendienteIndex;
-      const compra = compras[indexReal];
+    // ✅ Nueva función: abrir modal de pagos con facturas pendientes
+window.registrarPago = async function(clienteId, nombreCliente, telefonoCliente) {
+  const clienteDoc = doc(db, "clientes", clienteId);
+  const docSnap = await getDoc(clienteDoc);
+  if (!docSnap.exists()) {
+    alert("Cliente no encontrado.");
+    return;
+  }
+  const cliente = docSnap.data();
+  const compras = cliente.compras || [];
+  const facturasPendientes = compras
+    .map((compra, index) => {
       const total = (compra.monto || 0) - (compra.descuento || 0);
-      const saldo = total - (compra.pagado || 0);
-      const pago = prompt(`Saldo: ₡${saldo}\nMonto a pagar:`);
-      if (!pago) return;
-      const pagoNum = parseFloat(pago);
-      if (isNaN(pagoNum) || pagoNum <= 0) {
-        alert("⚠️ Monto inválido.");
-        return;
-      }
-      compra.pagado = Math.min((compra.pagado || 0) + pagoNum, total);
-      compras[indexReal] = compra;
-      await updateDoc(doc(db, "clientes", clienteId), { compras });
-      alert("✅ Pago registrado.");
-      await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
-    };
+      const pagado = compra.pagado || 0;
+      const saldo = total - pagado;
+      return { ...compra, saldo, index, total };
+    })
+    .filter(f => f.saldo > 0);
+
+  if (facturasPendientes.length === 0) {
+    alert("🎉 No hay facturas pendientes.");
+    return;
+  }
+
+  // Mostrar nombre del cliente
+  document.getElementById("nombre-cliente-pago").textContent = nombreCliente;
+
+  // Renderizar facturas
+  const contenedor = document.getElementById("lista-facturas-pendientes");
+  let html = `<h3>Facturas pendientes (${facturasPendientes.length}):</h3><ul style="list-style:none; padding:0;">`;
+  facturasPendientes.forEach(f => {
+    const productosResumen = f.productos?.map(p => `${p.cantidad}x ${p.nombre}`).join(", ") || "Sin productos";
+    html += `
+      <li style="border:1px solid #eee; padding:12px; margin:10px 0; border-radius:8px; background:#f9f9f9;">
+        <strong>📅 ${f.fecha}</strong><br>
+        <small><em>${productosResumen}</em></small><br>
+        Total: ₡${f.total.toLocaleString()} | Pagado: ₡${f.pagado.toLocaleString()}<br>
+        <strong style="color:red;">Saldo: ₡${f.saldo.toLocaleString()}</strong><br>
+        <input type="number" id="pago-${f.index}" placeholder="Monto a pagar" min="1" max="${f.saldo}" 
+               style="margin-top:8px; padding:6px; width:100%; border:1px solid #ccc; border-radius:4px;">
+        <button class="boton-accion" style="margin-top:8px; padding:5px 10px;"
+                onclick="aplicarPago('${clienteId}', ${f.index}, ${f.saldo})">
+          ✅ Aplicar Pago
+        </button>
+      </li>
+    `;
+  });
+  html += `</ul>`;
+  contenedor.innerHTML = html;
+
+  // Guardar ID en el ámbito global para WhatsApp/impresión
+  // Al final, al guardar en window.clienteActualPago, incluye el teléfono:
+  window.clienteActualPago = {
+    id: clienteId,
+    nombre: nombreCliente,
+    telefono: telefonoCliente,  // ✅ Ahora sí está definido
+    facturas: facturasPendientes
+  };
+
+  document.getElementById("modal-pago").style.display = "flex";
+};
+
+// ✅ Aplicar pago a una factura específica
+window.aplicarPago = async function(clienteId, compraIndex, saldoMax) {
+  const input = document.getElementById(`pago-${compraIndex}`);
+  const montoStr = input?.value.trim();
+  if (!montoStr) {
+    alert("⚠️ Ingresa un monto.");
+    return;
+  }
+  const monto = parseFloat(montoStr);
+  if (isNaN(monto) || monto <= 0 || monto > saldoMax) {
+    alert(`⚠️ Ingresa un monto válido (1 – ₡${saldoMax.toLocaleString()}).`);
+    return;
+  }
+
+  try {
+    // 🔥 LEER EL DOCUMENTO ACTUAL DE NUEVO (evita conflictos)
+    const clienteDocRef = doc(db, "clientes", clienteId);
+    const docSnap = await getDoc(clienteDocRef);
+    if (!docSnap.exists()) {
+      alert("Cliente no encontrado.");
+      return;
+    }
+    const clienteData = docSnap.data();
+    const compras = [...(clienteData.compras || [])]; // Copia profunda simple
+
+    if (!compras[compraIndex]) {
+      alert("Factura no encontrada.");
+      return;
+    }
+
+    const compra = compras[compraIndex];
+    const totalNeto = (compra.monto || 0) - (compra.descuento || 0);
+    const pagadoActual = compra.pagado || 0;
+    const nuevoPagado = Math.min(pagadoActual + monto, totalNeto);
+
+    // Aplicar el nuevo valor
+    compras[compraIndex] = { ...compra, pagado: nuevoPagado };
+
+    // 🔥 ACTUALIZAR EN FIRESTORE
+    await updateDoc(clienteDocRef, { compras });
+
+    alert("✅ Pago aplicado correctamente.");
+
+    // Recargar el modal con los datos actualizados
+    const nombre = window.clienteActualPago?.nombre || "Desconocido";
+    const telefono = window.clienteActualPago?.telefono || "";
+    registrarPago(clienteId, nombre, telefono);
+
+  } catch (error) {
+    console.error("Error al aplicar pago:", error);
+    alert("❌ Error al aplicar el pago: " + (error.message || "error desconocido"));
+  }
+};
+
+// ✅ Cerrar modal de pago
+window.cerrarModalPago = function() {
+  document.getElementById("modal-pago").style.display = "none";
+  delete window.clienteActualPago;
+};
+
+// ✅ Enviar WhatsApp con resumen de deudas
+window.enviarWhatsAppDeudas = function() {
+  if (!window.clienteActualPago || !window.clienteActualPago.telefono) {
+    alert("❌ No se encontró el número de teléfono del cliente.");
+    return;
+  }
+  const { nombre, facturas, telefono } = window.clienteActualPago;
+  const telefonoLimpio = (telefono || "").toString().replace(/\D/g, "");
+  if (telefonoLimpio.length !== 8) {
+    alert("⚠️ El número de teléfono no es válido para WhatsApp.");
+    return;
+  }
+
+  let mensaje = `Hola ${nombre}, estos son tus saldos pendientes en Esentia:\n\n`;
+  facturas.forEach(f => {
+    mensaje += `• ${f.fecha}: ₡${f.saldo.toLocaleString()}\n`;
+  });
+  const total = facturas.reduce((sum, f) => sum + f.saldo, 0);
+  mensaje += `\nTotal pendiente: ₡${total.toLocaleString()}\n\nGracias por tu confianza 💜`;
+
+  window.open(`https://wa.me/506${telefonoLimpio}?text=${encodeURIComponent(mensaje)}`, "_blank");
+};
+
+// ✅ Imprimir resumen de deudas
+window.imprimirDeudasPago = function() {
+  if (!window.clienteActualPago) return;
+  const { nombre, facturas } = window.clienteActualPago;
+  const totalGeneral = facturas.reduce((sum, f) => sum + f.saldo, 0);
+
+  let html = `<h2>📋 Deudas Pendientes – ${nombre}</h2><table border="1" style="border-collapse:collapse; width:100%; margin:20px 0;">
+    <tr><th>Fecha</th><th>Productos</th><th>Saldo</th></tr>`;
+  facturas.forEach(f => {
+    const productos = f.productos?.map(p => `${p.cantidad}x ${p.nombre}`).join(", ") || "—";
+    html += `<tr><td>${f.fecha}</td><td>${productos}</td><td>₡${f.saldo.toLocaleString()}</td></tr>`;
+  });
+  html += `<tr><td colspan="2" style="text-align:right;"><strong>TOTAL:</strong></td><td><strong>₡${totalGeneral.toLocaleString()}</strong></td></tr>`;
+  html += `</table><p>Fecha: ${new Date().toLocaleDateString()}</p>`;
+
+  const win = window.open("", "_blank", "width=800,height=600");
+  win.document.write(`
+    <html><head><title>Deudas - ${nombre}</title>
+    <style>body { font-family: Arial, sans-serif; padding: 20px; }</style></head>
+    <body>${html}
+    <button onclick="window.print()" style="padding:10px; background:#6c4ba3; color:white; border:none; margin-top:20px;">🖨️ Imprimir</button>
+    </body></html>
+  `);
+  win.document.close();
+};
 
     // ✅ Enviar WhatsApp
     function enviarWhatsApp(telefono, nombre, deuda) {
       const limpio = telefono.replace(/\D/g, '');
-      const mensaje = `Hola ${nombre}, Agradecemos tu preferencia y queremos comentarte que tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia llenando tu vida de fragancias que enamoran. 💜`;
+      const mensaje = `Hola ${nombre}, Agradecemos tu preferencia con ESENTIA y queremos comentarte que tienes al dia de hoy  saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia llenando tu vida de fragancias que enamoran. 💜💳 Formas de pago:\Efectivo \ SINPE 72952454 Wilber Calderón M.\ BAC: CR59010200009453897656 🌿`;
       const url = `https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`;
       window.open(url, "_blank");
     }
@@ -1610,6 +1928,7 @@ window.guardarEdicionDesdeModal = async function(clienteId) {
 };
 
     // Hacer funciones globales
+    window.cargarClientes = cargarClientes;
     window.agregarCliente = agregarCliente;
     window.abrirModalProductos = abrirModalProductos;
     window.cerrarModalProductos = cerrarModalProductos;
@@ -1634,6 +1953,22 @@ window.guardarEdicionDesdeModal = async function(clienteId) {
     window.imprimirModalHistorial = imprimirModalHistorial;
     window.actualizarInventario = actualizarInventario;
     window.revertirInventario = revertirInventario;
+   window.abrirModalNuevoCliente = abrirModalNuevoCliente;
+window.cerrarModalNuevoCliente = cerrarModalNuevoCliente;
+window.guardarNuevoCliente = guardarNuevoCliente;
+    // Hacer funciones globales
+window.abrirModalNuevaVenta = abrirModalNuevaVenta;
+window.cerrarModalSeleccionarCliente = cerrarModalSeleccionarCliente;
+// ... y las nuevas:
+window.registrarPago = registrarPago;
+window.aplicarPago = aplicarPago;
+window.cerrarModalPago = cerrarModalPago;
+window.enviarWhatsAppDeudas = enviarWhatsAppDeudas;
+window.imprimirDeudasPago = imprimirDeudasPago;
+window.abrirModalEditarCliente = abrirModalEditarCliente;
+window.cerrarModalEditarCliente = cerrarModalEditarCliente;
+window.guardarEdicionDesdeModal = guardarEdicionDesdeModal;
+
 
     // Inicializar: cargar solo deudores al inicio
     await cargarClientes(filtroDeudoresActivo);
@@ -1669,11 +2004,67 @@ window.guardarEdicionDesdeModal = async function(clienteId) {
     </div>
   </div>
 </div>
+<!-- Modal para nuevo cliente -->
+<div id="modal-nuevo-cliente" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:2000; justify-content:center; align-items:center;">
+  <div style="background:white; padding:25px; border-radius:12px; width:90%; max-width:500px;">
+    <h2>👤 Registrar Nuevo Cliente</h2>
+    <div style="margin-bottom:15px;">
+      <label>Cédula:</label>
+      <input type="text" id="modal-cedula" placeholder="Ej: 112230405" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+      <small id="nombre-desde-api" style="color:#4CAF50; display:block; margin-top:5px;"></small>
+    </div>
+    <div style="margin-bottom:15px;">
+      <label>Nombre (editable):</label>
+      <input type="text" id="modal-nombre" placeholder="Nombre del cliente" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+    </div>
+    <div style="margin-bottom:20px;">
+      <label>Teléfono (con código, 8 dígitos):</label>
+      <input type="text" id="modal-telefono" placeholder="Ej: 88889999" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+    </div>
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button class="boton-accion" style="background:#666;" onclick="cerrarModalNuevoCliente()">❌ Cancelar</button>
+      <button class="boton-accion" style="background:#4CAF50;" onclick="guardarNuevoCliente()">✅ Guardar y Agregar Productos</button>
+    </div>
+  </div>
+</div>
 
+<!-- Modal de selección de factura para pago -->
+<div id="modal-pago" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:2000; justify-content:center; align-items:center;">
+  <div style="background:white; padding:25px; border-radius:12px; width:90%; max-width:600px; max-height:85vh; overflow-y:auto;">
+    <h2>💰 Realizar Pago – <span id="nombre-cliente-pago"></span></h2>
+    <div id="lista-facturas-pendientes"></div>
+    <div id="acciones-pago" style="margin-top: 20px; display:flex; gap:10px; justify-content:flex-end;">
+      <button class="boton-accion" style="background:#666;" onclick="cerrarModalPago()">❌ Cerrar</button>
+      <button class="boton-accion" style="background:#4CAF50;" onclick="enviarWhatsAppDeudas()">📲 Enviar Saldo</button>
+      <button class="boton-accion" style="background:#2196F3;" onclick="imprimirDeudasPago()">🖨️ Imprimir</button>
+    </div>
+  </div>
+</div>
 
-
-  <p>✨ Esentia ofrece productos que mejoran la experiencia diaria a través de aromas que evocan sensaciones positivas y placenteras. 
-  🌟 Beneficios de los Aromas La aromaterapia puede contribuir a disminuir el estrés y mejorar el bienestar general. 
-  💡 Consejos de Uso Para maximizar la efectividad de los aromas, es recomendable utilizarlos en ambientes tranquilos y ventilados.</p>
+<!-- Modal para editar cliente -->
+<div id="modal-editar-cliente" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:2000; justify-content:center; align-items:center;">
+  <div style="background:white; padding:25px; border-radius:12px; width:90%; max-width:500px;">
+    <h2>✏️ Editar Cliente</h2>
+    <input type="hidden" id="modal-edit-id">
+    <div style="margin-bottom:15px;">
+      <label>Nombre:</label>
+      <input type="text" id="modal-edit-nombre" placeholder="Nombre completo" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+    </div>
+    <div style="margin-bottom:15px;">
+      <label>Cédula (opcional):</label>
+      <input type="text" id="modal-edit-cedula" placeholder="Cédula" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+      <small id="mensaje-nombre-desde-cedula" style="color:#4CAF50; display:block; margin-top:5px;"></small>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label>Teléfono (8 dígitos):</label>
+      <input type="text" id="modal-edit-telefono" placeholder="Ej: 88889999" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+    </div>
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button class="boton-accion" style="background:#666;" onclick="cerrarModalEditarCliente()">❌ Cancelar</button>
+      <button class="boton-accion" style="background:#4CAF50;" onclick="guardarEdicionDesdeModal()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+</div>
 </body>
 </html>
