@@ -1,3 +1,4 @@
+// ...existing code...
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -357,40 +358,39 @@
     }
   }
   </style>
-
-  <div class="logo-container">
-    <img src="https://wil1979.github.io/esentia-factura/images/logo.png" alt="Esentia Logo" class="logo">
 </head>
 <body>
-  
-    <div class="barra-acciones-flotante">
-  <button class="scroll-btn" style="background: #6c4ba3;" onclick="abrirModalNuevoCliente()">
-    ➕ Nuevo Cliente
-  </button>
-  <button class="scroll-btn" style="background: #4CAF50;" onclick="abrirModalNuevaVenta()">
-    ➕ Nueva Venta
-  </button>
-  <button class="scroll-btn" style="background: #2196F3;" onclick="cargarClientes(false)">
-    👥 Mostrar Todos
-  </button>
-  <button class="scroll-btn" style="background: #4CAF50;" onclick="cargarClientes(true)">
-    💳 Solo Deudores
-  </button>
-  <button class="scroll-btn" onclick="scrollToTop()">↑</button>
-  <button class="scroll-btn" onclick="scrollToBottom()">↓</button>
-</div>
+  <div class="logo-container">
+    <img src="https://wil1979.github.io/esentia-factura/images/logo.png" alt="Esentia Logo" class="logo">
   </div>
+
+  <div class="barra-acciones-flotante">
+    <button class="scroll-btn" style="background: #6c4ba3;" onclick="abrirModalNuevoCliente()">
+      ➕ Nuevo Cliente
+    </button>
+    <button class="scroll-btn" style="background: #4CAF50;" onclick="abrirModalNuevaVenta()">
+      ➕ Nueva Venta
+    </button>
+    <button class="scroll-btn" style="background: #2196F3;" onclick="cargarClientes(false)">
+      👥 Mostrar Todos
+    </button>
+    <button class="scroll-btn" style="background: #4CAF50;" onclick="cargarClientes(true)">
+      💳 Solo Deudores
+    </button>
+    <button class="scroll-btn" onclick="scrollToTop()">↑</button>
+    <button class="scroll-btn" onclick="scrollToBottom()">↓</button>
+  </div>
+
   <h1>📋 Esentia - Registro de Créditos</h1>
   <h2>👥 Clientes</h2>
 
   <!-- Filtros de visualización -->
   <div style="margin-bottom: 15px; text-align: center;">
-  <input type="text" id="filtro-clientes" placeholder="🔎 Buscar cliente por nombre..." style="width: 90%; max-width: 500px; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
-</div>
+    <input type="text" id="filtro-clientes" placeholder="🔎 Buscar cliente por nombre..." style="width: 90%; max-width: 500px; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
+  </div>
 
   <div id="clientes"></div>
 
-  
   <hr>
   <!-- Sección de Reportes -->
   <div id="seccion-reportes">
@@ -430,29 +430,38 @@
   </div>
 
   <!-- Modal de productos -->
-  <div id="modal-productos">
-    <div>
-      <h2>🛍️ Agregar Productos al Cliente</h2>
-      <div style="margin-bottom: 20px;">
-        <label for="select-producto">Seleccionar producto:</label>
-        <select id="select-producto"></select>
-        <button onclick="agregarAlCarritoModal()" style="margin-left: 10px;">Agregar</button>
-      </div>
-      <div id="carrito-modal"></div>
-      <div style="margin: 15px 0;">
-        <label for="descuento">Descuento: ₡</label>
-        <input type="number" id="descuento" value="0" min="0">
-      </div>
-      <div class="resumen-total">
-        <span>Total:</span>
-        <span>₡<span id="total-compra">0</span></span>
-      </div>
-      <div class="acciones-modal">
-        <button class="boton-accion" onclick="cerrarModalProductos()" style="background: #666;">❌ Cancelar</button>
-        <button class="boton-accion" onclick="guardarCompraDesdeCarrito()">Guardar Compra</button>
-      </div>
+<div id="modal-productos">
+  <div>
+    <h2>🛍️ Agregar Productos al Cliente</h2>
+    <div style="margin-bottom: 20px;">
+      <label for="select-producto">Seleccionar producto:</label>
+      <select id="select-producto"></select>
+      <button onclick="agregarAlCarritoModal()" style="margin-left: 10px;">Agregar</button>
+    </div>
+
+    <!-- Vista previa: imagen + info -->
+    <div id="vista-previa-producto" style="text-align: center; margin: 15px 0;">
+      <img id="img-producto" src="" alt="Producto" style="max-width: 150px; max-height: 150px; display: none; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+      <p id="info-producto" style="margin-top: 8px; font-size: 0.95rem; color: #555;"></p>
+      <!-- Selector de variantes (se genera dinámicamente) -->
+      <div id="selector-variantes" style="margin-top: 12px;"></div>
+    </div>
+
+    <div id="carrito-modal"></div>
+    <div style="margin: 15px 0;">
+      <label for="descuento">Descuento: ₡</label>
+      <input type="number" id="descuento" value="0" min="0">
+    </div>
+    <div class="resumen-total">
+      <span>Total:</span>
+      <span>₡<span id="total-compra">0</span></span>
+    </div>
+    <div class="acciones-modal">
+      <button class="boton-accion" onclick="cerrarModalProductos()" style="background: #666;">❌ Cancelar</button>
+      <button class="boton-accion" onclick="guardarCompraDesdeCarrito()">💾 Guardar Compra</button>
     </div>
   </div>
+</div>
 
   <!-- Modal de impresión del reporte -->
   <div id="modal-impresion">
@@ -522,8 +531,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const clientesRef = collection(db, "clientes");
-
-    
 
     // ✅ Función reutilizable para consultar nombre desde cédula
 async function consultarNombreDesdeCedula(inputCedula, inputNombre, elementoMensaje) {
@@ -983,7 +990,7 @@ if (compras.length > 0) {
         await updateDoc(clienteDoc, { compras });
 
         alert("✅ Inventario actualizado correctamente.");
-        await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]').style.background === 'rgb(76, 175, 80)');
+        await cargarClientes(filtroDeudoresActivo);
       } catch (error) {
         console.error("Error al actualizar inventario:", error);
         alert("❌ Hubo un error al actualizar el inventario.");
@@ -1046,7 +1053,7 @@ if (compras.length > 0) {
         await updateDoc(clienteDoc, { compras });
 
         alert("✅ Inventario revertido correctamente.");
-        await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
+        await cargarClientes(filtroDeudoresActivo);
       } catch (error) {
         console.error("Error al revertir inventario:", error);
         alert("❌ Hubo un error al revertir el inventario.");
@@ -1056,7 +1063,8 @@ if (compras.length > 0) {
     // ✅ Editar cliente
     function editarCliente(clienteId) {
       document.querySelectorAll('.editar-cliente').forEach(div => div.style.display = 'none');
-      document.getElementById(`editar-${clienteId}`).style.display = 'flex';
+      const el = document.getElementById(`editar-${clienteId}`);
+      if (el) el.style.display = 'flex';
     }
 
     async function guardarEdicion(clienteId) {
@@ -1084,7 +1092,7 @@ if (compras.length > 0) {
       cedula: nuevaCedula || null
     });
     alert("✅ Cliente actualizado.");
-    await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
+    await cargarClientes(filtroDeudoresActivo);
   } catch (error) {
     alert("❌ Error al actualizar: " + error.message);
     console.error("Error:", error);
@@ -1092,7 +1100,8 @@ if (compras.length > 0) {
 }
 
     function cancelarEdicion(clienteId) {
-      document.getElementById(`editar-${clienteId}`).style.display = 'none';
+      const el = document.getElementById(`editar-${clienteId}`);
+      if (el) el.style.display = 'none';
     }
 
     // ✅ Eliminar cliente
@@ -1101,7 +1110,7 @@ if (compras.length > 0) {
       try {
         await deleteDoc(doc(db, "clientes", clienteId));
         alert(`✅ ${nombre} eliminado.`);
-        await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
+        await cargarClientes(filtroDeudoresActivo);
       } catch (error) {
         alert("❌ Error al eliminar.");
         console.error(error);
@@ -1135,7 +1144,7 @@ if (compras.length > 0) {
       compras[index] = { ...compra, monto, descuento, pagado };
       await updateDoc(clienteDoc, { compras });
       alert("✅ Compra actualizada.");
-      await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
+      await cargarClientes(filtroDeudoresActivo);
     };
 
     // ✅ Eliminar compra
@@ -1148,7 +1157,7 @@ if (compras.length > 0) {
       compras.splice(index, 1);
       await updateDoc(clienteDoc, { compras });
       alert("✅ Compra eliminada.");
-      await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
+      await cargarClientes(filtroDeudoresActivo);
     };
 
     // ✅ Nueva función: abrir modal de pagos con facturas pendientes
@@ -1216,7 +1225,7 @@ window.registrarPago = async function(clienteId, nombreCliente, telefonoCliente)
 // ✅ Aplicar pago a una factura específica
 window.aplicarPago = async function(clienteId, compraIndex, saldoMax) {
   const input = document.getElementById(`pago-${compraIndex}`);
-  const montoStr = input?.value.trim();
+  const montoStr = input?.value?.trim();
   if (!montoStr) {
     alert("⚠️ Ingresa un monto.");
     return;
@@ -1388,7 +1397,8 @@ async function enviarWhatsApp(telefono, nombre, deuda, clienteId) {
           totalCompras,
           totalPagado,
           totalDescuentos,
-          totalPendiente
+          totalPendiente,
+          cedula: c.cedula || ''
         });
       });
 
@@ -1722,19 +1732,91 @@ async function enviarWhatsApp(telefono, nombre, deuda, clienteId) {
     let clienteSeleccionadoId = null;
     let filtroDeudoresActivo = true; // o false, según tu preferencia inicial
 
-    async function cargarProductosJSON() {
-      const [res1, res2] = await Promise.all([fetch(URL_ESENCIA), fetch(URL_LIMPIEZA)]);
-      const [aromas, limpieza] = await Promise.all([res1.json(), res2.json()]);
-      todosLosProductos = [...aromas, ...limpieza].filter(p => p.disponible);
-      const select = document.getElementById("select-producto");
-      select.innerHTML = "";
-      todosLosProductos.forEach((p, i) => {
-        const opt = document.createElement("option");
-        opt.value = i;
-        opt.textContent = p.nombre;
-        select.appendChild(opt);
-      });
+   async function cargarProductosJSON() {
+  try {
+    const [res1, res2] = await Promise.all([
+      fetch(URL_ESENCIA),
+      fetch(URL_LIMPIEZA)
+    ]);
+    const [aromas, limpieza] = await Promise.all([res1.json(), res2.json()]);
+    // Unificar listados; mantener presentaciones y precios
+    todosLosProductos = [...(aromas || []), ...(limpieza || [])].filter(p => p && (p.disponible === undefined || p.disponible === true));
+
+    const select = document.getElementById("select-producto");
+    if (!select) return;
+    select.innerHTML = "";
+    todosLosProductos.forEach((p, i) => {
+      const opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = p.nombre;
+      select.appendChild(opt);
+    });
+
+    // Escuchar cambios en la selección
+    select.addEventListener("change", mostrarVistaPrevia);
+    // Mostrar el primero al cargar
+    if (todosLosProductos.length > 0) {
+      select.value = 0;
+      mostrarVistaPrevia();
     }
+  } catch (err) {
+    console.error("Error cargando productos JSON:", err);
+  }
+}
+
+function mostrarVistaPrevia() {
+  const index = parseInt(document.getElementById("select-producto").value);
+  const prod = todosLosProductos[index];
+  const img = document.getElementById("img-producto");
+  const info = document.getElementById("info-producto");
+  const selectorDiv = document.getElementById("selector-variantes");
+
+  // Limpiar
+  if (img) img.style.display = "none";
+  if (info) info.textContent = "";
+  if (selectorDiv) selectorDiv.innerHTML = "";
+
+  if (!prod) return;
+
+  // Mostrar imagen si existe
+  if (prod.imagen && img) {
+    img.src = prod.imagen;
+    img.style.display = "inline-block";
+  }
+
+  // Mostrar info básica
+  if (info) info.textContent = prod.info || prod.beneficios || "";
+
+  // Mostrar variantes si existen
+  if (prod.variantes && prod.variantes.length > 0 && selectorDiv) {
+    const label = document.createElement("div");
+    label.textContent = "Selecciona una presentación:";
+    label.style.marginBottom = "6px";
+    label.style.fontWeight = "bold";
+    selectorDiv.appendChild(label);
+
+    const select = document.createElement("select");
+    select.id = "select-variante";
+    select.style.width = "100%";
+    select.style.padding = "8px";
+    select.style.borderRadius = "4px";
+    select.style.border = "1px solid #ccc";
+
+    const defaultOpt = document.createElement("option");
+    defaultOpt.value = "";
+    defaultOpt.textContent = "-- Selecciona --";
+    select.appendChild(defaultOpt);
+
+    prod.variantes.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = JSON.stringify(v); // Guardamos el objeto completo como string
+      opt.textContent = `${v.nombre} – ₡${(v.precio || 0).toLocaleString()}`;
+      select.appendChild(opt);
+    });
+
+    selectorDiv.appendChild(select);
+  }
+}
 
     function abrirModalProductos(idCliente) {
       clienteSeleccionadoId = idCliente;
@@ -1748,59 +1830,78 @@ async function enviarWhatsApp(telefono, nombre, deuda, clienteId) {
     function cerrarModalProductos() {
       document.getElementById("modal-productos").style.display = "none";
     }
+  
 
     function agregarAlCarritoModal() {
-      const index = parseInt(document.getElementById("select-producto").value);
-      const producto = todosLosProductos[index];
-      if (carrito.some(item => item.index === index)) {
-        alert("Este producto ya está en el carrito.");
-        return;
-      }
-      const precioSugerido = producto.precioPublico || 0;
-      const item = {
-        index: index,
-        producto: producto,
-        cantidad: 1,
-        precioUnitario: precioSugerido
-      };
-      carrito.push(item);
-      renderizarCarrito();
+  const index = parseInt(document.getElementById("select-producto").value);
+  const producto = todosLosProductos[index];
+  if (!producto) return;
+
+  let nombreFinal = producto.nombre;
+  let precioFinal = producto.precioOferta ?? producto.precio ?? producto.precioOriginal ?? 0;
+
+  // Si hay variantes, verificar selección
+  const selectVariante = document.getElementById("select-variante");
+  if (selectVariante && selectVariante.value) {
+    try {
+      const variante = JSON.parse(selectVariante.value);
+      nombreFinal = `${producto.nombre} ${variante.nombre}`;
+      precioFinal = variante.precio ?? precioFinal;
+    } catch (e) {
+      alert("Error al procesar la variante.");
+      return;
     }
+  } else if (producto.variantes && producto.variantes.length > 0) {
+    alert("⚠️ Selecciona una presentación.");
+    return;
+  }
+
+  // Evitar duplicados por nombre exacto
+  if (carrito.some(item => item.nombre === nombreFinal)) {
+    alert("Este producto ya está en el carrito.");
+    return;
+  }
+
+  carrito.push({
+    nombre: nombreFinal,
+    precioUnitario: Number(precioFinal) || 0,
+    cantidad: 1,
+    producto: producto,
+    productoOriginalIndex: index // opcional, para referencia
+  });
+
+  renderizarCarrito();
+}
 
     function renderizarCarrito() {
-      const contenedor = document.getElementById("carrito-modal");
-      contenedor.innerHTML = "";
-      if (carrito.length === 0) {
-        contenedor.innerHTML = "<p>No hay productos en el carrito.</p>";
-        actualizarTotal();
-        return;
-      }
-      carrito.forEach((item, i) => {
-        const div = document.createElement("div");
-        div.className = "producto-item";
-        div.innerHTML = `
-          <div class="producto-info">
-            <strong>${item.producto.nombre}</strong>
-            <div>
-              <label>Precio unitario: ₡</label>
-              <input type="number" class="precio-personalizado" value="${item.precioUnitario}" 
-                     onchange="actualizarPrecio(${i}, this.value)">
-            </div>
-          </div>
-          <div class="producto-cantidad">
-            <div class="cantidad-control">
-              <button class="btn-cantidad" onclick="cambiarCantidad(${i}, -1)">−</button>
-              <input type="text" class="cantidad-display" value="${item.cantidad}" readonly>
-              <button class="btn-cantidad" onclick="cambiarCantidad(${i}, 1)">+</button>
-            </div>
-            <button class="boton-accion" onclick="quitarDelCarrito(${i})" style="background: #d32f2f; padding: 5px 10px;">Eliminar</button>
-          </div>
-        `;
-        contenedor.appendChild(div);
-      });
-      actualizarTotal();
-    }
-
+  const contenedor = document.getElementById("carrito-modal");
+  contenedor.innerHTML = "";
+  if (carrito.length === 0) {
+    contenedor.innerHTML = "<p>No hay productos en el carrito.</p>";
+    actualizarTotal();
+    return;
+  }
+  carrito.forEach((item, i) => {
+    const div = document.createElement("div");
+    div.className = "producto-item";
+    div.innerHTML = `
+      <div class="producto-info">
+        <strong>${item.nombre}</strong><br>
+        Precio: ₡${(Number(item.precioUnitario) || 0).toLocaleString()}
+      </div>
+      <div class="producto-cantidad">
+        <div class="cantidad-control">
+          <button class="btn-cantidad" onclick="cambiarCantidad(${i}, -1)">−</button>
+          <input type="text" class="cantidad-display" value="${item.cantidad}" readonly>
+          <button class="btn-cantidad" onclick="cambiarCantidad(${i}, 1)">+</button>
+        </div>
+        <button class="boton-accion" onclick="quitarDelCarrito(${i})" style="background: #d32f2f; padding: 5px 10px;">Eliminar</button>
+      </div>
+    `;
+    contenedor.appendChild(div);
+  });
+  actualizarTotal();
+}
     window.actualizarPrecio = function(index, nuevoPrecio) {
       const precio = parseFloat(nuevoPrecio);
       if (!isNaN(precio) && precio >= 0) {
@@ -1825,11 +1926,11 @@ async function enviarWhatsApp(telefono, nombre, deuda, clienteId) {
     function actualizarTotal() {
       let total = 0;
       carrito.forEach(item => {
-        total += item.precioUnitario * item.cantidad;
+        total += (Number(item.precioUnitario) || 0) * (Number(item.cantidad) || 0);
       });
       const descuento = parseFloat(document.getElementById("descuento").value) || 0;
       const totalConDescuento = Math.max(0, total - descuento);
-      document.getElementById("total-compra").textContent = totalConDescuento.toLocaleString();
+      document.getElementById("total-compra").textContent = Math.round(totalConDescuento).toLocaleString();
     }
 
     document.getElementById("descuento").addEventListener("input", actualizarTotal);
@@ -1851,13 +1952,13 @@ async function enviarWhatsApp(telefono, nombre, deuda, clienteId) {
       const productos = [];
       let total = 0;
       carrito.forEach(item => {
-        const producto = item.producto;
-        const cantidad = item.cantidad;
-        const precio = item.precioUnitario;
+        const producto = item.producto || todosLosProductos[item.productoOriginalIndex] || { nombre: item.nombre };
+        const cantidad = Number(item.cantidad) || 0;
+        const precio = Number(item.precioUnitario) || 0;
         const totalProducto = precio * cantidad;
         productos.push({ 
-          nombre: producto.nombre,
-          presentacion: producto.presentacion || '',
+          nombre: producto.nombre || item.nombre,
+          presentacion: producto.presentacion || (producto.variantes && producto.variantes[0]?.nombre) || '',
           aroma: producto.aroma || null,
           precio: precio,
           cantidad: cantidad,
@@ -1876,7 +1977,7 @@ async function enviarWhatsApp(telefono, nombre, deuda, clienteId) {
       });
       await updateDoc(clienteDoc, { compras: comprasActuales });
       document.getElementById("modal-productos").style.display = "none";
-      await cargarClientes(document.querySelector('#seccion-reportes button[onclick="cargarClientes(true)"]')?.style.background === 'rgb(76, 175, 80)');
+      await cargarClientes(filtroDeudoresActivo);
       alert("✅ Compra guardada exitosamente.");
     }
 
@@ -2105,6 +2206,6 @@ window.guardarEdicionDesdeModal = guardarEdicionDesdeModal;
     </div>
   </div>
 </div>
-</div>
+
 </body>
 </html>
