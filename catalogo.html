@@ -5,1353 +5,325 @@
   <title>Catálogo Esentia</title>
   <link rel="icon" href="images/logo.png" sizes="192x192" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
+  <link rel="stylesheet" href="catalogo.css" />
+
   <style>
-    /* ========== VARIABLES Y RESET ========== */
-    :root {
-      --color-primary: #8b5cf6;
-      --color-secondary: #6366f1;
-      --color-accent: #ec4899;
-      --color-success: #10b981;
-      --color-dark: #0f172a;
-      --color-darker: #020617;
-      --color-light: #f8fafc;
-      --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      --gradient-glow: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-      --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.3);
-      --shadow-card: 0 10px 40px rgba(0, 0, 0, 0.3);
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: var(--color-darker);
-      color: var(--color-light);
-      overflow-x: hidden;
-      position: relative;
-    }
-
-    /* ========== FONDO ANIMADO ========== */
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: 
-        radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 40% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
-      z-index: 0;
-      animation: backgroundPulse 10s ease-in-out infinite;
-    }
-
-    @keyframes backgroundPulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
-    }
-
-    /* ========== PARTÍCULAS FLOTANTES ========== */
-    .particles {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      z-index: 1;
-      pointer-events: none;
-    }
-
-    .particle {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      background: rgba(139, 92, 246, 0.6);
-      border-radius: 50%;
-      animation: float 15s infinite ease-in-out;
-      box-shadow: 0 0 10px rgba(139, 92, 246, 0.8);
-    }
-
-    @keyframes float {
-      0%, 100% {
-        transform: translateY(0) translateX(0);
-        opacity: 0;
-      }
-      10% {
-        opacity: 1;
-      }
-      90% {
-        opacity: 1;
-      }
-      100% {
-        transform: translateY(-100vh) translateX(100px);
-        opacity: 0;
-      }
-    }
-
-    /* ========== HEADER ========== */
-    header {
-      position: relative;
-      z-index: 10;
-      text-align: center;
-      padding: 3rem 1rem;
-      background: linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, transparent 100%);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(139, 92, 246, 0.2);
-    }
-
-    .logo-container {
-      margin-bottom: 1.5rem;
-      animation: logoFloat 3s ease-in-out infinite;
-    }
-
-    @keyframes logoFloat {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    .logo {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      border: 3px solid var(--color-primary);
-      box-shadow: var(--shadow-glow);
-      transition: all 0.3s ease;
-    }
-
-    .logo:hover {
-      transform: scale(1.1) rotate(5deg);
-      box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
-    }
-
-    h1 {
-      font-size: 2.5rem;
-      background: var(--gradient-glow);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: textGlow 3s ease-in-out infinite;
-      text-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
-    }
-
-    @keyframes textGlow {
-      0%, 100% { filter: brightness(1); }
-      50% { filter: brightness(1.3); }
-    }
-
-    /* ========== CONTENEDOR PRINCIPAL ========== */
-    .contenedor {
-      position: relative;
-      z-index: 10;
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 2rem 1rem;
-    }
-
-    /* ========== LOADER ========== */
-    #loader {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 300px;
-      flex-direction: column;
-    }
-
-    .loader-spinner {
-      width: 80px;
-      height: 80px;
-      border: 4px solid rgba(139, 92, 246, 0.2);
-      border-top: 4px solid var(--color-primary);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      box-shadow: var(--shadow-glow);
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .loader-text {
-      margin-top: 1.5rem;
-      font-size: 1.2rem;
-      color: var(--color-primary);
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    /* ========== FILTROS ========== */
-    #filtros-container {
-      text-align: center;
-      margin: 2rem 0;
-      display: none;
-    }
-
+    /* ... tus estilos de botones ... */
     .btn-filtro {
-      background: rgba(139, 92, 246, 0.1);
-      border: 2px solid rgba(139, 92, 246, 0.3);
-      padding: 12px 24px;
-      margin: 0 8px;
-      border-radius: 30px;
+      background: #f0f0f0;
+      border: 2px solid #ccc;
+      padding: 8px 16px;
+      margin: 0 5px;
+      border-radius: 20px;
       cursor: pointer;
       font-weight: bold;
-      color: var(--color-light);
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-      backdrop-filter: blur(10px);
+      transition: all 0.3s;
     }
-
-    .btn-filtro::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      background: rgba(139, 92, 246, 0.4);
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
-    }
-
-    .btn-filtro:hover::before {
-      width: 300px;
-      height: 300px;
-    }
-
-    .btn-filtro:hover {
-      border-color: var(--color-primary);
-      box-shadow: var(--shadow-glow);
-      transform: translateY(-2px);
-    }
-
+    .btn-filtro:hover { background: #e0e0e0; }
     .btn-filtro.activo {
-      background: var(--gradient-primary);
+      background: #6c4ba3;
       color: white;
-      border-color: var(--color-primary);
-      box-shadow: var(--shadow-glow);
+      border-color: #6c4ba3;
     }
 
-    .btn-filtro span {
-      position: relative;
-      z-index: 1;
-    }
-
-    /* ========== PRODUCTOS ========== */
-    .productos {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 2rem;
-      margin-top: 2rem;
-    }
-
-    .producto-card {
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid rgba(139, 92, 246, 0.2);
-      border-radius: 20px;
-      padding: 1.5rem;
-      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      backdrop-filter: blur(10px);
-    }
-
-    .producto-card::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: conic-gradient(
-        transparent,
-        rgba(139, 92, 246, 0.3),
-        transparent 30%
-      );
-      animation: rotate 4s linear infinite;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-
-    @keyframes rotate {
-      100% { transform: rotate(360deg); }
-    }
-
-    .producto-card:hover::before {
-      opacity: 1;
-    }
-
-    .producto-card::after {
-      content: '';
-      position: absolute;
-      inset: 2px;
-      background: rgba(15, 23, 42, 0.95);
-      border-radius: 18px;
-      z-index: 1;
-    }
-
-    .producto-card > * {
-      position: relative;
-      z-index: 2;
-    }
-
-    .producto-card:hover {
-      transform: translateY(-10px) scale(1.02);
-      box-shadow: 
-        0 20px 60px rgba(139, 92, 246, 0.4),
-        0 0 40px rgba(139, 92, 246, 0.2);
-      border-color: var(--color-primary);
-    }
-
-    .producto-imagen {
+    /* 🔧 CORRECCIÓN IMÁGENES */
+    .producto-card img {
       width: 100%;
       height: 200px;
       object-fit: contain;
-      border-radius: 12px;
-      margin-bottom: 1rem;
-      background: rgba(255, 255, 255, 0.05);
-      transition: all 0.3s ease;
-    }
-
-    .producto-card:hover .producto-imagen {
-      transform: scale(1.05);
-      filter: brightness(1.1);
-    }
-
-    .producto-nombre {
-      font-size: 1.3rem;
-      font-weight: bold;
-      margin-bottom: 0.5rem;
-      background: var(--gradient-glow);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .producto-info {
-      color: rgba(248, 250, 252, 0.7);
-      margin-bottom: 0.8rem;
-      font-size: 0.95rem;
-      line-height: 1.5;
-    }
-
-    .producto-precio {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: var(--color-primary);
-      margin: 1rem 0;
-      text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
-    }
-
-    .stock-label {
-      margin: 0.8rem 0;
-      font-weight: bold;
-      font-size: 0.95rem;
-    }
-
-    .calificacion {
-      margin: 0.8rem 0;
-      font-size: 1.2rem;
-    }
-
-    .btn-agregar {
-      width: 100%;
-      padding: 12px;
-      background: var(--gradient-primary);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn-agregar::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.3);
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
-    }
-
-    .btn-agregar:hover::before {
-      width: 300px;
-      height: 300px;
-    }
-
-    .btn-agregar:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 25px rgba(139, 92, 246, 0.6);
-    }
-
-    .btn-agregar:active {
-      transform: translateY(0);
-    }
-
-    .btn-agregar:disabled {
-      background: rgba(100, 100, 100, 0.5);
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    .btn-agregar span {
-      position: relative;
-      z-index: 1;
-    }
-
-    /* ========== SECCIÓN MÁS OPCIONES ========== */
-    .opciones-extra {
-      text-align: center;
-      margin: 3rem auto;
-      padding: 2rem;
-      background: rgba(139, 92, 246, 0.1);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      border-radius: 20px;
-      max-width: 600px;
-      backdrop-filter: blur(10px);
-      box-shadow: var(--shadow-card);
-    }
-
-    .opciones-extra h3 {
-      margin-bottom: 1.5rem;
-      color: var(--color-primary);
-      font-size: 1.5rem;
-    }
-
-    .opciones-extra button {
+      background-color: white;
+      border-radius: 8px;
+      margin: 18px auto 10px auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
       display: block;
-      width: 100%;
-      padding: 14px;
-      margin: 12px 0;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
     }
-
-    .opciones-extra button::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.2);
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
-    }
-
-    .opciones-extra button:hover::before {
-      width: 400px;
-      height: 400px;
-    }
-
-    .opciones-extra button:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-    }
-
-    .btn-aroma {
-      background: var(--gradient-primary);
-      color: white;
-    }
-
-    .btn-whatsapp {
-      background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
-      color: white;
-    }
-
-    .btn-copiar {
-      background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
-      color: white;
-    }
-
-    .opciones-extra button span {
-      position: relative;
-      z-index: 1;
-    }
-
-    /* ========== MODALES ========== */
-    .modal-carrito {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(10px);
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    .modal-contenido {
-      background: rgba(15, 23, 42, 0.95);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      border-radius: 20px;
-      padding: 2rem;
-      max-width: 500px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-      position: relative;
-      box-shadow: 
-        0 20px 60px rgba(0, 0, 0, 0.5),
-        0 0 40px rgba(139, 92, 246, 0.3);
-      animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(50px) scale(0.9);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    .modal-contenido h2 {
-      color: var(--color-primary);
-      margin-bottom: 1.5rem;
-      font-size: 1.8rem;
-    }
-
-    .modal-contenido .cerrar {
-      position: absolute;
-      top: 15px;
-      right: 20px;
-      font-size: 28px;
-      cursor: pointer;
-      color: var(--color-light);
-      transition: all 0.3s ease;
-    }
-
-    .modal-contenido .cerrar:hover {
-      color: var(--color-accent);
-      transform: rotate(90deg);
-    }
-
     #modalProductoImagen {
       width: 100%;
       max-height: 250px;
       object-fit: contain;
-      border-radius: 12px;
-      margin: 1rem 0;
-      background: rgba(255, 255, 255, 0.05);
+      background-color: white;
+      border-radius: 8px;
+      margin: 10px 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
-    #listaCarritoModal {
-      list-style: none;
-      margin: 1rem 0;
+    /* ========== MINI CARRITO LATERAL ========== */
+    #miniCarrito {
+      position: fixed;
+      top: 0;
+      right: -380px; /* Fuera de la vista */
+      width: 360px;
+      height: 100vh;
+      background: white;
+      box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+      z-index: 9998;
+      transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      overflow-y: auto;
     }
-
-    #listaCarritoModal li {
-      background: rgba(139, 92, 246, 0.1);
-      padding: 1rem;
-      margin: 0.8rem 0;
-      border-radius: 12px;
-      border: 1px solid rgba(139, 92, 246, 0.2);
+    #miniCarrito.visible {
+      right: 0;
+    }
+    #miniCarritoOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.4);
+      z-index: 9997;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s;
+    }
+    #miniCarritoOverlay.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    .mini-header {
+      padding: 20px;
+      background: #6c4ba3;
+      color: white;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      transition: all 0.3s ease;
     }
-
-    #listaCarritoModal li:hover {
-      background: rgba(139, 92, 246, 0.2);
-      transform: translateX(5px);
-    }
-
-    #totalModal {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: var(--color-primary);
-      margin: 1.5rem 0;
-      text-align: center;
-    }
-
-    /* ========== BOTÓN FLOTANTE CARRITO ========== */
-    #botonCarrito {
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      background: var(--gradient-primary);
-      color: white;
+    .mini-header h3 { margin: 0; font-size: 1.3rem; }
+    .mini-close {
+      background: white;
+      color: #6c4ba3;
       border: none;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
-      width: 70px;
-      height: 70px;
-      font-size: 1.5rem;
+      font-size: 18px;
       cursor: pointer;
-      box-shadow: 
-        0 8px 25px rgba(139, 92, 246, 0.5),
-        0 0 40px rgba(139, 92, 246, 0.3);
-      z-index: 999;
-      transition: all 0.3s ease;
-      animation: floatButton 3s ease-in-out infinite;
-    }
-
-    @keyframes floatButton {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    #botonCarrito:hover {
-      transform: scale(1.15) translateY(-5px);
-      box-shadow: 
-        0 12px 35px rgba(139, 92, 246, 0.7),
-        0 0 60px rgba(139, 92, 246, 0.5);
-    }
-
-    #contadorCarrito {
-      position: absolute;
-      top: -5px;
-      right: -5px;
-      background: var(--color-accent);
-      color: white;
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.9rem;
-      font-weight: bold;
-      box-shadow: 0 2px 10px rgba(236, 72, 153, 0.6);
     }
-
-    /* ========== TOAST ========== */
-    #toast {
-      position: fixed;
-      bottom: 100px;
-      right: 30px;
-      background: var(--gradient-primary);
-      color: white;
-      padding: 16px 24px;
-      border-radius: 12px;
-      display: none;
-      z-index: 10000;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-      animation: slideInRight 0.4s ease;
+    .mini-producto {
+      display: flex;
+      padding: 16px;
+      border-bottom: 1px solid #eee;
+      align-items: flex-start;
     }
-
-    @keyframes slideInRight {
-      from {
-        opacity: 0;
-        transform: translateX(100px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-
-    /* ========== POPUP CARRITO RÁPIDO ========== */
-    #popupCarritoRapido {
-      display: none;
-      position: fixed;
-      bottom: 120px;
-      right: 30px;
-      z-index: 10000;
-      background: rgba(15, 23, 42, 0.95);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      border-radius: 16px;
-      box-shadow: 
-        0 20px 60px rgba(0, 0, 0, 0.5),
-        0 0 40px rgba(139, 92, 246, 0.3);
-      width: 340px;
-      max-width: 90vw;
-      padding: 1.5rem;
-      animation: fadeInUp 0.4s ease;
-      backdrop-filter: blur(10px);
-    }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    #popupCarritoRapido img {
-      width: 80px;
-      height: 80px;
+    .mini-producto img {
+      width: 60px;
+      height: 60px;
       object-fit: contain;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      margin-right: 12px;
+      background: #f9f9f9;
     }
-
-    #popupCarritoRapido h3 {
-      color: var(--color-light);
-      font-size: 1.1rem;
-      margin-bottom: 0.5rem;
+    .mini-info {
+      flex: 1;
     }
-
-    #popupCarritoRapido input {
-      padding: 8px;
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      border-radius: 8px;
-      background: rgba(139, 92, 246, 0.1);
-      color: var(--color-light);
-      width: 70px;
+    .mini-info h4 { margin: 0 0 6px 0; font-size: 1.05rem; color: #333; }
+    .mini-info .precio { font-weight: bold; color: #6c4ba3; margin: 4px 0; }
+    .mini-cantidad {
+      display: flex;
+      align-items: center;
+      margin-top: 8px;
     }
-
-    #popupCarritoRapido button {
-      padding: 10px;
-      border: none;
-      border-radius: 10px;
+    .mini-cantidad button {
+      width: 28px;
+      height: 28px;
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 18px;
       cursor: pointer;
+    }
+    .mini-cantidad span {
+      margin: 0 10px;
       font-weight: bold;
-      transition: all 0.3s ease;
     }
-
-    #popupVerCarrito {
-      background: var(--gradient-primary);
+    .mini-total {
+      padding: 20px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border-top: 2px solid #eee;
+      text-align: center;
+    }
+    .mini-footer {
+      padding: 0 20px 20px;
+      text-align: center;
+    }
+    .mini-footer button {
+      width: 100%;
+      padding: 12px;
+      background: #25D366;
       color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.05rem;
+      cursor: pointer;
+      transition: background 0.2s;
     }
-
-    #popupVerCarrito:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
-    }
-
-    #popupCerrar {
-      background: rgba(100, 100, 100, 0.5);
-      color: var(--color-light);
-    }
-
-    #popupCerrar:hover {
-      background: rgba(100, 100, 100, 0.7);
-    }
-
-    /* ========== SCROLLBAR ========== */
-    ::-webkit-scrollbar {
-      width: 10px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: var(--color-darker);
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: var(--gradient-primary);
-      border-radius: 10px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--color-primary);
-    }
-
-    /* ========== RESPONSIVE ========== */
-    @media (max-width: 768px) {
-      h1 {
-        font-size: 1.8rem;
-      }
-
-      .productos {
-        grid-template-columns: 1fr;
-      }
-
-      #botonCarrito {
-        width: 60px;
-        height: 60px;
-        font-size: 1.3rem;
-        bottom: 20px;
-        right: 20px;
-      }
-
-      #popupCarritoRapido {
-        bottom: 100px;
-        right: 20px;
-      }
+    .mini-footer button:hover {
+      background: #128C7E;
     }
   </style>
 </head>
 <body>
-<!-- Partículas flotantes -->
-  <div class="particles" id="particles"></div>
-
-  <header>
-    <div class="logo-container">
-      <img src="images/logo.png" alt="Logo de Esentia" class="logo" />
-    </div>
-    <h1>🌿 Catálogo de Productos Esentia</h1>
-  </header>
+  <!-- ... tu HTML existente hasta </main> ... -->
 
   <main class="contenedor">
     <!-- Loader -->
-    <div id="loader">
-      <div class="loader-spinner"></div>
-      <div class="loader-text">Cargando catálogo...</div>
+    <div id="loader" style="display:flex; justify-content:center; align-items:center; height:300px; color:#6c4ba3; font-size:1.5rem; font-weight:bold;">
+      <div style="text-align:center;">
+        <div style="font-size:3rem; margin-bottom:10px;">⏳</div>
+        <div>Cargando catálogo...</div>
+      </div>
     </div>
 
     <!-- Filtros -->
-    <div id="filtros-container">
-      <button id="btnMostrarDisponibles" class="btn-filtro activo">
-        <span>📦 Disponibles</span>
-      </button>
-      <button id="btnMostrarTodos" class="btn-filtro">
-        <span>📚 Ver todo el catálogo</span>
-      </button>
+    <div style="text-align:center; margin:1.5rem 0; display:none;" id="filtros-container">
+      <button id="btnMostrarDisponibles" class="btn-filtro activo">📦 Disponibles</button>
+      <button id="btnMostrarTodos" class="btn-filtro">📚 Ver todo el catálogo</button>
     </div>
 
-    <!-- Contenedor de productos -->
+    <!-- Productos -->
     <div id="productos-hogar"></div>
 
-    <!-- Sección: Más opciones -->
-    <div class="opciones-extra">
-      <h3>¿No encuentras lo que buscas?</h3>
-      <button onclick="solicitarAroma()" class="btn-aroma">
-        <span>🌸 Solicitar un aroma especial</span>
-      </button>
-      <button onclick="recomendarPorWhatsApp()" class="btn-whatsapp">
-        <span>📲 Recomendar a un amigo por WhatsApp</span>
-      </button>
-      <button onclick="copiarEnlaceRecomendacion()" class="btn-copiar">
-        <span>🔗 Copiar enlace para recomendar</span>
-      </button>
+    <!-- Nuevas funciones -->
+    <div style="text-align:center; margin:2rem 0; padding:1.2rem; background:#f9f6ff; border-radius:12px; max-width:600px; margin-left:auto; margin-right:auto;">
+      <h3 style="margin-top:0; color:#6c4ba3;">¿No encuentras lo que buscas?</h3>
+      <button onclick="solicitarAroma()" style="display:block; width:100%; padding:10px; margin:8px 0; background:#6c4ba3; color:white; border:none; border-radius:8px; cursor:pointer;">🌸 Solicitar un aroma especial</button>
+      <button onclick="recomendarPorWhatsApp()" style="display:block; width:100%; padding:10px; margin:8px 0; background:#25D366; color:white; border:none; border-radius:8px; cursor:pointer;">📲 Recomendar a un amigo por WhatsApp</button>
+      <button onclick="copiarEnlaceRecomendacion()" style="display:block; width:100%; padding:10px; margin:8px 0; background:#4caf50; color:white; border:none; border-radius:8px; cursor:pointer;">🔗 Copiar enlace para recomendar</button>
     </div>
   </main>
 
-  <!-- Modal de Producto -->
+  <!-- ... tus modales existentes (modalProducto, modalCarrito) ... -->
+  <!-- Modal Producto -->
   <div id="modalProducto" class="modal-carrito">
-    <div class="modal-contenido">
-      <span onclick="cerrarModalProducto()" class="cerrar">&times;</span>
-      <h2 id="modalProductoNombre"></h2>
-      <img id="modalProductoImagen" src="" alt="Producto">
-      <p id="modalProductoInfo"></p>
-      <p id="modalProductoUso"></p>
-      <p id="modalProductoPrecio"></p>
-      <div id="modalProductoCalificacion"></div>
-      <div id="selectorVariante"></div>
-      <p id="modalProductoStock"></p>
-      <button id="botonAgregarDesdeModal" class="btn-agregar" onclick="agregarDesdeModal()">
-        <span>🛒 Agregar al carrito</span>
-      </button>
-    </div>
+    <!-- ... contenido existente ... -->
   </div>
 
-  <!-- Modal Carrito -->
+  <!-- Modal Carrito (grande) -->
   <div id="modalCarrito" class="modal-carrito">
-    <div class="modal-contenido">
-      <span onclick="cerrarModalCarrito()" class="cerrar">&times;</span>
-      <h2>🛒 Tu Carrito</h2>
-      <ul id="listaCarritoModal"></ul>
-      <p id="totalModal"><strong>Total:</strong> ₡0</p>
-      <button onclick="finalizarPedido()" class="btn-whatsapp" style="width:100%; padding:14px; margin-top:10px;">
-        <span>📲 Enviar Pedido por WhatsApp</span>
-      </button>
-    </div>
+    <!-- ... contenido existente ... -->
   </div>
 
-  <!-- Botón flotante del carrito -->
-  <button id="botonCarrito" onclick="abrirModalCarrito()">
+  <!-- BOTÓN FLOTANTE CARRITO (opcional: puedes mantenerlo o quitarlo) -->
+  <button id="botonCarrito" onclick="abrirMiniCarrito()" style="position:fixed; top:20px; right:20px; background:#6c4ba3; color:white; border:none; border-radius:50%; width:52px; height:52px; font-size:1.7rem; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.15); z-index:999;">
     🛒 <span id="contadorCarrito">0</span>
   </button>
 
-  <!-- Toast -->
-  <div id="toast"></div>
+  <!-- TOAST -->
+  <div id="toast" style="position:fixed; bottom:20px; right:20px; background:#4caf50; color:white; padding:12px 16px; border-radius:6px; display:none; z-index:10000;"></div>
 
-  <!-- Popup de carrito rápido -->
-  <div id="popupCarritoRapido">
-    <div style="display:flex; gap:12px; margin-bottom:1rem;">
-      <img id="popupImagen" src="" alt="Producto">
-      <div style="flex:1;">
-        <h3 id="popupNombre"></h3>
-        <p id="popupPrecio" style="font-weight:bold; color:var(--color-primary);"></p>
-        <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
-          <label style="font-size:0.9rem;">Cantidad:</label>
-          <input type="number" id="popupCantidad" min="1" value="1">
-        </div>
-      </div>
+  <!-- MINI CARRITO LATERAL -->
+  <div id="miniCarritoOverlay"></div>
+  <div id="miniCarrito">
+    <div class="mini-header">
+      <h3>🛒 Carrito</h3>
+      <button class="mini-close" onclick="cerrarMiniCarrito()">×</button>
     </div>
-    <div style="display:flex; gap:10px;">
-      <button id="popupVerCarrito" style="flex:1;">
-        <span>🛒 Ver carrito</span>
-      </button>
-      <button id="popupCerrar" style="flex:1;">
-        <span>Cerrar</span>
-      </button>
+    <div id="miniCarritoContenido"></div>
+    <div class="mini-total" id="miniTotal">Total: ₡0</div>
+    <div class="mini-footer">
+      <button onclick="abrirModalCarritoCompleto()">Ver carrito completo</button>
     </div>
   </div>
 
+  <!-- ... Firebase y Scripts ... -->
   <!-- 🔥 Firebase -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
-      authDomain: "esentiacreditos-8345f.firebaseapp.com",
-      projectId: "esentiacreditos-8345f",
-      storageBucket: "esentiacreditos-8345f.firebasestorage.app",
-      messagingSenderId: "888658236080",
-      appId: "1:888658236080:web:506e5e2085b5a452dba175"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const stockCollection = collection(db, "stock");
-
-    window.stockCollection = stockCollection;
-    let inventario = {};
-    window.inventario = inventario;
-
-    async function cargarInventario() {
-      try {
-        const snapshot = await getDocs(stockCollection);
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          inventario[data.nombre] = data.cantidad;
-        });
-        if (typeof intentarRenderizar === "function") {
-          intentarRenderizar();
-        }
-      } catch (error) {
-        console.error("Error cargando inventario:", error);
-        if (typeof mostrarErrorCarga === "function") {
-          mostrarErrorCarga();
-        }
-      }
-    }
-
-    window.actualizarCatalogoConStock = function() {
-      document.querySelectorAll(".producto-card").forEach(card => {
-        const nombre = card.dataset.nombre;
-        const stock = inventario[nombre] ?? 0;
-        const stockLabel = card.querySelector(".stock-label");
-        const boton = card.querySelector(".btn-agregar");
-        if (stock > 0) {
-          stockLabel.innerHTML = `<span style="color:#10b981;">✅ Disponible: ${stock}</span>`;
-          if (boton) boton.disabled = false;
-        } else {
-          stockLabel.innerHTML = `<span style="color:#ef4444;">❌ Agotado</span>`;
-          if (boton) boton.disabled = true;
-        }
-      });
-    };
-
-    window.actualizarModalConStock = function(nombre) {
-      const stock = inventario[nombre] ?? 0;
-      const stockEl = document.getElementById("modalProductoStock");
-      const botonModal = document.getElementById("botonAgregarDesdeModal");
-      if (stock > 0) {
-        stockEl.innerHTML = `<span style="color:#10b981;">Disponible: ${stock} unidades</span>`;
-        botonModal.disabled = false;
-      } else {
-        stockEl.innerHTML = `<span style="color:#ef4444;">Agotado</span>`;
-        botonModal.disabled = true;
-      }
-    };
-
-    document.addEventListener("DOMContentLoaded", cargarInventario);
+    // ... tu código de Firebase igual que antes ...
   </script>
 
-  <!-- ✅ Script principal -->
   <script>
-    // Crear partículas flotantes
-    function crearParticulas() {
-      const particlesContainer = document.getElementById('particles');
-      const particleCount = 30;
-      
-      for (let i = 0; i < particleCount; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.left = Math.random() * 100 + '%';
-        particle.style.animationDelay = Math.random() * 15 + 's';
-        particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
-        particlesContainer.appendChild(particle);
-      }
+    // ... todo tu código JS principal ...
+
+    // === NUEVO: FUNCIONES DEL MINI CARRITO ===
+    function abrirMiniCarrito() {
+      document.getElementById('miniCarrito').classList.add('visible');
+      document.getElementById('miniCarritoOverlay').classList.add('visible');
+      renderMiniCarrito();
     }
 
-    crearParticulas();
-
-    let carrito = [];
-    let productos = [];
-    let modoVisualizacion = "disponibles";
-    let productoSeleccionado = null;
-
-    const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
-
-    fetch(URL_ESENCIA)
-      .then(res => res.json())
-      .then(data => {
-        productos = data;
-        intentarRenderizar();
-      })
-      .catch(err => {
-        console.error("Error cargando productos:", err);
-        mostrarErrorCarga();
-      });
-
-    function renderizarProductos() {
-      const container = document.getElementById("productos-hogar");
-      const loader = document.getElementById("loader");
-      const filtrosContainer = document.getElementById("filtros-container");
-
-      if (!container || !loader) return;
-
-      loader.style.display = "none";
-      if (filtrosContainer) filtrosContainer.style.display = "block";
-      container.innerHTML = "";
-
-      const fila = document.createElement("div");
-      fila.className = "productos";
-
-      const productosFiltrados = productos.filter(producto => {
-        if (!producto.disponible) return false;
-        if (modoVisualizacion === "disponibles") {
-          const stock = inventario[producto.nombre] ?? 0;
-          return stock > 0;
-        }
-        return true;
-      });
-
-      productosFiltrados.forEach(producto => {
-        const card = document.createElement("div");
-        card.className = "producto-card";
-        card.dataset.nombre = producto.nombre;
-        card.onclick = () => abrirModalProducto(producto);
-
-        const img = document.createElement("img");
-        img.src = producto.imagen || "images/default.png";
-        img.alt = producto.nombre;
-        img.className = "producto-imagen";
-
-        const nombre = document.createElement("h3");
-        nombre.className = "producto-nombre";
-        nombre.textContent = producto.nombre;
-
-        const info = document.createElement("p");
-        info.className = "producto-info";
-        info.textContent = producto.informacion || "Sin descripción";
-
-        const precio = document.createElement("p");
-        precio.className = "producto-precio";
-        precio.textContent = `₡${producto.precio.toLocaleString()}`;
-
-        const calificacion = document.createElement("div");
-        calificacion.className = "calificacion";
-        calificacion.textContent = "⭐".repeat(producto.calificacion || 5);
-
-        const stockLabel = document.createElement("p");
-        stockLabel.className = "stock-label";
-        const stock = inventario[producto.nombre] ?? 0;
-        if (stock > 0) {
-          stockLabel.innerHTML = `<span style="color:#10b981;">✅ Disponible: ${stock}</span>`;
-        } else {
-          stockLabel.innerHTML = `<span style="color:#ef4444;">❌ Agotado</span>`;
-        }
-
-        const boton = document.createElement("button");
-        boton.className = "btn-agregar";
-        boton.innerHTML = `<span>🛒 Agregar al carrito</span>`;
-        boton.disabled = stock <= 0;
-        boton.onclick = (e) => {
-          e.stopPropagation();
-          agregarAlCarrito(producto);
-        };
-
-        card.appendChild(img);
-        card.appendChild(nombre);
-        card.appendChild(info);
-        card.appendChild(precio);
-        card.appendChild(calificacion);
-        card.appendChild(stockLabel);
-        card.appendChild(boton);
-
-        fila.appendChild(card);
-      });
-
-      container.appendChild(fila);
-      actualizarBotonesFiltro();
+    function cerrarMiniCarrito() {
+      document.getElementById('miniCarrito').classList.remove('visible');
+      document.getElementById('miniCarritoOverlay').classList.remove('visible');
     }
 
-    function actualizarBotonesFiltro() {
-      const btnDisponibles = document.getElementById("btnMostrarDisponibles");
-      const btnTodos = document.getElementById("btnMostrarTodos");
-      
-      if (modoVisualizacion === "disponibles") {
-        btnDisponibles?.classList.add("activo");
-        btnTodos?.classList.remove("activo");
-      } else {
-        btnDisponibles?.classList.remove("activo");
-        btnTodos?.classList.add("activo");
-      }
-    }
-
-    function abrirModalProducto(producto) {
-      productoSeleccionado = producto;
-      document.getElementById("modalProductoNombre").textContent = producto.nombre;
-      document.getElementById("modalProductoImagen").src = producto.imagen || "images/default.png";
-      document.getElementById("modalProductoInfo").textContent = producto.informacion || "Sin descripción";
-      document.getElementById("modalProductoUso").textContent = producto.uso ? `Uso: ${producto.uso}` : "";
-      document.getElementById("modalProductoPrecio").textContent = `₡${producto.precio.toLocaleString()}`;
-      document.getElementById("modalProductoCalificacion").textContent = "⭐".repeat(producto.calificacion || 5);
-      
-      actualizarModalConStock(producto.nombre);
-      
-      document.getElementById("modalProducto").style.display = "flex";
-    }
-
-    function cerrarModalProducto() {
-      document.getElementById("modalProducto").style.display = "none";
-      productoSeleccionado = null;
-    }
-
-    function agregarDesdeModal() {
-      if (productoSeleccionado) {
-        agregarAlCarrito(productoSeleccionado);
-        cerrarModalProducto();
-      }
-    }
-
-    function agregarAlCarrito(producto) {
-      const stock = inventario[producto.nombre] ?? 0;
-      if (stock <= 0) {
-        mostrarToast("⚠️ Producto agotado", "#ef4444");
-        return;
-      }
-
-      const existe = carrito.find(item => item.nombre === producto.nombre);
-      if (existe) {
-        existe.cantidad++;
-      } else {
-        carrito.push({ ...producto, cantidad: 1 });
-      }
-
-      guardarCarrito();
-      renderCarrito();
-      mostrarToast("✅ Producto agregado al carrito", "#10b981");
-      mostrarPopupCarritoRapido(producto);
-    }
-
-    function mostrarPopupCarritoRapido(producto) {
-      const popup = document.getElementById("popupCarritoRapido");
-      document.getElementById("popupImagen").src = producto.imagen || "images/default.png";
-      document.getElementById("popupNombre").textContent = producto.nombre;
-      document.getElementById("popupPrecio").textContent = `₡${producto.precio.toLocaleString()}`;
-      document.getElementById("popupCantidad").value = 1;
-      
-      popup.style.display = "block";
-      
-      document.getElementById("popupVerCarrito").onclick = () => {
-        popup.style.display = "none";
-        abrirModalCarrito();
-      };
-      
-      document.getElementById("popupCerrar").onclick = () => {
-        popup.style.display = "none";
-      };
-      
-      setTimeout(() => {
-        popup.style.display = "none";
-      }, 5000);
-    }
-
-    function renderCarrito() {
-      const lista = document.getElementById("listaCarritoModal");
-      const total = document.getElementById("totalModal");
-      const contador = document.getElementById("contadorCarrito");
-
-      lista.innerHTML = "";
-      let suma = 0;
-
-      carrito.forEach((item, index) => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-          <div>
-            <strong>${item.nombre}</strong><br>
-            <small>₡${item.precio.toLocaleString()} x ${item.cantidad}</small>
-          </div>
-          <button onclick="eliminarDelCarrito(${index})" style="background:#ef4444; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;">
-            🗑️
-          </button>
-        `;
-        lista.appendChild(li);
-        suma += item.precio * item.cantidad;
-      });
-
-      total.innerHTML = `<strong>Total:</strong> ₡${suma.toLocaleString()}`;
-      contador.textContent = carrito.reduce((acc, item) => acc + item.cantidad, 0);
-    }
-
-    function eliminarDelCarrito(index) {
-      carrito.splice(index, 1);
-      guardarCarrito();
-      renderCarrito();
-      mostrarToast("🗑️ Producto eliminado", "#ef4444");
-    }
-
-    function guardarCarrito() {
-      localStorage.setItem("carritoEsentia", JSON.stringify(carrito));
-    }
-
-    function cargarCarrito() {
-      const guardado = localStorage.getItem("carritoEsentia");
-      if (guardado) {
-        carrito = JSON.parse(guardado);
-        renderCarrito();
-      }
-    }
-
-    async function finalizarPedido() {
+    function renderMiniCarrito() {
+      const contenedor = document.getElementById('miniCarritoContenido');
+      const totalEl = document.getElementById('miniTotal');
       if (carrito.length === 0) {
-        mostrarToast("⚠️ El carrito está vacío", "#ef4444");
+        contenedor.innerHTML = '<p style="text-align:center; padding:20px; color:#666;">Tu carrito está vacío</p>';
+        totalEl.textContent = 'Total: ₡0';
         return;
       }
 
-      let mensaje = "🛒 *Pedido Esentia*%0A%0A";
       let total = 0;
+      let html = '';
+      carrito.forEach((item, index) => {
+        const subtotal = item.precio * item.cantidad;
+        total += subtotal;
+        // Intentar obtener imagen del producto (si no, usa logo o placeholder)
+        const producto = productos.find(p => p.nombre === item.nombre.split(' ')[0]) || 
+                        productos.find(p => p.nombre === item.nombre);
+        const imagen = producto ? producto.imagen : 'images/logo.png';
 
-      carrito.forEach(item => {
-        mensaje += `• ${item.nombre}%0A  Cantidad: ${item.cantidad}%0A  Precio: ₡${item.precio.toLocaleString()}%0A  Subtotal: ₡${(item.precio * item.cantidad).toLocaleString()}%0A%0A`;
-        total += item.precio * item.cantidad;
-      });
-
-      mensaje += `*Total: ₡${total.toLocaleString()}*`;
-
-      window.open(`https://wa.me/50672952454?text=${mensaje}`, "_blank");
-
-      try {
-        const { updateDoc, doc } = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");
-        
-        for (const item of carrito) {
-          const stockActual = inventario[item.nombre] ?? 0;
-          const nuevoStock = Math.max(0, stockActual - item.cantidad);
-          
-          const snapshot = await getDocs(stockCollection);
-          snapshot.forEach(async (docSnap) => {
-            if (docSnap.data().nombre === item.nombre) {
-              await updateDoc(doc(stockCollection, docSnap.id), {
-                cantidad: nuevoStock
-              });
-              inventario[item.nombre] = nuevoStock;
-            }
-          });
-        }
-
-        actualizarCatalogoConStock();
-        carrito = [];
-        renderCarrito();
-        mostrarToast("✅ Pedido enviado y stock actualizado", "#10b981");
-      } catch (e) {
-        console.error("Error:", e);
-        mostrarToast("⚠️ Error al actualizar stock", "#ef4444");
-      }
-    }
-function mostrarToast(mensaje, color = "#10b981") {
-      const t = document.getElementById("toast");
-      t.textContent = mensaje;
-      t.style.backgroundColor = color;
-      t.style.display = "block";
-      t.style.opacity = "1";
-      setTimeout(() => {
-        t.style.transition = "opacity 0.5s";
-        t.style.opacity = "0";
-        setTimeout(() => { t.style.display = "none"; t.style.transition = ""; }, 500);
-      }, 3000);
-    }
-
-    function abrirModalCarrito() {
-      renderCarrito();
-      document.getElementById("modalCarrito").style.display = "flex";
-    }
-
-    function cerrarModalCarrito() {
-      document.getElementById("modalCarrito").style.display = "none";
-    }
-
-    function intentarRenderizar() {
-      if (productos.length > 0 && typeof inventario !== "undefined" && Object.keys(inventario).length > 0) {
-        renderizarProductos();
-      } else {
-        setTimeout(intentarRenderizar, 100);
-      }
-    }
-
-    function mostrarErrorCarga() {
-      const loader = document.getElementById("loader");
-      if (loader) {
-        loader.innerHTML = `
-          <div style="text-align:center;">
-            <div style="font-size:3rem; margin-bottom:10px;">⚠️</div>
-            <div class="loader-text">Error al cargar el catálogo. Por favor, recarga la página.</div>
+        html += `
+          <div class="mini-producto">
+            <img src="${imagen}" alt="${item.nombre}">
+            <div class="mini-info">
+              <h4>${item.nombre}</h4>
+              <div class="precio">₡${item.precio.toLocaleString()}</div>
+              <div class="mini-cantidad">
+                <button onclick="cambiarCantidadMini(${index}, -1)">−</button>
+                <span>${item.cantidad}</span>
+                <button onclick="cambiarCantidadMini(${index}, 1)">+</button>
+              </div>
+            </div>
           </div>
         `;
+      });
+      contenedor.innerHTML = html;
+      totalEl.textContent = `Total: ₡${Math.round(total).toLocaleString()}`;
+    }
+
+    function cambiarCantidadMini(index, cambio) {
+      if (cambio === -1 && carrito[index].cantidad <= 1) {
+        carrito.splice(index, 1);
+      } else {
+        carrito[index].cantidad += cambio;
       }
+      renderCarrito(); // Actualiza carrito principal y localStorage
+      renderMiniCarrito(); // Actualiza mini carrito
     }
 
-    // 🌸 Recomendación y aromas
-    function solicitarAroma() {
-      const m = "Hola Wilber 👋%0A%0ANo encontré un aroma que busco en el catálogo.%0A¿Podrías ayudarme a conseguirlo?%0A%0A¡Gracias! 🌿";
-      window.open(`https://wa.me/50672952454?text=${m}`, "_blank");
+    function abrirModalCarritoCompleto() {
+      cerrarMiniCarrito();
+      abrirModalCarrito(); // Usa tu función existente
     }
 
-    function recomendarPorWhatsApp() {
-      const url = encodeURIComponent(window.location.href);
-      const m = "¡Hola! 👋%0AQuiero recomendarte Esentia, una marca con productos naturales y esencias hermosas 🌿%0A%0AMira su catálogo aquí:%0A" + url + "%0A%0A¡Vale mucho la pena! 💜";
-      window.open(`https://wa.me/?text=${m}`, "_blank");
+    // Cerrar mini carrito al hacer clic fuera
+    document.getElementById('miniCarritoOverlay').addEventListener('click', cerrarMiniCarrito);
+
+    // === MODIFICAR agregarCarrito para que muestre el mini carrito ===
+    function agregarCarrito(nombre, precio) {
+      const existente = carrito.find(item => item.nombre === nombre);
+      if (existente) {
+        existente.cantidad += 1;
+      } else {
+        carrito.push({ nombre, precio, cantidad: 1 });
+      }
+      renderCarrito();
+      mostrarToast(`✅ "${nombre}" agregado`);
+
+      // ✨ MOSTRAR MINI CARRITO AUTOMÁTICAMENTE
+      setTimeout(() => {
+        abrirMiniCarrito();
+      }, 300);
     }
 
-    function copiarEnlaceRecomendacion() {
-      navigator.clipboard.writeText(window.location.href)
-        .then(() => mostrarToast("✅ Enlace copiado", "#10b981"))
-        .catch(() => mostrarToast("⚠️ No se pudo copiar", "#ef4444"));
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      cargarCarrito();
-      document.getElementById("btnMostrarDisponibles")?.addEventListener("click", () => {
-        modoVisualizacion = "disponibles";
-        renderizarProductos();
-      });
-      document.getElementById("btnMostrarTodos")?.addEventListener("click", () => {
-        modoVisualizacion = "todos";
-        renderizarProductos();
-      });
-    });
+    // ... resto de tus funciones (renderCarrito, finalizarPedido, etc.) ...
   </script>
 </body>
 </html>
