@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ruleta Esentia 🎁</title>
+
+  <!--
+    Mejora: Se recomienda mover el CSS a un archivo externo (style.css)
+    para una mejor separación de preocupaciones y caché del navegador.
+  -->
+  <style>
+  /* ------------------- Estilos Generales ------------------- */
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fuente más estándar */
+    background: #f8f9fa;
+  }
+
+  .modal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.88);
+    z-index: 1000;
+  }
+
+  .titulo {
+    color: white;
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    text-shadow: 0 3px 5px rgba(0,0,0,0.5);
+  }
+
+  .resultado {
+    margin-top: 25px;
+    font-size: 19px;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+    min-height: 60px;
+    line-height: 1.4;
+  }
+
+  .codigo {
+    background: rgba(0,0,0,0.4);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 15px;
+    margin-top: 10px;
+    display: inline-block;
+  }
+
+  /* ------------------- Nueva Interfaz de Premios (Lista) ------------------- */
+  .premios-lista {
+    width: 300px;
+    margin: 20px auto;
+    padding: 0;
+    list-style: none;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  }
+
+  .premio-item {
+    padding: 12px 15px;
+    margin-bottom: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-weight: 600;
+    text-align: left;
+    transition: background 0.1s ease-in-out, transform 0.1s ease-in-out;
+    border-left: 5px solid transparent;
+  }
+
+  .premio-item.highlight {
+    background: #e63946; /* Color principal de la marca */
+    transform: scale(1.05);
+    border-left: 5px solid #fff;
+    box-shadow: 0 0 10px rgba(230, 57, 70, 0.8);
+  }
+
+  /* ------------------- Botón Girar ------------------- */
+  #girar-btn {
+    margin-top: 25px;
+    padding: 13px 26px;
+    font-size: 18px;
+    background: #e63946;
+    color: white;
+    border: none;
+    border-radius: 40px;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-weight: bold;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+  }
+
+  #girar-btn:hover:not(:disabled) {
+    background: #d90429;
+  }
+
+  #girar-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* ------------------- Modal de actualización (glass effect) ------------------- */
+  .modal-actualizar {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(3px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10010;
+  }
+
+  .modal-actualizar.hidden {
+    display: none;
+  }
+
+  .modal-contenido {
+    width: 360px;
+    padding: 22px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+    backdrop-filter: blur(18px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+
+  .modal-contenido h2 {
+    text-align: center;
+    margin: 0 0 12px 0;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .modal-contenido label {
+    display: block;
+    margin-top: 8px;
+    font-size: 13px;
+    color: #e6eef6;
+  }
+
+  .modal-contenido input {
+    width: 100%;
+    padding: 10px 12px;
+    margin-top: 6px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    background: rgba(255,255,255,0.92);
+    color: #111;
+    box-sizing: border-box;
+    font-size: 14px;
+  }
+
+  .modal-botones {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 14px;
+  }
+
+  .btn-cancelar {
+    padding: 10px 14px;
+    background: rgba(255,59,59,0.95);
+    border: none;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    flex-grow: 1; /* Mejora: para que ocupe espacio de forma flexible */
+    margin-right: 5px;
+  }
+
+  .btn-guardar {
+    padding: 10px 14px;
+    background: rgba(0,200,81,0.95);
+    border: none;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    flex-grow: 1; /* Mejora: para que ocupe espacio de forma flexible */
+    margin-left: 5px;
+  }
+
+  .nota-pequena {
+    font-size: 12px;
+    color: #dfeaf6;
+    margin-top: 8px;
+    text-align: center;
+  }
+
+  .modal-confirm {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 13px;
+    color: #dff7e0;
+  }
+
+  @media (max-width: 420px) {
+    .modal-contenido { width: 92%; padding: 16px; }
+    .premios-lista { width: 90%; }
+  }
+  </style>
+</head>
+
+<body>
+    <header>
+    <div class="logo-container">
+      <img src="images/logo.png" alt="Logo de Esentia" class="logo" />
+    </div>
+    <h1>🌿 Ruleta Esentia</h1>
+  </header>
+
+
+  <div class="modal">
+    <div style="text-align: center; color: white; max-width: 90%;">
+
+      <div class="titulo">🎁 Ruleta Esentia</div>
+
+      <!-- Nuevo Contenedor de Premios (Lista) -->
+      <ul id="premiosLista" class="premios-lista">
+        <!-- Los premios se generan aquí por JavaScript -->
+      </ul>
+
+      <button id="girar-btn">¡Girar por tu premio!</button>
+      <div id="resultado" class="resultado"></div>
+
+      <div style="margin-top: 15px; font-size: 14px; color: #bbb;">
+        Por tu compra de ₡10,000 o más en Esentia, tienes la oportunidad de ganar premios exclusivos.<br>
+        ¡Gira la ruleta y descubre tu premio! 🎉
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal Actualizar Datos (glass) -->
+  <div id="modalActualizar" class="modal-actualizar hidden" aria-hidden="true">
+    <div class="modal-contenido" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h2 id="modalTitle">Actualizar información</h2>
+
+      <label for="updNombre">Nombre</label>
+      <input id="updNombre" type="text" placeholder="Nombre completo" autocomplete="name">
+
+      <label for="updCedula">Cédula</label>
+      <input id="updCedula" type="text" placeholder="Cédula (opcional)" inputmode="numeric" autocomplete="off">
+
+      <label for="updTelefono">Teléfono</label>
+      <input id="updTelefono" type="text" placeholder="Teléfono (opcional)" inputmode="tel" autocomplete="tel">
+
+      <div class="nota-pequena">Debes ingresar al menos Cédula o Teléfono para continuar.</div>
+
+      <div id="modalConfirm" class="modal-confirm" style="display:none;">Datos guardados ✓</div>
+
+      <div class="modal-botones">
+        <button class="btn-cancelar" id="btnCancelarUpd">Cancelar</button>
+        <button class="btn-guardar" id="btnGuardarUpd">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!--
+    Mejora: Se recomienda mover el código JavaScript a un archivo externo (script.js)
+    para una mejor separación de preocupaciones y mantenimiento.
+  -->
+  <script type="module">
+    /*
+      ¡IMPORTANTE!
+      La clave de API de Firebase (apiKey) está expuesta en el código fuente.
+      Esto es una vulnerabilidad de seguridad. Se recomienda encarecidamente:
+      1. Usar un entorno de servidor (Node.js, Vercel Functions, etc.) para interactuar con Firestore.
+      2. Si se debe usar el cliente web, configurar reglas de seguridad de Firestore
+         extremadamente estrictas para evitar accesos no autorizados.
+    */
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+      authDomain: "esentiacreditos-8345f.firebaseapp.com",
+      projectId: "esentiacreditos-8345f",
+      storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+      messagingSenderId: "888658236080",
+      appId: "1:888658236080:web:506e5e2085b5a452dba175"
+    };
+
+    // Mejora: Se actualizó la versión de Firebase a la última estable (10.x.x)
+    // y se usó la sintaxis de importación recomendada.
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import {
+      getFirestore, doc, getDoc, updateDoc, collection,
+      query, where, getDocs
+    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    /* ------------ Proxy API (deployed) ------------ */
+    const HACIENDA_PROXY = "https://esentia-proxy.vercel.app/hacienda?cedula=";
+
+    /**
+     * Obtiene el nombre de una persona usando un proxy y su cédula.
+     * @param {string} cedula - El número de cédula.
+     * @returns {Promise<string|null>} El nombre o null si falla.
+     */
+    async function obtenerNombreDesdeProxy(cedula) {
+      if (!cedula) return null; // Error: No buscar si no hay cédula
+      try {
+        const url = HACIENDA_PROXY + encodeURIComponent(cedula.trim());
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error(`Proxy responded with status: ${resp.status}`);
+        const data = await resp.json();
+        if (data && data.nombre) {
+          return data.nombre.trim();
+        }
+      } catch (err) {
+        console.warn("Proxy/Hacienda lookup failed:", err);
+      }
+      return null;
+    }
+
+    /* ------------ Generar Código ------------ */
+
+    /**
+     * Genera el enlace de WhatsApp con el mensaje predefinido.
+     * @param {object} clienteData - Datos del cliente (nombre, cedula, telefono).
+     * @param {string} premio - Nombre del premio.
+     * @param {string} codigo - Código de canje.
+     * @returns {string} URL de WhatsApp.
+     */
+    function generarLinkWhatsApp(clienteData, premio, codigo) {
+      // Número de teléfono de destino (debe ser el número de la empresa)
+      // Se usa un placeholder, el usuario debe reemplazarlo con el número real.
+      const numeroDestino = "50672952454"; // Reemplazar con el número de WhatsApp de Esentia
+
+      const mensaje = `
+🎉 ¡FELICIDADES! 🎉
+
+¡El cliente ${clienteData.nombre} ha ganado un premio en la Ruleta Esentia!
+
+- Premio Obtenido: ${premio}
+- Código de Canje: ${codigo}
+
+Datos del Cliente:
+- Cédula: ${clienteData.cedula || 'No proporcionada'}
+- Teléfono: ${clienteData.telefono || 'No proporcionado'}
+
+⚠️ IMPORTANTE: Este premio será efectivo en la PRÓXIMA COMPRA del cliente.
+`;
+      return `https://wa.me/${numeroDestino}?text=${encodeURIComponent(mensaje.trim())}`;
+    }
+    /**
+     * Genera un código de canje único.
+     * @param {string} valor - Cédula o teléfono del cliente.
+     * @param {string} premio - Nombre del premio.
+     * @returns {string} El código de canje.
+     */
+    function generarCodigo(valor, premio) {
+      let sufijo = "UNK";
+      if (premio.includes("5%")) sufijo = "5PCT";
+      else if (premio.includes("10%")) sufijo = "10PCT";
+      else if (premio.includes("50%")) sufijo = "50PCT";
+      else if (premio.includes("Difusor")) sufijo = "DIFF5";
+      else sufijo = "SUE"; // Más suerte la próxima vez
+
+      // Mejora: Se añade un timestamp corto para mayor unicidad
+      const timestamp = Date.now().toString(36).slice(-4).toUpperCase();
+      return `ES-${valor.slice(-4)}-${sufijo}-${timestamp}`.toUpperCase();
+    }
+
+    /* ------------ Probabilidades ------------ */
+    /**
+     * Lista de premios con sus nombres y probabilidades.
+     */
+    const premiosConProbabilidad = [
+      { nombre: "Más suerte la próxima vez", prob: 50 },
+      { nombre: "5% de descuento", prob: 30 },
+      { nombre: "10% de descuento", prob: 15 },
+      { nombre: "50% de descuento", prob: 3 },
+      { nombre: "Difusor de Auto", prob: 2 }
+    ];
+
+    /**
+     * Sortear un premio basado en probabilidades.
+     * @returns {string} El nombre del premio sorteado.
+     */
+    let configuracionPremios = null;
+
+async function cargarConfiguracionPremios() {
+  try {
+    const res = await fetch("https://wil1979.github.io/esentia-factura/ruleta-esentia/premios.json");
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn("Error cargando premios.json:", err);
+  }
+  // Fallback
+  return { premios: [/* ... */] };
+}
+
+function sortearPremio(premiosConProbabilidad) {
+  const total = premiosConProbabilidad.reduce((sum, p) => sum + p.prob, 0);
+  let rand = Math.random() * total;
+  for (const premio of premiosConProbabilidad) {
+    if (rand < premio.prob) return premio.nombre;
+    rand -= premio.prob;
+  }
+  return premiosConProbabilidad[0].nombre;
+}
+
+// Uso en tu flujo principal:
+async function registrarPremio(cedulaIngresada) {
+  const config = await cargarConfiguracionPremios();
+  const premio = sortearPremio(config.premios);
+  // ... resto del código
+}
+
+    /* ------------ Modal Actualizar Datos ------------ */
+    const modalActualizar = document.getElementById("modalActualizar");
+    const btnCancelarUpd = document.getElementById("btnCancelarUpd");
+    const btnGuardarUpd = document.getElementById("btnGuardarUpd");
+    const updNombre = document.getElementById("updNombre");
+    const updCedula = document.getElementById("updCedula");
+    const updTelefono = document.getElementById("updTelefono");
+    const modalConfirm = document.getElementById("modalConfirm");
+
+    let resolveModalPromise;
+    let rejectModalPromise;
+
+    /**
+     * Abre el modal para actualizar los datos del cliente.
+     * @param {object} clienteData - Datos actuales del cliente.
+     * @param {object} clienteRef - Referencia al documento de Firestore.
+     * @returns {Promise<void>} Resuelve cuando se guardan los datos, rechaza si se cancela.
+     */
+    function abrirModalActualizar(clienteData, clienteRef) {
+      return new Promise((resolve, reject) => {
+        resolveModalPromise = resolve;
+        rejectModalPromise = reject;
+
+        // Limpiar y pre-llenar campos
+        updNombre.value = clienteData.nombre || "";
+        updCedula.value = clienteData.cedula || "";
+        updTelefono.value = clienteData.telefono || "";
+        modalConfirm.style.display = "none";
+
+        // Mostrar modal
+        modalActualizar.classList.remove("hidden");
+        modalActualizar.setAttribute("aria-hidden", "false");
+
+        // Listener para Cancelar
+        const cancelarHandler = () => {
+          modalActualizar.classList.add("hidden");
+          modalActualizar.setAttribute("aria-hidden", "true");
+          rejectModalPromise(new Error("Actualización de datos cancelada por el usuario."));
+          removeListeners();
+        };
+
+        // Listener para Guardar
+        const guardarHandler = async () => {
+          const nombre = updNombre.value.trim();
+          const cedula = updCedula.value.trim();
+          const telefono = updTelefono.value.trim();
+
+          if (!nombre) {
+            alert("El nombre es obligatorio.");
+            return;
+          }
+
+          if (!cedula && !telefono) {
+            alert("Debes ingresar al menos Cédula o Teléfono.");
+            return;
+          }
+
+          // Mejora: Validación básica de formato
+          if (cedula && isNaN(cedula)) {
+            alert("La cédula debe ser un valor numérico.");
+            return;
+          }
+          if (telefono && isNaN(telefono)) {
+            alert("El teléfono debe ser un valor numérico.");
+            return;
+          }
+
+          btnGuardarUpd.disabled = true;
+          btnCancelarUpd.disabled = true;
+
+          try {
+            // Normalizar datos antes de guardar
+            const cedulaLimpia = cedula.replace(/[^0-9]/g, '');
+            const telefonoLimpio = telefono.replace(/[^0-9]/g, '');
+
+            await updateDoc(clienteRef, {
+              nombre: nombre,
+              cedula: cedulaLimpia || null, // Guardar como null si está vacío
+              telefono: telefonoLimpio || null,
+              fechaActualizacion: new Date()
+            });
+
+            modalConfirm.style.display = "block";
+            setTimeout(() => {
+              modalActualizar.classList.add("hidden");
+              modalActualizar.setAttribute("aria-hidden", "true");
+              resolveModalPromise();
+              removeListeners();
+            }, 1000);
+
+          } catch (error) {
+            console.error("Error al guardar datos:", error);
+            alert("Error al guardar los datos. Inténtalo de nuevo.");
+            btnGuardarUpd.disabled = false;
+            btnCancelarUpd.disabled = false;
+          }
+        };
+
+        // Función para remover listeners y evitar duplicados
+        const removeListeners = () => {
+          btnCancelarUpd.removeEventListener("click", cancelarHandler);
+          btnGuardarUpd.removeEventListener("click", guardarHandler);
+        };
+
+        // Agregar listeners
+        btnCancelarUpd.addEventListener("click", cancelarHandler);
+        btnGuardarUpd.addEventListener("click", guardarHandler);
+      });
+    }
+
+    /* ------------ Lógica Principal de Registro ------------ */
+    /**
+     * Registra la participación del cliente y sortea el premio.
+     * @param {string} cedulaIngresada - Cédula ingresada por el usuario.
+     * @returns {Promise<object>} Objeto con el premio, código y estado de repetición.
+     */
+    async function registrarPremio(cedulaIngresada) {
+      let clienteRef;
+      let clienteData = {};
+      let telefonoIngresado = ""; // Se inicializa para el caso de que no haya cédula
+
+      // 1. Buscar por Cédula
+      if (cedulaIngresada) {
+        // Corrección: Asegurar que la cédula se almacena como cadena (string) en Firestore
+        // y que la búsqueda se hace sobre el valor de la cadena.
+        const cedulaLimpia = cedulaIngresada.replace(/[^0-9]/g, ''); // Eliminar caracteres no numéricos
+        const q = query(collection(db, "clientes"), where("cedula", "==", cedulaLimpia));
+        const snap = await getDocs(q);
+
+        if (!snap.empty) {
+          snap.forEach(docSnap => {
+            clienteRef = docSnap.ref;
+            clienteData = docSnap.data();
+          });
+        }
+      }
+
+      // 2. Si no se encontró por cédula, pedir teléfono y buscar por teléfono
+      if (!clienteRef) {
+        telefonoIngresado = prompt("No se encontró cliente con esa cédula. Ingresa tu número de teléfono (si no lo tiene, deja vacío):");
+        if (telefonoIngresado && telefonoIngresado.trim() !== "" && isNaN(telefonoIngresado.trim())) {
+          alert("Por favor ingresa un teléfono numérico válido o deja vacío.");
+          throw new Error("Teléfono inválido.");
+        }
+
+        if (telefonoIngresado) {
+          const telefonoLimpio = telefonoIngresado.trim().replace(/[^0-9]/g, ''); // Limpiar el teléfono
+          const q = query(collection(db, "clientes"), where("telefono", "==", telefonoLimpio));
+          const snap = await getDocs(q);
+
+          if (!snap.empty) {
+            snap.forEach(docSnap => {
+              clienteRef = docSnap.ref;
+              clienteData = docSnap.data();
+            });
+          }
+        }
+      }
+
+      // 3. Si no se encontró, crear nuevo cliente
+      if (!clienteRef) {
+        // Mejora: Pedir el nombre inmediatamente si es un cliente nuevo
+        const nombreNuevo = prompt("¡Cliente nuevo! Por favor, ingresa tu nombre completo:");
+        if (!nombreNuevo || nombreNuevo.trim() === "") {
+          throw new Error("El nombre es obligatorio para registrar un nuevo cliente.");
+        }
+
+        // Crear documento con ID temporal (o usar un ID generado por Firestore)
+        // Se usará un ID generado por Firestore para evitar colisiones
+        const newDocRef = doc(collection(db, "clientes"));
+        clienteRef = newDocRef;
+        // Corrección: Asegurar que los datos se guarden como string limpio
+        const cedulaLimpia = cedulaIngresada ? cedulaIngresada.replace(/[^0-9]/g, '') : null;
+        const telefonoLimpio = telefonoIngresado ? telefonoIngresado.replace(/[^0-9]/g, '') : null;
+
+        clienteData = {
+          nombre: nombreNuevo.trim(),
+          cedula: cedulaLimpia,
+          telefono: telefonoLimpio,
+          fechaRegistro: new Date(),
+          yaParticipo: false,
+          premioObtenido: null,
+          codigoCanje: null
+        };
+        // Se usa updateDoc en el nuevo docRef para inicializarlo
+        await updateDoc(clienteRef, clienteData);
+      }
+
+      // 4. Si ya participó → devolver info del último premio sin volver a sortear
+      if (clienteData.yaParticipo === true) {
+        return {
+          premio: clienteData.premioObtenido || "No registrado",
+          codigo: clienteData.codigoCanje || "—",
+          fechaPremio: clienteData.fechaPremio ? (clienteData.fechaPremio.toDate ? clienteData.fechaPremio.toDate() : new Date(clienteData.fechaPremio)) : null,
+          repetido: true
+        };
+      }
+
+      // 5. Si el cliente existe pero le falta nombre, cédula o teléfono -> abrir modal y esperar actualización
+      // Se añade la validación de nombre, que es crucial
+      // La condición es: si falta el nombre O si faltan AMBOS (cédula Y teléfono)
+      if (!clienteData.nombre || (!clienteData.cedula && !clienteData.telefono)) {
+        try {
+          // Si falta el nombre, intentar obtenerlo de Hacienda si hay cédula
+          if (!clienteData.nombre && clienteData.cedula) {
+            const nombreHacienda = await obtenerNombreDesdeProxy(clienteData.cedula);
+            if (nombreHacienda) {
+              clienteData.nombre = nombreHacienda;
+              await updateDoc(clienteRef, { nombre: nombreHacienda });
+            }
+          }
+
+          // Abrir modal de actualización
+          await abrirModalActualizar(clienteData, clienteRef);
+          // tras guardar, recargar datos desde Firestore
+          const refreshed = await getDoc(clienteRef);
+          if (!refreshed.exists()) throw new Error("Documento no encontrado después de actualizar.");
+          clienteData = refreshed.data();
+        } catch (err) {
+          // Si el usuario canceló o hubo error en la actualización, abortamos el flujo
+          throw new Error(err.message || "Actualización cancelada o fallida.");
+        }
+      }
+
+      // 6. Re-check: si ya participó después de la actualización (posible)
+      if (clienteData.yaParticipo === true) {
+        return {
+          premio: clienteData.premioObtenido || "No registrado",
+          codigo: clienteData.codigoCanje || "—",
+          fechaPremio: clienteData.fechaPremio ? (clienteData.fechaPremio.toDate ? clienteData.fechaPremio.toDate() : new Date(clienteData.fechaPremio)) : null,
+          repetido: true
+        };
+      }
+
+      // 7. Sorteo
+      const premio = sortearPremio();
+      // Usar la cédula o teléfono final del clienteData para el código
+      // Corrección: Asegurar que el valor para el código sea una cadena limpia
+      const valorParaCodigo = (clienteData.cedula || clienteData.telefono || "0000").replace(/[^0-9]/g, '');
+      const codigo = generarCodigo(valorParaCodigo, premio);
+
+      // 8. Guardar el premio
+      await updateDoc(clienteRef, {
+        premioObtenido: premio,
+        codigoCanje: codigo,
+        fechaPremio: new Date(),
+        yaParticipo: true
+      });
+
+      // Se devuelve también la referencia del cliente para poder obtener los datos completos
+      // en el flujo principal para el mensaje de WhatsApp.
+      return { premio, codigo, repetido: false, clienteRef: clienteRef };
+    }
+
+    /* ------------ UI de Lista de Premios (Tombola) ------------ */
+    const premiosListaEl = document.getElementById("premiosLista");
+    const premiosVisuales = premiosConProbabilidad.map(p => p.nombre);
+
+    // 1. Generar la lista de premios en el HTML
+    premiosListaEl.innerHTML = ""; // limpiar
+    premiosVisuales.forEach((texto, i) => {
+      const li = document.createElement("li");
+      li.className = "premio-item";
+      li.innerText = texto;
+      li.dataset.index = i; // Para identificar el premio
+      premiosListaEl.appendChild(li);
+    });
+
+    const premioItems = document.querySelectorAll(".premio-item");
+
+    // 2. Función de animación de Tombola
+    function animarTombola(premioGanadorIndex) {
+      return new Promise(resolve => {
+        let currentIndex = -1;
+        let highlightCount = 0;
+        const totalHighlights = 30; // Número de veces que se iluminará un premio antes de detenerse
+        const finalIndex = premioGanadorIndex;
+
+        function highlightNext() {
+          // Desactivar el highlight anterior
+          if (currentIndex >= 0) {
+            premioItems[currentIndex].classList.remove("highlight");
+          }
+
+          // Calcular el siguiente índice
+          currentIndex = (currentIndex + 1) % premioItems.length;
+
+          // Activar el highlight actual
+          premioItems[currentIndex].classList.add("highlight");
+
+          highlightCount++;
+
+          // Lógica de detención
+          if (highlightCount >= totalHighlights && currentIndex === finalIndex) {
+            // Detener la animación en el premio ganador
+            resolve();
+            return;
+          }
+
+          // Aumentar el tiempo de espera para simular la desaceleración
+          let delay = 50;
+          if (highlightCount > totalHighlights - premioItems.length) {
+            // Desaceleración en la última vuelta
+            delay = 50 + (highlightCount - (totalHighlights - premioItems.length)) * 50;
+          }
+
+          setTimeout(highlightNext, delay);
+        }
+
+        // Iniciar la animación
+        highlightNext();
+      });
+    }
+
+    let yaGiro = false;
+    const btn = document.getElementById("girar-btn");
+    const resultadoEl = document.getElementById("resultado");
+
+    /**
+     * Formatea una fecha a un string legible.
+     * @param {Date|string} d - La fecha.
+     * @returns {string} La fecha formateada.
+     */
+    function formatoFecha(d) {
+      if (!d) return "—";
+      try {
+        const dt = (d instanceof Date) ? d : new Date(d);
+        // Mejora: Usar opciones de formato para mejor legibilidad
+        return dt.toLocaleString('es-CR', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch {
+        return String(d);
+      }
+    }
+
+    btn.addEventListener("click", async () => {
+      if (yaGiro) return;
+
+      // Se mantiene el prompt de cédula por simplicidad, aunque un modal sería mejor
+      const cedula = prompt("Ingresa tu número de cédula para participar (si no la tiene, deja vacío):");
+
+      if (cedula && cedula.trim() !== "" && isNaN(cedula.trim())) {
+        alert("Por favor ingresa una cédula numérica válida o deja vacío si no la tiene.");
+        return;
+      }
+
+      btn.disabled = true;
+      resultadoEl.innerHTML = "Iniciando sorteo...";
+
+      try {
+        // 1. Registrar el premio (Lógica de negocio)
+        const res = await registrarPremio(cedula ? cedula.trim() : "");
+
+        // Necesitamos la referencia del cliente para obtener los datos completos
+        // Esto es necesario para el mensaje de WhatsApp si el premio es ganado
+        const clienteRef = res.clienteRef;
+
+                // 2. Mostrar resultado si ya participó
+        if (res.repetido) {
+          const fechaTxt = formatoFecha(res.fechaPremio);
+          resultadoEl.innerHTML = `
+            🔁 Este cliente ya giró antes<br>
+            Premio: <strong>${res.premio}</strong><br>
+            Código: <div class="codigo">${res.codigo}</div>
+            <div style="font-size:13px; margin-top:6px; color:#eee;">Fecha: ${fechaTxt}</div>
+            <p style="font-size:14px; margin-top:10px; color:#fff;">
+              Recuerda que tu premio es válido en tu <strong>PRÓXIMA COMPRA</strong>.
+            </p>
+          `;
+          btn.disabled = false;
+          return;
+        }
+
+        // 3. Si fue nuevo sorteo -> animar y mostrar premio
+        const premio = res.premio;
+        const codigo = res.codigo;
+
+        // Encontrar el índice del premio ganador para la animación
+        const premioGanadorIndex = premiosVisuales.indexOf(premio);
+
+        if (premioGanadorIndex === -1) {
+          throw new Error("Error: Premio sorteado no encontrado en la lista visual.");
+        }
+
+        resultadoEl.innerHTML = "¡Girando!";
+
+        // 4. Ejecutar la animación de Tombola
+                // 4. Ejecutar la animación de Tombola
+        await animarTombola(premioGanadorIndex);
+
+        // 5. Mostrar el resultado final
+        if (premio === "Más suerte la próxima vez") {
+          resultadoEl.innerHTML = `
+            😢 Más suerte la próxima vez.<br>
+            ¡Gracias por participar en Esentia!
+          `;
+          // Redirigir a Facebook después de 5 segundos
+          setTimeout(() => {
+            window.location.href = "https://www.facebook.com/profile.php?id=61579078480913";
+          }, 5000);
+        } else {
+          // Obtener datos del cliente para WhatsApp
+          const clienteData = (await getDoc(clienteRef)).data();
+          const whatsappLink = generarLinkWhatsApp(clienteData, premio, codigo);
+
+          resultadoEl.innerHTML = `
+            🎉 ¡Felicidades!<br>
+            <strong>${premio}</strong><br>
+            <div class="codigo">${codigo}</div>
+            <p style="font-size:14px; margin-top:10px; color:#fff;">
+              ¡Tu premio es válido en tu <strong>PRÓXIMA COMPRA</strong>!
+            </p>
+            <a href="${whatsappLink}" target="_blank" id="whatsapp-btn" style="
+              display: inline-block;
+              margin-top: 15px;
+              padding: 10px 20px;
+              background: #25D366;
+              color: white;
+              text-decoration: none;
+              border-radius: 20px;
+              font-weight: bold;
+            ">
+              Enviar Código por WhatsApp
+            </a>
+          `;
+
+          // Añadir evento al botón de WhatsApp para redirigir tras 3 segundos
+          document.getElementById("whatsapp-btn").addEventListener("click", () => {
+            setTimeout(() => {
+              window.location.href = "https://www.facebook.com/profile.php?id=61579078480913";
+            }, 3000);
+          });
+        }
+        yaGiro = true;
+        btn.disabled = false;
+
+      } catch (err) {
+        // Mostrar error al usuario
+        resultadoEl.innerHTML = `❌ ${err.message || "Ocurrió un error desconocido."}`;
+        btn.disabled = false;
+        // Limpiar highlights en caso de error
+        premioItems.forEach(item => item.classList.remove("highlight"));
+      }
+    });
+
+  </script>
+</body>
+</html>

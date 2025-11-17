@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>📊 Panel de Premios - Esentia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #6c4ba3;
+      margin-bottom: 20px;
+    }
+    .filters {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .btn-filter {
+      padding: 8px 16px;
+      margin: 0 5px;
+      border: none;
+      border-radius: 20px;
+      background: #e0e0e0;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn-filter.active {
+      background: #6c4ba3;
+      color: white;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    th {
+      background: #6c4ba3;
+      color: white;
+    }
+    .usado { color: #2e7d32; font-weight: bold; }
+    .no-usado { color: #e53935; font-weight: bold; }
+    .loader {
+      text-align: center;
+      padding: 40px;
+      font-size: 1.2rem;
+      color: #6c4ba3;
+    }
+    .modal {
+      display: flex;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 400px;
+      width: 90%;
+    }
+    .btn-toggle {
+      padding: 4px 10px;
+      font-size: 0.85rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn-usar {
+      background: #e53935;
+      color: white;
+    }
+    .btn-desusar {
+      background: #2e7d32;
+      color: white;
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #4caf50;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 6px;
+      display: none;
+      z-index: 2000;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 Panel de Premios - Esentia</h1>
+
+    <div class="filters">
+      <button class="btn-filter active" data-filter="todos">Todos</button>
+      <button class="btn-filter" data-filter="usados">Usados</button>
+      <button class="btn-filter" data-filter="no-usados">No usados</button>
+    </div>
+
+    <div id="loader" class="loader">Cargando datos...</div>
+    <table id="tabla-premios" style="display:none;">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Cédula</th>
+          <th>Premio</th>
+          <th>Código</th>
+          <th>Estado</th>
+          <th>Acción</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo-tabla"></tbody>
+    </table>
+  </div>
+
+  <!-- Modal Login Admin -->
+  <div id="modalLogin" class="modal">
+    <div class="modal-content">
+      <h3>🔐 Acceso de administrador</h3>
+      <p>Ingresa tu cédula para acceder:</p>
+      <input type="text" id="adminCedula" placeholder="Cédula" style="width:100%; padding:10px; margin:10px 0; border:1px solid #ccc; border-radius:6px;">
+      <button id="btnEntrarAdmin" style="width:100%; padding:10px; background:#6c4ba3; color:white; border:none; border-radius:6px; margin-top:10px;">
+        Entrar
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast de notificación -->
+  <div id="toast" class="toast"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+      authDomain: "esentiacreditos-8345f.firebaseapp.com",
+      projectId: "esentiacreditos-8345f",
+      storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+      messagingSenderId: "888658236080",
+      appId: "1:888658236080:web:506e5e2085b5a452dba175"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const ADMIN_ID = "110350666";
+    let todosLosClientes = [];
+    let filtroActual = "todos";
+
+    // Mostrar toast
+    function showToast(mensaje, success = true) {
+      const toast = document.getElementById("toast");
+      toast.textContent = mensaje;
+      toast.style.backgroundColor = success ? "#4caf50" : "#e53935";
+      toast.style.display = "block";
+      setTimeout(() => {
+        toast.style.display = "none";
+      }, 3000);
+    }
+
+    // ✅ Evento de login
+    document.getElementById("btnEntrarAdmin").addEventListener("click", async () => {
+      const cedula = document.getElementById("adminCedula").value.trim();
+      if (cedula === ADMIN_ID) {
+        document.getElementById("modalLogin").style.display = "none";
+        await cargarDatos();
+      } else {
+        showToast("❌ Cédula incorrecta", false);
+      }
+    });
+
+    // Cargar datos de Firestore
+    async function cargarDatos() {
+      try {
+        const snapshot = await getDocs(collection(db, "clientes"));
+        todosLosClientes = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.codigoCanje) {
+            let fechaStr = '—';
+            if (data.fechaPremio) {
+              if (data.fechaPremio.seconds) {
+                fechaStr = new Date(data.fechaPremio.seconds * 1000).toLocaleString('es-CR');
+              } else if (typeof data.fechaPremio === 'string') {
+                fechaStr = new Date(data.fechaPremio).toLocaleString('es-CR');
+              }
+            }
+            todosLosClientes.push({
+              id: doc.id,
+              nombre: data.nombre || '—',
+              cedula: data.cedula || '—',
+              telefono: data.telefono || '—',
+              premio: data.premioObtenido || '—',
+              codigo: data.codigoCanje || '—',
+              usado: data.codigoUsado === true,
+              fecha: fechaStr
+            });
+          }
+        });
+        renderTabla();
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("tabla-premios").style.display = "table";
+      } catch (error) {
+        console.error("Error:", error);
+        showToast("❌ Error al cargar datos", false);
+      }
+    }
+
+    // Alternar estado de un código
+    async function toggleUso(clienteId, nuevoEstado) {
+      try {
+        const docRef = doc(db, "clientes", clienteId);
+        await updateDoc(docRef, {
+          codigoUsado: nuevoEstado,
+          fechaUso: nuevoEstado ? new Date() : null
+        });
+
+        // Actualizar localmente
+        const cliente = todosLosClientes.find(c => c.id === clienteId);
+        if (cliente) {
+          cliente.usado = nuevoEstado;
+          if (nuevoEstado && !cliente.fecha) {
+            cliente.fecha = new Date().toLocaleString('es-CR');
+          }
+        }
+
+        renderTabla();
+        showToast(nuevoEstado ? "✅ Código marcado como usado" : "🔄 Código restablecido");
+      } catch (error) {
+        console.error("Error al actualizar:", error);
+        showToast("❌ Error al actualizar", false);
+      }
+    }
+
+    // Renderizar tabla
+    function renderTabla() {
+      const tbody = document.getElementById("cuerpo-tabla");
+      tbody.innerHTML = "";
+      const filtrados = todosLosClientes.filter(cliente => {
+        if (filtroActual === "usados") return cliente.usado;
+        if (filtroActual === "no-usados") return !cliente.usado;
+        return true;
+      });
+
+      if (filtrados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No hay registros</td></tr>`;
+        return;
+      }
+
+      filtrados.forEach(c => {
+        const tr = document.createElement("tr");
+        const estadoBtn = c.usado
+          ? `<button class="btn-toggle btn-desusar" data-id="${c.id}">Restablecer</button>`
+          : `<button class="btn-toggle btn-usar" data-id="${c.id}">Marcar usado</button>`;
+
+        tr.innerHTML = `
+          <td>${c.nombre}</td>
+          <td>${c.cedula}</td>
+          <td>${c.premio}</td>
+          <td><code>${c.codigo}</code></td>
+          <td><span class="${c.usado ? 'usado' : 'no-usado'}">${c.usado ? '✅ Usado' : '⏳ No usado'}</span></td>
+          <td>${estadoBtn}</td>
+          <td>${c.fecha}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Asignar eventos a los botones
+      document.querySelectorAll(".btn-toggle").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          const id = e.target.dataset.id;
+          const texto = e.target.textContent;
+          const nuevoEstado = texto.includes("Marcar usado");
+          toggleUso(id, nuevoEstado);
+        });
+      });
+    }
+
+    // Filtros
+    document.querySelectorAll(".btn-filter").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".btn-filter").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        filtroActual = btn.dataset.filter;
+        renderTabla();
+      });
+    });
+  </script>
+</body>
+</html>
