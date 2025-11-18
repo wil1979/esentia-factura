@@ -197,9 +197,6 @@
 </head>
 <body>
   <header>
-    
-    
-    <!-- Panel de usuario -->
     <div id="panelUsuario">
       <span id="nombreUsuario"></span>
       <button onclick="cerrarSesion()">&times;</button>
@@ -210,7 +207,6 @@
     <div style="text-align: center; color: white; max-width: 90%;">
       <div class="titulo">🎁 Ruleta Esentia</div>
       
-      <!-- Mensaje de bienvenida con nombre -->
       <div id="mensaje-bienvenida"></div>
 
       <ul id="premiosLista" class="premios-lista"></ul>
@@ -219,13 +215,13 @@
       <div id="resultado" class="resultado"></div>
 
       <div style="margin-top: 15px; font-size: 14px; color: #bbb;">
-        Por tu compra de ₡10,000 o más en Esentia, tienes la oportunidad de ganar premios exclusivos.<br>
+        Por tu compra de ₡10,000 o más en Esentia, tienes la oportunidad de ganar premios exclusivos.  
+
         ¡Gira la ruleta y descubre tu premio! 🎉
       </div>
     </div>
   </div>
 
-  <!-- Modal Login/Registro -->
   <div id="modalLoginRegistro" class="modal-login">
     <div class="modal-login-contenido">
       <h2 style="text-align:center; margin-top:0; color:#6c4ba3;">👤 Bienvenido a Esentia</h2>
@@ -249,7 +245,6 @@
     </div>
   </div>
 
-  <!-- Modal de Actualización de Datos -->
   <div id="modalActualizar" class="modal-login" style="display:none; z-index: 2001;">
     <div class="modal-login-contenido" style="max-width: 420px;">
       <h2 style="text-align:center; margin-top:0; color:#6c4ba3;">📝 Completar Información</h2>
@@ -300,18 +295,17 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import {
       getFirestore, doc, getDoc, updateDoc, collection,
-      query, where, getDocs, addDoc
+      query, where, getDocs
     } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-    const app = initializeApp(firebaseConfig);
+    const app = initializeApp(firebaseConfig );
     const db = getFirestore(app);
-    const URL_PREMIOS = "https://wil1979.github.io/esentia-factura/premios.json?t=" + Date.now();
+    const URL_PREMIOS = "https://wil1979.github.io/esentia-factura/premios.json?t=" + Date.now( );
 
     let clienteAutenticado = null;
     let premiosConProbabilidad = [];
     let yaGiro = false;
 
-    // === CARGAR CONFIGURACIÓN DE PREMIOS ===
     async function cargarConfiguracionPremios() {
       try {
         const res = await fetch(URL_PREMIOS);
@@ -326,20 +320,19 @@
         console.warn("Error cargando premios.json. Usando valores por defecto.");
       }
       premiosConProbabilidad = [
-       /* { nombre: "Más suerte la próxima vez", prob: 50 },
+        { nombre: "Más suerte la próxima vez", prob: 50 },
         { nombre: "5% de descuento", prob: 30 },
         { nombre: "10% de descuento", prob: 15 },
         { nombre: "50% de descuento", prob: 3 },
-        { nombre: "Difusor de Auto", prob: 2 }*/
+        { nombre: "Difusor de Auto", prob: 2 }
       ];
     }
 
-    // === CONSULTA A HACIENDA ===
     async function consultarNombreDesdeCedula(cedula) {
       const cedLimpia = cedula.toString().replace(/\D/g, '');
       if (cedLimpia.length < 9) return null;
       try {
-        const res = await fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedLimpia}`);
+        const res = await fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedLimpia}` );
         if (!res.ok) return null;
         const data = await res.json();
         return data.nombre || data.nombre_completo || null;
@@ -348,15 +341,17 @@
       }
     }
 
-    // === VALIDACIÓN DE DATOS ===
+    // --- LÓGICA DE VALIDACIÓN REFORZADA ---
     function necesitaActualizarDatos(data) {
-      const tieneNombre = data.nombre && data.nombre.trim().length > 2;
-      const tieneTelefono = data.telefono && data.telefono.toString().replace(/\D/g, '').length === 8;
-      const tieneCedula = data.cedula && data.cedula.toString().replace(/\D/g, '').length >= 9;
-      return !tieneNombre || (!tieneTelefono && !tieneCedula);
+      // Un nombre válido debe existir y tener más de 2 caracteres.
+      const nombreValido = data && data.nombre && data.nombre.trim().length > 2;
+      // Un teléfono válido debe existir y tener 8 dígitos.
+      const telefonoValido = data && data.telefono && data.telefono.toString().replace(/\D/g, '').length === 8;
+      
+      // Si falta CUALQUIERA de los dos, necesita actualizar.
+      return !nombreValido || !telefonoValido;
     }
 
-    // === MODAL DE ACTUALIZACIÓN ===
     function abrirModalActualizar(data, clienteRef) {
       document.getElementById("updNombre").value = data.nombre || "";
       document.getElementById("updCedula").value = data.cedula || "";
@@ -372,21 +367,29 @@
 
     function cerrarModalActualizar() {
       document.getElementById("modalActualizar").style.display = "none";
-      if (window.rejectActualizar) window.rejectActualizar(new Error("Actualización cancelada"));
+      if (window.rejectActualizar) {
+        window.rejectActualizar(new Error("Actualización cancelada. Inicia sesión de nuevo."));
+      }
     }
 
     document.getElementById("updCedula")?.addEventListener("blur", async () => {
-      const cedula = document.getElementById("updCedula").value.trim();
+      const cedulaInput = document.getElementById("updCedula");
+      const nombreInput = document.getElementById("updNombre");
       const msg = document.getElementById("nombre-desde-api");
+      const cedula = cedulaInput.value.trim();
+      
       if (!cedula) return;
+      
       msg.textContent = "Buscando en Hacienda...";
+      msg.style.color = "#ffd166";
       const nombre = await consultarNombreDesdeCedula(cedula);
+      
       if (nombre) {
-        document.getElementById("updNombre").value = nombre;
-        msg.textContent = `✅ Nombre: ${nombre}`;
+        nombreInput.value = nombre;
+        msg.textContent = `✅ Nombre encontrado: ${nombre}`;
         msg.style.color = "#4CAF50";
       } else {
-        msg.textContent = "⚠️ No encontrado";
+        msg.textContent = "⚠️ Cédula no encontrada en Hacienda.";
         msg.style.color = "#d32f2f";
       }
     });
@@ -409,96 +412,112 @@
 
       try {
         const cedLimpia = cedula ? cedula.replace(/\D/g, '') : null;
-        const nombreFinal = nombre;
-
-        if (cedLimpia && !nombreFinal) {
-          const nombreHacienda = await consultarNombreDesdeCedula(cedLimpia);
-          if (nombreHacienda) {
-            document.getElementById("updNombre").value = nombreHacienda;
-            nombreFinal = nombreHacienda;
-          }
-        }
 
         await updateDoc(window.tempClienteRef, {
-          nombre: nombreFinal,
-          cedula: cedLimpia || null,
+          nombre: nombre,
+          cedula: cedLimpia,
           telefono: telLimpio
         });
 
-        clienteAutenticado = {
+        const clienteActualizado = {
           ...clienteAutenticado,
-          nombre: nombreFinal,
+          nombre: nombre,
           cedula: cedLimpia,
           telefono: telLimpio
         };
+        
+        clienteAutenticado = clienteActualizado;
 
-        document.getElementById("nombreUsuario").textContent = nombreFinal;
-        document.getElementById("mensaje-bienvenida").textContent = `¡Hola, ${nombreFinal}! Bienvenido a la Ruleta Esentia 🌿`;
+        document.getElementById("nombreUsuario").textContent = nombre;
+        document.getElementById("mensaje-bienvenida").textContent = `¡Hola, ${nombre}! Bienvenido a la Ruleta Esentia 🌿`;
         document.getElementById("modalActualizar").style.display = "none";
-        if (window.resolveActualizar) window.resolveActualizar();
+        
+        if (window.resolveActualizar) {
+            window.resolveActualizar(clienteActualizado);
+        }
+
       } catch (err) {
         console.error("Error al guardar:", err);
         alert("❌ Error al actualizar los datos.");
-        if (window.rejectActualizar) window.rejectActualizar(err);
+        if (window.rejectActualizar) {
+            window.rejectActualizar(err);
+        }
       }
     }
 
-    // === SESIÓN ===
     function cerrarSesion() {
       clienteAutenticado = null;
       document.getElementById("panelUsuario").style.display = "none";
       document.getElementById("mensaje-bienvenida").textContent = "";
       document.getElementById("modalLoginRegistro").style.display = "flex";
-      document.querySelectorAll(".btn-tab").forEach(b => b.classList.remove("activo"));
-      document.querySelector(".btn-tab[data-tab='login']").classList.add("activo");
-      document.getElementById("formLogin").style.display = "block";
+      document.getElementById("loginCedulaTel").value = "";
       document.getElementById("loginMensaje").textContent = "";
       yaGiro = false;
       document.getElementById("girar-btn").disabled = false;
       document.getElementById("resultado").innerHTML = "";
+      document.querySelectorAll(".premio-item").forEach(i => i.classList.remove("highlight"));
     }
 
-    // === LOGIN ===
-    document.querySelectorAll(".btn-tab").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".btn-tab").forEach(b => b.classList.remove("activo"));
-        btn.classList.add("activo");
-        const tab = btn.dataset.tab;
-        document.getElementById("formLogin").style.display = tab === "login" ? "block" : "none";
-        document.getElementById("loginMensaje").textContent = "";
-      });
-    });
-
+    // --- LÓGICA DE LOGIN REFORZADA ---
     document.getElementById("formLogin")?.addEventListener("submit", async (e) => {
       e.preventDefault();
       const valor = document.getElementById("loginCedulaTel").value.trim();
       const msg = document.getElementById("loginMensaje");
-      if (!valor) { msg.textContent = "Ingresa cédula o teléfono."; return; }
+      if (!valor) {
+        msg.textContent = "Ingresa cédula o teléfono.";
+        return;
+      }
 
+      msg.textContent = "Buscando cliente...";
       try {
-        msg.textContent = "Buscando cliente...";
         const col = collection(db, "clientes");
         const q1 = query(col, where("cedula", "==", valor));
         const q2 = query(col, where("telefono", "==", valor));
         const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+        
         let docSnap = null;
         if (!snap1.empty) docSnap = snap1.docs[0];
         else if (!snap2.empty) docSnap = snap2.docs[0];
-        if (!docSnap) { msg.textContent = "Cliente no registrado."; return; }
+        
+        if (!docSnap) { 
+            msg.textContent = "Cliente no registrado."; 
+            return; 
+        }
 
-        const data = docSnap.data();
+        let data = docSnap.data();
         clienteAutenticado = { id: docSnap.id, ...data };
+        
+        // FORZAR LA VALIDACIÓN SIEMPRE DESPUÉS DEL LOGIN
+        if (necesitaActualizarDatos(data)) {
+            msg.textContent = "Datos incompletos. Por favor, actualiza tu información.";
+            try {
+                // Abrimos el modal y esperamos a que se resuelva (guarde o cancele)
+                const clienteActualizado = await abrirModalActualizar(data, docSnap.ref);
+                // Actualizamos la data local con la que viene del modal resuelto
+                data = clienteActualizado; 
+                msg.textContent = ""; // Limpiar mensaje de "datos incompletos"
+            } catch (error) {
+                // El usuario canceló la actualización
+                msg.textContent = error.message; // Mostrar mensaje de cancelación
+                cerrarSesion(); // Forzar cierre de sesión
+                return;
+                
+            }
+        }
+
+        // Si los datos ya estaban completos o se acaban de actualizar, continuamos
         document.getElementById("nombreUsuario").textContent = data.nombre;
         document.getElementById("panelUsuario").style.display = "flex";
         document.getElementById("mensaje-bienvenida").textContent = `¡Hola, ${data.nombre}! Bienvenido a la Ruleta Esentia 🌿`;
         document.getElementById("modalLoginRegistro").style.display = "none";
+
       } catch (err) {
-        console.error("Error login:", err);
-        msg.textContent = "Error de conexión.";
+        console.error("Error en el proceso de login:", err);
+        msg.textContent = "Error de conexión o en el proceso.";
+        cerrarSesion();
       }
     });
 
-    // === FUNCIONES DE PREMIOS ===
     function sortearPremio() {
       const total = premiosConProbabilidad.reduce((sum, p) => sum + p.prob, 0);
       let rand = Math.random() * total;
@@ -536,15 +555,14 @@ Datos del Cliente:
 
 ⚠️ IMPORTANTE: Este premio será efectivo en la PRÓXIMA COMPRA del cliente.
 `;
-      return `https://wa.me/${numeroDestino}?text=${encodeURIComponent(mensaje.trim())}`;
+      return `https://wa.me/${numeroDestino}?text=${encodeURIComponent(mensaje.trim( ))}`;
     }
 
-    // === RENDERIZADO Y ANIMACIÓN ===
     function renderizarPremiosVisuales() {
       const lista = document.getElementById("premiosLista");
       lista.innerHTML = "";
       const nombres = premiosConProbabilidad.map(p => p.nombre);
-      nombres.forEach((texto, i) => {
+      nombres.forEach((texto) => {
         const li = document.createElement("li");
         li.className = "premio-item";
         li.textContent = texto;
@@ -555,33 +573,37 @@ Datos del Cliente:
     function animarTombola(indiceGanador) {
       return new Promise(resolve => {
         const items = document.querySelectorAll(".premio-item");
+        if (items.length === 0 || indiceGanador < 0) return resolve();
         let actual = -1;
         let cuenta = 0;
-        const total = 30;
+        const totalVueltas = 3;
+        const totalPasos = (items.length * totalVueltas) + indiceGanador;
 
         function resaltar() {
           if (actual >= 0) items[actual].classList.remove("highlight");
           actual = (actual + 1) % items.length;
           items[actual].classList.add("highlight");
           cuenta++;
-          if (cuenta >= total && actual === indiceGanador) {
-            resolve(); return;
+          
+          if (cuenta > totalPasos) {
+            resolve();
+            return;
           }
-          const delay = cuenta > total - items.length ? 50 + (cuenta - (total - items.length)) * 50 : 50;
+          
+          const delay = 50 + Math.pow(cuenta / totalPasos, 2) * 150;
           setTimeout(resaltar, delay);
         }
         resaltar();
       });
     }
 
-    // === FLUJO PRINCIPAL ===
     async function registrarPremio() {
       if (!clienteAutenticado) throw new Error("Debes iniciar sesión.");
 
       const clienteRef = doc(db, "clientes", clienteAutenticado.id);
       const snap = await getDoc(clienteRef);
       if (!snap.exists()) throw new Error("Cliente no encontrado.");
-      let data = snap.data();
+      const data = snap.data();
 
       if (data.yaParticipo) {
         return {
@@ -592,7 +614,6 @@ Datos del Cliente:
         };
       }
 
-      // ✅ VALIDAR COMPRA MÍNIMA DE ₡10,000
       const compras = data.compras || [];
       const tieneCompraCalificada = compras.some(compra => {
         const totalNeto = (compra.monto || 0) - (compra.descuento || 0);
@@ -600,13 +621,6 @@ Datos del Cliente:
       });
       if (!tieneCompraCalificada) {
         throw new Error("⚠️ Debes tener una compra ≥ ₡10,000 para participar.");
-      }
-
-      // ✅ VALIDAR DATOS COMPLETOS
-      if (necesitaActualizarDatos(data)) {
-        await abrirModalActualizar(data, clienteRef);
-        const snapActualizado = await getDoc(clienteRef);
-        data = snapActualizado.data();
       }
 
       const premio = sortearPremio();
@@ -623,7 +637,6 @@ Datos del Cliente:
       return { repetido: false, premio, codigo, clienteRef };
     }
 
-    // === INICIALIZACIÓN ===
     async function init() {
       await cargarConfiguracionPremios();
       renderizarPremiosVisuales();
@@ -635,18 +648,20 @@ Datos del Cliente:
         const btn = document.getElementById("girar-btn");
         const resEl = document.getElementById("resultado");
         btn.disabled = true;
-        resEl.innerHTML = "Iniciando sorteo...";
+        resEl.innerHTML = "Girando la ruleta...";
 
         try {
           const res = await registrarPremio();
           const nombres = premiosConProbabilidad.map(p => p.nombre);
+          
           if (res.repetido) {
             resEl.innerHTML = `
-              🔁 Ya participaste antes<br>
-              Premio: <strong>${res.premio}</strong><br>
+              🔁 Ya participaste antes  
+
+              Premio: <strong>${res.premio}</strong>  
+
               Código: <div class="codigo">${res.codigo}</div>
             `;
-            btn.disabled = false;
             return;
           }
 
@@ -654,20 +669,23 @@ Datos del Cliente:
           await animarTombola(idx);
 
           if (res.premio === "Más suerte la próxima vez") {
-            resEl.innerHTML = `😢 Más suerte la próxima vez.<br>¡Gracias por participar!`;
-            setTimeout(() => window.location.href = "https://www.facebook.com/profile.php?id=61579078480913", 5000);
+            resEl.innerHTML = `😢 Más suerte la próxima vez.  
+¡Gracias por participar!`;
+            setTimeout(() => window.location.href = "https://www.facebook.com/profile.php?id=61579078480913", 5000 );
           } else {
             const clienteData = (await getDoc(res.clienteRef)).data();
             const link = generarLinkWhatsApp(clienteData, res.premio, res.codigo);
             resEl.innerHTML = `
-              🎉 ¡Felicidades!<br><strong>${res.premio}</strong><br>
+              🎉 ¡Felicidades!  
+<strong>${res.premio}</strong>  
+
               <div class="codigo">${res.codigo}</div>
               <a href="${link}" target="_blank" id="whatsapp-btn" style="display:inline-block; margin-top:15px; padding:10px 20px; background:#25D366; color:white; text-decoration:none; border-radius:20px; font-weight:bold;">
                 Enviar Código por WhatsApp
               </a>
             `;
-            document.getElementById("whatsapp-btn").addEventListener("click", () => {
-              setTimeout(() => window.location.href = "https://www.facebook.com/profile.php?id=61579078480913", 3000);
+            document.getElementById("whatsapp-btn")?.addEventListener("click", () => {
+              setTimeout(() => window.location.href = "https://www.facebook.com/profile.php?id=61579078480913", 3000 );
             });
           }
         } catch (err) {
@@ -679,12 +697,5 @@ Datos del Cliente:
       });
     }
 
-    // Hacer accesibles globalmente
     window.cerrarSesion = cerrarSesion;
-    window.cerrarModalActualizar = cerrarModalActualizar;
-    window.guardarActualizacion = guardarActualizacion;
-
-    init();
-  </script>
-</body>
-</html>
+    window.cerrarModalActualizar =
