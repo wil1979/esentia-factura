@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>👥 Administrar Clientes - Esentia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #6c4ba3;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .search-box {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    #buscador {
+      padding: 10px;
+      width: 300px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    th {
+      background: #6c4ba3;
+      color: white;
+    }
+    tr:hover {
+      background: #f9f6ff;
+    }
+    .btn-edit, .btn-delete, .btn-reset {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      margin-left: 5px;
+    }
+    .btn-edit { background: #6c4ba3; color: white; }
+    .btn-delete { background: #d32f2f; color: white; }
+    .btn-reset { background: #FF9800; color: white; }
+    .btn-reset:hover { background: #F57C00; }
+    .calificado { color: #2e7d32; font-weight: bold; }
+    .no-calificado { color: #d32f2f; font-weight: bold; }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+    }
+    .modal-content input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    .modal-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #4caf50;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 6px;
+      display: none;
+      z-index: 2000;
+    }
+    .fecha-reinicio {
+      font-size: 0.85rem;
+      color: #6c4ba3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>👥 Administrar Clientes - Esentia</h1>
+    
+    <div class="search-box">
+      <input type="text" id="buscador" placeholder="Buscar por nombre o cédula...">
+    </div>
+
+    <table id="tabla-clientes">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Cédula</th>
+          <th>Teléfono</th>
+          <th>Compras</th>
+          <th>Compra ≥ ₡10k</th>
+          <th>Ya Participó</th>
+          <th>Últ. Reinicio</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo-tabla"></tbody>
+    </table>
+  </div>
+
+  <!-- Modal para editar cliente -->
+  <div id="modalEditar" class="modal">
+    <div class="modal-content">
+      <h3>✏️ Editar Cliente</h3>
+      <input type="hidden" id="edit-id">
+      <input type="text" id="edit-nombre" placeholder="Nombre">
+      <input type="text" id="edit-cedula" placeholder="Cédula">
+      <input type="text" id="edit-telefono" placeholder="Teléfono">
+      <div class="modal-buttons">
+        <button onclick="cerrarModal()">Cancelar</button>
+        <button onclick="guardarEdicion()" style="background:#6c4ba3; color:white;">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+      authDomain: "esentiacreditos-8345f.firebaseapp.com",
+      projectId: "esentiacreditos-8345f",
+      storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+      messagingSenderId: "888658236080",
+      appId: "1:888658236080:web:506e5e2085b5a452dba175"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let todosLosClientes = [];
+
+    function showToast(mensaje, exito = true) {
+      const t = document.getElementById("toast");
+      t.textContent = mensaje;
+      t.style.backgroundColor = exito ? "#4caf50" : "#d32f2f";
+      t.style.display = "block";
+      setTimeout(() => t.style.display = "none", 3000);
+    }
+
+    async function cargarClientes() {
+      const tbody = document.getElementById("cuerpo-tabla");
+      tbody.innerHTML = "<tr><td colspan='8' style='text-align:center;'>Cargando...</td></tr>";
+      
+      try {
+        const snapshot = await getDocs(collection(db, "clientes"));
+        todosLosClientes = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          todosLosClientes.push({ id: doc.id, ...data });
+        });
+        renderTabla();
+      } catch (error) {
+        console.error("Error:", error);
+        tbody.innerHTML = "<tr><td colspan='8' style='text-align:center; color:red;'>Error al cargar</td></tr>";
+      }
+    }
+
+    function tieneCompraCalificada(compras) {
+      return (compras || []).some(c => (c.monto - (c.descuento || 0)) >= 10000);
+    }
+
+    function renderTabla(filtro = "") {
+      const tbody = document.getElementById("cuerpo-tabla");
+      const filtrados = todosLosClientes.filter(c => 
+        c.nombre.toLowerCase().includes(filtro) ||
+        (c.cedula && c.cedula.toString().includes(filtro))
+      );
+
+      if (filtrados.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='8' style='text-align:center;'>No hay clientes</td></tr>";
+        return;
+      }
+
+      tbody.innerHTML = filtrados.map(c => {
+        const compras = c.compras || [];
+        const totalCompras = compras.length;
+        const calificado = tieneCompraCalificada(compras);
+        const fechaReinicio = c.fechaReinicioParticipacion 
+          ? new Date(c.fechaReinicioParticipacion).toLocaleDateString('es-CR') 
+          : '—';
+        return `
+          <tr>
+            <td>${c.nombre}</td>
+            <td>${c.cedula || '—'}</td>
+            <td>${c.telefono || '—'}</td>
+            <td>${totalCompras}</td>
+            <td class="${calificado ? 'calificado' : 'no-calificado'}">
+              ${calificado ? '✅ Sí' : '❌ No'}
+            </td>
+            <td>${c.yaParticipo ? '✅ Sí' : '❌ No'}</td>
+            <td class="fecha-reinicio">${fechaReinicio}</td>
+            <td>
+              <button class="btn-edit" onclick="abrirModal('${c.id}', '${c.nombre.replace(/'/g, "\\'")}', '${c.cedula || ''}', '${c.telefono || ''}')">✏️</button>
+              <button class="btn-delete" onclick="eliminar('${c.id}')">🗑️</button>
+              ${calificado && c.yaParticipo ? 
+                `<button class="btn-reset" onclick="reiniciarParticipacion('${c.id}', '${c.nombre.replace(/'/g, "\\'")}', '${c.telefono || ''}')">🔄</button>` 
+                : ''
+              }
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function abrirModal(id, nombre, cedula, telefono) {
+      document.getElementById("edit-id").value = id;
+      document.getElementById("edit-nombre").value = nombre;
+      document.getElementById("edit-cedula").value = cedula;
+      document.getElementById("edit-telefono").value = telefono;
+      document.getElementById("modalEditar").style.display = "flex";
+    }
+
+    function cerrarModal() {
+      document.getElementById("modalEditar").style.display = "none";
+    }
+
+    async function guardarEdicion() {
+      const id = document.getElementById("edit-id").value;
+      const nombre = document.getElementById("edit-nombre").value.trim();
+      const cedula = document.getElementById("edit-cedula").value.trim();
+      const telefono = document.getElementById("edit-telefono").value.trim();
+
+      if (!nombre) {
+        showToast("⚠️ Nombre obligatorio", false);
+        return;
+      }
+
+      try {
+        await updateDoc(doc(db, "clientes", id), {
+          nombre,
+          cedula: cedula || null,
+          telefono: telefono || null
+        });
+        showToast("✅ Cliente actualizado");
+        cerrarModal();
+        await cargarClientes();
+      } catch (error) {
+        console.error("Error:", error);
+        showToast("❌ Error al guardar", false);
+      }
+    }
+
+    async function eliminar(id) {
+      if (!confirm("¿Eliminar cliente?")) return;
+      try {
+        await deleteDoc(doc(db, "clientes", id));
+        showToast("✅ Cliente eliminado");
+        await cargarClientes();
+      } catch (error) {
+        console.error("Error:", error);
+        showToast("❌ Error al eliminar", false);
+      }
+    }
+
+    async function reiniciarParticipacion(id, nombre, telefono) {
+      if (!confirm(`¿Permitir que ${nombre} participe nuevamente en la ruleta?`)) return;
+      
+      try {
+        const fechaReinicio = new Date().toISOString();
+        await updateDoc(doc(db, "clientes", id), {
+          yaParticipo: false,
+          premioObtenido: null,
+          codigoCanje: null,
+          codigoUsado: false,
+          fechaReinicioParticipacion: fechaReinicio
+        });
+
+        // ✅ Enviar WhatsApp
+        const mensaje = `¡Hola ${nombre}! 🎉\n\nGracias por tu nueva compra en Esentia. Ahora tienes derecho a participar nuevamente en nuestra Ruleta de Premios.\n\nIngresa aquí: https://wil1979.github.io/esentia-factura/ruleta-esentia.html\n\n¡Gracias por confiar en Esentia! 🌿`;
+        const telLimpio = (telefono || "").toString().replace(/\D/g, '');
+        if (telLimpio.length === 8) {
+          window.open(`https://wa.me/506${telLimpio}?text=${encodeURIComponent(mensaje)}`, "_blank");
+        }
+
+        showToast("✅ Participación reiniciada y notificación enviada");
+        await cargarClientes();
+      } catch (error) {
+        console.error("Error al reiniciar:", error);
+        showToast("❌ Error al reiniciar", false);
+      }
+    }
+
+    document.getElementById("buscador").addEventListener("input", (e) => {
+      renderTabla(e.target.value.toLowerCase());
+    });
+
+    cargarClientes();
+
+    // Hacer accesibles las funciones desde HTML
+window.reiniciarParticipacion = reiniciarParticipacion;
+window.abrirModal = abrirModal;
+window.cerrarModal = cerrarModal;
+window.guardarEdicion = guardarEdicion;
+window.eliminar = eliminar;
+  </script>
+</body>
+</html>
