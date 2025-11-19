@@ -4,12 +4,60 @@
   <meta charset="UTF-8">
   <title>Esentia Créditos</title>
   <style>
+
+    .boton-accion.activo {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
+}
+
+    .scroll-buttons {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 999;
+    }
+    .scroll-btn {
+      padding: 15px 20px;
+      border: none;
+      border-radius: 25px;
+      background: #2196F3;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    .scroll-btn:hover {
+      background: #1976D2;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 8px rgba(0,0,0,0.2);
+    }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 20px;
       background-color: #f3f2f7;
       color: #333;
     }
+
+    /* Estilos para el logo */
+.logo-container {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.logo {
+  max-width: 200px; /* Ajusta este valor según lo grande que quieras el logo */
+  height: auto;
+  border-radius: 8px; /* Opcional: esquinas redondeadas */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Opcional: sombra suave */
+  transition: transform 0.3s ease;
+}
+
+.logo:hover {
+  transform: scale(1.05); /* Efecto al pasar el mouse */
+}
     h1 {
       color: #6c4ba3;
       text-align: center;
@@ -26,6 +74,18 @@
     .cliente:hover {
       transform: scale(1.01);
     }
+    .cliente-no-deudor {
+      opacity: 0.65;
+      background: #f8f8f8;
+      border-color: #e0e0e0;
+    }
+    .cliente-no-deudor .botones-derecha {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+    .cliente-no-deudor:hover {
+      transform: none;
+    }
     .botones-derecha {
       display: flex;
       flex-wrap: wrap;
@@ -33,49 +93,20 @@
       justify-content: flex-end;
       margin-top: 0.5rem;
     }
-    .boton-accion {
-      padding: 6px 10px;
-      font-size: 0.85rem;
-      border: none;
-      background: #6c4ba3;
-      color: white;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.2s;
-      flex: 1 1 auto;
-      min-width: fit-content;
-    }
+   .boton-accion {
+  padding: 4px 8px;           /* 👈 Menos padding (más pequeño) */
+  font-size: 0.75rem;         /* 👈 Fuente más pequeña */
+  border: none;
+  background: #6c4ba3;
+  color: white;
+  border-radius: 4px;         /* 👈 Bordes ligeramente menos redondeados */
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;        /* 👈 Evita que el texto se envuelva en dos líneas */
+  min-width: auto;            /* 👈 Permite que el botón sea tan pequeño como su contenido */
+}
     .boton-accion:hover {
       background-color: #573993;
-    }
-    #seccion-productos {
-      display: none;
-      margin-top: 20px;
-      padding: 15px;
-      background: #fff;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    input, select {
-      padding: 8px;
-      margin-right: 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-    }
-    button {
-      font-family: inherit;
-    }
-    .editar-cliente {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-      flex-wrap: wrap;
-    }
-    .editar-cliente input {
-      flex: 1;
-      min-width: 150px;
     }
     /* Historial de compras */
     .historial-compras {
@@ -156,6 +187,86 @@
       color: #388e3c;
       font-weight: bold;
     }
+    /* Modal de productos */
+    #modal-productos {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    #modal-productos > div {
+      background: white;
+      width: 90%;
+      max-width: 800px;
+      border-radius: 10px;
+      padding: 20px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .producto-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      margin-bottom: 5px;
+    }
+    .producto-info {
+      flex: 1;
+    }
+    .producto-cantidad {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: 20px;
+    }
+    .cantidad-control {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-cantidad {
+      width: 30px;
+      height: 30px;
+      border: 1px solid #ddd;
+      background: #f9f9f9;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .cantidad-display {
+      width: 50px;
+      text-align: center;
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .resumen-total {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    .acciones-modal {
+      margin-top: 20px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .precio-personalizado {
+      width: 100px;
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-left: 10px;
+    }
     /* Modal de impresión */
     #modal-impresion, #modal-historial {
       display: none;
@@ -178,9 +289,17 @@
     }
     /* Responsive */
     @media (max-width: 480px) {
-      .botones-derecha {
-        flex-direction: column;
+      .boton-accion {
+    font-size: 0.7rem;        /* 👈 Aún más pequeño en móvil */
+    padding: 3px 6px;
       }
+      .botones-derecha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;                /* 👈 Menos espacio entre botones */
+  justify-content: flex-end;
+  margin-top: 0.3rem;         /* 👈 Menos margen superior */
+}
       .boton-accion {
         width: 100%;
         margin-left: 0;
@@ -192,23 +311,86 @@
       .filtros-reportes {
         flex-direction: column;
       }
+      .producto-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .producto-cantidad {
+        margin-top: 10px;
+        margin-left: 0;
+      }
     }
+
+     .nueva-venta-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 999;
+  }
+
+   .barra-acciones-flotante {
+    position: fixed;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 999;
+  }
+  .barra-acciones-flotante .scroll-btn {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    width: 160px;
+    text-align: center;
+  }
+  @media (max-width: 480px) {
+    .barra-acciones-flotante {
+      width: auto;
+      right: 10px;
+    }
+    .barra-acciones-flotante .scroll-btn {
+      width: 130px;
+      padding: 8px 12px;
+      font-size: 0.75rem;
+    }
+  }
   </style>
 </head>
 <body>
+  <div class="logo-container">
+    <img src="https://wil1979.github.io/esentia-factura/images/logo.png" alt="Esentia Logo" class="logo">
+  </div>
+
+  <div class="barra-acciones-flotante">
+    <button class="scroll-btn" style="background: #6c4ba3;" onclick="abrirModalNuevoCliente()">
+      ➕ Nuevo Cliente
+    </button>
+    <button class="scroll-btn" style="background: #4CAF50;" onclick="abrirModalNuevaVenta()">
+      ➕ Nueva Venta
+    </button>
+    <button class="scroll-btn" style="background: #2196F3;" onclick="cargarClientes(false)">
+      👥 Mostrar Todos
+    </button>
+    <button class="scroll-btn" style="background: #4CAF50;" onclick="cargarClientes(true)">
+      💳 Solo Deudores
+    </button>
+    <button class="scroll-btn" onclick="scrollToTop()">↑</button>
+    <button class="scroll-btn" onclick="scrollToBottom()">↓</button>
+  </div>
+
   <h1>📋 Esentia - Registro de Créditos</h1>
   <h2>👥 Clientes</h2>
-<input type="text" id="filtro-clientes" placeholder="🔎 Buscar cliente por nombre..." style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
-<div id="clientes"></div>
 
-  <h2>➕ Nuevo Cliente</h2>
-  <input id="nombre" placeholder="Nombre completo">
-  <input id="telefono" placeholder="Teléfono con código (ej: 88889999)">
-  <button onclick="agregarCliente()">Agregar Cliente</button>
-  <hr>  
-  <h2>👥 Clientes</h2>
+  <!-- Filtros de visualización -->
+  <div style="margin-bottom: 15px; text-align: center;">
+    <input type="text" id="filtro-clientes" placeholder="🔎 Buscar cliente por nombre..." style="width: 90%; max-width: 500px; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
+  </div>
+
   <div id="clientes"></div>
 
+  <hr>
   <!-- Sección de Reportes -->
   <div id="seccion-reportes">
     <h2>📊 Reporte General de Clientes</h2>
@@ -246,31 +428,39 @@
     </div>
   </div>
 
-  <!-- Template para productos en carrito -->
-  <template id="producto-template">
-    <div class="producto-seleccionado">
-      <strong class="producto-nombre"></strong><br>
-      <select class="presentacion"></select>
-      <select class="aroma"></select>
-      <button class="quitar-producto">❌ Quitar</button>
-      <br><br>
+  <!-- Modal de productos -->
+<div id="modal-productos">
+  <div>
+    <h2>🛍️ Agregar Productos al Cliente</h2>
+    <div style="margin-bottom: 20px;">
+      <label for="select-producto">Seleccionar producto:</label>
+      <select id="select-producto"></select>
+      <button onclick="agregarAlCarritoModal()" style="margin-left: 10px;">Agregar</button>
     </div>
-  </template>
 
-  <!-- Sección de compra -->
-  <div id="seccion-productos" style="display:none; border: 1px solid #ccc; padding: 1rem; margin-top: 2rem; border-radius: 10px;">
-    <h3>🛍️ Agregar productos desde catálogo</h3>
-    <select id="select-producto"></select>
-    <button onclick="agregarAlCarrito()">Agregar</button>
-    <div id="carrito" style="margin-top:1rem;"></div>
-    <div>
+    <!-- Vista previa: imagen + info -->
+    <div id="vista-previa-producto" style="text-align: center; margin: 15px 0;">
+      <img id="img-producto" src="" alt="Producto" style="max-width: 150px; max-height: 150px; display: none; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+      <p id="info-producto" style="margin-top: 8px; font-size: 0.95rem; color: #555;"></p>
+      <!-- Selector de variantes (se genera dinámicamente) -->
+      <div id="selector-variantes" style="margin-top: 12px;"></div>
+    </div>
+
+    <div id="carrito-modal"></div>
+    <div style="margin: 15px 0;">
       <label for="descuento">Descuento: ₡</label>
       <input type="number" id="descuento" value="0" min="0">
     </div>
-    <strong>Total ₡<span id="total-compra">0</span></strong>
-    <br><br>
-    <button onclick="guardarCompraDesdeCarrito()">Guardar Compra</button>
+    <div class="resumen-total">
+      <span>Total:</span>
+      <span>₡<span id="total-compra">0</span></span>
+    </div>
+    <div class="acciones-modal">
+      <button class="boton-accion" onclick="cerrarModalProductos()" style="background: #666;">❌ Cancelar</button>
+      <button class="boton-accion" onclick="guardarCompraDesdeCarrito()">💾 Guardar Compra</button>
+    </div>
   </div>
+</div>
 
   <!-- Modal de impresión del reporte -->
   <div id="modal-impresion">
@@ -327,7 +517,7 @@
   <!-- Firebase y lógica -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
@@ -337,166 +527,587 @@
       messagingSenderId: "888658236080",
       appId: "1:888658236080:web:506e5e2085b5a452dba175"
     };
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const clientesRef = collection(db, "clientes");
 
-    // ✅ Agregar cliente
-    async function agregarCliente() {
-      const nombre = document.getElementById("nombre").value.trim();
-      const telefono = document.getElementById("telefono").value.trim();
-      if (!nombre || !telefono) {
-        alert("⚠️ Completa ambos campos.");
-        return;
-      }
-      try {
-        await addDoc(clientesRef, {
-          nombre,
-          telefono,
-          compras: []
-        });
-        alert("✅ Cliente agregado exitosamente.");
-        document.getElementById("nombre").value = "";
-        document.getElementById("telefono").value = "";
-        await cargarClientes();
-      } catch (error) {
-        alert("❌ Error al agregar cliente: " + error.message);
-        console.error("Error al agregar cliente:", error);
-      }
+    // ✅ Función reutilizable para consultar nombre desde cédula
+async function consultarNombreDesdeCedula(inputCedula, inputNombre, elementoMensaje) {
+  const cedula = inputCedula.value.trim().replace(/\D/g, "");
+  elementoMensaje.textContent = "";
+  elementoMensaje.style.color = "#4CAF50";
+
+  if (cedula.length < 9) {
+    elementoMensaje.textContent = "⚠️ Cédula inválida (mínimo 9 dígitos)";
+    return;
+  }
+
+  try {
+    elementoMensaje.textContent = "Buscando en Hacienda...";
+    const res = await fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedula}`);
+    if (!res.ok) throw new Error("No encontrado");
+    const data = await res.json();
+    const nombreCompleto = data.nombre || data.nombre_completo || "";
+    if (nombreCompleto) {
+      inputNombre.value = nombreCompleto;
+      elementoMensaje.textContent = `✅ Nombre: ${nombreCompleto}`;
+      elementoMensaje.style.color = "#4CAF50";
+    } else {
+      elementoMensaje.textContent = "⚠️ No encontrado en Hacienda";
+      elementoMensaje.style.color = "#d32f2f";
+    }
+  } catch (err) {
+    console.warn("Error al consultar Hacienda:", err);
+    elementoMensaje.textContent = "⚠️ Error de conexión o cédula no registrada";
+    elementoMensaje.style.color = "#d32f2f";
+  }
+}
+
+    // ✅ Abrir modal de edición
+function abrirModalEditarCliente(id, nombre, cedula, telefono) {
+  document.getElementById("modal-edit-id").value = id;
+  document.getElementById("modal-edit-nombre").value = nombre;
+  document.getElementById("modal-edit-cedula").value = cedula;
+  document.getElementById("modal-edit-telefono").value = telefono;
+  document.getElementById("modal-editar-cliente").style.display = "flex";
+}
+
+// ✅ Cerrar modal
+function cerrarModalEditarCliente() {
+  document.getElementById("modal-editar-cliente").style.display = "none";
+}
+
+// ✅ Guardar edición desde modal
+async function guardarEdicionDesdeModal() {
+  const clienteId = document.getElementById("modal-edit-id").value;
+  const nuevoNombre = document.getElementById("modal-edit-nombre").value.trim();
+  const nuevaCedula = document.getElementById("modal-edit-cedula").value.trim();
+  let nuevoTelefono = document.getElementById("modal-edit-telefono").value.trim();
+
+  if (!nuevoNombre) {
+    alert("⚠️ Completa el nombre.");
+    return;
+  }
+
+  const telefonoLimpio = nuevoTelefono.replace(/\D/g, '');
+  if (!telefonoLimpio || telefonoLimpio === "00000000" || telefonoLimpio.length !== 8) {
+    const nuevo = prompt("El número no es válido. Ingresa un número de teléfono válido (8 dígitos):");
+    if (!nuevo) {
+      alert("Se requiere un número válido.");
+      return;
+    }
+    nuevoTelefono = nuevo;
+  }
+
+  try {
+    const clienteDoc = doc(db, "clientes", clienteId);
+    await updateDoc(clienteDoc, {
+      nombre: nuevoNombre,
+      telefono: nuevoTelefono,
+      cedula: nuevaCedula || null
+    });
+    alert("✅ Cliente actualizado.");
+    cerrarModalEditarCliente();
+    await cargarClientes(filtroDeudoresActivo); // ✅ Usa la variable global
+  } catch (error) {
+    console.error("Error al actualizar:", error);
+    alert("❌ Error: " + error.message);
+  }
+}
+
+    // ✅ Abrir modal nuevo cliente
+function abrirModalNuevoCliente() {
+  document.getElementById("modal-nuevo-cliente").style.display = "flex";
+  document.getElementById("modal-cedula").value = "";
+  document.getElementById("modal-nombre").value = "";
+  document.getElementById("modal-telefono").value = "";
+  document.getElementById("nombre-desde-api").textContent = "";
+  document.getElementById("modal-cedula").focus();
+
+  // Escuchar cambios en cédula para consultar Hacienda
+  const cedulaInput = document.getElementById("modal-cedula");
+  cedulaInput.addEventListener("blur", consultarNombreHacienda);
+}
+
+function cerrarModalNuevoCliente() {
+  document.getElementById("modal-nuevo-cliente").style.display = "none";
+}
+
+// ✅ Consultar API pública de Hacienda CR
+async function consultarNombreHacienda() {
+  const cedula = document.getElementById("modal-cedula").value.trim().replace(/\D/g, "");
+  const nombreApi = document.getElementById("nombre-desde-api");
+  const nombreInput = document.getElementById("modal-nombre");
+
+  if (cedula.length < 9) {
+    nombreApi.textContent = "⚠️ Cédula inválida (mínimo 9 dígitos)";
+    return;
+  }
+
+  try {
+    nombreApi.textContent = "Buscando en Hacienda...";
+    const res = await fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedula}`);
+    if (!res.ok) throw new Error("No encontrado o error en API");
+    const data = await res.json();
+    const nombreCompleto = data.nombre || data.nombre_completo || "";
+    if (nombreCompleto) {
+      nombreInput.value = nombreCompleto;
+      nombreApi.textContent = `✅ Nombre obtenido: ${nombreCompleto}`;
+      nombreApi.style.color = "#4CAF50";
+    } else {
+      nombreApi.textContent = "⚠️ No se encontró el nombre en Hacienda";
+      nombreApi.style.color = "#d32f2f";
+    }
+  } catch (err) {
+    console.warn("Error al consultar Hacienda:", err);
+    nombreApi.textContent = "⚠️ No se pudo consultar Hacienda (fuera de línea o cédula no registrada)";
+    nombreApi.style.color = "#d32f2f";
+  }
+}
+
+// ✅ Guardar cliente y abrir modal de productos
+async function guardarNuevoCliente() {
+  const cedula = document.getElementById("modal-cedula").value.trim().replace(/\D/g, "");
+  const nombre = document.getElementById("modal-nombre").value.trim();
+  const telefono = document.getElementById("modal-telefono").value.trim().replace(/\D/g, "");
+
+  if (!cedula || cedula.length < 9) {
+    alert("⚠️ Ingresa una cédula válida (9 dígitos).");
+    return;
+  }
+  if (!nombre) {
+    alert("⚠️ Ingresa un nombre válido.");
+    return;
+  }
+  if (!telefono || telefono.length !== 8) {
+    alert("⚠️ Ingresa un teléfono válido de 8 dígitos.");
+    return;
+  }
+
+  try {
+    const docRef = await addDoc(clientesRef, {
+      cedula,
+      nombre,
+      telefono,
+      compras: []
+    });
+    alert("✅ Cliente registrado con éxito.");
+    cerrarModalNuevoCliente();
+    // Abrir directamente el modal de productos con el nuevo cliente
+    abrirModalProductos(docRef.id);
+  } catch (error) {
+    console.error("Error al guardar cliente:", error);
+    alert("❌ Error al registrar cliente: " + error.message);
+  }
+}
+
+
+    // ✅ Abrir modal para seleccionar cliente
+async function abrirModalNuevaVenta() {
+  const modal = document.getElementById("modal-seleccionar-cliente");
+  const lista = document.getElementById("lista-clientes-modal");
+  const filtro = document.getElementById("filtro-cliente-modal");
+  lista.innerHTML = "<p>Cargando clientes...</p>";
+
+  const snapshot = await getDocs(clientesRef);
+  const clientes = [];
+
+  snapshot.forEach(docSnap => {
+    const data = docSnap.data();
+    clientes.push({
+      id: docSnap.id,
+      nombre: data.nombre,
+      telefono: data.telefono
+    });
+  });
+
+  const renderizar = () => {
+    lista.innerHTML = "";
+    const filtroTexto = filtro.value.toLowerCase().trim();
+    const filtrados = clientes.filter(c => c.nombre.toLowerCase().includes(filtroTexto));
+
+    if (filtrados.length === 0) {
+      lista.innerHTML = "<p>No se encontraron clientes.</p>";
+      return;
     }
 
-   // ✅ Cargar clientes con filtro en tiempo real
-async function cargarClientes() {
-  const cont = document.getElementById("clientes");
-  const filtroInput = document.getElementById("filtro-clientes");
-
-  // Función asíncrona para renderizar
-  const renderizarClientes = async () => {
-    cont.innerHTML = "";
-    const snapshot = await getDocs(clientesRef); // ✅ Ahora sí: esperamos los datos
-    const filtroTexto = filtroInput.value.toLowerCase().trim();
-
-    snapshot.forEach(docSnap => {
-      const cliente = docSnap.data();
-      const id = docSnap.id;
-
-      // Filtrar por nombre
-      if (!cliente.nombre.toLowerCase().includes(filtroTexto)) {
-        return;
-      }
-
-      let totalPendiente = 0;
-      const compras = cliente.compras || [];
-      compras.forEach(c => {
-        const totalCompra = (c.monto || 0) - (c.descuento || 0);
-        totalPendiente += totalCompra - (c.pagado || 0);
-      });
-
+    filtrados.forEach(cliente => {
       const div = document.createElement("div");
-      div.className = "cliente";
+      div.style.padding = "10px";
+      div.style.margin = "5px 0";
+      div.style.border = "1px solid #eee";
+      div.style.borderRadius = "6px";
+      div.style.cursor = "pointer";
+      div.style.backgroundColor = "#f9f9f9";
+      div.onmouseover = () => div.style.backgroundColor = "#f0f0f0";
+      div.onmouseout = () => div.style.backgroundColor = "#f9f9f9";
       div.innerHTML = `
-        <strong>${cliente.nombre}</strong><br>
-        📞 <a href="https://wa.me/${cliente.telefono}" target="_blank" title="${cliente.telefono}">${ocultarTelefono(cliente.telefono)}</a><br>
-        💸 Pendiente: ₡${totalPendiente.toLocaleString()}<br>
-        <div class="editar-cliente" id="editar-${id}" style="display:none;">
-          <input type="text" id="edit-nombre-${id}" value="${cliente.nombre}">
-          <input type="text" id="edit-telefono-${id}" value="${cliente.telefono}">
-          <button class="boton-accion" onclick="guardarEdicion('${id}')">💾 Guardar</button>
-          <button class="boton-accion" onclick="cancelarEdicion('${id}')">❌ Cancelar</button>
-        </div>
-        <div class="botones-derecha">
-          <button class="boton-accion" onclick="editarCliente('${id}')">✏️ Editar</button>
-          <button class="boton-accion" onclick="mostrarAgregarCompra('${id}')">➕ Productos</button>
-          <button class="boton-accion" onclick="registrarPago('${id}', '${cliente.nombre}')">💰 Pago</button>
-          <button class="boton-accion" onclick="abrirModalHistorial('${id}', '${cliente.nombre}')">🖨️ Imprimir</button>
-          <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${totalPendiente})">📲 WhatsApp</button>
-          <button class="boton-accion" onclick="eliminarCliente('${id}', '${cliente.nombre}')">🗑️ Eliminar</button>
-        </div>
-      `;
-      cont.appendChild(div);
-
-      // ✅ Mostrar historial de compras
-      if (compras.length > 0) {
-        const historial = document.createElement("div");
-        historial.className = "historial-compras";
-        let html = "<h4>🛒 Historial de Compras:</h4><ul>";
-        compras.forEach((compra, index) => {
-          const total = (compra.monto || 0) - (compra.descuento || 0);
-          const saldo = total - (compra.pagado || 0);
-          html += `
-            <li>
-              <strong>📅 ${compra.fecha}</strong> | 
-              Total: ₡${total.toLocaleString()} | 
-              Pagado: ₡${(compra.pagado || 0).toLocaleString()} | 
-              Saldo: ₡${saldo.toLocaleString()}
-              <br>
-              <small><strong>Productos:</strong> 
-                ${compra.productos?.map(p => `${p.nombre} (${p.presentacion || ''}${p.aroma ? ' - ' + p.aroma : ''})`).join(', ') || 'Sin productos'}
-              </small><br>
-              <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px;" 
-                      onclick="editarCompra('${id}', ${index})">
-                ✏️ Editar
-              </button>
-              <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px; background: #d32f2f;" 
-                      onclick="eliminarCompra('${id}', ${index})">
-                🗑️ Eliminar
-              </button>
-            </li>`;
-        });
-        html += "</ul>";
-        historial.innerHTML = html;
-        div.appendChild(historial);
-      }
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <strong>${cliente.nombre}</strong><br>
+      <small>${ocultarTelefono(cliente.telefono)}</small>
+    </div>
+    <button class="boton-accion" style="padding: 4px 8px; font-size: 0.7rem; background: #FF9800;" 
+            onclick="event.stopPropagation(); editarClienteDesdeModal('${cliente.id}');">
+      ✏️ Editar
+    </button>
+  </div>
+`;
+div.onclick = () => {
+  cerrarModalSeleccionarCliente();
+  abrirModalProductos(cliente.id); // Abre el modal de productos
+};
+      lista.appendChild(div);
     });
   };
 
-  // Cargar los clientes al inicio
-  await renderizarClientes(); // ✅ Llamada inicial
-
-  // Escuchar cambios en el filtro
-  filtroInput.addEventListener("input", renderizarClientes);
-
+  renderizar();
+  filtro.addEventListener("input", renderizar);
+  modal.style.display = "flex";
 }
+
+// ✅ Cerrar modal
+function cerrarModalSeleccionarCliente() {
+  document.getElementById("modal-seleccionar-cliente").style.display = "none";
+}
+
+
+
+
+
+   // ✅ Agregar cliente (con cédula)
+async function agregarCliente() {
+  const nombre = document.getElementById("nombre").value.trim();
+  const telefono = document.getElementById("telefono").value.trim();
+  const cedula = document.getElementById("cedula").value.trim();
+  if (!nombre || !telefono) {
+    alert("⚠️ Completa al menos nombre y teléfono.");
+    return;
+  }
+  try {
+    await addDoc(clientesRef, {
+      nombre,
+      telefono,
+      cedula: cedula || null, // Guardar como null si está vacío
+      compras: []
+    });
+    alert("✅ Cliente agregado exitosamente.");
+    document.getElementById("nombre").value = "";
+    document.getElementById("telefono").value = "";
+    document.getElementById("cedula").value = "";
+    await cargarClientes(filtroDeudoresActivo);
+  } catch (error) {
+    alert("❌ Error al agregar cliente: " + error.message);
+    console.error("Error al agregar cliente:", error);
+  }
+}
+
+function marcarBotones() {
+const btnDeud = document.getElementById('btn-solo-deudores');
+const btnTodos = document.getElementById('btn-mostrar-todos');
+if (!btnDeud || !btnTodos) return;
+btnDeud.classList.toggle('activo', filtroDeudoresActivo === true);
+btnTodos.classList.toggle('activo', filtroDeudoresActivo === false);
+}
+
+
+    // ✅ Cargar clientes con filtro
+    async function cargarClientes(filtrarDeudores = true) {
+      filtroDeudoresActivo = filtrarDeudores;
+      marcarBotones();
+      const cont = document.getElementById("clientes");
+      const filtroInput = document.getElementById("filtro-clientes");
+
+      const renderizarClientes = async () => {
+        cont.innerHTML = "";
+        const snapshot = await getDocs(clientesRef);
+        const filtroTexto = filtroInput.value.toLowerCase().trim();
+
+        snapshot.forEach(docSnap => {
+          const cliente = docSnap.data();
+          const id = docSnap.id;
+
+          // Filtrar por nombre
+          if (!cliente.nombre.toLowerCase().includes(filtroTexto)) return;
+
+          // Calcular saldo pendiente
+          let totalPendiente = 0;
+          const compras = cliente.compras || [];
+          compras.forEach(c => {
+            const totalCompra = (c.monto || 0) - (c.descuento || 0);
+            totalPendiente += totalCompra - (c.pagado || 0);
+          });
+
+          // Filtrar por deuda si se solicita
+          if (filtrarDeudores && totalPendiente <= 0) return;
+
+          // Clase para deshabilitado
+          const esDeudor = totalPendiente > 0;
+          const claseCliente = esDeudor ? "" : "cliente-no-deudor";
+
+          const div = document.createElement("div");
+          div.className = `cliente ${claseCliente}`.trim();
+
+              // Indicador de participación
+const estadoParticipacion = cliente.yaParticipo === true 
+  ? '<span style="color:orange; font-weight:bold;">🎯 Ya participó</span>' 
+  : '<span style="color:green;">🔄 Puede participar</span>';
+
+          div.innerHTML = `
+  <strong>${cliente.nombre}</strong><br>
+  📞 <a href="https://wa.me/506${cliente.telefono}" target="_blank" title="${cliente.telefono}">${ocultarTelefono(cliente.telefono)}</a><br>
+  ${estadoParticipacion}<br>
+  ${cliente.cedula ? `🆔 Cédula: ${cliente.cedula}<br>` : ''}
+  💸 Pendiente: ₡${totalPendiente.toLocaleString()}<br>
+${cliente.ultimoRecordatorio 
+    ? `<small style="color:#6c4ba3;">📅 Último recordatorio: ${new Date(cliente.ultimoRecordatorio).toLocaleDateString()}</small><br>` 
+    : ''}
+            
+           <div class="botones-derecha">
+  <button class="boton-accion" onclick="abrirModalEditarCliente('${id}', '${cliente.nombre.replace(/'/g, "\\'")}', '${cliente.cedula || ''}', '${cliente.telefono}')">✏️ Editar</button>
+  <button class="boton-accion" onclick="abrirModalProductos('${id}')">➕ Productos</button>
+  <button class="boton-accion" onclick="registrarPago('${id}', '${cliente.nombre}', '${cliente.telefono}')">💰 Pago</button>
+  <button class="boton-accion" onclick="abrirModalHistorial('${id}', '${cliente.nombre}')">🖨️ Imprimir</button>
+ <button class="boton-accion" onclick="enviarWhatsApp('${cliente.telefono}', '${cliente.nombre}', ${totalPendiente}, '${id}')">📲 WhatsApp</button>
+ <button class="boton-accion" onclick="eliminarCliente('${id}', '${cliente.nombre}')">🗑️ Eliminar</button>
+</div>
+          `;
+          cont.appendChild(div);
+
+         // Botón para mostrar/ocultar historial
+const btnToggleHistorial = document.createElement("button");
+btnToggleHistorial.className = "boton-accion";
+btnToggleHistorial.style.marginTop = "10px";
+btnToggleHistorial.textContent = "📋 Ver/Ocultar Historial";
+btnToggleHistorial.onclick = function() {
+  const historialDiv = this.nextElementSibling;
+  if (historialDiv && historialDiv.classList.contains("historial-compras")) {
+    historialDiv.style.display = historialDiv.style.display === "none" ? "block" : "none";
+  }
+};
+div.appendChild(btnToggleHistorial);
+
+if (compras.length > 0) {
+  const historial = document.createElement("div");
+  historial.className = "historial-compras";
+  historial.style.display = "none"; // Oculto por defecto
+  let html = "<h4>🛒 Historial de Compras:</h4><ul>";
+  compras.forEach((compra, index) => {
+    const total = (compra.monto || 0) - (compra.descuento || 0);
+    const saldo = total - (compra.pagado || 0);
+    const estadoInv = compra.inventarioActualizado ? 
+      `<small style="color: green;">✅ Inventario actualizado</small>` : 
+      `<small style="color: orange;">🔸 Pendiente</small>`;
+    html += `
+      <li>
+    <strong>📅 ${compra.fecha}</strong> | 
+    Total: ₡${total.toLocaleString()} | 
+    Descuento: ₡${(compra.descuento || 0).toLocaleString()} | 
+    Pagado: ₡${(compra.pagado || 0).toLocaleString()} | 
+    Saldo: ₡${saldo.toLocaleString()}
+    <br>
+        <small><strong>Productos:</strong> 
+          ${compra.productos?.map(p => `${p.cantidad}x ${p.nombre} (${p.presentacion || ''}${p.aroma ? ' - ' + p.aroma : ''})`).join(', ') || 'Sin productos'}
+        </small><br>
+        ${estadoInv}
+        <br>
+        <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px;" 
+                onclick="editarCompra('${id}', ${index})">
+          ✏️ Editar
+        </button>
+        <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px; background: #d32f2f;" 
+                onclick="eliminarCompra('${id}', ${index})">
+          🗑️ Eliminar
+        </button>
+        <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px; background: #6c4ba3;"
+                onclick="actualizarInventario('${id}', ${index})">
+          📦 Actualizar Inventario
+        </button>
+        ${compra.inventarioActualizado ? `
+        <button class="boton-accion" style="padding: 3px 6px; font-size: 0.75rem; margin-top: 5px; background: #757575;"
+                onclick="revertirInventario('${id}', ${index})">
+          🔁 Revertir Inventario
+        </button>
+        ` : ''}
+      </li>`;
+  });
+  html += "</ul>";
+  historial.innerHTML = html;
+  div.appendChild(historial);
+}
+        });
+      };
+
+      await renderizarClientes();
+      filtroInput.addEventListener("input", renderizarClientes);
+    }
+
+    // ✅ Actualizar inventario
+    async function actualizarInventario(clienteId, compraIndex) {
+      try {
+        const clienteDoc = doc(db, "clientes", clienteId);
+        const docSnap = await getDoc(clienteDoc);
+        if (!docSnap.exists()) {
+          alert("Cliente no encontrado.");
+          return;
+        }
+
+        const cliente = docSnap.data();
+        const compras = cliente.compras || [];
+        const compra = compras[compraIndex];
+        if (!compra || !compra.productos) {
+          alert("Compra o productos no encontrados.");
+          return;
+        }
+
+        if (compra.inventarioActualizado) {
+          alert("⚠️ El inventario ya fue actualizado para esta compra.");
+          return;
+        }
+
+        const productos = compra.productos;
+        for (const prod of productos) {
+          const nombreProducto = prod.nombre;
+          const cantidadVendida = prod.cantidad;
+
+          const q = query(
+            collection(db, "stock"),
+            where("nombre", "==", nombreProducto)
+          );
+          const stockSnap = await getDocs(q);
+
+          if (stockSnap.empty) {
+            console.warn(`⚠️ Producto "${nombreProducto}" no existe en inventario.`);
+            continue;
+          }
+
+          const stockDoc = stockSnap.docs[0];
+          const stockData = stockDoc.data();
+          const nuevaCantidad = Math.max(0, (stockData.cantidad || 0) - cantidadVendida);
+
+          await updateDoc(doc(db, "stock", stockDoc.id), {
+            cantidad: nuevaCantidad,
+            ultimaActualizacion: new Date().toISOString()
+          });
+        }
+
+        // Marcar como actualizado
+        compras[compraIndex].inventarioActualizado = true;
+        await updateDoc(clienteDoc, { compras });
+
+        alert("✅ Inventario actualizado correctamente.");
+        await cargarClientes(filtroDeudoresActivo);
+      } catch (error) {
+        console.error("Error al actualizar inventario:", error);
+        alert("❌ Hubo un error al actualizar el inventario.");
+      }
+    }
+
+    // ✅ Revertir inventario
+    async function revertirInventario(clienteId, compraIndex) {
+      try {
+        const clienteDoc = doc(db, "clientes", clienteId);
+        const docSnap = await getDoc(clienteDoc);
+        if (!docSnap.exists()) {
+          alert("Cliente no encontrado.");
+          return;
+        }
+
+        const cliente = docSnap.data();
+        const compras = cliente.compras || [];
+        const compra = compras[compraIndex];
+        if (!compra || !compra.productos) {
+          alert("Compra o productos no encontrados.");
+          return;
+        }
+
+        if (!compra.inventarioActualizado) {
+          alert("⚠️ Esta compra no ha actualizado el inventario.");
+          return;
+        }
+
+        if (!confirm("¿Revertir el inventario? Se devolverán las cantidades al stock.")) return;
+
+        const productos = compra.productos;
+        for (const prod of productos) {
+          const nombreProducto = prod.nombre;
+          const cantidadVendida = prod.cantidad;
+
+          const q = query(
+            collection(db, "stock"),
+            where("nombre", "==", nombreProducto)
+          );
+          const stockSnap = await getDocs(q);
+
+          if (stockSnap.empty) {
+            console.warn(`⚠️ Producto "${nombreProducto}" no existe en inventario.`);
+            continue;
+          }
+
+          const stockDoc = stockSnap.docs[0];
+          const stockData = stockDoc.data();
+          const nuevaCantidad = (stockData.cantidad || 0) + cantidadVendida;
+
+          await updateDoc(doc(db, "stock", stockDoc.id), {
+            cantidad: nuevaCantidad,
+            ultimaActualizacion: new Date().toISOString()
+          });
+        }
+
+        // Desmarcar como actualizado
+        compras[compraIndex].inventarioActualizado = false;
+        await updateDoc(clienteDoc, { compras });
+
+        alert("✅ Inventario revertido correctamente.");
+        await cargarClientes(filtroDeudoresActivo);
+      } catch (error) {
+        console.error("Error al revertir inventario:", error);
+        alert("❌ Hubo un error al revertir el inventario.");
+      }
+    }
+
     // ✅ Editar cliente
     function editarCliente(clienteId) {
       document.querySelectorAll('.editar-cliente').forEach(div => div.style.display = 'none');
-      document.getElementById(`editar-${clienteId}`).style.display = 'flex';
+      const el = document.getElementById(`editar-${clienteId}`);
+      if (el) el.style.display = 'flex';
     }
 
-    // ✅ Guardar edición con validación de teléfono
     async function guardarEdicion(clienteId) {
-      const nuevoNombre = document.getElementById(`edit-nombre-${clienteId}`).value.trim();
-      let nuevoTelefono = document.getElementById(`edit-telefono-${clienteId}`).value.trim();
-
-      if (!nuevoNombre) {
-        alert("⚠️ Completa el nombre.");
-        return;
-      }
-
-      const telefonoLimpio = nuevoTelefono.replace(/\D/g, '');
-      if (!telefonoLimpio || telefonoLimpio === "00000000" || telefonoLimpio.length < 8) {
-        const nuevo = prompt("El número no es válido. Ingresa un número de teléfono válido (8 dígitos):");
-        if (!nuevo) {
-          alert("Se requiere un número válido.");
-          return;
-        }
-        nuevoTelefono = nuevo;
-      }
-
-      try {
-        const clienteDoc = doc(db, "clientes", clienteId);
-        await updateDoc(clienteDoc, { nombre: nuevoNombre, telefono: nuevoTelefono });
-        alert("✅ Cliente actualizado.");
-        await cargarClientes();
-      } catch (error) {
-        alert("❌ Error al actualizar: " + error.message);
-        console.error("Error:", error);
-      }
+  const nuevoNombre = document.getElementById(`edit-nombre-${clienteId}`).value.trim();
+  const nuevaCedula = document.getElementById(`edit-cedula-${clienteId}`).value.trim();
+  let nuevoTelefono = document.getElementById(`edit-telefono-${clienteId}`).value.trim();
+  if (!nuevoNombre) {
+    alert("⚠️ Completa el nombre.");
+    return;
+  }
+  const telefonoLimpio = nuevoTelefono.replace(/\D/g, '');
+  if (!telefonoLimpio || telefonoLimpio === "00000000" || telefonoLimpio.length < 8) {
+    const nuevo = prompt("El número no es válido. Ingresa un número de teléfono válido (8 dígitos):");
+    if (!nuevo) {
+      alert("Se requiere un número válido.");
+      return;
     }
+    nuevoTelefono = nuevo;
+  }
+  try {
+    const clienteDoc = doc(db, "clientes", clienteId);
+    await updateDoc(clienteDoc, { 
+      nombre: nuevoNombre, 
+      telefono: nuevoTelefono,
+      cedula: nuevaCedula || null
+    });
+    alert("✅ Cliente actualizado.");
+    await cargarClientes(filtroDeudoresActivo);
+  } catch (error) {
+    alert("❌ Error al actualizar: " + error.message);
+    console.error("Error:", error);
+  }
+}
 
     function cancelarEdicion(clienteId) {
-      document.getElementById(`editar-${clienteId}`).style.display = 'none';
+      const el = document.getElementById(`editar-${clienteId}`);
+      if (el) el.style.display = 'none';
     }
 
     // ✅ Eliminar cliente
@@ -505,7 +1116,7 @@ async function cargarClientes() {
       try {
         await deleteDoc(doc(db, "clientes", clienteId));
         alert(`✅ ${nombre} eliminado.`);
-        await cargarClientes();
+        await cargarClientes(filtroDeudoresActivo);
       } catch (error) {
         alert("❌ Error al eliminar.");
         console.error(error);
@@ -517,36 +1128,29 @@ async function cargarClientes() {
       const clienteDoc = doc(db, "clientes", clienteId);
       const docSnap = await getDoc(clienteDoc);
       if (!docSnap.exists()) return;
-
       const cliente = docSnap.data();
       const compras = cliente.compras || [];
       const compra = compras[index];
       if (!compra) return;
-
       const nuevoMonto = prompt("Editar monto total:", compra.monto);
       const nuevoDescuento = prompt("Editar descuento:", compra.descuento || 0);
       const nuevoPagado = prompt("Editar pago:", compra.pagado || 0);
-
       if ([nuevoMonto, nuevoDescuento, nuevoPagado].some(v => v === null)) return;
-
       const monto = parseFloat(nuevoMonto);
       const descuento = parseFloat(nuevoDescuento);
       const pagado = parseFloat(nuevoPagado);
-
       if (isNaN(monto) || isNaN(descuento) || isNaN(pagado)) {
         alert("⚠️ Todos los valores deben ser números.");
         return;
       }
-
       if (pagado > monto - descuento) {
         alert("⚠️ El pago no puede superar el total.");
         return;
       }
-
       compras[index] = { ...compra, monto, descuento, pagado };
       await updateDoc(clienteDoc, { compras });
       alert("✅ Compra actualizada.");
-      await cargarClientes();
+      await cargarClientes(filtroDeudoresActivo);
     };
 
     // ✅ Eliminar compra
@@ -559,56 +1163,222 @@ async function cargarClientes() {
       compras.splice(index, 1);
       await updateDoc(clienteDoc, { compras });
       alert("✅ Compra eliminada.");
-      await cargarClientes();
+      await cargarClientes(filtroDeudoresActivo);
     };
 
-    // ✅ Registrar pago
-    window.registrarPago = async function(clienteId, nombre) {
-      const snap = await getDocs(clientesRef);
-      let clienteData = null;
-      snap.forEach(docSnap => {
-        if (docSnap.id === clienteId) {
-          clienteData = docSnap.data();
-        }
-      });
-      if (!clienteData) return;
-
-      const compras = clienteData.compras || [];
-      const ultimaPendienteIndex = [...compras].reverse().findIndex(c => {
-        const total = (c.monto || 0) - (c.descuento || 0);
-        return total > (c.pagado || 0);
-      });
-
-      if (ultimaPendienteIndex === -1) {
-        alert("🎉 No hay pagos pendientes.");
-        return;
-      }
-
-      const indexReal = compras.length - 1 - ultimaPendienteIndex;
-      const compra = compras[indexReal];
+    // ✅ Nueva función: abrir modal de pagos con facturas pendientes
+window.registrarPago = async function(clienteId, nombreCliente, telefonoCliente) {
+  const clienteDoc = doc(db, "clientes", clienteId);
+  const docSnap = await getDoc(clienteDoc);
+  if (!docSnap.exists()) {
+    alert("Cliente no encontrado.");
+    return;
+  }
+  const cliente = docSnap.data();
+  const compras = cliente.compras || [];
+  const facturasPendientes = compras
+    .map((compra, index) => {
       const total = (compra.monto || 0) - (compra.descuento || 0);
-      const saldo = total - (compra.pagado || 0);
-      const pago = prompt(`Saldo: ₡${saldo}\nMonto a pagar:`);
-      if (!pago) return;
-      const pagoNum = parseFloat(pago);
-      if (isNaN(pagoNum) || pagoNum <= 0) {
-        alert("⚠️ Monto inválido.");
-        return;
-      }
-      compra.pagado = Math.min((compra.pagado || 0) + pagoNum, total);
-      compras[indexReal] = compra;
-      await updateDoc(doc(db, "clientes", clienteId), { compras });
-      alert("✅ Pago registrado.");
-      await cargarClientes();
-    };
+      const pagado = compra.pagado || 0;
+      const saldo = total - pagado;
+      return { ...compra, saldo, index, total };
+    })
+    .filter(f => f.saldo > 0);
 
-    // ✅ Enviar WhatsApp
-    function enviarWhatsApp(telefono, nombre, deuda) {
-      const limpio = telefono.replace(/\D/g, '');
-      const mensaje = `Hola ${nombre},agradecemos tu preferencia  y queremos informarte que tienes un saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia 💜 Pago por Sinpe al 72952454 Wilber Calderón M`;
-      const url = `https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`;
-      window.open(url, "_blank");
+  if (facturasPendientes.length === 0) {
+    alert("🎉 No hay facturas pendientes.");
+    return;
+  }
+
+  // Mostrar nombre del cliente
+  document.getElementById("nombre-cliente-pago").textContent = nombreCliente;
+
+  // Renderizar facturas
+  const contenedor = document.getElementById("lista-facturas-pendientes");
+  let html = `<h3>Facturas pendientes (${facturasPendientes.length}):</h3><ul style="list-style:none; padding:0;">`;
+  facturasPendientes.forEach(f => {
+    const productosResumen = f.productos?.map(p => `${p.cantidad}x ${p.nombre}`).join(", ") || "Sin productos";
+    html += `
+      <li style="border:1px solid #eee; padding:12px; margin:10px 0; border-radius:8px; background:#f9f9f9;">
+        <strong>📅 ${f.fecha}</strong><br>
+        <small><em>${productosResumen}</em></small><br>
+        Total: ₡${f.total.toLocaleString()} | Pagado: ₡${f.pagado.toLocaleString()}<br>
+        <strong style="color:red;">Saldo: ₡${f.saldo.toLocaleString()}</strong><br>
+        <input type="number" id="pago-${f.index}" placeholder="Monto a pagar" min="1" max="${f.saldo}" 
+               style="margin-top:8px; padding:6px; width:100%; border:1px solid #ccc; border-radius:4px;">
+        <button class="boton-accion" style="margin-top:8px; padding:5px 10px;"
+                onclick="aplicarPago('${clienteId}', ${f.index}, ${f.saldo})">
+          ✅ Aplicar Pago
+        </button>
+      </li>
+    `;
+  });
+  html += `</ul>`;
+  contenedor.innerHTML = html;
+
+  // Guardar ID en el ámbito global para WhatsApp/impresión
+  // Al final, al guardar en window.clienteActualPago, incluye el teléfono:
+  window.clienteActualPago = {
+    id: clienteId,
+    nombre: nombreCliente,
+    telefono: telefonoCliente,  // ✅ Ahora sí está definido
+    facturas: facturasPendientes
+  };
+
+  document.getElementById("modal-pago").style.display = "flex";
+};
+
+// ✅ Aplicar pago a una factura específica
+window.aplicarPago = async function(clienteId, compraIndex, saldoMax) {
+  const input = document.getElementById(`pago-${compraIndex}`);
+  const montoStr = input?.value?.trim();
+  if (!montoStr) {
+    alert("⚠️ Ingresa un monto.");
+    return;
+  }
+  const monto = parseFloat(montoStr);
+  if (isNaN(monto) || monto <= 0 || monto > saldoMax) {
+    alert(`⚠️ Ingresa un monto válido (1 – ₡${saldoMax.toLocaleString()}).`);
+    return;
+  }
+
+  try {
+    // 🔥 LEER EL DOCUMENTO ACTUAL DE NUEVO (evita conflictos)
+    const clienteDocRef = doc(db, "clientes", clienteId);
+    const docSnap = await getDoc(clienteDocRef);
+    if (!docSnap.exists()) {
+      alert("Cliente no encontrado.");
+      return;
     }
+    const clienteData = docSnap.data();
+    const compras = [...(clienteData.compras || [])]; // Copia profunda simple
+
+    if (!compras[compraIndex]) {
+      alert("Factura no encontrada.");
+      return;
+    }
+
+    const compra = compras[compraIndex];
+    const totalNeto = (compra.monto || 0) - (compra.descuento || 0);
+    const pagadoActual = compra.pagado || 0;
+    const nuevoPagado = Math.min(pagadoActual + monto, totalNeto);
+
+    // Aplicar el nuevo valor
+    compras[compraIndex] = { ...compra, pagado: nuevoPagado };
+
+    // 🔥 ACTUALIZAR EN FIRESTORE
+    await updateDoc(clienteDocRef, { compras });
+
+    alert("✅ Pago aplicado correctamente.");
+
+    // Recargar el modal con los datos actualizados
+    const nombre = window.clienteActualPago?.nombre || "Desconocido";
+    const telefono = window.clienteActualPago?.telefono || "";
+    registrarPago(clienteId, nombre, telefono);
+
+  } catch (error) {
+    console.error("Error al aplicar pago:", error);
+    alert("❌ Error al aplicar el pago: " + (error.message || "error desconocido"));
+  }
+};
+
+// ✅ Cerrar modal de pago
+window.cerrarModalPago = function() {
+  document.getElementById("modal-pago").style.display = "none";
+  delete window.clienteActualPago;
+};
+
+// ✅ Enviar WhatsApp con resumen de deudas
+window.enviarWhatsAppDeudas = function() {
+  if (!window.clienteActualPago || !window.clienteActualPago.telefono) {
+    alert("❌ No se encontró el número de teléfono del cliente.");
+    return;
+  }
+  const { nombre, facturas, telefono } = window.clienteActualPago;
+  const telefonoLimpio = (telefono || "").toString().replace(/\D/g, "");
+  if (telefonoLimpio.length !== 8) {
+    alert("⚠️ El número de teléfono no es válido para WhatsApp.");
+    return;
+  }
+
+  let mensaje = `Hola ${nombre}, estos son tus saldos pendientes en Esentia:\n\n`;
+  facturas.forEach(f => {
+    mensaje += `• ${f.fecha}: ₡${f.saldo.toLocaleString()}\n`;
+  });
+  const total = facturas.reduce((sum, f) => sum + f.saldo, 0);
+  mensaje += `\nTotal pendiente: ₡${total.toLocaleString()}\n\nGracias por tu confianza 💜`;
+
+  window.open(`https://wa.me/506${telefonoLimpio}?text=${encodeURIComponent(mensaje)}`, "_blank");
+};
+
+// ✅ Imprimir resumen de deudas
+window.imprimirDeudasPago = function() {
+  if (!window.clienteActualPago) return;
+  const { nombre, facturas } = window.clienteActualPago;
+  const totalGeneral = facturas.reduce((sum, f) => sum + f.saldo, 0);
+
+  let html = `<h2>📋 Deudas Pendientes – ${nombre}</h2><table border="1" style="border-collapse:collapse; width:100%; margin:20px 0;">
+    <tr><th>Fecha</th><th>Productos</th><th>Saldo</th></tr>`;
+  facturas.forEach(f => {
+    const productos = f.productos?.map(p => `${p.cantidad}x ${p.nombre}`).join(", ") || "—";
+    html += `<tr><td>${f.fecha}</td><td>${productos}</td><td>₡${f.saldo.toLocaleString()}</td></tr>`;
+  });
+  html += `<tr><td colspan="2" style="text-align:right;"><strong>TOTAL:</strong></td><td><strong>₡${totalGeneral.toLocaleString()}</strong></td></tr>`;
+  html += `</table><p>Fecha: ${new Date().toLocaleDateString()}</p>`;
+
+  const win = window.open("", "_blank", "width=800,height=600");
+  win.document.write(`
+    <html><head><title>Deudas - ${nombre}</title>
+    <style>body { font-family: Arial, sans-serif; padding: 20px; }</style></head>
+    <body>${html}
+    <button onclick="window.print()" style="padding:10px; background:#6c4ba3; color:white; border:none; margin-top:20px;">🖨️ Imprimir</button>
+    </body></html>
+  `);
+  win.document.close();
+};
+
+    // ✅ Enviar WhatsApp y registrar fecha de recordatorio
+async function enviarWhatsApp(telefono, nombre, deuda, clienteId) {
+  const limpio = telefono.replace(/\D/g, '');
+  if (!limpio || limpio.length !== 8) {
+    alert("⚠️ Teléfono no válido para WhatsApp.");
+    return;
+  }
+
+  // Verificar si ya se envió hoy
+  const hoy = new Date().setHours(0, 0, 0, 0);
+  const clienteDoc = doc(db, "clientes", clienteId);
+  const docSnap = await getDoc(clienteDoc);
+  const clienteData = docSnap.data();
+  const ultimo = clienteData?.ultimoRecordatorio ? new Date(clienteData.ultimoRecordatorio).setHours(0, 0, 0, 0) : null;
+
+  if (ultimo && ultimo >= hoy) {
+    if (!confirm("Ya se envió un recordatorio hoy. ¿Reenviar de todas formas?")) {
+      return;
+    }
+  }
+
+  const mensaje = `Hola ${nombre}, Agradecemos tu preferencia con ESENTIA y queremos comentarte que tienes al día de hoy saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia llenando tu vida de fragancias que enamoran. 💜💳 Formas de pago:
+1. Efectivo contra entrega
+2. SINPE 72952454 Wilber Calderón M.
+3. BAC: CR59010200009453897656 🌿`;
+
+  const url = `https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`;
+  window.open(url, "_blank");
+
+  // 🔥 Registrar la fecha del recordatorio en Firestore
+  try {
+    const clienteDoc = doc(db, "clientes", clienteId);
+    await updateDoc(clienteDoc, {
+      ultimoRecordatorio: new Date().toISOString() // Fecha en formato ISO (ej: "2025-04-10T15:30:00.000Z")
+    });
+    // Opcional: recargar la lista para mostrar la fecha
+    await cargarClientes(filtroDeudoresActivo);
+  } catch (error) {
+    console.error("No se pudo registrar la fecha del recordatorio:", error);
+    // No bloqueamos la UX si falla solo el registro
+  }
+}
 
     // ✅ Reportes
     async function generarReporte() {
@@ -633,7 +1403,8 @@ async function cargarClientes() {
           totalCompras,
           totalPagado,
           totalDescuentos,
-          totalPendiente
+          totalPendiente,
+          cedula: c.cedula || ''
         });
       });
 
@@ -642,11 +1413,11 @@ async function cargarClientes() {
       const max = parseFloat(document.getElementById("filtro-deuda-max").value) || Infinity;
       const orden = document.getElementById("filtro-orden").value;
 
-      clientes = clientes.filter(cli => {
-        return cli.nombre.toLowerCase().includes(filtroNombre) &&
-               cli.totalPendiente >= min &&
-               cli.totalPendiente <= max;
-      });
+      clientes = clientes.filter(cli => 
+        cli.nombre.toLowerCase().includes(filtroNombre) &&
+        cli.totalPendiente >= min &&
+        cli.totalPendiente <= max
+      );
 
       if (orden === "nombre-asc") clientes.sort((a, b) => a.nombre.localeCompare(b.nombre));
       if (orden === "nombre-desc") clientes.sort((a, b) => b.nombre.localeCompare(a.nombre));
@@ -658,42 +1429,46 @@ async function cargarClientes() {
         return;
       }
 
-      let totalGeneral = 0, totalPagadoGen = 0, totalPendienteGen = 0;
+      let totalGeneral = 0, totalPagadoGen = 0, totalPendienteGen = 0, totalDescuentosGen = 0;
       let tabla = `
         <table class="tabla-reportes">
           <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Teléfono</th>
-              <th>Total Compras</th>
-              <th>Total Pagado</th>
-              <th>Descuentos</th>
-              <th>Saldo</th>
-            </tr>
-          </thead>
+  <tr>
+    <th>Nombre</th>
+    <th>Teléfono</th>
+    <th>Cédula</th>
+    <th>Total Compras</th>
+    <th>Total Pagado</th>
+    <th>Descuentos</th>
+    <th>Saldo</th>
+  </tr>
+</thead>
           <tbody>
       `;
       clientes.forEach(cli => {
         totalGeneral += cli.totalCompras;
         totalPagadoGen += cli.totalPagado;
         totalPendienteGen += cli.totalPendiente;
+        totalDescuentosGen += cli.totalDescuentos; // ✅ ¡Agrega esta línea!
         const clase = cli.totalPendiente > 5000 ? "deuda-alta" : cli.totalPendiente > 2000 ? "deuda-media" : "deuda-baja";
-        tabla += `
-          <tr>
-            <td>${cli.nombre}</td>
-            <td>${cli.telefono}</td>
-            <td>₡${cli.totalCompras.toLocaleString()}</td>
-            <td>₡${cli.totalPagado.toLocaleString()}</td>
-            <td>₡${cli.totalDescuentos.toLocaleString()}</td>
-            <td class="${clase}">₡${cli.totalPendiente.toLocaleString()}</td>
-          </tr>
-        `;
+       tabla += `
+  <tr>
+    <td>${cli.nombre}</td>
+    <td>${cli.telefono}</td>
+    <td>${cli.cedula || '—'}</td>
+    <td>₡${cli.totalCompras.toLocaleString()}</td>
+    <td>₡${cli.totalPagado.toLocaleString()}</td>
+    <td>₡${cli.totalDescuentos.toLocaleString()}</td>
+    <td class="${clase}">₡${cli.totalPendiente.toLocaleString()}</td>
+  </tr>
+`;
       });
       tabla += `</tbody></table>
         <div style="margin-top:20px; padding:15px; background:#f5f5f5; border-radius:5px;">
           <h3>Resumen:</h3>
           <p><strong>Total Compras:</strong> ₡${totalGeneral.toLocaleString()}</p>
           <p><strong>Total Pagado:</strong> ₡${totalPagadoGen.toLocaleString()}</p>
+          <p><strong>Total Descuentos:</strong> ₡${totalDescuentosGen.toLocaleString()}</p>
           <p><strong>Total Pendiente:</strong> ₡${totalPendienteGen.toLocaleString()}</p>
         </div>`;
       cont.innerHTML = tabla;
@@ -715,6 +1490,8 @@ async function cargarClientes() {
     async function generarReporteModal() {
       const cont = document.getElementById("resultado-modal");
       cont.innerHTML = "<p>Generando...</p>";
+
+      try {
       const snapshot = await getDocs(clientesRef);
       let clientes = [];
       snapshot.forEach(docSnap => {
@@ -743,11 +1520,11 @@ async function cargarClientes() {
       const max = parseFloat(document.getElementById("filtro-deuda-max-modal").value) || Infinity;
       const orden = document.getElementById("filtro-orden-modal").value;
 
-      clientes = clientes.filter(cli => {
-        return cli.nombre.toLowerCase().includes(filtroNombre) &&
-               cli.totalPendiente >= min &&
-               cli.totalPendiente <= max;
-      });
+      clientes = clientes.filter(cli => 
+        cli.nombre.toLowerCase().includes(filtroNombre) &&
+        cli.totalPendiente >= min &&
+        cli.totalPendiente <= max
+      );
 
       if (orden === "nombre-asc") clientes.sort((a, b) => a.nombre.localeCompare(b.nombre));
       if (orden === "nombre-desc") clientes.sort((a, b) => b.nombre.localeCompare(a.nombre));
@@ -798,7 +1575,11 @@ async function cargarClientes() {
           <p><strong>Total Pendiente:</strong> ₡${totalPendienteGen.toLocaleString()}</p>
         </div>`;
       cont.innerHTML = tabla;
-    }
+      } catch (error) {
+    console.error("Error en generarReporte:", error);
+    cont.innerHTML = `<p style="color: red;">❌ Error: ${error.message}</p>`;
+  }
+}
 
     function imprimirModal() {
       const contenido = document.getElementById("modal-impresion").querySelector("div").innerHTML;
@@ -854,12 +1635,10 @@ async function cargarClientes() {
         alert("Cliente no encontrado.");
         return;
       }
-
       const cliente = docSnap.data();
       const compras = cliente.compras || [];
       let totalCompras = 0, totalPagado = 0, totalPendiente = 0;
       let html = "";
-
       if (compras.length === 0) {
         html = '<p>No hay compras registradas.</p>';
       } else {
@@ -869,18 +1648,18 @@ async function cargarClientes() {
           totalCompras += total;
           totalPagado += compra.pagado || 0;
           totalPendiente += saldo;
-          html += `
-            <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #eee; border-radius: 6px;">
-              <h4>📅 Compra #${index+1} - ${compra.fecha}</h4>
-              <ul style="margin-left: 20px;">
-                ${compra.productos?.map(p => `<li>${p.nombre} - ${p.presentacion || ''} ${p.aroma ? '('+p.aroma+')' : ''} - ₡${p.precio}</li>`).join('') || '<li>Sin productos</li>'}
-              </ul>
-              <p><strong>Total:</strong> ₡${total} | <strong>Pagado:</strong> ₡${compra.pagado || 0} | <strong>Saldo:</strong> ₡${saldo}</p>
-            </div>
-          `;
+         html += `
+  <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #eee; border-radius: 6px;">
+    <h4>📅 Compra #${index+1} - ${compra.fecha}</h4>
+    <ul style="margin-left: 20px;">
+      ${compra.productos?.map(p => `<li>${p.cantidad}x ${p.nombre} - ${p.presentacion || ''} ${p.aroma ? '('+p.aroma+')' : ''} - ₡${p.precio} (Total: ₡${p.precio * p.cantidad})</li>`).join('') || '<li>Sin productos</li>'}
+    </ul>
+    <p><strong>Total:</strong> ₡${total} | <strong>Descuento:</strong> ₡${(compra.descuento || 0).toLocaleString()} | <strong>Pagado:</strong> ₡${compra.pagado || 0} | <strong>Saldo:</strong> ₡${saldo}</p>
+    ${compra.inventarioActualizado ? '<p style="color: green;">✅ Inventario actualizado</p>' : ''}
+  </div>
+`;
         });
       }
-
       const contenido = document.getElementById("contenido-historial");
       contenido.innerHTML = `
         <p><strong>Cliente:</strong> ${cliente.nombre}</p>
@@ -897,7 +1676,6 @@ async function cargarClientes() {
           </p>
         </div>
       `;
-
       document.getElementById("modal-historial").style.display = "flex";
     };
 
@@ -907,11 +1685,11 @@ async function cargarClientes() {
 
     function imprimirModalHistorial() {
       const contenido = document.getElementById("contenido-historial").innerHTML;
-      const ventana = window.open('', '_blank', 'width=800,height=600');
+      const ventana = window.open('', '_blank', 'width:800,height:600');
       ventana.document.write(`
         <html>
           <head>
-            <title>Historial de Compras</title>
+            <title>Historial de Compras - ${document.getElementById("contenido-historial").querySelector("p").textContent}</title>
             <style>
               body { 
                 font-family: Arial, sans-serif; 
@@ -958,138 +1736,466 @@ async function cargarClientes() {
     let todosLosProductos = [];
     let carrito = [];
     let clienteSeleccionadoId = null;
+    let filtroDeudoresActivo = true; // o false, según tu preferencia inicial
 
-    async function cargarProductosJSON() {
-      const [res1, res2] = await Promise.all([fetch(URL_ESENCIA), fetch(URL_LIMPIEZA)]);
-      const [aromas, limpieza] = await Promise.all([res1.json(), res2.json()]);
-      todosLosProductos = [...aromas, ...limpieza].filter(p => p.disponible);
-      const select = document.getElementById("select-producto");
-      select.innerHTML = "";
-      todosLosProductos.forEach((p, i) => {
-        const opt = document.createElement("option");
-        opt.value = i;
-        opt.textContent = p.nombre;
-        select.appendChild(opt);
-      });
+   async function cargarProductosJSON() {
+  try {
+    const [res1, res2] = await Promise.all([
+      fetch(URL_ESENCIA),
+      fetch(URL_LIMPIEZA)
+    ]);
+    const [aromas, limpieza] = await Promise.all([res1.json(), res2.json()]);
+    // Unificar listados; mantener presentaciones y precios
+    todosLosProductos = [...(aromas || []), ...(limpieza || [])].filter(p => p && (p.disponible === undefined || p.disponible === true));
+
+    const select = document.getElementById("select-producto");
+    if (!select) return;
+    select.innerHTML = "";
+    todosLosProductos.forEach((p, i) => {
+      const opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = p.nombre;
+      select.appendChild(opt);
+    });
+
+    // Escuchar cambios en la selección
+    select.addEventListener("change", mostrarVistaPrevia);
+    // Mostrar el primero al cargar
+    if (todosLosProductos.length > 0) {
+      select.value = 0;
+      mostrarVistaPrevia();
     }
+  } catch (err) {
+    console.error("Error cargando productos JSON:", err);
+  }
+}
 
-    function mostrarAgregarCompra(idCliente) {
-      clienteSeleccionadoId = idCliente;
-      carrito = [];
-      document.getElementById("carrito").innerHTML = "";
-      document.getElementById("total-compra").textContent = "0";
-      document.getElementById("descuento").value = "0";
-      const clienteDiv = [...document.querySelectorAll(".cliente")].find(div =>
-        div.innerHTML.includes(`mostrarAgregarCompra('${idCliente}')`)
-      );
-      clienteDiv.appendChild(document.getElementById("seccion-productos"));
-      document.getElementById("seccion-productos").style.display = "block";
+function mostrarVistaPrevia() {
+  const index = parseInt(document.getElementById("select-producto").value);
+  const prod = todosLosProductos[index];
+  const img = document.getElementById("img-producto");
+  const info = document.getElementById("info-producto");
+  const selectorDiv = document.getElementById("selector-variantes");
+
+  // Limpiar
+  if (img) img.style.display = "none";
+  if (info) info.textContent = "";
+  if (selectorDiv) selectorDiv.innerHTML = "";
+  if (!prod) return;
+
+  // ✅ Convertir ruta relativa a URL absoluta
+  if (prod.imagen && img) {
+    // Base URL de tu repositorio
+    const baseUrl = "https://wil1979.github.io/esentia-factura/";
+    // Si la imagen ya es una URL absoluta, usarla directamente
+    let src = prod.imagen;
+    if (!prod.imagen.startsWith("http")) {
+      // Asegurar que no haya doble barra
+      src = baseUrl + (prod.imagen.startsWith("/") ? prod.imagen.slice(1) : prod.imagen);
     }
+    img.src = src;
+    img.style.display = "inline-block";
+  }
 
-    function agregarAlCarrito() {
-      const index = parseInt(document.getElementById("select-producto").value);
-      const producto = todosLosProductos[index];
-      const template = document.getElementById("producto-template").content.cloneNode(true);
-      const contenedor = document.createElement("div");
-      contenedor.dataset.index = index;
-      template.querySelector(".producto-nombre").textContent = producto.nombre;
-      const selPres = template.querySelector(".presentacion");
-      selPres.innerHTML = "";
-      if (producto.variantes) {
-        producto.variantes.forEach(v => {
-          const opt = document.createElement("option");
-          opt.value = v.precio;
-          opt.textContent = v.nombre;
-          selPres.appendChild(opt);
-        });
-      } else {
-        const opt = document.createElement("option");
-        opt.value = producto.precioPublico;
-        opt.textContent = producto.nombre;
-        selPres.appendChild(opt);
-        selPres.style.display = "none";
+  // Mostrar info básica
+  if (info) info.textContent = prod.info || prod.beneficios || "";
+
+  // Mostrar variantes si existen
+  if (prod.variantes && prod.variantes.length > 0 && selectorDiv) {
+    const label = document.createElement("div");
+    label.textContent = "Selecciona una presentación:";
+    label.style.marginBottom = "6px";
+    label.style.fontWeight = "bold";
+    selectorDiv.appendChild(label);
+
+    const select = document.createElement("select");
+    select.id = "select-variante";
+    select.style.width = "100%";
+    select.style.padding = "8px";
+    select.style.borderRadius = "4px";
+    select.style.border = "1px solid #ccc";
+
+    const defaultOpt = document.createElement("option");
+    defaultOpt.value = "";
+    defaultOpt.textContent = "-- Selecciona --";
+    select.appendChild(defaultOpt);
+
+    prod.variantes.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = JSON.stringify(v);
+      opt.textContent = `${v.nombre} – ₡${(v.precio || 0).toLocaleString()}`;
+      select.appendChild(opt);
+    });
+
+    selectorDiv.appendChild(select);
+  }
+}
+
+    async function abrirModalProductos(idCliente) {
+  clienteSeleccionadoId = idCliente;
+  carrito = [];
+  document.getElementById("carrito-modal").innerHTML = "";
+  document.getElementById("total-compra").textContent = "0";
+  document.getElementById("descuento").value = "0";
+  document.getElementById("modal-productos").style.display = "flex";
+
+  // ✅ Verificar premio pendiente
+  try {
+    const clienteDoc = doc(db, "clientes", idCliente);
+    const docSnap = await getDoc(clienteDoc);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      // Si tiene premio y no ha sido usado
+      if (data.codigoCanje && data.codigoUsado !== true && data.premioObtenido) {
+        const premio = data.premioObtenido;
+        // Aplicar descuento
+        if (premio.includes("descuento")) {
+          const porcentaje = premio.includes("50%") ? 50 : 
+                            premio.includes("10%") ? 10 : 5;
+          // Guardar en sesión para aplicar al total
+          window.premioAplicado = { tipo: "descuento", valor: porcentaje };
+          // Mostrar notificación
+          document.getElementById("modal-productos").insertAdjacentHTML("beforeend", `
+            <div id="premio-notificacion" style="position:absolute; top:20px; right:20px; background:#4CAF50; color:white; padding:10px; border-radius:6px; z-index:1001;">
+              🎁 Premio aplicado: ${porcentaje}% de descuento
+            </div>
+          `);
+          setTimeout(() => {
+            document.getElementById("premio-notificacion")?.remove();
+          }, 5000);
+        }
+        // Aplicar difusor
+        else if (premio.includes("Difusor")) {
+          // Buscar el primer difusor disponible
+          const difusor = todosLosProductos.find(p => 
+            p.nombre.toLowerCase().includes("difusor") && 
+            (p.disponible !== false)
+          );
+          if (difusor) {
+            carrito.push({
+              nombre: `${difusor.nombre} (🎁 Premio)`,
+              precioUnitario: 0,
+              cantidad: 1,
+              producto: difusor,
+              esPremio: true
+            });
+            window.premioAplicado = { tipo: "difusor", producto: difusor };
+            // Mostrar notificación
+            document.getElementById("modal-productos").insertAdjacentHTML("beforeend", `
+              <div id="premio-notificacion" style="position:absolute; top:20px; right:20px; background:#4CAF50; color:white; padding:10px; border-radius:6px; z-index:1001;">
+                🎁 Premio aplicado: ${difusor.nombre} gratis
+              </div>
+            `);
+            setTimeout(() => {
+              document.getElementById("premio-notificacion")?.remove();
+            }, 5000);
+          }
+        }
       }
-      const selAroma = template.querySelector(".aroma");
-      if (producto.aromas && producto.aromas.length > 0) {
-        producto.aromas.forEach(a => {
-          const opt = document.createElement("option");
-          opt.value = a;
-          opt.textContent = a;
-          selAroma.appendChild(opt);
-        });
-      } else {
-        selAroma.style.display = "none";
-      }
-      template.querySelector(".quitar-producto").onclick = () => {
-        contenedor.remove();
-        actualizarTotal();
-      };
-      contenedor.appendChild(template);
-      document.getElementById("carrito").appendChild(contenedor);
-      selPres.addEventListener("change", actualizarTotal);
-      actualizarTotal();
     }
+    renderizarCarrito();
+  } catch (err) {
+    console.error("Error al verificar premio:", err);
+  }
+}
+
+    function cerrarModalProductos() {
+      document.getElementById("modal-productos").style.display = "none";
+    }
+  
+
+    function agregarAlCarritoModal() {
+  const index = parseInt(document.getElementById("select-producto").value);
+  const producto = todosLosProductos[index];
+  if (!producto) return;
+
+  let nombreFinal = producto.nombre;
+  let precioFinal = producto.precioOferta ?? producto.precio ?? producto.precioOriginal ?? 0;
+
+  // Si hay variantes, verificar selección
+  const selectVariante = document.getElementById("select-variante");
+  if (selectVariante && selectVariante.value) {
+    try {
+      const variante = JSON.parse(selectVariante.value);
+      nombreFinal = `${producto.nombre} ${variante.nombre}`;
+      precioFinal = variante.precio ?? precioFinal;
+    } catch (e) {
+      alert("Error al procesar la variante.");
+      return;
+    }
+  } else if (producto.variantes && producto.variantes.length > 0) {
+    alert("⚠️ Selecciona una presentación.");
+    return;
+  }
+
+  // Evitar duplicados por nombre exacto
+  if (carrito.some(item => item.nombre === nombreFinal)) {
+    alert("Este producto ya está en el carrito.");
+    return;
+  }
+
+  carrito.push({
+    nombre: nombreFinal,
+    precioUnitario: Number(precioFinal) || 0,
+    cantidad: 1,
+    producto: producto,
+    productoOriginalIndex: index // opcional, para referencia
+  });
+
+  renderizarCarrito();
+}
+
+    function renderizarCarrito() {
+  const contenedor = document.getElementById("carrito-modal");
+  contenedor.innerHTML = "";
+  if (carrito.length === 0) {
+    contenedor.innerHTML = "<p>No hay productos en el carrito.</p>";
+    actualizarTotal();
+    return;
+  }
+  carrito.forEach((item, i) => {
+    const div = document.createElement("div");
+    div.className = "producto-item";
+    div.innerHTML = `
+      <div class="producto-info">
+        <strong>${item.nombre}</strong><br>
+        Precio: ₡${(Number(item.precioUnitario) || 0).toLocaleString()}
+      </div>
+      <div class="producto-cantidad">
+        <div class="cantidad-control">
+          <button class="btn-cantidad" onclick="cambiarCantidad(${i}, -1)">−</button>
+          <input type="text" class="cantidad-display" value="${item.cantidad}" readonly>
+          <button class="btn-cantidad" onclick="cambiarCantidad(${i}, 1)">+</button>
+        </div>
+        <button class="boton-accion" onclick="quitarDelCarrito(${i})" style="background: #d32f2f; padding: 5px 10px;">Eliminar</button>
+      </div>
+    `;
+    contenedor.appendChild(div);
+  });
+  actualizarTotal();
+}
+    window.actualizarPrecio = function(index, nuevoPrecio) {
+      const precio = parseFloat(nuevoPrecio);
+      if (!isNaN(precio) && precio >= 0) {
+        carrito[index].precioUnitario = precio;
+        renderizarCarrito();
+      }
+    };
+
+    window.cambiarCantidad = function(index, delta) {
+      const nuevoValor = carrito[index].cantidad + delta;
+      if (nuevoValor > 0) {
+        carrito[index].cantidad = nuevoValor;
+        renderizarCarrito();
+      }
+    };
+
+    window.quitarDelCarrito = function(index) {
+      carrito.splice(index, 1);
+      renderizarCarrito();
+    };
 
     function actualizarTotal() {
-      const items = document.querySelectorAll("#carrito > div");
-      let total = 0;
-      items.forEach(div => {
-        total += parseFloat(div.querySelector(".presentacion").value || 0);
-      });
-      const descuento = parseFloat(document.getElementById("descuento").value) || 0;
-      const totalConDescuento = Math.max(0, total - descuento);
-      document.getElementById("total-compra").textContent = totalConDescuento.toLocaleString();
-    }
+  let total = 0;
+  carrito.forEach(item => {
+    total += (Number(item.precioUnitario) || 0) * (Number(item.cantidad) || 0);
+  });
+  const descuentoManual = parseFloat(document.getElementById("descuento").value) || 0;
+  let descuentoTotal = descuentoManual;
+
+  // ✅ Aplicar descuento del premio
+  if (window.premioAplicado?.tipo === "descuento") {
+    const descuentoPremio = total * (window.premioAplicado.valor / 100);
+    descuentoTotal += descuentoPremio;
+  }
+
+  const totalConDescuento = Math.max(0, total - descuentoTotal);
+  document.getElementById("total-compra").textContent = Math.round(totalConDescuento).toLocaleString();
+}
 
     document.getElementById("descuento").addEventListener("input", actualizarTotal);
 
-    async function guardarCompraDesdeCarrito() {
-      if (!clienteSeleccionadoId) return;
-      const clienteDoc = doc(db, "clientes", clienteSeleccionadoId);
-      const snap = await getDocs(clientesRef);
-      let comprasActuales = [];
-      snap.forEach(s => {
-        if (s.id === clienteSeleccionadoId) {
-          comprasActuales = s.data().compras || [];
-        }
-      });
+   async function guardarCompraDesdeCarrito() {
+  if (!clienteSeleccionadoId) return;
+  if (carrito.length === 0) {
+    alert("No hay productos en el carrito.");
+    return;
+  }
 
-      const productos = [];
-      const items = document.querySelectorAll("#carrito > div");
-      let total = 0;
-      items.forEach(div => {
-        const index = parseInt(div.dataset.index);
-        const prod = todosLosProductos[index];
-        const presentacionSel = div.querySelector(".presentacion");
-        const aromaSel = div.querySelector(".aroma");
-        const nombre = prod.nombre;
-        const presentacion = presentacionSel?.options[presentacionSel.selectedIndex]?.textContent;
-        const precio = parseFloat(presentacionSel?.value || 0);
-        const aroma = aromaSel?.value || null;
-        productos.push({ nombre, presentacion, aroma, precio });
-        total += precio;
-      });
+  // Calcular total de la compra
+  let total = 0;
+  carrito.forEach(item => {
+    total += (Number(item.precioUnitario) || 0) * (Number(item.cantidad) || 0);
+  });
+  const descuento = parseFloat(document.getElementById("descuento").value) || 0;
+  const totalNeto = Math.max(0, total - descuento);
 
-      const descuento = parseFloat(document.getElementById("descuento").value) || 0;
-      comprasActuales.push({
-        fecha: new Date().toISOString().slice(0, 10),
-        productos,
-        monto: total,
-        descuento,
-        pagado: 0
-      });
+  // Preguntar si se debe reiniciar yaParticipo (solo si ≥ ₡10,000)
+  let reiniciarParticipacion = false;
+  if (totalNeto >= 10000) {
+    const respuesta = confirm(
+      `✅ Compra de ₡${totalNeto.toLocaleString()} registrada.\n\n` +
+      `¿Deseas permitir que este cliente participe nuevamente en la ruleta?`
+    );
+    reiniciarParticipacion = respuesta;
+  }
 
-      await updateDoc(clienteDoc, { compras: comprasActuales });
-      document.getElementById("seccion-productos").style.display = "none";
-      await cargarClientes();
+  // Guardar compra
+  const clienteDoc = doc(db, "clientes", clienteSeleccionadoId);
+  const snap = await getDocs(clientesRef);
+  let comprasActuales = [];
+  snap.forEach(s => {
+    if (s.id === clienteSeleccionadoId) {
+      comprasActuales = s.data().compras || [];
     }
+  });
+
+  const productos = [];
+  carrito.forEach(item => {
+    const producto = item.producto || todosLosProductos[item.productoOriginalIndex] || { nombre: item.nombre };
+    const cantidad = Number(item.cantidad) || 0;
+    const precio = Number(item.precioUnitario) || 0;
+    productos.push({ 
+      nombre: producto.nombre || item.nombre,
+      presentacion: producto.presentacion || (producto.variantes?.[0]?.nombre) || '',
+      aroma: producto.aroma || null,
+      precio: precio,
+      cantidad: cantidad,
+      total: precio * cantidad
+    });
+  });
+
+  comprasActuales.push({
+    fecha: new Date().toISOString().slice(0, 10),
+    productos,
+    monto: total,
+    descuento,
+    pagado: 0,
+    inventarioActualizado: false
+  });
+
+  // Preparar actualización del documento
+  const actualizacion = { compras: comprasActuales };
+  if (reiniciarParticipacion) {
+    actualizacion.yaParticipo = false;
+    actualizacion.premioObtenido = null;     // Opcional: resetear
+    actualizacion.codigoCanje = null;         // Opcional: resetear
+    actualizacion.codigoUsado = false;        // Opcional: resetear
+  }
+
+  // ✅ Marcar premio como usado si se aplicó
+if (window.premioAplicado) {
+  actualizacion.codigoUsado = true;
+  actualizacion.fechaUso = new Date().toISOString();
+  delete window.premioAplicado; // Limpiar
+}
+
+
+  await updateDoc(clienteDoc, actualizacion);
+  document.getElementById("modal-productos").style.display = "none";
+  await cargarClientes(filtroDeudoresActivo);
+  alert("✅ Compra guardada exitosamente.");
+}
+
+
+    // ✅ Editar cliente directamente desde el modal de selección
+window.editarClienteDesdeModal = async function(clienteId) {
+  const clienteDoc = doc(db, "clientes", clienteId);
+  const docSnap = await getDoc(clienteDoc);
+  if (!docSnap.exists()) {
+    alert("Cliente no encontrado.");
+    return;
+  }
+  const cliente = docSnap.data();
+
+  // Crear un modal simple para edición rápida
+  const modalEdit = document.createElement("div");
+  modalEdit.style.position = "fixed";
+  modalEdit.style.top = "50%";
+  modalEdit.style.left = "50%";
+  modalEdit.style.transform = "translate(-50%, -50%)";
+  modalEdit.style.backgroundColor = "white";
+  modalEdit.style.padding = "20px";
+  modalEdit.style.borderRadius = "10px";
+  modalEdit.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
+  modalEdit.style.zIndex = "10000";
+  modalEdit.style.width = "90%";
+  modalEdit.style.maxWidth = "400px";
+
+  modalEdit.innerHTML = `
+    <h3 style="margin: 0 0 15px 0;">✏️ Editar Cliente</h3>
+    <input type="text" id="edit-nombre-modal" value="${cliente.nombre}" placeholder="Nombre" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;">
+    <input type="text" id="edit-cedula-modal" value="${cliente.cedula || ''}" placeholder="Cédula (opcional)" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;">
+    <input type="text" id="edit-telefono-modal" value="${cliente.telefono}" placeholder="Teléfono" style="width: 100%; padding: 8px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 4px;">
+    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+      <button class="boton-accion" style="background: #666;" onclick="document.body.removeChild(this.closest('div'));">❌ Cancelar</button>
+      <button class="boton-accion" style="background: #4CAF50;" onclick="guardarEdicionDesdeModal('${clienteId}')">💾 Guardar</button>
+    </div>
+  `;
+
+  document.body.appendChild(modalEdit);
+
+  // Centrar el foco en el primer campo
+  modalEdit.querySelector("#edit-nombre-modal").focus();
+};
+
+// ✅ Guardar edición desde el modal emergente
+window.guardarEdicionDesdeModal = async function(clienteId) {
+  const nuevoNombre = document.getElementById("edit-nombre-modal").value.trim();
+  const nuevaCedula = document.getElementById("edit-cedula-modal").value.trim();
+  let nuevoTelefono = document.getElementById("edit-telefono-modal").value.trim();
+
+  if (!nuevoNombre) {
+    alert("⚠️ Completa el nombre.");
+    return;
+  }
+
+  const telefonoLimpio = nuevoTelefono.replace(/\D/g, '');
+  if (!telefonoLimpio || telefonoLimpio === "00000000" || telefonoLimpio.length < 8) {
+    const nuevo = prompt("El número no es válido. Ingresa un número de teléfono válido (8 dígitos):");
+    if (!nuevo) {
+      alert("Se requiere un número válido.");
+      return;
+    }
+    nuevoTelefono = nuevo;
+  }
+
+  try {
+    const clienteDoc = doc(db, "clientes", clienteId);
+    await updateDoc(clienteDoc, { 
+      nombre: nuevoNombre, 
+      telefono: nuevoTelefono,
+      cedula: nuevaCedula || null
+    });
+    alert("✅ Cliente actualizado.");
+    
+    // Cerrar el modal de edición
+    const modalEdit = document.querySelector('div[style*="z-index: 10000"]');
+    if (modalEdit) document.body.removeChild(modalEdit);
+
+    // Opcional: Recargar la lista de clientes en el modal de selección
+    const filtro = document.getElementById("filtro-cliente-modal");
+    if (filtro) {
+      filtro.dispatchEvent(new Event('input')); // Dispara el evento 'input' para recargar
+    }
+  } catch (error) {
+    alert("❌ Error al actualizar: " + error.message);
+    console.error("Error:", error);
+  }
+};
 
     // Hacer funciones globales
+	    window.cargarClientes = cargarClientes;
+	    window.seleccionarPersonal = seleccionarPersonal; // Nueva función global
     window.agregarCliente = agregarCliente;
-    window.mostrarAgregarCompra = mostrarAgregarCompra;
-    window.enviarWhatsApp = enviarWhatsApp;
-    window.agregarAlCarrito = agregarAlCarrito;
+    window.abrirModalProductos = abrirModalProductos;
+    window.cerrarModalProductos = cerrarModalProductos;
+    window.agregarAlCarritoModal = agregarAlCarritoModal;
     window.guardarCompraDesdeCarrito = guardarCompraDesdeCarrito;
+    window.cambiarCantidad = cambiarCantidad;
+    window.quitarDelCarrito = quitarDelCarrito;
+    window.actualizarPrecio = actualizarPrecio;
+    window.enviarWhatsApp = enviarWhatsApp;
     window.editarCliente = editarCliente;
     window.guardarEdicion = guardarEdicion;
     window.cancelarEdicion = cancelarEdicion;
@@ -1103,10 +2209,204 @@ async function cargarClientes() {
     window.abrirModalHistorial = abrirModalHistorial;
     window.cerrarModalHistorial = cerrarModalHistorial;
     window.imprimirModalHistorial = imprimirModalHistorial;
+    window.actualizarInventario = actualizarInventario;
+    window.revertirInventario = revertirInventario;
+   window.abrirModalNuevoCliente = abrirModalNuevoCliente;
+window.cerrarModalNuevoCliente = cerrarModalNuevoCliente;
+window.guardarNuevoCliente = guardarNuevoCliente;
+    // Hacer funciones globales
+window.abrirModalNuevaVenta = abrirModalNuevaVenta;
+window.cerrarModalSeleccionarCliente = cerrarModalSeleccionarCliente;
+// ... y las nuevas:
+window.registrarPago = registrarPago;
+window.aplicarPago = aplicarPago;
+window.cerrarModalPago = cerrarModalPago;
+window.enviarWhatsAppDeudas = enviarWhatsAppDeudas;
+window.imprimirDeudasPago = imprimirDeudasPago;
+window.abrirModalEditarCliente = abrirModalEditarCliente;
+window.cerrarModalEditarCliente = cerrarModalEditarCliente;
+window.guardarEdicionDesdeModal = guardarEdicionDesdeModal;
 
-    // Inicializar
-    await cargarClientes();
-    await cargarProductosJSON();
+
+    // Inicializar: cargar solo deudores al inicio
+    await cargarClientes(filtroDeudoresActivo);
+	    await cargarProductosJSON();
+	    await cargarPersonalJSON(); // Nueva función de inicialización
+	  </script>
+
+	  <script>
+	    // Variables globales para el personal
+	    let personalData = [];
+	
+	    // Función para cargar el personal.json
+	    async function cargarPersonalJSON() {
+	      try {
+	        const response = await fetch('personal.json');
+	        if (!response.ok) {
+	          throw new Error(\`HTTP error! status: \${response.status}\`);
+	        }
+	        personalData = await response.json();
+	        console.log("✅ Personal cargado:", personalData.length, "registros.");
+	      } catch (error) {
+	        console.error("❌ Error al cargar personal.json:", error);
+	        // Si falla, se inicializa vacío
+	        personalData = [];
+	      }
+	    }
+	
+	    // Función para buscar en el personal
+	    function buscarPersonal(query) {
+	      const resultadosDiv = document.getElementById('resultados-personal');
+	      resultadosDiv.innerHTML = '';
+	
+	      if (query.length < 3) {
+	        resultadosDiv.innerHTML = '<p style="padding: 5px; margin: 0; font-size: 0.9rem; color: #999;">Escriba al menos 3 caracteres.</p>';
+	        return;
+	      }
+	
+	      const queryLower = query.toLowerCase();
+	      const resultados = personalData.filter(p => 
+	        p.nombre.toLowerCase().includes(queryLower) || 
+	        String(p.cedula).includes(query)
+	      ).slice(0, 10); // Limitar a 10 resultados
+	
+	      if (resultados.length === 0) {
+	        resultadosDiv.innerHTML = '<p style="padding: 5px; margin: 0; font-size: 0.9rem; color: #999;">No se encontraron coincidencias.</p>';
+	        return;
+	      }
+	
+	      resultados.forEach(p => {
+	        const item = document.createElement('div');
+	        item.style.padding = '8px';
+	        item.style.borderBottom = '1px solid #eee';
+	        item.style.cursor = 'pointer';
+	        item.style.backgroundColor = 'white';
+	        item.style.transition = 'background-color 0.2s';
+	        item.innerHTML = \`<strong>\${p.nombre}</strong> (\${p.cedula})\`;
+	        item.onmouseover = () => item.style.backgroundColor = '#f0f0f0';
+	        item.onmouseout = () => item.style.backgroundColor = 'white';
+	        item.onclick = () => seleccionarPersonal(p);
+	        resultadosDiv.appendChild(item);
+	      });
+	    }
+	
+	    // Función para seleccionar un resultado y rellenar los campos
+	    function seleccionarPersonal(persona) {
+	      document.getElementById('modal-cedula').value = persona.cedula;
+	      document.getElementById('modal-nombre').value = persona.nombre;
+	      document.getElementById('modal-telefono').value = "0000000"; // Requerimiento del usuario
+	      document.getElementById('resultados-personal').innerHTML = ''; // Limpiar resultados
+	      document.getElementById('buscador-personal').value = persona.nombre; // Opcional: mostrar el nombre seleccionado en el buscador
+	    }
+	
+	    // Inicializar el evento de búsqueda
+	    document.addEventListener('DOMContentLoaded', () => {
+	      const buscador = document.getElementById('buscador-personal');
+	      if (buscador) {
+	        buscador.addEventListener('input', (e) => {
+	          buscarPersonal(e.target.value);
+	        });
+	      }
+	    });
+	  </script>
+  <script>
+    function scrollToTop() {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+    function scrollToBottom() {
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+
+    
   </script>
+
+<!-- Modal para seleccionar cliente -->
+<div id="modal-seleccionar-cliente" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+  <div style="background: white; width: 90%; max-width: 600px; border-radius: 10px; padding: 20px; max-height: 80vh; overflow-y: auto;">
+    <h2>➕ Seleccionar Cliente</h2>
+    <input type="text" id="filtro-cliente-modal" placeholder="Buscar cliente..." style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #ddd;">
+    <div id="lista-clientes-modal" style="max-height: 400px; overflow-y: auto;">
+      <!-- Se llenará dinámicamente -->
+    </div>
+    <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
+      <button class="boton-accion" onclick="cerrarModalSeleccionarCliente()" style="background: #666;">❌ Cerrar</button>
+    </div>
+  </div>
+</div>
+<!-- Modal para nuevo cliente -->
+<div id="modal-nuevo-cliente" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:2000; justify-content:center; align-items:center;">
+  <div style="background:white; padding:25px; border-radius:12px; width:90%; max-width:500px;">
+    <h2>👤 Registrar Nuevo Cliente</h2>
+    <div style="margin-bottom:15px;">
+      <label>Buscar Persona (Cédula o Nombre):</label>
+      <input type="text" id="buscador-personal" placeholder="Buscar en personal.json" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+      <div id="resultados-personal" style="max-height: 150px; overflow-y: auto; border: 1px solid #eee; margin-top: 5px; border-radius: 6px;">
+        <!-- Resultados de la búsqueda -->
+      </div>
+    </div>
+    <div style="margin-bottom:15px;">
+      <label>Cédula:</label>
+      <input type="text" id="modal-cedula" placeholder="Ej: 112230405" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;" readonly>
+      <small id="nombre-desde-api" style="color:#4CAF50; display:block; margin-top:5px;"></small>
+    </div>
+    <div style="margin-bottom:15px;">
+      <label>Nombre (editable):</label>
+      <input type="text" id="modal-nombre" placeholder="Nombre del cliente" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;" readonly>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label>Teléfono (con código, 8 dígitos):</label>
+      <input type="text" id="modal-telefono" placeholder="Ej: 88889999" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;" value="0000000" readonly>
+    </div>
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button class="boton-accion" style="background:#666;" onclick="cerrarModalNuevoCliente()">❌ Cancelar</button>
+      <button class="boton-accion" style="background:#4CAF50;" onclick="guardarNuevoCliente()">✅ Guardar y Agregar Productos</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de selección de factura para pago -->
+<div id="modal-pago" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:2000; justify-content:center; align-items:center;">
+  <div style="background:white; padding:25px; border-radius:12px; width:90%; max-width:600px; max-height:85vh; overflow-y:auto;">
+    <h2>💰 Realizar Pago – <span id="nombre-cliente-pago"></span></h2>
+    <div id="lista-facturas-pendientes"></div>
+    <div id="acciones-pago" style="margin-top: 20px; display:flex; gap:10px; justify-content:flex-end;">
+      <button class="boton-accion" style="background:#666;" onclick="cerrarModalPago()">❌ Cerrar</button>
+      <button class="boton-accion" style="background:#4CAF50;" onclick="enviarWhatsAppDeudas()">📲 Enviar Saldo</button>
+      <button class="boton-accion" style="background:#2196F3;" onclick="imprimirDeudasPago()">🖨️ Imprimir</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para editar cliente -->
+<div id="modal-editar-cliente" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:2000; justify-content:center; align-items:center;">
+  <div style="background:white; padding:25px; border-radius:12px; width:90%; max-width:500px;">
+    <h2>✏️ Editar Cliente</h2>
+    <input type="hidden" id="modal-edit-id">
+    <div style="margin-bottom:15px;">
+      <label>Nombre:</label>
+      <input type="text" id="modal-edit-nombre" placeholder="Nombre completo" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+    </div>
+    <div style="margin-bottom:15px;">
+      <label>Cédula (opcional):</label>
+      <input type="text" id="modal-edit-cedula" placeholder="Cédula" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+      <small id="mensaje-nombre-desde-cedula" style="color:#4CAF50; display:block; margin-top:5px;"></small>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label>Teléfono (8 dígitos):</label>
+      <input type="text" id="modal-edit-telefono" placeholder="Ej: 88889999" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+    </div>
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button class="boton-accion" style="background:#666;" onclick="cerrarModalEditarCliente()">❌ Cancelar</button>
+      <button class="boton-accion" style="background:#4CAF50;" onclick="guardarEdicionDesdeModal()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
