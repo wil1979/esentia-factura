@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" href="images/logo.png" sizes="192x192" />
   <title>Ruleta Esentia 🎁</title>
+  
   <style>
     body {
       margin: 0;
@@ -197,6 +199,9 @@
 </head>
 <body>
   <header>
+   
+    
+    <!-- Panel de usuario -->
     <div id="panelUsuario">
       <span id="nombreUsuario"></span>
       <button onclick="cerrarSesion()">&times;</button>
@@ -207,6 +212,7 @@
     <div style="text-align: center; color: white; max-width: 90%;">
       <div class="titulo">🎁 Ruleta Esentia</div>
       
+      <!-- Mensaje de bienvenida con nombre -->
       <div id="mensaje-bienvenida"></div>
 
       <ul id="premiosLista" class="premios-lista"></ul>
@@ -215,13 +221,13 @@
       <div id="resultado" class="resultado"></div>
 
       <div style="margin-top: 15px; font-size: 14px; color: #bbb;">
-        Por tu compra de ₡10,000 o más en Esentia, tienes la oportunidad de ganar premios exclusivos.  
-
+        Por tu compra de ₡10,000 o más en Esentia, tienes la oportunidad de ganar premios exclusivos.<br>
         ¡Gira la ruleta y descubre tu premio! 🎉
       </div>
     </div>
   </div>
 
+  <!-- Modal Login/Registro -->
   <div id="modalLoginRegistro" class="modal-login">
     <div class="modal-login-contenido">
       <h2 style="text-align:center; margin-top:0; color:#6c4ba3;">👤 Bienvenido a Esentia</h2>
@@ -234,8 +240,8 @@
       </div>
 
       <form id="formLogin">
-        <input type="text" id="loginCedulaTel" placeholder="Cédula o Teléfono" required
-          style="width: 93%; padding:12px; margin:8px 0; border:1px solid rgba(255,255,255,0.3); border-radius:8px; background:rgba(255,255,255,0.9);">
+        <input type="text" id="loginCedulaTel" placeholder="Cédula" required
+          style="width:94%; padding:12px; margin:8px 0; border:1px solid rgba(255,255,255,0.3); border-radius:8px; background:rgba(255,255,255,0.9);">
         <button type="submit" style="width:100%; padding:12px; background:#6c4ba3; color:white; border:none; border-radius:8px; margin-top:10px;">
           Entrar
         </button>
@@ -245,6 +251,7 @@
     </div>
   </div>
 
+  <!-- Modal de Actualización de Datos -->
   <div id="modalActualizar" class="modal-login" style="display:none; z-index: 2001;">
     <div class="modal-login-contenido" style="max-width: 420px;">
       <h2 style="text-align:center; margin-top:0; color:#6c4ba3;">📝 Completar Información</h2>
@@ -295,17 +302,18 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import {
       getFirestore, doc, getDoc, updateDoc, collection,
-      query, where, getDocs
+      query, where, getDocs, addDoc
     } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-    const app = initializeApp(firebaseConfig );
+    const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const URL_PREMIOS = "https://wil1979.github.io/esentia-factura/premios.json?t=" + Date.now( );
+    const URL_PREMIOS = "https://wil1979.github.io/esentia-factura/premios.json?t=" + Date.now();
 
     let clienteAutenticado = null;
     let premiosConProbabilidad = [];
     let yaGiro = false;
 
+    // === CARGAR CONFIGURACIÓN DE PREMIOS ===
     async function cargarConfiguracionPremios() {
       try {
         const res = await fetch(URL_PREMIOS);
@@ -328,11 +336,12 @@
       ];
     }
 
+    // === CONSULTA A HACIENDA ===
     async function consultarNombreDesdeCedula(cedula) {
       const cedLimpia = cedula.toString().replace(/\D/g, '');
       if (cedLimpia.length < 9) return null;
       try {
-        const res = await fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedLimpia}` );
+        const res = await fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedLimpia}`);
         if (!res.ok) return null;
         const data = await res.json();
         return data.nombre || data.nombre_completo || null;
@@ -341,17 +350,15 @@
       }
     }
 
-    // --- LÓGICA DE VALIDACIÓN REFORZADA ---
+    // === VALIDACIÓN DE DATOS ===
     function necesitaActualizarDatos(data) {
-      // Un nombre válido debe existir y tener más de 2 caracteres.
-      const nombreValido = data && data.nombre && data.nombre.trim().length > 2;
-      // Un teléfono válido debe existir y tener 8 dígitos.
-      const telefonoValido = data && data.telefono && data.telefono.toString().replace(/\D/g, '').length === 8;
-      
-      // Si falta CUALQUIERA de los dos, necesita actualizar.
-      return !nombreValido || !telefonoValido;
+      const tieneNombre = data.nombre && data.nombre.trim().length > 2;
+      const tieneTelefono = data.telefono && data.telefono.toString().replace(/\D/g, '').length === 8;
+      const tieneCedula = data.cedula && data.cedula.toString().replace(/\D/g, '').length >= 9;
+      return !tieneNombre || (!tieneTelefono && !tieneCedula);
     }
 
+    // === MODAL DE ACTUALIZACIÓN ===
     function abrirModalActualizar(data, clienteRef) {
       document.getElementById("updNombre").value = data.nombre || "";
       document.getElementById("updCedula").value = data.cedula || "";
@@ -367,29 +374,21 @@
 
     function cerrarModalActualizar() {
       document.getElementById("modalActualizar").style.display = "none";
-      if (window.rejectActualizar) {
-        window.rejectActualizar(new Error("Actualización cancelada. Inicia sesión de nuevo."));
-      }
+      if (window.rejectActualizar) window.rejectActualizar(new Error("Actualización cancelada"));
     }
 
     document.getElementById("updCedula")?.addEventListener("blur", async () => {
-      const cedulaInput = document.getElementById("updCedula");
-      const nombreInput = document.getElementById("updNombre");
+      const cedula = document.getElementById("updCedula").value.trim();
       const msg = document.getElementById("nombre-desde-api");
-      const cedula = cedulaInput.value.trim();
-      
       if (!cedula) return;
-      
       msg.textContent = "Buscando en Hacienda...";
-      msg.style.color = "#ffd166";
       const nombre = await consultarNombreDesdeCedula(cedula);
-      
       if (nombre) {
-        nombreInput.value = nombre;
-        msg.textContent = `✅ Nombre encontrado: ${nombre}`;
+        document.getElementById("updNombre").value = nombre;
+        msg.textContent = `✅ Nombre: ${nombre}`;
         msg.style.color = "#4CAF50";
       } else {
-        msg.textContent = "⚠️ Cédula no encontrada en Hacienda.";
+        msg.textContent = "⚠️ No encontrado";
         msg.style.color = "#d32f2f";
       }
     });
@@ -412,112 +411,126 @@
 
       try {
         const cedLimpia = cedula ? cedula.replace(/\D/g, '') : null;
+        const nombreFinal = nombre;
+
+        if (cedLimpia && !nombreFinal) {
+          const nombreHacienda = await consultarNombreDesdeCedula(cedLimpia);
+          if (nombreHacienda) {
+            document.getElementById("updNombre").value = nombreHacienda;
+            nombreFinal = nombreHacienda;
+          }
+        }
 
         await updateDoc(window.tempClienteRef, {
-          nombre: nombre,
-          cedula: cedLimpia,
+          nombre: nombreFinal,
+          cedula: cedLimpia || null,
           telefono: telLimpio
         });
 
-        const clienteActualizado = {
+        clienteAutenticado = {
           ...clienteAutenticado,
-          nombre: nombre,
+          nombre: nombreFinal,
           cedula: cedLimpia,
           telefono: telLimpio
         };
-        
-        clienteAutenticado = clienteActualizado;
 
-        document.getElementById("nombreUsuario").textContent = nombre;
-        document.getElementById("mensaje-bienvenida").textContent = `¡Hola, ${nombre}! Bienvenido a la Ruleta Esentia 🌿`;
+        document.getElementById("nombreUsuario").textContent = nombreFinal;
+        document.getElementById("mensaje-bienvenida").textContent = `¡Hola, ${nombreFinal}! Bienvenido a la Ruleta Esentia 🌿`;
         document.getElementById("modalActualizar").style.display = "none";
-        
-        if (window.resolveActualizar) {
-            window.resolveActualizar(clienteActualizado);
-        }
-
+        if (window.resolveActualizar) window.resolveActualizar();
       } catch (err) {
         console.error("Error al guardar:", err);
         alert("❌ Error al actualizar los datos.");
-        if (window.rejectActualizar) {
-            window.rejectActualizar(err);
-        }
+        if (window.rejectActualizar) window.rejectActualizar(err);
       }
     }
 
+    // === SESIÓN ===
     function cerrarSesion() {
       clienteAutenticado = null;
       document.getElementById("panelUsuario").style.display = "none";
       document.getElementById("mensaje-bienvenida").textContent = "";
       document.getElementById("modalLoginRegistro").style.display = "flex";
-      document.getElementById("loginCedulaTel").value = "";
+      document.querySelectorAll(".btn-tab").forEach(b => b.classList.remove("activo"));
+      document.querySelector(".btn-tab[data-tab='login']").classList.add("activo");
+      document.getElementById("formLogin").style.display = "block";
       document.getElementById("loginMensaje").textContent = "";
       yaGiro = false;
       document.getElementById("girar-btn").disabled = false;
       document.getElementById("resultado").innerHTML = "";
-      document.querySelectorAll(".premio-item").forEach(i => i.classList.remove("highlight"));
     }
 
-    // --- LÓGICA DE LOGIN REFORZADA ---
-    document.getElementById("formLogin")?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const valor = document.getElementById("loginCedulaTel").value.trim();
-      const msg = document.getElementById("loginMensaje");
-      if (!valor) {
-        msg.textContent = "Ingresa cédula o teléfono.";
-        return;
-      }
-
-      msg.textContent = "Buscando cliente...";
-      try {
-        const col = collection(db, "clientes");
-        const q1 = query(col, where("cedula", "==", valor));
-        const q2 = query(col, where("telefono", "==", valor));
-        const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-        
-        let docSnap = null;
-        if (!snap1.empty) docSnap = snap1.docs[0];
-        else if (!snap2.empty) docSnap = snap2.docs[0];
-        
-        if (!docSnap) { 
-            msg.textContent = "Cliente no registrado."; 
-            return; 
-        }
-
-        let data = docSnap.data();
-        clienteAutenticado = { id: docSnap.id, ...data };
-        
-        // FORZAR LA VALIDACIÓN SIEMPRE DESPUÉS DEL LOGIN
-        if (necesitaActualizarDatos(data)) {
-            msg.textContent = "Datos incompletos. Por favor, actualiza tu información.";
-            try {
-                // Abrimos el modal y esperamos a que se resuelva (guarde o cancele)
-                const clienteActualizado = await abrirModalActualizar(data, docSnap.ref);
-                // Actualizamos la data local con la que viene del modal resuelto
-                data = clienteActualizado; 
-                msg.textContent = ""; // Limpiar mensaje de "datos incompletos"
-            } catch (error) {
-                // El usuario canceló la actualización
-                msg.textContent = error.message; // Mostrar mensaje de cancelación
-                cerrarSesion(); // Forzar cierre de sesión
-                return;
-                
-            }
-        }
-
-        // Si los datos ya estaban completos o se acaban de actualizar, continuamos
-        document.getElementById("nombreUsuario").textContent = data.nombre;
-        document.getElementById("panelUsuario").style.display = "flex";
-        document.getElementById("mensaje-bienvenida").textContent = `¡Hola, ${data.nombre}! Bienvenido a la Ruleta Esentia 🌿`;
-        document.getElementById("modalLoginRegistro").style.display = "none";
-
-      } catch (err) {
-        console.error("Error en el proceso de login:", err);
-        msg.textContent = "Error de conexión o en el proceso.";
-        cerrarSesion();
-      }
+    // === LOGIN ===
+    document.querySelectorAll(".btn-tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".btn-tab").forEach(b => b.classList.remove("activo"));
+        btn.classList.add("activo");
+        const tab = btn.dataset.tab;
+        document.getElementById("formLogin").style.display = tab === "login" ? "block" : "none";
+        document.getElementById("loginMensaje").textContent = "";
+      });
     });
 
+   document.getElementById("formLogin")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const valor = document.getElementById("loginCedulaTel").value.trim();
+  const msg = document.getElementById("loginMensaje");
+  if (!valor) { msg.textContent = "Ingresa cédula o teléfono."; return; }
+
+  try {
+    msg.textContent = "Buscando cliente...";
+    const col = collection(db, "clientes");
+    
+    // Intentar primero por cédula
+    const qCedula = query(col, where("cedula", "==", valor));
+    const snapCedula = await getDocs(qCedula);
+    
+    if (!snapCedula.empty) {
+      // ✅ Encontrado por cédula
+      const docSnap = snapCedula.docs[0];
+      const data = docSnap.data();
+      clienteAutenticado = { id: docSnap.id, ...data };
+      document.getElementById("nombreUsuario").textContent = data.nombre;
+      document.getElementById("panelUsuario").style.display = "flex";
+      document.getElementById("mensaje-bienvenida").textContent = `¡Hola, ${data.nombre}! Bienvenido a la Ruleta Esentia 🌿`;
+      document.getElementById("modalLoginRegistro").style.display = "none";
+      return;
+    }
+
+    // Intentar por teléfono
+    const qTelefono = query(col, where("telefono", "==", valor));
+    const snapTelefono = await getDocs(qTelefono);
+    
+    if (!snapTelefono.empty) {
+      // ✅ Encontrado por teléfono
+      const docSnap = snapTelefono.docs[0];
+      const data = docSnap.data();
+      clienteAutenticado = { id: docSnap.id, ...data };
+      document.getElementById("nombreUsuario").textContent = data.nombre;
+      document.getElementById("panelUsuario").style.display = "flex";
+      document.getElementById("mensaje-bienvenida").textContent = `¡Hola, ${data.nombre}! Bienvenido a la Ruleta Esentia 🌿`;
+      document.getElementById("modalLoginRegistro").style.display = "none";
+      return;
+    }
+
+    // ❌ No encontrado por cédula ni teléfono
+    // Si el valor parece una cédula (≥9 dígitos), abrir modal para vincular
+    const valorLimpio = valor.replace(/\D/g, '');
+    if (valorLimpio.length >= 9) {
+      document.getElementById("cedula-a-vincular").value = valorLimpio;
+      document.getElementById("tel-vincular").value = "";
+      document.getElementById("modalVincularCedula").style.display = "flex";
+    } else {
+      msg.textContent = "Cliente no registrado. Regístrate primero.";
+    }
+
+  } catch (err) {
+    console.error("Error login:", err);
+    msg.textContent = "Error de conexión.";
+  }
+});
+
+    // === FUNCIONES DE PREMIOS ===
     function sortearPremio() {
       const total = premiosConProbabilidad.reduce((sum, p) => sum + p.prob, 0);
       let rand = Math.random() * total;
@@ -555,14 +568,15 @@ Datos del Cliente:
 
 ⚠️ IMPORTANTE: Este premio será efectivo en la PRÓXIMA COMPRA del cliente.
 `;
-      return `https://wa.me/${numeroDestino}?text=${encodeURIComponent(mensaje.trim( ))}`;
+      return `https://wa.me/${numeroDestino}?text=${encodeURIComponent(mensaje.trim())}`;
     }
 
+    // === RENDERIZADO Y ANIMACIÓN ===
     function renderizarPremiosVisuales() {
       const lista = document.getElementById("premiosLista");
       lista.innerHTML = "";
       const nombres = premiosConProbabilidad.map(p => p.nombre);
-      nombres.forEach((texto) => {
+      nombres.forEach((texto, i) => {
         const li = document.createElement("li");
         li.className = "premio-item";
         li.textContent = texto;
@@ -573,37 +587,33 @@ Datos del Cliente:
     function animarTombola(indiceGanador) {
       return new Promise(resolve => {
         const items = document.querySelectorAll(".premio-item");
-        if (items.length === 0 || indiceGanador < 0) return resolve();
         let actual = -1;
         let cuenta = 0;
-        const totalVueltas = 3;
-        const totalPasos = (items.length * totalVueltas) + indiceGanador;
+        const total = 30;
 
         function resaltar() {
           if (actual >= 0) items[actual].classList.remove("highlight");
           actual = (actual + 1) % items.length;
           items[actual].classList.add("highlight");
           cuenta++;
-          
-          if (cuenta > totalPasos) {
-            resolve();
-            return;
+          if (cuenta >= total && actual === indiceGanador) {
+            resolve(); return;
           }
-          
-          const delay = 50 + Math.pow(cuenta / totalPasos, 2) * 150;
+          const delay = cuenta > total - items.length ? 50 + (cuenta - (total - items.length)) * 50 : 50;
           setTimeout(resaltar, delay);
         }
         resaltar();
       });
     }
 
+    // === FLUJO PRINCIPAL ===
     async function registrarPremio() {
       if (!clienteAutenticado) throw new Error("Debes iniciar sesión.");
 
       const clienteRef = doc(db, "clientes", clienteAutenticado.id);
       const snap = await getDoc(clienteRef);
       if (!snap.exists()) throw new Error("Cliente no encontrado.");
-      const data = snap.data();
+      let data = snap.data();
 
       if (data.yaParticipo) {
         return {
@@ -614,6 +624,7 @@ Datos del Cliente:
         };
       }
 
+      // ✅ VALIDAR COMPRA MÍNIMA DE ₡10,000
       const compras = data.compras || [];
       const tieneCompraCalificada = compras.some(compra => {
         const totalNeto = (compra.monto || 0) - (compra.descuento || 0);
@@ -621,6 +632,13 @@ Datos del Cliente:
       });
       if (!tieneCompraCalificada) {
         throw new Error("⚠️ Debes tener una compra ≥ ₡10,000 para participar.");
+      }
+
+      // ✅ VALIDAR DATOS COMPLETOS
+      if (necesitaActualizarDatos(data)) {
+        await abrirModalActualizar(data, clienteRef);
+        const snapActualizado = await getDoc(clienteRef);
+        data = snapActualizado.data();
       }
 
       const premio = sortearPremio();
@@ -637,31 +655,33 @@ Datos del Cliente:
       return { repetido: false, premio, codigo, clienteRef };
     }
 
-    async function init() {
-      await cargarConfiguracionPremios();
-      renderizarPremiosVisuales();
-      document.getElementById("modalLoginRegistro").style.display = "flex";
+    // === INICIALIZACIÓN ===
+async function init() {
+  // ✅ Cargar premios PRIMERO
+  await cargarConfiguracionPremios();
+  // ✅ Luego renderizar la lista con los premios reales
+  renderizarPremiosVisuales();
+  
+  document.getElementById("modalLoginRegistro").style.display = "flex";
 
-      document.getElementById("girar-btn").addEventListener("click", async () => {
+  document.getElementById("girar-btn").addEventListener("click", async () => {
         if (yaGiro) return;
         yaGiro = true;
         const btn = document.getElementById("girar-btn");
         const resEl = document.getElementById("resultado");
         btn.disabled = true;
-        resEl.innerHTML = "Girando la ruleta...";
+        resEl.innerHTML = "Iniciando sorteo...";
 
         try {
           const res = await registrarPremio();
           const nombres = premiosConProbabilidad.map(p => p.nombre);
-          
           if (res.repetido) {
             resEl.innerHTML = `
-              🔁 Ya participaste antes  
-
-              Premio: <strong>${res.premio}</strong>  
-
+              🔁 Ya participaste antes<br>
+              Premio: <strong>${res.premio}</strong><br>
               Código: <div class="codigo">${res.codigo}</div>
             `;
+            btn.disabled = false;
             return;
           }
 
@@ -669,23 +689,20 @@ Datos del Cliente:
           await animarTombola(idx);
 
           if (res.premio === "Más suerte la próxima vez") {
-            resEl.innerHTML = `😢 Más suerte la próxima vez.  
-¡Gracias por participar!`;
-            setTimeout(() => window.location.href = "https://www.facebook.com/profile.php?id=61579078480913", 5000 );
+            resEl.innerHTML = `😢 Más suerte la próxima vez.<br>¡Gracias por participar!`;
+            setTimeout(() => window.location.href = "https://www.facebook.com/profile.php?id=61579078480913", 5000);
           } else {
             const clienteData = (await getDoc(res.clienteRef)).data();
             const link = generarLinkWhatsApp(clienteData, res.premio, res.codigo);
             resEl.innerHTML = `
-              🎉 ¡Felicidades!  
-<strong>${res.premio}</strong>  
-
+              🎉 ¡Felicidades!<br><strong>${res.premio}</strong><br>
               <div class="codigo">${res.codigo}</div>
               <a href="${link}" target="_blank" id="whatsapp-btn" style="display:inline-block; margin-top:15px; padding:10px 20px; background:#25D366; color:white; text-decoration:none; border-radius:20px; font-weight:bold;">
                 Enviar Código por WhatsApp
               </a>
             `;
-            document.getElementById("whatsapp-btn")?.addEventListener("click", () => {
-              setTimeout(() => window.location.href = "https://www.facebook.com/profile.php?id=61579078480913", 3000 );
+            document.getElementById("whatsapp-btn").addEventListener("click", () => {
+              setTimeout(() => window.location.href = "https://www.facebook.com/profile.php?id=61579078480913", 3000);
             });
           }
         } catch (err) {
@@ -697,12 +714,97 @@ Datos del Cliente:
       });
     }
 
+    
+
+    // === MODAL DE VINCULACIÓN DE CÉDULA ===
+function cerrarModalVincular() {
+  document.getElementById("modalVincularCedula").style.display = "none";
+}
+
+async function buscarYVincularCedula() {
+  const cedula = document.getElementById("cedula-a-vincular").value;
+  const telefono = document.getElementById("tel-vincular").value.trim().replace(/\D/g, '');
+  const msg = document.getElementById("loginMensaje");
+
+  if (!telefono || telefono.length !== 8) {
+    alert("⚠️ Ingresa un teléfono válido de 8 dígitos.");
+    return;
+  }
+
+  try {
+    msg.textContent = "Buscando cliente con ese teléfono...";
+    const col = collection(db, "clientes");
+    const q = query(col, where("telefono", "==", telefono));
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      msg.textContent = "📞 No se encontró cliente con ese teléfono.";
+      return;
+    }
+
+    // Actualizar cédula (y nombre si viene de Hacienda)
+    const docSnap = snap.docs[0];
+    const data = docSnap.data();
+    const docRef = docSnap.ref;
+
+    let nombreFinal = data.nombre;
+    const nombreHacienda = await consultarNombreDesdeCedula(cedula);
+    if (nombreHacienda) {
+      nombreFinal = nombreHacienda;
+    }
+
+    await updateDoc(docRef, {
+      cedula: cedula,
+      nombre: nombreFinal
+    });
+
+    // Iniciar sesión con los datos actualizados
+    clienteAutenticado = { id: docRef.id, nombre: nombreFinal, cedula, telefono };
+    document.getElementById("nombreUsuario").textContent = nombreFinal;
+    document.getElementById("panelUsuario").style.display = "flex";
+    document.getElementById("mensaje-bienvenida").textContent = `¡Hola, ${nombreFinal}! Bienvenido a la Ruleta Esentia 🌿`;
+    
+    document.getElementById("modalVincularCedula").style.display = "none";
+    document.getElementById("modalLoginRegistro").style.display = "none";
+    msg.textContent = "";
+
+  } catch (err) {
+    console.error("Error al vincular:", err);
+    msg.textContent = "❌ Error al vincular cédula.";
+  }
+}
+
+// Hacer accesibles
+window.cerrarModalVincular = cerrarModalVincular;
+window.buscarYVincularCedula = buscarYVincularCedula;
+// Hacer accesibles globalmente
     window.cerrarSesion = cerrarSesion;
     window.cerrarModalActualizar = cerrarModalActualizar;
     window.guardarActualizacion = guardarActualizacion;
 
     init();
   </script>
+  <!-- Modal para vincular cédula con teléfono -->
+<div id="modalVincularCedula" class="modal-login" style="display:none; z-index: 2002;">
+  <div class="modal-login-contenido" style="max-width: 420px;">
+    <h2 style="text-align:center; margin-top:0; color:#6c4ba3;">📱 Vincular Cédula</h2>
+    <p style="text-align:center; margin-bottom:15px; color:#ddd;">
+      No se encontró cliente con esa cédula.<br>
+      Ingresa tu teléfono para vincularla.
+    </p>
+
+    <input type="hidden" id="cedula-a-vincular">
+    <div style="margin-bottom:15px;">
+      <label for="tel-vincular" style="display:block; margin-bottom:6px; font-weight:bold;">Teléfono *</label>
+      <input type="text" id="tel-vincular" placeholder="88889999" required
+        style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.9);">
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button class="btn-tab" onclick="cerrarModalVincular()" style="flex:1; background:#666;">Cancelar</button>
+      <button class="btn-tab" onclick="buscarYVincularCedula()" style="flex:1; background:#6c4ba3;">🔍 Buscar y Vincular</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
-
