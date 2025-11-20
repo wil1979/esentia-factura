@@ -2185,7 +2185,8 @@ window.guardarEdicionDesdeModal = async function(clienteId) {
 };
 
     // Hacer funciones globales
-    window.cargarClientes = cargarClientes;
+	    window.cargarClientes = cargarClientes;
+	    window.seleccionarPersonal = seleccionarPersonal; // Nueva función global
     window.agregarCliente = agregarCliente;
     window.abrirModalProductos = abrirModalProductos;
     window.cerrarModalProductos = cerrarModalProductos;
@@ -2229,8 +2230,85 @@ window.guardarEdicionDesdeModal = guardarEdicionDesdeModal;
 
     // Inicializar: cargar solo deudores al inicio
     await cargarClientes(filtroDeudoresActivo);
-    await cargarProductosJSON();
-  </script>
+	    await cargarProductosJSON();
+	    await cargarPersonalJSON(); // Nueva función de inicialización
+	  </script>
+
+	  <script>
+      // Variables globales para el personal
+      let personalData = [];
+  
+      // Función para cargar el personal.json personal.json
+      async function cargarPersonalJSON() {
+        try {
+          const response = await fetch('personal.json');
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          personalData = await response.json();
+          console.log("✅ Personal cargado:", personalData.length, "registros.");
+        } catch (error) {
+          console.error("❌ Error al cargar personal.json:", error);
+          // Si falla, se inicializa vacío
+          personalData = [];
+        }
+      }
+	
+	    // Función para buscar en el personal
+	    function buscarPersonal(query) {
+	      const resultadosDiv = document.getElementById('resultados-personal');
+	      resultadosDiv.innerHTML = '';
+	
+	      if (query.length < 3) {
+	        resultadosDiv.innerHTML = '<p style="padding: 5px; margin: 0; font-size: 0.9rem; color: #999;">Escriba al menos 3 caracteres.</p>';
+	        return;
+	      }
+	
+	      const queryLower = query.toLowerCase();
+	      const resultados = personalData.filter(p => 
+	        p.nombre.toLowerCase().includes(queryLower) || 
+	        String(p.cedula).includes(query)
+	      ).slice(0, 10); // Limitar a 10 resultados
+	
+	      if (resultados.length === 0) {
+	        resultadosDiv.innerHTML = '<p style="padding: 5px; margin: 0; font-size: 0.9rem; color: #999;">No se encontraron coincidencias.</p>';
+	        return;
+	      }
+	
+	      resultados.forEach(p => {
+	        const item = document.createElement('div');
+	        item.style.padding = '8px';
+	        item.style.borderBottom = '1px solid #eee';
+	        item.style.cursor = 'pointer';
+	        item.style.backgroundColor = 'white';
+	        item.style.transition = 'background-color 0.2s';
+	        item.innerHTML = `<strong>${p.nombre}</strong> (${p.cedula})`;
+	        item.onmouseover = () => item.style.backgroundColor = '#f0f0f0';
+	        item.onmouseout = () => item.style.backgroundColor = 'white';
+	        item.onclick = () => seleccionarPersonal(p);
+	        resultadosDiv.appendChild(item);
+	      });
+	    }
+	
+	    // Función para seleccionar un resultado y rellenar los campos
+	    function seleccionarPersonal(persona) {
+	      document.getElementById('modal-cedula').value = persona.cedula;
+	      document.getElementById('modal-nombre').value = persona.nombre;
+	      document.getElementById('modal-telefono').value = "0000000"; // Requerimiento del usuario
+	      document.getElementById('resultados-personal').innerHTML = ''; // Limpiar resultados
+	      document.getElementById('buscador-personal').value = persona.nombre; // Opcional: mostrar el nombre seleccionado en el buscador
+	    }
+	
+	    // Inicializar el evento de búsqueda
+	    document.addEventListener('DOMContentLoaded', () => {
+	      const buscador = document.getElementById('buscador-personal');
+	      if (buscador) {
+	        buscador.addEventListener('input', (e) => {
+	          buscarPersonal(e.target.value);
+	        });
+	      }
+	    });
+	  </script>
   <script>
     function scrollToTop() {
       window.scrollTo({
@@ -2266,17 +2344,24 @@ window.guardarEdicionDesdeModal = guardarEdicionDesdeModal;
   <div style="background:white; padding:25px; border-radius:12px; width:90%; max-width:500px;">
     <h2>👤 Registrar Nuevo Cliente</h2>
     <div style="margin-bottom:15px;">
+      <label>Buscar Persona (Cédula o Nombre):</label>
+      <input type="text" id="buscador-personal" placeholder="Buscar en personal.json" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+      <div id="resultados-personal" style="max-height: 150px; overflow-y: auto; border: 1px solid #eee; margin-top: 5px; border-radius: 6px;">
+        <!-- Resultados de la búsqueda -->
+      </div>
+    </div>
+    <div style="margin-bottom:15px;">
       <label>Cédula:</label>
-      <input type="text" id="modal-cedula" placeholder="Ej: 112230405" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+      <input type="text" id="modal-cedula" placeholder="Ej: 112230405" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;" readonly>
       <small id="nombre-desde-api" style="color:#4CAF50; display:block; margin-top:5px;"></small>
     </div>
     <div style="margin-bottom:15px;">
       <label>Nombre (editable):</label>
-      <input type="text" id="modal-nombre" placeholder="Nombre del cliente" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+      <input type="text" id="modal-nombre" placeholder="Nombre del cliente" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;" readonly>
     </div>
     <div style="margin-bottom:20px;">
       <label>Teléfono (con código, 8 dígitos):</label>
-      <input type="text" id="modal-telefono" placeholder="Ej: 88889999" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
+      <input type="text" id="modal-telefono" placeholder="Ej: 88889999" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;" value="0000000" readonly>
     </div>
     <div style="display:flex; gap:10px; justify-content:flex-end;">
       <button class="boton-accion" style="background:#666;" onclick="cerrarModalNuevoCliente()">❌ Cancelar</button>
