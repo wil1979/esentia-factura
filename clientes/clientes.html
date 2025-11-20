@@ -2230,31 +2230,32 @@ window.guardarEdicionDesdeModal = guardarEdicionDesdeModal;
 
     // Inicializar: cargar solo deudores al inicio
     await cargarClientes(filtroDeudoresActivo);
-	    await cargarProductosJSON();
-	    await cargarPersonalJSON(); // Nueva función de inicialización
-	  </script>
+		    await cargarProductosJSON();
+		    await cargarPersonalJSON(); // Restaurar la llamada de inicialización
+			  </script>
 
-	  <script>
-      // Variables globales para el personal
-      let personalData = [];
-  
-      // Función para cargar el personal.json personal.json
-      async function cargarPersonalJSON() {
-        try {
-          const response = await fetch('personal.json');
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          personalData = await response.json();
-          console.log("✅ Personal cargado:", personalData.length, "registros.");
-        } catch (error) {
-          console.error("❌ Error al cargar personal.json:", error);
-          // Si falla, se inicializa vacío
-          personalData = [];
-        }
-      }
-	
-	    // Función para buscar en el personal
+			  <script>
+			    // Variables globales para el personal
+			    let personalData = [];
+			
+			    // Función para cargar el personal.json desde la URL
+			    async function cargarPersonalJSON() {
+			      try {
+			        const url = 'https://wil1979.github.io/esentia-factura/personal.json';
+			        const response = await fetch(url);
+			        if (!response.ok) {
+			          throw new Error(`HTTP error! status: ${response.status}`);
+			        }
+			        personalData = await response.json();
+			        console.log("✅ Personal cargado desde URL:", personalData.length, "registros.");
+			      } catch (error) {
+			        console.error("❌ Error al cargar personal.json desde URL:", error);
+			        // Si falla, se inicializa vacío
+			        personalData = [];
+			      }
+			    }
+		
+		    // Función para buscar en el personal
 	    function buscarPersonal(query) {
 	      const resultadosDiv = document.getElementById('resultados-personal');
 	      resultadosDiv.innerHTML = '';
