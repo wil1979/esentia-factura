@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Búsqueda Segura de Personal</title>
+   <link rel="stylesheet" href="styleextra.css">
+  
+</head>
+<body>
+
+  <!-- 🎯 Botón flotante "Inicio" -->
+  <a href="dashboard.html" class="btn-flotante-inicio" title="Ir al Dashboard">
+    🏠 Inicio
+  </a>
+  <div class="container">
+    <h2>🔍 Búsqueda Segura de Personal</h2>
+
+    <!-- Filtros -->
+    <div class="form-group">
+      <label for="filtroNombre">Nombre:</label>
+      <input type="text" id="filtroNombre" placeholder="Ej: Jorge, María...">
+    </div>
+    <div class="form-group">
+      <label for="filtroCedula">Cédula:</label>
+      <input type="text" id="filtroCedula" placeholder="Ej: 206830189 o 830...">
+    </div>
+    <div class="form-group">
+      <label for="filtroPuesto">Puesto:</label>
+      <select id="filtroPuesto">
+        <option value="">Todos los puestos</option>
+        <!-- Se llenará dinámicamente -->
+      </select>
+    </div>
+
+    <!-- Botones -->
+    <div class="btn-container">
+      <button id="btnBuscar" class="btn-primary">🔍 Buscar</button>
+      <button id="btnLimpiar" class="btn-secondary">🧹 Limpiar</button>
+    </div>
+
+    <!-- Resultados -->
+    <div id="resultados">
+      <table id="tablaPersonal">
+        <thead>
+          <tr>
+            <th>Cédula</th>
+            <th>Nombre</th>
+            <th>Puesto</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="tablaCuerpo">
+          <tr>
+            <td colspan="4" class="message loading">Cargando lista de personal...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Datos globales
+    let listaPersonal = [];
+    const puestosUnicos = new Set();
+
+    // Elementos del DOM
+    const filtroNombre = document.getElementById("filtroNombre");
+    const filtroCedula = document.getElementById("filtroCedula");
+    const filtroPuesto = document.getElementById("filtroPuesto");
+    const btnBuscar = document.getElementById("btnBuscar");
+    const btnLimpiar = document.getElementById("btnLimpiar");
+    const tablaCuerpo = document.getElementById("tablaCuerpo");
+
+    // Cargar Personal.json con validación robusta
+    async function cargarPersonal() {
+      try {
+        const respuesta = await fetch("personal.json");
+        if (!respuesta.ok) {
+          throw new Error(`Archivo no encontrado. Código: ${respuesta.status}`);
+        }
+
+        const datos = await respuesta.json();
+
+        // Validar que sea un arreglo
+        if (!Array.isArray(datos)) {
+          throw new Error("personal.json debe ser un arreglo de objetos");
+        }
+
+        // Filtrar registros válidos y extraer puestos
+        listaPersonal = datos.filter(p => {
+          if (!p || typeof p !== 'object') return false;
+          // Asegurar que tenga al menos un campo útil
+          return (p.nombre != null) || (p.cedula != null) || (p.puesto != null);
+        });
+
+        // Extraer puestos únicos (solo valores válidos)
+        listaPersonal.forEach(p => {
+          if (p.puesto && typeof p.puesto === 'string') {
+            puestosUnicos.add(p.puesto);
+          }
+        });
+
+        // Llenar el select de puestos
+        const opcionesPuesto = Array.from(puestosUnicos).sort();
+        filtroPuesto.innerHTML = '<option value="">Todos los puestos</option>';
+        opcionesPuesto.forEach(puesto => {
+          const option = document.createElement("option");
+          option.value = puesto;
+          option.textContent = puesto;
+          filtroPuesto.appendChild(option);
+        });
+
+        console.log(`✅ Cargados ${listaPersonal.length} registros válidos`);
+        tablaCuerpo.innerHTML = '<tr><td colspan="4" class="message">Ingrese criterios y haga clic en "Buscar"</td></tr>';
+      } catch (error) {
+        console.error("❌ Error al cargar personal.json:", error);
+        tablaCuerpo.innerHTML = `<tr><td colspan="4" class="message error">
+          ❌ Error: ${error.message}<br>
+          Verifique que el archivo "personal.json" exista y sea un JSON válido.
+        </td></tr>`;
+      }
+    }
+
+    // Función de búsqueda segura
+    function buscarPersonal() {
+      const nombreFiltro = filtroNombre.value.trim().toLowerCase();
+      const cedulaFiltro = filtroCedula.value.trim().replace(/\D/g, ''); // Solo dígitos
+      const puestoFiltro = filtroPuesto.value;
+
+      tablaCuerpo.innerHTML = '<tr><td colspan="4" class="message loading">Buscando...</td></tr>';
+
+      setTimeout(() => {
+        const resultados = listaPersonal.filter(p => {
+          // Filtro por puesto
+          if (puestoFiltro && p.puesto !== puestoFiltro) return false;
+
+          // Filtro por nombre (seguro contra undefined)
+          if (nombreFiltro) {
+            const nombreNormalizado = (p.nombre || '').toLowerCase();
+            if (!nombreNormalizado.includes(nombreFiltro)) return false;
+          }
+
+          // Filtro por cédula (¡protegido contra undefined, null, etc!)
+          if (cedulaFiltro) {
+            const cedulaStr = (p.cedula != null) ? p.cedula.toString() : '';
+            if (!cedulaStr.includes(cedulaFiltro)) return false;
+          }
+
+          return true;
+        });
+
+        if (resultados.length === 0) {
+          tablaCuerpo.innerHTML = '<tr><td colspan="4" class="message error">❌ No se encontraron coincidencias</td></tr>';
+        } else {
+          // Limitar a 100 resultados para no congelar el navegador
+          const resultadosAMostrar = resultados.slice(0, 100);
+          tablaCuerpo.innerHTML = resultadosAMostrar.map(p => `
+            <tr>
+              <td>${p.cedula != null ? p.cedula : '—'}</td>
+              <td>${p.nombre || '—'}</td>
+              <td>${p.puesto || '—'}</td>
+              <td><button class="btn-primary" onclick="alert('Seleccionado:\\nNombre: ${p.nombre || '—'}\\nCédula: ${p.cedula != null ? p.cedula : '—'}')">Seleccionar</button></td>
+            </tr>
+          `).join('');
+
+          if (resultados.length > 100) {
+            const filaAdvertencia = document.createElement("tr");
+            filaAdvertencia.innerHTML = `<td colspan="4" class="message">... y ${resultados.length - 100} más (mostrando solo 100)</td>`;
+            tablaCuerpo.appendChild(filaAdvertencia);
+          }
+        }
+      }, 150);
+    }
+
+    // Limpiar filtros
+    function limpiarFiltros() {
+      filtroNombre.value = "";
+      filtroCedula.value = "";
+      filtroPuesto.value = "";
+      tablaCuerpo.innerHTML = '<tr><td colspan="4" class="message">Ingrese criterios y haga clic en "Buscar"</td></tr>';
+    }
+
+    // Eventos
+    btnBuscar.addEventListener("click", buscarPersonal);
+    btnLimpiar.addEventListener("click", limpiarFiltros);
+
+    // Permitir búsqueda con Enter
+    document.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") buscarPersonal();
+    });
+
+    // Iniciar carga
+    cargarPersonal();
+  </script>
+</body>
+</html>
