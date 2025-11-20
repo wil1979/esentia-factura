@@ -227,7 +227,7 @@
     </div>
   </div>
 
-  <!-- Modal Login/Registro -->
+    <!-- Modal Login/Registro -->
   <div id="modalLoginRegistro" class="modal-login">
     <div class="modal-login-contenido">
       <h2 style="text-align:center; margin-top:0; color:#6c4ba3;">👤 Bienvenido a Esentia</h2>
@@ -285,6 +285,67 @@
       <div style="display:flex; gap:10px; margin-top:20px;">
         <button class="btn-tab" onclick="cerrarModalActualizar()" style="flex:1; background:#666;">Cancelar</button>
         <button class="btn-tab" onclick="guardarActualizacion()" style="flex:1; background:#4CAF50;">✅ Guardar y Continuar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para vincular cédula con teléfono -->
+  <div id="modalVincularCedula" class="modal-login" style="display:none; z-index: 2002;">
+    <div class="modal-login-contenido" style="max-width: 420px;">
+      <h2 style="text-align:center; margin-top:0; color:#6c4ba3;">📱 Vincular Cédula</h2>
+      <p style="text-align:center; margin-bottom:15px; color:#ddd;">
+        No se encontró cliente con esa cédula.<br>
+        Ingresa tu teléfono para vincularla.
+      </p>
+
+      <input type="hidden" id="cedula-a-vincular">
+      <div style="margin-bottom:15px;">
+        <label for="tel-vincular" style="display:block; margin-bottom:6px; font-weight:bold;">Teléfono *</label>
+        <input type="text" id="tel-vincular" placeholder="88889999" required
+          style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.9);">
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button class="btn-tab" onclick="cerrarModalVincular()" style="flex:1; background:#666;">Cancelar</button>
+        <button class="btn-tab" onclick="buscarYVincularCedula()" style="flex:1; background:#6c4ba3;">🔍 Buscar y Vincular</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ MODAL DE REGISTRO (¡IMPORTANTE!) -->
+  <div id="modalRegistro" class="modal-login" style="display:none; z-index: 2003;">
+    <div class="modal-login-contenido" style="max-width: 420px;">
+      <h2 style="text-align:center; margin-top:0; color:#6c4ba3;">✨ ¡Únete a Esentia!</h2>
+      <p style="text-align:center; margin-bottom:15px; color:#ddd;">
+        Gracias por ser parte de la familia Esentia.<br>
+        Llena tus espacios con <strong>Fragancias que enamoran</strong> 🌸
+      </p>
+
+      <div style="margin-bottom:15px;">
+        <label for="regNombre" style="display:block; margin-bottom:6px; font-weight:bold;">Nombre completo *</label>
+        <input type="text" id="regNombre" placeholder="Ej: Ana Pérez" required
+          style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.9);">
+      </div>
+
+      <div style="margin-bottom:15px;">
+        <label for="regCedula" style="display:block; margin-bottom:6px; font-weight:bold;">Cédula (opcional)</label>
+        <input type="text" id="regCedula" placeholder="Ej: 112233445"
+          style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.9);">
+      </div>
+
+      <div style="margin-bottom:15px;">
+        <label for="regTelefono" style="display:block; margin-bottom:6px; font-weight:bold;">Teléfono *</label>
+        <input type="text" id="regTelefono" placeholder="88889999" required
+          style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.9);">
+      </div>
+
+      <div style="text-align:center; margin-top:10px; font-size:0.85rem; color:#ffcccb;">
+        * Nombre y Teléfono son obligatorios
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button class="btn-tab" onclick="cerrarModalRegistro()" style="flex:1; background:#666;">Cancelar</button>
+        <button class="btn-tab" onclick="registrarNuevoCliente()" style="flex:1; background:#4CAF50;">✅ Registrarme</button>
       </div>
     </div>
   </div>
@@ -722,7 +783,7 @@ function cerrarModalVincular() {
 }
 
 async function buscarYVincularCedula() {
-  const cedula = document.getElementById("cedula-a-vincular").value;
+  const cedula = document.getElementById("cedula-a-vincular").value.trim();
   const telefono = document.getElementById("tel-vincular").value.trim().replace(/\D/g, '');
   const msg = document.getElementById("loginMensaje");
 
@@ -738,11 +799,26 @@ async function buscarYVincularCedula() {
     const snap = await getDocs(q);
 
     if (snap.empty) {
-      msg.textContent = "📞 No se encontró cliente con ese teléfono.";
+      // ✅ CLIENTE NO EXISTE → ABRIR MODAL DE REGISTRO
+      document.getElementById("modalVincularCedula").style.display = "none";
+      msg.textContent = "";
+
+      // Mostrar mensaje amable
+      setTimeout(() => {
+        alert("¡Gracias por interesarte en Esentia! 😊\nA continuación, por favor regístrate para participar.");
+      }, 300);
+
+      // Pre-rellenar campos si es posible
+      document.getElementById("regNombre").value = "";
+      document.getElementById("regCedula").value = cedula;
+      document.getElementById("regTelefono").value = telefono;
+
+      // ✅ ABRIR MODAL DE REGISTRO
+      document.getElementById("modalRegistro").style.display = "flex";
       return;
     }
 
-    // Actualizar cédula (y nombre si viene de Hacienda)
+    // ✅ Cliente existe → vincular cédula
     const docSnap = snap.docs[0];
     const data = docSnap.data();
     const docRef = docSnap.ref;
@@ -758,7 +834,7 @@ async function buscarYVincularCedula() {
       nombre: nombreFinal
     });
 
-    // Iniciar sesión con los datos actualizados
+    // Iniciar sesión
     clienteAutenticado = { id: docRef.id, nombre: nombreFinal, cedula, telefono };
     document.getElementById("nombreUsuario").textContent = nombreFinal;
     document.getElementById("panelUsuario").style.display = "flex";
@@ -770,7 +846,7 @@ async function buscarYVincularCedula() {
 
   } catch (err) {
     console.error("Error al vincular:", err);
-    msg.textContent = "❌ Error al vincular cédula.";
+    msg.textContent = "❌ Error al procesar.";
   }
 }
 
@@ -784,27 +860,6 @@ window.buscarYVincularCedula = buscarYVincularCedula;
 
     init();
   </script>
-  <!-- Modal para vincular cédula con teléfono -->
-<div id="modalVincularCedula" class="modal-login" style="display:none; z-index: 2002;">
-  <div class="modal-login-contenido" style="max-width: 420px;">
-    <h2 style="text-align:center; margin-top:0; color:#6c4ba3;">📱 Vincular Cédula</h2>
-    <p style="text-align:center; margin-bottom:15px; color:#ddd;">
-      No se encontró cliente con esa cédula.<br>
-      Ingresa tu teléfono para vincularla.
-    </p>
 
-    <input type="hidden" id="cedula-a-vincular">
-    <div style="margin-bottom:15px;">
-      <label for="tel-vincular" style="display:block; margin-bottom:6px; font-weight:bold;">Teléfono *</label>
-      <input type="text" id="tel-vincular" placeholder="88889999" required
-        style="width:100%; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.9);">
-    </div>
-
-    <div style="display:flex; gap:10px; margin-top:20px;">
-      <button class="btn-tab" onclick="cerrarModalVincular()" style="flex:1; background:#666;">Cancelar</button>
-      <button class="btn-tab" onclick="buscarYVincularCedula()" style="flex:1; background:#6c4ba3;">🔍 Buscar y Vincular</button>
-    </div>
-  </div>
-</div>
 </body>
 </html>
