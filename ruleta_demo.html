@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Demo Ruleta Esentia 🎁</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f8f9fa;
+    }
+
+    .modal {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.88);
+      z-index: 1000;
+    }
+
+    .titulo {
+      color: white;
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 28px;
+      font-weight: bold;
+      text-shadow: 0 3px 5px rgba(0,0,0,0.5);
+    }
+
+    #mensaje-bienvenida {
+      color: #ffd166;
+      font-size: 1.1rem;
+      margin: 10px 0;
+      min-height: 24px;
+      text-align: center;
+    }
+
+    .resultado {
+      margin-top: 25px;
+      font-size: 19px;
+      font-weight: bold;
+      color: white;
+      text-align: center;
+      min-height: 60px;
+      line-height: 1.4;
+    }
+
+    .codigo {
+      background: rgba(0,0,0,0.4);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 15px;
+      margin-top: 10px;
+      display: inline-block;
+    }
+
+    .premios-lista {
+      width: 300px;
+      margin: 20px auto;
+      padding: 0;
+      list-style: none;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    }
+
+    .premio-item {
+      padding: 12px 15px;
+      margin-bottom: 1px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-weight: 600;
+      text-align: left;
+      transition: background 0.1s ease-in-out, transform 0.1s ease-in-out;
+      border-left: 5px solid transparent;
+    }
+
+    .premio-item.highlight {
+      background: #e63946;
+      transform: scale(1.05);
+      border-left: 5px solid #fff;
+      box-shadow: 0 0 10px rgba(230, 57, 70, 0.8);
+    }
+
+    #girar-btn {
+      margin-top: 25px;
+      padding: 13px 26px;
+      font-size: 18px;
+      background: #e63946;
+      color: white;
+      border: none;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-weight: bold;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    }
+
+    #girar-btn:hover:not(:disabled) {
+      background: #d90429;
+    }
+
+    #girar-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Modal Registro */
+    .modal-registro {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    .modal-contenido {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 25px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 400px;
+      color: white;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.9);
+      box-sizing: border-box;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #6c4ba3;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .mensaje-info {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #aaa;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Pantalla principal (oculta hasta registro) -->
+  <div id="pantallaRuleta" class="modal" style="display: none;">
+    <div style="text-align: center; color: white; max-width: 90%;">
+      <div class="titulo">🎁 Ruleta Esentia (Demo)</div>
+      <div id="mensaje-bienvenida"></div>
+      
+      <ul id="premiosLista" class="premios-lista"></ul>
+
+      <button id="girar-btn">¡Girar por tu premio!</button>
+      <div id="resultado" class="resultado"></div>
+
+      <div class="mensaje-info">
+        Esta es una demo. Tus datos se guardan localmente para futuras promociones.<br>
+        ¡Gracias por participar! 🌸
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Registro -->
+  <div id="modalRegistro" class="modal-registro">
+    <div class="modal-contenido">
+      <h2 style="text-align:center; margin-top:0; color:#6c4ba3;">✨ Regístrate</h2>
+      <p style="text-align:center; margin-bottom:15px; color:#ddd;">
+        ¡Participa en la ruleta y recibe promociones futuras!<br>
+        <small style="color:#ffcc00;">(No compartimos tus datos)</small>
+      </p>
+
+      <input type="text" id="nombre" placeholder="Nombre completo *" required>
+      <input type="text" id="cedula" placeholder="Cédula (opcional)">
+      <input type="text" id="telefono" placeholder="Teléfono *" required>
+
+      <button onclick="procesarRegistro()">✅ Registrarme y Jugar</button>
+      <div class="mensaje-info">
+        Si ya estás registrado, ¡solo ingresa tus datos y continúa!
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Configuración ---
+    const PREMIOS = [
+      "Más suerte la próxima vez",
+      "5% de descuento",
+      "10% de descuento",
+      "50% de descuento",
+      "Difusor de Auto"
+    ];
+
+    let usuarioActual = null;
+    let yaGiro = false;
+
+    // --- Utilidades de almacenamiento ---
+    function cargarClientes() {
+      const data = localStorage.getItem('esentia_demo_clientes');
+      return data ? JSON.parse(data) : [];
+    }
+
+    function guardarClientes(clientes) {
+      localStorage.setItem('esentia_demo_clientes', JSON.stringify(clientes));
+    }
+
+    function clienteExiste(cedula, telefono) {
+      const clientes = cargarClientes();
+      return clientes.some(c => 
+        (cedula && c.cedula === cedula) || 
+        (telefono && c.telefono === telefono)
+      );
+    }
+
+    function agregarCliente(nombre, cedula, telefono) {
+      const clientes = cargarClientes();
+      const nuevo = {
+        id: Date.now().toString(36),
+        nombre: nombre.trim(),
+        cedula: cedula ? cedula.replace(/\D/g, '') : null,
+        telefono: telefono.replace(/\D/g, ''),
+        fechaRegistro: new Date().toISOString()
+      };
+      clientes.push(nuevo);
+      guardarClientes(clientes);
+      return nuevo;
+    }
+
+    // --- Interfaz ---
+    function renderizarPremios() {
+      const lista = document.getElementById("premiosLista");
+      lista.innerHTML = "";
+      PREMIOS.forEach(texto => {
+        const li = document.createElement("li");
+        li.className = "premio-item";
+        li.textContent = texto;
+        lista.appendChild(li);
+      });
+    }
+
+    function sortearPremioIgual() {
+      const idx = Math.floor(Math.random() * PREMIOS.length);
+      return { premio: PREMIOS[idx], idx };
+    }
+
+    function generarCodigoDemo(valor, premio) {
+      const sufijo = premio.includes("5%") ? "5PCT" :
+                     premio.includes("10%") ? "10PCT" :
+                     premio.includes("50%") ? "50PCT" :
+                     premio.includes("Difusor") ? "DIFF" : "SUE";
+      const timestamp = Date.now().toString(36).slice(-4).toUpperCase();
+      return `DEMO-${valor.slice(-4)}-${sufijo}-${timestamp}`;
+    }
+
+    async function animarTombola(indiceGanador) {
+      const items = document.querySelectorAll(".premio-item");
+      let actual = -1;
+      let cuenta = 0;
+      const total = 25;
+
+      return new Promise(resolve => {
+        function resaltar() {
+          if (actual >= 0) items[actual].classList.remove("highlight");
+          actual = (actual + 1) % items.length;
+          items[actual].classList.add("highlight");
+          cuenta++;
+          if (cuenta >= total && actual === indiceGanador) {
+            resolve();
+            return;
+          }
+          const delay = cuenta > total - items.length ? 50 + (cuenta - (total - items.length)) * 50 : 50;
+          setTimeout(resaltar, delay);
+        }
+        resaltar();
+      });
+    }
+
+    // --- Registro ---
+    function procesarRegistro() {
+      const nombre = document.getElementById("nombre").value.trim();
+      const cedulaInput = document.getElementById("cedula").value.trim();
+      const telefonoInput = document.getElementById("telefono").value.trim();
+
+      const cedula = cedulaInput ? cedulaInput.replace(/\D/g, '') : null;
+      const telefono = telefonoInput.replace(/\D/g, '');
+
+      if (!nombre || nombre.length < 2) {
+        alert("⚠️ Por favor ingresa un nombre válido.");
+        return;
+      }
+      if (!telefono || telefono.length !== 8) {
+        alert("⚠️ El teléfono debe tener 8 dígitos.");
+        return;
+      }
+
+      // Normalizar cédula (solo si se ingresó)
+      const cedulaFinal = cedula && cedula.length >= 9 ? cedula : null;
+
+      // Verificar si ya existe
+      if (clienteExiste(cedulaFinal, telefono)) {
+        // Solo continuar, sin guardar
+        usuarioActual = { nombre, cedula: cedulaFinal, telefono };
+      } else {
+        // Guardar nuevo cliente
+        usuarioActual = agregarCliente(nombre, cedulaFinal, telefono);
+      }
+
+      // Mostrar ruleta
+      document.getElementById("modalRegistro").style.display = "none";
+      document.getElementById("pantallaRuleta").style.display = "flex";
+      document.getElementById("mensaje-bienvenida").textContent = `¡Hola, ${nombre}! Bienvenido 🌿`;
+      renderizarPremios();
+    }
+
+    // --- Ruleta ---
+    document.getElementById("girar-btn").addEventListener("click", async () => {
+      if (yaGiro) return;
+      yaGiro = true;
+      const btn = document.getElementById("girar-btn");
+      const resEl = document.getElementById("resultado");
+      btn.disabled = true;
+      resEl.innerHTML = "Iniciando sorteo...";
+
+      try {
+        const { premio, idx } = sortearPremioIgual();
+        await animarTombola(idx);
+
+        if (premio === "Más suerte la próxima vez") {
+          resEl.innerHTML = `😢 Más suerte la próxima vez.<br>¡Gracias por participar!`;
+        } else {
+          const valor = (usuarioActual.cedula || usuarioActual.telefono).replace(/\D/g, '');
+          const codigo = generarCodigoDemo(valor, premio);
+          resEl.innerHTML = `
+            🎉 ¡Felicidades!<br><strong>${premio}</strong><br>
+            <div class="codigo">${codigo}</div>
+            <div style="margin-top:10px; font-size:0.9rem; color:#4CAF50;">
+              Guardado para futuras promociones ✅
+            </div>
+          `;
+        }
+      } catch (err) {
+        resEl.innerHTML = `❌ Error: ${err.message}`;
+        yaGiro = false;
+        btn.disabled = false;
+      }
+    });
+
+    // --- Inicializar ---
+    renderizarPremios();
+  </script>
+</body>
+</html>
