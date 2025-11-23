@@ -15,7 +15,14 @@
     h1 {
       text-align: center;
       color: #6c4ba3;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
+    }
+    .instrucciones {
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto 20px;
+      color: #555;
+      font-size: 14px;
     }
     .contenedor {
       max-width: 900px;
@@ -30,7 +37,7 @@
       color: white;
       padding: 15px 20px;
       display: grid;
-      grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+      grid-template-columns: 1.5fr 1fr 1fr 1.2fr 1fr;
       gap: 10px;
       font-weight: bold;
     }
@@ -38,9 +45,10 @@
       padding: 14px 20px;
       border-bottom: 1px solid #eee;
       display: grid;
-      grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+      grid-template-columns: 1.5fr 1fr 1fr 1.2fr 1fr;
       gap: 10px;
       font-size: 15px;
+      align-items: center;
     }
     .fila:last-child {
       border-bottom: none;
@@ -60,16 +68,56 @@
       color: #6c4ba3;
       font-weight: bold;
     }
+    .btn-whatsapp {
+      background: #25D366;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: bold;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+    .btn-whatsapp:hover {
+      background: #1fbc58;
+    }
+    .btn-todos {
+      display: block;
+      margin: 20px auto;
+      padding: 12px 25px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+      max-width: 300px;
+    }
+    .btn-todos:hover {
+      background: #45a049;
+    }
   </style>
 </head>
 <body>
   <h1>👥 Clientes de la Demo - Esentia</h1>
+  <p class="instrucciones">
+    Haz clic en "Enviar Oferta" para abrir WhatsApp con un mensaje personalizado.<br>
+    Usa el botón "Enviar a Todos" para iniciar envíos masivos (se abrirán pestañas una por una).
+  </p>
+
+  <button class="btn-todos" onclick="enviarAMasivos()">📤 Enviar Oferta a Todos</button>
+
   <div class="contenedor">
     <div class="cabecera">
       <div>Nombre</div>
       <div>Teléfono</div>
       <div>Cédula</div>
       <div>Registro</div>
+      <div>Acción</div>
     </div>
     <div id="listaClientes">
       <div class="loading">Cargando clientes...</div>
@@ -77,7 +125,7 @@
   </div>
 
   <script type="module">
-    // 🔑 Tu configuración de Firebase (misma que en la demo)
+    // 🔑 Configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
       authDomain: "esentiacreditos-8345f.firebaseapp.com",
@@ -94,17 +142,27 @@
     const db = getFirestore(app);
     const listaDiv = document.getElementById("listaClientes");
 
+    // Mensaje de oferta personalizable
+    const MENSAJE_OFERTA = `¡Hola! 🌸\n\nGracias por participar en nuestra Ruleta Esentia.\n\n✨ OFERTA EXCLUSIVA: Llévate un 15% de descuento en tu próxima compra de difusores o aromas.\nVálido hasta el 31 de diciembre.\n\n📍 Visítanos en tienda o escríbenos para más info.\n\n¡Hacemos tus espacios más placenteros con aromas a tu estilo! 💜`;
+
+    let clientesCache = [];
+
+    function crearEnlaceWhatsApp(telefono) {
+      const numero = telefono.startsWith('506') ? telefono : `506${telefono}`;
+      return `https://wa.me/${numero}?text=${encodeURIComponent(MENSAJE_OFERTA)}`;
+    }
+
+    function enviarWhatsApp(telefono) {
+      const url = crearEnlaceWhatsApp(telefono);
+      window.open(url, '_blank');
+    }
+
     async function cargarClientes() {
       try {
         const q = query(collection(db, "clientesBD"), orderBy("fechaRegistro", "desc"));
         const querySnapshot = await getDocs(q);
         
-        if (querySnapshot.empty) {
-          listaDiv.innerHTML = `<div class="vacio">No hay clientes registrados aún.</div>`;
-          return;
-        }
-
-        let html = '';
+        clientesCache = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           const fecha = data.fechaRegistro?.toDate 
@@ -113,23 +171,76 @@
               ? new Date(data.fechaRegistro).toLocaleString('es-CR')
               : '—';
 
-          html += `
-            <div class="fila">
-              <div>${data.nombre || '—'}</div>
-              <div>${data.telefono || '—'}</div>
-              <div>${data.cedula || '—'}</div>
-              <div class="fecha">${fecha}</div>
-            </div>
-          `;
+          if (data.telefono && data.telefono.toString().length === 8) {
+            clientesCache.push({
+              nombre: data.nombre || '—',
+              telefono: data.telefono,
+              cedula: data.cedula || '—',
+              fecha
+            });
+          }
         });
-        listaDiv.innerHTML = html;
+
+        renderizarClientes();
       } catch (error) {
         console.error("Error al cargar clientes:", error);
-        listaDiv.innerHTML = `<div class="vacio">❌ Error al cargar datos.<br>Verifica tu conexión o permisos de Firebase.</div>`;
+        listaDiv.innerHTML = `<div class="vacio">❌ Error al cargar datos.</div>`;
       }
     }
 
-    // Iniciar carga
+    function renderizarClientes() {
+      if (clientesCache.length === 0) {
+        listaDiv.innerHTML = `<div class="vacio">No hay clientes con teléfono válido.</div>`;
+        return;
+      }
+
+      let html = '';
+      clientesCache.forEach(cliente => {
+        html += `
+          <div class="fila">
+            <div>${cliente.nombre}</div>
+            <div>${cliente.telefono}</div>
+            <div>${cliente.cedula}</div>
+            <div class="fecha">${cliente.fecha}</div>
+            <div>
+              <a href="#" class="btn-whatsapp" onclick="enviarWhatsApp('${cliente.telefono}'); return false;">
+                📩 Enviar
+              </a>
+            </div>
+          </div>
+        `;
+      });
+      listaDiv.innerHTML = html;
+    }
+
+    // ✨ Envío masivo (abre una pestaña cada 2 segundos)
+    function enviarAMasivos() {
+      if (clientesCache.length === 0) {
+        alert("⚠️ No hay clientes para enviar.");
+        return;
+      }
+
+      if (!confirm(`¿Enviar oferta a ${clientesCache.length} clientes?\n\nSe abrirán ${clientesCache.length} pestañas de WhatsApp (una cada 2 segundos).`)) {
+        return;
+      }
+
+      let index = 0;
+      const intervalo = setInterval(() => {
+        if (index < clientesCache.length) {
+          enviarWhatsApp(clientesCache[index].telefono);
+          index++;
+        } else {
+          clearInterval(intervalo);
+          alert("✅ Envío masivo iniciado.\nRevisa las pestañas abiertas de WhatsApp.");
+        }
+      }, 2000); // 2 segundos entre cada envío (evita bloqueos)
+    }
+
+    // Exponer funciones al ámbito global
+    window.enviarWhatsApp = enviarWhatsApp;
+    window.enviarAMasivos = enviarAMasivos;
+
+    // Cargar datos al iniciar
     cargarClientes();
   </script>
 </body>
