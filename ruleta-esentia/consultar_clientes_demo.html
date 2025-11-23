@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Clientes Demo - Esentia</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f7ff;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #6c4ba3;
+      margin-bottom: 20px;
+    }
+    .contenedor {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    .cabecera {
+      background: #6c4ba3;
+      color: white;
+      padding: 15px 20px;
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+      gap: 10px;
+      font-weight: bold;
+    }
+    .fila {
+      padding: 14px 20px;
+      border-bottom: 1px solid #eee;
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+      gap: 10px;
+      font-size: 15px;
+    }
+    .fila:last-child {
+      border-bottom: none;
+    }
+    .fecha {
+      color: #666;
+      font-size: 14px;
+    }
+    .vacio {
+      text-align: center;
+      padding: 40px;
+      color: #888;
+    }
+    .loading {
+      text-align: center;
+      padding: 30px;
+      color: #6c4ba3;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>👥 Clientes de la Demo - Esentia</h1>
+  <div class="contenedor">
+    <div class="cabecera">
+      <div>Nombre</div>
+      <div>Teléfono</div>
+      <div>Cédula</div>
+      <div>Registro</div>
+    </div>
+    <div id="listaClientes">
+      <div class="loading">Cargando clientes...</div>
+    </div>
+  </div>
+
+  <script type="module">
+    // 🔑 Tu configuración de Firebase (misma que en la demo)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+      authDomain: "esentiacreditos-8345f.firebaseapp.com",
+      projectId: "esentiacreditos-8345f",
+      storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+      messagingSenderId: "888658236080",
+      appId: "1:888658236080:web:506e5e2085b5a452dba175"
+    };
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const listaDiv = document.getElementById("listaClientes");
+
+    async function cargarClientes() {
+      try {
+        const q = query(collection(db, "clientesBD"), orderBy("fechaRegistro", "desc"));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+          listaDiv.innerHTML = `<div class="vacio">No hay clientes registrados aún.</div>`;
+          return;
+        }
+
+        let html = '';
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const fecha = data.fechaRegistro?.toDate 
+            ? new Date(data.fechaRegistro.toDate()).toLocaleString('es-CR')
+            : data.fechaRegistro 
+              ? new Date(data.fechaRegistro).toLocaleString('es-CR')
+              : '—';
+
+          html += `
+            <div class="fila">
+              <div>${data.nombre || '—'}</div>
+              <div>${data.telefono || '—'}</div>
+              <div>${data.cedula || '—'}</div>
+              <div class="fecha">${fecha}</div>
+            </div>
+          `;
+        });
+        listaDiv.innerHTML = html;
+      } catch (error) {
+        console.error("Error al cargar clientes:", error);
+        listaDiv.innerHTML = `<div class="vacio">❌ Error al cargar datos.<br>Verifica tu conexión o permisos de Firebase.</div>`;
+      }
+    }
+
+    // Iniciar carga
+    cargarClientes();
+  </script>
+</body>
+</html>
