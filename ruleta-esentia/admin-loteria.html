@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" href="images/logo.png" sizes="192x192" />
+  <title>Admin Lotería 🎟️ | Esentia</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1e1e2f;
+      color: #f0f0f0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 20px;
+    }
+    h1, h2 {
+      color: #ffd166;
+      text-align: center;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 5px;
+    }
+    .btn-primary { background: #6c4ba3; color: white; }
+    .btn-danger { background: #e63946; color: white; }
+    .btn-success { background: #4CAF50; color: white; }
+    .search-box {
+      margin: 20px 0;
+      text-align: center;
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 300px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background: #2d2d44;
+      color: white;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: rgba(30,30,47,0.7);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #444;
+    }
+    th {
+      background: #6c4ba3;
+      color: white;
+    }
+    tr:hover {
+      background: rgba(108,75,163,0.2);
+    }
+    .ganador {
+      color: #4CAF50;
+      font-weight: bold;
+    }
+    .estatus {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+    .estatus.ganador { background: #2e7d32; color: white; }
+    .estatus.pendiente { background: #555; color: #ddd; }
+    .acciones button {
+      margin: 2px;
+      padding: 6px 10px;
+      font-size: 0.85em;
+    }
+    #mensaje {
+      text-align: center;
+      margin: 15px 0;
+      min-height: 24px;
+      font-weight: bold;
+    }
+    .premio-info {
+      background: rgba(255,255,255,0.08);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎯 Panel de Administración - Lotería Esentia</h1>
+
+    <div class="premio-info" id="infoSorteo"></div>
+
+    <div class="header">
+      <div>
+        <button class="btn btn-success" id="btnEjecutarSorteo">🎲 Ejecutar Sorteo</button>
+        <button class="btn btn-primary" onclick="location.reload()">↻ Recargar</button>
+      </div>
+      <div>
+        <span id="usuarioAdmin" style="color:#ffd166;"></span>
+        <button class="btn btn-danger" onclick="cerrarSesionAdmin()">Salir</button>
+      </div>
+    </div>
+
+    <div class="search-box">
+      <input type="text" id="buscador" placeholder="Buscar por nombre, teléfono o número..." oninput="filtrarTabla()">
+    </div>
+
+    <div id="mensaje"></div>
+
+    <table id="tablaParticipantes">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Teléfono</th>
+          <th>Número</th>
+          <th>Compra (₡)</th>
+          <th>Estatus</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpoTabla">
+        <!-- Se llena dinámicamente -->
+      </tbody>
+    </table>
+  </div>
+
+  <script type="module">
+    // === Firebase ===
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+      authDomain: "esentiacreditos-8345f.firebaseapp.com",
+      projectId: "esentiacreditos-8345f",
+      storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+      messagingSenderId: "888658236080",
+      appId: "1:888658236080:web:506e5e2085b5a452dba175"
+    };
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import {
+      getFirestore, collection, query, where, getDocs, deleteDoc, doc, updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const URL_LOTERIA = "https://wil1979.github.io/esentia-factura/ruleta-esentia/loteria.json?t=" + Date.now();
+
+    // 🔑 ID del usuario admin (cámbialo al ID real en Firebase)
+    const ADMIN_ID = "TU_ID_DE_ADMIN_AQUI"; // ← ¡Cambia esto!
+
+    let participantes = [];
+    let configSorteo = null;
+    let usuarioAdmin = null;
+
+    // === Cerrar sesión ===
+    function cerrarSesionAdmin() {
+      localStorage.removeItem("adminSession");
+      window.location.href = "index.html"; // o login.html
+    }
+
+    // === Verificar sesión de admin ===
+    async function verificarAdmin() {
+      // Aquí puedes integrar tu sistema de login real
+      // Por ahora, usamos un acceso temporal (solo para demo)
+      const adminSession = localStorage.getItem("adminSession");
+      if (!adminSession) {
+        const input = prompt("🔒 Ingresa el código de acceso de administrador:");
+        if (input !== "Wil19797511") { // ← Cambia o mejora esto en producción
+          alert("Acceso denegado.");
+          window.location.href = "index.html";
+          return false;
+        }
+        localStorage.setItem("adminSession", "true");
+      }
+      document.getElementById("usuarioAdmin").textContent = "Admin";
+      return true;
+    }
+
+    // === Cargar configuración del sorteo ===
+    async function cargarConfigSorteo() {
+      try {
+        const res = await fetch(URL_LOTERIA);
+        if (res.ok) {
+          configSorteo = await res.json();
+          if (configSorteo.activo) {
+            document.getElementById("infoSorteo").innerHTML = `
+              <h3>Sorteo: ${configSorteo.sorteoId}</h3>
+              <p>Fecha: <strong>${new Date(configSorteo.fechaSorteo).toLocaleDateString("es-CR")}</strong></p>
+              <p>🥇 Primer: ${configSorteo.premios.primer}</p>
+              <p>🥈 Segundo: ${configSorteo.premios.segundo}</p>
+              <p>🥉 Tercer: ${configSorteo.premios.tercer}</p>
+            `;
+            return true;
+          }
+        }
+      } catch (e) {
+        console.error("Error al cargar loteria.json", e);
+      }
+      document.getElementById("infoSorteo").innerHTML = "<p style='color:#e63946;'>⚠️ No hay sorteo activo.</p>";
+      return false;
+    }
+
+    // === Cargar participantes ===
+    async function cargarParticipantes() {
+      if (!configSorteo) return;
+      
+      document.getElementById("mensaje").textContent = "Cargando participantes...";
+      const q = query(collection(db, "loteria"), where("sorteoId", "==", configSorteo.sorteoId));
+      const snapshot = await getDocs(q);
+      
+      participantes = [];
+      snapshot.forEach(doc => {
+        participantes.push({ id: doc.id, ...doc.data() });
+      });
+
+      renderizarTabla(participantes);
+      document.getElementById("mensaje").textContent = `Participantes: ${participantes.length}`;
+    }
+
+    // === Renderizar tabla ===
+    function renderizarTabla(lista) {
+      const tbody = document.getElementById("cuerpoTabla");
+      tbody.innerHTML = "";
+      
+      lista.forEach(p => {
+        const tr = document.createElement("tr");
+        
+        const estatus = p.ganador 
+          ? `<span class="estatus ganador">${p.premio || 'Ganador'}</span>`
+          : `<span class="estatus pendiente">Pendiente</span>`;
+
+        tr.innerHTML = `
+          <td>${p.nombre || '—'}</td>
+          <td>${p.telefono || '—'}</td>
+          <td><strong>${p.numero}</strong></td>
+          <td>₡${p.montoCompra?.toLocaleString() || '—'}</td>
+          <td>${estatus}</td>
+          <td class="acciones">
+            <button class="btn btn-danger" onclick="reiniciarParticipacion('${p.clienteId}')">
+              🔄 Reiniciar
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // === Filtrar tabla ===
+    function filtrarTabla() {
+      const filtro = document.getElementById("buscador").value.toLowerCase();
+      const filtrados = participantes.filter(p =>
+        (p.nombre?.toLowerCase().includes(filtro)) ||
+        (p.telefono?.includes(filtro)) ||
+        (p.numero?.includes(filtro))
+      );
+      renderizarTabla(filtrados);
+    }
+
+    // === Reiniciar participación de un cliente ===
+    window.reiniciarParticipacion = async function(clienteId) {
+      if (!confirm("¿Eliminar TODOS los números de este cliente para que pueda volver a participar?")) return;
+      
+      try {
+        const q = query(collection(db, "loteria"), 
+          where("clienteId", "==", clienteId),
+          where("sorteoId", "==", configSorteo.sorteoId)
+        );
+        const snapshot = await getDocs(q);
+        for (const docSnap of snapshot.docs) {
+          await deleteDoc(doc(db, "loteria", docSnap.id));
+        }
+        await cargarParticipantes();
+        document.getElementById("mensaje").textContent = "✅ Participación reiniciada.";
+        setTimeout(() => document.getElementById("mensaje").textContent = `Participantes: ${participantes.length}`, 2000);
+      } catch (err) {
+        console.error("Error al reiniciar:", err);
+        alert("❌ No se pudo reiniciar la participación.");
+      }
+    };
+
+    // === Ejecutar sorteo manualmente ===
+    document.getElementById("btnEjecutarSorteo").addEventListener("click", async () => {
+      if (!configSorteo || !configSorteo.numerosGanadores) {
+        alert("❌ No hay números ganadores definidos en loteria.json");
+        return;
+      }
+      
+      if (!confirm("¿Ejecutar sorteo ahora? Esto marcará a los ganadores.")) return;
+      
+      try {
+        const q = query(collection(db, "loteria"), where("sorteoId", "==", configSorteo.sorteoId));
+        const snapshot = await getDocs(q);
+        
+        let contador = 0;
+        for (const docSnap of snapshot.docs) {
+          const data = docSnap.data();
+          let premio = null;
+          if (data.numero === configSorteo.numerosGanadores.primer) premio = "primer";
+          else if (data.numero === configSorteo.numerosGanadores.segundo) premio = "segundo";
+          else if (data.numero === configSorteo.numerosGanadores.tercer) premio = "tercer";
+          
+          if (premio) {
+            await updateDoc(doc(db, "loteria", docSnap.id), { ganador: true, premio });
+            contador++;
+          }
+        }
+        
+        await cargarParticipantes();
+        alert(`🎉 Sorteo ejecutado. ${contador} ganador(es) identificado(s).`);
+      } catch (err) {
+        console.error("Error en sorteo:", err);
+        alert("❌ Error al ejecutar el sorteo.");
+      }
+    });
+
+    // === Inicializar ===
+    async function init() {
+      const esAdmin = await verificarAdmin();
+      if (!esAdmin) return;
+      
+      const sorteoOk = await cargarConfigSorteo();
+      if (sorteoOk) {
+        await cargarParticipantes();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

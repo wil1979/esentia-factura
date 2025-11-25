@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" href="images/logo.png" sizes="192x192" />
+  <title>Lotería Esentia 🎟️</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f8f9fa;
+    }
+
+    .modal {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.88);
+      z-index: 1000;
+    }
+
+    header {
+      position: relative;
+      padding-right: 160px;
+      box-sizing: border-box;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .logo {
+      max-width: 120px;
+      margin-bottom: 10px;
+    }
+
+    .titulo {
+      color: white;
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 28px;
+      font-weight: bold;
+      text-shadow: 0 3px 5px rgba(0,0,0,0.5);
+    }
+
+    #mensaje-bienvenida {
+      color: #ffd166;
+      font-size: 1.1rem;
+      margin: 10px 0;
+      min-height: 24px;
+      text-align: center;
+    }
+
+    #panelUsuario {
+      display: none;
+      position: absolute;
+      top: 12px;
+      right: 15px;
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 24px;
+      padding: 6px 12px;
+      color: white;
+      font-size: 0.95rem;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #panelUsuario button {
+      background: transparent;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 1.2rem;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Modal Login */
+    .modal-login {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    .modal-login-contenido {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 25px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 400px;
+      color: white;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    /* Seleccion de números */
+    .numeros-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin: 20px 0;
+      max-width: 400px;
+    }
+    .num-input {
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      text-align: center;
+      border: 2px solid #6c4ba3;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.9);
+      outline: none;
+    }
+    .num-input:focus {
+      border-color: #e63946;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      font-size: 18px;
+      border: none;
+      border-radius: 40px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+    .btn-primary {
+      background: #e63946;
+      color: white;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #d90429;
+    }
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .info-sorteo {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #bbb;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div id="panelUsuario">
+      <span id="nombreUsuario"></span>
+      <button onclick="cerrarSesion()">&times;</button>
+    </div>
+  </header>
+
+  <div class="modal" id="pantallaPrincipal" style="display:none;">
+    <div style="text-align: center; color: white; max-width: 90%;">
+      <div class="titulo">🎟️ Lotería Esentia</div>
+      <div id="mensaje-bienvenida"></div>
+
+      <div id="instrucciones">
+        Por cada <strong>₡5,000</strong> en tu última compra, elige un número del <strong>00 al 99</strong>.<br>
+        ¡Podrías ganar increíbles premios en el próximo sorteo!
+      </div>
+
+      <div id="contenedorNumeros" style="margin-top: 20px;"></div>
+
+      <button id="btnParticipar" class="btn btn-primary" disabled>✅ Enviar Números</button>
+
+      <div class="info-sorteo" id="infoSorteo"></div>
+    </div>
+  </div>
+
+  <!-- Modal Login -->
+  <div id="modalLogin" class="modal-login">
+    <div class="modal-login-contenido">
+      <h2 style="text-align:center; margin-top:0; color:#6c4ba3;">👤 Bienvenido a Esentia</h2>
+      <p style="text-align:center; margin-bottom:20px; color:#ddd;">
+        Inicia sesión para participar en la Lotería
+      </p>
+      <form id="formLogin">
+        <input type="text" id="loginCedulaTel" placeholder="Cédula o Teléfono" required
+          style="width:94%; padding:12px; margin:8px 0; border:1px solid rgba(255,255,255,0.3); border-radius:8px; background:rgba(255,255,255,0.9);">
+        <button type="submit" style="width:100%; padding:12px; background:#6c4ba3; color:white; border:none; border-radius:8px; margin-top:10px;">
+          Entrar
+        </button>
+      </form>
+      <div id="loginMensaje" style="margin-top:15px; min-height:20px; text-align:center; font-size:0.9rem; color:#ffcccb;"></div>
+    </div>
+  </div>
+
+  <!-- Modal Confirmación -->
+  <div id="modalConfirmacion" class="modal-login" style="display:none; z-index:2001;">
+    <div class="modal-login-contenido">
+      <h2 style="text-align:center; color:#4CAF50;">✅ ¡Participación Exitosa!</h2>
+      <p style="text-align:center; color:#ddd;">
+        Has participado con los siguientes números:
+      </p>
+      <div id="numerosConfirmados" style="font-size:24px; font-weight:bold; margin:15px 0; color:white;"></div>
+      <p style="text-align:center; font-size:14px; color:#bbb;">
+        El sorteo se realizará el <span id="fechaSorteoTexto"></span>.
+      </p>
+      <button class="btn" style="background:#4CAF50; color:white;" onclick="cerrarConfirmacion()">Aceptar</button>
+    </div>
+  </div>
+
+ <script type="module">
+  // === Firebase ===
+  const firebaseConfig = {
+    apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+    authDomain: "esentiacreditos-8345f.firebaseapp.com",
+    projectId: "esentiacreditos-8345f",
+    storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+    messagingSenderId: "888658236080",
+    appId: "1:888658236080:web:506e5e2085b5a452dba175"
+  };
+
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+  import {
+    getFirestore, doc, getDoc, collection, query, where, getDocs, addDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const URL_LOTERIA = "https://wil1979.github.io/esentia-factura/ruleta-esentia/loteria.json?t=" + Date.now();
+
+  let clienteAutenticado = null;
+  let configSorteo = null;
+
+  // === Cerrar sesión ===
+  window.cerrarSesion = function() {
+    clienteAutenticado = null;
+    document.getElementById("panelUsuario").style.display = "none";
+    document.getElementById("mensaje-bienvenida").textContent = "";
+    document.getElementById("pantallaPrincipal").style.display = "none";
+    document.getElementById("modalLogin").style.display = "flex";
+    document.getElementById("loginMensaje").textContent = "";
+  };
+
+  // === Cargar configuración del sorteo (puede no existir) ===
+  async function cargarConfiguracionSorteo() {
+    try {
+      const res = await fetch(URL_LOTERIA);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.activo) {
+          return data;
+        }
+      }
+    } catch (e) {
+      console.warn("No se pudo cargar loteria.json o no está activo.");
+    }
+    return null;
+  }
+
+  // === Mostrar pantalla principal (con o sin sorteo) ===
+  function mostrarPantallaPrincipal(configSorteo, ultimaCompra = null) {
+    const monto = ultimaCompra ? (ultimaCompra.monto || 0) : 0;
+    const tieneCompraValida = monto >= 5000;
+    const puedeParticipar = configSorteo && tieneCompraValida;
+
+    let mensaje = "";
+    if (!configSorteo) {
+      mensaje = "🎟️ Actualmente no hay ningún sorteo activo.<br>¡Gracias por tu interés en la Lotería Esentia! 🌿";
+      document.getElementById("contenedorNumeros").innerHTML = "";
+      document.getElementById("btnParticipar").style.display = "none";
+    } else if (!tieneCompraValida) {
+      mensaje = `⚠️ Necesitas al menos <strong>₡5,000</strong> en una compra para participar.<br>Tu última compra fue de ₡${monto.toLocaleString()}.`;
+      document.getElementById("contenedorNumeros").innerHTML = "";
+      document.getElementById("btnParticipar").style.display = "none";
+    } else {
+      const boletos = Math.min(Math.floor(monto / 5000), 20);
+      mensaje = `Elige tus <strong>${boletos}</strong> número(s) para el sorteo del <strong>${new Date(configSorteo.fechaSorteo).toLocaleDateString("es-CR")}</strong>.`;
+      renderizarInputsNumeros(boletos);
+      document.getElementById("btnParticipar").style.display = "inline-block";
+    }
+
+    document.getElementById("infoSorteo").innerHTML = configSorteo ? `
+      🗓️ Sorteo: <strong>${new Date(configSorteo.fechaSorteo).toLocaleDateString("es-CR")}</strong><br>
+      🥇 ${configSorteo.premios.primer}
+    ` : "";
+
+    document.getElementById("instrucciones").innerHTML = mensaje;
+    document.getElementById("pantallaPrincipal").style.display = "flex";
+  }
+
+  // === Login ===
+  document.getElementById("formLogin").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const valor = document.getElementById("loginCedulaTel").value.trim();
+    const msg = document.getElementById("loginMensaje");
+    if (!valor) { msg.textContent = "Ingresa cédula o teléfono."; return; }
+
+    try {
+      msg.textContent = "Buscando cliente...";
+      const col = collection(db, "clientes");
+      let snap = await getDocs(query(col, where("cedula", "==", valor)));
+      if (snap.empty) {
+        snap = await getDocs(query(col, where("telefono", "==", valor)));
+      }
+
+      if (snap.empty) {
+        msg.textContent = "❌ Cliente no registrado.";
+        return;
+      }
+
+      const docSnap = snap.docs[0];
+      const data = docSnap.data();
+      clienteAutenticado = { id: docSnap.id, ...data };
+
+      // Obtener última compra
+      const compras = data.compras || [];
+      let ultimaCompra = null;
+      if (compras.length > 0) {
+        ultimaCompra = compras.reduce((latest, c) => 
+          (c.fecha?.seconds || 0) > (latest.fecha?.seconds || 0) ? c : latest
+        );
+      }
+
+      // Cargar configuración (puede ser null)
+      configSorteo = await cargarConfiguracionSorteo();
+
+      // Mostrar pantalla principal
+      document.getElementById("nombreUsuario").textContent = data.nombre;
+      document.getElementById("panelUsuario").style.display = "flex";
+      document.getElementById("mensaje-bienvenida").textContent = 
+        `¡Hola, ${data.nombre}! Bienvenido a la Lotería Esentia 🌿`;
+      document.getElementById("modalLogin").style.display = "none";
+
+      mostrarPantallaPrincipal(configSorteo, ultimaCompra);
+
+    } catch (err) {
+      console.error("Error login:", err);
+      msg.textContent = "❌ Error de conexión.";
+    }
+  });
+
+  // === Renderizar inputs ===
+  function renderizarInputsNumeros(boletosDisponibles) {
+    const contenedor = document.getElementById("contenedorNumeros");
+    contenedor.innerHTML = "";
+    const fragment = document.createDocumentFragment();
+    for (let i = 0; i < boletosDisponibles; i++) {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "num-input";
+      input.maxLength = 2;
+      input.placeholder = "00";
+      input.addEventListener("input", validarNumero);
+      fragment.appendChild(input);
+    }
+    contenedor.appendChild(fragment);
+    document.getElementById("btnParticipar").disabled = true;
+  }
+
+  // === Validar número ===
+  function validarNumero(e) {
+    let val = e.target.value.replace(/\D/g, '').slice(0, 2);
+    if (val.length === 1) val = "0" + val;
+    if (val.length === 2) {
+      const num = parseInt(val, 10);
+      if (num >= 0 && num <= 99) {
+        e.target.value = val;
+      } else {
+        e.target.value = "";
+      }
+    }
+    validarParticipacion();
+  }
+
+  // === Validar participación ===
+  function validarParticipacion() {
+    const inputs = document.querySelectorAll(".num-input");
+    const valores = Array.from(inputs).map(inp => inp.value);
+    const completos = valores.every(v => v.length === 2);
+    const duplicados = new Set(valores).size !== valores.length;
+    document.getElementById("btnParticipar").disabled = !completos || duplicados;
+  }
+
+  // === Enviar participación ===
+  document.getElementById("btnParticipar").addEventListener("click", async () => {
+    const inputs = document.querySelectorAll(".num-input");
+    const numeros = Array.from(inputs).map(inp => inp.value);
+
+    try {
+      for (const num of numeros) {
+        await addDoc(collection(db, "loteria"), {
+          clienteId: clienteAutenticado.id,
+          nombre: clienteAutenticado.nombre,
+          telefono: clienteAutenticado.telefono,
+          cedula: clienteAutenticado.cedula,
+          numero: num,
+          montoCompra: clienteAutenticado.compras.reduce((max, c) => 
+            (c.fecha?.seconds || 0) > (max.fecha?.seconds || 0) ? c.monto : max.monto, 0
+          ),
+          fechaParticipacion: new Date(),
+          sorteoId: configSorteo.sorteoId,
+          ganador: false,
+          premio: null
+        });
+      }
+
+      document.getElementById("numerosConfirmados").textContent = numeros.join(", ");
+      document.getElementById("fechaSorteoTexto").textContent = 
+        new Date(configSorteo.fechaSorteo).toLocaleDateString("es-CR", {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+      document.getElementById("modalConfirmacion").style.display = "flex";
+    } catch (err) {
+      console.error("Error al guardar:", err);
+      alert("❌ No se pudo registrar tu participación.");
+    }
+  });
+
+  // === Cerrar confirmación ===
+  window.cerrarConfirmacion = function() {
+    document.getElementById("modalConfirmacion").style.display = "none";
+  };
+
+  // Iniciar
+  document.getElementById("modalLogin").style.display = "flex";
+</script>
+</body>
+</html>
