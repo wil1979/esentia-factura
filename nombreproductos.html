@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Lista de nombres desde JSON</title>
+
+  <!-- Fuente elegante desde Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Cinzel', serif;
+      background: #f7f7f7;
+      padding: 20px;
+    }
+
+    h2 {
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .item {
+      padding: 8px 12px;
+      background: white;
+      margin: 5px 0;
+      border-radius: 6px;
+      border-left: 4px solid #444;
+      font-size: 18px;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Nombres extraídos del JSON</h2>
+  <div id="lista"></div>
+
+  <script>
+    // URL de tu JSON
+    const url = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
+
+    // Cargar y procesar
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        const contenedor = document.getElementById("lista");
+
+        // Recorrer todos los productos
+        data.forEach(producto => {
+          const div = document.createElement("div");
+          div.className = "item";
+          div.textContent = producto.nombre;  // Extraemos "nombre"
+          contenedor.appendChild(div);
+        });
+      })
+      .catch(error => {
+        console.error("Error cargando JSON:", error);
+      });
+  </script>
+
+</body>
+</html>
