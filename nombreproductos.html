@@ -8,54 +8,92 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Cinzel:wght@400;700&family=Lora:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
-    body {
-        background: #eaeaea;
-        padding: 20px;
-        font-family: Arial, sans-serif;
-    }
+body {
+    background: #eaeaea;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+.panel {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+button {
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    background: #444;
+    color: white;
+}
+#preview {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    min-height: 400px;
+}
+.item {
+    margin: 12px 0;
+    padding: 10px;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.item.dragging {
+    opacity: 0.4;
+}
+.qr {
+    width: 60px;
+    margin-left: 20px;
+}
+#logo {
+    width: 120px;
+    display: none;
+    margin-bottom: 20px;
+}
 
-    .panel {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        margin-bottom: 20px;
-    }
+/* Bordes */
+.border-gold { border-bottom: 2px solid #d4af37; }
+.border-black { border-bottom: 2px solid #000; }
+.border-double { border-bottom: 4px double black; }
 
-    #preview {
-        background: white;
-        padding: 30px;
-        border-radius: 12px;
-        min-height: 400px;
-    }
+/* FOIL GOLD REAL */
+.foil-gold {
+    background: linear-gradient(45deg, #d4af37, #f7e98e, #b2892b, #f4d77f, #c59c35);
+    background-size: 200% 200%;
+    animation: shine 4s ease infinite;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent !important;
+    filter: drop-shadow(0 0 5px rgba(255,200,80,0.4));
+}
+@keyframes shine {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
 
-    .item {
-        margin: 12px 0;
-        padding: 10px;
-        cursor: grab;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .qr {
-        width: 60px;
-        margin-left: 20px;
-    }
-
-    .item.dragging {
-        opacity: 0.4;
-    }
-
-    #logo {
-        width: 120px;
-        display: none;
-        margin-bottom: 20px;
-    }
-
-    .border-gold { border-bottom: 2px solid #d4af37; }
-    .border-black { border-bottom: 2px solid black; }
-    .border-double { border-bottom: 4px double black; }
-
+/* MODAL SELECTOR */
+#modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+#modal-content {
+    width: 90%;
+    height: 80%;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    overflow-y: auto;
+}
 </style>
 </head>
 
@@ -64,7 +102,9 @@
 <div class="panel">
     <h2>Esentia DTF UV – Panel de Control</h2>
 
-    <!-- TEMA -->
+    <button onclick="abrirModal()">Seleccionar productos</button>
+    <br><br>
+
     <label>🎨 Estilo visual:</label><br>
     <select id="theme">
         <option value="deluxe">✨ Deluxe</option>
@@ -72,16 +112,15 @@
         <option value="minimal">🖤 Minimal</option>
     </select><br><br>
 
-    <!-- COLOR -->
     <label>🎨 Color del texto:</label><br>
     <select id="color">
+        <option value="foil">✨ Foil Gold (Metálico)</option>
         <option value="#d4af37">Oro</option>
         <option value="#c0c0c0">Plata</option>
-        <option value="#000000">Negro</option>
-        <option value="#ffffff">Blanco</option>
+        <option value="#000">Negro</option>
+        <option value="#fff">Blanco</option>
     </select><br><br>
 
-    <!-- MARCOS -->
     <label>📏 Tipo de borde:</label><br>
     <select id="border">
         <option value="none">Sin borde</option>
@@ -90,19 +129,15 @@
         <option value="border-double">Doble Elegante</option>
     </select><br><br>
 
-    <!-- FUENTE -->
     <label>🔠 Tamaño de letra:</label><br>
     <input type="number" id="fontSize" value="30" min="10" max="100"> px<br><br>
 
-    <!-- QR -->
     <label>📌 Incluir códigos QR:</label>
     <input type="checkbox" id="qrToggle"><br><br>
 
-    <!-- LOGO -->
     <label>🌟 Incluir logo Esentia:</label>
     <input type="checkbox" id="logoToggle"><br><br>
 
-    <!-- BOTONES -->
     <button onclick="aplicarEstilos()">Aplicar estilos</button>
     <button onclick="window.print()">PDF</button>
     <button onclick="descargarPNG()">PNG</button>
@@ -114,104 +149,176 @@
 <h3>Vista previa:</h3>
 <div id="preview"></div>
 
-<!-- Librería para PNG -->
+<!-- MODAL SELECTOR -->
+<div id="modal">
+    <div id="modal-content">
+        <h3>Selecciona los productos</h3>
+        <div id="listaProductos"></div>
+        <br>
+        <button onclick="guardarSeleccion(); cerrarModal();">Guardar selección</button>
+        <button onclick="cerrarModal()" style="background:#999">Cerrar</button>
+    </div>
+</div>
+
+<!-- LIBRERÍA PNG -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
 const url = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
-const preview = document.getElementById("preview");
-const logo = document.getElementById("logo");
-
 let productos = [];
+let seleccionados = JSON.parse(localStorage.getItem("seleccionEsentia") || "[]");
 
 // Cargar JSON
 fetch(url)
-  .then(res => res.json())
-  .then(data => {
+.then(res => res.json())
+.then(data => {
     productos = data;
+    cargarModal();
     renderizar();
-  });
-
-// Renderizar productos
-function renderizar() {
-  preview.innerHTML = "";
-  
-  productos.forEach(p => {
-    const div = document.createElement("div");
-    div.className = "item";
-    div.draggable = true;
-    div.textContent = p.nombre;
-
-    // Evento drag & drop
-    div.addEventListener("dragstart", () => div.classList.add("dragging"));
-    div.addEventListener("dragend", () => div.classList.remove("dragging"));
-
-    preview.appendChild(div);
-  });
-
-  aplicarEstilos();
-}
-
-// Aplicar estilos seleccionados
-function aplicarEstilos() {
-  const theme = document.getElementById("theme").value;
-  const color = document.getElementById("color").value;
-  const size = document.getElementById("fontSize").value;
-  const border = document.getElementById("border").value;
-  const qrOn = document.getElementById("qrToggle").checked;
-  const logoOn = document.getElementById("logoToggle").checked;
-
-  logo.style.display = logoOn ? "block" : "none";
-
-  [...preview.children].forEach(el => {
-    el.style.fontSize = size + "px";
-    el.style.color = color;
-
-    // Quitar clases previas
-    el.classList.remove("deluxe", "nature", "minimal", "border-gold", "border-black", "border-double");
-
-    // Aplicar tema
-    el.classList.add(theme);
-
-    // Aplicar borde
-    if (border !== "none") el.classList.add(border);
-
-    // Agregar QR si está activado
-    if (qrOn) {
-      if (!el.querySelector("img")) {
-        let qr = document.createElement("img");
-        qr.className = "qr";
-        qr.src = "https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=" + encodeURIComponent(el.textContent);
-        el.appendChild(qr);
-      }
-    } else {
-      let img = el.querySelector("img");
-      if (img) img.remove();
-    }
-  });
-}
-
-// Drag & Drop reordenable
-preview.addEventListener("dragover", e => {
-  e.preventDefault();
-  const dragging = document.querySelector(".dragging");
-  const after = [...preview.querySelectorAll(".item:not(.dragging)")].find(x => {
-    const rect = x.getBoundingClientRect();
-    return e.clientY < rect.top + rect.height / 2;
-  });
-  if (after) preview.insertBefore(dragging, after);
-  else preview.appendChild(dragging);
 });
 
-// Descargar PNG
-function descargarPNG() {
-  html2canvas(preview).then(canvas => {
-    const link = document.createElement("a");
-    link.download = "esentia_dtf.png";
-    link.href = canvas.toDataURL();
-    link.click();
-  });
+// Modal
+function abrirModal() { document.getElementById("modal").style.display = "flex"; }
+function cerrarModal() { document.getElementById("modal").style.display = "none"; }
+
+// Cargar lista en modal
+function cargarModal() {
+    const cont = document.getElementById("listaProductos");
+    cont.innerHTML = "";
+
+    productos.forEach(p => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+            <label>
+                <input type="checkbox" value="${p.nombre}" ${seleccionados.includes(p.nombre) ? "checked" : ""}>
+                ${p.nombre}
+            </label>
+        `;
+        cont.appendChild(div);
+    });
 }
+
+// Guardar selección
+function guardarSeleccion() {
+    const checks = [...document.querySelectorAll("#listaProductos input:checked")];
+    seleccionados = checks.map(c => c.value);
+
+    localStorage.setItem("seleccionEsentia", JSON.stringify(seleccionados));
+    renderizar();
+}
+
+// Renderizar preview
+function renderizar() {
+    const preview = document.getElementById("preview");
+    preview.innerHTML = "";
+
+    seleccionados.forEach(nombre => {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.draggable = true;
+        div.textContent = nombre;
+
+        div.addEventListener("dragstart", () => div.classList.add("dragging"));
+        div.addEventListener("dragend", () => div.classList.remove("dragging"));
+
+        preview.appendChild(div);
+    });
+
+    aplicarEstilos();
+}
+
+// Estilos
+function aplicarEstilos() {
+    const theme = document.getElementById("theme").value;
+    const color = document.getElementById("color").value;
+    const border = document.getElementById("border").value;
+    const size = document.getElementById("fontSize").value;
+    const qrOn = document.getElementById("qrToggle").checked;
+    const logoOn = document.getElementById("logoToggle").checked;
+
+    document.getElementById("logo").style.display = logoOn ? "block" : "none";
+
+    [...preview.children].forEach(el => {
+        el.style.fontSize = size + "px";
+
+        // Borrar estilos previos
+        el.className = "item";
+        el.style.color = "";
+        el.style.background = "";
+
+        // Estilos
+        el.classList.add(theme);
+        if (border !== "none") el.classList.add(border);
+
+        // FOIL GOLD
+        if (color === "foil") {
+            el.classList.add("foil-gold");
+        } else {
+            el.style.color = color;
+        }
+
+        // QR
+        if (qrOn) {
+            if (!el.querySelector("img")) {
+                let qr = document.createElement("img");
+                qr.className = "qr";
+                qr.src = "https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=" + encodeURIComponent(el.textContent);
+                el.appendChild(qr);
+            }
+        } else {
+            let img = el.querySelector("img");
+            if (img) img.remove();
+        }
+    });
+
+    guardarConfig();
+}
+
+// Guardar configuración completa
+function guardarConfig() {
+    const config = {
+        theme: theme.value,
+        color: color.value,
+        border: border.value,
+        fontSize: fontSize.value,
+        qrToggle: qrToggle.checked,
+        logoToggle: logoToggle.checked
+    };
+    localStorage.setItem("configEsentia", JSON.stringify(config));
+}
+
+// Cargar config guardada
+window.onload = () => {
+    const config = JSON.parse(localStorage.getItem("configEsentia") || "{}");
+    Object.keys(config).forEach(k => {
+        document.getElementById(k).value = config[k];
+        if (typeof config[k] === "boolean") {
+            document.getElementById(k).checked = config[k];
+        }
+    });
+};
+
+// PNG
+function descargarPNG() {
+    html2canvas(preview).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "esentia_dtf.png";
+        link.href = canvas.toDataURL();
+        link.click();
+    });
+}
+
+// Drag & Drop
+preview.addEventListener("dragover", e => {
+    e.preventDefault();
+    const dragging = document.querySelector(".dragging");
+    const after = [...preview.querySelectorAll(".item:not(.dragging)")].find(x => {
+        const rect = x.getBoundingClientRect();
+        return e.clientY < rect.top + rect.height / 2;
+    });
+    if (after) preview.insertBefore(dragging, after);
+    else preview.appendChild(dragging);
+});
 </script>
 
 </body>
