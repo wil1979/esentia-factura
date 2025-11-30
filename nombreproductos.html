@@ -1,62 +1,218 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Lista de nombres desde JSON</title>
+<meta charset="UTF-8">
+<title>Esentia DTF UV Tool PRO</title>
 
-  <!-- Fuente elegante desde Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+<!-- Fuentes elegantes -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Cinzel:wght@400;700&family=Lora:wght@400;600&display=swap" rel="stylesheet">
 
-  <style>
+<style>
     body {
-      font-family: 'Cinzel', serif;
-      background: #f7f7f7;
-      padding: 20px;
+        background: #eaeaea;
+        padding: 20px;
+        font-family: Arial, sans-serif;
     }
 
-    h2 {
-      font-weight: 600;
-      margin-bottom: 10px;
+    .panel {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+
+    #preview {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        min-height: 400px;
     }
 
     .item {
-      padding: 8px 12px;
-      background: white;
-      margin: 5px 0;
-      border-radius: 6px;
-      border-left: 4px solid #444;
-      font-size: 18px;
-      letter-spacing: 0.5px;
+        margin: 12px 0;
+        padding: 10px;
+        cursor: grab;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
-  </style>
+
+    .qr {
+        width: 60px;
+        margin-left: 20px;
+    }
+
+    .item.dragging {
+        opacity: 0.4;
+    }
+
+    #logo {
+        width: 120px;
+        display: none;
+        margin-bottom: 20px;
+    }
+
+    .border-gold { border-bottom: 2px solid #d4af37; }
+    .border-black { border-bottom: 2px solid black; }
+    .border-double { border-bottom: 4px double black; }
+
+</style>
 </head>
+
 <body>
 
-  <h2>Nombres extraídos del JSON</h2>
-  <div id="lista"></div>
+<div class="panel">
+    <h2>Esentia DTF UV – Panel de Control</h2>
 
-  <script>
-    // URL de tu JSON
-    const url = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
+    <!-- TEMA -->
+    <label>🎨 Estilo visual:</label><br>
+    <select id="theme">
+        <option value="deluxe">✨ Deluxe</option>
+        <option value="nature">🌿 Nature</option>
+        <option value="minimal">🖤 Minimal</option>
+    </select><br><br>
 
-    // Cargar y procesar
-    fetch(url)
-      .then(response => response.json())
-      .then(data => {
-        const contenedor = document.getElementById("lista");
+    <!-- COLOR -->
+    <label>🎨 Color del texto:</label><br>
+    <select id="color">
+        <option value="#d4af37">Oro</option>
+        <option value="#c0c0c0">Plata</option>
+        <option value="#000000">Negro</option>
+        <option value="#ffffff">Blanco</option>
+    </select><br><br>
 
-        // Recorrer todos los productos
-        data.forEach(producto => {
-          const div = document.createElement("div");
-          div.className = "item";
-          div.textContent = producto.nombre;  // Extraemos "nombre"
-          contenedor.appendChild(div);
-        });
-      })
-      .catch(error => {
-        console.error("Error cargando JSON:", error);
-      });
-  </script>
+    <!-- MARCOS -->
+    <label>📏 Tipo de borde:</label><br>
+    <select id="border">
+        <option value="none">Sin borde</option>
+        <option value="border-gold">Línea Dorada</option>
+        <option value="border-black">Línea Negra</option>
+        <option value="border-double">Doble Elegante</option>
+    </select><br><br>
+
+    <!-- FUENTE -->
+    <label>🔠 Tamaño de letra:</label><br>
+    <input type="number" id="fontSize" value="30" min="10" max="100"> px<br><br>
+
+    <!-- QR -->
+    <label>📌 Incluir códigos QR:</label>
+    <input type="checkbox" id="qrToggle"><br><br>
+
+    <!-- LOGO -->
+    <label>🌟 Incluir logo Esentia:</label>
+    <input type="checkbox" id="logoToggle"><br><br>
+
+    <!-- BOTONES -->
+    <button onclick="aplicarEstilos()">Aplicar estilos</button>
+    <button onclick="window.print()">PDF</button>
+    <button onclick="descargarPNG()">PNG</button>
+</div>
+
+<!-- LOGO -->
+<img id="logo" src="https://wil1979.github.io/esentia-factura/logo_esentia.png">
+
+<h3>Vista previa:</h3>
+<div id="preview"></div>
+
+<!-- Librería para PNG -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+const url = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
+const preview = document.getElementById("preview");
+const logo = document.getElementById("logo");
+
+let productos = [];
+
+// Cargar JSON
+fetch(url)
+  .then(res => res.json())
+  .then(data => {
+    productos = data;
+    renderizar();
+  });
+
+// Renderizar productos
+function renderizar() {
+  preview.innerHTML = "";
+  
+  productos.forEach(p => {
+    const div = document.createElement("div");
+    div.className = "item";
+    div.draggable = true;
+    div.textContent = p.nombre;
+
+    // Evento drag & drop
+    div.addEventListener("dragstart", () => div.classList.add("dragging"));
+    div.addEventListener("dragend", () => div.classList.remove("dragging"));
+
+    preview.appendChild(div);
+  });
+
+  aplicarEstilos();
+}
+
+// Aplicar estilos seleccionados
+function aplicarEstilos() {
+  const theme = document.getElementById("theme").value;
+  const color = document.getElementById("color").value;
+  const size = document.getElementById("fontSize").value;
+  const border = document.getElementById("border").value;
+  const qrOn = document.getElementById("qrToggle").checked;
+  const logoOn = document.getElementById("logoToggle").checked;
+
+  logo.style.display = logoOn ? "block" : "none";
+
+  [...preview.children].forEach(el => {
+    el.style.fontSize = size + "px";
+    el.style.color = color;
+
+    // Quitar clases previas
+    el.classList.remove("deluxe", "nature", "minimal", "border-gold", "border-black", "border-double");
+
+    // Aplicar tema
+    el.classList.add(theme);
+
+    // Aplicar borde
+    if (border !== "none") el.classList.add(border);
+
+    // Agregar QR si está activado
+    if (qrOn) {
+      if (!el.querySelector("img")) {
+        let qr = document.createElement("img");
+        qr.className = "qr";
+        qr.src = "https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=" + encodeURIComponent(el.textContent);
+        el.appendChild(qr);
+      }
+    } else {
+      let img = el.querySelector("img");
+      if (img) img.remove();
+    }
+  });
+}
+
+// Drag & Drop reordenable
+preview.addEventListener("dragover", e => {
+  e.preventDefault();
+  const dragging = document.querySelector(".dragging");
+  const after = [...preview.querySelectorAll(".item:not(.dragging)")].find(x => {
+    const rect = x.getBoundingClientRect();
+    return e.clientY < rect.top + rect.height / 2;
+  });
+  if (after) preview.insertBefore(dragging, after);
+  else preview.appendChild(dragging);
+});
+
+// Descargar PNG
+function descargarPNG() {
+  html2canvas(preview).then(canvas => {
+    const link = document.createElement("a");
+    link.download = "esentia_dtf.png";
+    link.href = canvas.toDataURL();
+    link.click();
+  });
+}
+</script>
 
 </body>
 </html>
