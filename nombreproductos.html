@@ -1,218 +1,667 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Esentia – Etiquetas DTF + Foil + QR</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Esentia – Generator PRO (Foil, QR, Batch, ZIP)</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
+<!-- Fuentes -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
 
-  <style>
-    body {
-      font-family: "Playfair Display", serif;
-      margin: 0;
-      background: #f4f4f4;
-    }
+<!-- Librerías -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-    header {
-      background: #222;
-      color: white;
-      padding: 18px;
-      text-align: center;
-      font-size: 26px;
-    }
+<style>
+  :root {
+    --panel-bg: #fff;
+    --accent: #c89a2a;
+    --max-width: 1100px;
+  }
+  body { font-family: "Playfair Display", serif; margin:0; background:#f4f4f4; color:#111; }
+  header { background:#111; color:#fff; padding:18px; text-align:center; font-size:20px; }
+  .container { max-width: var(--max-width); margin:20px auto; padding:16px; }
+  .controls { display:flex; flex-wrap:wrap; gap:12px; background:var(--panel-bg); padding:16px; border-radius:12px; box-shadow:0 6px 14px rgba(0,0,0,0.06); }
+  .controls label { display:flex; gap:6px; align-items:center; }
+  .controls select, .controls input[type="number"], .controls input[type="text"] { padding:8px; border-radius:6px; border:1px solid #ddd; }
+  button { background:#111; color:#fff; border:none; padding:10px 14px; border-radius:8px; cursor:pointer; }
+  button.secondary { background:#666; }
+  .flex { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
 
-    #controls {
-      padding: 20px;
-      display: flex;
-      gap:20px;
-      flex-wrap: wrap;
-      background: #fff;
-    }
+  /* Preview area */
+  #previewWrap { margin-top:18px; display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start; }
+  #previewArea { background:var(--panel-bg); padding:18px; border-radius:12px; width:720px; min-height:380px; box-shadow:0 8px 30px rgba(0,0,0,0.07); position:relative; }
+  #controlsRight { flex:1; min-width:280px; }
 
-    button {
-      padding: 12px 20px;
-      font-size: 17px;
-      border-radius: 8px;
-      cursor: pointer;
-      border: none;
-      background: #333;
-      color: white;
-    }
+  /* Foil SVG img */
+  .foilImg { width:100%; height:auto; display:block; }
 
-    #previewArea {
-      margin: 30px auto;
-      background: white;
-      padding: 40px;
-      width: fit-content;
-      border-radius: 12px;
-      text-align: center;
-      box-shadow: 0 0 15px rgba(0,0,0,0.15);
-    }
+  /* QR canvas */
+  #qrCanvas { width:120px; height:120px; border:1px solid #eee; margin-top:12px; }
 
-    /* Modal selector */
-    #modal {
-      position: fixed;
-      top:0;
-      left:0;
-      width:100%;
-      height:100%;
-      background:rgba(0,0,0,0.65);
-      display:none;
-      justify-content:center;
-      align-items:center;
-      z-index:100;
-    }
+  /* modal */
+  #modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:9999; }
+  #modalContent { width:92%; max-width:980px; max-height:86vh; overflow:auto; background:#fff; padding:18px; border-radius:12px; box-shadow:0 14px 40px rgba(0,0,0,0.2); }
+  #listaProductos { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin-top:12px; }
 
-    #modalContent {
-      background:white;
-      padding:25px;
-      width: 450px;
-      max-height:80vh;
-      overflow-y:auto;
-      border-radius:15px;
-    }
+  .prodItem { padding:8px; border-radius:8px; border:1px solid #eee; display:flex; gap:8px; align-items:center; }
+  .prodThumb { width:48px; height:48px; object-fit:contain; border-radius:6px; background:#fafafa; padding:6px; }
 
-    .qrContainer {
-      margin-top:20px;
-    }
+  /* 3D mockup */
+  .mockup { perspective:900px; width:320px; }
+  .mockupInner { transform-style:preserve-3d; transform: rotateX(12deg) rotateY(-12deg); transition:transform .3s; background:linear-gradient(180deg,#fff,#f7f7f7); padding:12px; border-radius:8px; box-shadow:0 12px 40px rgba(0,0,0,0.12); }
+  .mockupInner:hover { transform: rotateX(6deg) rotateY(-6deg); }
 
-  </style>
+  /* small helpers */
+  .small { font-size:13px; color:#555; }
+  hr { border:none; border-top:1px solid #eee; margin:12px 0; }
+
+  /* print styles: hide UI */
+  @media print {
+    body * { visibility: hidden; }
+    #printTarget, #printTarget * { visibility: visible; }
+    #printTarget { position: absolute; left:0; top:0; width:100%; }
+  }
+</style>
 </head>
 <body>
 
-<header>Generador de Etiquetas Esentia – Foil + QR</header>
+<header>Esentia — Generator PRO: Foil, QR, Batch & ZIP</header>
 
-<div id="controls">
+<div class="container">
+  <div class="controls">
+    <div class="flex">
+      <button onclick="openModal()">Seleccionar productos</button>
+      <button onclick="selectAllVisible()" class="secondary">Seleccionar todo</button>
+      <button onclick="clearSelection()" class="secondary">Limpiar</button>
+    </div>
 
-  <button onclick="abrirSelector()">Seleccionar productos</button>
+    <div class="flex">
+      <label>Estilo:
+        <select id="styleSelect">
+          <option value="gold">Foil Gold</option>
+          <option value="silver">Foil Silver</option>
+          <option value="holo">Holographic</option>
+          <option value="black">Black Matte</option>
+          <option value="white">White Gloss</option>
+        </select>
+      </label>
 
-  <select id="foilSelector">
-    <option value="gold">Foil Gold</option>
-    <option value="silver">Foil Silver (pendiente)</option>
-    <option value="black">Black Matte</option>
-    <option value="white">White Gloss</option>
-    <option value="holo">Holographic (pendiente)</option>
-  </select>
+      <label>Tamaño texto (px):
+        <input id="fontSize" type="number" value="120" min="20" max="400">
+      </label>
 
-  <label>Tamaño texto: 
-    <input id="fontSize" type="number" value="120" min="20" max="300">
-  </label>
+      <label>QR:
+        <input id="qrToggle" type="checkbox" checked>
+      </label>
 
-  <button onclick="exportPNG()">Exportar PNG</button>
-  <button onclick="exportPDF()">Exportar PDF</button>
-</div>
+      <label>Tamaño etiqueta (px):
+        <input id="labelWidth" type="number" value="800" min="200" max="2000"> x
+        <input id="labelHeight" type="number" value="300" min="100" max="2000">
+      </label>
+    </div>
 
-<!-- Vista previa -->
-<div id="previewArea">
-  <img id="foilSvg" src="esign/foil/gold.svg" width="700">
-  <div class="qrContainer">
-    <canvas id="qrCanvas"></canvas>
+    <div class="flex">
+      <button onclick="previewSelected()">Mostrar seleccionados</button>
+      <button onclick="printDirect()">Imprimir directo</button>
+      <button onclick="exportSelectedZIP()">Exportar ZIP</button>
+      <label class="small">Exportar N por producto:
+        <input id="batchCount" type="number" value="1" min="1" max="500" style="width:70px;">
+      </label>
+      <button onclick="exportBatch()">Exportar en serie</button>
+    </div>
+  </div>
+
+  <div id="previewWrap">
+    <div id="previewArea" aria-live="polite">
+      <!-- print target -->
+      <div id="printTarget">
+        <!-- Foil SVG rendered here -->
+        <div id="foilContainer" style="width:100%;"></div>
+      </div>
+    </div>
+
+    <div id="controlsRight">
+      <div style="background:#fff;padding:12px;border-radius:12px;box-shadow:0 8px 18px rgba(0,0,0,0.06);">
+        <h4>Vista rápida</h4>
+        <div class="mockup" style="width:320px;">
+          <div class="mockupInner" id="mockupInner">
+            <div id="mockupContent" style="padding:14px;"></div>
+          </div>
+        </div>
+        <canvas id="qrCanvas" width="120" height="120" style="display:block;margin-top:10px;"></canvas>
+        <div class="small">Mockup 3D (interactivo): pasa el cursor para mirar el ángulo.</div>
+      </div>
+
+      <hr>
+
+      <div style="background:#fff;padding:12px;border-radius:12px;box-shadow:0 8px 18px rgba(0,0,0,0.06);margin-top:12px;">
+        <h4>Configuración guardada</h4>
+        <button onclick="saveConfig()" class="secondary">Guardar ahora</button>
+        <button onclick="loadConfig()" class="secondary">Cargar</button>
+        <div id="configStatus" class="small" style="margin-top:8px;"></div>
+      </div>
+    </div>
   </div>
 </div>
 
-
-<!-- Modal selector -->
+<!-- modal -->
 <div id="modal">
   <div id="modalContent">
-    <h2>Selecciona los productos</h2>
-    <div id="listaProductos"></div>
-    <br>
-    <button onclick="cerrarSelector()">Cerrar</button>
+    <h3>Selecciona tus productos</h3>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <input id="searchBox" placeholder="Buscar..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #ddd;">
+      <button onclick="applyFilter()">Buscar</button>
+      <button onclick="resetFilter()" class="secondary">Reset</button>
+    </div>
+
+    <div id="listaProductos" style="margin-top:12px;"></div>
+
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="applySelectionAndClose()">Aceptar y cerrar</button>
+      <button onclick="closeModal()" class="secondary">Cancelar</button>
+    </div>
   </div>
 </div>
 
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 <script>
+/* ---------------------------
+  Datos y utilidades
+----------------------------*/
+const baseUrl = "https://wil1979.github.io/esentia-factura/";
+const jsonUrl = baseUrl + "productos_esentia.json";
 
-// ---------- CARGAR JSON ----------
-let productos = [];
-fetch("productos_esentia.json")
+let productos = [];            // lista completa
+let seleccion = [];            // nombresOriginal (id) seleccionados
+let visibleFilter = [];        // productos visibles en modal (para select all)
+
+const styleSelect = document.getElementById('styleSelect');
+const fontSizeInput = document.getElementById('fontSize');
+const qrToggle = document.getElementById('qrToggle');
+const labelWidthInput = document.getElementById('labelWidth');
+const labelHeightInput = document.getElementById('labelHeight');
+const qrCanvas = document.getElementById('qrCanvas');
+const mockupContent = document.getElementById('mockupContent');
+const foilContainer = document.getElementById('foilContainer');
+
+/* ---------------------------
+  SVG Templates (strings)
+  - Each template includes a <text id="foilText"> which will be replaced
+----------------------------*/
+const SVG_TEMPLATES = {
+  gold: (text, size, width, height) => `<?xml version="1.0" encoding="utf-8"?>
+  <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+    <defs>
+      <linearGradient id="g" x1="0" x2="1">
+        <stop offset="0" stop-color="#a67c00"/>
+        <stop offset="0.25" stop-color="#ffdc73"/>
+        <stop offset="0.5" stop-color="#f2c94c"/>
+        <stop offset="0.75" stop-color="#b88700"/>
+        <stop offset="1" stop-color="#ffeb99"/>
+      </linearGradient>
+      <filter id="f" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="2.5" result="b"/>
+        <feBlend in="SourceGraphic" in2="b" mode="screen"/>
+      </filter>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+    <text id="foilText" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+          font-family="Playfair Display, serif" font-weight="600"
+          font-size="${size}" fill="url(#g)" filter="url(#f)">${escapeXml(text)}</text>
+  </svg>`,
+
+  silver: (text, size, width, height) => `<?xml version="1.0" encoding="utf-8"?>
+  <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+    <defs>
+      <linearGradient id="g" x1="0" x2="1">
+        <stop offset="0" stop-color="#bdbdbd"/>
+        <stop offset="0.35" stop-color="#ffffff"/>
+        <stop offset="0.7" stop-color="#9b9b9b"/>
+        <stop offset="1" stop-color="#e6e6e6"/>
+      </linearGradient>
+      <filter id="f" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.8"/></filter>
+    </defs>
+    <rect width="100%" height="100%" fill="#fff"/>
+    <text id="foilText" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+          font-family="Playfair Display, serif" font-weight="600"
+          font-size="${size}" fill="url(#g)" filter="url(#f)">${escapeXml(text)}</text>
+  </svg>`,
+
+  holo: (text, size, width, height) => `<?xml version="1.0" encoding="utf-8"?>
+  <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+    <defs>
+      <linearGradient id="g" x1="0" x2="1" gradientTransform="rotate(45)">
+        <stop offset="0" stop-color="#ff5f6d"/>
+        <stop offset="25%" stop-color="#ffc371"/>
+        <stop offset="50%" stop-color="#47d1ff"/>
+        <stop offset="75%" stop-color="#9b7bff"/>
+        <stop offset="100%" stop-color="#ff5f6d"/>
+      </linearGradient>
+      <filter id="f"><feGaussianBlur stdDeviation="1.6"/></filter>
+    </defs>
+    <rect width="100%" height="100%" fill="#fff"/>
+    <text id="foilText" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+          font-family="Playfair Display, serif" font-weight="600"
+          font-size="${size}" fill="url(#g)" filter="url(#f)">${escapeXml(text)}</text>
+  </svg>`,
+
+  black: (text, size, width, height) => `<?xml version="1.0" encoding="utf-8"?>
+  <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+    <rect width="100%" height="100%" fill="#000"/>
+    <text id="foilText" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+          font-family="Playfair Display, serif" font-weight="600" font-size="${size}" fill="#fff">${escapeXml(text)}</text>
+  </svg>`,
+
+  white: (text, size, width, height) => `<?xml version="1.0" encoding="utf-8"?>
+  <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+    <rect width="100%" height="100%" fill="#fff"/>
+    <text id="foilText" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+          font-family="Playfair Display, serif" font-weight="600" font-size="${size}" fill="#000">${escapeXml(text)}</text>
+  </svg>`
+};
+
+/* ---------------------------
+  Cargar JSON
+----------------------------*/
+fetch(jsonUrl)
   .then(r => r.json())
   .then(data => {
     productos = data;
-    cargarListaProductos();
+    buildModalList(productos);
+    loadConfig();   // aplicar configuración guardada si hay
+  })
+  .catch(err => {
+    alert("No pude cargar productos_esentia.json. Revisa la ruta: " + jsonUrl);
+    console.error(err);
   });
 
+/* ---------------------------
+  Modal / selector
+----------------------------*/
+function openModal() { document.getElementById('modal').style.display = 'flex'; }
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
-// ---------- SELECTOR ----------
-function abrirSelector(){ document.getElementById("modal").style.display="flex"; }
-function cerrarSelector(){ document.getElementById("modal").style.display="none"; }
-
-function cargarListaProductos(){
-  const lista = document.getElementById("listaProductos");
-  lista.innerHTML = productos.map(p => `
-    <label>
-      <input type="radio" name="producto" value="${(p.nombreOriginal || p.nombre).replace(/\s+/g,'')}">
-      ${p.nombre}
-    </label><br>
-  `).join("");
+function buildModalList(arr) {
+  const cont = document.getElementById('listaProductos');
+  cont.innerHTML = '';
+  arr.forEach(p => {
+    const id = (p.nombreOriginal || p.nombre).replace(/\s+/g,'');
+    const div = document.createElement('div');
+    div.className = 'prodItem';
+    div.innerHTML = `
+      <input type="checkbox" data-id="${id}" ${seleccion.includes(id) ? 'checked' : ''}>
+      <img class="prodThumb" src="${p.imagen || ''}" alt="${p.nombre}">
+      <div style="flex:1">
+        <div style="font-weight:600">${p.nombre}</div>
+        <div class="small">₡${(p.precioOferta || p.precioOriginal || 0).toLocaleString()}</div>
+      </div>
+    `;
+    cont.appendChild(div);
+  });
+  visibleFilter = arr; // set visible
 }
 
-// ---------- PREVIEW FOIL + QR ----------
-function actualizarPreview(){
+function applyFilter(){
+  const q = document.getElementById('searchBox').value.trim().toLowerCase();
+  const filtered = productos.filter(p =>
+    (p.nombre || '').toLowerCase().includes(q) || (p.nombreOriginal||'').toLowerCase().includes(q)
+  );
+  buildModalList(filtered);
+}
+function resetFilter(){ document.getElementById('searchBox').value=''; buildModalList(productos); }
 
-  const seleccionado = document.querySelector("input[name='producto']:checked");
-  if(!seleccionado) return;
+function applySelectionAndClose(){
+  const checks = [...document.querySelectorAll('#listaProductos input[type="checkbox"]')];
+  // keep previous selections not visible? We'll store union of checked + already selected outside modal
+  // Here we replace seleccion with selected checkboxes (within visible list)
+  const selectedIds = checks.filter(c => c.checked).map(c => c.dataset.id);
+  // merge with existing selection for items not in current visibleFilter
+  const visibleIds = visibleFilter.map(p => (p.nombreOriginal || p.nombre).replace(/\s+/g,''));
+  // remove visibleIds from seleccion, then add selectedIds => this lets modal act as editor for visible chunk
+  seleccion = (seleccion.filter(id => !visibleIds.includes(id))).concat(selectedIds);
+  // unique
+  seleccion = [...new Set(seleccion)];
+  saveSelection();
+  closeModal();
+  previewSelected();
+}
 
-  const id = seleccionado.value;
-  const item = productos.find(p => (p.nombreOriginal || p.nombre).replace(/\s+/g,'') === id);
+/* quick helpers */
+function selectAllVisible(){
+  visibleFilter.forEach(p => {
+    const id = (p.nombreOriginal || p.nombre).replace(/\s+/g,'');
+    if(!seleccion.includes(id)) seleccion.push(id);
+  });
+  saveSelection();
+  previewSelected();
+}
+function clearSelection(){ seleccion = []; saveSelection(); previewSelected(); }
 
-  // cambiar texto en el SVG foil
-  const size = document.getElementById("fontSize").value;
-  const foil = document.getElementById("foilSelector").value;
-  const svgPath = `esign/foil/gold.svg`;
+/* ---------------------------
+  Preview render
+----------------------------*/
+function previewSelected(){
+  // generate in preview the first selected product in FOIL, and list all below with smaller previews
+  if(seleccion.length === 0) {
+    foilContainer.innerHTML = "<div class='small' style='padding:20px;'>No hay productos seleccionados. Abre 'Seleccionar productos'.</div>";
+    mockupContent.innerHTML = '';
+    updateQR(null);
+    return;
+  }
+  const firstId = seleccion[0];
+  const prod = productos.find(p => ((p.nombreOriginal||p.nombre).replace(/\s+/g,'')) === firstId);
+  if(!prod) return;
 
-  // Recargar SVG y reemplazar texto dinámicamente
-  fetch(svgPath)
-    .then(r => r.text())
-    .then(svg => {
-      svg = svg.replace(">SAMPLE<", `>${item.nombre}<`);
-      svg = svg.replace('font-size="120"', `font-size="${size}"`);
-      const blob = new Blob([svg], {type:"image/svg+xml"});
-      const url = URL.createObjectURL(blob);
-      document.getElementById("foilSvg").src = url;
-    });
+  renderFoilSVG(prod.nombre, styleSelect.value, parseInt(fontSizeInput.value), parseInt(labelWidthInput.value), parseInt(labelHeightInput.value));
+  renderMockup(prod);
+  updateQR(prod);
+}
 
-  // QR
-  const qrUrl = `https://wil1979.github.io/esentia-factura/producto.html?id=${id}`;
-  const qr = new QRious({
-    element: document.getElementById("qrCanvas"),
-    value: qrUrl,
-    size: 200,
+/* ---------------------------
+  Render SVG (inlined) into foilContainer
+  - For correct export we use the SVG string as data URL and set an <img> src to that URL.
+----------------------------*/
+function renderFoilSVG(text, styleKey, size, width, height) {
+  // choose template and build SVG string
+  const templateFn = SVG_TEMPLATES[styleKey] || SVG_TEMPLATES.gold;
+  const svgString = templateFn(text, size, width, height);
+  // set image
+  const svgBlob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
+  const url = URL.createObjectURL(svgBlob);
+
+  // create image element
+  foilContainer.innerHTML = '';
+  const img = document.createElement('img');
+  img.className = 'foilImg';
+  img.src = url;
+  img.alt = text;
+  img.width = width;
+  img.height = height;
+  foilContainer.appendChild(img);
+
+  // also set an accessible container for printing
+  img.id = 'foilImageForExport';
+}
+
+/* ---------------------------
+  Mockup + QR preview
+----------------------------*/
+function renderMockup(prod){
+  mockupContent.innerHTML = `
+    <div style="font-weight:700;font-size:20px;">${prod.nombre}</div>
+    <div style="font-size:12px;color:#555;margin:6px 0;">${prod.info || ''}</div>
+    <img src="${prod.imagen}" style="width:120px;height:80px;object-fit:contain;border-radius:6px;background:#fff;padding:6px;">
+    <div style="margin-top:8px;font-weight:600;">₡${(prod.precioOferta || prod.precioOriginal).toLocaleString()}</div>
+  `;
+}
+
+/* ---------------------------
+  QR Generation
+----------------------------*/
+function updateQR(prod){
+  const ctx = qrCanvas.getContext('2d');
+  ctx.clearRect(0,0,qrCanvas.width,qrCanvas.height);
+  if(!prod || !qrToggle.checked) return;
+  const id = (prod.nombreOriginal || prod.nombre).replace(/\s+/g,'');
+  const url = `${baseUrl}producto.html?id=${encodeURIComponent(id)}`;
+  const q = new QRious({ size: 240, value: url });
+  // draw scaled into canvas 120x120
+  const img = new Image();
+  img.src = q.toDataURL();
+  img.onload = () => {
+    // clear and draw center
+    ctx.clearRect(0,0,qrCanvas.width,qrCanvas.height);
+    ctx.drawImage(img, 0, 0, qrCanvas.width, qrCanvas.height);
+  };
+}
+
+/* ---------------------------
+  Export single canvas of current preview (PNG)
+  Using SVG image + QR overlay; we will create canvas programmatically
+----------------------------*/
+async function createLabelCanvas(prodName, styleKey, size, width, height, includeQR, qrValue) {
+  // Build SVG string
+  const template = SVG_TEMPLATES[styleKey] || SVG_TEMPLATES.gold;
+  const svgText = template(prodName, size, width, height);
+  // create Image from SVG
+  const svgBlob = new Blob([svgText], {type:'image/svg+xml;charset=utf-8'});
+  const url = URL.createObjectURL(svgBlob);
+  const svgImg = await loadImage(url);
+
+  // create canvas with given dims
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  // paint white background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // draw svg
+  ctx.drawImage(svgImg, 0, 0, canvas.width, canvas.height);
+
+  // draw QR bottom-right if requested
+  if(includeQR && qrValue) {
+    const q = new QRious({ size: 600, value: qrValue });
+    const qrImg = await loadImage(q.toDataURL());
+    const qrSize = Math.round(Math.min(canvas.width, canvas.height) * 0.24);
+    ctx.drawImage(qrImg, canvas.width - qrSize - 12, canvas.height - qrSize - 12, qrSize, qrSize);
+  }
+
+  return canvas;
+}
+
+/* helper to load image */
+function loadImage(src){
+  return new Promise((res, rej) => {
+    const i = new Image();
+    i.crossOrigin = "anonymous";
+    i.onload = () => { res(i); URL.revokeObjectURL(src); };
+    i.onerror = e => rej(e);
+    i.src = src;
   });
 }
 
-document.getElementById("modal").addEventListener("change", actualizarPreview);
-document.getElementById("fontSize").addEventListener("input", actualizarPreview);
-document.getElementById("foilSelector").addEventListener("change", actualizarPreview);
+/* ---------------------------
+  ZIP export: selected products (one PNG per product)
+----------------------------*/
+async function exportSelectedZIP(){
+  if(seleccion.length === 0){ alert('No hay productos seleccionados.'); return; }
+  const zip = new JSZip();
+  const styleKey = styleSelect.value;
+  const size = parseInt(fontSizeInput.value);
+  const width = parseInt(labelWidthInput.value);
+  const height = parseInt(labelHeightInput.value);
+  const includeQR = qrToggle.checked;
 
+  // For each selected product
+  for(let id of seleccion) {
+    const prod = productos.find(p => ((p.nombreOriginal||p.nombre).replace(/\s+/g,'')) === id);
+    if(!prod) continue;
+    const qrUrl = `${baseUrl}producto.html?id=${encodeURIComponent(id)}`;
+    const canvas = await createLabelCanvas(prod.nombre, styleKey, size, width, height, includeQR, includeQR ? qrUrl : null);
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    zip.file(`${id}.png`, blob);
+  }
 
-// ---------- EXPORTAR PNG ----------
-function exportPNG(){
-  html2canvas(document.getElementById("previewArea")).then(canvas => {
-    const link = document.createElement("a");
-    link.download = "etiqueta.png";
-    link.href = canvas.toDataURL();
-    link.click();
+  // generate zip
+  const content = await zip.generateAsync({type:"blob"});
+  saveAs(content, "esentia_labels.zip");
+}
+
+/* ---------------------------
+  Batch export: N labels per selected product (n puede ser 100)
+  N total = batchCount * seleccion.length
+----------------------------*/
+async function exportBatch(){
+  const count = parseInt(document.getElementById('batchCount').value) || 1;
+  if(seleccion.length === 0){ alert('No hay productos seleccionados.'); return; }
+  if(count > 500) { if(!confirm('Vas a generar ' + (count*seleccion.length) + ' imágenes. ¿Continuar?')) return; }
+
+  const zip = new JSZip();
+  const styleKey = styleSelect.value;
+  const size = parseInt(fontSizeInput.value);
+  const width = parseInt(labelWidthInput.value);
+  const height = parseInt(labelHeightInput.value);
+  const includeQR = qrToggle.checked;
+
+  for(let id of seleccion){
+    const prod = productos.find(p => ((p.nombreOriginal||p.nombre).replace(/\s+/g,'')) === id);
+    if(!prod) continue;
+    for(let i=1;i<=count;i++){
+      const qrUrl = `${baseUrl}producto.html?id=${encodeURIComponent(id)}&batch=${i}`;
+      const canvas = await createLabelCanvas(prod.nombre, styleKey, size, width, height, includeQR, includeQR ? qrUrl : null);
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      zip.file(`${id}_${String(i).padStart(3,'0')}.png`, blob);
+    }
+  }
+
+  const content = await zip.generateAsync({type:"blob"});
+  saveAs(content, `esentia_batch_${Date.now()}.zip`);
+}
+
+/* ---------------------------
+  Print direct: open new window with image(s) ready to print
+  We'll render current selection into a printable HTML with images
+----------------------------*/
+async function printDirect(){
+  if(seleccion.length === 0) { alert('No hay productos seleccionados.'); return; }
+  const width = parseInt(labelWidthInput.value);
+  const height = parseInt(labelHeightInput.value);
+  const size = parseInt(fontSizeInput.value);
+  const styleKey = styleSelect.value;
+  const includeQR = qrToggle.checked;
+
+  // prepare list of dataURLs
+  const images = [];
+  for(const id of seleccion){
+    const prod = productos.find(p => ((p.nombreOriginal||p.nombre).replace(/\s+/g,'')) === id);
+    if(!prod) continue;
+    const qrUrl = includeQR ? `${baseUrl}producto.html?id=${encodeURIComponent(id)}` : null;
+    const canvas = await createLabelCanvas(prod.nombre, styleKey, size, width, height, includeQR, qrUrl);
+    images.push(canvas.toDataURL('image/png'));
+  }
+
+  // open print window
+  const w = window.open('', '_blank');
+  let html = `<html><head><title>Print Etiquetas</title><style>body{margin:10mm;} img{display:block;margin:8px auto;max-width:100%;}</style></head><body>`;
+  images.forEach(src => {
+    html += `<img src="${src}">`;
+  });
+  html += `</body></html>`;
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(()=> w.print(), 600);
+}
+
+/* ---------------------------
+  Save / load config
+----------------------------*/
+function saveConfig(){
+  const cfg = {
+    seleccion, style: styleSelect.value, fontSize: fontSizeInput.value,
+    labelWidth: labelWidthInput.value, labelHeight: labelHeightInput.value,
+    qr: qrToggle.checked, batchCount: document.getElementById('batchCount').value
+  };
+  localStorage.setItem('esentia_config', JSON.stringify(cfg));
+  document.getElementById('configStatus').innerText = 'Guardado ' + new Date().toLocaleString();
+}
+function loadConfig(){
+  const raw = localStorage.getItem('esentia_config');
+  if(!raw) return;
+  try{
+    const cfg = JSON.parse(raw);
+    if(cfg.seleccion) seleccion = cfg.seleccion;
+    if(cfg.style) styleSelect.value = cfg.style;
+    if(cfg.fontSize) fontSizeInput.value = cfg.fontSize;
+    if(cfg.labelWidth) labelWidthInput.value = cfg.labelWidth;
+    if(cfg.labelHeight) labelHeightInput.value = cfg.labelHeight;
+    if(typeof cfg.qr !== 'undefined') qrToggle.checked = cfg.qr;
+    if(cfg.batchCount) document.getElementById('batchCount').value = cfg.batchCount;
+    buildModalList(productos);
+    previewSelected();
+    document.getElementById('configStatus').innerText = 'Configuración cargada';
+  }catch(e){ console.warn(e); }
+}
+function saveSelection(){ saveConfig(); }
+
+/* ---------------------------
+  Utilities
+----------------------------*/
+function escapeXml(unsafe) {
+  if(!unsafe) return '';
+  return unsafe.replace(/[<>&'"]/g, function (c) {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '\'': return '&apos;';
+      case '"': return '&quot;';
+    }
   });
 }
 
+/* helper to create preview on modal change */
+document.getElementById('modal').addEventListener('change', () => {
+  // preview first checked item
+  const checked = document.querySelector('#listaProductos input[type="checkbox"]:checked');
+  if(!checked) return;
+  const id = checked.dataset.id;
+  const prod = productos.find(p => ((p.nombreOriginal || p.nombre).replace(/\s+/g,'')) === id);
+  if(prod) {
+    renderFoilSVG(prod.nombre, styleSelect.value, parseInt(fontSizeInput.value), parseInt(labelWidthInput.value), parseInt(labelHeightInput.value));
+    renderMockup(prod);
+    updateQR(prod);
+  }
+});
 
-// ---------- EXPORTAR PDF ----------
-function exportPDF(){
-  html2canvas(document.getElementById("previewArea")).then(canvas => {
-    const img = canvas.toDataURL("image/png");
-    const pdf = new jsPDF({orientation:"portrait", unit:"px", format:"a4"});
-    pdf.addImage(img, "PNG", 20, 20);
-    pdf.save("etiqueta.pdf");
-  });
+document.getElementById('styleSelect').addEventListener('change', () => previewSelected());
+document.getElementById('fontSize').addEventListener('input', () => previewSelected());
+document.getElementById('labelWidth').addEventListener('input', () => previewSelected());
+document.getElementById('labelHeight').addEventListener('input', () => previewSelected());
+document.getElementById('qrToggle').addEventListener('change', () => previewSelected());
+
+/* Close modal helper */
+function closeModal(){
+  document.getElementById('modal').style.display = 'none';
 }
+
+/* initial helper to open modal and build list */
+function openModal(){
+  buildModalList(productos);
+  document.getElementById('modal').style.display = 'flex';
+}
+
+/* Reset filter helper */
+function applyFilter(){ /* implemented above */ }
+function resetFilter(){ /* implemented above */ }
+
+/* load saved config on first load attempt (if products already loaded) */
+window.addEventListener('load', () => {
+  // if productos already present, build modal list & load config
+  if(productos.length) { buildModalList(productos); loadConfig(); previewSelected(); }
+});
+
+/* expose some helpers to global for buttons */
+window.openModal = openModal;
+window.applyFilter = applyFilter;
+window.resetFilter = resetFilter;
+window.applySelectionAndClose = applySelectionAndClose;
+window.previewSelected = previewSelected;
+window.printDirect = printDirect;
+window.exportSelectedZIP = exportSelectedZIP;
+window.exportBatch = exportBatch;
+window.saveConfig = saveConfig;
+window.loadConfig = loadConfig;
+window.selectAllVisible = selectAllVisible;
+window.clearSelection = clearSelection;
 
 </script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 </body>
 </html>
