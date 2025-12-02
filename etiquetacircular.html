@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Esentia — Label Generator Circular (QR + PDF + ZIP)</title>
+
+<!-- Librerías -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+  @font-face {
+    font-family: "Adelia";
+    src: url("./fonts/Adelia.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+  }
+  body { font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin:0; background:#f5f5f6; color:#111;}
+  header { background:#111; color:#fff; padding:14px; text-align:center; font-size:18px; }
+  .container{ max-width:1200px; margin:18px auto; padding:12px; display:flex; gap:12px; flex-wrap:wrap;}
+  .panel{ background:#fff; padding:14px; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.06); }
+  .controls{ width:360px; }
+  .preview{ flex:1; min-width:520px; }
+  label{ display:block; margin-top:8px; font-size:14px; color:#333; }
+  input, select, button { width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; box-sizing:border-box; margin-top:6px; font-family:inherit; font-size:14px; }
+  button{ background:#111; color:#fff; border:none; cursor:pointer; }
+  button.secondary{ background:#666; }
+  .row{ display:flex; gap:8px; }
+  .row > * { flex:1; }
+  .small{ font-size:13px; color:#666; margin-top:8px; }
+  #canvasPreview{ border:1px solid #eee; width:525px; height:525px; display:block; background:#fff; }
+  progress{ width:100%; margin-top:8px; }
+</style>
+</head>
+<body>
+<header>Esentia — Generador de Etiquetas Circulares (QR + PDF + ZIP)</header>
+
+<div class="container">
+  <div class="panel controls">
+    <h3>Opciones</h3>
+
+    <label>Buscar producto (nombre parcial):</label>
+    <div class="row">
+      <input id="productSearch" placeholder="Escribe parte del nombre...">
+      <button id="btnFind" style="flex:0 0 120px;">Buscar</button>
+    </div>
+
+    <label>Selecciona un producto:</label>
+    <select id="productSelect">
+      <option value="">Cargando productos...</option>
+    </select>
+    <button id="btnSelectProduct" style="margin-top: 8px;">Seleccionar y previsualizar</button>
+
+    <label>Seleccionar varios (IDs separados por coma) — opcional:</label>
+    <input id="multiIds" placeholder="freshapple, sweetcherry,...">
+
+    <!-- Estos selects se dejan por compatibilidad, aunque el foil ya no se usa -->
+    <label>Estilo (sin efecto foil, solo decorativo):</label>
+    <select id="styleSelect">
+      <option value="plain">Plano</option>
+      <option value="gold">Gold</option>
+      <option value="silver">Silver</option>
+      <option value="holo">Holo</option>
+    </select>
+
+    <label>Color nombre producto (preset rápido):</label>
+    <select id="colorPreset">
+      <option value="random">Aleatorio</option>
+      <option value="#c94a2c">Cereza</option>
+      <option value="#2a8f4a">Verde Esmeralda</option>
+      <option value="#5a3ea5">Violeta</option>
+      <option value="#1f3a93">Índigo</option>
+    </select>
+
+    <hr style="margin: 16px 0;">
+
+    <!-- CONTROLES NUEVOS DE TEXTO -->
+    <h3>Texto: Marca (Arriba)</h3>
+    <label>Tamaño</label>
+    <input id="marcaSize" type="number" value="32">
+
+    <label>Color</label>
+    <input id="marcaColor" type="color" value="#cbbf7a">
+
+    <label>Fuente</label>
+    <select id="marcaFont">
+      <option value="Adelia">Adelia</option>
+      <option value="Playfair Display">Playfair Display</option>
+      <option value="Poppins">Poppins</option>
+    </select>
+
+    <label>Espaciado (px)</label>
+    <input id="marcaSpacing" type="number" value="1">
+
+    <label>Rotación (grados)</label>
+    <input id="marcaRotation" type="number" value="0">
+
+    <hr>
+
+    <h3>Texto Circular (Nombre del Producto)</h3>
+    <label>Tamaño</label>
+    <input id="leftSize" type="number" value="20">
+
+    <label>Color</label>
+    <input id="leftColor" type="color" value="#cc4a2c">
+
+    <label>Fuente</label>
+    <select id="leftFont">
+      <option value="Playfair Display">Playfair Display</option>
+      <option value="Poppins">Poppins</option>
+    </select>
+
+    <label>Espaciado (px)</label>
+    <input id="leftSpacing" type="number" value="2">
+
+    <label>Offset desde el borde (px)</label>
+    <input id="leftOffset" type="number" value="15">
+
+    <hr>
+
+    <h3>Texto Circular (Slogan)</h3>
+    <label>Tamaño</label>
+    <input id="rightSize" type="number" value="20">
+
+    <label>Color</label>
+    <input id="rightColor" type="color" value="#2a8f4a">
+
+    <label>Fuente</label>
+    <select id="rightFont">
+      <option value="Playfair Display">Playfair Display</option>
+      <option value="Poppins">Poppins</option>
+    </select>
+
+    <label>Espaciado (px)</label>
+    <input id="rightSpacing" type="number" value="2">
+
+    <label>Offset desde el borde (px)</label>
+    <input id="rightOffset" type="number" value="15">
+
+    <hr>
+
+    <h3>Texto Inferior</h3>
+    <label>Tamaño</label>
+    <input id="bottomSize" type="number" value="18">
+
+    <label>Color</label>
+    <input id="bottomColor" type="color" value="#444444">
+
+    <label>Fuente</label>
+    <select id="bottomFont">
+      <option value="Playfair Display">Playfair Display</option>
+      <option value="Poppins">Poppins</option>
+    </select>
+
+    <hr>
+
+    <h3>Tamaño y QR</h3>
+    <label>Tamaño etiqueta (inches):</label>
+    <div class="row">
+      <input id="labelInches" value="1.75" style="flex:1;">
+      <input id="dpi" value="300" style="flex:1;">
+    </div>
+
+    <label>Sangrado / bleed (mm):</label>
+    <input id="bleedMm" value="2">
+
+    <label>Margen para marca de corte (mm):</label>
+    <input id="cropMm" value="3">
+
+    <label>QR base URL (producto.html?id=...):</label>
+    <input id="qrBase" value="https://wil1979.github.io/esentia-factura/producto.html">
+
+    <label>Batch: cuántas por producto (ej. 100):</label>
+    <input id="batchCount" value="100">
+
+    <div class="row" style="margin-top:12px;">
+      <button id="btnGenerate">Generar y preview</button>
+      <button id="btnDownloadZIP" class="secondary">Exportar ZIP</button>
+    </div>
+
+    <div class="row" style="margin-top:8px;">
+      <button id="btnExportPDF" class="secondary">Exportar PDF (marcas de corte)</button>
+      <button id="btnExportPDFAll" class="secondary">PDF (todas etiquetas)</button>
+    </div>
+
+    <progress id="progress" value="0" max="100" style="display:none"></progress>
+    <div id="status" class="small"></div>
+  </div>
+
+  <div class="panel preview">
+    <h3>Preview / Canvas (525×525 px)</h3>
+    <canvas id="canvasPreview" width="525" height="525"></canvas>
+
+    <div class="row" style="margin-top:12px;">
+      <button id="btnDownloadPNG">Descargar PNG actual</button>
+      <button id="btnDownloadPDFSingle" class="secondary">Descargar PDF actual</button>
+    </div>
+
+    <div class="small" style="margin-top:8px;">Preview muestra la primera etiqueta generada.</div>
+  </div>
+</div>
+
+<script>
+/* -------------------------
+  Config & utilidades
+--------------------------*/
+const baseUrl = "https://wil1979.github.io/esentia-factura/";
+const jsonUrl = baseUrl + "productos_esentia.json";
+
+let productos = [];       // productos del JSON (+ id sanitizado)
+let selectedIds = [];     // arreglo de ids internos (sanitizados)
+
+const canvas = document.getElementById('canvasPreview');
+const ctx = canvas.getContext('2d');
+
+const progress = document.getElementById('progress');
+const status  = document.getElementById('status');
+
+function sanitizeId(s){
+  return String(s || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s+/g,'')
+    .replace(/[^\w\-]/g,'')
+    .toLowerCase();
+}
+
+function mmToPx(mm, dpi){
+  return Math.round(mm / 25.4 * dpi);
+}
+
+/* -------------------------
+  Cargar JSON de productos
+--------------------------*/
+fetch(jsonUrl)
+  .then(r => r.json())
+  .then(data => {
+    productos = data.map(p => ({
+      ...p,
+      id: sanitizeId(p.nombreOriginal || p.nombre)
+    }));
+    llenarListaProductos();
+    status.innerText = "Productos cargados.";
+  })
+  .catch(e => {
+    console.error("No se cargó JSON", e);
+    status.innerText = "Error cargando productos_esentia.json";
+  });
+
+function llenarListaProductos(){
+  const select = document.getElementById('productSelect');
+  select.innerHTML = "";
+  const opt = document.createElement('option');
+  opt.value = "";
+  opt.textContent = "Seleccione un producto...";
+  opt.disabled = true;
+  opt.selected = true;
+  select.appendChild(opt);
+
+  const ordenados = [...productos].sort((a,b) => (a.nombre || '').localeCompare(b.nombre || ''));
+  for(const p of ordenados){
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = p.nombre;
+    select.appendChild(o);
+  }
+}
+
+/* -------------------------
+  Ajustes (JSON)
+--------------------------*/
+function getSettings(){
+  return {
+    // Marca
+    marcaSize:     parseFloat(document.getElementById('marcaSize').value) || 32,
+    marcaColor:    document.getElementById('marcaColor').value || "#cbbf7a",
+    marcaFont:     document.getElementById('marcaFont').value || "Adelia",
+    marcaSpacing:  parseFloat(document.getElementById('marcaSpacing').value) || 1,
+    marcaRotation: parseFloat(document.getElementById('marcaRotation').value) || 0,
+
+    // Texto circular producto
+    leftSize:     parseFloat(document.getElementById('leftSize').value) || 20,
+    leftColor:    document.getElementById('leftColor').value || "#cc4a2c",
+    leftFont:     document.getElementById('leftFont').value || "Playfair Display",
+    leftSpacing:  parseFloat(document.getElementById('leftSpacing').value) || 2,
+    leftOffset:   parseFloat(document.getElementById('leftOffset').value) || 15,
+
+    // Texto circular slogan
+    rightSize:     parseFloat(document.getElementById('rightSize').value) || 20,
+    rightColor:    document.getElementById('rightColor').value || "#2a8f4a",
+    rightFont:     document.getElementById('rightFont').value || "Playfair Display",
+    rightSpacing:  parseFloat(document.getElementById('rightSpacing').value) || 2,
+    rightOffset:   parseFloat(document.getElementById('rightOffset').value) || 15,
+
+    // Texto inferior
+    bottomSize:   parseFloat(document.getElementById('bottomSize').value) || 18,
+    bottomColor:  document.getElementById('bottomColor').value || "#444444",
+    bottomFont:   document.getElementById('bottomFont').value || "Playfair Display"
+  };
+}
+
+function setSettings(s){
+  if(!s) return;
+  document.getElementById('marcaSize').value     = s.marcaSize;
+  document.getElementById('marcaColor').value    = s.marcaColor;
+  document.getElementById('marcaFont').value     = s.marcaFont;
+  document.getElementById('marcaSpacing').value  = s.marcaSpacing;
+  document.getElementById('marcaRotation').value = s.marcaRotation;
+
+  document.getElementById('leftSize').value    = s.leftSize;
+  document.getElementById('leftColor').value   = s.leftColor;
+  document.getElementById('leftFont').value    = s.leftFont;
+  document.getElementById('leftSpacing').value = s.leftSpacing;
+  document.getElementById('leftOffset').value  = s.leftOffset;
+
+  document.getElementById('rightSize').value    = s.rightSize;
+  document.getElementById('rightColor').value   = s.rightColor;
+  document.getElementById('rightFont').value    = s.rightFont;
+  document.getElementById('rightSpacing').value = s.rightSpacing;
+  document.getElementById('rightOffset').value  = s.rightOffset;
+
+  document.getElementById('bottomSize').value  = s.bottomSize;
+  document.getElementById('bottomColor').value = s.bottomColor;
+  document.getElementById('bottomFont').value  = s.bottomFont;
+
+  status.innerText = "Ajustes cargados.";
+}
+
+document.getElementById('btnSaveSettings').addEventListener('click', ()=>{
+  const s = getSettings();
+  const blob = new Blob([JSON.stringify(s, null, 2)], {type:"application/json"});
+  saveAs(blob, "esentia_svg_settings.json");
+  status.innerText = "Ajustes guardados.";
+});
+
+document.getElementById('btnLoadSettings').addEventListener('click', ()=>{
+  document.getElementById('fileLoadSettings')?.click();
+});
+
+// Campo oculto para cargar JSON
+let fileInput = document.getElementById('fileLoadSettings');
+if(!fileInput){
+  fileInput = document.createElement('input');
+  fileInput.type = "file";
+  fileInput.id = "fileLoadSettings";
+  fileInput.accept = ".json";
+  fileInput.style.display = "none";
+  document.body.appendChild(fileInput);
+}
+fileInput.addEventListener('change', e=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const s = JSON.parse(ev.target.result);
+      setSettings(s);
+    }catch(err){
+      alert("Error al cargar JSON: " + err.message);
+    }
+  };
+  reader.readAsText(f);
+});
+
+/* -------------------------
+  SVG Template (circular)
+--------------------------*/
+function svgTemplate({ w, h, prodName, qrHref, settings, cropPx }) {
+  const esc = s => (s || "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;");
+
+  const cx = w / 2;
+  const cy = h / 2;
+
+  const circleR = Math.min(w, h) / 2 - cropPx;      // radio del borde de corte
+  const baseR   = circleR - 6;                      // base para textos circulares
+
+  const rProduct = Math.max(10, baseR - settings.leftOffset);
+  const rSlogan  = Math.max(10, baseR - settings.rightOffset);
+
+  // Arco superior (ESENTIA)
+  const marcaR = baseR * 0.7;
+  const marcaY = cy - baseR * 0.8;
+  const brandPath = `M ${cx - marcaR} ${marcaY} A ${marcaR} ${marcaR} 0 0 1 ${cx + marcaR} ${marcaY}`;
+
+  // Círculo producto
+  const productPath =
+    `M ${cx - rProduct} ${cy} ` +
+    `a ${rProduct},${rProduct} 0 1,1 ${rProduct*2},0 ` +
+    `a ${rProduct},${rProduct} 0 1,1 -${rProduct*2},0`;
+
+  // Círculo slogan
+  const sloganPath =
+    `M ${cx - rSlogan} ${cy} ` +
+    `a ${rSlogan},${rSlogan} 0 1,1 ${rSlogan*2},0 ` +
+    `a ${rSlogan},${rSlogan} 0 1,1 -${rSlogan*2},0`;
+
+  const slogan = "FRAGANCIAS QUE ENAMORAN";
+
+  return `<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+  <defs>
+    <path id="brandPath" d="${brandPath}" />
+    <path id="productPath" d="${productPath}" />
+    <path id="sloganPath" d="${sloganPath}" />
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Círculo de corte -->
+  <circle cx="${cx}" cy="${cy}" r="${circleR}"
+          fill="none" stroke="#000" stroke-width="1"/>
+
+  <!-- Marca superior ESENTIA -->
+  <g transform="rotate(${settings.marcaRotation} ${cx} ${cy})">
+    <text font-family="${settings.marcaFont}" font-size="${settings.marcaSize}"
+          fill="${settings.marcaColor}" letter-spacing="${settings.marcaSpacing}">
+      <textPath href="#brandPath" startOffset="50%" text-anchor="middle">
+        ESENTIA
+      </textPath>
+    </text>
+  </g>
+
+  <!-- Texto circular: nombre del producto -->
+  <text font-family="${settings.leftFont}" font-size="${settings.leftSize}"
+        fill="${settings.leftColor}" letter-spacing="${settings.leftSpacing}">
+    <textPath href="#productPath">
+      ${esc(prodName.toUpperCase())} • ${esc(prodName.toUpperCase())} • ${esc(prodName.toUpperCase())} •
+    </textPath>
+  </text>
+
+  <!-- Texto circular: slogan -->
+  <text font-family="${settings.rightFont}" font-size="${settings.rightSize}"
+        fill="${settings.rightColor}" letter-spacing="${settings.rightSpacing}">
+    <textPath href="#sloganPath">
+      ${slogan} • ${slogan} • ${slogan} •
+    </textPath>
+  </text>
+
+  <!-- Texto inferior -->
+  <text x="${cx}" y="${h - cropPx * 2}"
+        font-family="${settings.bottomFont}"
+        font-size="${settings.bottomSize}"
+        fill="${settings.bottomColor}"
+        text-anchor="middle">
+    INFORMACIÓN
+  </text>
+
+  <!-- QR centrado -->
+  <image href="${qrHref}"
+         x="${cx - circleR * 0.45}"
+         y="${cy - circleR * 0.45}"
+         width="${circleR * 0.9}"
+         height="${circleR * 0.9}" />
+</svg>`;
+}
+
+/* -------------------------
+  SVG -> Canvas
+--------------------------*/
+async function svgToCanvasPng(svgStr, outWpx, outHpx) {
+  const blob = new Blob([svgStr], {type:'image/svg+xml;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const img = await loadImage(url);
+  const c = document.createElement('canvas');
+  c.width = outWpx;
+  c.height = outHpx;
+  const cctx = c.getContext('2d');
+  cctx.fillStyle = '#ffffff';
+  cctx.fillRect(0,0,c.width,c.height);
+  cctx.drawImage(img, 0, 0, c.width, c.height);
+  URL.revokeObjectURL(url);
+  return c;
+}
+
+function loadImage(src){
+  return new Promise((res, rej)=>{
+    const i = new Image();
+    i.crossOrigin = "anonymous";
+    i.onload = ()=>res(i);
+    i.onerror = e=>rej(e);
+    i.src = src;
+  });
+}
+
+async function urlToDataURL(url){
+  const img = await loadImage(url);
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth;
+  c.height = img.naturalHeight;
+  const cctx = c.getContext('2d');
+  cctx.drawImage(img,0,0);
+  return c.toDataURL('image/png');
+}
+
+/* -------------------------
+  Generar UNA etiqueta (canvas)
+--------------------------*/
+async function generateOneCanvas({ prodName, labelInches, dpi, bleedMm, cropMm, qrUrl, settings }) {
+  const basePx  = Math.round(labelInches * dpi);
+  const bleedPx = mmToPx(bleedMm, dpi);
+  const cropPx  = mmToPx(cropMm, dpi);
+
+  const outW = basePx + 2 * bleedPx;
+  const outH = outW;
+
+  let qrDataUrl;
+  try{
+    qrDataUrl = await urlToDataURL(qrUrl);
+  }catch(e){
+    console.warn("CORS QR, se usará URL directa", e);
+    qrDataUrl = qrUrl;
+  }
+
+  const svgStr = svgTemplate({
+    w: outW,
+    h: outH,
+    prodName,
+    qrHref: qrDataUrl,
+    settings,
+    cropPx
+  });
+
+  const c = await svgToCanvasPng(svgStr, outW, outH);
+
+  // Copia + marcas de corte
+  const finalCanvas = document.createElement('canvas');
+  finalCanvas.width = outW;
+  finalCanvas.height = outH;
+  const fctx = finalCanvas.getContext('2d');
+
+  fctx.fillStyle = "#ffffff";
+  fctx.fillRect(0,0,outW,outH);
+  fctx.drawImage(c,0,0);
+
+  const markLen = mmToPx(4, dpi);
+  fctx.strokeStyle = "#000";
+  fctx.lineWidth = 1;
+
+  // top-left
+  fctx.beginPath();
+  fctx.moveTo(cropPx, 0); fctx.lineTo(cropPx, markLen);
+  fctx.moveTo(0, cropPx); fctx.lineTo(markLen, cropPx);
+  fctx.stroke();
+
+  // top-right
+  fctx.beginPath();
+  fctx.moveTo(outW - cropPx, 0); fctx.lineTo(outW - cropPx, markLen);
+  fctx.moveTo(outW - markLen, cropPx); fctx.lineTo(outW, cropPx);
+  fctx.stroke();
+
+  // bottom-left
+  fctx.beginPath();
+  fctx.moveTo(cropPx, outH); fctx.lineTo(cropPx, outH - markLen);
+  fctx.moveTo(0, outH - cropPx); fctx.lineTo(markLen, outH - cropPx);
+  fctx.stroke();
+
+  // bottom-right
+  fctx.beginPath();
+  fctx.moveTo(outW - cropPx, outH); fctx.lineTo(outW - cropPx, outH - markLen);
+  fctx.moveTo(outW - markLen, outH - cropPx); fctx.lineTo(outW, outH - cropPx);
+  fctx.stroke();
+
+  return finalCanvas;
+}
+
+/* -------------------------
+  Preview
+--------------------------*/
+async function previewById(id){
+  const prod = productos.find(p => p.id === id);
+  if(!prod){
+    alert("Producto no encontrado en memoria.");
+    return;
+  }
+
+  const labelInches = parseFloat(document.getElementById('labelInches').value) || 1.75;
+  const dpi         = parseInt(document.getElementById('dpi').value) || 300;
+  const bleedMm     = parseFloat(document.getElementById('bleedMm').value) || 2;
+  const cropMm      = parseFloat(document.getElementById('cropMm').value) || 3;
+  const qrBase      = document.getElementById('qrBase').value.trim();
+
+  const targetUrl   = qrBase + "?id=" + encodeURIComponent(prod.nombre);
+  const qrUrlImage  = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=" + encodeURIComponent(targetUrl);
+
+  const settings = getSettings();
+
+  const canvasLabel = await generateOneCanvas({
+    prodName: prod.nombre,
+    labelInches,
+    dpi,
+    bleedMm,
+    cropMm,
+    qrUrl: qrUrlImage,
+    settings
+  });
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const scale = Math.min(canvas.width / canvasLabel.width, canvas.height / canvasLabel.height);
+  const dw = canvasLabel.width  * scale;
+  const dh = canvasLabel.height * scale;
+  ctx.drawImage(canvasLabel, (canvas.width - dw)/2, (canvas.height - dh)/2, dw, dh);
+
+  status.innerText = "Preview: " + prod.nombre;
+}
+
+/* -------------------------
+  Batch ZIP
+--------------------------*/
+async function generateBatchAndZip(ids, countPerProduct){
+  if(!ids || !ids.length){
+    alert("No hay productos seleccionados.");
+    return;
+  }
+
+  const zip = new JSZip();
+
+  const labelInches = parseFloat(document.getElementById('labelInches').value) || 1.75;
+  const dpi         = parseInt(document.getElementById('dpi').value) || 300;
+  const bleedMm     = parseFloat(document.getElementById('bleedMm').value) || 2;
+  const cropMm      = parseFloat(document.getElementById('cropMm').value) || 3;
+  const qrBase      = document.getElementById('qrBase').value.trim();
+
+  const settings = getSettings();
+
+  const total = ids.length * countPerProduct;
+  let done = 0;
+  progress.style.display = "block";
+  progress.max = total;
+  progress.value = 0;
+
+  for(const id of ids){
+    const prod = productos.find(p => p.id === id);
+    if(!prod) continue;
+    const baseName = prod.id;
+
+    for(let i=1; i<=countPerProduct; i++){
+      const targetUrl  = qrBase + "?id=" + encodeURIComponent(prod.nombre);
+      const qrUrlImage = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=" + encodeURIComponent(targetUrl);
+
+      const canvasLabel = await generateOneCanvas({
+        prodName: prod.nombre,
+        labelInches,
+        dpi,
+        bleedMm,
+        cropMm,
+        qrUrl: qrUrlImage,
+        settings
+      });
+
+      const blob = await new Promise(res => canvasLabel.toBlob(res, "image/png"));
+      const filename = `${baseName}_${String(i).padStart(3,'0')}.png`;
+      zip.file(filename, blob);
+
+      done++;
+      progress.value = done;
+      status.innerText = `Generando ${done}/${total} (${filename})`;
+      await new Promise(r => setTimeout(r, 10));
+    }
+  }
+
+  status.innerText = "Empaquetando ZIP...";
+  const content = await zip.generateAsync({type:"blob"});
+  saveAs(content, `esentia_labels_${Date.now()}.zip`);
+  progress.style.display = "none";
+  status.innerText = "ZIP generado.";
+}
+
+/* -------------------------
+  Exportar PDF (uno por id)
+--------------------------*/
+async function exportPDFs(ids){
+  if(!ids || !ids.length){
+    alert("No hay productos seleccionados.");
+    return;
+  }
+
+  const labelInches = parseFloat(document.getElementById('labelInches').value) || 1.75;
+  const dpi         = parseInt(document.getElementById('dpi').value) || 300;
+  const bleedMm     = parseFloat(document.getElementById('bleedMm').value) || 2;
+  const cropMm      = parseFloat(document.getElementById('cropMm').value) || 3;
+  const qrBase      = document.getElementById('qrBase').value.trim();
+
+  const { jsPDF } = window.jspdf;
+  const pageW = labelInches * 72 + (bleedMm/25.4*72)*2;
+  const pageH = pageW;
+
+  const pdf = new jsPDF({ unit: 'pt', format: [pageW, pageH] });
+
+  const settings = getSettings();
+  let first = true;
+
+  for(const id of ids){
+    const prod = productos.find(p => p.id === id);
+    if(!prod) continue;
+
+    const targetUrl  = qrBase + "?id=" + encodeURIComponent(prod.nombre);
+    const qrUrlImage = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=" + encodeURIComponent(targetUrl);
+
+    const canvasLabel = await generateOneCanvas({
+      prodName: prod.nombre,
+      labelInches,
+      dpi,
+      bleedMm,
+      cropMm,
+      qrUrl: qrUrlImage,
+      settings
+    });
+
+    const imgData = canvasLabel.toDataURL("image/png");
+
+    if(!first) pdf.addPage([pageW, pageH]);
+    first = false;
+
+    pdf.addImage(imgData, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
+    status.innerText = `Añadido ${prod.nombre} al PDF...`;
+  }
+
+  pdf.save(`esentia_labels_${Date.now()}.pdf`);
+  status.innerText = "PDF exportado.";
+}
+
+/* -------------------------
+  Handlers UI
+--------------------------*/
+document.getElementById('btnFind').addEventListener('click', ()=>{
+  const q = (document.getElementById('productSearch').value || '').trim().toLowerCase();
+  if(!q){ alert("Escribe algo para buscar."); return; }
+  const found = productos.find(p =>
+    (p.nombre || '').toLowerCase().includes(q) ||
+    (p.nombreOriginal || '').toLowerCase().includes(q)
+  );
+  if(!found){
+    alert("Producto no encontrado en JSON.");
+    return;
+  }
+  selectedIds = [found.id];
+  alert("Producto seleccionado: " + found.nombre + " → id interno: " + found.id);
+  previewById(found.id);
+});
+
+document.getElementById('btnSelectProduct').addEventListener('click', ()=>{
+  const sel = document.getElementById('productSelect');
+  const id = sel.value;
+  if(!id){
+    alert("Selecciona un producto de la lista.");
+    return;
+  }
+  selectedIds = [id];
+  previewById(id);
+});
+
+document.getElementById('btnGenerate').addEventListener('click', ()=>{
+  const multi = (document.getElementById('multiIds').value || '').trim();
+  if(multi){
+    selectedIds = multi
+      .split(',')
+      .map(s => sanitizeId(s.trim()))
+      .filter(Boolean);
+  }
+  if(!selectedIds.length){
+    alert("No hay productos seleccionados (usa búsqueda, lista o campo múltiple).");
+    return;
+  }
+  previewById(selectedIds[0]);
+});
+
+document.getElementById('btnDownloadPNG').addEventListener('click', async ()=>{
+  if(!selectedIds.length){
+    alert("Selecciona un producto primero para descargar PNG.");
+    return;
+  }
+  const id = selectedIds[0];
+  const prod = productos.find(p => p.id === id);
+  if(!prod) return;
+
+  const labelInches = parseFloat(document.getElementById('labelInches').value) || 1.75;
+  const dpi         = parseInt(document.getElementById('dpi').value) || 300;
+  const bleedMm     = parseFloat(document.getElementById('bleedMm').value) || 2;
+  const cropMm      = parseFloat(document.getElementById('cropMm').value) || 3;
+  const qrBase      = document.getElementById('qrBase').value.trim();
+  const settings    = getSettings();
+
+  const targetUrl  = qrBase + "?id=" + encodeURIComponent(prod.nombre);
+  const qrUrlImage = "https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=" + encodeURIComponent(targetUrl);
+
+  const canvasLabel = await generateOneCanvas({
+    prodName: prod.nombre,
+    labelInches,
+    dpi,
+    bleedMm,
+    cropMm,
+    qrUrl: qrUrlImage,
+    settings
+  });
+
+  canvasLabel.toBlob(blob => {
+    saveAs(blob, `esentia_${id}.png`);
+  }, "image/png");
+});
+
+document.getElementById('btnDownloadPDFSingle').addEventListener('click', async ()=>{
+  if(!selectedIds.length){
+    alert("Selecciona un producto primero.");
+    return;
+  }
+  await exportPDFs([selectedIds[0]]);
+});
+
+document.getElementById('btnDownloadZIP').addEventListener('click', async ()=>{
+  const multi = (document.getElementById('multiIds').value || '').trim();
+  if(multi){
+    selectedIds = multi
+      .split(',')
+      .map(s => sanitizeId(s.trim()))
+      .filter(Boolean);
+  }
+  if(!selectedIds.length){
+    alert("Selecciona IDs primero (buscar, lista o campo múltiple).");
+    return;
+  }
+  const count = parseInt(document.getElementById('batchCount').value) || 1;
+  await generateBatchAndZip(selectedIds, count);
+});
+
+document.getElementById('btnExportPDF').addEventListener('click', async ()=>{
+  const multi = (document.getElementById('multiIds').value || '').trim();
+  if(multi){
+    selectedIds = multi
+      .split(',')
+      .map(s => sanitizeId(s.trim()))
+      .filter(Boolean);
+  }
+  if(!selectedIds.length){
+    alert("Selecciona IDs primero.");
+    return;
+  }
+  await exportPDFs(selectedIds);
+});
+
+// Para debug
+window._debug = {
+  get productos(){ return productos; },
+  sanitizeId,
+  svgTemplate,
+  generateOneCanvas
+};
+</script>
+</body>
+</html>
