@@ -1,116 +1,187 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Producto Esentia</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Esentia • Producto</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
-
-  <style>
+<style>
     body {
-      font-family: "Playfair Display", serif;
-      padding: 30px;
-      max-width: 750px;
-      margin: auto;
-      background: #fafafa;
+        font-family: "Poppins", sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(145deg, #fafafa, #e5e5e5);
+        color: #333;
     }
 
-    .titulo {
-      font-size: 42px;
-      font-weight: 600;
-      margin-bottom: 5px;
+    .contenedor {
+        max-width: 480px;
+        margin: auto;
+        padding: 20px;
+        text-align: center;
     }
 
-    .imagen {
-      max-width: 220px;
-      margin: 20px 0;
+    .logo {
+        width: 130px;
+        margin: 10px auto 20px;
+        opacity: 0.9;
+    }
+
+    .card {
+        background: white;
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        animation: fadeIn 0.5s ease-out;
+        margin-bottom: 35px;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .imagen-producto {
+        width: 160px;
+        height: 160px;
+        object-fit: contain;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+        background: linear-gradient(90deg, #c8a76a, #e7d09a);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
     }
 
     .precio {
-      font-size: 24px;
-      font-weight: 600;
-      margin-top: 10px;
+        margin-top: 5px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #222;
     }
 
-    .oferta {
-      color: #e63946;
-      font-size: 28px;
-      font-weight: bold;
+    .descripcion {
+        margin: 15px 0;
+        line-height: 1.5;
+        color: #555;
     }
 
-    .badge {
-      background: #3aa66b;
-      color: white;
-      padding: 5px 12px;
-      border-radius: 10px;
-      margin-left: 10px;
-      font-size: 12px;
+    .seccion {
+        text-align: left;
+        margin-top: 25px;
     }
 
-    .var {
-      background: #ffffff;
-      padding: 8px 15px;
-      border-radius: 8px;
-      margin-top: 8px;
-      border: 1px solid #ddd;
+    .titulo-seccion {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-bottom: 6px;
+        background: linear-gradient(90deg, #c8a76a, #e7d09a);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
-  </style>
+
+    ul li {
+        margin-bottom: 5px;
+    }
+
+    .qr-contenedor {
+        margin-top: 30px;
+    }
+
+    .qr-contenedor img {
+        width: 160px;
+        height: 160px;
+        border-radius: 8px;
+    }
+</style>
 </head>
-
 <body>
 
-<div id="contenido">Cargando producto…</div>
+<div class="contenedor">
+
+    <img src="https://wil1979.github.io/esentia-factura/images/logo-esentia.png" class="logo">
+
+    <div class="card" id="contenedorProducto">
+        <h1>Cargando producto...</h1>
+        <p>Un momento por favor.</p>
+    </div>
+
+</div>
 
 <script>
-  // Tomar ID desde la URL
-  const params = new URLSearchParams(window.location.search);
-  const id = params.get("id");
+// Sanitizar ID igual que en el generador
+function sanitize(s){
+    return String(s).toLowerCase().replace(/\s+/g,'');
+}
 
-  fetch("productos_esentia.json")
+// Obtener ID desde QR
+const params = new URLSearchParams(window.location.search);
+const productId = params.get("id");
+
+if(!productId){
+    document.getElementById("contenedorProducto").innerHTML =
+    "<h2>Error</h2><p>No se recibió ID de producto.</p>";
+}
+
+// Cargar JSON
+fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json")
     .then(r => r.json())
     .then(lista => {
 
-      const producto = lista.find(p => 
-        (p.nombreOriginal || p.nombre).replace(/\s+/g, "") === id
-      );
+        const producto = lista.find(
+            p => sanitize(p.nombreOriginal || p.nombre) === sanitize(productId)
+        );
 
-      const div = document.getElementById("contenido");
-
-      if (!producto) {
-        div.innerHTML = "<h2>Producto no encontrado</h2>";
-        return;
-      }
-
-      const oferta = producto.precioOferta < producto.precioOriginal;
-
-      div.innerHTML = `
-        <div class="titulo">${producto.nombre}</div>
-
-        <img class="imagen" src="${producto.imagen}" alt="${producto.nombre}">
-
-        <div class="precio">
-          Precio: ₡${producto.precioOriginal.toLocaleString()}
-          ${producto.disponible ? `<span class="badge">Disponible</span>` : ""}
-        </div>
-
-        ${
-          oferta
-            ? `<div class="oferta">Oferta: ₡${producto.precioOferta.toLocaleString()}</div>`
-            : ""
+        if(!producto){
+            document.getElementById("contenedorProducto").innerHTML =
+            "<h2>No encontrado</h2><p>El producto solicitado no existe.</p>";
+            return;
         }
 
-        <p><b>Descripción:</b> ${producto.info}</p>
-        <p><b>Beneficios:</b> ${producto.beneficios}</p>
-        <p><b>Uso recomendado:</b> ${producto.usoRecomendado}</p>
-
-        <h3>Variantes disponibles:</h3>
-        ${producto.variantes.map(v => `
-          <div class="var">
-            ${v.nombre} — ₡${v.precio.toLocaleString()}
-          </div>
-        `).join("")}
-      `;
+        renderProducto(producto);
+    })
+    .catch(() => {
+        document.getElementById("contenedorProducto").innerHTML =
+        "<h2>Error</h2><p>No fue posible cargar la información.</p>";
     });
+
+function renderProducto(p){
+
+    const precio = p.precioOferta ?? p.precioOriginal;
+
+    document.getElementById("contenedorProducto").innerHTML = `
+        <img src="${p.imagen}" class="imagen-producto">
+
+        <h1>${p.nombre}</h1>
+        <div class="precio">₡${precio.toLocaleString()}</div>
+
+        <p class="descripcion">${p.info}</p>
+
+        <div class="seccion">
+            <div class="titulo-seccion">Beneficios</div>
+            <div>${p.beneficios}</div>
+        </div>
+
+        <div class="seccion">
+            <div class="titulo-seccion">Uso recomendado</div>
+            <div>${p.usoRecomendado}</div>
+        </div>
+
+        <div class="seccion">
+            <div class="titulo-seccion">Presentaciones</div>
+            <ul>
+                ${p.variantes.map(v => `<li>${v.nombre} – ₡${v.precio.toLocaleString()}</li>`).join("")}
+            </ul>
+        </div>
+
+        <div class="qr-contenedor">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.href)}">
+        </div>
+    `;
+}
 </script>
 
 </body>
