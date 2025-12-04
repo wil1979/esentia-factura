@@ -355,6 +355,18 @@
       padding: 8px 12px;
       font-size: 0.75rem;
     }
+    /* Ocultar barra flotante por defecto en escritorio */
+@media (min-width: 481px) {
+  .barra-acciones-flotante {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .barra-acciones-flotante:hover {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
   }
   </style>
 </head>
@@ -422,6 +434,11 @@
       <div class="filtro-item">
         <button class="boton-accion" onclick="abrirModalImpresion()" style="margin-top: 22px;">🖨️ Imprimir</button>
       </div>
+      <div class="filtro-item" style="margin-top: 22px;">
+  <button class="boton-accion" style="background: #FF9800;" onclick="actualizarTodoInventarioPendiente()">
+    📦 Actualizar Todo el Inventario
+  </button>
+</div>
     </div>
     <div id="resultados-reportes">
       <p>Haz clic en "Filtrar" para generar el reporte.</p>
@@ -560,6 +577,60 @@ async function consultarNombreDesdeCedula(inputCedula, inputNombre, elementoMens
     console.warn("Error al consultar Hacienda:", err);
     elementoMensaje.textContent = "⚠️ Error de conexión o cédula no registrada";
     elementoMensaje.style.color = "#d32f2f";
+  }
+}
+
+async function actualizarTodoInventarioPendiente() {
+  if (!confirm("⚠️ ¿Deseas actualizar el inventario para TODAS las compras pendientes? Esta acción no se puede deshacer.")) {
+    return;
+  }
+
+  try {
+    const clientesSnapshot = await getDocs(collection(db, "clientes"));
+    let totalActualizadas = 0;
+
+    for (const clienteDoc of clientesSnapshot.docs) {
+      const clienteId = clienteDoc.id;
+      const clienteData = clienteDoc.data();
+      const compras = clienteData.compras || [];
+      let hayCambios = false;
+
+      for (let i = 0; i < compras.length; i++) {
+        const compra = compras[i];
+        // Solo procesar si no está actualizado
+        if (!compra.inventarioActualizado && compra.productos && compra.productos.length > 0) {
+          // Actualizar stock por cada producto
+          for (const prod of compra.productos) {
+            const q = query(collection(db, "stock"), where("nombre", "==", prod.nombre));
+            const stockSnap = await getDocs(q);
+            if (!stockSnap.empty) {
+              const stockDoc = stockSnap.docs[0];
+              const stockData = stockDoc.data();
+              const nuevaCantidad = Math.max(0, (stockData.cantidad || 0) - (prod.cantidad || 0));
+              await updateDoc(doc(db, "stock", stockDoc.id), {
+                cantidad: nuevaCantidad,
+                ultimaActualizacion: new Date().toISOString()
+              });
+            }
+          }
+          // Marcar como actualizado
+          compras[i].inventarioActualizado = true;
+          hayCambios = true;
+          totalActualizadas++;
+        }
+      }
+
+      // Guardar cambios en el cliente si hubo actualizaciones
+      if (hayCambios) {
+        await updateDoc(doc(db, "clientes", clienteId), { compras });
+      }
+    }
+
+    alert(`✅ ¡Inventario actualizado! ${totalActualizadas} compra(s) procesada(s).`);
+    await cargarClientes(filtroDeudoresActivo); // Recargar vista
+  } catch (error) {
+    console.error("Error al actualizar inventario masivo:", error);
+    alert("❌ Error al actualizar el inventario: " + error.message);
   }
 }
 
@@ -2226,6 +2297,7 @@ window.imprimirDeudasPago = imprimirDeudasPago;
 window.abrirModalEditarCliente = abrirModalEditarCliente;
 window.cerrarModalEditarCliente = cerrarModalEditarCliente;
 window.guardarEdicionDesdeModal = guardarEdicionDesdeModal;
+window.actualizarTodoInventarioPendiente = actualizarTodoInventarioPendiente;
 
 
     // Inicializar: cargar solo deudores al inicio
@@ -2295,7 +2367,7 @@ window.guardarEdicionDesdeModal = guardarEdicionDesdeModal;
 	    function seleccionarPersonal(persona) {
 	      document.getElementById('modal-cedula').value = persona.cedula;
 	      document.getElementById('modal-nombre').value = persona.nombre;
-	      document.getElementById('modal-telefono').value = "00000000"; // Requerimiento del usuario
+	      document.getElementById('modal-telefono').value = "0000000"; // Requerimiento del usuario
 	      document.getElementById('resultados-personal').innerHTML = ''; // Limpiar resultados
 	      document.getElementById('buscador-personal').value = persona.nombre; // Opcional: mostrar el nombre seleccionado en el buscador
 	    }
@@ -2362,7 +2434,7 @@ window.guardarEdicionDesdeModal = guardarEdicionDesdeModal;
     </div>
     <div style="margin-bottom:20px;">
       <label>Teléfono (con código, 8 dígitos):</label>
-      <input type="text" id="modal-telefono" placeholder="Ej: 88889999" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;" value="0000000" >
+      <input type="text" id="modal-telefono" placeholder="Ej: 88889999" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;" value="00000000" >
     </div>
     <div style="display:flex; gap:10px; justify-content:flex-end;">
       <button class="boton-accion" style="background:#666;" onclick="cerrarModalNuevoCliente()">❌ Cancelar</button>
