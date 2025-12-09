@@ -10,7 +10,7 @@
         font-family: "Poppins", sans-serif;
         margin: 0;
         padding: 0;
-        background: linear-gradient(145deg, #fafafa, #e5e5e5);
+        background: linear-gradient(145deg, #fdfdfd, #e8e6e6);
         color: #333;
     }
 
@@ -19,6 +19,12 @@
         margin: auto;
         padding: 20px;
         text-align: center;
+        animation: fadeIn 0.7s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     .logo {
@@ -32,35 +38,115 @@
         border-radius: 20px;
         padding: 25px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.12);
-        animation: fadeIn 0.5s ease-out;
+        animation: fadeIn 0.6s ease-out;
         margin-bottom: 35px;
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+    @font-face {
+        font-family: "Adelia";
+        src: url("./fonts/Adelia.ttf") format("truetype");
+        font-weight: 400;
     }
 
+    .header-esentia {
+        width: 100%;
+        background: #000;
+        padding: 18px 0;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    .header-esentia h1 {
+        font-family: "Adelia", cursive;
+        font-size: 2.8rem;
+        margin: 0;
+        background: linear-gradient(90deg, #d4af37, #f5e6a1, #caa84a);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: 2px;
+        text-shadow: 0 0 12px rgba(255, 215, 0, 0.25);
+    }
+
+    /* MENÚ DESPLEGABLE MODERNO */
+    .select-container {
+        margin: 20px auto;
+        width: 100%;
+        max-width: 380px;
+        text-align: center;
+    }
+
+    .select-container label {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #d4af37;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .select-esentia {
+        width: 100%;
+        padding: 14px;
+        border-radius: 12px;
+        border: 2px solid #d4af37;
+        background: #000;
+        color: #f5eec2;
+        font-size: 1.1rem;
+        font-weight: 600;
+        outline: none;
+        transition: all 0.25s ease;
+    }
+
+    .select-esentia:hover {
+        border-color: #f5eec2;
+    }
+
+    .select-esentia option {
+        background: #000;
+        color: #fff;
+        padding: 10px;
+    }
+
+    /* ZOOM EN IMAGEN */
     .imagen-producto {
-        width: 160px;
-        height: 160px;
+        width: 220px;
+        height: 220px;
         object-fit: contain;
+        border-radius: 12px;
+        transition: transform 0.35s ease, box-shadow 0.3s ease;
+        cursor: zoom-in;
+    }
+
+    .imagen-producto:hover {
+        transform: scale(1.28);
+        box-shadow: 0 18px 40px rgba(0,0,0,0.25);
     }
 
     h1 {
         font-size: 1.8rem;
-        margin-bottom: 8px;
+        margin-bottom: 5px;
         background: linear-gradient(90deg, #c8a76a, #e7d09a);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-weight: 700;
     }
 
-    .precio {
-        margin-top: 5px;
-        font-size: 1.5rem;
-        font-weight: bold;
+    .precio-oferta {
+        font-size: 1.6rem;
         color: #222;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .precio-original {
+        text-decoration: line-through;
+        color: #999;
+        font-size: 1rem;
+    }
+
+    .estrellas {
+        font-size: 1.3rem;
+        color: #f3c400;
+        margin-bottom: 10px;
     }
 
     .descripcion {
@@ -72,6 +158,7 @@
     .seccion {
         text-align: left;
         margin-top: 25px;
+        padding-left: 10px;
     }
 
     .titulo-seccion {
@@ -87,76 +174,282 @@
         margin-bottom: 5px;
     }
 
-    .qr-contenedor {
-        margin-top: 30px;
+    /* BOTÓN WHATSAPP */
+    .btn-wsp {
+        width: 100%;
+        background: #25D366;
+        padding: 14px;
+        border-radius: 10px;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-top: 20px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        transition: transform 0.25s;
+    }
+    .btn-wsp:hover { transform: scale(1.04); }
+
+    /* BOTÓN FLOTANTE VOLVER */
+    .btn-volver {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        background: #6c4ba3;
+        color: white;
+        padding: 14px;
+        border-radius: 50%;
+        font-size: 1.6rem;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
-    .qr-contenedor img {
-        width: 160px;
-        height: 160px;
-        border-radius: 8px;
+    /* LIGHTBOX */
+    .lightbox-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.85);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 5000;
     }
+
+    .lightbox-img {
+        max-width: 90%;
+        max-height: 90%;
+        border-radius: 16px;
+        box-shadow: 0 0 25px rgba(255,255,255,0.15);
+    }
+
+    .lightbox-close {
+        position: fixed;
+        top: 20px;
+        right: 25px;
+        font-size: 2.5rem;
+        color: white;
+        cursor: pointer;
+        z-index: 6000;
+    }
+
 </style>
+
 </head>
+<!-- Metadatos OG dinámicos Esentia para Facebook -->
+<script>
+(async () => {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+
+  if (!id) return;
+
+  const res = await fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json");
+  const productos = await res.json();
+
+  const prod = productos.find(p =>
+    p.imagen.toLowerCase().includes(id)
+  );
+
+  if (!prod) return;
+
+  // Datos principales
+  const nombre = prod.nombre || "Producto Esentia";
+  const beneficios = prod.beneficios || "";
+  const uso = prod.usoRecomendado || "";
+  const imagen = prod.imagen || "";
+  const calificacion = prod.calificacion ? `⭐ ${prod.calificacion} / 5` : "";
+  const precio = prod.precioOferta
+      ? `Oferta: ₡${prod.precioOferta.toLocaleString()} (Antes ₡${prod.precioOriginal.toLocaleString()})`
+      : `Precio: ₡${prod.precioOriginal?.toLocaleString() || prod.precio?.toLocaleString()}`;
+
+  // Hashtags premium automáticos
+  const hashtags = "#Esentia #FraganciasQueEnamoran #AromasParaElHogar #Bienestar";
+
+  // Texto final para Facebook
+  const desc = `
+${calificacion}
+${precio}
+
+Beneficios: ${beneficios}
+Uso recomendado: ${uso}
+
+${hashtags}
+  `.trim();
+
+  const title = `${nombre} – Fragancia Esentia`;
+
+  // Función para insertar metas
+  const addMeta = (property, content) => {
+    const m = document.createElement("meta");
+    m.setAttribute("property", property);
+    m.setAttribute("content", content);
+    document.head.appendChild(m);
+  };
+
+  // Metadatos OG
+  addMeta("og:title", title);
+  addMeta("og:description", desc);
+  addMeta("og:image", imagen);
+  addMeta("og:type", "product");
+  addMeta("og:url", window.location.href);
+  addMeta("og:site_name", "Esentia Fragancias");
+})();
+</script>
+
+
 <body>
 
+<header class="header-esentia">
+    <h1>Esentia</h1>
+</header>
+
+<!--<div class="select-container">
+    <label>Seleccionar producto</label>
+    <select id="selectorProducto" class="select-esentia">
+        <option value="">-- Elegir aroma --</option>
+    </select>
+</div>-->
+
 <div class="contenedor">
-
-    <img src="https://wil1979.github.io/esentia-factura/images/logo-esentia.png" class="logo">
-
     <div class="card" id="contenedorProducto">
         <h1>Cargando producto...</h1>
         <p>Un momento por favor.</p>
     </div>
-
 </div>
 
+<button class="btn-volver" onclick="window.location.href='catalogo.html'">⟵</button>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+    authDomain: "esentiacreditos-8345f.firebaseapp.com",
+    projectId: "esentiacreditos-8345f",
+    storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+    messagingSenderId: "888658236080",
+    appId: "1:888658236080:web:506e5e2085b5a452dba175"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const stockCollection = collection(db, "stock");
+
+window.inventario = {};
+
+// Cargar inventario Firestore
+getDocs(stockCollection).then(snapshot => {
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        inventario[data.nombre] = data.cantidad;
+    });
+});
+
+</script>
+
 <script>
-// Sanitizar ID igual que en el generador
-function sanitize(s){
-    return String(s).toLowerCase().replace(/\s+/g,'');
-}
-
-// Obtener ID desde QR
+// Obtener ID desde URL
 const params = new URLSearchParams(window.location.search);
-const productId = params.get("id");
+const productId = (params.get("id") || "").toLowerCase().trim();
 
-if(!productId){
-    document.getElementById("contenedorProducto").innerHTML =
-    "<h2>Error</h2><p>No se recibió ID de producto.</p>";
-}
-
-// Cargar JSON
+// Cargar producto actual
 fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json")
     .then(r => r.json())
     .then(lista => {
+        const producto = lista.find(p => {
+            const id = p.imagen.split("/").pop().split(".")[0].toLowerCase();
+            return id === productId;
+        });
 
-        const producto = lista.find(
-            p => sanitize(p.nombreOriginal || p.nombre) === sanitize(productId)
-        );
-
-        if(!producto){
+        if (!producto) {
             document.getElementById("contenedorProducto").innerHTML =
-            "<h2>No encontrado</h2><p>El producto solicitado no existe.</p>";
+                "<h2>No encontrado</h2><p>El producto solicitado no existe.</p>";
             return;
         }
 
         renderProducto(producto);
     })
-    .catch(() => {
+    .catch(err => {
+        console.error("Error cargando producto:", err);
         document.getElementById("contenedorProducto").innerHTML =
-        "<h2>Error</h2><p>No fue posible cargar la información.</p>";
+            "<h2>Error</h2><p>No fue posible cargar la información.</p>";
     });
 
-function renderProducto(p){
+// ===== MENÚ DESPLEGABLE (SOLO PRODUCTOS CON STOCK + DISPONIBLES) =====
+function cargarSelectorConStock() {
+    const inv = window.inventario || {};
 
+    // Si inventario aún no está cargado, volver a intentar
+    if (Object.keys(inv).length === 0) {
+        setTimeout(cargarSelectorConStock, 150);
+        return;
+    }
+
+    fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json")
+        .then(r => r.json())
+        .then(lista => {
+            const selector = document.getElementById("selectorProducto");
+            selector.innerHTML = `<option value="">-- Elegir aroma --</option>`;
+
+            const disponibles = lista.filter(p => {
+                const stock = inv[p.nombre] ?? 0;
+                return p.disponible === true && stock > 0;
+            });
+
+            disponibles.forEach(p => {
+                const id = p.imagen.split("/").pop().split(".")[0].toLowerCase();
+                const option = document.createElement("option");
+                option.value = id;
+                option.textContent = `${p.nombre} (${inv[p.nombre]} uds)`;
+                selector.appendChild(option);
+            });
+
+            if (productId) selector.value = productId;
+
+            selector.onchange = () => {
+                if (selector.value) {
+                    window.location.href = `producto.html?id=${selector.value}`;
+                }
+            };
+        })
+        .catch(err => console.error("Error cargando lista para selector:", err));
+}
+
+// lanzar el llenado del selector un poco después para dar tiempo a Firebase
+setTimeout(cargarSelectorConStock, 300);
+
+
+// RENDER PRINCIPAL DEL PRODUCTO
+function renderProducto(p){
     const precio = p.precioOferta ?? p.precioOriginal;
 
+    let estrellas = "";
+    if(p.calificacion){
+        const llenas = Math.floor(p.calificacion);
+        const media = p.calificacion % 1 >= 0.5;
+        estrellas = "⭐".repeat(llenas) + (media ? "✨" : "");
+    }
+
     document.getElementById("contenedorProducto").innerHTML = `
-        <img src="${p.imagen}" class="imagen-producto">
+        <img src="${p.imagen}" class="imagen-producto" onclick="abrirLightbox('${p.imagen}')">
 
         <h1>${p.nombre}</h1>
-        <div class="precio">₡${precio.toLocaleString()}</div>
+
+        <div class="estrellas">${estrellas}</div>
+
+        ${
+            p.precioOferta
+            ? `<div class="precio-oferta">₡${p.precioOferta.toLocaleString()}</div>
+               <div class="precio-original">₡${p.precioOriginal.toLocaleString()}</div>`
+            : `<div class="precio-oferta">₡${p.precioOriginal.toLocaleString()}</div>`
+        }
 
         <p class="descripcion">${p.info}</p>
 
@@ -177,12 +470,92 @@ function renderProducto(p){
             </ul>
         </div>
 
+        <button class="btn-wsp" onclick="agregarAlCarrito('${encodeURIComponent(p.nombre)}')">
+    🛒 Agregar al carrito
+</button>
+
         <div class="qr-contenedor">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.href)}">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250
+                     &color=200-160-90
+                     &qzone=3
+                     &data=${encodeURIComponent(window.location.href)}">
         </div>
     `;
 }
+
+// ENVÍO A WHATSAPP
+function comprarWhatsApp(nombreProducto){
+    const mensaje = `
+Hola Wilber 👋
+
+Quisiera información sobre:
+
+🧴 *${decodeURIComponent(nombreProducto)}*
+🔗 Link: ${window.location.href}
+
+¡Gracias! 🌿
+    `.trim();
+
+    window.open(`https://wa.me/50672952454?text=${encodeURIComponent(mensaje)}`, "_blank");
+}
+
+// LIGHTBOX
+function abrirLightbox(src) {
+    document.getElementById("lightbox-img").src = src;
+    document.getElementById("lightbox").style.display = "flex";
+}
+function cerrarLightbox() {
+    document.getElementById("lightbox").style.display = "none";
+}
+
+function agregarAlCarrito(nombreProductoCodificado) {
+    const nombreProducto = decodeURIComponent(nombreProductoCodificado);
+
+    let carrito = JSON.parse(localStorage.getItem("carrito") || "[]");
+
+    fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json")
+        .then(r => r.json())
+        .then(lista => {
+
+            const producto = lista.find(p => p.nombre === nombreProducto);
+            if (!producto) {
+                alert("Error: producto no encontrado.");
+                return;
+            }
+
+            const id = producto.imagen.split("/").pop().split(".")[0].toLowerCase();
+
+            let existente = carrito.find(i => i.id === id);
+
+            if (existente) {
+                existente.cantidad += 1;
+            } else {
+                carrito.push({
+                    id: id,
+                    nombre: producto.nombre,
+                    precio: producto.precioOferta ?? producto.precioOriginal,
+                    cantidad: 1,
+                    imagen: producto.imagen
+                });
+            }
+
+            localStorage.setItem("carrito", JSON.stringify(carrito));
+
+            window.location.href = "catalogo.html?added=1";
+        });
+}
+
+
 </script>
+
+
+<!-- LIGHTBOX -->
+<div id="lightbox" class="lightbox-overlay">
+    <span class="lightbox-close" onclick="cerrarLightbox()">×</span>
+    <img id="lightbox-img" class="lightbox-img" src="">
+</div>
+
+
 
 </body>
 </html>
