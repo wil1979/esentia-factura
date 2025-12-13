@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Esentia — Gestión de Clientes y Créditos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="clientes.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>👥 Clientes Esentia</h1>
+    <div class="header-actions">
+      <button id="btn-refrescar-clientes">🔄 Refrescar</button>
+      <button id="btn-toggle-deudores">💸 Ver solo deudores</button>
+      <button id="btn-nuevo-cliente">➕ Nuevo cliente</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- Panel de clientes -->
+    <section class="panel panel-izq">
+      <h2>Clientes</h2>
+      <input
+        type="text"
+        id="buscador-clientes"
+        placeholder="Buscar por nombre o teléfono..."
+        class="input-full"
+      />
+      <div id="lista-clientes" class="lista-scroll"></div>
+    </section>
+
+    <!-- Panel de detalle -->
+    <div id="info-cliente" class="card vacio">
+  Selecciona un cliente para ver detalles.
+</div>
+
+<div id="panel-acciones" class="card hidden">
+  <div id="info-basica"></div>
+
+  <div class="acciones-grid">
+    <button class="btn-accion" onclick="abrirModalEditarCliente()">✏️Editar</button>
+    <button class="btn-accion" onclick="abrirModalProductos(clienteSeleccionadoId)">➕ Productos</button>
+
+    <button class="btn-accion" onclick="registrarPago()">💰 Pago</button>
+    <button class="btn-accion" onclick="imprimirEstadoCuenta()">🖨 Imprimir</button>
+    <button class="btn-accion" onclick="enviarWhatsAppCliente('suave')">📲 WhatsApp Suave</button>
+    <button class="btn-accion" onclick="enviarWhatsAppCliente('firme')">📲 WhatsApp Firme</button> 
+    <button class="btn-accion" onclick="abrirEditarCompra(INDEX)">✏️ Editar compra</button>
+    <button class="btn-accion btn-rojo" onclick="eliminarCliente()">🗑</button>
+  </div>
+
+  <button id="btn-historial" class="btn-secundario" onclick="toggleHistorial()">
+    📋 Ver/Ocultar Historial
+  </button>
+
+  <div id="historial-compras" class="hidden"></div>
+</div>
+      <div class="card">
+        <h3>📅 Compras / Créditos</h3>
+        <div id="lista-compras" class="lista-scroll"></div>
+      </div>
+
+      <div class="card">
+        <h3>🛒 Nueva compra a crédito</h3>
+        <div class="form-grid">
+          <input type="text" id="nombre-producto" placeholder="Producto" />
+          <input type="number" id="precio-producto" placeholder="Precio ₡" min="0" />
+          <input type="number" id="cantidad-producto" placeholder="Cantidad" min="1" value="1" />
+          <button id="btn-agregar-carrito">➕ Agregar al carrito</button>
+        </div>
+
+        <div id="carrito" class="lista-scroll carrito"></div>
+
+        <div class="totales-row">
+          <label>
+            Descuento:
+            <input type="number" id="descuento" value="0" min="0" />
+          </label>
+          <span id="total-compra">Total: ₡0</span>
+        </div>
+
+        <div class="acciones-row">
+          <button id="btn-vaciar-carrito" class="btn-secundario">🧹 Vaciar carrito</button>
+          <button id="btn-guardar-compra" class="btn-principal">💾 Guardar compra</button>
+          
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal nuevo cliente -->
+  <div id="modal-nuevo-cliente" class="modal hidden">
+    <div class="modal-content">
+      <h2>➕ Nuevo Cliente</h2>
+      <label>Nombre</label>
+      <input type="text" id="nuevo-nombre" class="input-full" />
+
+      <label>Teléfono</label>
+      <input type="text" id="nuevo-telefono" class="input-full" />
+
+      <label>Cédula (opcional)</label>
+      <input type="text" id="nuevo-cedula" class="input-full" />
+
+      <div class="modal-actions">
+        <button id="btn-cancelar-nuevo" class="btn-secundario">Cancelar</button>
+        <button id="btn-guardar-nuevo" class="btn-principal">Guardar</button>
+      </div>
+    </div>
+  </div>
+<!-- =======================
+     MODAL EDITAR CLIENTE
+======================= -->
+<div id="modal-editar-cliente" class="modal hidden">
+  <div class="modal-content">
+    <h3>✏️ Editar Cliente</h3>
+
+    <label>Nombre:</label>
+    <input id="edit-nombre" type="text">
+
+    <label>Cédula:</label>
+    <input id="edit-cedula" type="text">
+
+    <label>Teléfono:</label>
+    <input id="edit-telefono" type="text">
+
+    <div class="modal-buttons">
+      <button class="btn-guardar" onclick="guardarEdicionCliente()">Guardar</button>
+      <button class="btn-cerrar" onclick="cerrarModalEditar()">Cerrar</button>
+    </div>
+  </div>
+</div>
+<!-- =======================
+     MODAL AGREGAR PRODUCTOS
+======================= -->
+<div id="modal-productos" class="modal hidden">
+  <div class="modal-content">
+    <h3>➕ Agregar Productos</h3>
+
+    <label>Producto:</label>
+    <input id="prod-nombre" type="text" placeholder="Ej: Esencia Lavanda">
+
+    <label>Cantidad:</label>
+    <input id="prod-cantidad" type="number" value="1">
+
+    <label>Precio Unitario:</label>
+    <input id="prod-precio" type="number" value="1000">
+
+    <div class="modal-buttons">
+      <button class="btn-guardar" onclick="guardarProductoEnCompra()">Agregar</button>
+      <button class="btn-cerrar" onclick="cerrarModalProductos()">Cerrar</button>
+    </div>
+  </div>
+</div>
+<!-- ======================
+     MODAL PAGO / ABONOS PRO
+====================== -->
+<div id="modal-pago" class="modal hidden">
+  <div class="modal-content" style="max-width:420px;">
+    <h3>💰 Registrar Pago</h3>
+
+    <label>Monto del abono:</label>
+    <input id="pago-monto" type="number" placeholder="₡" min="1">
+
+    <label>Método de pago:</label>
+    <select id="pago-metodo">
+      <option value="Efectivo">Efectivo</option>
+      <option value="SINPE">SINPE Móvil</option>
+      <option value="Transferencia">Transferencia Bancaria</option>
+      <option value="Otro">Otro</option>
+    </select>
+
+    <label>Nota (opcional):</label>
+    <textarea id="pago-nota" placeholder="Ej: Cliente pagó una parte…"></textarea>
+
+    <div class="modal-buttons">
+      <button class="btn-guardar" onclick="guardarPago()">Registrar</button>
+      <button class="btn-cerrar" onclick="cerrarModalPago()">Cerrar</button>
+    </div>
+
+    <h4>📋 Historial de pagos</h4>
+    <div id="historial-abonos" style="max-height:150px;overflow-y:auto;"></div>
+  </div>
+</div>
+
+<!-- =======================
+     MODAL ELIMINAR CLIENTE
+======================= -->
+<div id="modal-eliminar-cliente" class="modal hidden">
+  <div class="modal-content" style="max-width:420px;">
+    <h3>🗑️ Eliminar Cliente</h3>
+
+    <p id="info-eliminar"></p>
+
+    <label>
+      <input type="radio" name="tipo-eliminar" value="historial" checked>
+      Eliminar solo historial (compras y pagos)
+    </label><br>
+
+    <label>
+      <input type="radio" name="tipo-eliminar" value="completo">
+      Eliminar cliente completamente
+    </label>
+
+    <p style="color:#b94a48;margin-top:10px;">
+      ⚠️ Esta acción puede ser irreversible.
+    </p>
+
+    <label>Escribe el nombre del cliente para confirmar:</label>
+    <input id="confirmar-nombre-eliminar" type="text">
+
+    <div class="modal-buttons">
+      <button class="btn-rojo" onclick="confirmarEliminarCliente()">Eliminar</button>
+      <button class="btn-cerrar" onclick="cerrarModalEliminar()">Cancelar</button>
+    </div>
+  </div>
+</div>
+<!-- =======================
+     MODAL EDITAR COMPRA
+======================= -->
+<div id="modal-editar-compra" class="modal hidden">
+  <div class="modal-content" style="max-width:520px;">
+    <h3>✏️ Editar Compra</h3>
+
+    <div id="edit-compra-info"></div>
+
+    <label>Descuento (₡):</label>
+    <input id="edit-descuento" type="number" min="0" value="0">
+
+    <h4>🛒 Productos</h4>
+    <div id="edit-productos"></div>
+
+    <div class="modal-buttons">
+      <button class="btn-guardar" onclick="guardarEdicionCompra()">Guardar cambios</button>
+      <button class="btn-cerrar" onclick="cerrarModalEditarCompra()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- =======================
+     MODAL NUEVA COMPRA JSON
+======================= -->
+<div id="modal-compra-json" class="modal hidden">
+  <div class="modal-content" style="max-width:600px;">
+    <h3>🛒 Nueva compra a crédito</h3>
+
+    <!-- Selector de producto -->
+    <select id="select-producto"></select>
+
+    <!-- Vista previa -->
+    <div style="margin-top:10px;display:flex;gap:10px;">
+      <img id="img-producto" style="max-width:120px;display:none;border-radius:8px;">
+      <div id="info-producto"></div>
+    </div>
+
+    <!-- Variantes -->
+    <div id="selector-variantes" style="margin-top:10px;"></div>
+
+    <!-- Cantidad -->
+    <label style="margin-top:10px;">Cantidad:</label>
+    <input id="cantidad-producto" type="number" min="1" value="1">
+
+    <button class="btn-accion" onclick="agregarProductoAlCarrito()">➕ Agregar</button>
+
+    <!-- Carrito -->
+    <h4 style="margin-top:15px;">🧺 Carrito</h4>
+    <div id="lista-carrito"></div>
+
+    <div style="margin-top:10px;">
+      <strong>Total: ₡<span id="total-carrito">0</span></strong>
+    </div>
+
+    <div class="modal-buttons">
+      <button class="btn-guardar" onclick="guardarCompraCredito()">Guardar compra</button>
+      <button class="btn-cerrar" onclick="cerrarModalCompra()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+  <script type="module" src="clientes.js"></script>
+  <!--<script src="clientes.js"></script>-->
+
+</body>
+</html>
