@@ -79,10 +79,10 @@
       background: #f8f8f8;
       border-color: #e0e0e0;
     }
-    .cliente-no-deudor .botones-derecha {
+    /*.cliente-no-deudor .botones-derecha {
       pointer-events: none;
-      opacity: 0.5;
-    }
+        opacity: 0.5;
+      }*/
     .cliente-no-deudor:hover {
       transform: none;
     }
@@ -355,18 +355,6 @@
       padding: 8px 12px;
       font-size: 0.75rem;
     }
-    /* Ocultar barra flotante por defecto en escritorio */
-@media (min-width: 481px) {
-  .barra-acciones-flotante {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-  }
-  .barra-acciones-flotante:hover {
-    opacity: 1;
-    pointer-events: auto;
-  }
-}
   }
   </style>
 </head>
@@ -434,11 +422,6 @@
       <div class="filtro-item">
         <button class="boton-accion" onclick="abrirModalImpresion()" style="margin-top: 22px;">🖨️ Imprimir</button>
       </div>
-      <div class="filtro-item" style="margin-top: 22px;">
-  <button class="boton-accion" style="background: #FF9800;" onclick="actualizarTodoInventarioPendiente()">
-    📦 Actualizar Todo el Inventario
-  </button>
-</div>
     </div>
     <div id="resultados-reportes">
       <p>Haz clic en "Filtrar" para generar el reporte.</p>
@@ -533,9 +516,6 @@
 
   <!-- Firebase y lógica -->
   <script type="module">
-  
-
-  
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
@@ -580,60 +560,6 @@ async function consultarNombreDesdeCedula(inputCedula, inputNombre, elementoMens
     console.warn("Error al consultar Hacienda:", err);
     elementoMensaje.textContent = "⚠️ Error de conexión o cédula no registrada";
     elementoMensaje.style.color = "#d32f2f";
-  }
-}
-
-async function actualizarTodoInventarioPendiente() {
-  if (!confirm("⚠️ ¿Deseas actualizar el inventario para TODAS las compras pendientes? Esta acción no se puede deshacer.")) {
-    return;
-  }
-
-  try {
-    const clientesSnapshot = await getDocs(collection(db, "clientes"));
-    let totalActualizadas = 0;
-
-    for (const clienteDoc of clientesSnapshot.docs) {
-      const clienteId = clienteDoc.id;
-      const clienteData = clienteDoc.data();
-      const compras = clienteData.compras || [];
-      let hayCambios = false;
-
-      for (let i = 0; i < compras.length; i++) {
-        const compra = compras[i];
-        // Solo procesar si no está actualizado
-        if (!compra.inventarioActualizado && compra.productos && compra.productos.length > 0) {
-          // Actualizar stock por cada producto
-          for (const prod of compra.productos) {
-            const q = query(collection(db, "stock"), where("nombre", "==", prod.nombre));
-            const stockSnap = await getDocs(q);
-            if (!stockSnap.empty) {
-              const stockDoc = stockSnap.docs[0];
-              const stockData = stockDoc.data();
-              const nuevaCantidad = Math.max(0, (stockData.cantidad || 0) - (prod.cantidad || 0));
-              await updateDoc(doc(db, "stock", stockDoc.id), {
-                cantidad: nuevaCantidad,
-                ultimaActualizacion: new Date().toISOString()
-              });
-            }
-          }
-          // Marcar como actualizado
-          compras[i].inventarioActualizado = true;
-          hayCambios = true;
-          totalActualizadas++;
-        }
-      }
-
-      // Guardar cambios en el cliente si hubo actualizaciones
-      if (hayCambios) {
-        await updateDoc(doc(db, "clientes", clienteId), { compras });
-      }
-    }
-
-    alert(`✅ ¡Inventario actualizado! ${totalActualizadas} compra(s) procesada(s).`);
-    await cargarClientes(filtroDeudoresActivo); // Recargar vista
-  } catch (error) {
-    console.error("Error al actualizar inventario masivo:", error);
-    alert("❌ Error al actualizar el inventario: " + error.message);
   }
 }
 
@@ -798,7 +724,10 @@ async function abrirModalNuevaVenta() {
   const renderizar = () => {
     lista.innerHTML = "";
     const filtroTexto = filtro.value.toLowerCase().trim();
-    const filtrados = clientes.filter(c => c.nombre.toLowerCase().includes(filtroTexto));
+    const filtrados = clientes.filter(c => {
+    const nombre = (c.nombre || "").toString();
+    return nombre.toLowerCase().includes(filtroTexto);
+  });
 
     if (filtrados.length === 0) {
       lista.innerHTML = "<p>No se encontraron clientes.</p>";
@@ -902,7 +831,8 @@ btnTodos.classList.toggle('activo', filtroDeudoresActivo === false);
           const id = docSnap.id;
 
           // Filtrar por nombre
-          if (!cliente.nombre.toLowerCase().includes(filtroTexto)) return;
+          const nombreCliente = (cliente.nombre || "").toString();
+               if (!nombreCliente.toLowerCase().includes(filtroTexto)) return;
 
           // Calcular saldo pendiente
           let totalPendiente = 0;
@@ -1412,81 +1342,47 @@ window.imprimirDeudasPago = function() {
 };
 
     // ✅ Enviar WhatsApp y registrar fecha de recordatorio
-async function enviarWhatsApp(telefono, nombre, deudaTotal, clienteId) {
+async function enviarWhatsApp(telefono, nombre, deuda, clienteId) {
   const limpio = telefono.replace(/\D/g, '');
   if (!limpio || limpio.length !== 8) {
-    alert("⚠️ Teléfono no válido.");
+    alert("⚠️ Teléfono no válido para WhatsApp.");
     return;
   }
 
-  // Obtener facturas pendientes
+  // Verificar si ya se envió hoy
+  const hoy = new Date().setHours(0, 0, 0, 0);
   const clienteDoc = doc(db, "clientes", clienteId);
   const docSnap = await getDoc(clienteDoc);
-  if (!docSnap.exists()) return;
+  const clienteData = docSnap.data();
+  const ultimo = clienteData?.ultimoRecordatorio ? new Date(clienteData.ultimoRecordatorio).setHours(0, 0, 0, 0) : null;
 
-  const cliente = docSnap.data();
-  const compras = cliente.compras || [];
-
-  const facturas = compras
-    .map((c, i) => {
-      const total = (c.monto || 0) - (c.descuento || 0);
-      const saldo = total - (c.pagado || 0);
-      return { ...c, total, saldo };
-    })
-    .filter(f => f.saldo > 0);
-
-  // Si no hay pendientes
-  if (facturas.length === 0) {
-    alert("🎉 No tiene saldos pendientes.");
-    return;
+  if (ultimo && ultimo >= hoy) {
+    if (!confirm("Ya se envió un recordatorio hoy. ¿Reenviar de todas formas?")) {
+      return;
+    }
   }
 
-  // Construir mensaje tipo factura
-  let mensaje = `🧾 *Estado de Cuenta - Esentia*\n`;
-  mensaje += `👤 Cliente: *${nombre}*\n`;
-  mensaje += `📅 Fecha: ${new Date().toLocaleDateString()}\n`;
-  mensaje += `──────────────────────\n\n`;
+  const mensaje = `Hola ${nombre}, Agradecemos tu preferencia con ESENTIA y queremos comentarte que tienes al día de hoy saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia llenando tu vida de fragancias que enamoran. 💜💳 Formas de pago:
+1. Efectivo contra entrega
+2. SINPE 72952454 Wilber Calderón M.
+3. BAC: CR59010200009453897656 🌿`;
 
-  facturas.forEach((f, index) => {
-    const productosTxt = f.productos?.map(p =>
-      `  ▸ ${p.cantidad}× ${p.nombre}${p.presentacion ? " (" + p.presentacion + ")" : ""}`
-    ).join("\n") || "  ▸ Sin productos";
+  const url = `https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`;
+  window.open(url, "_blank");
 
-    mensaje += `*Factura ${index + 1}*\n`;
-    mensaje += `📆 ${f.fecha}\n`;
-    mensaje += `${productosTxt}\n`;
-    mensaje += `Subtotal: ₡${f.total.toLocaleString()}\n`;
-    mensaje += `Pagado: ₡${(f.pagado || 0).toLocaleString()}\n`;
-    mensaje += `*Saldo pendiente: ₡${f.saldo.toLocaleString()}*\n`;
-    mensaje += `──────────────────────\n`;
-  });
-
-  // Total general
-  const total = facturas.reduce((sum, f) => sum + f.saldo, 0);
-  mensaje += `\n💜 *TOTAL PENDIENTE: ₡${total.toLocaleString()}*\n\n`;
-
-  // Métodos de pago + SINPE QR
-  mensaje += `💳 *Formas de pago*\n`;
-  mensaje += `1️⃣ Efectivo contra entrega\n`;
-  mensaje += `2️⃣ SINPE Móvil: *7295-2454* (Wilber Calderón)\n`;
-  mensaje += `3️⃣ Cuenta BAC: *CR59010200009453897656*\n\n`;
-
-  // Link SINPE QR (puedes poner tu QR real)
-  mensaje += `📲 *Pagar con SINPE QR:*\n`;
-  mensaje += `https://wil1979.github.io/esentia-factura/sinpe-qr.png\n\n`;
-
-  // Mensaje de cierre
-  mensaje += `🌿 Gracias por confiar en *Esentia*, llenando tu vida de fragancias que enamoran 💜`;
-
-  // Enviar WhatsApp
-  window.open(`https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`, "_blank");
-
-  // Registrar recordatorio
-  await updateDoc(clienteDoc, { ultimoRecordatorio: new Date().toISOString() });
-  await cargarClientes(filtroDeudoresActivo);
+  // 🔥 Registrar la fecha del recordatorio en Firestore
+  try {
+    const clienteDoc = doc(db, "clientes", clienteId);
+    await updateDoc(clienteDoc, {
+      ultimoRecordatorio: new Date().toISOString() // Fecha en formato ISO (ej: "2025-04-10T15:30:00.000Z")
+    });
+    // Opcional: recargar la lista para mostrar la fecha
+    await cargarClientes(filtroDeudoresActivo);
+  } catch (error) {
+    console.error("No se pudo registrar la fecha del recordatorio:", error);
+    // No bloqueamos la UX si falla solo el registro
+  }
 }
-
-
 
     // ✅ Reportes
     async function generarReporte() {
@@ -2334,7 +2230,6 @@ window.imprimirDeudasPago = imprimirDeudasPago;
 window.abrirModalEditarCliente = abrirModalEditarCliente;
 window.cerrarModalEditarCliente = cerrarModalEditarCliente;
 window.guardarEdicionDesdeModal = guardarEdicionDesdeModal;
-window.actualizarTodoInventarioPendiente = actualizarTodoInventarioPendiente;
 
 
     // Inicializar: cargar solo deudores al inicio
@@ -2404,7 +2299,7 @@ window.actualizarTodoInventarioPendiente = actualizarTodoInventarioPendiente;
 	    function seleccionarPersonal(persona) {
 	      document.getElementById('modal-cedula').value = persona.cedula;
 	      document.getElementById('modal-nombre').value = persona.nombre;
-	      document.getElementById('modal-telefono').value = "0000000"; // Requerimiento del usuario
+	      document.getElementById('modal-telefono').value = "00000000"; // Requerimiento del usuario
 	      document.getElementById('resultados-personal').innerHTML = ''; // Limpiar resultados
 	      document.getElementById('buscador-personal').value = persona.nombre; // Opcional: mostrar el nombre seleccionado en el buscador
 	    }
@@ -2471,7 +2366,7 @@ window.actualizarTodoInventarioPendiente = actualizarTodoInventarioPendiente;
     </div>
     <div style="margin-bottom:20px;">
       <label>Teléfono (con código, 8 dígitos):</label>
-      <input type="text" id="modal-telefono" placeholder="Ej: 88889999" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;" value="00000000" >
+      <input type="text" id="modal-telefono" placeholder="Ej: 88889999" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;" value="0000000" >
     </div>
     <div style="display:flex; gap:10px; justify-content:flex-end;">
       <button class="boton-accion" style="background:#666;" onclick="cerrarModalNuevoCliente()">❌ Cancelar</button>
