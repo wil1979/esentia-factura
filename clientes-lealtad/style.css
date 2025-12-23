@@ -1,0 +1,489 @@
+/*<!-- Estilos generales -->*/
+  
+    .btn-filtro {
+      background: #f0f0f0;
+      border: 2px solid #ccc;
+      padding: 8px 16px;
+      margin: 0 5px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+
+    .btn-filtro:hover { background: #e0e0e0; }
+
+    .btn-filtro.activo {
+      background: #6c4ba3;
+      color: white;
+      border-color: #6c4ba3;
+    }
+
+    .modal-carrito {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+
+    .modal-contenido {
+      background-color: #fefefe;
+      margin: 5% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 90%;
+      max-width: 600px;
+      border-radius: 12px;
+      position: relative;
+    }
+
+    .producto-card {
+      position: relative;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #4caf50;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      display: none;
+      z-index: 2000;
+    }
+  
+
+  /*<!-- Bottom sheet admin negro/dorado -->*/
+ 
+    .admin-sheet-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(4px);
+      display: none;
+      justify-content: flex-end;
+      align-items: stretch;
+      z-index: 1200;
+    }
+
+    .admin-sheet {
+      background: #050505;
+      border-radius: 20px 20px 0 0;
+      border-top: 2px solid #d4af37;
+      box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.6);
+      padding: 16px 20px 22px;
+      width: 25%;
+      max-height: 65vh;
+      animation: adminSheetIn 0.25s ease-out;
+    }
+
+    @keyframes adminSheetIn {
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .admin-sheet-handle {
+      width: 48px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 999px;
+      margin: 0 auto 12px;
+    }
+
+    .admin-sheet-title {
+      color: #f5eec2;
+      font-size: 1.05rem;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .admin-sheet-desc {
+      color: #d4af37;
+      font-size: 0.9rem;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .admin-sheet-btn {
+      width: 100%;
+      padding: 10px 14px;
+      margin-top: 8px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #d4af37, #b8891e);
+      color: #000;
+      font-weight: 600;
+    }
+
+    .admin-sheet-btn-secondary {
+      width: 100%;
+      padding: 9px 14px;
+      margin-top: 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: transparent;
+      color: #f5f5f5;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+
+    .admin-dot-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: 1px solid rgba(212, 175, 55, 0.9);
+      background: rgba(0, 0, 0, 0.7);
+      color: #f5eec2;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 20;
+      backdrop-filter: blur(2px);
+    }
+
+    .admin-dot-btn:hover {
+      background: rgba(18, 18, 18, 0.95);
+    }
+ 
+  
+    #modalLoginRegistro {
+      backdrop-filter: blur(10px);
+      background: rgba(0, 0, 0, 0.65);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1100;
+    }
+
+    #modalLoginRegistro .modal-contenido {
+      background: radial-gradient(circle at top, rgba(255, 255, 255, 0.22), rgba(10, 10, 10, 0.9));
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(212, 175, 55, 0.6);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65);
+      border-radius: 18px !important;
+      padding: 24px 22px !important;
+      max-width: 380px !important;
+      color: #f5eec2;
+      animation: glassFadeIn 0.4s ease;
+    }
+
+    @keyframes glassFadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9) translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    #modalLoginRegistro h2 {
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 1.4rem;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-tab {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: transparent;
+      color: #f5eec2;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .btn-tab.activo {
+      background: linear-gradient(90deg, #b89446, #efd28f);
+      color: #000;
+      border-color: transparent;
+      font-weight: 600;
+    }
+
+    #modalLoginRegistro input {
+      background: rgba(0, 0, 0, 0.5) !important;
+      color: #f5eec2 !important;
+      border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
+
+    #modalLoginRegistro input::placeholder {
+      color: rgba(245, 238, 194, 0.7);
+    }
+
+    #modalLoginRegistro button {
+      background: linear-gradient(90deg, #b89446, #efd28f);
+      color: #000 !important;
+      font-weight: 600;
+      border-radius: 10px !important;
+    }
+
+    #loginMensaje {
+      color: #ffb3b3 !important;
+    }
+
+  /* ESTILOS TARJETA DE LEALTAD -->
+ 
+    /* Contenedor flotante de la tarjeta de lealtad */
+    .lealtad-container {
+      position: fixed;
+      bottom: 100px;
+      right: 20px;
+      z-index: 998;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .lealtad-container.activo {
+      display: flex;
+    }
+
+    /* Tarjeta de lealtad flotante */
+    .tarjeta-lealtad {
+      background: linear-gradient(135deg, #6c4ba3 0%, #8b6bb4 100%);
+      border-radius: 16px;
+      padding: 20px;
+      width: 320px;
+      box-shadow: 0 8px 24px rgba(108, 75, 163, 0.3);
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      animation: slideInRight 0.4s ease-out;
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .tarjeta-lealtad-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      padding-bottom: 12px;
+    }
+
+    .tarjeta-lealtad-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .btn-cerrar-tarjeta {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .btn-cerrar-tarjeta:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+
+    .cliente-info {
+      margin-bottom: 16px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+
+    .cliente-info p {
+      margin: 4px 0;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .cliente-info strong {
+      color: #ffd700;
+    }
+
+    /* Sellos de lealtad */
+    .sellos-container {
+      margin: 16px 0;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+    }
+
+    .sellos-titulo {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      text-align: center;
+      color: #ffd700;
+    }
+
+    .sellos-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .sello {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: bold;
+      border: 2px dashed rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    .sello.activo {
+      background: linear-gradient(135deg, #ffd700, #ffed4e);
+      border-color: #ffd700;
+      color: #333;
+      box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+      animation: popIn 0.5s ease-out;
+    }
+
+    @keyframes popIn {
+      0% {
+        transform: scale(0.5);
+        opacity: 0;
+      }
+      50% {
+        transform: scale(1.15);
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .sello.inactivo {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .progreso-lealtad {
+      margin-top: 12px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #ffd700;
+      font-weight: 600;
+    }
+
+    /* Caja de regalo flotante */
+    .caja-regalo-flotante {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
+      animation: bounce 2s infinite;
+      transition: all 0.3s ease;
+    }
+
+    .caja-regalo-flotante:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 24px rgba(255, 107, 107, 0.4);
+    }
+
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    /* Estado premio obtenido */
+    .estado-premio {
+      background: linear-gradient(135deg, #4caf50, #66bb6a);
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 600;
+      margin-top: 12px;
+      animation: slideInUp 0.4s ease-out;
+    }
+
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .lealtad-container {
+        bottom: 80px;
+        right: 10px;
+      }
+
+      .tarjeta-lealtad {
+        width: 280px;
+        padding: 16px;
+      }
+
+      .sellos-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .caja-regalo-flotante {
+        width: 70px;
+        height: 70px;
+        font-size: 2rem;
+      }
+    }
+ 

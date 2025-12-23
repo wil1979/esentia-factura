@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Catálogo Esentia</title>
+  <link rel="icon" href="images/logo.png" sizes="192x192" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!--<link rel="stylesheet" href="catalogo.css" />-->
+  <style>
+  /* ====== Estilos generales ====== */
+  :root {
+    --dorado: #c8b273;
+    --dorado-claro: #d4c28f;
+    --verde: #e1e9e1;
+    --verde-oscuro: #1a3a1f;
+    --blanco-translucido: rgba(255, 255, 255, 0.12);
+    --borde-dorado: rgba(200, 178, 115, 0.35);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    
+    background: linear-gradient(135deg, var(--verde) 0%, var(--verde-oscuro) 100%);
+    color: #f8f8f8;
+    min-height: 100vh;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* ====== Header ====== */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: var(--blanco-translucido);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--borde-dorado);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo {
+    height: 50px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+
+  .header h1 {
+    color: var(--dorado);
+    font-size: 1.6rem;
+  }
+
+  .header p {
+    color: #e0e0e0;
+    font-size: 0.95rem;
+  }
+
+  .btn-login, .btn-cerrar-sesion {
+    background: rgba(200, 178, 115, 0.25);
+    color: white;
+    border: 1px solid var(--dorado);
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(4px);
+  }
+
+  .btn-login:hover, .btn-cerrar-sesion:hover {
+    background: rgba(200, 178, 115, 0.45);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(200, 178, 115, 0.3);
+  }
+
+  /* ====== Tarjetas de producto (glass) ====== */
+  .producto-card {
+    background: var(--blanco-translucido);
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    max-width: 220px;
+    border: 1px solid var(--borde-dorado);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .producto-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  }
+
+  .producto-card h3 {
+    margin: 8px 0;
+    font-size: 1.1rem;
+    color: var(--dorado);
+  }
+
+  .producto-card .estrellas {
+    margin: 6px 0;
+    color: gold;
+    font-size: 0.9rem;
+  }
+
+  .producto-card .precio-original {
+    text-decoration: line-through;
+    color: #aaa;
+    margin-right: 6px;
+  }
+
+  .producto-card p {
+    margin: 4px 0;
+    font-weight: bold;
+    color: #fff;
+  }
+
+  .btn-agregar {
+    background: rgba(200, 178, 115, 0.2);
+    color: white;
+    border: 1px solid var(--dorado);
+    border-radius: 10px;
+    padding: 6px 12px;
+    margin-top: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .btn-agregar:hover {
+    background: rgba(200, 178, 115, 0.4);
+    transform: scale(1.05);
+  }
+
+  /* ====== Sección "¿No encuentras...?" ====== */
+  .contenedor > div[style*="background:#f9f7ff"] {
+    background: var(--blanco-translucido) !important;
+    border: 1px solid var(--borde-dorado) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    color: #fff !important;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15) !important;
+  }
+
+  .contenedor > div[style*="background:#f9f7ff"] h3 {
+    color: var(--dorado) !important;
+    margin-bottom: 12px !important;
+  }
+
+  .contenedor > div[style*="background:#f9f7ff"] button {
+    background: rgba(200, 178, 115, 0.25) !important;
+    border: 1px solid var(--dorado) !important;
+    color: white !important;
+    border-radius: 10px !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .contenedor > div[style*="background:#f9f7ff"] button:hover {
+    background: rgba(200, 178, 115, 0.45) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(200, 178, 115, 0.3) !important;
+  }
+
+  /* ====== Modales generales ====== */
+  .modal-carrito {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-contenido {
+    background: var(--blanco-translucido);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--borde-dorado);
+    border-radius: 20px;
+    padding: 24px;
+    width: 90%;
+    max-width: 400px;
+    color: #fff;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+
+  .modal-contenido h2 {
+    color: var(--dorado);
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .modal-contenido input,
+  .modal-contenido select {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 10px;
+    border: 1px solid var(--borde-dorado);
+    background: rgba(255,255,255,0.15);
+    color: white;
+  }
+
+  .modal-contenido input::placeholder {
+    color: #ccc;
+  }
+
+  .modal-contenido button {
+    background: var(--dorado);
+    color: #2d572c;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .modal-contenido button:hover {
+    background: var(--dorado-claro);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(200, 178, 115, 0.4);
+  }
+
+  /* Botones secundarios (como eliminar del carrito) */
+  .modal-contenido button[style*="background:#ff5b5b"] {
+    background: #e74c3c !important;
+    color: white !important;
+  }
+
+  /* Tabs login/registro */
+  .btn-tab {
+    background: rgba(200, 178, 115, 0.2);
+    color: white;
+    border: 1px solid var(--borde-dorado);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+
+  .btn-tab.activo {
+    background: var(--dorado);
+    color: var(--verde);
+    font-weight: bold;
+  }
+
+  /* ====== Botón flotante del carrito ====== */
+  #botonCarrito {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    padding: 12px 16px !important;
+    background: var(--dorado) !important;
+    color: var(--verde) !important;
+    border: none !important;
+    border-radius: 50% !important;
+    width: 60px !important;
+    height: 60px !important;
+    font-size: 1.4rem !important;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.4) !important;
+    z-index: 999 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    transition: all 0.3s ease !important;
+  }
+
+  #botonCarrito:hover {
+    transform: scale(1.1) !important;
+    box-shadow: 0 8px 20px rgba(200, 178, 115, 0.5) !important;
+  }
+
+  #contadorCarrito {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+  }
+
+  /* ====== Toast ====== */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--dorado);
+    color: var(--verde);
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    z-index: 1000;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  /* ====== Tarjeta de lealtad ====== */
+  .lealtad-container {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    z-index: 998;
+  }
+
+  .tarjeta-lealtad {
+    background: var(--blanco-translucido);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--borde-dorado);
+    border-radius: 16px;
+    padding: 16px;
+    width: 280px;
+    color: white;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  }
+
+  .tarjeta-lealtad-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .tarjeta-lealtad h3 {
+    color: var(--dorado);
+  }
+
+  .btn-cerrar-tarjeta {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.4rem;
+    cursor: pointer;
+  }
+
+  .cliente-info span {
+    color: #ccc;
+  }
+
+  .sellos-container {
+    margin-top: 12px;
+  }
+
+  .sellos-titulo {
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    color: #ddd;
+  }
+
+  .sellos-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .sello {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+  }
+
+  .sello.activo {
+    background: var(--dorado);
+    color: var(--verde);
+  }
+
+  .sello.inactivo {
+    background: rgba(255,255,255,0.1);
+    color: #666;
+  }
+
+  .estado-premio {
+    background: rgba(200, 178, 115, 0.25);
+    padding: 8px;
+    border-radius: 8px;
+    text-align: center;
+    margin-top: 8px;
+    color: white;
+  }
+
+  .caja-regalo-flotante {
+    width: 50px;
+    height: 50px;
+    background: var(--dorado);
+    color: var(--verde);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.4rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+
+  /* ====== Responsive ====== */
+  @media (max-width: 600px) {
+    .header {
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+    }
+
+    .productos {
+      justify-content: center !important;
+    }
+  }
+</style>
+
+
+  
+</head>
+
+<body>
+  <header class="header">
+    <div class="header-left">
+      <img src="https://wil1979.github.io/esentia-factura/images/logo.png" alt="Esentia" class="logo">
+      <div>
+        <h1>Catálogo Esentia</h1>
+        <p>Fragancias que enamoran</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div id="panelUsuario" style="display:none; align-items:center; gap:10px;">
+        <span id="nombreUsuario"></span>
+        <button onclick="cerrarSesion()" class="btn-cerrar-sesion">Salir</button>
+      </div>
+      <button id="btnLogin" onclick="abrirLoginRegistro()" class="btn-login">Iniciar sesión</button>
+    </div>
+  </header>
+
+  <main class="contenedor">
+    <div id="loader" style="display:flex; justify-content:center; align-items:center; height:300px; color:#6c4ba3; font-size:1.5rem; font-weight:bold;">
+      <div style="text-align:center;">
+        <div style="font-size:3rem; margin-bottom:10px;">⏳</div>
+        <div>Cargando catálogo...</div>
+      </div>
+    </div>
+    <div id="productos-hogar"></div>
+
+    <div style="text-align:center; margin:2rem 0; padding:1.2rem; background:#f9f7ff; border-radius:12px; max-width:600px; margin-left:auto; margin-right:auto;">
+      <h3 style="margin-top:0; color:#6c4ba3;">¿No encuentras lo que buscas?</h3>
+      <button onclick="solicitarAroma()" style="display:block; width:100%; padding:10px; margin:8px 0; background:#6c4ba3; color:white; border:none; border-radius:8px; cursor:pointer;">
+        🌸 Solicitar un aroma especial
+      </button>
+      <button onclick="copiarEnlaceRecomendacion()" style="display:block; width:100%; padding:10px; margin:8px 0; background:#4caf50; color:white; border:none; border-radius:8px; cursor:pointer;">
+        🔗 Copiar enlace para recomendar
+      </button>
+    </div>
+  </main>
+
+  <!-- Modal Producto -->
+  <div id="modalProducto" class="modal-carrito">
+    <div class="modal-contenido">
+      <span onclick="cerrarModalProducto()" style="position:absolute; top:10px; right:15px; cursor:pointer; font-size:22px;">&times;</span>
+      <h2 id="modalProductoNombre"></h2>
+      <img id="modalProductoImagen" src="" alt="Producto"
+           style="width:100%; max-width:280px; height:auto; object-fit:contain; border-radius:8px; margin:10px 0; background:#fff;">
+      <p id="modalProductoInfo"></p>
+      <p id="modalProductoUso"></p>
+      <p id="modalProductoPrecio" style="font-size:1.4rem; font-weight:bold;"></p>
+      <div id="selectorVariante"></div>
+      <button onclick="agregarAlCarritoDesdeModal()"
+              style="display:block; width:100%; padding:10px; margin-top:10px; background:#6c4ba3; color:white; border:none; border-radius:8px; cursor:pointer;">
+        🛒 Agregar al carrito
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal Carrito -->
+  <div id="modalCarrito" class="modal-carrito">
+    <div class="modal-contenido">
+      <span onclick="cerrarModalCarrito()" style="position:absolute; top:10px; right:15px; cursor:pointer; font-size:22px;">&times;</span>
+      <h2>Tu carrito</h2>
+      <ul id="listaCarrito"></ul>
+      <p id="totalModal"></p>
+      <input type="text" id="codigoPremio" placeholder="Código de promoción o premio"
+             style="width:100%; padding:8px; margin:10px 0;" />
+      <button id="btnAplicarCodigo"
+              style="width:100%; padding:8px; background:#6c4ba3; color:white; border:none; border-radius:8px; cursor:pointer;">
+        🎁 Aplicar código
+      </button>
+      <button onclick="finalizarPedido()"
+              style="width:100%; padding:10px; margin-top:10px; background:#4caf50; color:white; border:none; border-radius:8px; cursor:pointer;">
+        ✅ Finalizar pedido por WhatsApp
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal Login / Registro (glass) -->
+  <div id="modalLoginRegistro" class="modal-carrito">
+    <div class="modal-contenido">
+      <h2>Bienvenido a Esentia</h2>
+      <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <button class="btn-tab activo" data-tab="login">Iniciar sesión</button>
+        <button class="btn-tab" data-tab="registro">Registrarse</button>
+      </div>
+
+      <form id="formLogin">
+        <input type="text" id="loginCedulaTel" placeholder="Cédula o Teléfono" required
+               style="width:100%; padding:12px; margin:8px 0; border-radius:8px;">
+        <button type="submit" style="width:100%; padding:12px; margin-top:10px;">
+          Entrar
+        </button>
+      </form>
+
+      <form id="formRegistro" style="display:none;">
+        <input type="text" id="regNombre" placeholder="Nombre completo" required
+               style="width:100%; padding:12px; margin:8px 0; border-radius:8px;">
+        <input type="text" id="regCedula" placeholder="Cédula (opcional)"
+               style="width:100%; padding:12px; margin:8px 0; border-radius:8px;">
+        <input type="text" id="regTelefono" placeholder="Teléfono (opcional)" required
+               style="width:100%; padding:12px; margin:8px 0; border-radius:8px;">
+        <button type="submit" style="width:100%; padding:12px; margin-top:10px;">
+          Registrarme
+        </button>
+      </form>
+
+      <div id="loginMensaje" style="margin-top:15px; min-height:20px; text-align:center; font-size:0.9rem;"></div>
+    </div>
+  </div>
+
+  <!-- Botón flotante del carrito -->
+  <button id="botonCarrito" onclick="abrirModalCarrito()" style="
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    padding:12px 16px;
+    background:#6c4ba3;
+    color:white;
+    border:none;
+    border-radius:50%;
+    width:60px;
+    height:60px;
+    font-size:1.4rem;
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);
+    z-index:999;
+  ">
+    🛒 <span id="contadorCarrito">0</span>
+  </button>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- TARJETA DE LEALTAD FLOTANTE -->
+  <div class="lealtad-container" id="lealtadContainer">
+    <!-- Tarjeta de lealtad (visible cuando está abierta) -->
+    <div class="tarjeta-lealtad" id="tarjetaLealtad">
+      <div class="tarjeta-lealtad-header">
+        <h3>💳 Mi Lealtad</h3>
+        <button class="btn-cerrar-tarjeta" onclick="cerrarTarjetaLealtad()">×</button>
+      </div>
+
+      <div class="cliente-info" id="clienteInfoLealtad">
+        <p><span>Cliente:</span> <strong id="nombreClienteLealtad">-</strong></p>
+        <p><span>Sellos:</span> <strong id="sellsActualesLealtad">0</strong> / <strong id="sellsObjetivoLealtad">6</strong></p>
+      </div>
+
+      <div class="sellos-container">
+        <div class="sellos-titulo">Tus sellos de compra</div>
+        <div class="sellos-grid" id="sellsGrid">
+          <!-- Los sellos se generarán dinámicamente -->
+        </div>
+        <div class="progreso-lealtad" id="progresoLealtad">
+          Completa 6 sellos para obtener tu regalo
+        </div>
+      </div>
+
+      <div id="estadoPremioLealtad"></div>
+    </div>
+
+    <!-- Caja de regalo (visible cuando la tarjeta está cerrada) -->
+    <div class="caja-regalo-flotante" id="cajaRegaloFlotante" onclick="abrirTarjetaLealtad()" style="display:none;" title="Abre tu tarjeta de lealtad">
+      🎁
+    </div>
+  </div>
+
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      query,
+      where,
+      addDoc
+    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+      authDomain: "esentiacreditos-8345f.firebaseapp.com",
+      projectId: "esentiacreditos-8345f",
+      storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+      messagingSenderId: "888658236080",
+      appId: "1:888658236080:web:506e5e2085b5a452dba175"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const stockCollection = collection(db, "stock");
+
+    window.db = db;
+    window.firebaseUtils = { query, where, collection, getDocs, addDoc };
+
+    let inventario = {};
+    window.inventario = inventario;
+
+    async function cargarInventario() {
+      try {
+        const snapshot = await getDocs(stockCollection);
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          inventario[data.nombre] = data.cantidad;
+        });
+        if (typeof intentarRenderizar === "function" && window.catalogoListo) {
+          intentarRenderizar();
+        }
+      } catch (error) {
+        console.error("Error cargando inventario:", error);
+        if (typeof mostrarErrorCarga === "function") {
+          mostrarErrorCarga();
+        }
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", cargarInventario);
+  </script>
+
+  <!-- Lógica principal -->
+  <script>
+    let carrito = [];
+    let productos = [];
+    let productoSeleccionado = null;
+    let codigoAplicado = null;
+    let descuentoAplicado = 0;
+    let difusorAplicado = null;
+    let clienteAutenticado = null;
+    window.catalogoListo = false;
+    // ============================================
+    // FUNCIONES DE TARJETA DE LEALTAD
+    // ============================================
+
+    let datosLealtadCliente = null;
+    let tarjetaLealtadAbierta = true;
+
+    /**
+     * Abre la tarjeta de lealtad y oculta la caja de regalo
+     */
+    function abrirTarjetaLealtad() {
+      const tarjeta = document.getElementById('tarjetaLealtad');
+      const cajaRegalo = document.getElementById('cajaRegaloFlotante');
+      if (tarjeta) tarjeta.style.display = 'block';
+      if (cajaRegalo) cajaRegalo.style.display = 'none';
+      tarjetaLealtadAbierta = true;
+      localStorage.setItem('tarjetaLealtadAbierta', 'true');
+    }
+
+    /**
+     * Cierra la tarjeta de lealtad y muestra la caja de regalo
+     */
+    function cerrarTarjetaLealtad() {
+      const tarjeta = document.getElementById('tarjetaLealtad');
+      const cajaRegalo = document.getElementById('cajaRegaloFlotante');
+      if (tarjeta) tarjeta.style.display = 'none';
+      if (cajaRegalo) cajaRegalo.style.display = 'flex';
+      tarjetaLealtadAbierta = false;
+      localStorage.setItem('tarjetaLealtadAbierta', 'false');
+    }
+
+    /**
+     * Muestra la tarjeta de lealtad solo si el cliente está autenticado
+     */
+    function mostrarTarjetaLealtad() {
+      const container = document.getElementById('lealtadContainer');
+      if (!container) return;
+
+      if (clienteAutenticado) {
+        container.classList.add('activo');
+        cargarDatosLealtadCliente();
+      } else {
+        container.classList.remove('activo');
+      }
+    }
+
+    /**
+     * Carga los datos de lealtad del cliente desde Firestore
+     */
+    async function cargarDatosLealtadCliente() {
+      if (!clienteAutenticado) return;
+
+      try {
+        const { query, where, collection, getDocs } = window.firebaseUtils;
+        const col = collection(window.db, 'clientes');
+        const q = query(col, where('cedula', '==', clienteAutenticado.cedula));
+        const snap = await getDocs(q);
+
+        if (!snap.empty) {
+          const doc = snap.docs[0];
+          datosLealtadCliente = doc.data();
+          actualizarVisualizacionLealtad();
+        }
+      } catch (error) {
+        console.error('Error cargando datos de lealtad:', error);
+      }
+    }
+
+    /**
+     * Actualiza la visualización de la tarjeta de lealtad con los datos del cliente
+     */
+    function actualizarVisualizacionLealtad() {
+      if (!datosLealtadCliente) return;
+
+      const lealtad = datosLealtadCliente.lealtad || {};
+      const sellos = lealtad.sellos || 0;
+      const objetivo = lealtad.objetivo || 6;
+      const premiosPendientes = lealtad.premiosPendientes || 0;
+
+      // Actualizar información del cliente
+      document.getElementById('nombreClienteLealtad').textContent = datosLealtadCliente.nombre || '-';
+      document.getElementById('sellsActualesLealtad').textContent = sellos;
+      document.getElementById('sellsObjetivoLealtad').textContent = objetivo;
+
+      // Generar los sellos visuales
+      const sellsGrid = document.getElementById('sellsGrid');
+      sellsGrid.innerHTML = '';
+
+      for (let i = 1; i <= objetivo; i++) {
+        const sello = document.createElement('div');
+        sello.className = i <= sellos ? 'sello activo' : 'sello inactivo';
+        sello.textContent = '⭐';
+        sellsGrid.appendChild(sello);
+      }
+
+      // Actualizar progreso
+      const progresoDiv = document.getElementById('progresoLealtad');
+      if (sellos >= objetivo) {
+        progresoDiv.innerHTML = `<div class="estado-premio">🎉 ¡Completaste tu tarjeta! Reclama tu regalo</div>`;
+      } else {
+        const faltantes = objetivo - sellos;
+        progresoDiv.textContent = `Faltan ${faltantes} sello${faltantes !== 1 ? 's' : ''} para tu regalo`;
+      }
+
+      // Mostrar estado de premios pendientes
+      const estadoPremio = document.getElementById('estadoPremioLealtad');
+      if (premiosPendientes > 0) {
+        estadoPremio.innerHTML = `<div class="estado-premio">🎁 Tienes ${premiosPendientes} premio${premiosPendientes !== 1 ? 's' : ''} por reclamar</div>`;
+      } else {
+        estadoPremio.innerHTML = '';
+      }
+    }
+
+    /**
+     * Actualiza la tarjeta de lealtad cuando el cliente se autentica
+     */
+    function actualizarLealtadAlAutenticar() {
+      mostrarTarjetaLealtad();
+      
+      // Restaurar el estado de la tarjeta (abierta o cerrada)
+      const tarjetaAbierta = localStorage.getItem('tarjetaLealtadAbierta') !== 'false';
+      if (tarjetaAbierta) {
+        abrirTarjetaLealtad();
+      } else {
+        cerrarTarjetaLealtad();
+      }
+    }
+
+    /**
+     * Oculta la tarjeta de lealtad cuando el cliente cierra sesión
+     */
+    function ocultarTarjetaLealtadAlCerrarSesion() {
+      const container = document.getElementById('lealtadContainer');
+      if (container) container.classList.remove('activo');
+      datosLealtadCliente = null;
+    }
+
+
+    function mostrarToast(mensaje, color = "#4caf50") {
+      const t = document.getElementById("toast");
+      t.textContent = mensaje;
+      t.style.backgroundColor = color;
+      t.style.display = "block";
+      t.style.opacity = "1";
+      setTimeout(() => {
+        t.style.transition = "opacity 0.5s";
+        t.style.opacity = "0";
+        setTimeout(() => {
+          t.style.display = "none";
+          t.style.transition = "";
+        }, 500);
+      }, 2000);
+    }
+
+    function abrirLoginRegistro() {
+      document.getElementById("modalLoginRegistro").style.display = "flex";
+    }
+
+    function verificarSesion() {
+      const sesion = localStorage.getItem("sesionEsentia");
+      if (sesion) {
+        clienteAutenticado = JSON.parse(sesion);
+        document.getElementById("nombreUsuario").textContent = clienteAutenticado.nombre;
+        document.getElementById("panelUsuario").style.display = "flex";
+        document.getElementById("btnLogin").style.display = "none";
+        document.getElementById("modalLoginRegistro").style.display = "none";
+
+        const esAdmin =
+          clienteAutenticado.cedula === "110350666" ||
+          clienteAutenticado.id === "110350666" ||
+          clienteAutenticado.telefono === "110350666";
+
+        if (esAdmin) {
+          localStorage.setItem("adminEsentia", "1");
+        } else {
+          localStorage.removeItem("adminEsentia");
+        }
+
+        window.catalogoListo = true;
+        intentarRenderizar();
+      } else {
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("modalLoginRegistro").style.display = "flex";
+        document.getElementById("btnLogin").style.display = "inline-block";
+      }
+    }
+
+    function intentarRenderizar() {
+      if (window.catalogoListo && Object.keys(inventario).length > 0 && productos.length > 0) {
+        renderizarProductos();
+      }
+    }
+
+    async function cargarProductos() {
+      try {
+        const resp = await fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json");
+        productos = await resp.json();
+        intentarRenderizar();
+      } catch (error) {
+        console.error("Error cargando productos:", error);
+        mostrarErrorCarga();
+      }
+    }
+
+    function mostrarErrorCarga() {
+      document.getElementById("loader").style.display = "none";
+      const cont = document.getElementById("productos-hogar");
+      cont.innerHTML = "<p>Error cargando catálogo. Intenta más tarde.</p>";
+    }
+
+    function renderizarProductos() {
+      const container = document.getElementById("productos-hogar");
+      const loader = document.getElementById("loader");
+      if (!container || !loader) return;
+      loader.style.display = "none";
+      container.innerHTML = "";
+
+      const fila = document.createElement("div");
+      fila.className = "productos";
+      fila.style.display = "flex";
+      fila.style.flexWrap = "wrap";
+      fila.style.gap = "1.5rem";
+
+      const productosFiltrados = productos.filter(
+        p => p.disponible && (inventario[p.nombre] ?? 0) > 0
+      );
+
+      if (productosFiltrados.length === 0) {
+        const m = document.createElement("p");
+        m.textContent = "📭 No hay productos disponibles.";
+        m.style.textAlign = "center";
+        m.style.fontSize = "1.2rem";
+        m.style.color = "#666";
+        fila.appendChild(m);
+      }
+
+      productosFiltrados.forEach(p => {
+        const precioFinal = p.precioOferta || p.precio;
+        let estrellas = "";
+        if (p.calificacion) {
+          const llenas = Math.floor(p.calificacion);
+          const media = p.calificacion % 1 >= 0.5;
+          for (let i = 0; i < llenas; i++) estrellas += "⭐";
+          if (media) estrellas += "✨";
+          while (estrellas.length < 5) estrellas += "☆";
+        }
+
+        const precioHTML = p.precioOferta
+          ? `<p><span class="precio-original">₡${p.precioOriginal}</span> ₡${p.precioOferta}</p>`
+          : `<p>₡${p.precio}</p>`;
+
+        const nombreEsc = p.nombre.replace(/'/g, "\\'");
+        const infoEsc = (p.info || "").replace(/`/g, "\\`");
+        const benefEsc = (p.beneficios || "").replace(/`/g, "\\`");
+        const usoEsc = (p.usoRecomendado || "").replace(/`/g, "\\`");
+
+        const div = document.createElement("div");
+        div.className = p.precioOferta ? "producto oferta producto-card" : "producto producto-card";
+        div.dataset.nombre = p.nombre;
+        div.innerHTML = `
+          <div style="position:relative;">
+            <img src="${p.imagen}" alt="${p.nombre}"
+              style="width:100%; max-width:220px; height:220px; object-fit:contain; border-radius:12px; cursor:pointer;"
+              onclick="mostrarInfoProducto('${nombreEsc}', ${precioFinal}, '${p.imagen}', \`${infoEsc}\`, \`${benefEsc}\`, \`${usoEsc}\`)">
+          </div>
+          <h3>${p.nombre}</h3>
+          <div class="estrellas">${estrellas}</div>
+          ${precioHTML}
+          <p class="stock-label">Cargando stock...</p>
+          <button class="btn-agregar"
+            onclick="mostrarInfoProducto('${nombreEsc}', ${precioFinal}, '${p.imagen}', \`${infoEsc}\`, \`${benefEsc}\`, \`${usoEsc}\`)">
+            Ver detalles
+          </button>
+        `;
+        fila.appendChild(div);
+      });
+
+      container.appendChild(fila);
+
+      if (typeof actualizarCatalogoConStock === "function") actualizarCatalogoConStock();
+      if (localStorage.getItem("adminEsentia") === "1") activarAccionesAdminTarjetas();
+    }
+
+    function mostrarInfoProducto(nombre, precio, imagen, info, beneficios, usoRecomendado) {
+      document.getElementById("modalProductoNombre").textContent = nombre;
+      document.getElementById("modalProductoImagen").src = imagen;
+      document.getElementById("modalProductoInfo").textContent = info;
+      document.getElementById("modalProductoUso").innerHTML =
+        `<strong>✨ Beneficios:</strong> ${beneficios}<br><strong>🏠 Uso recomendado:</strong> ${usoRecomendado}`;
+      document.getElementById("modalProductoPrecio").textContent =
+        `₡${precio.toLocaleString()}`;
+
+      const p = productos.find(x => x.nombre === nombre);
+      productoSeleccionado = { ...p };
+
+      const sel = document.getElementById("selectorVariante");
+      sel.innerHTML = "";
+
+      if (p.variantes && p.variantes.length > 0) {
+        const select = document.createElement("select");
+        select.id = "varianteSeleccionada";
+        select.style.width = "100%";
+        select.style.marginTop = "1rem";
+        select.style.padding = "10px";
+        select.innerHTML = '<option value="">-- Selecciona una presentación --</option>';
+        p.variantes.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = JSON.stringify(v);
+          opt.textContent = `${v.nombre} – ₡${v.precio.toLocaleString()}`;
+          select.appendChild(opt);
+        });
+        sel.appendChild(select);
+      }
+
+      document.getElementById("modalProducto").style.display = "flex";
+      if (typeof actualizarModalConStock === "function") actualizarModalConStock(nombre);
+    }
+
+    function cerrarModalProducto() {
+      document.getElementById("modalProducto").style.display = "none";
+    }
+
+    function agregarAlCarritoDesdeModal() {
+      if (!productoSeleccionado) return;
+
+      let variante = { nombre: "30 ml", precio: 3000 };
+      const select = document.getElementById("varianteSeleccionada");
+      if (select && select.value) {
+        try {
+          variante = JSON.parse(select.value);
+        } catch {}
+      }
+
+      const item = {
+        id: productoSeleccionado.imagen.split("/").pop().split(".")[0].toLowerCase(),
+        nombre: `${productoSeleccionado.nombre} ${variante.nombre}`,
+        precio: variante.precio || 3000,
+        cantidad: 1,
+        imagen: productoSeleccionado.imagen
+      };
+
+      const existente = carrito.find(x => x.id === item.id && x.nombre === item.nombre);
+      if (existente) existente.cantidad += 1;
+      else carrito.push(item);
+
+      renderCarrito();
+      cerrarModalProducto();
+      mostrarToast("Producto añadido al carrito 🛒");
+    }
+
+    function abrirModalCarrito() {
+      document.getElementById("modalCarrito").style.display = "flex";
+    }
+
+    function cerrarModalCarrito() {
+      document.getElementById("modalCarrito").style.display = "none";
+    }
+
+    function solicitarAroma() {
+      const msg = encodeURIComponent(
+        "Hola, me gustaría un aroma personalizado para mi hogar. 🌸"
+      );
+      window.open(`https://wa.me/50672952454?text=${msg}`, "_blank");
+    }
+
+    function copiarEnlaceRecomendacion() {
+      const url = window.location.href;
+      navigator.clipboard.writeText(url).then(() => {
+        mostrarToast("Enlace copiado para recomendar 💌");
+      });
+    }
+
+    function cerrarSesion() {
+      localStorage.removeItem("sesionEsentia");
+      localStorage.removeItem("adminEsentia");
+      clienteAutenticado = null;
+      carrito = [];
+      localStorage.removeItem("carrito");
+      renderCarrito();
+      codigoAplicado = null;
+      descuentoAplicado = 0;
+      difusorAplicado = null;
+
+      document.getElementById("panelUsuario").style.display = "none";
+      document.getElementById("btnLogin").style.display = "inline-block";
+      document.getElementById("loader").style.display = "none";
+      document.getElementById("productos-hogar").innerHTML = "";
+      document.getElementById("modalLoginRegistro").style.display = "flex";
+    }
+
+    // Login
+    document.getElementById("formLogin")?.addEventListener("submit", async e => {
+      e.preventDefault();
+      const valor = document.getElementById("loginCedulaTel").value.trim();
+      const msg = document.getElementById("loginMensaje");
+      if (!valor) {
+        msg.textContent = "Ingresa cédula o teléfono.";
+        return;
+      }
+
+      try {
+        msg.textContent = "Buscando cliente...";
+        const { query, where, collection, getDocs } = window.firebaseUtils;
+        const col = collection(window.db, "clientes");
+        const q1 = query(col, where("cedula", "==", valor));
+        const q2 = query(col, where("telefono", "==", valor));
+
+        const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+        let docSnap = null;
+
+        if (!snap1.empty) docSnap = snap1.docs[0];
+        else if (!snap2.empty) docSnap = snap2.docs[0];
+
+        if (!docSnap) {
+          msg.textContent = "Cliente no registrado. Usa 'Registrarse'.";
+          return;
+        }
+
+        const data = docSnap.data();
+        clienteAutenticado = {
+          id: docSnap.id,
+          nombre: data.nombre,
+          cedula: data.cedula,
+          telefono: data.telefono
+        };
+
+        localStorage.setItem("sesionEsentia", JSON.stringify(clienteAutenticado));
+
+        const esAdmin =
+          data.cedula === "110350666" ||
+          data.telefono === "110350666" ||
+          valor === "110350666";
+
+        if (esAdmin) {
+          localStorage.setItem("adminEsentia", "1");
+        } else {
+          localStorage.removeItem("adminEsentia");
+        }
+
+        document.getElementById("nombreUsuario").textContent = clienteAutenticado.nombre;
+        document.getElementById("panelUsuario").style.display = "flex";
+        document.getElementById("btnLogin").style.display = "none";
+        document.getElementById("modalLoginRegistro").style.display = "none";
+        msg.textContent = "";
+        document.getElementById("loader").style.display = "flex";
+        window.catalogoListo = true;
+        setTimeout(intentarRenderizar, 300);
+      } catch (err) {
+        console.error("Error login:", err);
+        msg.textContent = "Error de conexión.";
+      }
+    });
+
+    // Registro
+    document.getElementById("formRegistro")?.addEventListener("submit", async e => {
+      e.preventDefault();
+      const nombre = document.getElementById("regNombre").value.trim();
+      const cedula = document.getElementById("regCedula").value.trim();
+      const telefono = document.getElementById("regTelefono").value.trim();
+      const msg = document.getElementById("loginMensaje");
+
+      if (!nombre || !telefono) {
+        msg.textContent = "Nombre y teléfono son obligatorios.";
+        return;
+      }
+
+      try {
+        msg.textContent = "Registrando...";
+        const { collection, addDoc } = window.firebaseUtils;
+        const nuevoCliente = {
+          nombre: nombre,
+          cedula: cedula || "",
+          telefono: telefono,
+          creado: new Date()
+        };
+        const ref = await addDoc(collection(window.db, "clientes"), nuevoCliente);
+        clienteAutenticado = {
+          id: ref.id,
+          nombre: nombre,
+          cedula: cedula || "",
+          telefono: telefono
+        };
+        localStorage.setItem("sesionEsentia", JSON.stringify(clienteAutenticado));
+        document.getElementById("nombreUsuario").textContent = nombre;
+        document.getElementById("panelUsuario").style.display = "flex";
+        document.getElementById("btnLogin").style.display = "none";
+        document.getElementById("modalLoginRegistro").style.display = "none";
+        msg.textContent = "";
+        document.getElementById("loader").style.display = "flex";
+        window.catalogoListo = true;
+        setTimeout(intentarRenderizar, 300);
+      } catch (err) {
+        console.error("Error registro:", err);
+        msg.textContent = "Error registrando. Intenta de nuevo.";
+      }
+    });
+
+    // Tabs login/registro
+    document.querySelectorAll(".btn-tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".btn-tab").forEach(b => b.classList.remove("activo"));
+        btn.classList.add("activo");
+        const tab = btn.dataset.tab;
+        document.getElementById("formLogin").style.display =
+          tab === "login" ? "block" : "none";
+        document.getElementById("formRegistro").style.display =
+          tab === "registro" ? "block" : "none";
+        document.getElementById("loginMensaje").textContent = "";
+      });
+    });
+
+    // Acciones admin
+    let adminProductoActualId = null;
+
+    function activarAccionesAdminTarjetas() {
+      const esAdmin = localStorage.getItem("adminEsentia") === "1";
+      if (!esAdmin) return;
+
+      const cards = document.querySelectorAll(".producto-card");
+      cards.forEach(card => {
+        if (card.dataset.adminEnhanced === "1") return;
+        const img = card.querySelector("img");
+        if (!img) return;
+        const src = img.getAttribute("src") || "";
+        if (!src) return;
+        const file = src.split("/").pop().split(".")[0].toLowerCase();
+
+        const wrapper = img.parentElement;
+        if (!wrapper) return;
+        if (getComputedStyle(wrapper).position === "static") {
+          wrapper.style.position = "relative";
+        }
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "admin-dot-btn";
+        btn.textContent = "⋮";
+        btn.addEventListener("click", e => {
+          e.stopPropagation();
+          abrirAdminSheet(file);
+        });
+
+        wrapper.appendChild(btn);
+        card.dataset.adminEnhanced = "1";
+      });
+    }
+
+    function abrirAdminSheet(idProducto) {
+      adminProductoActualId = idProducto;
+      const overlay = document.getElementById("adminSheetOverlay");
+      if (!overlay) return;
+      overlay.style.display = "flex";
+    }
+
+    function cerrarAdminSheet() {
+      const overlay = document.getElementById("adminSheetOverlay");
+      if (overlay) overlay.style.display = "none";
+      adminProductoActualId = null;
+    }
+
+    function publicarFacebook(idProducto) {
+      if (!idProducto) return;
+      const urlProducto = `https://wil1979.github.io/esentia-factura/producto.html?id=${encodeURIComponent(
+        idProducto
+      )}`;
+      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+        urlProducto
+      )}`;
+      window.open(shareUrl, "_blank");
+    }
+
+    function publicarFacebookDesdeSheet() {
+      if (!adminProductoActualId) return;
+      publicarFacebook(adminProductoActualId);
+    }
+
+    // Cerrar bottom sheet al tocar fuera
+    window.addEventListener("click", e => {
+      const overlay = document.getElementById("adminSheetOverlay");
+      if (!overlay || overlay.style.display !== "flex") return;
+      if (e.target === overlay) {
+        cerrarAdminSheet();
+      }
+    });
+
+    // Aviso al salir si hay productos en carrito
+    window.addEventListener("beforeunload", e => {
+      try {
+        const data = localStorage.getItem("carrito");
+        if (!data) return;
+        const c = JSON.parse(data);
+        if (!Array.isArray(c) || c.length === 0) return;
+        const mensaje =
+          "Tienes productos en tu carrito. ¿Seguro que deseas salir sin completar tu compra?";
+        e.returnValue = mensaje;
+        return mensaje;
+      } catch {
+        return;
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      cargarCarrito();
+      document
+        .getElementById("btnAplicarCodigo")
+        ?.addEventListener("click", aplicarCodigoPremio);
+      verificarSesion();
+      cargarProductos(); // 🔥 importante para que cargue el catálogo
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("added") === "1") {
+        setTimeout(() => {
+          mostrarToast("Producto añadido al carrito 🛒");
+        }, 600);
+      }
+    });
+
+    function cargarCarrito() {
+      const data = localStorage.getItem("carrito");
+      if (data) carrito = JSON.parse(data);
+      renderCarrito();
+    }
+
+    function renderCarrito() {
+      const lista = document.getElementById("listaCarrito");
+      const contador = document.getElementById("contadorCarrito");
+      const totalModal = document.getElementById("totalModal");
+
+      if (!lista || !contador || !totalModal) return;
+
+      lista.innerHTML = "";
+      let total = 0;
+
+      carrito.forEach((item, index) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span>${item.nombre} (${item.cantidad})</span>
+          <strong>₡${(item.precio * item.cantidad).toLocaleString()}</strong>
+        </div>
+        <button onclick="eliminarDelCarrito(${index})"
+          style="background:#ff5b5b; color:white; border:none; padding:5px 8px; border-radius:6px; margin-top:6px; cursor:pointer;">
+          🗑 Quitar
+        </button>
+      `;
+        lista.appendChild(li);
+        total += item.precio * item.cantidad;
+      });
+
+      totalModal.textContent = `Total: ₡${total.toLocaleString()}`;
+      contador.textContent = carrito.length;
+      localStorage.setItem("carrito", JSON.stringify(carrito));
+    }
+
+    function eliminarDelCarrito(i) {
+      carrito.splice(i, 1);
+      renderCarrito();
+    }
+
+    function aplicarCodigoPremio() {
+      const input = document.getElementById("codigoPremio");
+      if (!input) return;
+
+      const codigo = input.value.trim().toUpperCase();
+      if (!codigo) {
+        mostrarToast("Ingresa un código válido ❗", "#E74C3C");
+        return;
+      }
+
+      const codigosValidos = {
+        ESENTIA10: { tipo: "porcentaje", valor: 10 },
+        ESENTIA20: { tipo: "porcentaje", valor: 20 },
+        NAVIDAD: { tipo: "monto", valor: 1500 },
+        PREMIO1: { tipo: "monto", valor: 1000 }
+      };
+
+      const promo = codigosValidos[codigo];
+      if (!promo) {
+        mostrarToast("Código inválido ❌", "#E74C3C");
+        return;
+      }
+
+      let total = carrito.reduce(
+        (sum, item) => sum + item.precio * item.cantidad,
+        0
+      );
+
+      let descuento = 0;
+      if (promo.tipo === "porcentaje") {
+        descuento = Math.round(total * (promo.valor / 100));
+      } else if (promo.tipo === "monto") {
+        descuento = promo.valor;
+      }
+
+      total -= descuento;
+      if (total < 0) total = 0;
+
+      document.getElementById("totalModal").textContent = `Total con descuento: ₡${total.toLocaleString()} (-₡${descuento.toLocaleString()})`;
+
+      mostrarToast(
+        `Código aplicado 🎉 Descuento: ₡${descuento.toLocaleString()}`
+      );
+
+      codigoAplicado = codigo;
+      descuentoAplicado = descuento;
+    }
+
+    // Aquí deberías tener tu función finalizarPedido() original
+    function finalizarPedido() {
+      if (!clienteAutenticado) {
+        mostrarToast("Inicia sesión para finalizar el pedido", "#E74C3C");
+        abrirLoginRegistro();
+        return;
+      }
+      if (!carrito.length) {
+        mostrarToast("Tu carrito está vacío 🛒", "#E74C3C");
+        return;
+      }
+
+      let mensaje = `Hola Wilber 👋\n\nQuiero hacer un pedido:\n\n`;
+      carrito.forEach(item => {
+        mensaje += `• ${item.nombre} x${item.cantidad} – ₡${(item.precio * item.cantidad).toLocaleString()}\n`;
+      });
+      let total = carrito.reduce(
+        (sum, item) => sum + item.precio * item.cantidad,
+        0
+      );
+      if (descuentoAplicado > 0) {
+        mensaje += `\nDescuento aplicado: -₡${descuentoAplicado.toLocaleString()}`;
+        total -= descuentoAplicado;
+      }
+      mensaje += `\n\nTotal a pagar: ₡${total.toLocaleString()}\n\n`;
+      mensaje += `Cliente: ${clienteAutenticado.nombre}\nTel: ${clienteAutenticado.telefono || "No registrado"}`;
+
+      window.open(
+        `https://wa.me/50672952454?text=${encodeURIComponent(mensaje)}`,
+        "_blank"
+      );
+    }
+
+    function publicarFacebookOG() {
+  if (!adminProductoActualId) return;
+
+  const urlOG = `https://wil1979.github.io/esentia-factura/og/${adminProductoActualId}.html`;
+  const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlOG)}`;
+  window.open(shareUrl, "_blank");
+}
+
+function publicarFacebookDirecto() {
+  if (!adminProductoActualId) return;
+
+  const urlProducto = `https://wil1979.github.io/esentia-factura/producto.html?id=${encodeURIComponent(adminProductoActualId)}`;
+  const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlProducto)}`;
+  window.open(shareUrl, "_blank");
+}
+
+function actualizarCatalogoConStock() {
+  const cards = document.querySelectorAll(".producto-card");
+
+  cards.forEach(card => {
+    const nombre = card.dataset.nombre;
+
+    // Lectura del stock desde inventario
+    const stock = inventario[nombre] ?? 0;
+
+    // Busca la etiqueta donde se muestra el stock
+    const label = card.querySelector(".stock-label");
+
+    if (!label) return;
+
+    if (stock > 10) {
+      label.textContent = "En stock";
+      label.style.color = "#28a745"; // verde
+    } else if (stock > 0) {
+      label.textContent = `Stock: ${stock}`;
+      label.style.color = "#f0ad4e"; // amarillo
+    } else {
+      label.textContent = "Agotado";
+      label.style.color = "#dc3545"; // rojo
+      // (Opcional: desactivar botón si querés)
+      const btn = card.querySelector(".btn-agregar");
+      if (btn) btn.disabled = true;
+    }
+  });
+}
+
+  </script>
+
+  
+</body>
+</html>
