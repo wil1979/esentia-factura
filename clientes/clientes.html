@@ -1,9 +1,19 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Esentia Créditos</title>
+  <meta charset="UTF-8" />
+  <title>Esentia Creditos</title>
+  <link rel="icon" href="images/logo.png" sizes="192x192" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
+    :root {
+  --color-verde-esentia: rgb(22, 58, 40);
+  --color-dorado: #c8b273;
+  --color-dorado-suave: #d9cfb1;
+  --color-fondo-claro: rgba(245, 245, 245, 0.25);
+  --blur-intensidad: 12px;
+  --borde-brillo: rgba(212, 175, 55, 0.3);
+}
 
     .boton-accion.activo {
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
@@ -12,7 +22,7 @@
 
     .scroll-buttons {
       position: fixed;
-      bottom: 20px;
+      bottom: 10px;
       right: 20px;
       display: flex;
       flex-direction: column;
@@ -20,7 +30,7 @@
       z-index: 999;
     }
     .scroll-btn {
-      padding: 15px 20px;
+      padding: 5px 5px;
       border: none;
       border-radius: 25px;
       background: #2196F3;
@@ -34,58 +44,76 @@
       transform: translateY(-2px);
       box-shadow: 0 6px 8px rgba(0,0,0,0.2);
     }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 20px;
-      background-color: #f3f2f7;
-      color: #333;
-    }
+    /* Fondo general con textura suave en verde claro/dorado */
+body {
+  background: linear-gradient(135deg, #f0f7f4, #fdf8ed);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 20px;
+  color: #333;
+  min-height: 100vh;
+}
 
-    /* Estilos para el logo */
+/* Logo container con efecto vidrioso */
 .logo-container {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
 }
-
 .logo {
-  max-width: 200px; /* Ajusta este valor según lo grande que quieras el logo */
+  max-width: 200px;
   height: auto;
-  border-radius: 8px; /* Opcional: esquinas redondeadas */
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Opcional: sombra suave */
-  transition: transform 0.3s ease;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(61, 122, 92, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.logo:hover {
+  transform: scale(1.06);
+  box-shadow: 0 8px 25px rgba(212, 175, 55, 0.35);
+}
+/* Títulos con dorado */
+h1, h2, h3 {
+  color: var(--color-verde-esentia);
+  text-align: center;
+  font-weight: 600;
+}
+h1 {
+  background: linear-gradient(90deg, var(--color-verde-esentia), var(--color-dorado));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 25px;
 }
 
-.logo:hover {
-  transform: scale(1.05); /* Efecto al pasar el mouse */
+/* Estilo glass para tarjetas de cliente */
+.cliente {
+  background: var(--color-fondo-claro);
+  backdrop-filter: blur(var(--blur-intensidad));
+  -webkit-backdrop-filter: blur(var(--blur-intensidad));
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(61, 122, 92, 0.1);
+  transition: all 0.3s ease;
 }
-    h1 {
-      color: #6c4ba3;
-      text-align: center;
-    }
-    .cliente {
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 12px;
-      background: #fff;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s;
-    }
-    .cliente:hover {
-      transform: scale(1.01);
-    }
-    .cliente-no-deudor {
-      opacity: 0.65;
-      background: #f8f8f8;
-      border-color: #e0e0e0;
-    }
-    /*.cliente-no-deudor .botones-derecha {
-      pointer-events: none;
-        opacity: 0.5;
-      }*/
-    .cliente-no-deudor:hover {
+.cliente:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(212, 175, 55, 0.25);
+  border-color: rgba(212, 175, 55, 0.5);
+}
+
+.cliente-no-deudor {
+  opacity: 0.7;
+  background: rgba(245, 245, 245, 0.15);
+  border-color: rgba(61, 122, 92, 0.15);
+}
+ 
+.cliente-no-deudor:hover {
       transform: none;
     }
+
+
+
     .botones-derecha {
       display: flex;
       flex-wrap: wrap;
@@ -93,30 +121,42 @@
       justify-content: flex-end;
       margin-top: 0.5rem;
     }
-   .boton-accion {
-  padding: 4px 8px;           /* 👈 Menos padding (más pequeño) */
-  font-size: 0.75rem;         /* 👈 Fuente más pequeña */
+/* Botones de acción con dorado y hover en verde */
+.boton-accion {
+  padding: 6px 12px;
+  font-size: 0.75rem;
   border: none;
-  background: #6c4ba3;
+  background: var(--color-dorado);
   color: white;
-  border-radius: 4px;         /* 👈 Bordes ligeramente menos redondeados */
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s;
-  white-space: nowrap;        /* 👈 Evita que el texto se envuelva en dos líneas */
-  min-width: auto;            /* 👈 Permite que el botón sea tan pequeño como su contenido */
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(212, 175, 55, 0.3);
 }
-    .boton-accion:hover {
-      background-color: #573993;
-    }
-    /* Historial de compras */
-    .historial-compras {
-      margin-top: 10px;
-      padding: 10px;
-      background: #f9f9f9;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      border: 1px dashed #ccc;
-    }
+.boton-accion:hover {
+  background: var(--color-verde-esentia);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(61, 122, 92, 0.4);
+}
+
+.boton-accion.activo {
+  box-shadow: 0 4px 10px rgba(212, 175, 55, 0.5);
+  transform: translateY(-2px);
+}
+
+
+    /* Historial de compras con fondo vidrioso */
+.historial-compras {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(61, 122, 92, 0.15);
+  font-size: 0.9rem;
+}
     .historial-compras h4 {
       margin: 0 0 10px 0;
       color: #555;
@@ -199,10 +239,14 @@
       align-items: center;
     }
     #modal-productos > div {
-      background: white;
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       width: 90%;
       max-width: 800px;
       border-radius: 10px;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      box-shadow: 0 10px 30px rgba(61, 122, 92, 0.2);
       padding: 20px;
       max-height: 90vh;
       overflow-y: auto;
@@ -329,22 +373,36 @@
   }
 
    .barra-acciones-flotante {
-    position: fixed;
-    top: 50%;
-    right: 20px;
-    transform: translateY(-50%);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 999;
+     padding: 14px 20px;
+  border: none;
+  border-radius: 30px;
+  
+  color: white;
+  cursor: pointer;
+  
+  transition: all 0.3s ease;
+  font-weight: 600;
   }
   .barra-acciones-flotante .scroll-btn {
-    padding: 10px 16px;
-    font-size: 0.85rem;
-    white-space: nowrap;
-    width: 160px;
-    text-align: center;
+     transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
   }
+
+  .scroll-btn {
+  padding: 14px 20px;
+  border: none;
+  border-radius: 30px;
+  background: linear-gradient(135deg, var(--color-dorado), var(--color-verde-esentia));
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 5px 15px rgba(61, 122, 92, 0.3);
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+.scroll-btn:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+}
   @media (max-width: 480px) {
     .barra-acciones-flotante {
       width: auto;
@@ -353,34 +411,95 @@
     .barra-acciones-flotante .scroll-btn {
       width: 130px;
       padding: 8px 12px;
-      font-size: 0.75rem;
+      font-size: 0.45rem;
     }
+    /* Ocultar barra flotante por defecto en escritorio */
+@media (min-width: 481px) {
+  .barra-acciones-flotante {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .barra-acciones-flotante:hover {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+  }
+
+  /* ====== Header ====== */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: var(--blanco-translucido);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--borde-dorado);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo {
+    height: 50px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+
+  .header h1 {
+    color: var(--dorado);
+    font-size: 1.6rem;
+  }
+
+  .header p {
+    color: #e0e0e0;
+    font-size: 0.95rem;
   }
   </style>
 </head>
 <body>
-  <div class="logo-container">
-    <img src="https://wil1979.github.io/esentia-factura/images/logo.png" alt="Esentia Logo" class="logo">
-  </div>
 
-  <div class="barra-acciones-flotante">
-    <button class="scroll-btn" style="background: #6c4ba3;" onclick="abrirModalNuevoCliente()">
+<header class="header">
+    <div class="header-left">
+      <img src="https://wil1979.github.io/esentia-factura/images/logo.png" alt="Esentia" class="logo">
+      <div>
+        <h1>Creditos Esentia</h1>
+        <p>Fragancias que enamoran</p>
+      </div>
+    </div>
+
+
+    <div class="barra-acciones-flotante">
+    <button class="scroll-btn" style=" background: linear-gradient(135deg, var(--color-dorado), var(--color-verde-esentia));" onclick="abrirModalNuevoCliente()">
       ➕ Nuevo Cliente
     </button>
-    <button class="scroll-btn" style="background: #4CAF50;" onclick="abrirModalNuevaVenta()">
+    <button class="scroll-btn" style=" background: linear-gradient(135deg, var(--color-dorado), var(--color-verde-esentia));" onclick="abrirModalNuevaVenta()">
       ➕ Nueva Venta
     </button>
-    <button class="scroll-btn" style="background: #2196F3;" onclick="cargarClientes(false)">
+    <button class="scroll-btn" style=" background: linear-gradient(135deg, var(--color-dorado), var(--color-verde-esentia));" onclick="cargarClientes(false)">
       👥 Mostrar Todos
     </button>
-    <button class="scroll-btn" style="background: #4CAF50;" onclick="cargarClientes(true)">
+    <button class="scroll-btn" style=" background: linear-gradient(135deg, var(--color-dorado), var(--color-verde-esentia));" onclick="cargarClientes(true)">
       💳 Solo Deudores
     </button>
     <button class="scroll-btn" onclick="scrollToTop()">↑</button>
     <button class="scroll-btn" onclick="scrollToBottom()">↓</button>
   </div>
+  </header>
 
-  <h1>📋 Esentia - Registro de Créditos</h1>
+ 
+
+  
+
+  
   <h2>👥 Clientes</h2>
 
   <!-- Filtros de visualización -->
@@ -422,6 +541,11 @@
       <div class="filtro-item">
         <button class="boton-accion" onclick="abrirModalImpresion()" style="margin-top: 22px;">🖨️ Imprimir</button>
       </div>
+      <div class="filtro-item" style="margin-top: 22px;">
+  <button class="boton-accion" style="background: #FF9800;" onclick="actualizarTodoInventarioPendiente()">
+    📦 Actualizar Todo el Inventario
+  </button>
+</div>
     </div>
     <div id="resultados-reportes">
       <p>Haz clic en "Filtrar" para generar el reporte.</p>
@@ -560,6 +684,60 @@ async function consultarNombreDesdeCedula(inputCedula, inputNombre, elementoMens
     console.warn("Error al consultar Hacienda:", err);
     elementoMensaje.textContent = "⚠️ Error de conexión o cédula no registrada";
     elementoMensaje.style.color = "#d32f2f";
+  }
+}
+
+async function actualizarTodoInventarioPendiente() {
+  if (!confirm("⚠️ ¿Deseas actualizar el inventario para TODAS las compras pendientes? Esta acción no se puede deshacer.")) {
+    return;
+  }
+
+  try {
+    const clientesSnapshot = await getDocs(collection(db, "clientes"));
+    let totalActualizadas = 0;
+
+    for (const clienteDoc of clientesSnapshot.docs) {
+      const clienteId = clienteDoc.id;
+      const clienteData = clienteDoc.data();
+      const compras = clienteData.compras || [];
+      let hayCambios = false;
+
+      for (let i = 0; i < compras.length; i++) {
+        const compra = compras[i];
+        // Solo procesar si no está actualizado
+        if (!compra.inventarioActualizado && compra.productos && compra.productos.length > 0) {
+          // Actualizar stock por cada producto
+          for (const prod of compra.productos) {
+            const q = query(collection(db, "stock"), where("nombre", "==", prod.nombre));
+            const stockSnap = await getDocs(q);
+            if (!stockSnap.empty) {
+              const stockDoc = stockSnap.docs[0];
+              const stockData = stockDoc.data();
+              const nuevaCantidad = Math.max(0, (stockData.cantidad || 0) - (prod.cantidad || 0));
+              await updateDoc(doc(db, "stock", stockDoc.id), {
+                cantidad: nuevaCantidad,
+                ultimaActualizacion: new Date().toISOString()
+              });
+            }
+          }
+          // Marcar como actualizado
+          compras[i].inventarioActualizado = true;
+          hayCambios = true;
+          totalActualizadas++;
+        }
+      }
+
+      // Guardar cambios en el cliente si hubo actualizaciones
+      if (hayCambios) {
+        await updateDoc(doc(db, "clientes", clienteId), { compras });
+      }
+    }
+
+    alert(`✅ ¡Inventario actualizado! ${totalActualizadas} compra(s) procesada(s).`);
+    await cargarClientes(filtroDeudoresActivo); // Recargar vista
+  } catch (error) {
+    console.error("Error al actualizar inventario masivo:", error);
+    alert("❌ Error al actualizar el inventario: " + error.message);
   }
 }
 
@@ -715,9 +893,9 @@ async function abrirModalNuevaVenta() {
   snapshot.forEach(docSnap => {
     const data = docSnap.data();
     clientes.push({
-      id: docSnap.id,
-      nombre: data.nombre,
-      telefono: data.telefono
+     id: docSnap.id,
+     nombre: data.nombre || "Sin nombre",
+     telefono: data.telefono || ""
     });
   });
 
@@ -725,10 +903,9 @@ async function abrirModalNuevaVenta() {
     lista.innerHTML = "";
     const filtroTexto = filtro.value.toLowerCase().trim();
     const filtrados = clientes.filter(c => {
-    const nombre = (c.nombre || "").toString();
-    return nombre.toLowerCase().includes(filtroTexto);
-  });
-
+  const nombre = (c.nombre || "").toString();
+  return nombre.toLowerCase().includes(filtroTexto);
+});
     if (filtrados.length === 0) {
       lista.innerHTML = "<p>No se encontraron clientes.</p>";
       return;
@@ -832,7 +1009,7 @@ btnTodos.classList.toggle('activo', filtroDeudoresActivo === false);
 
           // Filtrar por nombre
           const nombreCliente = (cliente.nombre || "").toString();
-               if (!nombreCliente.toLowerCase().includes(filtroTexto)) return;
+          if (!nombreCliente.toLowerCase().includes(filtroTexto)) return;
 
           // Calcular saldo pendiente
           let totalPendiente = 0;
@@ -1342,47 +1519,81 @@ window.imprimirDeudasPago = function() {
 };
 
     // ✅ Enviar WhatsApp y registrar fecha de recordatorio
-async function enviarWhatsApp(telefono, nombre, deuda, clienteId) {
+async function enviarWhatsApp(telefono, nombre, deudaTotal, clienteId) {
   const limpio = telefono.replace(/\D/g, '');
   if (!limpio || limpio.length !== 8) {
-    alert("⚠️ Teléfono no válido para WhatsApp.");
+    alert("⚠️ Teléfono no válido.");
     return;
   }
 
-  // Verificar si ya se envió hoy
-  const hoy = new Date().setHours(0, 0, 0, 0);
+  // Obtener facturas pendientes
   const clienteDoc = doc(db, "clientes", clienteId);
   const docSnap = await getDoc(clienteDoc);
-  const clienteData = docSnap.data();
-  const ultimo = clienteData?.ultimoRecordatorio ? new Date(clienteData.ultimoRecordatorio).setHours(0, 0, 0, 0) : null;
+  if (!docSnap.exists()) return;
 
-  if (ultimo && ultimo >= hoy) {
-    if (!confirm("Ya se envió un recordatorio hoy. ¿Reenviar de todas formas?")) {
-      return;
-    }
+  const cliente = docSnap.data();
+  const compras = cliente.compras || [];
+
+  const facturas = compras
+    .map((c, i) => {
+      const total = (c.monto || 0) - (c.descuento || 0);
+      const saldo = total - (c.pagado || 0);
+      return { ...c, total, saldo };
+    })
+    .filter(f => f.saldo > 0);
+
+  // Si no hay pendientes
+  if (facturas.length === 0) {
+    alert("🎉 No tiene saldos pendientes.");
+    return;
   }
 
-  const mensaje = `Hola ${nombre}, Agradecemos tu preferencia con ESENTIA y queremos comentarte que tienes al día de hoy saldo pendiente de ₡${deuda.toLocaleString()}. Gracias por confiar en Esentia llenando tu vida de fragancias que enamoran. 💜💳 Formas de pago:
-1. Efectivo contra entrega
-2. SINPE 72952454 Wilber Calderón M.
-3. BAC: CR59010200009453897656 🌿`;
+  // Construir mensaje tipo factura
+  let mensaje = `🧾 *Estado de Cuenta - Esentia*\n`;
+  mensaje += `👤 Cliente: *${nombre}*\n`;
+  mensaje += `📅 Fecha: ${new Date().toLocaleDateString()}\n`;
+  mensaje += `──────────────────────\n\n`;
 
-  const url = `https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`;
-  window.open(url, "_blank");
+  facturas.forEach((f, index) => {
+    const productosTxt = f.productos?.map(p =>
+      `  ▸ ${p.cantidad}× ${p.nombre}${p.presentacion ? " (" + p.presentacion + ")" : ""}`
+    ).join("\n") || "  ▸ Sin productos";
 
-  // 🔥 Registrar la fecha del recordatorio en Firestore
-  try {
-    const clienteDoc = doc(db, "clientes", clienteId);
-    await updateDoc(clienteDoc, {
-      ultimoRecordatorio: new Date().toISOString() // Fecha en formato ISO (ej: "2025-04-10T15:30:00.000Z")
-    });
-    // Opcional: recargar la lista para mostrar la fecha
-    await cargarClientes(filtroDeudoresActivo);
-  } catch (error) {
-    console.error("No se pudo registrar la fecha del recordatorio:", error);
-    // No bloqueamos la UX si falla solo el registro
-  }
+    mensaje += `*Factura ${index + 1}*\n`;
+    mensaje += `📆 ${f.fecha}\n`;
+    mensaje += `${productosTxt}\n`;
+    mensaje += `Subtotal: ₡${f.total.toLocaleString()}\n`;
+    mensaje += `Pagado: ₡${(f.pagado || 0).toLocaleString()}\n`;
+    mensaje += `*Saldo pendiente: ₡${f.saldo.toLocaleString()}*\n`;
+    mensaje += `──────────────────────\n`;
+  });
+
+  // Total general
+  const total = facturas.reduce((sum, f) => sum + f.saldo, 0);
+  mensaje += `\n💜 *TOTAL PENDIENTE: ₡${total.toLocaleString()}*\n\n`;
+
+  // Métodos de pago + SINPE QR
+  mensaje += `💳 *Formas de pago*\n`;
+  mensaje += `1️⃣ Efectivo contra entrega\n`;
+  mensaje += `2️⃣ SINPE Móvil: *7295-2454* (Wilber Calderón)\n`;
+  mensaje += `3️⃣ Cuenta BAC: *CR59010200009453897656*\n\n`;
+
+  // Link SINPE QR (puedes poner tu QR real)
+  mensaje += `📲 *Pagar con SINPE QR:*\n`;
+  mensaje += `https://wil1979.github.io/esentia-factura/sinpe-qr.png\n\n`;
+
+  // Mensaje de cierre
+  mensaje += `🌿 Gracias por confiar en *Esentia*, llenando tu vida de fragancias que enamoran 💜`;
+
+  // Enviar WhatsApp
+  window.open(`https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`, "_blank");
+
+  // Registrar recordatorio
+  await updateDoc(clienteDoc, { ultimoRecordatorio: new Date().toISOString() });
+  await cargarClientes(filtroDeudoresActivo);
 }
+
+
 
     // ✅ Reportes
     async function generarReporte() {
@@ -2096,6 +2307,19 @@ if (window.premioAplicado) {
 
 
   await updateDoc(clienteDoc, actualizacion);
+  
+  // ✅ Aplicar sellos de lealtad
+  try {
+    const cedulaCliente = await obtenerCedulaPorId(clienteSeleccionadoId);
+    if (cedulaCliente) {
+      const resultado = await procesarVentayAplicarSellos(cedulaCliente, totalNeto);
+      if (resultado && resultado.exito) {
+        console.log(`✓ Sellos aplicados: ${resultado.sellosaAgregar} sello(s) por compra de ₡${resultado.montoTotal}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error aplicando sellos:', error);
+  }
   document.getElementById("modal-productos").style.display = "none";
   await cargarClientes(filtroDeudoresActivo);
   alert("✅ Compra guardada exitosamente.");
@@ -2230,6 +2454,7 @@ window.imprimirDeudasPago = imprimirDeudasPago;
 window.abrirModalEditarCliente = abrirModalEditarCliente;
 window.cerrarModalEditarCliente = cerrarModalEditarCliente;
 window.guardarEdicionDesdeModal = guardarEdicionDesdeModal;
+window.actualizarTodoInventarioPendiente = actualizarTodoInventarioPendiente;
 
 
     // Inicializar: cargar solo deudores al inicio
@@ -2299,7 +2524,7 @@ window.guardarEdicionDesdeModal = guardarEdicionDesdeModal;
 	    function seleccionarPersonal(persona) {
 	      document.getElementById('modal-cedula').value = persona.cedula;
 	      document.getElementById('modal-nombre').value = persona.nombre;
-	      document.getElementById('modal-telefono').value = "00000000"; // Requerimiento del usuario
+	      document.getElementById('modal-telefono').value = "0000000"; // Requerimiento del usuario
 	      document.getElementById('resultados-personal').innerHTML = ''; // Limpiar resultados
 	      document.getElementById('buscador-personal').value = persona.nombre; // Opcional: mostrar el nombre seleccionado en el buscador
 	    }
@@ -2329,6 +2554,239 @@ window.guardarEdicionDesdeModal = guardarEdicionDesdeModal;
     }
 
     
+  
+    // ============================================
+    // FUNCIONES DE CÁLCULO Y APLICACIÓN DE SELLOS
+    // ============================================
+
+    /**
+     * Calcula la cantidad de sellos que debe obtener el cliente basado en el monto de compra
+     * Cada 5000 colones = 1 sello
+     * @param {number} montoCompra - Monto total de la compra en colones
+     * @returns {number} Cantidad de sellos a otorgar
+     */
+    function calcularSellosporCompra(montoCompra) {
+      if (!montoCompra || montoCompra < 5000) return 0;
+      return Math.floor(montoCompra / 5000);
+    }
+
+    /**
+     * Aplica sellos a la tarjeta de lealtad del cliente
+     * Actualiza el documento del cliente en Firestore con los nuevos sellos
+     * @param {string} cedulaCliente - Cédula del cliente
+     * @param {number} sellosaAgregar - Cantidad de sellos a agregar
+     * @param {number} montoCompra - Monto de la compra (para referencia)
+     */
+    async function aplicarSellosaCliente(cedulaCliente, sellosaAgregar, montoCompra) {
+      if (!cedulaCliente || sellosaAgregar <= 0) return false;
+
+      try {
+        const { query, where, collection, getDocs, updateDoc, doc } = window.firebaseUtils;
+        const db = window.db;
+        
+        // Buscar el documento del cliente
+        const col = collection(db, 'clientes');
+        const q = query(col, where('cedula', '==', cedulaCliente));
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+          console.error('Cliente no encontrado:', cedulaCliente);
+          return false;
+        }
+
+        const docCliente = snap.docs[0];
+        const docRef = doc(db, 'clientes', docCliente.id);
+        const datosActuales = docCliente.data();
+
+        // Obtener datos actuales de lealtad
+        const lealtadActual = datosActuales.lealtad || {
+          sellos: 0,
+          objetivo: 6,
+          premiosPendientes: 0,
+          ultimaActualizacion: new Date().toISOString()
+        };
+
+        // Calcular nuevos sellos
+        let nuevosSellos = (lealtadActual.sellos || 0) + sellosaAgregar;
+        let premiosPendientes = lealtadActual.premiosPendientes || 0;
+
+        // Verificar si se completó alguna tarjeta (6 sellos = 1 premio)
+        const tarjetasCompletadas = Math.floor(nuevosSellos / lealtadActual.objetivo);
+        if (tarjetasCompletadas > 0) {
+          premiosPendientes += tarjetasCompletadas;
+          nuevosSellos = nuevosSellos % lealtadActual.objetivo;
+        }
+
+        // Preparar datos actualizados
+        const datosActualizados = {
+          lealtad: {
+            sellos: nuevosSellos,
+            objetivo: lealtadActual.objetivo,
+            premiosPendientes: premiosPendientes,
+            ultimaActualizacion: new Date().toISOString()
+          },
+          ultimaCompra: new Date()
+        };
+
+        // Actualizar el documento en Firestore
+        await updateDoc(docRef, datosActualizados);
+
+        // Log de la operación
+        console.log(`✓ Sellos aplicados a ${cedulaCliente}:`, {
+          sellosaAgregar: sellosaAgregar,
+          nuevosSellos: nuevosSellos,
+          premiosPendientes: premiosPendientes,
+          montoCompra: montoCompra
+        });
+
+        return true;
+      } catch (error) {
+        console.error('Error aplicando sellos:', error);
+        return false;
+      }
+    }
+
+    /**
+     * Procesa una venta y aplica los sellos correspondientes
+     * Se debe llamar después de finalizar una venta
+     * @param {string} cedulaCliente - Cédula del cliente
+     * @param {number} montoTotal - Monto total de la venta
+     */
+    async function procesarVentayAplicarSellos(cedulaCliente, montoTotal) {
+      if (!cedulaCliente || !montoTotal) {
+        console.warn('Datos incompletos para procesar venta');
+        return false;
+      }
+
+      // Calcular sellos basado en el monto
+      const sellosaAgregar = calcularSellosporCompra(montoTotal);
+
+      if (sellosaAgregar > 0) {
+        const resultado = await aplicarSellosaCliente(cedulaCliente, sellosaAgregar, montoTotal);
+        
+        if (resultado) {
+          console.log(`✓ Venta procesada: ${sellosaAgregar} sello(s) agregado(s) por ₡${montoTotal}`);
+          return {
+            exito: true,
+            sellosaAgregar: sellosaAgregar,
+            montoTotal: montoTotal
+          };
+        }
+      } else {
+        console.log('Monto insuficiente para obtener sellos (mínimo ₡5000)');
+      }
+
+      return false;
+    }
+
+    /**
+     * Recalcula los sellos de un cliente (útil para correcciones)
+     * @param {string} cedulaCliente - Cédula del cliente
+     * @param {number} nuevaCantidadSellos - Nueva cantidad de sellos
+     */
+    async function recalcularSellosaCliente(cedulaCliente, nuevaCantidadSellos) {
+      if (!cedulaCliente || nuevaCantidadSellos < 0) return false;
+
+      try {
+        const { query, where, collection, getDocs, updateDoc, doc } = window.firebaseUtils;
+        const db = window.db;
+        
+        const col = collection(db, 'clientes');
+        const q = query(col, where('cedula', '==', cedulaCliente));
+        const snap = await getDocs(q);
+
+        if (snap.empty) return false;
+
+        const docCliente = snap.docs[0];
+        const docRef = doc(db, 'clientes', docCliente.id);
+        const datosActuales = docCliente.data();
+        const lealtadActual = datosActuales.lealtad || {};
+
+        await updateDoc(docRef, {
+          lealtad: {
+            ...lealtadActual,
+            sellos: nuevaCantidadSellos,
+            ultimaActualizacion: new Date().toISOString()
+          }
+        });
+
+        console.log(`✓ Sellos recalculados para ${cedulaCliente}: ${nuevaCantidadSellos}`);
+        return true;
+      } catch (error) {
+        console.error('Error recalculando sellos:', error);
+        return false;
+      }
+    }
+
+    /**
+     * Obtiene el estado actual de lealtad de un cliente
+     * @param {string} cedulaCliente - Cédula del cliente
+     * @returns {Promise<Object>} Objeto con datos de lealtad
+     */
+    async function obtenerEstadoLealtadCliente(cedulaCliente) {
+      try {
+        const { query, where, collection, getDocs } = window.firebaseUtils;
+        const db = window.db;
+        
+        const col = collection(db, 'clientes');
+        const q = query(col, where('cedula', '==', cedulaCliente));
+        const snap = await getDocs(q);
+
+        if (snap.empty) return null;
+
+        const datosCliente = snap.docs[0].data();
+        return datosCliente.lealtad || {
+          sellos: 0,
+          objetivo: 6,
+          premiosPendientes: 0
+        };
+      } catch (error) {
+        console.error('Error obteniendo estado de lealtad:', error);
+        return null;
+      }
+    }
+
+    /**
+     * Marca un premio como reclamado
+     * @param {string} cedulaCliente - Cédula del cliente
+     */
+    async function marcarPremioComoReclamado(cedulaCliente) {
+      if (!cedulaCliente) return false;
+
+      try {
+        const { query, where, collection, getDocs, updateDoc, doc } = window.firebaseUtils;
+        const db = window.db;
+        
+        const col = collection(db, 'clientes');
+        const q = query(col, where('cedula', '==', cedulaCliente));
+        const snap = await getDocs(q);
+
+        if (snap.empty) return false;
+
+        const docCliente = snap.docs[0];
+        const docRef = doc(db, 'clientes', docCliente.id);
+        const datosActuales = docCliente.data();
+        const lealtadActual = datosActuales.lealtad || {};
+
+        // Decrementar premios pendientes
+        const premiosRestantes = Math.max(0, (lealtadActual.premiosPendientes || 1) - 1);
+
+        await updateDoc(docRef, {
+          lealtad: {
+            ...lealtadActual,
+            premiosPendientes: premiosRestantes,
+            ultimaActualizacion: new Date().toISOString()
+          }
+        });
+
+        console.log(`✓ Premio reclamado para ${cedulaCliente}`);
+        return true;
+      } catch (error) {
+        console.error('Error marcando premio como reclamado:', error);
+        return false;
+      }
+    }
+
   </script>
 
 <!-- Modal para seleccionar cliente -->
@@ -2366,7 +2824,7 @@ window.guardarEdicionDesdeModal = guardarEdicionDesdeModal;
     </div>
     <div style="margin-bottom:20px;">
       <label>Teléfono (con código, 8 dígitos):</label>
-      <input type="text" id="modal-telefono" placeholder="Ej: 88889999" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;" value="0000000" >
+      <input type="text" id="modal-telefono" placeholder="Ej: 88889999" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;" value="00000000" >
     </div>
     <div style="display:flex; gap:10px; justify-content:flex-end;">
       <button class="boton-accion" style="background:#666;" onclick="cerrarModalNuevoCliente()">❌ Cancelar</button>
