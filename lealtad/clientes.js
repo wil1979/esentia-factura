@@ -169,38 +169,60 @@ async function consultarNombreHacienda() {
 // 📥 Clientes base (clientesBD)
 // ===============================
 async function cargarClientesBase() {
-  const snap = await getDocs(collection(db, "clientesBD"));
+  const snapClientes = await getDocs(collection(db, "clientesBD"));
+  const facturasMap = await cargarFacturasMap();
+
   clientesBase = [];
 
-  for (const d of snap.docs) {
+  snapClientes.docs.forEach(d => {
     const cliente = { id: d.id, ...d.data() };
 
-    // 🔑 Cargar movimientos reales
-    const refMov = doc(db, "facturas", cliente.id);
-    const snapMov = await getDoc(refMov);
+    const dataMov = facturasMap.get(cliente.id) || {};
+    const compras = dataMov.compras || [];
+    const abonos = dataMov.abonos || [];
 
-    const compras = snapMov.exists() ? snapMov.data().compras || [] : [];
-    const abonos = snapMov.exists() ? snapMov.data().abonos || [] : [];
-
-    // Guardar en cliente (ESTO FALTABA)
     cliente.compras = compras;
     cliente.abonos = abonos;
 
-    // Calcular deuda
+    // 🔢 Calcular deuda
     cliente.totalDeuda = compras.reduce((acc, c) => {
-      const monto = Number(c.total ?? (c.monto - (c.descuento || 0)));
+      const total = Number(c.total ?? (c.monto - (c.descuento || 0)));
       const pagado = Number(c.pagado || 0);
-      const saldo = Math.max(0, monto - pagado);
-      return acc + saldo;
+      return acc + Math.max(0, total - pagado);
     }, 0);
 
+    cliente.diasAtraso = 0;
+    compras.forEach(c => {
+      const total = Number(c.total ?? (c.monto - (c.descuento || 0)));
+      const saldo = total - (c.pagado || 0);
+      if (saldo > 0 && c.fecha) {
+        cliente.diasAtraso = Math.max(
+          cliente.diasAtraso,
+          calcularDiasAtraso(c)
+        );
+      }
+    });
+
     clientesBase.push(cliente);
-  }
+  });
 
   renderListaClientes();
-  renderResumenGeneral(); // 👈 ahora sí tiene datos
+  renderResumenGeneral();
 }
 
+
+
+
+async function cargarFacturasMap() {
+  const snap = await getDocs(collection(db, "facturas"));
+  const map = new Map();
+
+  snap.docs.forEach(d => {
+    map.set(d.id, d.data());
+  });
+
+  return map;
+}
 
 function calcularResumenGeneral() {
   let totalVendido = 0;
@@ -244,47 +266,81 @@ function renderResumenGeneral() {
     <div>🔴 Pendiente: <strong>₡${r.totalPendiente.toLocaleString("es-CR")}</strong></div>
   `;
 
-  const pagos = calcularResumenPagosPorMetodo();
+  const pagos = calcularResumenPagosPorMetodoGlobal();
 
 let htmlPagos = `<h4>💳 Pagos por método</h4>`;
-Object.entries(pagos).forEach(([metodo, info]) => {
-  if (info.cantidad > 0) {
+Object.entries(pagos).forEach(([metodo, total]) => {
+  if (total > 0) {
     htmlPagos += `
       <div>
-        ${metodo}: 
-        <strong>${info.cantidad}</strong> pagos — 
-        ₡${info.total.toLocaleString("es-CR")}
+        ${metodo}: <strong>₡${total.toLocaleString("es-CR")}</strong>
       </div>
     `;
   }
 });
 
+
 cont.innerHTML += htmlPagos;
 }
 
-function calcularResumenPagosPorMetodo() {
+
+
+function renderResumenPagosPorMetodo() {
+  const cont = document.getElementById("resumen-pagos");
+  if (!cont) return;
+
+  const r = calcularResumenPagosPorMetodoGlobal();
+
+  cont.innerHTML = `
+    <h3>💳 Pagos por método</h3>
+    <div>💵 Efectivo: ₡${r.Efectivo.toLocaleString("es-CR")}</div>
+    <div>📲 SINPE: ₡${r.SINPE.toLocaleString("es-CR")}</div>
+    <div>🏦 Transferencia: ₡${r.Transferencia.toLocaleString("es-CR")}</div>
+    <div>💳 Tarjeta: ₡${r.Tarjeta.toLocaleString("es-CR")}</div>
+    <div>⏳ Pendiente: ₡${r.Pendiente.toLocaleString("es-CR")}</div>
+  `;
+}
+
+function calcularResumenPagosPorMetodoGlobal() {
   const resumen = {
-    SINPE: { cantidad: 0, total: 0 },
-    Efectivo: { cantidad: 0, total: 0 },
-    Transferencia: { cantidad: 0, total: 0 },
-    Tarjeta: { cantidad: 0, total: 0 },
-    Pendiente: { cantidad: 0, total: 0 }
+    Efectivo: 0,
+    SINPE: 0,
+    Transferencia: 0,
+    Tarjeta: 0,
+    Pendiente: 0
   };
 
   clientesBase.forEach(cliente => {
+
+    // 1️⃣ Pagos desde COMPRAS
+    const compras = cliente.compras || [];
+    compras.forEach(c => {
+      const metodo = c.metodoPago || "Pendiente";
+      const pagado = Number(c.pagado || 0);
+
+      if (pagado > 0) {
+        if (!resumen[metodo]) resumen[metodo] = 0;
+        resumen[metodo] += pagado;
+      }
+    });
+
+    // 2️⃣ Pagos desde ABONOS
     const abonos = cliente.abonos || [];
     abonos.forEach(a => {
       const metodo = a.metodo || "Pendiente";
-      if (!resumen[metodo]) {
-        resumen[metodo] = { cantidad: 0, total: 0 };
+      const monto = Number(a.monto || 0);
+
+      if (monto > 0) {
+        if (!resumen[metodo]) resumen[metodo] = 0;
+        resumen[metodo] += monto;
       }
-      resumen[metodo].cantidad += 1;
-      resumen[metodo].total += Number(a.monto || 0);
     });
+
   });
 
   return resumen;
 }
+
 
 
 function calcularSaldoCliente(cliente) {
@@ -332,32 +388,55 @@ function obtenerClientesConAtraso(minDias = 7) {
   return resultado;
 }
 
+function ocultarClientesEnMovil() {
+  if (window.innerWidth <= 768) {
+    document.getElementById("panel-clientes").style.display = "none";
+  }
+}
+
+function mostrarClientes() {
+  document.getElementById("panel-clientes").style.display = "block";
+}
+
+
 
 function renderListaClientes() {
-const cont = document.getElementById("lista-clientes");
-if (!cont) return;
+  const cont = document.getElementById("lista-clientes");
+  if (!cont) return;
 
+  const filtro = document
+    .getElementById("buscador-clientes")
+    ?.value.toLowerCase() || "";
 
-const filtro = document.getElementById("buscador-clientes")?.value.toLowerCase();
-cont.innerHTML = "";
+  cont.innerHTML = "";
 
+  clientesBase.forEach((c) => {
+    if (
+      filtro &&
+      !String(c.nombre || "").toLowerCase().includes(filtro) &&
+      !String(c.telefono || "").includes(filtro)
+    ) return;
 
-clientesBase.forEach(c => {
-if (filtro && !c.nombre.toLowerCase().includes(filtro) && !String(c.telefono).includes(filtro)) return;
-if (soloDeudores && (!c.totalDeuda || c.totalDeuda <= 0)) return;
+    if (soloDeudores && (!c.totalDeuda || c.totalDeuda <= 0)) return;
 
+    // (Opcional) badge de atraso si lo tenés calculado en c.diasAtraso
+    const atraso =
+      c.totalDeuda > 0 && Number(c.diasAtraso || 0) > 0
+        ? `<small style="color:#c62828">⏱ ${c.diasAtraso} días</small>`
+        : "";
 
-const div = document.createElement("div");
-div.className = "cliente-item";
-div.innerHTML = `<strong>${c.nombre}</strong><br>Tel: ${c.telefono || "-"}`;
-div.onclick = () => seleccionarCliente(c.id);
-cont.appendChild(div);
-});
+    const div = document.createElement("div");
+    div.className = "cliente-item";
+    div.innerHTML = `
+      <strong>${c.nombre || "Sin nombre"}</strong><br>
+      Tel: ${c.telefono || "-"}<br>
+      ${atraso}
+    `;
+    div.onclick = () => seleccionarCliente(c.id);
+    cont.appendChild(div);
+  });
 
-
-
-
-if (!cont.innerHTML) cont.innerHTML = `<div class="vacio">No hay clientes</div>`;
+  if (!cont.innerHTML) cont.innerHTML = `<div class="vacio">No hay clientes</div>`;
 }
 
 // ===============================
@@ -402,6 +481,8 @@ window.seleccionarCliente = async function (id) {
   document.getElementById("info-cliente")?.classList.remove("vacio");
   renderInfoCliente();
   renderHistorialCompras();
+  ocultarClientesEnMovil();
+  renderResumenPagosPorMetodo();
 };
 
 function renderInfoCliente() {
@@ -416,6 +497,7 @@ function renderInfoCliente() {
     <button onclick="enviarWhatsAppCliente('suave')">🟢 WhatsApp Suave</button>
     <button onclick="enviarWhatsAppCliente('firme')">🔴 WhatsApp Fuerte</button>
     <button onclick="enviarRecordatoriosAtraso()" style="margin-bottom:10px">🔔 Enviar recordatorios</button>
+    <button onclick="mostrarClientes()" class="btn-volver"> 👈 Clientes</button>
   `;
 }
 
@@ -454,6 +536,7 @@ function renderComprasCliente() {
       <button onclick="eliminarCompra(${i})">🗑️</button>
     `;
     cont.appendChild(div);
+    renderResumenGeneral();
   });
 }
 
@@ -473,6 +556,7 @@ function renderCarrito() {
       </div>
     `;
   });
+  renderResumenGeneral();
 
   document.getElementById("total-carrito").textContent = formatearColones(total);
 }
@@ -812,6 +896,7 @@ Te envío tu estado de cuenta actualizado. Te agradezco confirmar tu fecha de pa
     const clienteDoc = doc(db, "facturas", clienteSeleccionadoId);
     await updateDoc(clienteDoc, { ultimoRecordatorio: new Date().toISOString() });
     await cargarClientesBase();
+renderResumenPagosPorMetodo();
     renderResumenGeneral();
   } catch (e) {
     console.error("Error guardando recordatorio:", e);
@@ -851,6 +936,7 @@ window.eliminarCompra = async function (index) {
 
   // Recalcular deuda en la lista
 await cargarClientesBase();
+renderResumenPagosPorMetodo();
 renderResumenGeneral();
 limpieza
   alert("🗑 Compra eliminada correctamente");
@@ -875,6 +961,7 @@ window.marcarAbono = async function (index) {
     await updateDoc(clienteRef, { compras });
     alert("💰 Pago registrado.");
     await cargarClientesBase();
+renderResumenPagosPorMetodo();
     renderResumenGeneral();
     await seleccionarCliente(clienteSeleccionadoId);
   } catch (e) {
@@ -1007,6 +1094,7 @@ window.guardarEdicionCliente = async function () {
     await updateDoc(doc(db, "facturas", clienteSeleccionadoId), { nombre: nuevoNombre, cedula: nuevaCedula, telefono: nuevoTelefono });
     cerrarModalEditar();
     await cargarClientesBase();
+renderResumenPagosPorMetodo();
     renderResumenGeneral();
     seleccionarCliente(clienteSeleccionadoId);
     alert("✔ Cliente actualizado correctamente.");
@@ -1015,6 +1103,7 @@ window.guardarEdicionCliente = async function () {
     alert("❌ Ocurrió un error.");
   }
 };
+
 // ===============================
 // 🛒 ABRIR MODAL PRODUCTOS (FINAL)
 // ===============================
@@ -1029,37 +1118,35 @@ window.abrirModalProductos = async function () {
   window.productoSeleccionado = null;
 
   const modal = document.getElementById("modal-productos");
-  modal.classList.remove("hidden");
 
-  // Reset UI (defensivo)
+// abrir
+modal.classList.remove("hidden");
+modal.style.display = "flex";
+
+  // DOM (defensivo)
   const carritoDiv = document.getElementById("carrito-modal");
   const resumenDiv = document.getElementById("resumen-venta");
   const descuentoInput = document.getElementById("descuento");
   const selectTipoPago = document.getElementById("tipo-pago");
   const selectMetodoPago = document.getElementById("metodo-pago");
+  const bloqueCredito = document.getElementById("bloque-credito");
 
   if (!carritoDiv || !resumenDiv || !descuentoInput || !selectTipoPago || !selectMetodoPago) {
     console.error("❌ Modal incompleto: faltan elementos del DOM");
     return;
   }
 
+  // Reset UI
   carritoDiv.innerHTML = "";
   resumenDiv.innerHTML = "";
   descuentoInput.value = 0;
 
-  // Reset tipo de pago
-  selectTipoPago.value = "Credito";
+  // ✅ Default: CRÉDITO
+  selectTipoPago.value = "credito";
   selectMetodoPago.disabled = true;
   selectMetodoPago.value = "Pendiente";
 
-  // Totales iniciales
-actualizarResumenVenta();
-
- // Forzar estado inicial correcto
-const esCredito = true;
-selectMetodoPago.disabled = esCredito;
-selectMetodoPago.value = "Pendiente";
-actualizarResumenVenta();
+  if (bloqueCredito) bloqueCredito.style.display = "block";
 
   // Cargar productos
   if (!window.todosLosProductos.length) {
@@ -1079,14 +1166,21 @@ actualizarResumenVenta();
     const esCredito = selectTipoPago.value === "credito";
     selectMetodoPago.disabled = esCredito;
     selectMetodoPago.value = esCredito ? "Pendiente" : "Efectivo";
+
+    if (bloqueCredito) {
+      bloqueCredito.style.display = esCredito ? "block" : "none";
+    }
+
     actualizarResumenVenta();
   };
-  
 };
 
 
 window.cerrarModalProductos = function () {
-  document.getElementById("modal-productos")?.classList.add("hidden");
+  const modal = document.getElementById("modal-productos");
+// cerrar
+modal.classList.add("hidden");
+modal.style.display = "none";
 };
 
 function calcularDiasAtraso(compra) {
@@ -1134,8 +1228,6 @@ function recalcularComprasDesdeAbonos(compras, abonos) {
       });
     });
 }
-
-
 
 
 function notificarPremio(texto) {
@@ -1295,6 +1387,7 @@ window.guardarPago = window.guardarPagoModal = async function () {
     await updateDoc(ref, { compras, abonos, lealtad: data.lealtad });
     cerrarModalPago();
     await cargarClientesBase();
+renderResumenPagosPorMetodo();
     renderResumenGeneral();
     seleccionarCliente(clienteSeleccionadoId);
     alert("✔ Pago registrado con éxito.");
@@ -1423,6 +1516,7 @@ window.confirmarEliminarCliente = async function () {
     clienteSeleccionado = null;
     clienteSeleccionadoId = null;
     await cargarClientesBase();
+renderResumenPagosPorMetodo();
     renderResumenGeneral();
   } catch (e) {
     console.error("Error eliminando cliente:", e);
@@ -1545,6 +1639,103 @@ window.guardarEdicionCompra = async function () {
   cerrarModalEditarCompra();
   await seleccionarCliente(clienteSeleccionadoId);
   alert("✔ Compra actualizada correctamente");
+};
+
+/*
+window.revertirPago = async function (indexPago) {
+  const abonos = [...(clienteSeleccionado.abonos || [])];
+  const pago = abonos[indexPago];
+  if (!pago) return;
+
+  if (!confirm(`¿Revertir este pago?
+Monto: ₡${pago.monto.toLocaleString()}
+Fecha: ${new Date(pago.fecha).toLocaleDateString("es-CR")}`)) return;
+
+  // Quitar solo ese abono
+  abonos.splice(indexPago, 1);
+
+  // 🔁 Recalcular TODAS las compras desde cero
+  clienteSeleccionado.compras.forEach(c => {
+    const total = Number(c.total ?? (c.monto - (c.descuento || 0)));
+    c.pagado = 0;
+    c.saldo = total;
+    c.selloOtorgado = false;
+  });
+
+  // FIFO limpio
+  const comprasOrdenadas = clienteSeleccionado.compras
+    .slice()
+    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+  abonos
+    .slice()
+    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
+    .forEach(abono => {
+      let restante = abono.monto;
+
+      comprasOrdenadas.forEach(c => {
+        if (restante <= 0) return;
+
+        const total = Number(c.total ?? (c.monto - (c.descuento || 0)));
+        const disponible = total - c.pagado;
+
+        if (disponible > 0) {
+          const aplicar = Math.min(disponible, restante);
+          c.pagado += aplicar;
+          c.saldo = total - c.pagado;
+          restante -= aplicar;
+        }
+      });
+    });
+
+  await updateDoc(doc(db, "facturas", clienteSeleccionadoId), {
+    compras: clienteSeleccionado.compras,
+    abonos
+  });
+
+  await seleccionarCliente(clienteSeleccionadoId);
+  alert("✔ Pago revertido correctamente");
+};
+*/
+
+
+
+window.revertirPago = async function (indexAbono) {
+  if (!clienteSeleccionadoId) return;
+
+  if (!confirm("¿Deseas revertir este pago?")) return;
+
+  const ref = doc(db, "facturas", clienteSeleccionadoId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+  let compras = data.compras || [];
+  let abonos = data.abonos || [];
+
+  const abono = abonos[indexAbono];
+  if (!abono) return;
+
+  // 1️⃣ Eliminar abono
+  abonos.splice(indexAbono, 1);
+
+  // 2️⃣ Recalcular compras desde cero
+  recalcularComprasDesdeAbonos(compras, abonos);
+
+  // 3️⃣ Guardar en Firestore
+  await updateDoc(ref, { compras, abonos });
+
+  // 4️⃣ Actualizar estado local
+  clienteSeleccionado.compras = compras;
+  clienteSeleccionado.abonos = abonos;
+
+  // 5️⃣ UI
+  renderHistorialCompras();
+  renderResumenPagosPorMetodo();
+  renderResumenGeneral();
+  await cargarClientesBase();
+
+  alert("↩ Pago revertido correctamente");
 };
 
 
@@ -1756,7 +1947,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   // ===============================
   await cargarContactosPersonal();      // personal.json
   await cargarProductosDisponibles();   // sugerencias rápidas
-  await cargarClientesBase();            // clientes + deuda
+  await cargarClientesBase();
+renderResumenPagosPorMetodo();            // clientes + deuda
   renderResumenGeneral();
 
   // ===============================
@@ -1842,6 +2034,8 @@ window.seleccionarCliente = seleccionarCliente;
 window.abrirModalNuevoCliente = abrirModalNuevoCliente;
 window.cerrarModalNuevoCliente = cerrarModalNuevoCliente;
 window.guardarNuevoCliente = guardarNuevoCliente;
+window.mostrarClientes = mostrarClientes;
+window.calcularResumenPagosPorMetodoGlobal = calcularResumenPagosPorMetodoGlobal;
 
 
 /*
@@ -1859,61 +2053,5 @@ window.registrarPagoAutomatico = function () {
   const monto = Number(prompt("Monto del pago (₡):", "0"));
   if (!monto || monto <= 0) return;
   window.guardarPagoModal(monto, "Efectivo", "");
-};
-
-
-window.revertirPago = async function (indexPago) {
-  const abonos = [...(clienteSeleccionado.abonos || [])];
-  const pago = abonos[indexPago];
-  if (!pago) return;
-
-  if (!confirm(`¿Revertir este pago?
-Monto: ₡${pago.monto.toLocaleString()}
-Fecha: ${new Date(pago.fecha).toLocaleDateString("es-CR")}`)) return;
-
-  // Quitar solo ese abono
-  abonos.splice(indexPago, 1);
-
-  // 🔁 Recalcular TODAS las compras desde cero
-  clienteSeleccionado.compras.forEach(c => {
-    const total = Number(c.total ?? (c.monto - (c.descuento || 0)));
-    c.pagado = 0;
-    c.saldo = total;
-    c.selloOtorgado = false;
-  });
-
-  // FIFO limpio
-  const comprasOrdenadas = clienteSeleccionado.compras
-    .slice()
-    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-
-  abonos
-    .slice()
-    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
-    .forEach(abono => {
-      let restante = abono.monto;
-
-      comprasOrdenadas.forEach(c => {
-        if (restante <= 0) return;
-
-        const total = Number(c.total ?? (c.monto - (c.descuento || 0)));
-        const disponible = total - c.pagado;
-
-        if (disponible > 0) {
-          const aplicar = Math.min(disponible, restante);
-          c.pagado += aplicar;
-          c.saldo = total - c.pagado;
-          restante -= aplicar;
-        }
-      });
-    });
-
-  await updateDoc(doc(db, "facturas", clienteSeleccionadoId), {
-    compras: clienteSeleccionado.compras,
-    abonos
-  });
-
-  await seleccionarCliente(clienteSeleccionadoId);
-  alert("✔ Pago revertido correctamente");
 };
 
