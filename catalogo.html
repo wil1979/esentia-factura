@@ -5,448 +5,558 @@
   <title>Catálogo Esentia</title>
   <link rel="icon" href="images/logo.png" sizes="192x192" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!--<link rel="stylesheet" href="catalogo.css" />-->
+  <link rel="stylesheet" href="catalogo.css" />
+
+  <!-- Estilos generales -->
   <style>
-  /* ====== Estilos generales ====== */
-  :root {
-    --dorado: #c8b273;
-    --dorado-claro: #d4c28f;
-    --verde: #e1e9e1;
-    --verde-oscuro: #1a3a1f;
-    --blanco-translucido: rgba(255, 255, 255, 0.12);
-    --borde-dorado: rgba(200, 178, 115, 0.35);
-  }
+    .btn-filtro {
+      background: #f0f0f0;
+      border: 2px solid #ccc;
+      padding: 8px 16px;
+      margin: 0 5px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
 
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+    .btn-filtro:hover { background: #e0e0e0; }
 
-  body {
-    
-    background: linear-gradient(135deg, var(--verde) 0%, var(--verde-oscuro) 100%);
-    color: #f8f8f8;
-    min-height: 100vh;
-    padding: 0;
-    margin: 0;
-  }
+    .btn-filtro.activo {
+      background: #6c4ba3;
+      color: white;
+      border-color: #6c4ba3;
+    }
 
-  /* ====== Header ====== */
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 24px;
-    background: var(--blanco-translucido);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--borde-dorado);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
+    .modal-carrito {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.7);
+    }
 
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+    .modal-contenido {
+      background-color: #fefefe;
+      margin: 5% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 90%;
+      max-width: 600px;
+      border-radius: 12px;
+      position: relative;
+    }
 
-  .logo {
-    height: 50px;
-    border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-  }
+    .producto-card {
+      position: relative;
+    }
 
-  .header h1 {
-    color: var(--dorado);
-    font-size: 1.6rem;
-  }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #4caf50;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      display: none;
+      z-index: 2000;
+    }
+  </style>
 
-  .header p {
-    color: #08442b;
-    font-size: 0.95rem;
-  }
+  <!-- Bottom sheet admin negro/dorado -->
+  <style>
+    .admin-sheet-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(4px);
+      display: none;
+      justify-content: flex-end;
+      align-items: stretch;
+      z-index: 1200;
+    }
 
-  .btn-login, .btn-cerrar-sesion {
-    background: rgba(200, 178, 115, 0.25);
-    color: white;
-    border: 1px solid var(--dorado);
-    border-radius: 10px;
-    padding: 8px 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(4px);
-  }
+    .admin-sheet {
+      background: #050505;
+      border-radius: 20px 20px 0 0;
+      border-top: 2px solid #d4af37;
+      box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.6);
+      padding: 16px 20px 22px;
+      width: 25%;
+      max-height: 65vh;
+      animation: adminSheetIn 0.25s ease-out;
+    }
 
-  .btn-login:hover, .btn-cerrar-sesion:hover {
-    background: rgba(200, 178, 115, 0.45);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(200, 178, 115, 0.3);
-  }
+    @keyframes adminSheetIn {
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
 
-  /* ====== Tarjetas de producto (glass) ====== */
-  .producto-card {
-    background: var(--blanco-translucido);
-    border-radius: 16px;
-    padding: 16px;
-    text-align: center;
-    max-width: 220px;
-    border: 1px solid var(--borde-dorado);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
+    .admin-sheet-handle {
+      width: 48px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 999px;
+      margin: 0 auto 12px;
+    }
 
-  .producto-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
-  }
-
-  .producto-card h3 {
-    margin: 8px 0;
-    font-size: 1.1rem;
-    color: var(--dorado);
-  }
-
-  .producto-card .estrellas {
-    margin: 6px 0;
-    color: gold;
-    font-size: 0.9rem;
-  }
-
-  .producto-card .precio-original {
-    text-decoration: line-through;
-    color: #aaa;
-    margin-right: 6px;
-  }
-
-  .producto-card p {
-    margin: 4px 0;
-    font-weight: bold;
-    color: #fff;
-  }
-
-  .btn-agregar {
-    background: rgba(200, 178, 115, 0.2);
-    color: white;
-    border: 1px solid var(--dorado);
-    border-radius: 10px;
-    padding: 6px 12px;
-    margin-top: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-  }
-
-  .btn-agregar:hover {
-    background: rgba(200, 178, 115, 0.4);
-    transform: scale(1.05);
-  }
-
-  /* ====== Sección "¿No encuentras...?" ====== */
-  .contenedor > div[style*="background:#f9f7ff"] {
-    background: var(--blanco-translucido) !important;
-    border: 1px solid var(--borde-dorado) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    color: #fff !important;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.15) !important;
-  }
-
-  .contenedor > div[style*="background:#f9f7ff"] h3 {
-    color: var(--dorado) !important;
-    margin-bottom: 12px !important;
-  }
-
-  .contenedor > div[style*="background:#f9f7ff"] button {
-    background: rgba(200, 178, 115, 0.25) !important;
-    border: 1px solid var(--dorado) !important;
-    color: white !important;
-    border-radius: 10px !important;
-    transition: all 0.3s ease !important;
-  }
-
-  .contenedor > div[style*="background:#f9f7ff"] button:hover {
-    background: rgba(200, 178, 115, 0.45) !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 12px rgba(200, 178, 115, 0.3) !important;
-  }
-
-  /* ====== Modales generales ====== */
-  .modal-carrito {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    justify-content: center;
-    align-items: center;
-  }
-
-  .modal-contenido {
-    background: var(--blanco-translucido);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid var(--borde-dorado);
-    border-radius: 20px;
-    padding: 24px;
-    width: 90%;
-    max-width: 400px;
-    color: #fff;
-    position: relative;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  }
-
-  .modal-contenido h2 {
-    color: var(--dorado);
-    margin-bottom: 16px;
-    text-align: center;
-  }
-
-  .modal-contenido input,
-  .modal-contenido select {
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    border-radius: 10px;
-    border: 1px solid var(--borde-dorado);
-    background: rgba(255,255,255,0.15);
-    color: white;
-  }
-
-  .modal-contenido input::placeholder {
-    color: #ccc;
-  }
-
-  .modal-contenido button {
-    background: var(--dorado);
-    color: #2d572c;
-    border: none;
-    border-radius: 10px;
-    padding: 10px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-
-  .modal-contenido button:hover {
-    background: var(--dorado-claro);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(200, 178, 115, 0.4);
-  }
-
-  /* Botones secundarios (como eliminar del carrito) */
-  .modal-contenido button[style*="background:#ff5b5b"] {
-    background: #e74c3c !important;
-    color: white !important;
-  }
-
-  /* Tabs login/registro */
-  .btn-tab {
-    background: rgba(200, 178, 115, 0.2);
-    color: white;
-    border: 1px solid var(--borde-dorado);
-    border-radius: 8px;
-    padding: 8px 12px;
-    cursor: pointer;
-  }
-
-  .btn-tab.activo {
-    background: var(--dorado);
-    color: var(--verde);
-    font-weight: bold;
-  }
-
-  /* ====== Botón flotante del carrito ====== */
-  #botonCarrito {
-    position: fixed !important;
-    bottom: 20px !important;
-    right: 20px !important;
-    padding: 12px 16px !important;
-    background: var(--dorado) !important;
-    color: var(--verde) !important;
-    border: none !important;
-    border-radius: 50% !important;
-    width: 60px !important;
-    height: 60px !important;
-    font-size: 1.4rem !important;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.4) !important;
-    z-index: 999 !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    transition: all 0.3s ease !important;
-  }
-
-  #botonCarrito:hover {
-    transform: scale(1.1) !important;
-    box-shadow: 0 8px 20px rgba(200, 178, 115, 0.5) !important;
-  }
-
-  #contadorCarrito {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: #e74c3c;
-    color: white;
-    border-radius: 50%;
-    width: 22px;
-    height: 22px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 0.8rem;
-    font-weight: bold;
-  }
-
-  /* ====== Toast ====== */
-  .toast {
-    position: fixed;
-    bottom: 90px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--dorado);
-    color: var(--verde);
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-weight: bold;
-    z-index: 1000;
-    display: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  /* ====== Tarjeta de lealtad ====== */
-  .lealtad-container {
-    position: fixed;
-    bottom: 90px;
-    right: 20px;
-    z-index: 998;
-  }
-
-  .tarjeta-lealtad {
-    background: var(--blanco-translucido);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--borde-dorado);
-    border-radius: 16px;
-    padding: 16px;
-    width: 280px;
-    color: white;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-  }
-
-  .tarjeta-lealtad-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-  }
-
-  .tarjeta-lealtad h3 {
-    color: var(--dorado);
-  }
-
-  .btn-cerrar-tarjeta {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.4rem;
-    cursor: pointer;
-  }
-
-  .cliente-info span {
-    color: #ccc;
-  }
-
-  .sellos-container {
-    margin-top: 12px;
-  }
-
-  .sellos-titulo {
-    font-size: 0.9rem;
-    margin-bottom: 8px;
-    color: #ddd;
-  }
-
-  .sellos-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 6px;
-    margin-bottom: 8px;
-  }
-
-  .sello {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 0.8rem;
-  }
-
-  .sello.activo {
-    background: var(--dorado);
-    color: var(--verde);
-  }
-
-  .sello.inactivo {
-    background: rgba(255,255,255,0.1);
-    color: #666;
-  }
-
-  .estado-premio {
-    background: rgba(200, 178, 115, 0.25);
-    padding: 8px;
-    border-radius: 8px;
-    text-align: center;
-    margin-top: 8px;
-    color: white;
-  }
-
-  .caja-regalo-flotante {
-    width: 50px;
-    height: 50px;
-    background: var(--dorado);
-    color: var(--verde);
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.4rem;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  }
-
-  /* ====== Responsive ====== */
-  @media (max-width: 600px) {
-    .header {
-      flex-direction: column;
-      gap: 12px;
+    .admin-sheet-title {
+      color: #f5eec2;
+      font-size: 1.05rem;
+      margin-bottom: 10px;
       text-align: center;
     }
 
-    .productos {
-      justify-content: center !important;
+    .admin-sheet-desc {
+      color: #d4af37;
+      font-size: 0.9rem;
+      text-align: center;
+      margin-bottom: 16px;
     }
-  }
-</style>
 
+    .admin-sheet-btn {
+      width: 100%;
+      padding: 10px 14px;
+      margin-top: 8px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #d4af37, #b8891e);
+      color: #000;
+      font-weight: 600;
+    }
+
+    .admin-sheet-btn-secondary {
+      width: 100%;
+      padding: 9px 14px;
+      margin-top: 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: transparent;
+      color: #f5f5f5;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+
+    .admin-dot-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: 1px solid rgba(212, 175, 55, 0.9);
+      background: rgba(0, 0, 0, 0.7);
+      color: #f5eec2;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 20;
+      backdrop-filter: blur(2px);
+    }
+
+    .admin-dot-btn:hover {
+      background: rgba(18, 18, 18, 0.95);
+    }
+  </style>
+
+  <!-- LOGIN GLASS OSCURO -->
+  <style>
+    #modalLoginRegistro {
+      backdrop-filter: blur(10px);
+      background: rgba(0, 0, 0, 0.65);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1100;
+    }
+
+    #modalLoginRegistro .modal-contenido {
+      background: radial-gradient(circle at top, rgba(255, 255, 255, 0.22), rgba(10, 10, 10, 0.9));
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(212, 175, 55, 0.6);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65);
+      border-radius: 18px !important;
+      padding: 24px 22px !important;
+      max-width: 380px !important;
+      color: #f5eec2;
+      animation: glassFadeIn 0.4s ease;
+    }
+
+    @keyframes glassFadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9) translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    #modalLoginRegistro h2 {
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 1.4rem;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-tab {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: transparent;
+      color: #f5eec2;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .btn-tab.activo {
+      background: linear-gradient(90deg, #b89446, #efd28f);
+      color: #000;
+      border-color: transparent;
+      font-weight: 600;
+    }
+
+    #modalLoginRegistro input {
+      background: rgba(0, 0, 0, 0.5) !important;
+      color: #f5eec2 !important;
+      border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
+
+    #modalLoginRegistro input::placeholder {
+      color: rgba(245, 238, 194, 0.7);
+    }
+
+    #modalLoginRegistro button {
+      background: linear-gradient(90deg, #b89446, #efd28f);
+      color: #000 !important;
+      font-weight: 600;
+      border-radius: 10px !important;
+    }
+
+    #loginMensaje {
+      color: #ffb3b3 !important;
+    }
 
   
+ 
+    /* Contenedor flotante de la tarjeta de lealtad */
+    .lealtad-container {
+      position: fixed;
+      bottom: 100px;
+      right: 20px;
+      z-index: 998;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .lealtad-container.activo {
+      display: flex;
+    }
+
+    /* Tarjeta de lealtad flotante */
+    .tarjeta-lealtad {
+      background: linear-gradient(135deg, #6c4ba3 0%, #8b6bb4 100%);
+      border-radius: 16px;
+      padding: 20px;
+      width: 320px;
+      box-shadow: 0 8px 24px rgba(108, 75, 163, 0.3);
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      animation: slideInRight 0.4s ease-out;
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .tarjeta-lealtad-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      padding-bottom: 12px;
+    }
+
+    .tarjeta-lealtad-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .btn-cerrar-tarjeta {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .btn-cerrar-tarjeta:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+
+    .cliente-info {
+      margin-bottom: 16px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+
+    .cliente-info p {
+      margin: 4px 0;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .cliente-info strong {
+      color: #ffd700;
+    }
+
+    /* Sellos de lealtad */
+    .sellos-container {
+      margin: 16px 0;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+    }
+
+    .sellos-titulo {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      text-align: center;
+      color: #ffd700;
+    }
+
+    .sellos-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .sello {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: bold;
+      border: 2px dashed rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    .sello.activo {
+      background: linear-gradient(135deg, #ffd700, #ffed4e);
+      border-color: #ffd700;
+      color: #333;
+      box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+      animation: popIn 0.5s ease-out;
+    }
+
+    @keyframes popIn {
+      0% {
+        transform: scale(0.5);
+        opacity: 0;
+      }
+      50% {
+        transform: scale(1.15);
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .sello.inactivo {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .progreso-lealtad {
+      margin-top: 12px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #ffd700;
+      font-weight: 600;
+    }
+
+    /* Caja de regalo flotante */
+    .caja-regalo-flotante {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
+      animation: bounce 2s infinite;
+      transition: all 0.3s ease;
+    }
+
+    .caja-regalo-flotante:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 24px rgba(255, 107, 107, 0.4);
+    }
+
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    /* Estado premio obtenido */
+    .estado-premio {
+      background: linear-gradient(135deg, #4caf50, #66bb6a);
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 600;
+      margin-top: 12px;
+      animation: slideInUp 0.4s ease-out;
+    }
+
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .lealtad-container {
+        bottom: 80px;
+        right: 10px;
+      }
+
+      .tarjeta-lealtad {
+        width: 280px;
+        padding: 16px;
+      }
+
+      .sellos-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .caja-regalo-flotante {
+        width: 70px;
+        height: 70px;
+        font-size: 2rem;
+      }
+    }
+
+    .glass-visitas {
+  position: fixed;
+  top: 90px;
+  right: 20px;
+  width: 320px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(212,175,55,0.5);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  color: #f5eec2;
+  z-index: 1300;
+}
+
+.glass-visitas h3 {
+  margin-top: 0;
+  text-align: center;
+  color: #d4af37;
+}
+
+.hidden { display: none; }
+
+.btn-toggle-visitas {
+  position: fixed;
+  top: 90px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(212,175,55,0.7);
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(10px);
+  color: #f5eec2;
+  font-size: 1.2rem;
+  cursor: pointer;
+  z-index: 1400;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+}
+
+.btn-toggle-visitas:hover {
+  background: rgba(15,15,15,0.9);
+  transform: scale(1.05);
+}
+
+.btn-toggle-visitas.hidden {
+  display: none;
+}
+  </style>
+
+  </style>
 </head>
 
 <body>
   <header class="header">
     <div class="header-left">
-      <img src="https://wil1979.github.io/esentia-factura/images/logo.png" alt="Esentia" class="logo">
+      <img src="images/logo.png" alt="Esentia" class="logo">
       <div>
         <h1>Catálogo Esentia</h1>
         <p>Fragancias que enamoran</p>
@@ -537,9 +647,9 @@
       </form>
 
       <form id="formRegistro" style="display:none;">
-        <input type="text" id="regNombre" placeholder="Nombre completo" required
+        <input type="text" id="regNombre" placeholder="Nombre completo" disabled
                style="width:100%; padding:12px; margin:8px 0; border-radius:8px;">
-        <input type="text" id="regCedula" placeholder="Cédula (opcional)"
+        <input type="text" id="regCedula" placeholder="Cédula (opcional)" required
                style="width:100%; padding:12px; margin:8px 0; border-radius:8px;">
         <input type="text" id="regTelefono" placeholder="Teléfono (opcional)" required
                style="width:100%; padding:12px; margin:8px 0; border-radius:8px;">
@@ -579,20 +689,7 @@
     <div class="tarjeta-lealtad" id="tarjetaLealtad">
       <div class="tarjeta-lealtad-header">
         <h3>💳 Mi Lealtad</h3>
-        
-        <button onclick="cargarDatosLealtadCliente()" style="
-  background: rgba(200, 178, 115, 0.25);
-  color: white;
-  border: 1px solid var(--dorado);
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 0.85rem;
-  margin-top: 4px;
-  cursor: pointer;
-">🔄</button>
         <button class="btn-cerrar-tarjeta" onclick="cerrarTarjetaLealtad()">×</button>
-        <button id="btn-reclamar-premio" onclick="reclamarPremioLealtad()" style="display:none;">
-  🎁 Reclamar
       </div>
 
       <div class="cliente-info" id="clienteInfoLealtad">
@@ -615,10 +712,7 @@
 
     <!-- Caja de regalo (visible cuando la tarjeta está cerrada) -->
     <div class="caja-regalo-flotante" id="cajaRegaloFlotante" onclick="abrirTarjetaLealtad()" style="display:none;" title="Abre tu tarjeta de lealtad">
-      🎁      
-    
-
-</button>
+      🎁
     </div>
   </div>
 
@@ -627,14 +721,17 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import {
-      getFirestore,
-    collection,
-    getDocs,
-    query,
-    where,
-    addDoc,
-    updateDoc
-    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+  getFirestore,
+  collection,
+  getDocs,
+  getDoc,       // ✅
+  doc,          // ✅
+  setDoc,       // ✅
+  query,
+  where,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
@@ -650,13 +747,16 @@
     const stockCollection = collection(db, "stock");
 
     window.db = db;
-   window.firebaseUtils = { 
-  query, 
-  where, 
-  collection, 
-  getDocs, 
-  addDoc, 
-  updateDoc  // 👈 Añade esta línea
+    window.firebaseUtils = {
+  query,
+  where,
+  collection,
+  getDocs,
+  getDoc,      // ✅
+  doc,         // ✅
+  setDoc,      // ✅
+  addDoc,
+  serverTimestamp
 };
 
     let inventario = {};
@@ -669,15 +769,15 @@
           const data = doc.data();
           inventario[data.nombre] = data.cantidad;
         });
-        // ✅ LLAMADA A LA FUNCIÓN DE LEALTAD
-    if (typeof actualizarLealtadAlAutenticar === "function") {
-      actualizarLealtadAlAutenticar();
-    }
+        // ✅ Actualizar tarjeta de lealtad
+        if (typeof actualizarLealtadAlAutenticar === "function") {
+          actualizarLealtadAlAutenticar();
+        }
 
-    if (typeof intentarRenderizar === "function" && window.catalogoListo) {
-      intentarRenderizar();
-    }
-  } catch (error) {
+        if (typeof intentarRenderizar === "function" && window.catalogoListo) {
+          intentarRenderizar();
+        }
+      } catch (error) {
         console.error("Error cargando inventario:", error);
         if (typeof mostrarErrorCarga === "function") {
           mostrarErrorCarga();
@@ -739,31 +839,47 @@
       if (clienteAutenticado) {
         container.classList.add('activo');
         cargarDatosLealtadCliente();
+        activarControlesAdmin();
       } else {
         container.classList.remove('activo');
       }
     }
 
     /**
- * Carga los datos de lealtad del cliente desde Firestore
- */
-async function cargarDatosLealtadCliente() {
+     * Carga los datos de lealtad del cliente desde Firestore
+     */
+    async function cargarDatosLealtadCliente() {
   if (!clienteAutenticado) return;
+
   try {
-    const { query, where, collection, getDocs } = window.firebaseUtils;
-    const col = collection(window.db, 'clientes');
-    // Busca por el campo 'cedula' dentro del documento, no por el ID del documento
-    const q = query(col, where('cedula', '==', clienteAutenticado.cedula));
-    const snap = await getDocs(q);
-    if (!snap.empty) {
-      const doc = snap.docs[0];
-      datosLealtadCliente = doc.data();
+    const { doc, getDoc } = window.firebaseUtils;
+
+    const ref = doc(window.db, "clientesBD", clienteAutenticado.id);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      datosLealtadCliente = {
+        nombre: clienteAutenticado.nombre,
+        lealtad: { sellos: 0, objetivo: 6, premiosPendientes: 0 }
+      };
       actualizarVisualizacionLealtad();
+      return;
     }
+
+    const data = snap.data();
+
+    datosLealtadCliente = {
+      nombre: data.nombre,
+      lealtad: data.lealtad || { sellos: 0, objetivo: 6, premiosPendientes: 0 }
+    };
+
+    actualizarVisualizacionLealtad();
+
   } catch (error) {
-    console.error('Error cargando datos de lealtad:', error);
+    console.error("❌ Error cargando lealtad:", error);
   }
 }
+
 
     /**
      * Actualiza la visualización de la tarjeta de lealtad con los datos del cliente
@@ -808,21 +924,41 @@ async function cargarDatosLealtadCliente() {
       } else {
         estadoPremio.innerHTML = '';
       }
-
-      const btnReclamar = document.getElementById("btn-reclamar-premio");
-if (premiosPendientes > 0) {
-  btnReclamar.style.display = "block";
-  // Opcional: mensaje adicional
-} else {
-  btnReclamar.style.display = "none";
-}
     }
 
     /**
      * Actualiza la tarjeta de lealtad cuando el cliente se autentica
      */
+    
+    /**
+     * Registra la visita del cliente a catalogo.html en Firestore
+     * Crea un documento en la colección "registroVisitas"
+     */
+    async function registrarVisita() {
+  if (!clienteAutenticado) return;
+
+  try {
+    const { doc, setDoc, serverTimestamp } = window.firebaseUtils;
+
+    const ref = doc(window.db, "registroVisitas", clienteAutenticado.id);
+
+    await setDoc(ref, {
+      nombre: clienteAutenticado.nombre,
+      cedula: clienteAutenticado.cedula || "",
+      pagina: "catalogo.html",
+      ultimaVisita: serverTimestamp(),
+      navegador: navigator.userAgent
+    }, { merge: true });
+
+  } catch (error) {
+    console.error("Error registrando visita:", error);
+  }
+}
+
     function actualizarLealtadAlAutenticar() {
       mostrarTarjetaLealtad();
+      registrarVisita();  // ✅ Registrar visita
+      
       
       // Restaurar el estado de la tarjeta (abierta o cerrada)
       const tarjetaAbierta = localStorage.getItem('tarjetaLealtadAbierta') !== 'false';
@@ -842,57 +978,6 @@ if (premiosPendientes > 0) {
       datosLealtadCliente = null;
     }
 
-    function lanzarConfeti() {
-  // Puedes usar una librería como canvas-confetti o un efecto simple
-  // Aquí una versión ligera sin dependencias externas:
-  if (typeof confetti === 'undefined') {
-    // Si no tienes confetti, saltar
-    return;
-  }
-  confetti({
-    particleCount: 100,
-    spread: 70,
-    origin: { y: 0.6 }
-  });
-}
-
-   async function reclamarPremioLealtad() {
-  if (!clienteAutenticado?.cedula) {
-    mostrarToast("Inicia sesión para reclamar tu premio.", "#ff9800");
-    return;
-  }
-  try {
-    const { collection, query, where, getDocs, updateDoc } = window.firebaseUtils;
-    const q = query(collection(window.db, "clientes"), where("cedula", "==", clienteAutenticado.cedula));
-    const snap = await getDocs(q);
-    if (snap.empty) {
-      mostrarToast("Cliente no encontrado.", "#f44336");
-      return;
-    }
-    const docRef = snap.docs[0].ref;
-    const data = snap.docs[0].data();
-    const lealtad = data.lealtad || {};
-    const premiosPendientes = lealtad.premiosPendientes || 0;
-    if (premiosPendientes <= 0) {
-      mostrarToast("No tienes premios pendientes.", "#ff9800");
-      return;
-    }
-    // Actualizar en Firestore
-    await updateDoc(docRef, {
-      "lealtad.premiosPendientes": premiosPendientes - 1
-    });
-
-    // ✅ Sin confeti (por ahora)
-    alert("🎁 ¡Premio reclamado! Muestra este mensaje en tu próxima compra.");
-
-    // Recargar la tarjeta
-    await cargarDatosLealtadCliente();
-  } catch (e) {
-    console.error("Error al reclamar premio:", e);
-    mostrarToast("Error al reclamar. Intenta de nuevo.", "#f44336");
-  }
-}
-
 
     function mostrarToast(mensaje, color = "#4caf50") {
       const t = document.getElementById("toast");
@@ -909,6 +994,60 @@ if (premiosPendientes > 0) {
         }, 500);
       }, 2000);
     }
+
+   async function mostrarPanelVisitasAdmin() {
+  if (localStorage.getItem("adminEsentia") !== "1") return;
+
+  const panel = document.getElementById("panelVisitas");
+  const lista = document.getElementById("listaVisitas");
+  if (!panel || !lista) return;
+
+  panel.classList.remove("hidden");
+  lista.innerHTML = "Cargando...";
+
+  try {
+    const { collection, getDocs } = window.firebaseUtils;
+    const snap = await getDocs(collection(window.db, "registroVisitas"));
+
+    lista.innerHTML = "";
+
+   snap.docs
+  .sort((a, b) =>
+    (b.data().ultimaVisita?.seconds || 0) -
+    (a.data().ultimaVisita?.seconds || 0)
+  )
+  .forEach(d => {
+    const v = d.data();
+    const fecha = v.ultimaVisita?.seconds
+      ? new Date(v.ultimaVisita.seconds * 1000).toLocaleString("es-CR")
+      : "—";
+
+    lista.innerHTML += `
+      <div style="margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.2)">
+        <strong>${v.nombre || "Sin nombre"}</strong><br>
+        <small>Última visita:</small><br>
+        <small>${fecha}</small>
+      </div>
+    `;
+  });
+
+  } catch (e) {
+    lista.innerHTML = "Error cargando visitas";
+  }
+}
+
+async function buscarCedulaHacienda(cedula) {
+  try {
+    const resp = await fetch(
+      `https://api.hacienda.go.cr/fe/ae?identificacion=${cedula}`
+    );
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return data?.nombre || null;
+  } catch {
+    return null;
+  }
+}
 
     function abrirLoginRegistro() {
       document.getElementById("modalLoginRegistro").style.display = "flex";
@@ -941,6 +1080,9 @@ if (premiosPendientes > 0) {
         document.getElementById("modalLoginRegistro").style.display = "flex";
         document.getElementById("btnLogin").style.display = "inline-block";
       }
+
+      activarControlesAdmin(); // ✅ CLAVE
+      actualizarLealtadAlAutenticar();
     }
 
     function intentarRenderizar() {
@@ -1159,7 +1301,7 @@ if (premiosPendientes > 0) {
       try {
         msg.textContent = "Buscando cliente...";
         const { query, where, collection, getDocs } = window.firebaseUtils;
-        const col = collection(window.db, "clientes");
+        const col = collection(window.db, "clientesBD");
         const q1 = query(col, where("cedula", "==", valor));
         const q2 = query(col, where("telefono", "==", valor));
 
@@ -1183,11 +1325,6 @@ if (premiosPendientes > 0) {
         };
 
         localStorage.setItem("sesionEsentia", JSON.stringify(clienteAutenticado));
-        /* 👇 Añade esta línea aquí*/
-if (typeof actualizarLealtadAlAutenticar === "function") {
-  actualizarLealtadAlAutenticar();
-}
-
 
         const esAdmin =
           data.cedula === "110350666" ||
@@ -1212,12 +1349,24 @@ if (typeof actualizarLealtadAlAutenticar === "function") {
         console.error("Error login:", err);
         msg.textContent = "Error de conexión.";
       }
+
+      activarControlesAdmin();
     });
 
     // Registro
     document.getElementById("formRegistro")?.addEventListener("submit", async e => {
       e.preventDefault();
-      const nombre = document.getElementById("regNombre").value.trim();
+      let nombre = document.getElementById("regNombre").value.trim();
+
+if (cedula) {
+  msg.textContent = "Validando cédula...";
+  const nombreHacienda = await buscarCedulaHacienda(cedula);
+  if (!nombreHacienda) {
+    msg.textContent = "❌ Cédula inválida";
+    return;
+  }
+  nombre = nombreHacienda;
+}
       const cedula = document.getElementById("regCedula").value.trim();
       const telefono = document.getElementById("regTelefono").value.trim();
       const msg = document.getElementById("loginMensaje");
@@ -1236,7 +1385,7 @@ if (typeof actualizarLealtadAlAutenticar === "function") {
           telefono: telefono,
           creado: new Date()
         };
-        const ref = await addDoc(collection(window.db, "clientes"), nuevoCliente);
+        const ref = await addDoc(collection(window.db, "clientesBD"), nuevoCliente);
         clienteAutenticado = {
           id: ref.id,
           nombre: nombre,
@@ -1336,6 +1485,31 @@ if (typeof actualizarLealtadAlAutenticar === "function") {
       if (!adminProductoActualId) return;
       publicarFacebook(adminProductoActualId);
     }
+
+    function activarControlesAdmin() {
+  const esAdmin = localStorage.getItem("adminEsentia") === "1";
+  const btn = document.getElementById("btnToggleVisitas");
+  const panel = document.getElementById("panelVisitas");
+
+  if (!btn || !panel) return;
+
+  if (!esAdmin) {
+    btn.classList.add("hidden");
+    panel.classList.add("hidden");
+    return;
+  }
+
+  btn.classList.remove("hidden");
+
+  // Restaurar estado anterior
+  const visible = localStorage.getItem("visitasVisible") === "1";
+  if (visible) {
+    panel.classList.remove("hidden");
+    mostrarPanelVisitasAdmin();
+  } else {
+    panel.classList.add("hidden");
+  }
+}
 
     // Cerrar bottom sheet al tocar fuera
     window.addEventListener("click", e => {
@@ -1547,8 +1721,59 @@ function actualizarCatalogoConStock() {
   });
 }
 
+function togglePanelVisitas() {
+  const panel = document.getElementById("panelVisitas");
+  if (!panel) return;
+
+  const visible = !panel.classList.contains("hidden");
+
+  if (visible) {
+    panel.classList.add("hidden");
+    localStorage.setItem("visitasVisible", "0");
+  } else {
+    panel.classList.remove("hidden");
+    localStorage.setItem("visitasVisible", "1");
+    mostrarPanelVisitasAdmin(); // recarga si se abre
+  }
+}
+
   </script>
 
+  <!-- Bottom sheet admin -->
+ <div id="adminSheetOverlay" class="admin-sheet-overlay">
+  <div class="admin-sheet">
+    <div class="admin-sheet-handle"></div>
+    <div class="admin-sheet-title">Acciones de administrador</div>
+    <div class="admin-sheet-desc">Herramientas rápidas para este producto.</div>
+
+    <!-- Vista PRO con página OG -->
+    <button type="button" class="admin-sheet-btn" onclick="publicarFacebookOG()">
+      <span>📣</span> <span>Publicar en Facebook (Vista PRO)</span>
+    </button>
+
+    <!-- Enlace directo normal al producto -->
+    <button type="button" class="admin-sheet-btn-secondary" onclick="publicarFacebookDirecto()">
+      🔗 Publicar en Facebook (Enlace directo)
+    </button>
+
+    <button type="button" class="admin-sheet-btn-secondary" onclick="cerrarAdminSheet()">
+      Cancelar
+    </button>
+  </div>
+</div>
+
+<div id="panelVisitas" class="glass-visitas hidden">
+  <h3>👁️ Visitas al catálogo</h3>
+  <div id="listaVisitas"></div>
+</div>
+
+<button id="btnToggleVisitas" class="btn-toggle-visitas hidden"
+        onclick="togglePanelVisitas()"
+        title="Mostrar / ocultar visitas">
+  👁️
+</button> 
+
+ <button type="button" class="admin-sheet-btn-secondary" onclick="mostrarPanelVisitasAdmin()"></button>
   
 </body>
 </html>
