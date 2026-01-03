@@ -203,10 +203,11 @@
 
     function renderTabla(filtro = "") {
       const tbody = document.getElementById("cuerpo-tabla");
-      const filtrados = todosLosClientes.filter(c => 
-        c.nombre.toLowerCase().includes(filtro) ||
-        (c.cedula && c.cedula.toString().includes(filtro))
-      );
+      const filtrados = todosLosClientes.filter(c => {
+  const nombre = (c.nombre || "").toString().toLowerCase();
+  const cedula = (c.cedula || "").toString();
+  return nombre.includes(filtro) || cedula.includes(filtro);
+});
 
       if (filtrados.length === 0) {
         tbody.innerHTML = "<tr><td colspan='8' style='text-align:center;'>No hay clientes</td></tr>";
@@ -222,7 +223,7 @@
           : '—';
         return `
           <tr>
-            <td>${c.nombre}</td>
+            <td>${c.nombre || '—'}</td>
             <td>${c.cedula || '—'}</td>
             <td>${c.telefono || '—'}</td>
             <td>${totalCompras}</td>
