@@ -4,13 +4,27 @@
 <meta charset="UTF-8">
 <title>👥 Clientes - Esentia</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body {
   font-family: system-ui, sans-serif;
   background: #f5f7fa;
   padding: 16px;
 }
-h2 { text-align:center; color:#6c4ba3; }
+h2 {
+  text-align:center;
+  color:#6c4ba3;
+  margin-bottom:10px;
+}
+input {
+  width:100%;
+  max-width:400px;
+  padding:10px;
+  margin:0 auto 16px;
+  display:block;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
 table {
   width:100%;
   border-collapse:collapse;
@@ -25,13 +39,17 @@ th {
   background:#6c4ba3;
   color:#fff;
 }
-tr:nth-child(even){background:#faf7ff;}
+tr:nth-child(even){
+  background:#faf7ff;
+}
 </style>
 </head>
 
 <body>
 
 <h2>👥 Clientes</h2>
+
+<input id="buscador" placeholder="Buscar por nombre o cédula…">
 
 <table>
 <thead>
@@ -60,27 +78,60 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
 const tbody = document.getElementById("tabla");
+const buscador = document.getElementById("buscador");
 
-async function cargar() {
-  const snap = await getDocs(collection(db, "clientes"));
+let clientes = [];
 
+/* 🔹 PINTAR TABLA */
+function render(lista) {
   tbody.innerHTML = "";
 
-  snap.forEach(d => {
-    const c = d.data();
-    const tr = document.createElement("tr");
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Sin resultados</td></tr>`;
+    return;
+  }
 
+  lista.forEach(c => {
+    const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${c.nombre || '—'}</td>
       <td>${c.cedula || '—'}</td>
       <td>${c.telefono || '—'}</td>
       <td>${(c.compras || []).length}</td>
     `;
-
     tbody.appendChild(tr);
   });
 }
+
+/* 🔹 CARGA INICIAL */
+async function cargar() {
+  const snap = await getDocs(collection(db, "clientes"));
+  clientes = [];
+
+  snap.forEach(d => {
+    const data = d.data();
+    clientes.push({
+      nombre: data.nombre || "",
+      cedula: (data.cedula || "").toString(),
+      telefono: data.telefono || "",
+      compras: data.compras || []
+    });
+  });
+
+  render(clientes);
+}
+
+/* 🔹 BUSCADOR */
+buscador.addEventListener("input", () => {
+  const f = buscador.value.toLowerCase();
+  const filtrados = clientes.filter(c =>
+    c.nombre.toLowerCase().includes(f) ||
+    c.cedula.includes(f)
+  );
+  render(filtrados);
+});
 
 cargar();
 </script>
