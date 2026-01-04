@@ -1,163 +1,19 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>👥 Administrar Clientes - Esentia</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #b3af57;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    h1 {
-      color: #6c4ba3;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .search-box {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    #buscador {
-      padding: 10px;
-      width: 300px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    th, td {
-      padding: 12px 15px;
-      text-align: left;
-      border-bottom: 1px solid #eee;
-    }
-    th {
-      background: #6c4ba3;
-      color: white;
-    }
-    tr:hover {
-      background: #f9f6ff;
-    }
-    .btn-edit, .btn-delete, .btn-reset {
-      padding: 5px 10px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      margin-left: 5px;
-    }
-    .btn-edit { background: #6c4ba3; color: white; }
-    .btn-delete { background: #d32f2f; color: white; }
-    .btn-reset { background: #FF9800; color: white; }
-    .btn-reset:hover { background: #F57C00; }
-    .calificado { color: #2e7d32; font-weight: bold; }
-    .no-calificado { color: #d32f2f; font-weight: bold; }
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-    .modal-content {
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 500px;
-    }
-    .modal-content input {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    .modal-buttons {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 15px;
-    }
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #4caf50;
-      color: white;
-      padding: 12px 16px;
-      border-radius: 6px;
-      display: none;
-      z-index: 2000;
-    }
-    .fecha-reinicio {
-      font-size: 0.85rem;
-      color: #6c4ba3;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>TEST CLIENTES</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-
 <body>
-<div class="container">
-  <h1>👥 Administrar Clientes - Esentia</h1>
 
-  <div class="search-box">
-    <input type="text" id="buscador" placeholder="Buscar por nombre o cédula...">
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Nombre</th>
-        <th>Cédula</th>
-        <th>Teléfono</th>
-        <th>Compras</th>
-        <th>Compra ≥ ₡10k</th>
-        <th>Ya Participó</th>
-        <th>Últ. Reinicio</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody id="cuerpo-tabla"></tbody>
-  </table>
-</div>
-
-<!-- Modal -->
-<div id="modalEditar" class="modal">
-  <div class="modal-content">
-    <h3>✏️ Editar Cliente</h3>
-    <input type="hidden" id="edit-id">
-    <input type="text" id="edit-nombre" placeholder="Nombre">
-    <input type="text" id="edit-cedula" placeholder="Cédula">
-    <input type="text" id="edit-telefono" placeholder="Teléfono">
-    <div class="modal-buttons">
-      <button onclick="cerrarModal()">Cancelar</button>
-      <button onclick="guardarEdicion()" style="background:#6c4ba3;color:white;">Guardar</button>
-    </div>
-  </div>
-</div>
-
-<div id="toast" class="toast"></div>
+<h2>📋 Clientes (test directo)</h2>
+<div id="estado">Conectando…</div>
+<ul id="lista"></ul>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
@@ -170,154 +26,31 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-let todosLosClientes = [];
 
-function showToast(msg, ok=true) {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.style.background = ok ? "#4caf50" : "#d32f2f";
-  t.style.display = "block";
-  setTimeout(() => t.style.display = "none", 3000);
-}
+const estado = document.getElementById("estado");
+const lista = document.getElementById("lista");
 
-async function cargarClientes() {
-  const tbody = document.getElementById("cuerpo-tabla");
-  tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">Cargando...</td></tr>`;
-
+async function test() {
   try {
     const snap = await getDocs(collection(db, "clientes"));
-    todosLosClientes = [];
+    estado.textContent = `Clientes encontrados: ${snap.size}`;
 
     snap.forEach(d => {
-      const data = d.data();
-      todosLosClientes.push({
-        id: d.id,
-        nombre: data.nombre || "",
-        cedula: data.cedula || "",
-        telefono: data.telefono || "",
-        compras: data.compras || [],
-        yaParticipo: data.yaParticipo || false,
-        fechaReinicioParticipacion: data.fechaReinicioParticipacion || null,
-        ...data
-      });
+      const li = document.createElement("li");
+      li.textContent = JSON.stringify(d.data());
+      lista.appendChild(li);
     });
 
-    renderTabla();
+    if (snap.size === 0) {
+      estado.textContent += " (colección vacía)";
+    }
   } catch (e) {
-    console.error(e);
-    tbody.innerHTML = `<tr><td colspan="8" style="color:red;text-align:center;">Error al cargar</td></tr>`;
+    estado.textContent = "❌ ERROR al consultar Firestore";
   }
 }
 
-function tieneCompraCalificada(compras=[]) {
-  return compras.some(c => (c.monto - (c.descuento || 0)) >= 10000);
-}
-
-function renderTabla(filtro="") {
-  const tbody = document.getElementById("cuerpo-tabla");
-  const f = filtro.toLowerCase();
-
-  const lista = todosLosClientes.filter(c => {
-    const nombre = c.nombre.toLowerCase();
-    const cedula = c.cedula.toString();
-    return nombre.includes(f) || cedula.includes(f);
-  });
-
-  if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">No hay clientes</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = lista.map(c => {
-    const calificado = tieneCompraCalificada(c.compras);
-    const fecha = c.fechaReinicioParticipacion
-      ? new Date(c.fechaReinicioParticipacion).toLocaleDateString('es-CR')
-      : '—';
-
-    return `
-    <tr>
-      <td>${c.nombre || '—'}</td>
-      <td>${c.cedula || '—'}</td>
-      <td>${c.telefono || '—'}</td>
-      <td>${c.compras.length}</td>
-      <td class="${calificado?'calificado':'no-calificado'}">${calificado?'✅ Sí':'❌ No'}</td>
-      <td>${c.yaParticipo?'✅ Sí':'❌ No'}</td>
-      <td class="fecha-reinicio">${fecha}</td>
-      <td>
-        <button class="btn-edit" onclick="abrirModal('${c.id}','${c.nombre.replace(/'/g,"\\'")}','${c.cedula}','${c.telefono}')">✏️</button>
-        <button class="btn-delete" onclick="eliminar('${c.id}')">🗑️</button>
-        ${calificado && c.yaParticipo ? `<button class="btn-reset" onclick="reiniciarParticipacion('${c.id}','${c.nombre}','${c.telefono}')">🔄</button>` : ''}
-      </td>
-    </tr>`;
-  }).join("");
-}
-function abrirModal(id, nombre, cedula, telefono) {
-  document.getElementById("edit-id").value = id;
-  document.getElementById("edit-nombre").value = nombre;
-  document.getElementById("edit-cedula").value = cedula;
-  document.getElementById("edit-telefono").value = telefono;
-  document.getElementById("modalEditar").style.display = "flex";
-}
-
-function cerrarModal() {
-  document.getElementById("modalEditar").style.display = "none";
-}
-
-async function guardarEdicion() {
-  const id = document.getElementById("edit-id").value;
-  const nombre = document.getElementById("edit-nombre").value.trim();
-  const cedula = document.getElementById("edit-cedula").value.trim();
-  const telefono = document.getElementById("edit-telefono").value.trim();
-
-  if (!nombre) {
-    showToast("⚠️ Nombre obligatorio", false);
-    return;
-  }
-
-  await updateDoc(doc(db, "clientes", id), {
-    nombre,
-    cedula: cedula || null,
-    telefono: telefono || null
-  });
-
-  showToast("✅ Cliente actualizado");
-  cerrarModal();
-  setTimeout(cargarClientes, 500);
-}
-
-async function eliminar(id) {
-  if (!confirm("¿Eliminar cliente?")) return;
-  await deleteDoc(doc(db, "clientes", id));
-  showToast("✅ Cliente eliminado");
-  cargarClientes();
-}
-
-async function reiniciarParticipacion(id, nombre, telefono) {
-  if (!confirm(`¿Reiniciar participación de ${nombre}?`)) return;
-
-  await updateDoc(doc(db, "clientes", id), {
-    yaParticipo: false,
-    premioObtenido: null,
-    codigoCanje: null,
-    codigoUsado: false,
-    fechaReinicioParticipacion: new Date().toISOString()
-  });
-
-  showToast("✅ Participación reiniciada");
-  cargarClientes();
-}
-
-document.getElementById("buscador").addEventListener("input", e => {
-  renderTabla(e.target.value);
-});
-
-cargarClientes();
-
-window.abrirModal = abrirModal;
-window.cerrarModal = cerrarModal;
-window.guardarEdicion = guardarEdicion;
-window.eliminar = eliminar;
-window.reiniciarParticipacion = reiniciarParticipacion;
+test();
 </script>
+
 </body>
 </html>
