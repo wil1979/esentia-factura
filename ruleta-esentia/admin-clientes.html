@@ -220,7 +220,9 @@ async function cargarClientes() {
   const snap = await getDocs(collection(db, "clientes"));
   clientes = [];
 
-  snap.forEach(d => clientes.push(d.data()));
+  snap.forEach(d => {
+  clientes.push({ id: d.id, ...d.data() });
+});
 
   detectarDuplicados(clientes);
   render(clientes);
