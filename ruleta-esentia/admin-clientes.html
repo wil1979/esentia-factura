@@ -2,14 +2,48 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>TEST CLIENTES</title>
+<title>👥 Clientes - Esentia</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {
+  font-family: system-ui, sans-serif;
+  background: #f5f7fa;
+  padding: 16px;
+}
+h2 { text-align:center; color:#6c4ba3; }
+table {
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+}
+th, td {
+  padding:10px;
+  border-bottom:1px solid #eee;
+  font-size:0.9rem;
+}
+th {
+  background:#6c4ba3;
+  color:#fff;
+}
+tr:nth-child(even){background:#faf7ff;}
+</style>
 </head>
+
 <body>
 
-<h2>📋 Clientes (test directo)</h2>
-<div id="estado">Conectando…</div>
-<ul id="lista"></ul>
+<h2>👥 Clientes</h2>
+
+<table>
+<thead>
+<tr>
+  <th>Nombre</th>
+  <th>Cédula</th>
+  <th>Teléfono</th>
+  <th>Compras</th>
+</tr>
+</thead>
+<tbody id="tabla"></tbody>
+</table>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
@@ -26,30 +60,29 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const tbody = document.getElementById("tabla");
 
-const estado = document.getElementById("estado");
-const lista = document.getElementById("lista");
+async function cargar() {
+  const snap = await getDocs(collection(db, "clientes"));
 
-async function test() {
-  try {
-    const snap = await getDocs(collection(db, "clientes"));
-    estado.textContent = `Clientes encontrados: ${snap.size}`;
+  tbody.innerHTML = "";
 
-    snap.forEach(d => {
-      const li = document.createElement("li");
-      li.textContent = JSON.stringify(d.data());
-      lista.appendChild(li);
-    });
+  snap.forEach(d => {
+    const c = d.data();
+    const tr = document.createElement("tr");
 
-    if (snap.size === 0) {
-      estado.textContent += " (colección vacía)";
-    }
-  } catch (e) {
-    estado.textContent = "❌ ERROR al consultar Firestore";
-  }
+    tr.innerHTML = `
+      <td>${c.nombre || '—'}</td>
+      <td>${c.cedula || '—'}</td>
+      <td>${c.telefono || '—'}</td>
+      <td>${(c.compras || []).length}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
 }
 
-test();
+cargar();
 </script>
 
 </body>
