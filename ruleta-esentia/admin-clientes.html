@@ -14,21 +14,29 @@ body {
 h2 {
   text-align:center;
   color:#6c4ba3;
-  margin-bottom:10px;
 }
-input {
+input, button {
   width:100%;
   max-width:400px;
   padding:10px;
-  margin:0 auto 16px;
+  margin:6px auto;
   display:block;
   border-radius:8px;
   border:1px solid #ccc;
+}
+button {
+  background:#6c4ba3;
+  color:#fff;
+  border:none;
+}
+button.secondary {
+  background:#607d8b;
 }
 table {
   width:100%;
   border-collapse:collapse;
   background:#fff;
+  margin-top:16px;
 }
 th, td {
   padding:10px;
@@ -39,8 +47,20 @@ th {
   background:#6c4ba3;
   color:#fff;
 }
-tr:nth-child(even){
-  background:#faf7ff;
+.modal {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  align-items:center;
+  justify-content:center;
+}
+.modal-content {
+  background:#fff;
+  padding:16px;
+  border-radius:12px;
+  width:90%;
+  max-width:420px;
 }
 </style>
 </head>
@@ -50,6 +70,7 @@ tr:nth-child(even){
 <h2>👥 Clientes</h2>
 
 <input id="buscador" placeholder="Buscar por nombre o cédula…">
+<button id="btnNuevo">➕ Nuevo cliente</button>
 
 <table>
 <thead>
@@ -63,9 +84,21 @@ tr:nth-child(even){
 <tbody id="tabla"></tbody>
 </table>
 
+<!-- MODAL NUEVO CLIENTE -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3>➕ Nuevo cliente</h3>
+    <input id="cedula" placeholder="Cédula">
+    <input id="nombre" placeholder="Nombre">
+    <input id="telefono" placeholder="Teléfono">
+    <button id="guardar">Guardar</button>
+    <button class="secondary" id="cerrar">Cancelar</button>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
@@ -81,59 +114,104 @@ const db = getFirestore(app);
 
 const tbody = document.getElementById("tabla");
 const buscador = document.getElementById("buscador");
+const modal = document.getElementById("modal");
 
 let clientes = [];
+let personal = [];
 
-/* 🔹 PINTAR TABLA */
+/* ================= DATOS PERSONAL.JSON ================= */
+async function cargarPersonal() {
+  try {
+    const res = await fetch("personal.json");
+    const data = await res.json();
+    personal = Array.isArray(data) ? data : [data];
+  } catch {
+    personal = [];
+  }
+}
+
+/* ================= TABLA ================= */
 function render(lista) {
   tbody.innerHTML = "";
-
   if (!lista.length) {
     tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Sin resultados</td></tr>`;
     return;
   }
-
   lista.forEach(c => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${c.nombre || '—'}</td>
-      <td>${c.cedula || '—'}</td>
-      <td>${c.telefono || '—'}</td>
+      <td>${c.nombre || "—"}</td>
+      <td>${c.cedula || "—"}</td>
+      <td>${c.telefono || "—"}</td>
       <td>${(c.compras || []).length}</td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-/* 🔹 CARGA INICIAL */
-async function cargar() {
+/* ================= FIRESTORE ================= */
+async function cargarClientes() {
   const snap = await getDocs(collection(db, "clientes"));
   clientes = [];
-
   snap.forEach(d => {
-    const data = d.data();
-    clientes.push({
-      nombre: data.nombre || "",
-      cedula: (data.cedula || "").toString(),
-      telefono: data.telefono || "",
-      compras: data.compras || []
-    });
+    clientes.push(d.data());
   });
-
   render(clientes);
 }
 
-/* 🔹 BUSCADOR */
+/* ================= BUSCADOR ================= */
 buscador.addEventListener("input", () => {
   const f = buscador.value.toLowerCase();
-  const filtrados = clientes.filter(c =>
-    c.nombre.toLowerCase().includes(f) ||
-    c.cedula.includes(f)
+  render(
+    clientes.filter(c =>
+      (c.nombre || "").toLowerCase().includes(f) ||
+      (c.cedula || "").toString().includes(f)
+    )
   );
-  render(filtrados);
 });
 
-cargar();
+/* ================= NUEVO CLIENTE ================= */
+document.getElementById("btnNuevo").onclick = () => modal.style.display = "flex";
+document.getElementById("cerrar").onclick = () => modal.style.display = "none";
+
+document.getElementById("cedula").addEventListener("input", e => {
+  const c = personal.find(p => p.cedula == e.target.value);
+  if (c) {
+    document.getElementById("nombre").value = c.nombre || "";
+    document.getElementById("telefono").value = c.telefono || "";
+  }
+});
+
+document.getElementById("guardar").onclick = async () => {
+  const cedula = document.getElementById("cedula").value.trim();
+  const nombre = document.getElementById("nombre").value.trim();
+  const telefono = document.getElementById("telefono").value.trim();
+
+  if (!nombre) {
+    alert("Nombre obligatorio");
+    return;
+  }
+
+  await addDoc(collection(db, "clientes"), {
+    cedula,
+    nombre,
+    telefono,
+    compras: [],
+    yaParticipo: false,
+    createdAt: new Date().toISOString()
+  });
+
+  modal.style.display = "none";
+  document.getElementById("cedula").value = "";
+  document.getElementById("nombre").value = "";
+  document.getElementById("telefono").value = "";
+
+  cargarClientes();
+};
+
+/* ================= INIT ================= */
+await cargarPersonal();
+await cargarClientes();
 </script>
 
 </body>
