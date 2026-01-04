@@ -251,6 +251,61 @@ function renderTabla(filtro="") {
     </tr>`;
   }).join("");
 }
+function abrirModal(id, nombre, cedula, telefono) {
+  document.getElementById("edit-id").value = id;
+  document.getElementById("edit-nombre").value = nombre;
+  document.getElementById("edit-cedula").value = cedula;
+  document.getElementById("edit-telefono").value = telefono;
+  document.getElementById("modalEditar").style.display = "flex";
+}
+
+function cerrarModal() {
+  document.getElementById("modalEditar").style.display = "none";
+}
+
+async function guardarEdicion() {
+  const id = document.getElementById("edit-id").value;
+  const nombre = document.getElementById("edit-nombre").value.trim();
+  const cedula = document.getElementById("edit-cedula").value.trim();
+  const telefono = document.getElementById("edit-telefono").value.trim();
+
+  if (!nombre) {
+    showToast("⚠️ Nombre obligatorio", false);
+    return;
+  }
+
+  await updateDoc(doc(db, "clientes", id), {
+    nombre,
+    cedula: cedula || null,
+    telefono: telefono || null
+  });
+
+  showToast("✅ Cliente actualizado");
+  cerrarModal();
+  cargarClientes();
+}
+
+async function eliminar(id) {
+  if (!confirm("¿Eliminar cliente?")) return;
+  await deleteDoc(doc(db, "clientes", id));
+  showToast("✅ Cliente eliminado");
+  cargarClientes();
+}
+
+async function reiniciarParticipacion(id, nombre, telefono) {
+  if (!confirm(`¿Reiniciar participación de ${nombre}?`)) return;
+
+  await updateDoc(doc(db, "clientes", id), {
+    yaParticipo: false,
+    premioObtenido: null,
+    codigoCanje: null,
+    codigoUsado: false,
+    fechaReinicioParticipacion: new Date().toISOString()
+  });
+
+  showToast("✅ Participación reiniciada");
+  cargarClientes();
+}
 
 document.getElementById("buscador").addEventListener("input", e => {
   renderTabla(e.target.value);
