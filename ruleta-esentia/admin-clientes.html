@@ -17,7 +17,7 @@ h2 {
 }
 input, button {
   width:100%;
-  max-width:400px;
+  max-width:420px;
   padding:10px;
   margin:6px auto;
   display:block;
@@ -47,6 +47,15 @@ th {
   background:#6c4ba3;
   color:#fff;
 }
+.badge {
+  padding:4px 8px;
+  border-radius:6px;
+  font-size:0.75rem;
+  font-weight:600;
+}
+.ok { background:#e8f5e9; color:#2e7d32; }
+.dup { background:#fff3e0; color:#ef6c00; }
+
 .modal {
   display:none;
   position:fixed;
@@ -79,6 +88,7 @@ th {
   <th>Cédula</th>
   <th>Teléfono</th>
   <th>Compras</th>
+  <th>Estado</th>
 </tr>
 </thead>
 <tbody id="tabla"></tbody>
@@ -100,6 +110,7 @@ th {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
+/* ================= FIREBASE ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
   authDomain: "esentiacreditos-8345f.firebaseapp.com",
@@ -112,39 +123,62 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+/* ================= ESTADO ================= */
 const tbody = document.getElementById("tabla");
 const buscador = document.getElementById("buscador");
 const modal = document.getElementById("modal");
 
 let clientes = [];
 let personal = [];
+let duplicados = new Set();
 
-/* ================= DATOS PERSONAL.JSON ================= */
+/* ================= PERSONAL.JSON ================= */
 async function cargarPersonal() {
-  try {
-    const res = await fetch("personal.json");
-    const data = await res.json();
-    personal = Array.isArray(data) ? data : [data];
-  } catch {
-    personal = [];
-  }
+  const res = await fetch("personal.json");
+  const data = await res.json();
+  personal = Array.isArray(data) ? data : [data];
 }
 
-/* ================= TABLA ================= */
+/* ================= DETECTAR DUPLICADOS ================= */
+function detectarDuplicados(lista) {
+  duplicados.clear();
+  const conteo = {};
+
+  lista.forEach(c => {
+    if (!c.cedula) return;
+    conteo[c.cedula] = (conteo[c.cedula] || 0) + 1;
+  });
+
+  Object.keys(conteo).forEach(c => {
+    if (conteo[c] > 1) duplicados.add(c);
+  });
+}
+
+/* ================= RENDER ================= */
 function render(lista) {
   tbody.innerHTML = "";
+
   if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Sin resultados</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Sin resultados</td></tr>`;
     return;
   }
+
   lista.forEach(c => {
+    const esDup = c.cedula && duplicados.has(c.cedula);
     const tr = document.createElement("tr");
+
     tr.innerHTML = `
       <td>${c.nombre || "—"}</td>
       <td>${c.cedula || "—"}</td>
       <td>${c.telefono || "—"}</td>
       <td>${(c.compras || []).length}</td>
+      <td>
+        <span class="badge ${esDup ? "dup" : "ok"}">
+          ${esDup ? "⚠️ Duplicado" : "OK"}
+        </span>
+      </td>
     `;
+
     tbody.appendChild(tr);
   });
 }
@@ -153,9 +187,10 @@ function render(lista) {
 async function cargarClientes() {
   const snap = await getDocs(collection(db, "clientes"));
   clientes = [];
-  snap.forEach(d => {
-    clientes.push(d.data());
-  });
+
+  snap.forEach(d => clientes.push(d.data()));
+
+  detectarDuplicados(clientes);
   render(clientes);
 }
 
@@ -175,10 +210,10 @@ document.getElementById("btnNuevo").onclick = () => modal.style.display = "flex"
 document.getElementById("cerrar").onclick = () => modal.style.display = "none";
 
 document.getElementById("cedula").addEventListener("input", e => {
-  const c = personal.find(p => p.cedula == e.target.value);
-  if (c) {
-    document.getElementById("nombre").value = c.nombre || "";
-    document.getElementById("telefono").value = c.telefono || "";
+  const p = personal.find(x => x.cedula == e.target.value);
+  if (p) {
+    document.getElementById("nombre").value = p.nombre || "";
+    document.getElementById("telefono").value = p.telefono || "";
   }
 });
 
