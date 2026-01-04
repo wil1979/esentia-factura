@@ -22,7 +22,7 @@
 body {
   margin: 0;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background: radial-gradient(circle at top right, #9addc5, #061a12);
+  background: radial-gradient(circle at top right, #c6e2c6, #233b23);
   background-attachment: fixed;
   color: var(--text-white);
   height: 100vh;
@@ -52,13 +52,14 @@ body {
 #panel-clientes {
   width: 320px;
   min-width: 300px;
-  background: rgba(10, 46, 31, 0.6);
+  background: rgba(87, 95, 92, 0.11);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   border-right: 1px solid var(--glass-border);
   display: flex;
   flex-direction: column;
   padding: 20px;
+  overflow-y: auto; /* 👈 AGREGA ESTA LÍNEA */
 }
 
 #panel-clientes h2 {
@@ -206,11 +207,9 @@ button:active {
 
 /* === Responsive (Mobile) === */
 @media (max-width: 768px) {
-  #panel-clientes {
-    height: 40vh;
-    overflow-y: auto;
+  #app {
+    flex-direction: column;
   }
-  
 
   #panel-clientes {
     width: 100%;
@@ -218,8 +217,6 @@ button:active {
     height: 40vh;
     border-right: none;
     border-bottom: 1px solid var(--glass-border);
-    overflow-y: auto;
-  -webkit-overflow-scrolling: touch; /* scroll suave iOS */
   }
 
   #panel-detalle {
@@ -255,53 +252,3 @@ button:active {
   max-height: 90vh;
   overflow-y: auto;
 }
-.skeleton-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.skeleton-item {
-  height: 60px;
-  border-radius: 12px;
-  background: linear-gradient(
-    100deg,
-    rgba(255,255,255,0.08) 40%,
-    rgba(255,255,255,0.18) 50%,
-    rgba(255,255,255,0.08) 60%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.2s infinite;
-}
-
-@keyframes shimmer {
-  to {
-    background-position-x: -200%;
-  }
-}
-
-@media print {
-  body * {
-    visibility: hidden;
-  }
-
-  .print-area, .print-area * {
-    visibility: visible;
-  }
-
-  .print-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    background: white;
-    color: black;
-    padding: 20px;
-    font-size: 12px;
-  }
-
-  button {
-    display: none !important;
-  }
-}
-
