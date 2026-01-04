@@ -4,293 +4,173 @@
 <meta charset="UTF-8">
 <title>👥 Clientes - Esentia</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
-body {
-  font-family: system-ui, sans-serif;
-  background: #f5f7fa;
-  padding: 16px;
-}
-h2 {
-  text-align:center;
-  color:#6c4ba3;
-}
-input, button {
-  width:100%;
-  max-width:420px;
-  padding:10px;
-  margin:6px auto;
-  display:block;
-  border-radius:8px;
-  border:1px solid #ccc;
-}
-button {
-  background:#6c4ba3;
-  color:#fff;
-  border:none;
-}
-button.secondary {
-  background:#607d8b;
-}
-table {
-  width:100%;
-  border-collapse:collapse;
-  background:#fff;
-  margin-top:16px;
-}
-th, td {
-  padding:10px;
-  border-bottom:1px solid #eee;
-  font-size:0.9rem;
-}
-th {
-  background:#6c4ba3;
-  color:#fff;
-}
-.badge {
-  padding:4px 8px;
-  border-radius:6px;
-  font-size:0.75rem;
-  font-weight:600;
-}
-.ok { background:#e8f5e9; color:#2e7d32; }
-.dup { background:#fff3e0; color:#ef6c00; }
-
-.modal {
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.6);
-  align-items:center;
-  justify-content:center;
-}
-.modal-content {
-  background:#fff;
-  padding:16px;
-  border-radius:12px;
-  width:90%;
-  max-width:420px;
-}
+body { font-family: system-ui, sans-serif; background:#f5f7fa; padding:20px }
+h1,h2 { color:#6c4ba3 }
+table { width:100%; border-collapse:collapse; background:#fff }
+th,td { padding:10px; border-bottom:1px solid #eee }
+th { background:#6c4ba3; color:#fff }
+.dup { background:#fff3f3 }
+.btn { padding:4px 8px; border:none; border-radius:4px; cursor:pointer }
+.edit { background:#6c4ba3; color:#fff }
+.del { background:#d32f2f; color:#fff }
 </style>
 </head>
 
 <body>
 
-<h2>👥 Clientes</h2>
+<h1>👥 Clientes Esentia</h1>
 
-<input id="buscador" placeholder="Buscar por nombre o cédula…">
-<button id="btnNuevo">➕ Nuevo cliente</button>
-
+<h2>Clientes normales</h2>
 <table>
 <thead>
-<tr>
-  <th>Nombre</th>
-  <th>Cédula</th>
-  <th>Teléfono</th>
-  <th>Compras</th>
-  <th>Estado</th>
-</tr>
+<tr><th>Nombre</th><th>Cédula</th><th>Teléfono</th><th>Origen</th><th>Acciones</th></tr>
 </thead>
-<tbody id="tabla"></tbody>
+<tbody id="tabla-clientes"></tbody>
 </table>
 
-<!-- MODAL NUEVO CLIENTE -->
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <h3>➕ Nuevo cliente</h3>
-    <input id="cedula" placeholder="Cédula">
-    <input id="nombre" placeholder="Nombre">
-    <input id="telefono" placeholder="Teléfono">
-    <button id="guardar">Guardar</button>
-    <button class="secondary" id="cerrar">Cancelar</button>
+<h2>📑 Clientes con cédula duplicada</h2>
+<table>
+<thead>
+<tr><th>Nombre</th><th>Cédula</th><th>Teléfono</th><th>Origen</th><th>Acciones</th></tr>
+</thead>
+<tbody id="tabla-duplicados"></tbody>
+</table>
+
+<!-- Modal editar -->
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);justify-content:center;align-items:center">
+  <div style="background:#fff;padding:20px;width:300px">
+    <input type="hidden" id="edit-id">
+    <input id="edit-nombre" placeholder="Nombre" style="width:100%;margin-bottom:8px">
+    <input id="edit-cedula" placeholder="Cédula" style="width:100%;margin-bottom:8px">
+    <input id="edit-telefono" placeholder="Teléfono" style="width:100%;margin-bottom:8px">
+    <button onclick="guardarEdicion()" class="btn edit">Guardar</button>
+    <button onclick="cerrarModal()" class="btn">Cancelar</button>
   </div>
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-
 /* ================= FIREBASE ================= */
-const firebaseConfig = {
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+const app = initializeApp({
   apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
   authDomain: "esentiacreditos-8345f.firebaseapp.com",
-  projectId: "esentiacreditos-8345f",
-  storageBucket: "esentiacreditos-8345f.firebasestorage.app",
-  messagingSenderId: "888658236080",
-  appId: "1:888658236080:web:506e5e2085b5a452dba175"
-};
-
-const app = initializeApp(firebaseConfig);
+  projectId: "esentiacreditos-8345f"
+});
 const db = getFirestore(app);
 
-/* ================= ESTADO ================= */
-const tbody = document.getElementById("tabla");
-const buscador = document.getElementById("buscador");
-const modal = document.getElementById("modal");
-
+/* ================= DATA ================= */
 let clientes = [];
 let personal = [];
-let duplicados = new Set();
 
-/* ================= PERSONAL.JSON ================= */
+/* ================= LOADERS ================= */
+async function cargarClientes() {
+  const snap = await getDocs(collection(db, "clientes"));
+  clientes = snap.docs.map(d => ({
+    id: d.id,
+    origen: "Firestore",
+    ...d.data()
+  }));
+}
+
 async function cargarPersonal() {
   try {
     const res = await fetch("personal.json");
-    if (!res.ok) throw new Error("No se pudo cargar personal.json");
+    if (!res.ok) throw "";
     const data = await res.json();
-    personal = Array.isArray(data) ? data : [data];
-  } catch (e) {
-    console.warn("personal.json no disponible, se continúa sin autocompletar");
+    personal = (Array.isArray(data) ? data : [data]).map(p => ({
+      ...p,
+      origen: "Personal",
+      id: null
+    }));
+  } catch {
     personal = [];
   }
 }
 
-/* ================= DETECTAR DUPLICADOS ================= */
+/* ================= LOGIC ================= */
+function normalizarCedula(c) {
+  return c?.toString().trim() || null;
+}
+
 function detectarDuplicados(lista) {
-  duplicados.clear();
-  const conteo = {};
-
+  const map = {};
   lista.forEach(c => {
-    if (!c.cedula) return;
-    conteo[c.cedula] = (conteo[c.cedula] || 0) + 1;
+    const ced = normalizarCedula(c.cedula);
+    if (!ced) return;
+    map[ced] = map[ced] || [];
+    map[ced].push(c);
   });
-
-  Object.keys(conteo).forEach(c => {
-    if (conteo[c] > 1) duplicados.add(c);
-  });
+  return Object.values(map).filter(g => g.length > 1).flat();
 }
 
 /* ================= RENDER ================= */
-function render(lista) {
-  tbody.innerHTML = "";
+function render() {
+  const todos = [...clientes, ...personal];
+  const duplicados = detectarDuplicados(todos);
+  const normales = todos.filter(c => !duplicados.includes(c));
 
+  renderTabla("tabla-clientes", normales, false);
+  renderTabla("tabla-duplicados", duplicados, true);
+}
+
+function renderTabla(id, lista, esDup) {
+  const tb = document.getElementById(id);
   if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Sin resultados</td></tr>`;
+    tb.innerHTML = `<tr><td colspan="5">Sin registros</td></tr>`;
     return;
   }
-
-  lista.forEach(c => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${c.nombre || "—"}</td>
-      <td>${c.cedula || "—"}</td>
-      <td>${c.telefono || "—"}</td>
-      <td>${(c.compras || []).length}</td>
+  tb.innerHTML = lista.map(c => `
+    <tr class="${esDup ? 'dup' : ''}">
+      <td>${c.nombre || '—'}</td>
+      <td>${c.cedula || '—'}</td>
+      <td>${c.telefono || '—'}</td>
+      <td>${c.origen}</td>
       <td>
-        <button data-edit="${c.id}">✏️</button>
-        <button data-del="${c.id}">🗑️</button>
+        <button class="btn edit" onclick="editar('${c.id}','${c.nombre||''}','${c.cedula||''}','${c.telefono||''}')">✏️</button>
+        ${c.origen === 'Firestore' ? `<button class="btn del" onclick="eliminar('${c.id}')">🗑️</button>` : ''}
       </td>
-    `;
-    tbody.appendChild(tr);
-  });
+    </tr>
+  `).join("");
 }
 
-import { doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-
-let editandoId = null;
-
-tbody.addEventListener("click", async e => {
-
-  /* ===== EDITAR ===== */
-  if (e.target.dataset.edit) {
-    const c = clientes.find(x => x.id === e.target.dataset.edit);
-    if (!c) return;
-
-    editandoId = c.id;
-    modal.style.display = "flex";
-
-    document.getElementById("cedula").value = c.cedula || "";
-    document.getElementById("nombre").value = c.nombre || "";
-    document.getElementById("telefono").value = c.telefono || "";
-
-    return;
-  }
-
-  /* ===== ELIMINAR ===== */
-  if (e.target.dataset.del) {
-    if (!confirm("¿Eliminar este cliente?")) return;
-
-    await deleteDoc(doc(db, "clientes", e.target.dataset.del));
-    cargarClientes();
-  }
-});
-
-/* ================= FIRESTORE ================= */
-async function cargarClientes() {
-  const snap = await getDocs(collection(db, "clientes"));
-  clientes = [];
-
-  snap.forEach(d => {
-  clientes.push({ id: d.id, ...d.data() });
-});
-
-  detectarDuplicados(clientes);
-  render(clientes);
-}
-
-/* ================= BUSCADOR ================= */
-buscador.addEventListener("input", () => {
-  const f = buscador.value.toLowerCase();
-  render(
-    clientes.filter(c =>
-      (c.nombre || "").toLowerCase().includes(f) ||
-      (c.cedula || "").toString().includes(f)
-    )
-  );
-});
-
-/* ================= NUEVO CLIENTE ================= */
-document.getElementById("btnNuevo").onclick = () => modal.style.display = "flex";
-document.getElementById("cerrar").onclick = () => modal.style.display = "none";
-
-document.getElementById("cedula").addEventListener("input", e => {
-  const p = personal.find(x => x.cedula == e.target.value);
-  if (p) {
-    document.getElementById("nombre").value = p.nombre || "";
-    document.getElementById("telefono").value = p.telefono || "";
-  }
-});
-
-document.getElementById("guardar").onclick = async () => {
-  const cedula = document.getElementById("cedula").value.trim();
-  const nombre = document.getElementById("nombre").value.trim();
-  const telefono = document.getElementById("telefono").value.trim();
-
-  if (!nombre) {
-    alert("Nombre obligatorio");
-    return;
-  }
-
-  if (editandoId) {
-    await updateDoc(doc(db, "clientes", editandoId), {
-      cedula,
-      nombre,
-      telefono
-    });
-  } else {
-    await addDoc(collection(db, "clientes"), {
-      cedula,
-      nombre,
-      telefono,
-      compras: [],
-      yaParticipo: false,
-      createdAt: new Date().toISOString()
-    });
-  }
-
-  editandoId = null;
-  modal.style.display = "none";
-
-  document.getElementById("cedula").value = "";
-  document.getElementById("nombre").value = "";
-  document.getElementById("telefono").value = "";
-
-  cargarClientes();
+/* ================= ACTIONS ================= */
+window.editar = (id,n,c,t) => {
+  if (!id) return alert("Cliente de personal.json (solo referencia)");
+  edit-id.value = id;
+  edit-nombre.value = n;
+  edit-cedula.value = c;
+  edit-telefono.value = t;
+  modal.style.display = "flex";
 };
 
+window.guardarEdicion = async () => {
+  await updateDoc(doc(db,"clientes",edit-id.value),{
+    nombre: edit-nombre.value,
+    cedula: edit-cedula.value || null,
+    telefono: edit-telefono.value || null
+  });
+  modal.style.display="none";
+  await init();
+};
+
+window.eliminar = async id => {
+  if (!confirm("¿Eliminar cliente?")) return;
+  await deleteDoc(doc(db,"clientes",id));
+  await init();
+};
+
+window.cerrarModal = () => modal.style.display="none";
+
 /* ================= INIT ================= */
-await cargarPersonal();
-await cargarClientes();
+async function init() {
+  await cargarClientes();
+  await cargarPersonal();
+  render();
+}
+init();
 </script>
 
 </body>
