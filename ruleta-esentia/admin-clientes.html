@@ -170,24 +170,50 @@ function render(lista) {
   }
 
   lista.forEach(c => {
-    const esDup = c.cedula && duplicados.has(c.cedula);
     const tr = document.createElement("tr");
-
     tr.innerHTML = `
       <td>${c.nombre || "—"}</td>
       <td>${c.cedula || "—"}</td>
       <td>${c.telefono || "—"}</td>
       <td>${(c.compras || []).length}</td>
       <td>
-        <span class="badge ${esDup ? "dup" : "ok"}">
-          ${esDup ? "⚠️ Duplicado" : "OK"}
-        </span>
+        <button data-edit="${c.id}">✏️</button>
+        <button data-del="${c.id}">🗑️</button>
       </td>
     `;
-
     tbody.appendChild(tr);
   });
 }
+
+import { doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+let editandoId = null;
+
+tbody.addEventListener("click", async e => {
+
+  /* ===== EDITAR ===== */
+  if (e.target.dataset.edit) {
+    const c = clientes.find(x => x.id === e.target.dataset.edit);
+    if (!c) return;
+
+    editandoId = c.id;
+    modal.style.display = "flex";
+
+    document.getElementById("cedula").value = c.cedula || "";
+    document.getElementById("nombre").value = c.nombre || "";
+    document.getElementById("telefono").value = c.telefono || "";
+
+    return;
+  }
+
+  /* ===== ELIMINAR ===== */
+  if (e.target.dataset.del) {
+    if (!confirm("¿Eliminar este cliente?")) return;
+
+    await deleteDoc(doc(db, "clientes", e.target.dataset.del));
+    cargarClientes();
+  }
+});
 
 /* ================= FIRESTORE ================= */
 async function cargarClientes() {
@@ -233,16 +259,26 @@ document.getElementById("guardar").onclick = async () => {
     return;
   }
 
-  await addDoc(collection(db, "clientes"), {
-    cedula,
-    nombre,
-    telefono,
-    compras: [],
-    yaParticipo: false,
-    createdAt: new Date().toISOString()
-  });
+  if (editandoId) {
+    await updateDoc(doc(db, "clientes", editandoId), {
+      cedula,
+      nombre,
+      telefono
+    });
+  } else {
+    await addDoc(collection(db, "clientes"), {
+      cedula,
+      nombre,
+      telefono,
+      compras: [],
+      yaParticipo: false,
+      createdAt: new Date().toISOString()
+    });
+  }
 
+  editandoId = null;
   modal.style.display = "none";
+
   document.getElementById("cedula").value = "";
   document.getElementById("nombre").value = "";
   document.getElementById("telefono").value = "";
