@@ -1,11 +1,12 @@
-//<!-- Código JavaScript unificado y corregido para el sistema de facturación de Esentia -->
-//<script type="module">
+// CLIENTES.JS
+// Versión estable v1.0
+// Última revisión: 2026-01
 // ===============================
 // 🔥 Firebase Config
 // ===============================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import {
-  getFirestore,
+   getFirestore,
   collection,
   getDocs,
   doc,
@@ -13,8 +14,26 @@ import {
   updateDoc,
   setDoc,
   addDoc,
-  deleteDoc
+  deleteDoc,
+  query,          // 👈 FALTA
+  where,
+  orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+export {
+  db,
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  updateDoc,
+  setDoc,
+  addDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy
+};
 
 const firebaseConfig = {
   apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
@@ -60,6 +79,9 @@ const URL_LIMPIEZA = "https://wil1979.github.io/esentia-factura/productos_limpie
 // ===============================
 function formatearColones(n) {
   return `₡${Math.round(n).toLocaleString("es-CR")}`;
+}
+function colones(v) {
+  return "₡" + Number(v || 0).toLocaleString("es-CR");
 }
 
 // ===============================
@@ -188,6 +210,26 @@ async function cargarClientesBaseLigero() {
  // renderResumenGeneralLigero(); // versión simplificada
 }
 
+// ===========📦 Registrar salidas desde factura====================
+
+async function registrarSalidasInventarioDesdeFactura(productos, clienteId) {
+  const fecha = new Date().toISOString();
+
+  for (const p of productos) {
+    await addDoc(
+      collection(db, "inventario_movimientos"),
+      {
+        productoId: p.codigo || p.nombre,
+        tipo: "salida",
+        cantidad: p.cantidad,
+        origen: "venta",
+        referencia: `CLI-${clienteId}`,
+        fecha
+      }
+    );
+  }
+}
+
 function renderResumenGeneralLigero() {
   const cont = document.getElementById("resumen-general");
   if (!cont) return;
@@ -198,7 +240,7 @@ function renderResumenGeneralLigero() {
     <div>👥 Total: <strong>${totalClientes}</strong></div>
     <div>💰 Deudores: <strong>${deudores}</strong></div>
     <p><em>Resumen rápido (sin facturas)</em></p>
-    <button onclick="cargarResumenCompleto()">🔍 Cargar resumen completo</button>
+    
   `;
 }
 
@@ -283,54 +325,76 @@ function calcularResumenGeneral() {
   };
 }
 
-function renderResumenGeneral() {
-  const cont = document.getElementById("resumen-general");
-  if (!cont) return;
+function renderResumenGeneral(datos) {
+  const resumen = document.getElementById("resumen-general");
+  if (!resumen) return;
 
-  const r = calcularResumenGeneral();
+  // 🔓 mostrar solo cuando se llama explícitamente
+  resumen.classList.remove("hidden");
+  resumen.style.display = "block";
 
-  cont.innerHTML = `
-    <h3>📊 Resumen General</h3>
-    <div>🧾 Facturas: <strong>${r.totalFacturas}</strong></div>
-    <div>💰 Total vendido: <strong>₡${r.totalVendido.toLocaleString("es-CR")}</strong></div>
-    <div>💳 Total pagado: <strong>₡${r.totalPagado.toLocaleString("es-CR")}</strong></div>
-    <div>🔴 Pendiente: <strong>₡${r.totalPendiente.toLocaleString("es-CR")}</strong></div>
-  `;
-
-  const pagos = calcularResumenPagosPorMetodoGlobal();
-
-let htmlPagos = `<h4>💳 Pagos por método</h4>`;
-Object.entries(pagos).forEach(([metodo, info]) => {
-  if (info.cantidad > 0) {
-    htmlPagos += `
-      <div>
-        ${metodo}: 
-        <strong>${info.cantidad}</strong> pagos — 
-        ₡${info.total.toLocaleString("es-CR")}
-      </div>
+  if (!datos || datos.totalVentas === 0) {
+    resumen.innerHTML = `
+      <strong>📊 Resumen General</strong><br>
+      No hay ventas registradas.
     `;
+    return;
   }
-});
 
-cont.innerHTML += htmlPagos;
+  resumen.innerHTML = `
+    <strong>📊 Resumen General</strong><br><br>
+
+    🧾 Total ventas: <b>${datos.totalVentas}</b><br>
+    💰 Total facturado: <b>₡${datos.totalMonto.toLocaleString()}</b><br>
+    ⏳ Total pendiente: <b>₡${datos.totalPendiente.toLocaleString()}</b><br><br>
+
+    <strong>💳 Pagos por método</strong><br>
+    ${Object.entries(datos.pagosPorMetodo)
+      .map(
+        ([metodo, info]) =>
+          `• ${metodo}: ${info.cantidad} pagos — ₡${info.total.toLocaleString()}`
+      )
+      .join("<br>")}
+  `;
 }
 
-
-
-function renderResumenPagosPorMetodo() {
+function renderResumenPagos(resumen) {
   const cont = document.getElementById("resumen-pagos");
   if (!cont) return;
 
-  const r = calcularResumenPagosPorMetodoGlobal();
+  cont.innerHTML = "";
 
-  cont.innerHTML = `
-    <h3>💳 Pagos por método</h3>
-    <div>💵 Efectivo: ₡${r.Efectivo.toLocaleString("es-CR")}</div>
-    <div>📲 SINPE: ₡${r.SINPE.toLocaleString("es-CR")}</div>
-    <div>🏦 Transferencia: ₡${r.Transferencia.toLocaleString("es-CR")}</div>
-    <div>💳 Tarjeta: ₡${r.Tarjeta.toLocaleString("es-CR")}</div>
-    <div>⏳ Pendiente: ₡${r.Pendiente.toLocaleString("es-CR")}</div>
-  `;
+  Object.entries(resumen).forEach(([metodo, data]) => {
+    if (data.cantidad === 0) return;
+
+    cont.innerHTML += `
+      <div class="linea-resumen-pago">
+        <strong>${metodo.toUpperCase()}</strong>:
+        ${data.cantidad} pagos —
+        <span>Total ₡${data.total.toLocaleString("es-CR")}</span>
+      </div>
+    `;
+  });
+}
+//RESUMENES********************************************************************************
+function calcularResumenPagosPorMetodo(pagos = []) {
+  const resumen = {
+    efectivo: { total: 0, cantidad: 0 },
+    sinpe: { total: 0, cantidad: 0 },
+    tarjeta: { total: 0, cantidad: 0 }
+  };
+
+  pagos.forEach(p => {
+    const metodo = (p.metodo || "").toLowerCase();
+    const monto = Number(p.monto || 0);
+
+    if (resumen[metodo]) {
+      resumen[metodo].total += monto;
+      resumen[metodo].cantidad += 1;
+    }
+  });
+
+  return resumen;
 }
 
 function calcularResumenPagosPorMetodoGlobal() {
@@ -371,9 +435,10 @@ function calcularResumenPagosPorMetodoGlobal() {
   });
 
   return resumen;
+  renderResumenPagos(resumen);
 }
 
-
+//********************************************************************************* */
 
 function calcularSaldoCliente(cliente) {
   const compras = cliente.compras || [];
@@ -478,7 +543,41 @@ document.getElementById("filtro-deudores")?.addEventListener("change", (e) => {
   
 }
 
+async function registrarSalidasInventario(facturaId, productos) {
+  const fecha = new Date().toISOString();
 
+  for (const p of productos) {
+    await addDoc(
+      collection(db, "inventario_movimientos"),
+      {
+        productoId: p.codigo || p.nombre,
+        tipo: "salida",
+        cantidad: p.cantidad,
+        origen: "venta",
+        referencia: `FACT-${facturaId}`,
+        fecha
+      }
+    );
+  }
+}
+
+async function obtenerStockActual(productoId) {
+  const q = query(
+    collection(db, "inventario_movimientos"),
+    where("productoId", "==", productoId)
+  );
+
+  const snap = await getDocs(q);
+
+  let stock = 0;
+  snap.forEach((doc) => {
+    const m = doc.data();
+    if (m.tipo === "entrada") stock += m.cantidad;
+    if (m.tipo === "salida") stock -= m.cantidad;
+  });
+
+  return stock;
+}
 
 // ===============================
 // 📂 Movimientos del cliente
@@ -538,26 +637,70 @@ window.seleccionarCliente = async function (id) {
   renderInfoCliente();
   renderHistorialCompras();
   ocultarClientesEnMovil();
-  renderResumenPagosPorMetodo(); // solo para este cliente
+ // renderResumenPagosPorMetodo(); // solo para este cliente
 };
 function renderInfoCliente() {
   const cont = document.getElementById("info-basica");
   if (!clienteSeleccionado || !cont) return;
 
-   cont.innerHTML = `
+  cont.innerHTML = `
     <h2>${clienteSeleccionado.nombre}</h2>
     <p>📞 <a href="https://wa.me/506${clienteSeleccionado.telefono}" target="_blank">${clienteSeleccionado.telefono}</a></p>
     ${clienteSeleccionado.cedula ? `<p>🆔 ${clienteSeleccionado.cedula}</p>` : ""}
-    <button onclick="abrirModalProductos()">🛒 Agregar productos</button>
-    <button onclick="enviarWhatsAppCliente('suave')">🟢 WhatsApp Suave</button>
-    <button onclick="enviarWhatsAppCliente('firme')">🔴 WhatsApp Fuerte</button>
-    <button onclick="enviarRecordatoriosAtraso()" style="margin-bottom:10px">🔔 Enviar recordatorios</button>
-    <button onclick="mostrarClientes()" class="btn-volver"> 👈 Clientes</button>
+    
+    <div class="acciones-cliente">
+     
+
+      <button class="btn primary" onclick="abrirModalProductos()">🛒 Agregar productos</button>
+      <button class="btn whatsapp suave" onclick="enviarWhatsAppCliente('suave')">🟢 WhatsApp Suave</button>
+
+      <div class="dropdown">
+      <button class="btn secondary">⚙️ Más acciones ▾</button>
+      <div class="dropdown-menu">
+
+      <button class="item" onclick="enviarWhatsAppCliente('firme')">🔴 WhatsApp Fuerte</button>
+      <button class="item" onclick="enviarRecordatoriosAtraso()" style="margin-bottom:10px">🔔 Enviar recordatorios</button>
+      <button class="item" onclick="abrirModalEditarCliente()">✏️ Editar datos</button>
+      <button class="item" onclick="eliminarCliente()">🗑️ Eliminar cliente</button>
+      <button class="item"onclick="mostrarClientes()" class="btn-volver"> 👈 Clientes</button>
+    </div>
   `;
 }
 
+// Filtrar productos en el modal por nombre
+// Array global filtrado
+window.productosFiltrados = [];
 
+function filtrarProductosEnModal() {
+  const input = document.getElementById("filtro-productos");
+  const select = document.getElementById("select-producto");
+  if (!input || !select) return;
 
+  const query = input.value.toLowerCase().trim();
+  window.productosFiltrados = window.todosLosProductos.filter(p =>
+    p.nombre.toLowerCase().includes(query)
+  );
+
+  // Limpiar select
+  select.innerHTML = "";
+  window.productosFiltrados.forEach((p, i) => {
+    const opt = document.createElement("option");
+    opt.value = i; // ← índice dentro de productosFiltrados
+    opt.textContent = p.nombre;
+    select.appendChild(opt);
+  });
+
+  // Si hay al menos uno, seleccionar el primero y mostrar vista previa
+  if (window.productosFiltrados.length > 0) {
+    select.value = 0;
+    mostrarVistaPrevia(); // esta función ahora usará productosFiltrados
+  } else {
+    // Limpiar vista previa si no hay resultados
+    document.getElementById("vista-previa-producto").innerHTML = "<em>No hay productos</em>";
+    document.getElementById("select-variante").innerHTML = '<option>Sin variantes</option>';
+    window.productoSeleccionado = null;
+  }
+}
 // ===============================
 // 🧾 Compras
 // ===============================
@@ -637,6 +780,25 @@ async function guardarCompraDesdeCarrito() {
   seleccionarCliente(clienteSeleccionadoId);
 }
 
+function renderHistorialAbonos() {
+  const cont = document.getElementById("historial-abonos");
+  if (!cont) return;
+
+  cont.innerHTML = "";
+
+  (clienteSeleccionado.abonos || []).forEach((a, i) => {
+    cont.innerHTML += `
+      <div class="abono-item">
+        💰 ₡${a.monto.toLocaleString("es-CR")}
+        📅 ${new Date(a.fecha).toLocaleDateString("es-CR")}
+        💳 ${a.metodo || "-"}
+        <button onclick="revertirPago(${i})">↩ Revertir</button>
+      </div>
+    `;
+  });
+}
+
+
 // ===============================
 // 🧾 Historial con detalle de productos
 // ===============================
@@ -710,18 +872,18 @@ if (c.saldo > 0) {
         }
 
        ${
-  pagado > 0
-    ? `<button onclick="revertirPago(${index})">↩ Revertir</button>`
-    : ""
+  (clienteSeleccionado.abonos?.length > 0)
+  ? `<button onclick="alert('Revertir pagos se hace desde Historial de Abonos')">↩ Revertir</button>`
+  : ""
 }
       </div>
 
       <div id="detalle-prod-${index}" class="detalle-productos hidden">
         ${renderProductosHTML(productos)}
       </div>
-    `;
+     `;
 
-    cont.appendChild(div);
+     cont.appendChild(div);
   });
 }
 
@@ -806,9 +968,11 @@ window.guardarPagoFactura = async function () {
   alert("✅ Pago registrado correctamente");
 };
 
-window.enviarRecordatoriosAtraso = function () {
-  const atrasados = obtenerClientesConAtraso(0);
+window.enviarRecordatoriosAtraso = async function () {
+  // ⚠️ Esta función solo funciona si ya se cargaron las facturas (clientesBase con compras)
+  // Por eso debes usarla SOLO después de cargarClientesBase(), no con la versión ligera
 
+  const atrasados = obtenerClientesConAtraso(0);
   if (!atrasados.length) {
     alert("🎉 No hay clientes con atraso.");
     return;
@@ -817,10 +981,10 @@ window.enviarRecordatoriosAtraso = function () {
   atrasados.forEach(({ cliente, dias }) => {
     let modo = "suave";
     if (dias >= 7) modo = "firme";
-    else if (dias >= 0) modo = "firme";
+    // else if (dias >= 0) modo = "firme"; // ❌ Esto sobra y fuerza "firme" siempre
+    // ✅ Solo "firme" si ≥7, de lo contrario "suave"
 
-    // reutiliza tu función existente
-    enviarWhatsAppCliente(modo);
+    enviarWhatsAppA(cliente, modo);
   });
 
   alert(`🔔 Recordatorios enviados a ${atrasados.length} clientes`);
@@ -956,6 +1120,77 @@ renderResumenPagosPorMetodo();
   }
 };
 
+// Nueva función: envía WhatsApp a un cliente específico
+window.enviarWhatsAppA = function(cliente, modo = "suave") {
+  if (!cliente) return;
+
+  const { nombre, telefono, compras = [], lealtad = {} } = cliente;
+  const limpio = (telefono || "").toString().replace(/\D/g, "");
+  if (limpio.length !== 8) {
+    console.warn("Teléfono inválido para cliente:", nombre);
+    return;
+  }
+
+  const pendientes = compras
+    .map(c => {
+      const subtotal = Number(c.monto || c.totalBruto || 0);
+      const descuento = Number(c.descuento || 0);
+      const pagado = Number(c.pagado || 0);
+      const total = Math.max(0, subtotal - descuento);
+      const saldo = Math.max(0, total - pagado);
+      return { ...c, subtotal, total, saldo };
+    })
+    .filter(f => f.saldo > 0);
+
+  if (pendientes.length === 0) return;
+
+  const totalGeneral = pendientes.reduce((sum, f) => sum + f.saldo, 0);
+  let sugerido = 0;
+  if (totalGeneral <= 5000) sugerido = totalGeneral;
+  else if (totalGeneral <= 10000) sugerido = Math.ceil(totalGeneral / 2 / 1000) * 1000;
+  else sugerido = 5000;
+
+  const textoModo = {
+    suave: `Hola ${nombre} 🌿\nTe compartimos tu estado de cuenta actualizado en *Esentia*. Gracias por tu preferencia 💜\n`,
+    firme: `Hola ${nombre} 👋\nTe envío tu estado de cuenta actualizado. Te agradezco confirmar tu fecha de pago para mantener tu cuenta al día 💜\n`
+  };
+
+  let mensaje = textoModo[modo];
+  mensaje += `🧾 *Estado de Cuenta - Esentia*\n`;
+  mensaje += `📅 ${new Date().toLocaleDateString("es-CR")}\n`;
+  mensaje += `──────────────────────\n`;
+
+  pendientes.forEach((f, index) => {
+    const fecha = f.fecha ? new Date(f.fecha).toLocaleDateString("es-CR") : "Sin fecha";
+    const productosTxt = (f.productos || [])
+      .map(p => `  ▸ ${p.cantidad}× ${p.nombre}${p.presentacion ? " (" + p.presentacion + ")" : ""}`)
+      .join("\n") || "  ▸ Sin productos";
+    mensaje += `*Factura ${index + 1}*\n`;
+    mensaje += `📆 ${fecha}\n`;
+    mensaje += `${productosTxt}\n`;
+    mensaje += `Subtotal: ₡${f.subtotal.toLocaleString()}\n`;
+    if (f.descuento > 0) mensaje += `Descuento: -₡${f.descuento.toLocaleString()}\n`;
+    mensaje += `Pagado: ₡${(f.pagado || 0).toLocaleString()}\n`;
+    mensaje += `*Saldo pendiente: ₡${f.saldo.toLocaleString()}*\n`;
+    mensaje += `──────────────────────\n`;
+  });
+
+  mensaje += `\n💜 *TOTAL PENDIENTE: ₡${totalGeneral.toLocaleString()}*\n`;
+  if ((lealtad.sellos || 0) >= (lealtad.objetivo || 6)) {
+    mensaje += `🎁 *Tienes un premio por reclamar.*\n`;
+  }
+  mensaje += `💡 *Sugerencia de abono*: ₡${sugerido.toLocaleString()}\n`;
+  mensaje += `💳 *Formas de pago*\n`;
+  mensaje += `1️⃣ Efectivo contra entrega\n`;
+  mensaje += `2️⃣ SINPE Móvil: *7295-2454* (Wilber Calderón)\n`;
+  mensaje += `3️⃣ Cuenta BAC: *CR59010200009453897656*\n`;
+  mensaje += modo === "suave"
+    ? `🌸 Gracias por confiar en *Esentia*, siempre un gusto atenderte 💜`
+    : `✨ Agradecemos tu pronta gestión. Estamos para servirte 💜`;
+
+  window.open(`https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`, "_blank");
+};
+
 // ===============================
 // 🗑 Eliminar compra
 // ===============================
@@ -989,11 +1224,27 @@ window.eliminarCompra = async function (index) {
 
   // Recalcular deuda en la lista
 await cargarClientesBase();
-renderResumenPagosPorMetodo();
+//renderResumenPagosPorMetodo();
 renderResumenGeneral();
 limpieza
   alert("🗑 Compra eliminada correctamente");
+  await revertirInventarioPorFactura(compraEliminada);
+// luego sí la quitas del array compras y guardás
 };
+
+async function revertirInventarioPorFactura(compra) {
+  for (const p of compra.productos) {
+    await addDoc(collection(db, "kardex"), {
+      productoId: p.id,
+      nombre: p.nombre,
+      tipo: "entrada", // 👈 REVERSO
+      cantidad: p.cantidad,
+      fecha: new Date().toISOString(),
+      referencia: "Reverso por eliminación de factura",
+      origen: "facturas"
+    });
+  }
+}
 
 // ===============================
 // 💰 Registrar pago rápido
@@ -1084,7 +1335,13 @@ function cerrarModalNuevoCliente() {
 // ➕ Guardar Cliente
 // ===============================
 async function guardarNuevoCliente() {
-  const nombre = document.getElementById("modal-nombre").value.trim();
+
+  const inputNombre = document.getElementById("modal-nombre");
+   inputNombre.addEventListener("input", () => {
+   inputNombre.value = inputNombre.value.toUpperCase();
+  });
+
+  const nombre = document.getElementById("modal-nombre").value.trim().toUpperCase();
   const tel = document.getElementById("modal-telefono").value.trim();
   const cedula = document.getElementById("modal-cedula").value.trim();
 
@@ -1121,6 +1378,81 @@ async function guardarNuevoCliente() {
 }
 
 // ===============================================
+// ✏️ EDITAR CLIENTE - Normalizar nombre
+function normalizarNombre(nombre = "") {
+  return nombre
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, " ");
+}
+
+window.normalizarClientes = async function () {
+  if (!confirm(
+    "⚠️ NORMALIZAR CLIENTES\n\n" +
+    "• Convertirá todos los nombres a MAYÚSCULAS\n" +
+    "• No afecta saldos ni historial\n" +
+    "• Esta acción es segura\n\n" +
+    "¿Deseas continuar?"
+  )) {
+    return;
+  }
+
+  try {
+    const snap = await getDocs(collection(db, "clientesBD"));
+
+    let total = 0;
+    let actualizados = 0;
+
+    for (const docSnap of snap.docs) {
+      const data = docSnap.data();
+      if (!data.nombre) continue;
+
+      const nombreNormalizado = normalizarNombre(data.nombre);
+
+      if (data.nombre !== nombreNormalizado) {
+        // 🔑 actualizar cliente
+        await updateDoc(doc(db, "clientesBD", docSnap.id), {
+          nombre: nombreNormalizado
+        });
+
+        // 🔑 actualizar facturas (si existen)
+        try {
+          await updateDoc(doc(db, "facturas", docSnap.id), {
+            nombre: nombreNormalizado
+          });
+        } catch (_) {
+          // si no existe factura, no pasa nada
+        }
+
+        actualizados++;
+      }
+
+      total++;
+    }
+
+    alert(
+      `✅ Normalización completa\n\n` +
+      `Clientes revisados: ${total}\n` +
+      `Clientes actualizados: ${actualizados}`
+    );
+
+    // refrescar UI
+    if (typeof cargarClientesBaseLigero === "function") {
+      await cargarClientesBaseLigero();
+    }
+
+  } catch (err) {
+    console.error("❌ Error normalizando clientes:", err);
+    alert("❌ Ocurrió un error durante la normalización.");
+  }
+};
+
+
+
+
+
+
+// ===============================================
 // ✏️ EDITAR CLIENTE
 // ===============================================
 window.abrirModalEditarCliente = function () {
@@ -1128,32 +1460,85 @@ window.abrirModalEditarCliente = function () {
     alert("Selecciona un cliente.");
     return;
   }
-  document.getElementById("edit-nombre").value = clienteSeleccionado.nombre || "";
-  document.getElementById("edit-cedula").value = clienteSeleccionado.cedula || "";
-  document.getElementById("edit-telefono").value = clienteSeleccionado.telefono || "";
-  document.getElementById("modal-editar-cliente").classList.remove("hidden");
+
+  document.getElementById("edit-nombre").value =
+    (clienteSeleccionado.nombre || "").toUpperCase();
+
+  document.getElementById("edit-cedula").value =
+    clienteSeleccionado.cedula || "";
+
+  document.getElementById("edit-telefono").value =
+    clienteSeleccionado.telefono || "";
+
+  document
+    .getElementById("modal-editar-cliente")
+    .classList.remove("hidden");
 };
 
-window.cerrarModalEditar = function () {
+ window.cerrarModalEditar = function () {
   document.getElementById("modal-editar-cliente").classList.add("hidden");
-};
+ };
 
 window.guardarEdicionCliente = async function () {
-  const nuevoNombre = document.getElementById("edit-nombre").value.trim();
-  const nuevaCedula = document.getElementById("edit-cedula").value.trim();
-  const nuevoTelefono = document.getElementById("edit-telefono").value.trim();
-  if (!nuevoNombre) return alert("El nombre no puede estar vacío.");
+  const nombreInput = document.getElementById("edit-nombre");
+  const cedulaInput = document.getElementById("edit-cedula");
+  const telefonoInput = document.getElementById("edit-telefono");
+
+  if (!nombreInput || !telefonoInput) {
+    alert("❌ Campos del formulario no encontrados.");
+    return;
+  }
+
+  // 🔠 FORZAR MAYÚSCULAS DEFINITIVAS
+  const nuevoNombre = nombreInput.value.trim().toUpperCase();
+  const nuevaCedula = cedulaInput?.value.trim() || null;
+  const nuevoTelefono = telefonoInput.value.trim();
+
+  if (!nuevoNombre) {
+    alert("❌ El nombre no puede estar vacío.");
+    return;
+  }
+
+  if (!/^\d{8}$/.test(nuevoTelefono)) {
+    alert("❌ El teléfono debe tener 8 dígitos.");
+    return;
+  }
+
+  const id = window.clienteSeleccionadoId;
+  if (!id) {
+    alert("❌ No hay cliente seleccionado.");
+    return;
+  }
+
   try {
-    await updateDoc(doc(db, "facturas", clienteSeleccionadoId), { nombre: nuevoNombre, cedula: nuevaCedula, telefono: nuevoTelefono });
+    // 🔑 1. CLIENTES (fuente principal)
+    const clienteRef = doc(db, "clientesBD", id);
+    await updateDoc(clienteRef, {
+      nombre: nuevoNombre,
+      cedula: nuevaCedula,
+      telefono: nuevoTelefono
+    });
+
+    // 🔑 2. FACTURAS (coherencia histórica / WhatsApp)
+    const facturaRef = doc(db, "facturas", id);
+    await updateDoc(facturaRef, {
+      nombre: nuevoNombre,
+      cedula: nuevaCedula,
+      telefono: nuevoTelefono
+    });
+
+    // 🔒 3. Cerrar modal
     cerrarModalEditar();
-    await cargarClientesBase();
-renderResumenPagosPorMetodo();
-    renderResumenGeneral();
-    seleccionarCliente(clienteSeleccionadoId);
-    alert("✔ Cliente actualizado correctamente.");
+
+    // 🔄 4. Recargar UI
+    await cargarClientesBaseLigero?.();
+    await seleccionarCliente?.(id);
+
+    alert("✅ Cliente actualizado correctamente.");
+
   } catch (e) {
-    console.error("Error al guardar edición:", e);
-    alert("❌ Ocurrió un error.");
+    console.error("❌ Error al guardar edición:", e);
+    alert("❌ Ocurrió un error al guardar los cambios.");
   }
 };
 
@@ -1172,9 +1557,9 @@ window.abrirModalProductos = async function () {
 
   const modal = document.getElementById("modal-productos");
 
-// abrir
-modal.classList.remove("hidden");
-modal.style.display = "flex";
+  // abrir
+ modal.classList.remove("hidden");
+ modal.style.display = "flex";
 
   // DOM (defensivo)
   const carritoDiv = document.getElementById("carrito-modal");
@@ -1207,6 +1592,12 @@ modal.style.display = "flex";
   } else {
     mostrarVistaPrevia();
   }
+  // Dentro de abrirModalProductos(), justo antes de `actualizarResumenVenta();`
+ const filtroInput = document.getElementById("filtro-productos");
+ if (filtroInput) {
+  filtroInput.value = ""; // limpiar al abrir
+  filtroInput.oninput = filtrarProductosEnModal;
+ }
 
   // Totales iniciales
   actualizarResumenVenta();
@@ -1223,6 +1614,12 @@ modal.style.display = "flex";
     if (bloqueCredito) {
       bloqueCredito.style.display = esCredito ? "block" : "none";
     }
+
+    document.getElementById("resumen-venta").innerHTML =
+  "🧾 TOTAL: ₡10.000<br>Descuento: ₡0";
+
+ document.getElementById("resumen-pagos").innerHTML =
+  "💳 Efectivo: 2 pagos — ₡5.000<br>💳 SINPE: 1 pago — ₡5.000";
 
     actualizarResumenVenta();
   };
@@ -1404,6 +1801,12 @@ window.guardarPago = window.guardarPagoModal = async function () {
   const nota = document.getElementById("pago-nota").value.trim();
   if (!monto || monto <= 0) return alert("Ingresa un monto válido.");
 
+  {
+   id: crypto.randomUUID(),
+   monto,
+   fecha
+  }
+
   const ref = doc(db, "facturas", clienteSeleccionadoId);
   const snap = await getDoc(ref);
   const data = snap.data();
@@ -1517,7 +1920,7 @@ function generarEstadoCuentaHTML() {
           Metodo: ${a.metodo}<br>
           ${a.nota ? "📝 " + a.nota : ""}
           <div class="acciones">
-            <button onclick="revertirPago(${idx})">↩ Revertir</button>
+            <button onclick="revertirPago('ID_DEL_PAGO')">↩ Revertir</button>
           </div>
         </div>
       `;
@@ -1534,19 +1937,64 @@ function generarEstadoCuentaHTML() {
   cont.innerHTML = html;
 }
 
-// ===============================================
-// 🗑️ ELIMINAR CLIENTE
-// ===============================================
-window.eliminarCliente = function () {
-  if (!clienteSeleccionado) return alert("Selecciona un cliente.");
-  const saldo = calcularSaldoCliente(clienteSeleccionado);
-  document.getElementById("info-eliminar").innerHTML = `
-    <strong>${clienteSeleccionado.nombre}</strong><br>
-    💸 Saldo pendiente: ₡${saldo.toLocaleString()}
-  `;
-  document.getElementById("confirmar-nombre-eliminar").value = "";
-  document.getElementById("modal-eliminar-cliente").classList.remove("hidden");
+async function eliminarSubcoleccion(ref) {
+  const snap = await getDocs(ref);
+  for (const d of snap.docs) {
+    await deleteDoc(d.ref);
+  }
+}
+
+window.eliminarCliente = async function () {
+  if (!window.clienteSeleccionadoId) {
+    alert("❌ No hay cliente seleccionado.");
+    return;
+  }
+
+  const ok = confirm(
+    "⚠️ ELIMINACIÓN TOTAL\n\n" +
+    "• Cliente\n" +
+    "• Facturas\n" +
+    "• Pagos\n\n" +
+    "Esta acción NO se puede deshacer."
+  );
+
+  if (!ok) return;
+
+  try {
+    const id = window.clienteSeleccionadoId;
+
+    // 🧹 BORRAR FACTURAS (si son subcolección)
+    await eliminarSubcoleccion(
+      collection(db, "clientesBD", id, "facturas")
+    );
+
+    // 🧹 BORRAR PAGOS (si aplica)
+    await eliminarSubcoleccion(
+      collection(db, "clientesBD", id, "pagos")
+    );
+
+    // 🔥 BORRAR CLIENTE
+    await deleteDoc(doc(db, "clientesBD", id));
+
+    alert("✅ Cliente y datos eliminados.");
+
+    window.clienteSeleccionadoId = null;
+     cargarClientesBaseLigero();
+
+  } catch (err) {
+    console.error(err);
+    alert("❌ Error eliminando datos");
+  }
+
+   console.log("DEBUG eliminarCliente", {
+  nombre: document.getElementById("nombre-cliente"),
+  telefono: document.getElementById("telefono-cliente"),
+  cedula: document.getElementById("cedula-cliente")
+  });
+
+  cargarClientesBaseLigero();
 };
+
 
 window.cerrarModalEliminar = function () {
   document.getElementById("modal-eliminar-cliente").classList.add("hidden");
@@ -1569,7 +2017,7 @@ window.confirmarEliminarCliente = async function () {
     clienteSeleccionado = null;
     clienteSeleccionadoId = null;
     await cargarClientesBase();
-renderResumenPagosPorMetodo();
+    renderResumenPagosPorMetodo();
     renderResumenGeneral();
   } catch (e) {
     console.error("Error eliminando cliente:", e);
@@ -1577,7 +2025,8 @@ renderResumenPagosPorMetodo();
   }
 };
 
-// ===============================
+
+
 // 💾 FACTURAR (BASE)
 // ===============================
 window.facturarVenta = async function () {
@@ -1598,6 +2047,18 @@ window.facturarVenta = async function () {
 
   const total = Math.max(0, subtotal - descuento);
 
+  // 🔑 Si es pago CONTADO, registrar también como abono
+if (tipoPago === "contado") {
+  const abono = {
+    fecha: new Date().toISOString(),
+    monto: total, // total - descuento
+    metodo: metodoPago,
+    nota: "Pago contado al facturar"
+  };
+
+  data.abonos = [...(data.abonos || []), abono];
+}
+
   const compra = {
     fecha: new Date().toISOString(),
     productos: window.carrito,
@@ -1616,6 +2077,28 @@ window.facturarVenta = async function () {
   
   console.log("🧾 Facturando con tipoPago:", tipoPago);
 
+  // ===============================
+// 🔒 VALIDAR STOCK ANTES DE FACTURAR
+
+for (const p of window.carrito) {
+  const productoId = p.codigo || p.nombre;
+  const stock = await obtenerStockActual(productoId);
+
+  if (stock === 0) {
+  console.warn(`⚠️ ${p.nombre} sin stock`);
+}
+
+  if (p.cantidad > stock) {
+    alert(
+      `❌ Stock insuficiente para "${p.nombre}"
+ Disponible: ${stock}
+ Solicitado: ${p.cantidad}`
+    );
+    return; // ⛔ corta la facturación
+  }
+}
+
+// ===============================
 
   const ref = doc(db, "facturas", window.clienteSeleccionadoId);
   const snap = await getDoc(ref);
@@ -1623,10 +2106,39 @@ window.facturarVenta = async function () {
     ? snap.data()
     : { compras: [], abonos: [] };
 
+
   data.compras.push(compra);
   await setDoc(ref, data, { merge: true });
 
-  alert("✅ Factura registrada correctamente");
+  // 🔥🔥 AQUÍ VA LA CONEXIÓN CON INVENTARIO 🔥🔥
+  await registrarSalidasInventarioDesdeFactura(
+    window.carrito,
+    window.clienteSeleccionadoId
+  );
+alert("✅ Factura registrada correctamente");
+
+// 🔑 SINCRONIZAR ESTADO LOCAL
+  window.clienteSeleccionado.compras.push(compra);
+
+  cerrarModalProductos();
+  renderHistorialCompras();
+};
+
+/*
+  //agregado por kardex en inventario NUEVO
+  const facturaRef = await addDoc(
+  collection(db, "facturas"),
+  factura
+   );
+
+  // 👇 INVENTARIO REACCIONA
+  await registrarSalidasInventario(
+  facturaRef.id,
+  factura.productos
+);
+//agregado por kardex en inventario NUEVO
+
+  
 
   // 🔑 SINCRONIZAR ESTADO LOCAL
    window.clienteSeleccionado.compras.push(compra);
@@ -1637,12 +2149,19 @@ window.facturarVenta = async function () {
 
 };
 
-
+*/
 
 
 // ===============================================
 // ✏️ EDITAR COMPRA
 // ===============================================
+window.abrirEditarCompra = function (compra) {
+  document.getElementById("edit-descuento").value = compra.descuento || 0;
+
+  const resumen = calcularResumenPagosPorMetodo(compra.pagos || []);
+  renderResumenPagos(resumen);
+};
+
 window.abrirEditarCompra = function (index) {
   indiceCompraEditando = index;
   const compra = clienteSeleccionado.compras[index];
@@ -1656,10 +2175,13 @@ window.abrirEditarCompra = function (index) {
         <input data-i="${i}" data-k="nombre" value="${p.nombre}">
         <input data-i="${i}" data-k="cantidad" type="number" min="1" value="${p.cantidad}">
         <input data-i="${i}" data-k="precio" type="number" min="0" value="${p.precio}">
+        
       </div>
     `;
   });
   document.getElementById("edit-descuento").value = compra.descuento || 0;
+  const resumen = calcularResumenPagosPorMetodo(compra.pagos || []);
+renderResumenPagos(resumen);
 };
 
 window.cerrarModalEditarCompra = function () {
@@ -1767,6 +2289,13 @@ async function cargarProductosJSON() {
   } catch (err) {
     console.error("Error cargando productos JSON:", err);
   }
+
+  // Al terminar de cargar todos los productos
+window.productosFiltrados = [...window.todosLosProductos];
+// Y si el input de filtro existe, dispara el filtro una vez
+if (document.getElementById("filtro-productos")) {
+  filtrarProductosEnModal();
+}
 }
 
 async function cargarProductosDisponibles() {
@@ -1881,14 +2410,22 @@ function cargarVariantesProducto(prod) {
 // ===============================
 function mostrarVistaPrevia() {
   const select = document.getElementById("select-producto");
-  if (!select) return;
+  if (!select || window.productosFiltrados.length === 0) return;
 
   const index = Number(select.value);
-  const prod = window.todosLosProductos[index];
+  const prod = window.productosFiltrados[index]; // ← AHORA es el correcto
   if (!prod) return;
 
   window.productoSeleccionado = prod;
-  console.log("📦 Producto seleccionado:", prod.nombre);
+
+  const previewDiv = document.getElementById("vista-previa-producto");
+  if (previewDiv) {
+    previewDiv.innerHTML = `
+      <strong>${prod.nombre}</strong><br>
+      ${prod.descripcion ? `<small>${prod.descripcion}</small><br>` : ""}
+      Precio: ₡${(prod.precio || (prod.variantes?.[0]?.precio || 0)).toLocaleString()}
+    `;
+  }
 
   cargarVariantesProducto(prod);
 }
@@ -1905,7 +2442,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   await cargarProductosDisponibles();   // sugerencias rápidas
   //await cargarClientesBase();
   await cargarClientesBaseLigero();
-  renderResumenPagosPorMetodo();            // clientes + deuda
+  renderHistorialAbonos();            // clientes + deuda
   renderResumenGeneral();
   renderResumenGeneralLigero();
   
@@ -2003,16 +2540,6 @@ window.mostrarClientes = mostrarClientes;
 window.calcularResumenPagosPorMetodoGlobal = calcularResumenPagosPorMetodoGlobal;
 
 
-/*
-
-document.getElementById("monto-pagado").oninput = e => {
-  carritoVenta.montoPagado = Number(e.target.value || 0);
-  actualizarResumenVenta();
-  //renderResumenVenta();
-};
-
-*/
-
 // ==============
 // 📊 Cargar resumen completo (con facturas reales)
 // ==============
@@ -2032,48 +2559,27 @@ window.registrarPagoAutomatico = function () {
 window.revertirPago = async function (indexPago) {
   const abonos = [...(clienteSeleccionado.abonos || [])];
   const pago = abonos[indexPago];
-  if (!pago) return;
 
-  if (!confirm(`¿Revertir este pago?
-Monto: ₡${pago.monto.toLocaleString()}
-Fecha: ${new Date(pago.fecha).toLocaleDateString("es-CR")}`)) return;
+  if (!pago) {
+    alert("⚠️ Este pago no existe o no fue registrado como abono.");
+    return;
+  }
 
-  // Quitar solo ese abono
+  if (!confirm(
+    `¿Revertir este pago?\n\n` +
+    `Monto: ₡${pago.monto.toLocaleString("es-CR")}\n` +
+    `Método: ${pago.metodo}\n` +
+    `Fecha: ${new Date(pago.fecha).toLocaleDateString("es-CR")}`
+  )) return;
+
+  // ❌ eliminar solo este abono
   abonos.splice(indexPago, 1);
 
-  // 🔁 Recalcular TODAS las compras desde cero
-  clienteSeleccionado.compras.forEach(c => {
-    const total = Number(c.total ?? (c.monto - (c.descuento || 0)));
-    c.pagado = 0;
-    c.saldo = total;
-    c.selloOtorgado = false;
-  });
-
-  // FIFO limpio
-  const comprasOrdenadas = clienteSeleccionado.compras
-    .slice()
-    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-
-  abonos
-    .slice()
-    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
-    .forEach(abono => {
-      let restante = abono.monto;
-
-      comprasOrdenadas.forEach(c => {
-        if (restante <= 0) return;
-
-        const total = Number(c.total ?? (c.monto - (c.descuento || 0)));
-        const disponible = total - c.pagado;
-
-        if (disponible > 0) {
-          const aplicar = Math.min(disponible, restante);
-          c.pagado += aplicar;
-          c.saldo = total - c.pagado;
-          restante -= aplicar;
-        }
-      });
-    });
+  // 🔁 recalcular compras desde cero
+  recalcularComprasDesdeAbonos(
+    clienteSeleccionado.compras,
+    abonos
+  );
 
   await updateDoc(doc(db, "facturas", clienteSeleccionadoId), {
     compras: clienteSeleccionado.compras,
