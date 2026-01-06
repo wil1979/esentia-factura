@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Migrar Clientes - Esentia</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 10px;
+      border: 1px solid #ddd;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: var(--glass-shadow);
+  text-decoration: none;
+  color: white;
+}
+  </style>
+</head>
+<body>
+  <h2>🔁 Migrar clientes a nueva colección</h2>
+  <button onclick="migrar()">Iniciar migración</button>
+  <pre id="log"></pre>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      doc,
+      getDoc,
+      setDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+      authDomain: "esentiacreditos-8345f.firebaseapp.com",
+      projectId: "esentiacreditos-8345f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function migrar() {
+      const log = document.getElementById("log");
+      log.textContent = "⏳ Iniciando...\n";
+
+      // 👉 ORIGEN (actual)
+      const origenRef = collection(db, "clientes");
+      const snap = await getDocs(origenRef);
+
+      log.textContent += `📦 Clientes encontrados en origen: ${snap.size}\n\n`;
+
+      let nuevos = 0;
+      let omitidos = 0;
+
+      for (const d of snap.docs) {
+        const data = d.data();
+        const clienteId = d.id;
+
+        // 👉 DESTINO (nueva colección clientesBD)
+        // Verificar si ya existe en el destino
+        const destinoDocRef = doc(db, "clientesBD", clienteId);
+        const destinoSnap = await getDoc(destinoDocRef);
+
+        if (destinoSnap.exists()) {
+          omitidos++;
+          log.textContent += `⏭️ Omitido (ya existe): ${clienteId} — ${data.nombre || "Sin nombre"}\n`;
+          continue; // Saltar al siguiente cliente
+        }
+
+        // Extraer SOLO datos del cliente si es nuevo
+        const clienteBase = {
+          nombre: data.nombre || "Sin nombre",
+          telefono: data.telefono || "",
+          cedula: data.cedula || null,
+          creadoEn: new Date().toISOString(),
+          activo: true
+        };
+
+        await setDoc(destinoDocRef, clienteBase);
+        nuevos++;
+        log.textContent += `✅ Guardado: ${clienteId} — ${clienteBase.nombre}\n`;
+      }
+
+      log.textContent += `\n-----------------------------------\n`;
+      log.textContent += `📊 Resumen:\n`;
+      log.textContent += `✨ Nuevos guardados: ${nuevos}\n`;
+      log.textContent += `⏭️ Ya existentes (omitidos): ${omitidos}\n`;
+      log.textContent += `\n🎉 Proceso completado`;
+      
+      alert(`Migración finalizada.\nNuevos: ${nuevos}\nOmitidos: ${omitidos}`);
+    }
+
+    window.migrar = migrar;
+  </script>
+
+  <a href="index.html" class="fab">🏠</a>
+</body>
+</html>
