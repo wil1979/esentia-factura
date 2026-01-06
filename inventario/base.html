@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Inventario / Kardex - Esentia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+<h1>📦 Inventario / Kardex</h1>
+<p class="muted">Módulo independiente de clientes y facturación</p>
+
+
+<div class="card">
+  <h2>➕ Registrar entrada de inventario</h2>
+<select id="productoSelect"></select>
+
+<input
+  type="number"
+  id="cantidad"
+  placeholder="Cantidad"
+/>
+
+<input
+  type="text"
+  id="referencia"
+  placeholder="Referencia (opcional)"
+/>
+
+
+  <h4>📦 Stock actual</h4>
+  <div id="stockActual">0</div>
+
+
+<button id="btnRegistrarEntrada">
+  ➕ Registrar Entrada
+</button>
+</div>
+
+<!-- 4. Stock actual -->
+ <div class="card">
+<table>
+  <thead>
+    <tr>
+      <th>Producto</th>
+      <th>Stock actual</th>
+      
+    </tr>
+  </thead>
+  <tbody id="stockBody"></tbody>
+  
+</table>
+</div>
+
+<!-- 5. Historial Kardex -->
+ <div class="card">
+<h3>📘 Kardex por producto</h3>
+
+
+<table>
+  <thead>
+    <tr>
+      <th>Fecha</th>
+      <th>Entrada</th>
+      <th>Salida</th>
+      <th>Stock</th>
+      <th>Referencia</th>
+      <th>Saldo</th>
+    </tr>
+  </thead>
+  <tbody id="kardexBody"></tbody>
+</table>
+</div>
+
+<div id="modalMovimiento" class="modal hidden">
+  <div class="card modal-content">
+    <h3>✏️ Editar movimiento</h3>
+
+      <h4>Cantidad</h4>
+    <input type="number" id="editCantidad" />
+      <h4>Referencia</h4>
+    <input type="text" id="editReferencia" />
+
+   <div class="modal-actions">
+      <button id="btnGuardarCambio">💾 Guardar</button>
+      <button id="btnEliminarMovimiento">🗑️ Eliminar</button>
+      <button id="btnCancelarModal">❌ Cancelar</button>
+    </div>
+  </div>
+</div>
+
+
+<a href="index.html" class="fab">🏠</a>
+<script type="module" src="inventario.js"></script>
+</body>
+</html>
