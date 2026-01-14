@@ -599,7 +599,7 @@
     <div id="loader" style="display:flex; justify-content:center; align-items:center; height:300px; color:#6c4ba3; font-size:1.5rem; font-weight:bold;">
       <div style="text-align:center;">
         <div style="font-size:3rem; margin-bottom:10px;">⏳</div>
-        <div>Cargando catálogo...</div>
+        <div>Estamos Actualizando el Inventario...</div>
       </div>
     </div>
     <div id="productos-hogar"></div>
@@ -840,7 +840,7 @@
 
     let datosLealtadCliente = null;
     let tarjetaLealtadAbierta = true;
-
+    
     /**
      * Abre la tarjeta de lealtad y oculta la caja de regalo
      */
@@ -884,38 +884,64 @@
     /**
      * Carga los datos de lealtad del cliente desde Firestore
      */
-    async function cargarDatosLealtadCliente() {
+async function cargarDatosLealtadCliente() {
   if (!clienteAutenticado) return;
 
   try {
     const { doc, getDoc } = window.firebaseUtils;
 
+    // 🔥 AQUÍ ESTABA EL ERROR: debe ser "facturas"
     const ref = doc(window.db, "facturas", clienteAutenticado.id);
     const snap = await getDoc(ref);
 
     if (!snap.exists()) {
       datosLealtadCliente = {
         nombre: clienteAutenticado.nombre,
-        lealtad: { sellos: 0, objetivo: 6, premiosPendientes: 0 }
+        sellos: 0,
+        objetivo: 6,
+        premiosPendientes: 0
       };
-      actualizarVisualizacionLealtad();
-      return;
+    } else {
+      const data = snap.data();
+      datosLealtadCliente = {
+        nombre: clienteAutenticado.nombre,
+        ...(data.lealtad || {
+          sellos: 0,
+          objetivo: 6,
+          premiosPendientes: 0
+        })
+      };
     }
 
-    const data = snap.data();
-
-    datosLealtadCliente = {
-      nombre: data.nombre,
-      lealtad: data.lealtad || { sellos: 0, objetivo: 6, premiosPendientes: 0 }
-    };
-
-    actualizarVisualizacionLealtad();
+    renderizarTarjetaLealtad();
 
   } catch (error) {
-    console.error("❌ Error cargando lealtad:", error);
+    console.error("Error cargando lealtad:", error);
   }
 }
 
+function renderizarTarjetaLealtad() {
+  if (!datosLealtadCliente) return;
+
+  document.getElementById("nombreClienteLealtad").textContent =
+    datosLealtadCliente.nombre;
+
+  document.getElementById("sellsActualesLealtad").textContent =
+    datosLealtadCliente.sellos;
+
+  document.getElementById("sellsObjetivoLealtad").textContent =
+    datosLealtadCliente.objetivo;
+
+  const grid = document.getElementById("sellsGrid");
+  grid.innerHTML = "";
+
+  for (let i = 1; i <= datosLealtadCliente.objetivo; i++) {
+    const div = document.createElement("div");
+    div.className = "sello " + (i <= datosLealtadCliente.sellos ? "activo" : "inactivo");
+    div.textContent = "★";
+    grid.appendChild(div);
+  }
+}
 
     /**
      * Actualiza la visualización de la tarjeta de lealtad con los datos del cliente
@@ -1000,6 +1026,7 @@
       const tarjetaAbierta = localStorage.getItem('tarjetaLealtadAbierta') !== 'false';
       if (tarjetaAbierta) {
         abrirTarjetaLealtad();
+        renderTarjetaLealtad(window.clienteSeleccionado);
       } else {
         cerrarTarjetaLealtad();
       }
@@ -1012,6 +1039,8 @@
       const container = document.getElementById('lealtadContainer');
       if (container) container.classList.remove('activo');
       datosLealtadCliente = null;
+
+      renderTarjetaLealtad(window.clienteSeleccionado);
     }
 
 
@@ -1118,7 +1147,10 @@ async function buscarCedulaHacienda(cedula) {
       }
 
       activarControlesAdmin(); // ✅ CLAVE
+      renderTarjetaLealtad(window.clienteSeleccionado);
+
       actualizarLealtadAlAutenticar();
+
     }
 
     function intentarRenderizar() {
@@ -1308,11 +1340,13 @@ async function buscarCedulaHacienda(cedula) {
 
     function cerrarSesion() {
       localStorage.removeItem("sesionEsentia");
+      renderTarjetaLealtad(null);
       localStorage.removeItem("adminEsentia");
       clienteAutenticado = null;
       carrito = [];
       localStorage.removeItem("carrito");
       renderCarrito();
+      
       codigoAplicado = null;
       descuentoAplicado = 0;
       difusorAplicado = null;
@@ -1399,6 +1433,70 @@ let cedulaValidaCache = null; // { cedula: "123...", nombre: "Nombre" }
 function limpiarCedula(cedula) {
   return cedula.replace(/\D/g, "").padStart(9, "0").slice(-9);
 }
+
+async function cargarLealtadCliente(clienteId) {
+  const { doc, getDoc } = window.firebaseUtils;
+
+  const ref = doc(window.db, "facturas", clienteId);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    return {
+      sellos: 0,
+      objetivo: 6,
+      premiosPendientes: 0
+    };
+  }
+
+  return snap.data().lealtad || {
+    sellos: 0,
+    objetivo: 6,
+    premiosPendientes: 0
+  };
+}
+
+
+function renderTarjetaLealtad(cliente) {
+  const card = document.getElementById("tarjeta-lealtad");
+  if (!card) return;
+
+  if (!cliente || !cliente.lealtad) {
+    card.innerHTML = `
+      <h4>🎁 Lealtad</h4>
+      <p>Sin datos</p>
+    `;
+    return;
+  }
+
+  const { sellos = 0, objetivo = 6, premiosPendientes = 0 } = cliente.lealtad;
+
+  card.innerHTML = `
+    <h4>🎁 Lealtad</h4>
+    <p>Sellos: ${sellos} / ${objetivo}</p>
+    <p>🎉 Premios pendientes: <strong>${premiosPendientes}</strong></p>
+  `;
+}
+
+async function cargarLealtadCliente(clienteId) {
+  const ref = doc(db, "facturas", clienteId);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    return {
+      sellos: 0,
+      objetivo: 6,
+      premiosPendientes: 0
+    };
+  }
+
+  return snap.data().lealtad || {
+    sellos: 0,
+    objetivo: 6,
+    premiosPendientes: 0
+  };
+}
+
+
 
 async function verificarCedulaEnHacienda(cedula) {
   const msg = document.getElementById("loginMensaje");
@@ -1523,6 +1621,10 @@ document.getElementById("formRegistro")?.addEventListener("submit", async e => {
       cedula: nuevoCliente.cedula,
       telefono: nuevoCliente.telefono
     };
+
+    // 🔥 cargar lealtad REAL desde facturas
+const lealtad = await cargarLealtadCliente(clienteAutenticado.id);
+clienteAutenticado.lealtad = lealtad;
     
     localStorage.setItem("sesionEsentia", JSON.stringify(clienteAutenticado));
     
@@ -1537,6 +1639,7 @@ document.getElementById("formRegistro")?.addEventListener("submit", async e => {
     // ✅ Éxito
     document.getElementById("nombreUsuario").textContent = nombre;
     document.getElementById("panelUsuario").style.display = "flex";
+    renderTarjetaLealtad(clienteAutenticado);
     document.getElementById("btnLogin").style.display = "none";
     document.getElementById("modalLoginRegistro").style.display = "none";
     msg.textContent = "";
