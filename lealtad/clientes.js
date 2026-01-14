@@ -217,9 +217,10 @@ async function registrarSalidasInventarioDesdeFactura(productos, clienteId) {
 
   for (const p of productos) {
     await addDoc(
-      collection(db, "inventario_movimientos"),
+     // inventario_movimientos
+      collection(db, "facturas"),
       {
-        productoId: p.codigo || p.nombre,
+        nombre: p.codigo || p.nombre,
         tipo: "salida",
         cantidad: p.cantidad,
         origen: "venta",
@@ -228,6 +229,23 @@ async function registrarSalidasInventarioDesdeFactura(productos, clienteId) {
       }
     );
   }
+}
+function renderSellosCliente(clienteId) {
+  const contenedor = document.getElementById("sellos-cliente");
+  if (!contenedor) return;
+
+  getDoc(doc(db, "facturas", clienteId)).then(snap => {
+    if (!snap.exists() || !snap.data().lealtad) {
+      contenedor.innerHTML = "🎁 Sellos: 0";
+      return;
+    }
+
+    const { sellos = 0, objetivo = 6 } = snap.data().lealtad;
+
+    contenedor.innerHTML = `
+      🎁 Sellos: <strong>${sellos}</strong> / ${objetivo}
+    `;
+  });
 }
 
 function renderResumenGeneralLigero() {
@@ -548,9 +566,10 @@ async function registrarSalidasInventario(facturaId, productos) {
 
   for (const p of productos) {
     await addDoc(
-      collection(db, "inventario_movimientos"),
+      //inventario_movimientos
+      collection(db, "facturas"),
       {
-        productoId: p.codigo || p.nombre,
+        nombre: p.codigo || p.nombre,
         tipo: "salida",
         cantidad: p.cantidad,
         origen: "venta",
@@ -561,24 +580,38 @@ async function registrarSalidasInventario(facturaId, productos) {
   }
 }
 
-async function obtenerStockActual(productoId) {
+async function obtenerStockActual(nombre) {
   const q = query(
-    collection(db, "inventario_movimientos"),
-    where("productoId", "==", productoId)
+    collection(db, "stock"),
+    where("nombre", "==", nombre)
   );
 
   const snap = await getDocs(q);
 
-  let stock = 0;
-  snap.forEach((doc) => {
-    const m = doc.data();
-    if (m.tipo === "entrada") stock += m.cantidad;
-    if (m.tipo === "salida") stock -= m.cantidad;
-  });
+  if (snap.empty) return 0;
 
-  return stock;
+  // Asumimos 1 documento por producto
+  const docStock = snap.docs[0].data();
+  return Number(docStock.cantidad || 0);
 }
 
+async function descontarStock(nombre, cantidadVendida) {
+  const q = query(
+    collection(db, "stock"),
+    where("nombre", "==", nombre)
+  );
+
+  const snap = await getDocs(q);
+  if (snap.empty) return;
+
+  const ref = snap.docs[0].ref;
+  const actual = snap.docs[0].data().cantidad || 0;
+
+  await updateDoc(ref, {
+    cantidad: actual - cantidadVendida,
+    ultimaActualizacion: new Date().toISOString()
+  });
+}
 // ===============================
 // 📂 Movimientos del cliente
 // ===============================
@@ -603,6 +636,7 @@ window.seleccionarCliente = async function (id) {
   if (!base) return alert("Cliente no encontrado");
 
   window.clienteSeleccionadoId = id;
+  renderSellosCliente(id);
 
   // 🔥 Cargamos las facturas SOLO al seleccionar
   const ref = doc(db, "facturas", id);
@@ -957,6 +991,14 @@ window.guardarPagoFactura = async function () {
 
   await setDoc(ref, data, { merge: true });
 
+  // 🔥 DESCONTAR STOCK REAL**********************************************************
+await descontarStockDesdeFactura(window.carrito);
+
+//data.lealtad = calcularLealtad(data.lealtad, total);
+ // 🔥 DESCONTAR STOCK REAL**********************************************************
+
+
+
   // Actualizar estado local
   window.clienteSeleccionado.compras = compras;
   window.clienteSeleccionado.abonos =
@@ -989,6 +1031,31 @@ window.enviarRecordatoriosAtraso = async function () {
 
   alert(`🔔 Recordatorios enviados a ${atrasados.length} clientes`);
 };
+
+function calcularLealtad(lealtad = {}, montoFactura) {
+  const config = {
+    valorSello: 5000,
+    objetivo: lealtad.objetivo || 6
+  };
+
+  const sellosActuales = lealtad.sellos || 0;
+  const premiosPendientes = lealtad.premiosPendientes || 0;
+
+  const sellosGanados = Math.floor(montoFactura / config.valorSello);
+  let nuevosSellos = sellosActuales + sellosGanados;
+  let nuevosPremios = premiosPendientes;
+
+  while (nuevosSellos >= config.objetivo) {
+    nuevosSellos -= config.objetivo;
+    nuevosPremios += 1;
+  }
+
+  return {
+    sellos: nuevosSellos,
+    objetivo: config.objetivo,
+    premiosPendientes: nuevosPremios
+  };
+}
 
 
 function renderProductosHTML(productos) {
@@ -1200,12 +1267,12 @@ window.eliminarCompra = async function (index) {
   const compras = window.clienteSeleccionado.compras;
   if (!compras || !compras[index]) return;
 
-  /* ❌ No permitir eliminar si tiene pagos
+   //❌ No permitir eliminar si tiene pagos
   if (Number(compras[index].pagado) > 0) {
     alert("No se puede eliminar una compra con pagos registrados.");
     return;
   }
-*/
+
   // Eliminar del estado local
   compras.splice(index, 1);
 
@@ -1234,8 +1301,8 @@ limpieza
 
 async function revertirInventarioPorFactura(compra) {
   for (const p of compra.productos) {
-    await addDoc(collection(db, "kardex"), {
-      productoId: p.id,
+    await addDoc(collection(db, "factura"), {
+      nombre: p.id,
       nombre: p.nombre,
       tipo: "entrada", // 👈 REVERSO
       cantidad: p.cantidad,
@@ -1706,8 +1773,11 @@ window.agregarAlCarritoModal = function () {
 
   const selectVar = document.getElementById("select-variante");
   const variante = selectVar?.value ? JSON.parse(selectVar.value) : null;
+  const inputCantidad = document.getElementById("input-cantidad");
+  const cantidad = Math.max(1, Number(inputCantidad?.value || 1));
 
   window.carrito.push({
+    stockId: window.productoSeleccionado.id, // 🔑 CORRECTO
     nombre: window.productoSeleccionado.nombre,
     variante: variante?.nombre || "Única",
     precio:
@@ -1716,7 +1786,7 @@ window.agregarAlCarritoModal = function () {
   window.productoSeleccionado.precioPublico ??
   window.productoSeleccionado.precioOriginal ??
   0,
-    cantidad: 1
+    cantidad
   });
 
   renderizarCarrito();
@@ -1843,9 +1913,9 @@ window.guardarPago = window.guardarPagoModal = async function () {
     await updateDoc(ref, { compras, abonos, lealtad: data.lealtad });
     cerrarModalPago();
     await cargarClientesBase();
-renderResumenPagosPorMetodo();
+    //renderResumenPagosPorMetodo();
     renderResumenGeneral();
-    seleccionarCliente(clienteSeleccionadoId);
+    seleccionarCliente(clienteSeleccionadoId);    
     alert("✔ Pago registrado con éxito.");
   } catch (e) {
     console.error("Error al guardar pago:", e);
@@ -2052,7 +2122,7 @@ if (tipoPago === "contado") {
   const abono = {
     fecha: new Date().toISOString(),
     monto: total, // total - descuento
-    metodo: metodoPago,
+    metodo: "Efectivo",
     nota: "Pago contado al facturar"
   };
 
@@ -2077,79 +2147,74 @@ if (tipoPago === "contado") {
   
   console.log("🧾 Facturando con tipoPago:", tipoPago);
 
-  // ===============================
 // 🔒 VALIDAR STOCK ANTES DE FACTURAR
-
 for (const p of window.carrito) {
-  const productoId = p.codigo || p.nombre;
-  const stock = await obtenerStockActual(productoId);
+  const nombre = p.nombre; // 👈 usar nombre directo
+  const stock = await obtenerStockActual(nombre);
 
-  if (stock === 0) {
-  console.warn(`⚠️ ${p.nombre} sin stock`);
-}
+  if (stock <= 0) {
+    alert(`❌ "${p.nombre}" no tiene stock disponible`);
+    return;
+  }
 
   if (p.cantidad > stock) {
     alert(
       `❌ Stock insuficiente para "${p.nombre}"
- Disponible: ${stock}
- Solicitado: ${p.cantidad}`
+Disponible: ${stock}
+Solicitado: ${p.cantidad}`
     );
     return; // ⛔ corta la facturación
   }
 }
 
-// ===============================
-
   const ref = doc(db, "facturas", window.clienteSeleccionadoId);
   const snap = await getDoc(ref);
   const data = snap.exists()
-    ? snap.data()
-    : { compras: [], abonos: [] };
+  ? snap.data()
+  : { compras: [], abonos: [] };
 
+   // 🧾 guardar compra
+   data.compras.push(compra);
 
-  data.compras.push(compra);
-  await setDoc(ref, data, { merge: true });
+   // 🎁 calcular lealtad
+  data.lealtad = calcularLealtad(data.lealtad, total);
+
+ await setDoc(ref, data, { merge: true });
 
   // 🔥🔥 AQUÍ VA LA CONEXIÓN CON INVENTARIO 🔥🔥
   await registrarSalidasInventarioDesdeFactura(
     window.carrito,
     window.clienteSeleccionadoId
   );
-alert("✅ Factura registrada correctamente");
+ alert("✅ Factura registrada correctamente");
 
-// 🔑 SINCRONIZAR ESTADO LOCAL
+ // 🔑 SINCRONIZAR ESTADO LOCAL
   window.clienteSeleccionado.compras.push(compra);
 
   cerrarModalProductos();
   renderHistorialCompras();
 };
 
-/*
-  //agregado por kardex en inventario NUEVO
-  const facturaRef = await addDoc(
-  collection(db, "facturas"),
-  factura
-   );
+async function descontarStockDesdeFactura(productos) {
+  for (const p of productos) {
+    const q = query(
+      collection(db, "stock"),
+      where("nombre", "==", p.nombre)
+    );
 
-  // 👇 INVENTARIO REACCIONA
-  await registrarSalidasInventario(
-  facturaRef.id,
-  factura.productos
-);
-//agregado por kardex en inventario NUEVO
+    const snap = await getDocs(q);
+    if (snap.empty) continue;
 
-  
+    const refStock = snap.docs[0].ref;
+    const actual = snap.docs[0].data().cantidad || 0;
 
-  // 🔑 SINCRONIZAR ESTADO LOCAL
-   window.clienteSeleccionado.compras.push(compra);
-   
-  cerrarModalProductos();
-  renderHistorialCompras();
-  
+    await updateDoc(refStock, {
+      cantidad: actual - p.cantidad,
+      ultimaActualizacion: new Date().toISOString()
+    });
+  }
+}
 
-};
-
-*/
 
 
 // ===============================================
