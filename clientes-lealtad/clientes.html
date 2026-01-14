@@ -622,7 +622,7 @@ async function actualizarTodoInventarioPendiente() {
 
       // Guardar cambios en el cliente si hubo actualizaciones
       if (hayCambios) {
-        await updateDoc(doc(db, "clientes", clienteId), { compras });
+        await updateDoc(doc(db, "clientesBD", clienteId), { compras });
       }
     }
 
@@ -671,7 +671,7 @@ async function guardarEdicionDesdeModal() {
   }
 
   try {
-    const clienteDoc = doc(db, "clientes", clienteId);
+    const clienteDoc = doc(db, "clientesBD", clienteId);
     await updateDoc(clienteDoc, {
       nombre: nuevoNombre,
       telefono: nuevoTelefono,
@@ -1019,7 +1019,7 @@ if (compras.length > 0) {
     // ✅ Actualizar inventario
     async function actualizarInventario(clienteId, compraIndex) {
       try {
-        const clienteDoc = doc(db, "clientes", clienteId);
+        const clienteDoc = doc(db, "clientesBD", clienteId);
         const docSnap = await getDoc(clienteDoc);
         if (!docSnap.exists()) {
           alert("Cliente no encontrado.");
@@ -1080,7 +1080,7 @@ if (compras.length > 0) {
     // ✅ Revertir inventario
     async function revertirInventario(clienteId, compraIndex) {
       try {
-        const clienteDoc = doc(db, "clientes", clienteId);
+        const clienteDoc = doc(db, "clientesBD", clienteId);
         const docSnap = await getDoc(clienteDoc);
         if (!docSnap.exists()) {
           alert("Cliente no encontrado.");
@@ -1165,7 +1165,7 @@ if (compras.length > 0) {
     nuevoTelefono = nuevo;
   }
   try {
-    const clienteDoc = doc(db, "clientes", clienteId);
+    const clienteDoc = doc(db, "clientesBD", clienteId);
     await updateDoc(clienteDoc, { 
       nombre: nuevoNombre, 
       telefono: nuevoTelefono,
@@ -1188,7 +1188,7 @@ if (compras.length > 0) {
     async function eliminarCliente(clienteId, nombre) {
       if (!confirm(`¿Eliminar a ${nombre}? Esta acción no se puede deshacer.`)) return;
       try {
-        await deleteDoc(doc(db, "clientes", clienteId));
+        await deleteDoc(doc(db, "clientesBD", clienteId));
         alert(`✅ ${nombre} eliminado.`);
         await cargarClientes(filtroDeudoresActivo);
       } catch (error) {
@@ -1199,7 +1199,7 @@ if (compras.length > 0) {
 
     // ✅ Editar compra
     window.editarCompra = async function(clienteId, index) {
-      const clienteDoc = doc(db, "clientes", clienteId);
+      const clienteDoc = doc(db, "clientesBD", clienteId);
       const docSnap = await getDoc(clienteDoc);
       if (!docSnap.exists()) return;
       const cliente = docSnap.data();
@@ -1230,7 +1230,7 @@ if (compras.length > 0) {
     // ✅ Eliminar compra
     window.eliminarCompra = async function(clienteId, index) {
       if (!confirm("¿Eliminar esta compra?")) return;
-      const clienteDoc = doc(db, "clientes", clienteId);
+      const clienteDoc = doc(db, "clientesBD", clienteId);
       const docSnap = await getDoc(clienteDoc);
       const cliente = docSnap.data();
       const compras = cliente.compras || [];
@@ -1242,7 +1242,7 @@ if (compras.length > 0) {
 
     // ✅ Nueva función: abrir modal de pagos con facturas pendientes
 window.registrarPago = async function(clienteId, nombreCliente, telefonoCliente) {
-  const clienteDoc = doc(db, "clientes", clienteId);
+  const clienteDoc = doc(db, "clientesBD", clienteId);
   const docSnap = await getDoc(clienteDoc);
   if (!docSnap.exists()) {
     alert("Cliente no encontrado.");
@@ -1318,7 +1318,7 @@ window.aplicarPago = async function(clienteId, compraIndex, saldoMax) {
 
   try {
     // 🔥 LEER EL DOCUMENTO ACTUAL DE NUEVO (evita conflictos)
-    const clienteDocRef = doc(db, "clientes", clienteId);
+    const clienteDocRef = doc(db, "clientesBD", clienteId);
     const docSnap = await getDoc(clienteDocRef);
     if (!docSnap.exists()) {
       alert("Cliente no encontrado.");
@@ -1420,7 +1420,7 @@ async function enviarWhatsApp(telefono, nombre, deudaTotal, clienteId) {
   }
 
   // Obtener facturas pendientes
-  const clienteDoc = doc(db, "clientes", clienteId);
+  const clienteDoc = doc(db, "clientesBD", clienteId);
   const docSnap = await getDoc(clienteDoc);
   if (!docSnap.exists()) return;
 
@@ -1737,7 +1737,7 @@ async function enviarWhatsApp(telefono, nombre, deudaTotal, clienteId) {
 
     // === IMPRESIÓN MODAL DEL HISTORIAL INDIVIDUAL ===
     window.abrirModalHistorial = async function(clienteId, nombre) {
-      const clienteDoc = doc(db, "clientes", clienteId);
+      const clienteDoc = doc(db, "clientesBD", clienteId);
       const docSnap = await getDoc(clienteDoc);
       if (!docSnap.exists()) {
         alert("Cliente no encontrado.");
@@ -1949,7 +1949,7 @@ function mostrarVistaPrevia() {
 
   // ✅ Verificar premio pendiente
   try {
-    const clienteDoc = doc(db, "clientes", idCliente);
+    const clienteDoc = doc(db, "clientesBD", idCliente);
     const docSnap = await getDoc(clienteDoc);
     if (docSnap.exists()) {
       const data = docSnap.data();
@@ -2149,7 +2149,7 @@ function mostrarVistaPrevia() {
   }
 
   // Guardar compra
-  const clienteDoc = doc(db, "clientes", clienteSeleccionadoId);
+  const clienteDoc = doc(db, "clientesBD", clienteSeleccionadoId);
   const snap = await getDocs(clientesRef);
   let comprasActuales = [];
   snap.forEach(s => {
@@ -2221,7 +2221,7 @@ if (window.premioAplicado) {
 
     // ✅ Editar cliente directamente desde el modal de selección
 window.editarClienteDesdeModal = async function(clienteId) {
-  const clienteDoc = doc(db, "clientes", clienteId);
+  const clienteDoc = doc(db, "clientesBD", clienteId);
   const docSnap = await getDoc(clienteDoc);
   if (!docSnap.exists()) {
     alert("Cliente no encontrado.");
@@ -2282,7 +2282,7 @@ window.guardarEdicionDesdeModal = async function(clienteId) {
   }
 
   try {
-    const clienteDoc = doc(db, "clientes", clienteId);
+    const clienteDoc = doc(db, "clientesBD", clienteId);
     await updateDoc(clienteDoc, { 
       nombre: nuevoNombre, 
       telefono: nuevoTelefono,
