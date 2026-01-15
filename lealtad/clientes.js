@@ -2097,17 +2097,16 @@ window.confirmarEliminarCliente = async function () {
 
 
 
-// 💾 FACTURAR (BASE)
+// 💾 FACTURAR (CORREGIDO)
 // ===============================
 window.facturarVenta = async function () {
   if (!window.clienteSeleccionadoId || window.carrito.length === 0) {
     alert("No hay datos para facturar");
     return;
   }
-  
 
   const tipoPago =
-  document.querySelector("#modal-productos #tipo-pago")?.value || "contado";
+    document.querySelector("#modal-productos #tipo-pago")?.value || "contado";
   const descuento = Number(document.getElementById("descuento")?.value || 0);
 
   const subtotal = window.carrito.reduce(
@@ -2117,17 +2116,44 @@ window.facturarVenta = async function () {
 
   const total = Math.max(0, subtotal - descuento);
 
-  // 🔑 Si es pago CONTADO, registrar también como abono
-if (tipoPago === "contado") {
-  const abono = {
-    fecha: new Date().toISOString(),
-    monto: total, // total - descuento
-    metodo: "Efectivo",
-    nota: "Pago contado al facturar"
-  };
+  // 🔒 VALIDAR STOCK ANTES DE FACTURAR
+  for (const p of window.carrito) {
+    const nombre = p.nombre;
+    const stock = await obtenerStockActual(nombre);
 
-  data.abonos = [...(data.abonos || []), abono];
-}
+    if (stock <= 0) {
+      alert(`❌ "${p.nombre}" no tiene stock disponible`);
+      return;
+    }
+
+    if (p.cantidad > stock) {
+      alert(
+        `❌ Stock insuficiente para "${p.nombre}"
+Disponible: ${stock}
+Solicitado: ${p.cantidad}`
+      );
+      return;
+    }
+  }
+
+  // ✅ SOLUCIÓN: Obtener data ANTES de usarla
+  const ref = doc(db, "facturas", window.clienteSeleccionadoId);
+  const snap = await getDoc(ref);
+  const data = snap.exists()
+    ? snap.data()
+    : { compras: [], abonos: [], lealtad: {} };
+
+  // 🔑 Si es pago CONTADO, registrar también como abono
+  if (tipoPago === "contado") {
+    const abono = {
+      fecha: new Date().toISOString(),
+      monto: total,
+      metodo: "Efectivo",
+      nota: "Pago contado al facturar"
+    };
+
+    data.abonos = [...(data.abonos || []), abono];
+  }
 
   const compra = {
     fecha: new Date().toISOString(),
@@ -2138,62 +2164,37 @@ if (tipoPago === "contado") {
     pagado: tipoPago === "credito" ? 0 : total,
     saldo: tipoPago === "credito" ? total : 0,
     tipoPago,
-    metodoPago: tipoPago === "credito" ? "Pendiente" : "Efectivo" // 👈 CLAVE
+    metodoPago: tipoPago === "credito" ? "Pendiente" : "Efectivo"
   };
 
   const selectDebug = document.querySelector("#modal-productos #tipo-pago");
-   console.log("🔍 Select real:", selectDebug);
-   console.log("🔍 Valor real:", selectDebug?.value);
-  
+  console.log("🔍 Select real:", selectDebug);
+  console.log("🔍 Valor real:", selectDebug?.value);
   console.log("🧾 Facturando con tipoPago:", tipoPago);
 
-// 🔒 VALIDAR STOCK ANTES DE FACTURAR
-for (const p of window.carrito) {
-  const nombre = p.nombre; // 👈 usar nombre directo
-  const stock = await obtenerStockActual(nombre);
+  // 🧾 guardar compra
+  data.compras.push(compra);
 
-  if (stock <= 0) {
-    alert(`❌ "${p.nombre}" no tiene stock disponible`);
-    return;
-  }
-
-  if (p.cantidad > stock) {
-    alert(
-      `❌ Stock insuficiente para "${p.nombre}"
-Disponible: ${stock}
-Solicitado: ${p.cantidad}`
-    );
-    return; // ⛔ corta la facturación
-  }
-}
-
-  const ref = doc(db, "facturas", window.clienteSeleccionadoId);
-  const snap = await getDoc(ref);
-  const data = snap.exists()
-  ? snap.data()
-  : { compras: [], abonos: [] };
-
-   // 🧾 guardar compra
-   data.compras.push(compra);
-
-   // 🎁 calcular lealtad
+  // 🎁 calcular lealtad
   data.lealtad = calcularLealtad(data.lealtad, total);
 
- await setDoc(ref, data, { merge: true });
+  await setDoc(ref, data, { merge: true });
 
-  // 🔥🔥 AQUÍ VA LA CONEXIÓN CON INVENTARIO 🔥🔥
+  // 🔥 CONEXIÓN CON INVENTARIO
   await registrarSalidasInventarioDesdeFactura(
     window.carrito,
     window.clienteSeleccionadoId
   );
- alert("✅ Factura registrada correctamente");
 
- // 🔑 SINCRONIZAR ESTADO LOCAL
+  alert("✅ Factura registrada correctamente");
+
+  // 🔑 SINCRONIZAR ESTADO LOCAL
   window.clienteSeleccionado.compras.push(compra);
 
   cerrarModalProductos();
   renderHistorialCompras();
 };
+
 
 async function descontarStockDesdeFactura(productos) {
   for (const p of productos) {
@@ -2654,4 +2655,5 @@ window.revertirPago = async function (indexPago) {
   await seleccionarCliente(clienteSeleccionadoId);
   alert("✔ Pago revertido correctamente");
 };
+
 
