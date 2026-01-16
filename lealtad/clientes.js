@@ -326,7 +326,7 @@ function calcularResumenGeneral() {
     compras.forEach(c => {
       const total = Number(c.total ?? (c.monto - (c.descuento || 0)));
       const pagado = Number(c.pagado || 0);
-      const saldo = Math.max(0, total - pagado);
+      const saldo = Math.max(0, total - (c.pagado || 0));
 
       totalVendido += total;
       totalPagado += pagado;
@@ -651,7 +651,7 @@ window.seleccionarCliente = async function (id) {
   compras.forEach(c => {
     const total = Number(c.total ?? (c.monto - (c.descuento || 0)));
     const pagado = Number(c.pagado || 0);
-    const saldo = Math.max(0, total - pagado);
+    const saldo = Math.max(0, total - (c.pagado || 0));
     totalDeuda += saldo;
     if (saldo > 0 && c.fecha) {
       const dias = calcularDiasAtraso(c.fecha);
@@ -830,6 +830,9 @@ function renderHistorialAbonos() {
       </div>
     `;
   });
+ cargarClientesBase();
+ seleccionarCliente(clienteSeleccionadoId);
+
 }
 
 
@@ -858,7 +861,7 @@ function renderHistorialCompras() {
     const descuento = Number(c.descuento || 0);
     const pagado = Number(c.pagado || 0);
     const total = Number(c.total ?? Math.max(0, monto - descuento));
-    const saldo = Number(c.saldo ?? Math.max(0, total - pagado));
+    const saldo = Math.max(0, total - (c.pagado || 0));
     const diasAtraso = calcularDiasAtraso(c);
 
 let badgeAtraso = "";
@@ -1032,30 +1035,7 @@ window.enviarRecordatoriosAtraso = async function () {
   alert(`🔔 Recordatorios enviados a ${atrasados.length} clientes`);
 };
 
-function calcularLealtad(lealtad = {}, montoFactura) {
-  const config = {
-    valorSello: 5000,
-    objetivo: lealtad.objetivo || 6
-  };
 
-  const sellosActuales = lealtad.sellos || 0;
-  const premiosPendientes = lealtad.premiosPendientes || 0;
-
-  const sellosGanados = Math.floor(montoFactura / config.valorSello);
-  let nuevosSellos = sellosActuales + sellosGanados;
-  let nuevosPremios = premiosPendientes;
-
-  while (nuevosSellos >= config.objetivo) {
-    nuevosSellos -= config.objetivo;
-    nuevosPremios += 1;
-  }
-
-  return {
-    sellos: nuevosSellos,
-    objetivo: config.objetivo,
-    premiosPendientes: nuevosPremios
-  };
-}
 
 
 function renderProductosHTML(productos) {
@@ -1105,7 +1085,7 @@ window.enviarWhatsAppCliente = async function (modo = "suave") {
       const descuento = Number(c.descuento || 0);
       const pagado = Number(c.pagado || 0);
       const total = Math.max(0, subtotal - descuento);
-      const saldo = Number(c.saldo ?? Math.max(0, total - pagado));
+      const saldo = Math.max(0, total - (c.pagado || 0));
       return { ...c, subtotal, total, saldo };
     })
     .filter(f => f.saldo > 0);
@@ -1204,7 +1184,7 @@ window.enviarWhatsAppA = function(cliente, modo = "suave") {
       const descuento = Number(c.descuento || 0);
       const pagado = Number(c.pagado || 0);
       const total = Math.max(0, subtotal - descuento);
-      const saldo = Math.max(0, total - pagado);
+      const saldo = Math.max(0, total - (c.pagado || 0));
       return { ...c, subtotal, total, saldo };
     })
     .filter(f => f.saldo > 0);
@@ -1268,10 +1248,10 @@ window.eliminarCompra = async function (index) {
   if (!compras || !compras[index]) return;
 
    //❌ No permitir eliminar si tiene pagos
-  if (Number(compras[index].pagado) > 0) {
+  /*if (Number(compras[index].pagado) > 0) {
     alert("No se puede eliminar una compra con pagos registrados.");
     return;
-  }
+  }*/
 
   // Eliminar del estado local
   compras.splice(index, 1);
@@ -1709,6 +1689,7 @@ function calcularDiasAtraso(compra) {
   const diff = hoy - fecha;
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
+/*
 
 function recalcularComprasDesdeAbonos(compras, abonos) {
   // Resetear compras
@@ -1745,7 +1726,7 @@ function recalcularComprasDesdeAbonos(compras, abonos) {
       });
     });
 }
-
+*/
 
 function notificarPremio(texto) {
   const modal = document.getElementById("modal-productos");
@@ -1862,7 +1843,12 @@ async function cargarHistorialAbonos() {
         </div>
       </div>
     `;
+
+    
   });
+  await cargarClientesBase();
+  await seleccionarCliente(clienteSeleccionadoId);
+
 }
 
 window.guardarPago = window.guardarPagoModal = async function () {
@@ -1994,7 +1980,12 @@ function generarEstadoCuentaHTML() {
           </div>
         </div>
       `;
+      
     });
+
+    cargarClientesBase();
+    seleccionarCliente(clienteSeleccionadoId);
+
   }
 
   html += `
@@ -2097,7 +2088,8 @@ window.confirmarEliminarCliente = async function () {
 
 
 
-// 💾 FACTURAR (CORREGIDO)
+
+// 💾 FACTURAR (BASE) — Versión segura
 // ===============================
 window.facturarVenta = async function () {
   if (!window.clienteSeleccionadoId || window.carrito.length === 0) {
@@ -2107,43 +2099,69 @@ window.facturarVenta = async function () {
 
   const tipoPago =
     document.querySelector("#modal-productos #tipo-pago")?.value || "contado";
-  const descuento = Number(document.getElementById("descuento")?.value || 0);
+  const descuentoInput = document.getElementById("descuento")?.value || 0;
+  const descuento = Number(descuentoInput);
+  
+  if (isNaN(descuento)) {
+    alert("El descuento no es válido");
+    return;
+  }
 
   const subtotal = window.carrito.reduce(
-    (s, p) => s + p.precio * p.cantidad,
+    (s, p) => s + (Number(p.precio) || 0) * (Number(p.cantidad) || 0),
     0
   );
+
+  if (isNaN(subtotal)) {
+    alert("Error en el cálculo del subtotal");
+    return;
+  }
 
   const total = Math.max(0, subtotal - descuento);
 
   // 🔒 VALIDAR STOCK ANTES DE FACTURAR
   for (const p of window.carrito) {
     const nombre = p.nombre;
+    if (!nombre) {
+      alert("Producto sin nombre en el carrito");
+      return;
+    }
     const stock = await obtenerStockActual(nombre);
-
     if (stock <= 0) {
       alert(`❌ "${p.nombre}" no tiene stock disponible`);
       return;
     }
-
-    if (p.cantidad > stock) {
+    if ((p.cantidad || 0) > stock) {
       alert(
-        `❌ Stock insuficiente para "${p.nombre}"
-Disponible: ${stock}
-Solicitado: ${p.cantidad}`
+        `❌ Stock insuficiente para "${p.nombre}"\nDisponible: ${stock}\nSolicitado: ${p.cantidad}`
       );
       return;
     }
   }
 
-  // ✅ SOLUCIÓN: Obtener data ANTES de usarla
-  const ref = doc(db, "facturas", window.clienteSeleccionadoId);
-  const snap = await getDoc(ref);
-  const data = snap.exists()
-    ? snap.data()
-    : { compras: [], abonos: [], lealtad: {} };
+  // 🧾 Preparar compra
+  const compra = {
+    fecha: new Date().toISOString(),
+    productos: window.carrito.map(p => ({
+      nombre: p.nombre || "",
+      precio: Number(p.precio) || 0,
+      cantidad: Number(p.cantidad) || 0,
+      // Incluye otras propiedades si existen, pero evita undefined
+      ...(p.codigo ? { codigo: p.codigo } : {}),
+      ...(p.categoria ? { categoria: p.categoria } : {}),
+      ...(p.precioOferta !== undefined ? { precioOferta: p.precioOferta } : {})
+    })),
+    monto: subtotal,
+    descuento: descuento,
+    total: total,
+    pagado: tipoPago === "credito" ? 0 : total,
+    saldo: tipoPago === "credito" ? total : 0,
+    tipoPago: tipoPago,
+    metodoPago: tipoPago === "credito" ? "Pendiente" : "Efectivo"
+  };
 
   // 🔑 Si es pago CONTADO, registrar también como abono
+  let abonosExtras = [];
   if (tipoPago === "contado") {
     const abono = {
       fecha: new Date().toISOString(),
@@ -2151,36 +2169,40 @@ Solicitado: ${p.cantidad}`
       metodo: "Efectivo",
       nota: "Pago contado al facturar"
     };
-
-    data.abonos = [...(data.abonos || []), abono];
+    abonosExtras.push(abono);
   }
 
-  const compra = {
-    fecha: new Date().toISOString(),
-    productos: window.carrito,
-    monto: subtotal,
-    descuento,
-    total,
-    pagado: tipoPago === "credito" ? 0 : total,
-    saldo: tipoPago === "credito" ? total : 0,
-    tipoPago,
-    metodoPago: tipoPago === "credito" ? "Pendiente" : "Efectivo"
-  };
+  // 🔍 Leer documento existente
+  const ref = doc(db, "facturas", window.clienteSeleccionadoId);
+  const snap = await getDoc(ref);
+  const data = snap.exists() ? snap.data() : { compras: [], abonos: [] };
 
-  const selectDebug = document.querySelector("#modal-productos #tipo-pago");
-  console.log("🔍 Select real:", selectDebug);
-  console.log("🔍 Valor real:", selectDebug?.value);
-  console.log("🧾 Facturando con tipoPago:", tipoPago);
+  // Asegurar estructura base
+  if (!Array.isArray(data.compras)) data.compras = [];
+  if (!Array.isArray(data.abonos)) data.abonos = [];
 
-  // 🧾 guardar compra
+  // Agregar nueva compra
   data.compras.push(compra);
 
-  // 🎁 calcular lealtad
-  data.lealtad = calcularLealtad(data.lealtad, total);
+  // Agregar abono si aplica
+  if (abonosExtras.length > 0) {
+    data.abonos = [...data.abonos, ...abonosExtras];
+  }
 
-  await setDoc(ref, data, { merge: true });
+  // 🎁 Calcular lealtad (asegurar que no sea undefined)
+  const lealtadActual = typeof data.lealtad === 'number' ? data.lealtad : 0;
+  const nuevaLealtad = calcularLealtad(lealtadActual, total);
+  data.lealtad = typeof nuevaLealtad === 'number' ? nuevaLealtad : lealtadActual;
 
-  // 🔥 CONEXIÓN CON INVENTARIO
+  // 🔥 Limpiar datos antes de guardar en Firestore
+  const dataLimpia = limpiarParaFirestore(data);
+  
+  // 👇 Opcional: depuración
+  // console.log("💾 Datos limpios para Firestore:", JSON.stringify(dataLimpia, null, 2));
+
+  await setDoc(ref, dataLimpia, { merge: true });
+
+  // 🔥 Actualizar inventario
   await registrarSalidasInventarioDesdeFactura(
     window.carrito,
     window.clienteSeleccionadoId
@@ -2188,13 +2210,67 @@ Solicitado: ${p.cantidad}`
 
   alert("✅ Factura registrada correctamente");
 
-  // 🔑 SINCRONIZAR ESTADO LOCAL
-  window.clienteSeleccionado.compras.push(compra);
+  // 🔑 Sincronizar estado local
+  if (window.clienteSeleccionado) {
+    window.clienteSeleccionado.compras = window.clienteSeleccionado.compras || [];
+    window.clienteSeleccionado.compras.push(compra);
+  }
 
   cerrarModalProductos();
   renderHistorialCompras();
 };
 
+// 🧹 Helper: eliminar valores no válidos para Firestore
+function limpiarParaFirestore(obj) {
+  if (obj === null || obj === undefined) return null;
+  if (typeof obj !== 'object') {
+    if (typeof obj === 'number' && !isFinite(obj)) return 0; // NaN, Infinity → 0
+    return obj;
+  }
+  if (obj instanceof Date) return obj; // Firestore acepta Date
+  if (Array.isArray(obj)) {
+    return obj.map(limpiarParaFirestore).filter(item => item !== undefined);
+  }
+  const cleaned = {};
+  for (const key in obj) {
+    const val = obj[key];
+    if (val === undefined) continue;
+    cleaned[key] = limpiarParaFirestore(val);
+  }
+  return cleaned;
+}
+
+/* 🎁 Asegúrate de que esta función nunca devuelva undefined
+function calcularLealtad(actual = 0, monto = 0) {
+  actual = typeof actual === 'number' ? actual : 0;
+  monto = typeof monto === 'number' ? monto : 0;
+  return actual + monto * 0.1; // o tu lógica personalizada
+}*/
+
+function calcularLealtad(lealtad = {}, montoFactura) {
+  const config = {
+    valorSello: 5000,
+    objetivo: lealtad.objetivo || 6
+  };
+
+  const sellosActuales = lealtad.sellos || 0;
+  const premiosPendientes = lealtad.premiosPendientes || 0;
+
+  const sellosGanados = Math.floor(montoFactura / config.valorSello);
+  let nuevosSellos = sellosActuales + sellosGanados;
+  let nuevosPremios = premiosPendientes;
+
+  while (nuevosSellos >= config.objetivo) {
+    nuevosSellos -= config.objetivo;
+    nuevosPremios += 1;
+  }
+
+  return {
+    sellos: nuevosSellos,
+    objetivo: config.objetivo,
+    premiosPendientes: nuevosPremios
+  };
+}
 
 async function descontarStockDesdeFactura(productos) {
   for (const p of productos) {
@@ -2623,37 +2699,103 @@ window.registrarPagoAutomatico = function () {
 
 
 window.revertirPago = async function (indexPago) {
-  const abonos = [...(clienteSeleccionado.abonos || [])];
-  const pago = abonos[indexPago];
+  const ref = doc(db, "facturas", clienteSeleccionadoId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
 
-  if (!pago) {
-    alert("⚠️ Este pago no existe o no fue registrado como abono.");
-    return;
-  }
+  const data = snap.data();
+  const abonos = [...(data.abonos || [])];
+  const compras = [...(data.compras || [])];
+
+  const pago = abonos[indexPago];
+  if (!pago) return alert("Pago no encontrado");
 
   if (!confirm(
-    `¿Revertir este pago?\n\n` +
-    `Monto: ₡${pago.monto.toLocaleString("es-CR")}\n` +
-    `Método: ${pago.metodo}\n` +
-    `Fecha: ${new Date(pago.fecha).toLocaleDateString("es-CR")}`
+    `¿Revertir pago?\n\n` +
+    `₡${pago.monto.toLocaleString("es-CR")} — ${pago.metodo}`
   )) return;
 
-  // ❌ eliminar solo este abono
+  // ❌ eliminar abono
   abonos.splice(indexPago, 1);
 
-  // 🔁 recalcular compras desde cero
-  recalcularComprasDesdeAbonos(
-    clienteSeleccionado.compras,
-    abonos
-  );
+  // 🔁 reconstrucción REAL
+  reconstruirComprasDesdeAbonos(compras, abonos);
 
-  await updateDoc(doc(db, "facturas", clienteSeleccionadoId), {
-    compras: clienteSeleccionado.compras,
-    abonos
+  await updateDoc(ref, { compras, abonos });
+
+  await cargarClientesBase();
+  await seleccionarCliente(clienteSeleccionadoId);
+
+  alert("↩️ Pago revertido correctamente");
+};
+
+
+
+function recalcularComprasDesdeAbonos(compras = [], abonos = []) {
+  compras.forEach(c => {
+    const total = Number(c.total ?? (c.monto - (c.descuento || 0)));
+    c.pagado = 0;
+    c.saldo = total;               // 👈 CLAVE
+    c.metodoPago = "Pendiente";
   });
 
-  await seleccionarCliente(clienteSeleccionadoId);
-  alert("✔ Pago revertido correctamente");
-};
+  const comprasOrdenadas = [...compras].sort(
+    (a, b) => new Date(a.fecha) - new Date(b.fecha)
+  );
+
+  const abonosOrdenados = [...abonos].sort(
+    (a, b) => new Date(a.fecha) - new Date(b.fecha)
+  );
+
+  abonosOrdenados.forEach(abono => {
+    let restante = Number(abono.monto || 0);
+
+    comprasOrdenadas.forEach(c => {
+      if (restante <= 0 || c.saldo <= 0) return;
+
+      const aplicar = Math.min(c.saldo, restante);
+      c.pagado += aplicar;
+      c.saldo -= aplicar;
+      c.metodoPago = abono.metodo;
+
+      restante -= aplicar;
+    });
+  });
+}
+
+function reconstruirComprasDesdeAbonos(compras = [], abonos = []) {
+  // 1️⃣ Reset total
+  compras.forEach(c => {
+    c.pagado = 0;
+    c.metodoPago = "Pendiente";
+  });
+
+  // 2️⃣ FIFO real
+  const comprasOrdenadas = [...compras].sort(
+    (a, b) => new Date(a.fecha) - new Date(b.fecha)
+  );
+
+  const abonosOrdenados = [...abonos].sort(
+    (a, b) => new Date(a.fecha) - new Date(b.fecha)
+  );
+
+  abonosOrdenados.forEach(abono => {
+    let restante = Number(abono.monto || 0);
+
+    comprasOrdenadas.forEach(c => {
+      if (restante <= 0) return;
+
+      const total = Number(c.total ?? (c.monto - (c.descuento || 0)));
+      const saldo = total - (c.pagado || 0);
+
+      if (saldo <= 0) return;
+
+      const aplicar = Math.min(saldo, restante);
+      c.pagado += aplicar;
+      c.metodoPago = abono.metodo;
+      restante -= aplicar;
+    });
+  });
+}
 
 
