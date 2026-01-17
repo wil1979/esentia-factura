@@ -1046,14 +1046,12 @@ async function exportAllPNGsAsZIP() {
   const ordenados = [...productos].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
 
   for (const prod of ordenados) {
-    const id = producto.imagen
-  .split("/")
-  .pop()
-  .replace(".png", "")
-  .toLowerCase();
+    const id = prod.id;
+    if (!id) continue;
 
-    const url = `https://wil1979.github.io/esentia-factura/page.html?id=${id}`;
-    const qrUrlImage = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(url)}`;
+    const targetUrl  = qrBase + "?id=" + encodeURIComponent(prod.id);
+    const qrUrlImage = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=" + encodeURIComponent(targetUrl);
+
     try {
       const canvasLabel = await generateOneCanvas({
         prodName: prod.nombre,
