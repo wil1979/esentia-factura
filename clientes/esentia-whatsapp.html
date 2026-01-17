@@ -85,7 +85,9 @@
 </head>
 <body>
   <h1>💬 Esentia - WhatsApp Rápido</h1>
-
+  <select id="clienteBD">
+    <option value="">-- Selecciona un cliente --</option>
+  </select>
   <!-- Enviar mensaje -->
   <div class="seccion">
     <h2>Enviar mensaje a cliente</h2>
@@ -158,6 +160,37 @@
       "General", "Navidad", "Temporada", "Promocional",
       "Descuentos", "Ofertas", "Recomendaciones"
     ];
+    
+    async function cargarClientesBD() {
+  const select = document.getElementById("clienteBD");
+  select.innerHTML = '<option value="">-- Selecciona un cliente --</option>';
+
+  try {
+    const q = query(collection(db, "clientesBD"), orderBy("nombre"));
+    const snapshot = await getDocs(q);
+
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      if (!data.telefono) return;
+
+      const opt = document.createElement("option");
+      opt.value = data.telefono;
+      opt.textContent = `${data.nombre} ${data.apellidos || ""}`.trim();
+      select.appendChild(opt);
+    });
+
+  } catch (e) {
+    console.error("Error cargando clientesBD:", e);
+    select.innerHTML = '<option value="">❌ Error al cargar clientes</option>';
+  }
+}
+
+document.getElementById("clienteBD").addEventListener("change", e => {
+  const tel = e.target.value;
+  if (tel) {
+    document.getElementById("telefono").value = tel.replace(/^506/, "");
+  }
+});
 
     async function cargarRespuestas() {
       const select = document.getElementById("respuestaRapida");
@@ -349,6 +382,7 @@
     // Iniciar
     cargarRespuestas();
     cargarHistorial();
+    cargarClientesBD();
   </script>
 </body>
 </html>
