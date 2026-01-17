@@ -251,9 +251,8 @@
   const res = await fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json");
   const productos = await res.json();
 
-  const prod = productos.find(p =>
-    p.imagen.toLowerCase().includes(id)
-  );
+  const prod = productos.find(p => String(p.id) === id);
+ 
 
   if (!prod) return;
 
@@ -363,16 +362,8 @@ const productId = (params.get("id") || "").toLowerCase().trim();
 fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json")
     .then(r => r.json())
     .then(lista => {
-        const producto = lista.find(p => {
-            const id = p.imagen.split("/").pop().split(".")[0].toLowerCase();
-            return id === productId;
-        });
+        const producto = lista.find(p => String(p.id) === productId);
 
-        if (!producto) {
-            document.getElementById("contenedorProducto").innerHTML =
-                "<h2>No encontrado</h2><p>El producto solicitado no existe.</p>";
-            return;
-        }
 
         renderProducto(producto);
     })
