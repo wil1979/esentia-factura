@@ -534,9 +534,9 @@
           selProd.innerHTML = "<option value=''>Selecciona un producto</option>";
           todosLosProductos.forEach(p => {
             const opt = document.createElement("option");
-            opt.value = p.nombre;
+            opt.value = p.id;
             opt.textContent = p.nombre;
-            if (p.nombre === prod.nombre) opt.selected = true;
+             if (p.id === prod.id) opt.selected = true;
             selProd.appendChild(opt);
           });
 
@@ -544,14 +544,14 @@
           cantInput.type = "number";
           cantInput.placeholder = "Cantidad";
           cantInput.value = prod.cantidad;
-          cantInput.min = "1";
+          cantInput.min = "4";
           cantInput.classList.add("prod-cant");
 
           const precioInput = document.createElement("input");
           precioInput.type = "number";
           precioInput.placeholder = "Precio de compra por unidad";
           precioInput.value = prod.precioUnitario;
-          precioInput.min = "0";
+          precioInput.min = "1300";
           precioInput.classList.add("prod-precio");
 
           const totalSpan = document.createElement("span");
@@ -614,72 +614,60 @@
     }
 
     function agregarProducto() {
-      const cont = document.getElementById("productos-compra");
-      const div = document.createElement("div");
-      div.className = "producto-item";
+  const cont = document.getElementById("productos-compra");
+  const div = document.createElement("div");
+  div.className = "producto-item";
 
-      const selProd = document.createElement("select");
-      selProd.classList.add("prod-seleccion");
-      selProd.innerHTML = "<option value=''>Selecciona un producto</option>";
-      todosLosProductos.forEach(p => {
-        const opt = document.createElement("option");
-        opt.value = p.nombre;
-        opt.textContent = p.nombre;
-        selProd.appendChild(opt);
-      });
+  const selProd = document.createElement("select");
+  selProd.classList.add("prod-seleccion");
+  selProd.innerHTML = "<option value=''>Selecciona un producto</option>";
 
-      const cantInput = document.createElement("input");
-      cantInput.type = "number";
-      cantInput.placeholder = "Cantidad";
-      cantInput.value = "1";
-      cantInput.min = "1";
-      cantInput.classList.add("prod-cant");
+  todosLosProductos.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.id;              // ✅ ID REAL
+    opt.textContent = p.nombre;
+    selProd.appendChild(opt);
+  });
 
-      const precioInput = document.createElement("input");
-      precioInput.type = "number";
-      precioInput.placeholder = "Precio de compra por unidad";
-      precioInput.value = "0";
-      precioInput.min = "0";
-      precioInput.classList.add("prod-precio");
+  const cantInput = document.createElement("input");
+  cantInput.type = "number";
+  cantInput.value = "1";
+  cantInput.min = "1";
+  cantInput.classList.add("prod-cant");
 
-      const totalSpan = document.createElement("span");
-      totalSpan.classList.add("total-producto");
-      totalSpan.textContent = "₡0";
+  const precioInput = document.createElement("input");
+  precioInput.type = "number";
+  precioInput.value = "0";
+  precioInput.min = "0";
+  precioInput.classList.add("prod-precio");
 
-      const btnQuitar = document.createElement("button");
-      btnQuitar.textContent = "❌ Quitar";
-      btnQuitar.classList.add("boton-accion", "boton-rojo");
-      btnQuitar.onclick = () => {
-        div.remove();
-        actualizarTotalCompra();
-      };
+  const totalSpan = document.createElement("span");
+  totalSpan.classList.add("total-producto");
+  totalSpan.textContent = "₡0";
 
-      function actualizar() {
-        const nombre = selProd.value;
-        const cantidad = parseFloat(cantInput.value) || 0;
-        const precio = parseFloat(precioInput.value) || 0;
-        const total = cantidad * precio;
-        totalSpan.textContent = `₡${total.toLocaleString()}`;
-        actualizarTotalCompra();
-      }
+  function actualizar() {
+    const cantidad = parseFloat(cantInput.value) || 0;
+    const precio = parseFloat(precioInput.value) || 0;
+    totalSpan.textContent = `₡${(cantidad * precio).toLocaleString()}`;
+    actualizarTotalCompra();
+  }
 
-      selProd.addEventListener("change", actualizar);
-      cantInput.addEventListener("input", actualizar);
-      precioInput.addEventListener("input", actualizar);
+  selProd.addEventListener("change", actualizar);
+  cantInput.addEventListener("input", actualizar);
+  precioInput.addEventListener("input", actualizar);
 
-      div.appendChild(selProd);
-      div.appendChild(cantInput);
-      div.appendChild(document.createElement("br"));
-      div.appendChild(precioInput);
-      div.appendChild(document.createElement("br"));
-      div.appendChild(document.createTextNode("Total: "));
-      div.appendChild(totalSpan);
-      div.appendChild(document.createElement("br"));
-      div.appendChild(btnQuitar);
+  div.appendChild(selProd);
+  div.appendChild(cantInput);
+  div.appendChild(document.createElement("br"));
+  div.appendChild(precioInput);
+  div.appendChild(document.createElement("br"));
+  div.appendChild(document.createTextNode("Total: "));
+  div.appendChild(totalSpan);
 
-      cont.appendChild(div);
-      actualizar();
-    }
+  cont.appendChild(div);
+  actualizar();
+}
+
 
     function actualizarTotalCompra() {
       const productos = document.querySelectorAll("#productos-compra > div");
@@ -712,30 +700,41 @@
       const productos = [];
       let totalCompra = 0;
 
-      document.querySelectorAll("#productos-compra > div").forEach(div => {
-        const nombre = div.querySelector(".prod-seleccion").value;
-        const cantidad = parseFloat(div.querySelector(".prod-cant").value) || 0;
-        const precioUnitario = parseFloat(div.querySelector(".prod-precio").value) || 0;
-        const total = cantidad * precioUnitario;
+      
 
-        if (!nombre || cantidad <= 0 || precioUnitario < 0) {
-          alert("⚠️ Producto incompleto: verifica nombre, cantidad y precio.");
-          return;
-        }
 
-        productos.push({
-          nombre,
-          cantidad,
-          precioUnitario,
-          total
-        });
-        totalCompra += total;
-      });
+//aqui se guardan los datos con id
+  document.querySelectorAll("#productos-compra > div").forEach(div => {
+  const id = div.querySelector(".prod-seleccion").value;
+  const cantidad = parseFloat(div.querySelector(".prod-cant").value) || 0;
+  const precioUnitario = parseFloat(div.querySelector(".prod-precio").value) || 0;
+
+  const producto = todosLosProductos.find(p => String(p.id) === id);
+  if (!producto) {
+    alert("⚠️ Producto inválido");
+    return;
+  }
+
+  const total = cantidad * precioUnitario;
+
+  productos.push({
+    id,                    // 🔑 CLAVE
+    nombre: producto.nombre,
+    cantidad,
+    precioUnitario,
+    total
+  });
+
+  totalCompra += total;
+});
+
 
       if (productos.length === 0) {
         alert("⚠️ Agrega al menos un producto.");
         return;
       }
+
+      
 
       try {
         const data = {
@@ -750,12 +749,16 @@
           totalCompra
         };
 
+        
+
         if (esEdicion) {
           await updateDoc(doc(db, "comprasProveedor", editId), data);
           alert("✅ Compra actualizada exitosamente.");
         } else {
           await addDoc(comprasRef, data);
           alert("✅ Compra registrada exitosamente.");
+
+          
 
           // ✅ Imprimir comprobante después de guardar
           if (confirm("¿Imprimir comprobante de compra?")) {
@@ -769,6 +772,90 @@
         alert("❌ Error al guardar: " + error.message);
       }
     }
+//script ========================
+
+async function migrarIdsComprasProveedor() {
+  if (!confirm("⚠️ Esto asignará IDs a productos en comprasProveedor.\n¿Deseas continuar?")) {
+    return;
+  }
+
+  try {
+    // 1️⃣ Cargar productos desde los JSON
+    const [res1, res2] = await Promise.all([
+      fetch(URL_ESENCIA),
+      fetch(URL_LIMPIEZA)
+    ]);
+
+    const [aromas, limpieza] = await Promise.all([
+      res1.json(),
+      res2.json()
+    ]);
+
+    const productosJSON = [...aromas, ...limpieza];
+
+    console.log("Productos cargados:", productosJSON.length);
+
+    // Indexar productos por nombre
+    const productosPorNombre = {};
+    productosJSON.forEach(p => {
+      productosPorNombre[p.nombre.trim().toLowerCase()] = p.id;
+    });
+
+    // 2️⃣ Obtener comprasProveedor
+    const snapshot = await getDocs(collection(db, "comprasProveedor"));
+    let comprasActualizadas = 0;
+    let productosActualizados = 0;
+
+    for (const docSnap of snapshot.docs) {
+      const compra = docSnap.data();
+      let cambio = false;
+
+      const productos = compra.productos.map(prod => {
+        if (!prod.id && prod.nombre) {
+          const key = prod.nombre.trim().toLowerCase();
+          const idEncontrado = productosPorNombre[key];
+
+          if (idEncontrado) {
+            productosActualizados++;
+            cambio = true;
+            return {
+              ...prod,
+              id: idEncontrado
+            };
+          }
+        }
+        return prod;
+      });
+
+      if (cambio) {
+        await updateDoc(doc(db, "comprasProveedor", docSnap.id), {
+          productos
+        });
+        comprasActualizadas++;
+      }
+    }
+
+    alert(
+      `✅ Migración completada\n\n` +
+      `Compras actualizadas: ${comprasActualizadas}\n` +
+      `Productos actualizados: ${productosActualizados}`
+    );
+
+    console.log("Migración finalizada");
+
+  } catch (error) {
+    console.error("Error en migración:", error);
+    alert("❌ Error durante la migración");
+  }
+}
+
+//fin ========================
+
+
+
+
+
+
 
     // ✅ Filtrar compras por proveedor
     async function filtrarCompras() {
@@ -809,6 +896,11 @@
           const fechaPago = c.fechaPago ? ` | 📅 Pagar: ${c.fechaPago}` : '';
           const iconoPago = c.formaPago === 'Crédito' ? '💳' : '💵';
 
+          if (!c.id) {
+                      console.warn("Compra sin ID:", c);
+          return;
+          }
+
           // Determinar estado de actualización de inventario
           const estadoInventario = c.estadoInventario === 'actualizado' ? 
             '<span class="estado-inventario actualizado">✅ Inventario actualizado</span>' : 
@@ -827,7 +919,9 @@
             <div class="acciones-compra">
               <button class="boton-accion" onclick="abrirModalCompra('${c.id}')">✏️ Editar</button>
               <button class="boton-accion boton-rojo" onclick="eliminarCompra('${c.id}')">🗑️ Eliminar</button>
-              <button class="btn-inventario" onclick="actualizarInventario('${c.id}')">📦 Actualizar Inventario</button>
+              <button class="btn-inventario" onclick="actualizarInventario('${c.id}')">
+               📦 Actualizar Inventario
+              </button>
             </div>
             ${estadoInventario}
           `;
@@ -919,104 +1013,108 @@
     }
 
     // ✅ Actualizar inventario desde compra
-    async function actualizarInventario(compraId) {
-      if (!confirm('¿Deseas actualizar el inventario con los productos de esta compra?')) {
-        return;
+   async function actualizarInventario(compraId) {
+
+    if (!compraId || typeof compraId !== "string") {
+    alert("❌ Error: ID de compra inválido.");
+    console.error("compraId inválido:", compraId);
+    return;
+  }
+  console.log("Actualizando compra:", compraId);
+
+  if (!confirm('¿Deseas actualizar el inventario con los productos de esta compra?')) {
+    return;
+  }
+
+  try {
+    const compraRef = doc(db, "comprasProveedor", compraId);
+    const compraSnap = await getDoc(compraRef);
+
+    if (!compraSnap.exists()) {
+      alert("Compra no encontrada.");
+      return;
+    }
+
+    const compra = compraSnap.data();
+    const productosCompra = compra.productos;
+
+    // 🔹 Obtener stock indexado por id
+    const snapshotStock = await getDocs(stockRef);
+    const stockPorId = {};
+
+    snapshotStock.forEach(docSnap => {
+      const data = docSnap.data();
+      if (data.id) {
+        stockPorId[data.id] = {
+          id: docSnap.id,
+          ...data
+        };
+      }
+    });
+
+    let actualizados = 0;
+    let nuevos = 0;
+
+    for (const producto of productosCompra) {
+      const { id, nombre, cantidad, precioUnitario } = producto;
+
+      if (!id) {
+        console.warn("Producto sin ID:", producto);
+        continue;
       }
 
-      try {
-        // Obtener la compra
-        const compraDoc = doc(db, "comprasProveedor", compraId);
-        const docSnap = await getDoc(compraDoc);
-        
-        if (!docSnap.exists()) {
-          alert('Compra no encontrada.');
-          return;
-        }
+      if (stockPorId[id]) {
+        // ✅ Producto existente
+        const stockDoc = doc(db, "stock", stockPorId[id].id);
+        const nuevaCantidad = stockPorId[id].cantidad + cantidad;
 
-        const compra = docSnap.data();
-        const productosCompra = compra.productos;
-        
-        // Obtener inventario actual
-        const snapshotStock = await getDocs(stockRef);
-        const stockActual = {};
-        
-        snapshotStock.forEach(doc => {
-          const data = doc.data();
-          stockActual[data.nombre] = {
-            id: doc.id,
-            ...data
-          };
+        await updateDoc(stockDoc, {
+          cantidad: nuevaCantidad,
+          precio: precioUnitario,
+          proveedor: compra.proveedorNombre,
+          fechaUltimaCompra: compra.fecha,
+          ultimaActualizacion: new Date().toISOString()
         });
 
-        let productosActualizados = 0;
-        let productosNuevos = 0;
-        let errores = 0;
-
-        // Procesar cada producto de la compra
-        for (const producto of productosCompra) {
-          try {
-            if (stockActual[producto.nombre]) {
-              // Producto existente - actualizar cantidad
-              const productoExistente = stockActual[producto.nombre];
-              const nuevaCantidad = productoExistente.cantidad + producto.cantidad;
-              const productoDoc = doc(db, "stock", productoExistente.id);
-              
-              await updateDoc(productoDoc, {
-                cantidad: nuevaCantidad,
-                ultimaActualizacion: new Date().toISOString(),
-                precio: producto.precioUnitario,
-                fechaUltimaCompra: compra.fecha,
-                proveedor: compra.proveedorNombre
-              });
-              
-              productosActualizados++;
-            } else {
-              // Nuevo producto - crear registro
-              await addDoc(stockRef, {
-                nombre: producto.nombre,
-                cantidad: producto.cantidad,
-                categoria: 'compra-proveedor',
-                precio: producto.precioUnitario,
-                fechaCreacion: new Date().toISOString(),
-                fechaUltimaCompra: compra.fecha,
-                proveedor: compra.proveedorNombre,
-                notas: `Producto agregado desde compra ${compra.id}`
-              });
-              
-              productosNuevos++;
-            }
-          } catch (error) {
-            console.error(`Error al procesar ${producto.nombre}:`, error);
-            errores++;
-          }
-        }
-
-        // Actualizar estado de la compra
-        await updateDoc(compraDoc, {
-          estadoInventario: 'actualizado',
-          fechaActualizacionInventario: new Date().toISOString()
+        actualizados++;
+      } else {
+        // 🆕 Producto nuevo en stock
+        await addDoc(stockRef, {
+          id,
+          nombre,
+          cantidad,
+          precio: precioUnitario,
+          proveedor: compra.proveedorNombre,
+          fechaUltimaCompra: compra.fecha,
+          fechaCreacion: new Date().toISOString(),
+          categoria: "compra-proveedor"
         });
 
-        // Mostrar resultado
-        let mensaje = `✅ Actualización de inventario completada:\n`;
-        mensaje += `- ${productosActualizados} productos actualizados\n`;
-        mensaje += `- ${productosNuevos} nuevos productos agregados\n`;
-        
-        if (errores > 0) {
-          mensaje += `- ${errores} errores durante el proceso`;
-        }
-
-        alert(mensaje);
-        
-        // Refrescar la lista de compras
-        await filtrarCompras();
-
-      } catch (error) {
-        console.error("Error al actualizar inventario:", error);
-        alert(`❌ Error al actualizar el inventario: ${error.message}`);
+        nuevos++;
       }
     }
+
+    // 🔒 Marcar compra como procesada
+    await updateDoc(compraRef, {
+      estadoInventario: "actualizado",
+      fechaActualizacionInventario: new Date().toISOString()
+    });
+
+    alert(
+      `✅ Inventario actualizado\n` +
+      `• ${actualizados} productos actualizados\n` +
+      `• ${nuevos} productos nuevos`
+    );
+
+    await filtrarCompras();
+
+  } catch (error) {
+    console.error(error);
+    alert("❌ Error al actualizar inventario");
+  }
+}
+
+
 
     // ✅ Mostrar/ocultar sección de proveedores
     function toggleProveedores() {
@@ -1049,6 +1147,7 @@
     window.cargarFiltroProveedores = cargarFiltroProveedores;
     window.filtrarCompras = filtrarCompras;
     window.actualizarInventario = actualizarInventario;
+    window.migrarIdsComprasProveedor = migrarIdsComprasProveedor;
   </script>
 
   <script>
