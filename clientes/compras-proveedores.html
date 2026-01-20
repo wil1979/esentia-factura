@@ -437,31 +437,35 @@
     }
 
     function agregarAlCarrito() {
-      const id = document.getElementById("select-producto").value;
-      if (!id) {
-        alert("⚠️ Por favor selecciona un producto.");
-        return;
-      }
+  const id = document.getElementById("select-producto").value;
+  if (!id) {
+    alert("⚠️ Por favor selecciona un producto.");
+    return;
+  }
 
-      const producto = todosLosProductos.find(p => p.id === id);
-      if (!producto) return;
+  // ✅ Comparación segura: convertir ambos a string
+  const producto = todosLosProductos.find(p => String(p.id) === String(id));
+  if (!producto) {
+    alert("❌ Producto no encontrado. Esto puede deberse a un problema de formato de ID.");
+    console.error("ID seleccionado:", id, "Productos disponibles:", todosLosProductos.map(p => ({ id: p.id, nombre: p.nombre })));
+    return;
+  }
 
-      const existente = carritoCompra.find(p => p.id === id);
-      if (existente) {
-        existente.cantidad += 1;
-      } else {
-        // ✅ Usa precioOferta o precio del JSON, no valor fijo
-        const precioUnitario = producto.precioOferta || producto.precio || 1300;
-        carritoCompra.push({
-          id,
-          nombre: producto.nombre,
-          cantidad: 1,
-          precioUnitario: precioUnitario
-        });
-      }
+  const existente = carritoCompra.find(p => p.id === producto.id);
+  if (existente) {
+    existente.cantidad += 1;
+  } else {
+    const precioUnitario = producto.precioOferta || producto.precio || 1300;
+    carritoCompra.push({
+      id: producto.id, // mantén el tipo original (número)
+      nombre: producto.nombre,
+      cantidad: 1,
+      precioUnitario: precioUnitario
+    });
+  }
 
-      renderCarrito();
-    }
+  renderCarrito();
+}
 
     function renderCarrito() {
       const cont = document.getElementById("productos-compra");
