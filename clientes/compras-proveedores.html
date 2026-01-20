@@ -6,70 +6,24 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 20px;
-      background-color: #f3f2f7;
+      padding: 20px;
+      background: #f8f9fa;
       color: #333;
     }
-    h1 {
+    h1, h2 {
       color: #6c4ba3;
-      text-align: center;
-    }
-    h2 {
-      color: #555;
-      border-bottom: 2px solid #6c4ba3;
-      padding-bottom: 8px;
-      margin-top: 30px;
-    }
-    .item {
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 12px;
-      background: #fff;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .botones-derecha {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      justify-content: flex-end;
-      margin-top: 0.5rem;
     }
     .boton-accion {
-      padding: 2px 4px;
-      font-size: 0.7rem;
-      line-height: 1;
-      border-radius: 4px;
-    }
-    .scroll-buttons {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 999;
-    }
-    
-    .scroll-btn {
-      padding: 15px 20px;
-      border: none;
-      border-radius: 25px;
-      background: #2196F3;
+      background: #6c4ba3;
       color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
       cursor: pointer;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      transition: all 0.3s ease;
+      margin: 4px;
     }
-
-    .scroll-btn:hover {
-      background: #1976D2;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 8px rgba(0,0,0,0.2);
-    }
-
     .boton-accion:hover {
-      background-color: #573993;
+      background: #5a3d8a;
     }
     .boton-rojo {
       background: #d32f2f;
@@ -77,126 +31,108 @@
     .boton-rojo:hover {
       background: #b71c1c;
     }
-    input, select, button {
-      font-family: inherit;
-      border-radius: 6px;
+    .item {
+      background: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    input, select {
-      padding: 8px;
-      border: 1px solid #ccc;
-      margin-bottom: 10px;
-      width: 100%;
-    }
-    button {
-      padding: 10px;
-    }
-    .producto-item {
-      border: 1px dashed #ccc;
-      padding: 8px;
-      margin-bottom: 8px;
-      border-radius: 6px;
-      background: #f9f9f9;
-    }
-    /* Modal */
     .modal {
       display: none;
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
       justify-content: center;
       align-items: center;
-      z-index: 1000;
     }
     .modal-contenido {
       background: white;
+      padding: 25px;
+      border-radius: 12px;
       width: 90%;
       max-width: 600px;
-      border-radius: 10px;
-      padding: 20px;
-      max-height: 90vh;
-      overflow-y: auto;
+      position: relative;
     }
     .cerrar-modal {
-      float: right;
-      font-size: 1.5rem;
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 24px;
       cursor: pointer;
       color: #999;
     }
-    .cerrar-modal:hover {
-      color: #000;
-    }
-    /* Filtros */
-    .filtro-compras {
-      margin: 20px 0;
-      padding: 15px;
-      background: #f5f5f5;
-      border-radius: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      align-items: end;
-    }
-    .filtro-item {
-      flex: 1 1 200px;
-    }
-    .filtro-item label {
-      font-weight: bold;
-      color: #6c4ba3;
-      margin-bottom: 5px;
-      display: block;
-    }
-    /* Responsive */
-    @media (max-width: 480px) {
-      .boton-accion {
-        width: 100%;
-        margin-bottom: 5px;
-      }
-    }
-    
-    /* Nuevos estilos para el botón de actualizar inventario */
-    .acciones-compra {
+    .botones-derecha {
+      text-align: right;
       margin-top: 15px;
-      padding-top: 15px;
-      border-top: 1px dashed #ccc;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
     }
-    
-    .btn-inventario {
-      padding: 8px 12px;
-      font-size: 0.8rem;
-      background: #4caf50;
+    .scroll-buttons {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .scroll-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #6c4ba3;
       color: white;
       border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .producto-item {
+      background: #f5f5f5;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border-left: 4px solid #6c4ba3;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .acciones-compra {
+      margin-top: 10px;
+    }
+    .btn-inventario {
+      background: #2e7d32;
+      color: white;
+      border: none;
+      padding: 6px 12px;
       border-radius: 4px;
       cursor: pointer;
     }
-    
-    .btn-inventario:hover {
-      background: #388e3c;
-    }
-    
-    .btn-inventario:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-    
     .estado-inventario {
-      font-size: 0.8rem;
-      color: #666;
-      margin-top: 5px;
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.9em;
     }
-    
     .actualizado {
-      color: #4caf50;
-      font-weight: bold;
+      background: #e8f5e9;
+      color: #2e7d32;
     }
-    
     .pendiente {
-      color: #ff9800;
-      font-weight: bold;
+      background: #fff3e0;
+      color: #e65100;
     }
   </style>
 </head>
@@ -228,7 +164,7 @@
   <button class="boton-accion" onclick="abrirModalCompra()">➕ Registrar Compra</button>
 
   <!-- Filtros de Compras -->
-  <div class="filtro-compras">
+  <div class="filtro-compras" style="margin: 15px 0;">
     <div class="filtro-item">
       <label for="filtro-proveedor">Filtrar por Proveedor:</label>
       <select id="filtro-proveedor">
@@ -238,8 +174,8 @@
     <button class="boton-accion" onclick="filtrarCompras()">🔍 Mostrar Compras</button>
   </div>
 
-  <!-- Lista de compras (oculta al inicio) -->
-  <div id="lista-compras"></div>
+  <!-- Lista de compras -->
+  <div id="lista-compras"><p>Selecciona un filtro y haz clic en 'Mostrar Compras'.</p></div>
 
   <!-- Modal: Nuevo Proveedor -->
   <div id="modal-proveedor" class="modal">
@@ -266,7 +202,7 @@
       <label>Proveedor:</label>
       <select id="select-proveedor"></select>
       <label>Fecha:</label>
-      <input type="date" id="fecha-compra" value="">
+      <input type="date" id="fecha-compra">
       <label>Fecha de pago esperada (opcional):</label>
       <input type="date" id="fecha-pago">
       <label>Factura (opcional):</label>
@@ -281,9 +217,15 @@
       <label>Notas (opcional):</label>
       <input type="text" id="notas-compra" placeholder="Detalles adicionales">
 
-      <h4>Productos Comprados</h4>
-      <div id="productos-compra"></div>
-      <button class="boton-accion" onclick="agregarProducto()">+ Agregar Producto</button>
+      <label>Buscar y agregar producto:</label>
+      <input type="text" id="buscar-producto" placeholder="🔍 Buscar producto" oninput="filtrarProductosBusqueda()">
+      <select id="select-producto">
+        <option value="">Selecciona un producto</option>
+      </select>
+      <button onclick="agregarAlCarrito()">➕ Agregar</button>
+
+      <!-- Carrito renderizado aquí -->
+      <div id="productos-compra" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;"></div>
 
       <br><br>
       <strong>Total: ₡<span id="total-compra">0</span></strong>
@@ -300,7 +242,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-    // 🔥 Tu configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
       authDomain: "esentiacreditos-8345f.firebaseapp.com",
@@ -313,30 +254,25 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Referencias
     const proveedoresRef = collection(db, "proveedores");
     const comprasRef = collection(db, "comprasProveedor");
     const stockRef = collection(db, "stock");
 
-    // Variables globales
     let proveedores = [];
     let todosLosProductos = [];
+    let carritoCompra = []; // ✅ Carrito en memoria
 
-    // URLs de productos
     const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
     const URL_LIMPIEZA = "https://wil1979.github.io/esentia-factura/productos_limpieza_completo.json";
 
-    // Cargar datos al inicio
     window.onload = async () => {
       await cargarProductosJSON();
       await cargarProveedores();
       await cargarFiltroProveedores();
       document.getElementById("lista-compras").innerHTML = "<p>Selecciona un filtro y haz clic en 'Mostrar Compras'.</p>";
+      document.getElementById("fecha-compra").valueAsDate = new Date();
     };
 
-    // ========================
-    // CARGAR PRODUCTOS DESDE JSON
-    // ========================
     async function cargarProductosJSON() {
       try {
         const [res1, res2] = await Promise.all([fetch(URL_ESENCIA), fetch(URL_LIMPIEZA)]);
@@ -349,9 +285,6 @@
       }
     }
 
-    // ========================
-    // PROVEEDORES
-    // ========================
     async function cargarProveedores() {
       const cont = document.getElementById("lista-proveedores");
       cont.innerHTML = "<p>Cargando proveedores...</p>";
@@ -393,7 +326,6 @@
       }
     }
 
-    // ✅ Cargar proveedores en el filtro
     async function cargarFiltroProveedores() {
       const filtro = document.getElementById("filtro-proveedor");
       filtro.innerHTML = "<option value='todos'>Todos los proveedores</option>";
@@ -412,6 +344,92 @@
       }
     }
 
+    // ✅ NUEVAS FUNCIONES DEL CARRITO
+    function filtrarProductosBusqueda() {
+  const busqueda = document.getElementById("buscar-producto").value.toLowerCase().trim();
+  const select = document.getElementById("select-producto");
+  select.innerHTML = "<option value=''>Selecciona un producto</option>";
+
+  const listaFiltrada = busqueda
+    ? todosLosProductos.filter(p => p.nombre.toLowerCase().includes(busqueda))
+    : todosLosProductos; // Si está vacío, mostrar todos
+
+  listaFiltrada.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.nombre;
+    select.appendChild(opt);
+  });
+}
+
+    function agregarAlCarrito() {
+      const id = document.getElementById("select-producto").value;
+      if (!id) return;
+
+      const producto = todosLosProductos.find(p => p.id === id);
+      if (!producto) return;
+
+      const existente = carritoCompra.find(p => p.id === id);
+      if (existente) {
+        existente.cantidad += 1;
+      } else {
+        carritoCompra.push({
+          id,
+          nombre: producto.nombre,
+          cantidad: 1,
+          precioUnitario: 1300
+        });
+      }
+
+      renderCarrito();
+    }
+
+    function renderCarrito() {
+      const cont = document.getElementById("productos-compra");
+      cont.innerHTML = "";
+
+      let total = 0;
+
+      carritoCompra.forEach((p, index) => {
+        const subtotal = p.cantidad * p.precioUnitario;
+        total += subtotal;
+
+        const div = document.createElement("div");
+        div.className = "producto-item";
+        div.innerHTML = `
+          <strong>${p.nombre}</strong><br>
+          Cant: <input type="number" value="${p.cantidad}" min="1"
+            onchange="actualizarCantidad(${index}, this.value)">
+          Precio: <input type="number" value="${p.precioUnitario}"
+            onchange="actualizarPrecio(${index}, this.value)">
+          <br>Total: ₡${subtotal.toLocaleString()}
+          <button class="boton-accion boton-rojo"
+            onclick="eliminarDelCarrito(${index})">❌</button>
+        `;
+        cont.appendChild(div);
+      });
+
+      document.getElementById("total-compra").textContent = total.toLocaleString();
+    }
+
+    function actualizarCantidad(index, valor) {
+      const num = parseInt(valor) || 0;
+      if (num >= 1) carritoCompra[index].cantidad = num;
+      renderCarrito();
+    }
+
+    function actualizarPrecio(index, valor) {
+      const num = parseFloat(valor) || 0;
+      if (num >= 0) carritoCompra[index].precioUnitario = num;
+      renderCarrito();
+    }
+
+    function eliminarDelCarrito(index) {
+      carritoCompra.splice(index, 1);
+      renderCarrito();
+    }
+
+    // PROVEEDORES
     function abrirModalProveedor() {
       document.getElementById("modal-proveedor").style.display = "flex";
       document.getElementById("nombre-proveedor").value = "";
@@ -486,9 +504,7 @@
       await cargarFiltroProveedores();
     }
 
-    // ========================
     // COMPRAS
-    // ========================
     async function abrirModalCompra(editId = null) {
       const select = document.getElementById("select-proveedor");
       select.innerHTML = "";
@@ -499,105 +515,27 @@
         select.appendChild(opt);
       });
 
-      document.getElementById("fecha-compra").value = new Date().toISOString().slice(0,10);
+      document.getElementById("fecha-compra").valueAsDate = new Date();
       document.getElementById("fecha-pago").value = "";
       document.getElementById("factura-compra").value = "";
       document.getElementById("notas-compra").value = "";
       document.getElementById("forma-pago").value = "Efectivo";
+      
+      // Dentro de abrirModalCompra(), después de limpiar campos:
+document.getElementById("buscar-producto").value = "";
+llenarSelectProductos(); // 👈 Añadir esta línea
 
-      // Limpiar productos
-      document.getElementById("productos-compra").innerHTML = "";
-      document.getElementById("total-compra").textContent = "0";
+      carritoCompra = [];
+      renderCarrito();
 
       const modal = document.getElementById("modal-compra");
 
       if (editId) {
-        // Modo edición
-        const docSnap = await getDoc(doc(db, "comprasProveedor", editId));
-        if (!docSnap.exists()) return;
-        const compra = docSnap.data();
-
-        select.value = compra.proveedorId;
-        document.getElementById("fecha-compra").value = compra.fecha;
-        document.getElementById("fecha-pago").value = compra.fechaPago || "";
-        document.getElementById("factura-compra").value = compra.factura || "";
-        document.getElementById("notas-compra").value = compra.notas || "";
-        document.getElementById("forma-pago").value = compra.formaPago;
-        document.getElementById("titulo-modal-compra").textContent = "✏️ Editar Compra";
-
-        compra.productos.forEach(prod => {
-          const div = document.createElement("div");
-          div.className = "producto-item";
-
-          const selProd = document.createElement("select");
-          selProd.classList.add("prod-seleccion");
-          selProd.innerHTML = "<option value=''>Selecciona un producto</option>";
-          todosLosProductos.forEach(p => {
-            const opt = document.createElement("option");
-            opt.value = p.id;
-            opt.textContent = p.nombre;
-             if (p.id === prod.id) opt.selected = true;
-            selProd.appendChild(opt);
-          });
-
-          const cantInput = document.createElement("input");
-          cantInput.type = "number";
-          cantInput.placeholder = "Cantidad";
-          cantInput.value = prod.cantidad;
-          cantInput.min = "4";
-          cantInput.classList.add("prod-cant");
-
-          const precioInput = document.createElement("input");
-          precioInput.type = "number";
-          precioInput.placeholder = "Precio de compra por unidad";
-          precioInput.value = prod.precioUnitario;
-          precioInput.min = "1300";
-          precioInput.classList.add("prod-precio");
-
-          const totalSpan = document.createElement("span");
-          totalSpan.classList.add("total-producto");
-          totalSpan.textContent = `₡${(prod.cantidad * prod.precioUnitario).toLocaleString()}`;
-
-          const btnQuitar = document.createElement("button");
-          btnQuitar.textContent = "❌ Quitar";
-          btnQuitar.classList.add("boton-accion", "boton-rojo");
-          btnQuitar.onclick = () => {
-            div.remove();
-            actualizarTotalCompra();
-          };
-
-          function actualizar() {
-            const nombre = selProd.value;
-            const cantidad = parseFloat(cantInput.value) || 0;
-            const precio = parseFloat(precioInput.value) || 0;
-            const total = cantidad * precio;
-            totalSpan.textContent = `₡${total.toLocaleString()}`;
-            actualizarTotalCompra();
-          }
-
-          selProd.addEventListener("change", actualizar);
-          cantInput.addEventListener("input", actualizar);
-          precioInput.addEventListener("input", actualizar);
-
-          div.appendChild(selProd);
-          div.appendChild(cantInput);
-          div.appendChild(document.createElement("br"));
-          div.appendChild(precioInput);
-          div.appendChild(document.createElement("br"));
-          div.appendChild(document.createTextNode("Total: "));
-          div.appendChild(totalSpan);
-          div.appendChild(document.createElement("br"));
-          div.appendChild(btnQuitar);
-
-          document.getElementById("productos-compra").appendChild(div);
-          actualizar();
-        });
-
-        actualizarTotalCompra();
+        // Modo edición (opcional: implementar más adelante si lo necesitas)
+        alert("La edición de compras aún no está adaptada al nuevo carrito. ¿Deseas continuar?");
         modal.dataset.editId = editId;
+        document.getElementById("titulo-modal-compra").textContent = "✏️ Editar Compra";
       } else {
-        // Modo nuevo
-        agregarProducto();
         document.getElementById("titulo-modal-compra").textContent = "🛒 Nueva Compra";
         delete modal.dataset.editId;
       }
@@ -607,76 +545,9 @@
 
     function cerrarModalCompra() {
       document.getElementById("modal-compra").style.display = "none";
+      carritoCompra = [];
       const modal = document.getElementById("modal-compra");
-      if (modal.dataset.editId) {
-        delete modal.dataset.editId;
-      }
-    }
-
-    function agregarProducto() {
-  const cont = document.getElementById("productos-compra");
-  const div = document.createElement("div");
-  div.className = "producto-item";
-
-  const selProd = document.createElement("select");
-  selProd.classList.add("prod-seleccion");
-  selProd.innerHTML = "<option value=''>Selecciona un producto</option>";
-
-  todosLosProductos.forEach(p => {
-    const opt = document.createElement("option");
-    opt.value = p.id;              // ✅ ID REAL
-    opt.textContent = p.nombre;
-    selProd.appendChild(opt);
-  });
-
-  const cantInput = document.createElement("input");
-  cantInput.type = "number";
-  cantInput.value = "1";
-  cantInput.min = "1";
-  cantInput.classList.add("prod-cant");
-
-  const precioInput = document.createElement("input");
-  precioInput.type = "number";
-  precioInput.value = "0";
-  precioInput.min = "0";
-  precioInput.classList.add("prod-precio");
-
-  const totalSpan = document.createElement("span");
-  totalSpan.classList.add("total-producto");
-  totalSpan.textContent = "₡0";
-
-  function actualizar() {
-    const cantidad = parseFloat(cantInput.value) || 0;
-    const precio = parseFloat(precioInput.value) || 0;
-    totalSpan.textContent = `₡${(cantidad * precio).toLocaleString()}`;
-    actualizarTotalCompra();
-  }
-
-  selProd.addEventListener("change", actualizar);
-  cantInput.addEventListener("input", actualizar);
-  precioInput.addEventListener("input", actualizar);
-
-  div.appendChild(selProd);
-  div.appendChild(cantInput);
-  div.appendChild(document.createElement("br"));
-  div.appendChild(precioInput);
-  div.appendChild(document.createElement("br"));
-  div.appendChild(document.createTextNode("Total: "));
-  div.appendChild(totalSpan);
-
-  cont.appendChild(div);
-  actualizar();
-}
-
-
-    function actualizarTotalCompra() {
-      const productos = document.querySelectorAll("#productos-compra > div");
-      let total = 0;
-      productos.forEach(div => {
-        const totalSpan = div.querySelector(".total-producto").textContent.replace(/[₡,]/g, '');
-        total += parseFloat(totalSpan) || 0;
-      });
-      document.getElementById("total-compra").textContent = total.toLocaleString();
+      if (modal.dataset.editId) delete modal.dataset.editId;
     }
 
     async function guardarCompra() {
@@ -696,45 +567,21 @@
         return;
       }
 
-      const proveedor = proveedores.find(p => p.id === proveedorId);
-      const productos = [];
-      let totalCompra = 0;
-
-      
-
-
-//aqui se guardan los datos con id
-  document.querySelectorAll("#productos-compra > div").forEach(div => {
-  const id = div.querySelector(".prod-seleccion").value;
-  const cantidad = parseFloat(div.querySelector(".prod-cant").value) || 0;
-  const precioUnitario = parseFloat(div.querySelector(".prod-precio").value) || 0;
-
-  const producto = todosLosProductos.find(p => String(p.id) === id);
-  if (!producto) {
-    alert("⚠️ Producto inválido");
-    return;
-  }
-
-  const total = cantidad * precioUnitario;
-
-  productos.push({
-    id,                    // 🔑 CLAVE
-    nombre: producto.nombre,
-    cantidad,
-    precioUnitario,
-    total
-  });
-
-  totalCompra += total;
-});
-
-
-      if (productos.length === 0) {
+      if (carritoCompra.length === 0) {
         alert("⚠️ Agrega al menos un producto.");
         return;
       }
 
-      
+      const proveedor = proveedores.find(p => p.id === proveedorId);
+      const productos = carritoCompra.map(p => ({
+        id: p.id,
+        nombre: p.nombre,
+        cantidad: p.cantidad,
+        precioUnitario: p.precioUnitario,
+        total: p.cantidad * p.precioUnitario
+      }));
+
+      const totalCompra = productos.reduce((sum, p) => sum + p.total, 0);
 
       try {
         const data = {
@@ -749,8 +596,6 @@
           totalCompra
         };
 
-        
-
         if (esEdicion) {
           await updateDoc(doc(db, "comprasProveedor", editId), data);
           alert("✅ Compra actualizada exitosamente.");
@@ -758,106 +603,18 @@
           await addDoc(comprasRef, data);
           alert("✅ Compra registrada exitosamente.");
 
-          
-
-          // ✅ Imprimir comprobante después de guardar
           if (confirm("¿Imprimir comprobante de compra?")) {
             imprimirComprobante(data);
           }
         }
 
         cerrarModalCompra();
-        await filtrarCompras(); // Refrescar vista
+        await filtrarCompras();
       } catch (error) {
         alert("❌ Error al guardar: " + error.message);
       }
     }
-//script ========================
 
-async function migrarIdsComprasProveedor() {
-  if (!confirm("⚠️ Esto asignará IDs a productos en comprasProveedor.\n¿Deseas continuar?")) {
-    return;
-  }
-
-  try {
-    // 1️⃣ Cargar productos desde los JSON
-    const [res1, res2] = await Promise.all([
-      fetch(URL_ESENCIA),
-      fetch(URL_LIMPIEZA)
-    ]);
-
-    const [aromas, limpieza] = await Promise.all([
-      res1.json(),
-      res2.json()
-    ]);
-
-    const productosJSON = [...aromas, ...limpieza];
-
-    console.log("Productos cargados:", productosJSON.length);
-
-    // Indexar productos por nombre
-    const productosPorNombre = {};
-    productosJSON.forEach(p => {
-      productosPorNombre[p.nombre.trim().toLowerCase()] = p.id;
-    });
-
-    // 2️⃣ Obtener comprasProveedor
-    const snapshot = await getDocs(collection(db, "comprasProveedor"));
-    let comprasActualizadas = 0;
-    let productosActualizados = 0;
-
-    for (const docSnap of snapshot.docs) {
-      const compra = docSnap.data();
-      let cambio = false;
-
-      const productos = compra.productos.map(prod => {
-        if (!prod.id && prod.nombre) {
-          const key = prod.nombre.trim().toLowerCase();
-          const idEncontrado = productosPorNombre[key];
-
-          if (idEncontrado) {
-            productosActualizados++;
-            cambio = true;
-            return {
-              ...prod,
-              id: idEncontrado
-            };
-          }
-        }
-        return prod;
-      });
-
-      if (cambio) {
-        await updateDoc(doc(db, "comprasProveedor", docSnap.id), {
-          productos
-        });
-        comprasActualizadas++;
-      }
-    }
-
-    alert(
-      `✅ Migración completada\n\n` +
-      `Compras actualizadas: ${comprasActualizadas}\n` +
-      `Productos actualizados: ${productosActualizados}`
-    );
-
-    console.log("Migración finalizada");
-
-  } catch (error) {
-    console.error("Error en migración:", error);
-    alert("❌ Error durante la migración");
-  }
-}
-
-//fin ========================
-
-
-
-
-
-
-
-    // ✅ Filtrar compras por proveedor
     async function filtrarCompras() {
       const proveedorId = document.getElementById("filtro-proveedor").value;
       const cont = document.getElementById("lista-compras");
@@ -875,7 +632,6 @@ async function migrarIdsComprasProveedor() {
           }
         });
 
-        // Ordenar por fecha (reciente primero)
         compras.sort((a, b) => b.fecha.localeCompare(a.fecha));
 
         if (compras.length === 0) {
@@ -896,12 +652,6 @@ async function migrarIdsComprasProveedor() {
           const fechaPago = c.fechaPago ? ` | 📅 Pagar: ${c.fechaPago}` : '';
           const iconoPago = c.formaPago === 'Crédito' ? '💳' : '💵';
 
-          if (!c.id) {
-                      console.warn("Compra sin ID:", c);
-          return;
-          }
-
-          // Determinar estado de actualización de inventario
           const estadoInventario = c.estadoInventario === 'actualizado' ? 
             '<span class="estado-inventario actualizado">✅ Inventario actualizado</span>' : 
             '<span class="estado-inventario pendiente">⚠️ Pendiente de actualizar</span>';
@@ -944,10 +694,8 @@ async function migrarIdsComprasProveedor() {
       }
     }
 
-    // ✅ Imprimir comprobante
     function imprimirComprobante(compra) {
       const ventana = window.open('', '_blank', 'width=800,height=600');
-      const fecha = new Date().toLocaleDateString();
       let productosHTML = '';
       compra.productos.forEach(p => {
         productosHTML += `
@@ -1012,115 +760,94 @@ async function migrarIdsComprasProveedor() {
       ventana.document.close();
     }
 
-    // ✅ Actualizar inventario desde compra
-   async function actualizarInventario(compraId) {
-
-    if (!compraId || typeof compraId !== "string") {
-    alert("❌ Error: ID de compra inválido.");
-    console.error("compraId inválido:", compraId);
-    return;
-  }
-  console.log("Actualizando compra:", compraId);
-
-  if (!confirm('¿Deseas actualizar el inventario con los productos de esta compra?')) {
-    return;
-  }
-
-  try {
-    const compraRef = doc(db, "comprasProveedor", compraId);
-    const compraSnap = await getDoc(compraRef);
-
-    if (!compraSnap.exists()) {
-      alert("Compra no encontrada.");
-      return;
-    }
-
-    const compra = compraSnap.data();
-    const productosCompra = compra.productos;
-
-    // 🔹 Obtener stock indexado por id
-    const snapshotStock = await getDocs(stockRef);
-    const stockPorId = {};
-
-    snapshotStock.forEach(docSnap => {
-      const data = docSnap.data();
-      if (data.id) {
-        stockPorId[data.id] = {
-          id: docSnap.id,
-          ...data
-        };
-      }
-    });
-
-    let actualizados = 0;
-    let nuevos = 0;
-
-    for (const producto of productosCompra) {
-      const { id, nombre, cantidad, precioUnitario } = producto;
-
-      if (!id) {
-        console.warn("Producto sin ID:", producto);
-        continue;
+    async function actualizarInventario(compraId) {
+      if (!compraId || typeof compraId !== "string") {
+        alert("❌ Error: ID de compra inválido.");
+        return;
       }
 
-      if (stockPorId[id]) {
-        // ✅ Producto existente
-        const stockDoc = doc(db, "stock", stockPorId[id].id);
-        const nuevaCantidad = stockPorId[id].cantidad + cantidad;
+      if (!confirm('¿Deseas actualizar el inventario con los productos de esta compra?')) {
+        return;
+      }
 
-        await updateDoc(stockDoc, {
-          cantidad: nuevaCantidad,
-          precio: precioUnitario,
-          proveedor: compra.proveedorNombre,
-          fechaUltimaCompra: compra.fecha,
-          ultimaActualizacion: new Date().toISOString()
+      try {
+        const compraRef = doc(db, "comprasProveedor", compraId);
+        const compraSnap = await getDoc(compraRef);
+
+        if (!compraSnap.exists()) {
+          alert("Compra no encontrada.");
+          return;
+        }
+
+        const compra = compraSnap.data();
+        const productosCompra = compra.productos;
+
+        const snapshotStock = await getDocs(stockRef);
+        const stockPorId = {};
+        snapshotStock.forEach(docSnap => {
+          const data = docSnap.data();
+          if (data.id) {
+            stockPorId[data.id] = {
+              id: docSnap.id,
+              ...data
+            };
+          }
         });
 
-        actualizados++;
-      } else {
-        // 🆕 Producto nuevo en stock
-        await addDoc(stockRef, {
-          id,
-          nombre,
-          cantidad,
-          precio: precioUnitario,
-          proveedor: compra.proveedorNombre,
-          fechaUltimaCompra: compra.fecha,
-          fechaCreacion: new Date().toISOString(),
-          categoria: "compra-proveedor"
+        let actualizados = 0;
+        let nuevos = 0;
+
+        for (const producto of productosCompra) {
+          const { id, nombre, cantidad, precioUnitario } = producto;
+          if (!id) continue;
+
+          if (stockPorId[id]) {
+            const stockDoc = doc(db, "stock", stockPorId[id].id);
+            const nuevaCantidad = stockPorId[id].cantidad + cantidad;
+            await updateDoc(stockDoc, {
+              cantidad: nuevaCantidad,
+              precio: precioUnitario,
+              proveedor: compra.proveedorNombre,
+              fechaUltimaCompra: compra.fecha,
+              ultimaActualizacion: new Date().toISOString()
+            });
+            actualizados++;
+          } else {
+            await addDoc(stockRef, {
+              id,
+              nombre,
+              cantidad,
+              precio: precioUnitario,
+              proveedor: compra.proveedorNombre,
+              fechaUltimaCompra: compra.fecha,
+              fechaCreacion: new Date().toISOString(),
+              categoria: "compra-proveedor"
+            });
+            nuevos++;
+          }
+        }
+
+        await updateDoc(compraRef, {
+          estadoInventario: "actualizado",
+          fechaActualizacionInventario: new Date().toISOString()
         });
 
-        nuevos++;
+        alert(
+          `✅ Inventario actualizado\n` +
+          `• ${actualizados} productos actualizados\n` +
+          `• ${nuevos} productos nuevos`
+        );
+
+        await filtrarCompras();
+      } catch (error) {
+        console.error(error);
+        alert("❌ Error al actualizar inventario");
       }
     }
 
-    // 🔒 Marcar compra como procesada
-    await updateDoc(compraRef, {
-      estadoInventario: "actualizado",
-      fechaActualizacionInventario: new Date().toISOString()
-    });
-
-    alert(
-      `✅ Inventario actualizado\n` +
-      `• ${actualizados} productos actualizados\n` +
-      `• ${nuevos} productos nuevos`
-    );
-
-    await filtrarCompras();
-
-  } catch (error) {
-    console.error(error);
-    alert("❌ Error al actualizar inventario");
-  }
-}
-
-
-
-    // ✅ Mostrar/ocultar sección de proveedores
     function toggleProveedores() {
       const cont = document.getElementById("contenedor-proveedores");
       const texto = document.getElementById("texto-toggle");
-      
       if (cont.style.display === "block") {
         cont.style.display = "none";
         texto.textContent = "Mostrar Proveedores";
@@ -1129,6 +856,17 @@ async function migrarIdsComprasProveedor() {
         texto.textContent = "Ocultar Proveedores";
       }
     }
+    
+    function llenarSelectProductos() {
+  const select = document.getElementById("select-producto");
+  select.innerHTML = "<option value=''>Selecciona un producto</option>";
+  todosLosProductos.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.nombre;
+    select.appendChild(opt);
+  });
+}
 
     // Hacer funciones globales
     window.abrirModalProveedor = abrirModalProveedor;
@@ -1138,8 +876,6 @@ async function migrarIdsComprasProveedor() {
     window.eliminarProveedor = eliminarProveedor;
     window.abrirModalCompra = abrirModalCompra;
     window.cerrarModalCompra = cerrarModalCompra;
-    window.agregarProducto = agregarProducto;
-    window.actualizarTotalCompra = actualizarTotalCompra;
     window.guardarCompra = guardarCompra;
     window.eliminarCompra = eliminarCompra;
     window.imprimirComprobante = imprimirComprobante;
@@ -1147,22 +883,19 @@ async function migrarIdsComprasProveedor() {
     window.cargarFiltroProveedores = cargarFiltroProveedores;
     window.filtrarCompras = filtrarCompras;
     window.actualizarInventario = actualizarInventario;
-    window.migrarIdsComprasProveedor = migrarIdsComprasProveedor;
+    window.filtrarProductosBusqueda = filtrarProductosBusqueda;
+    window.agregarAlCarrito = agregarAlCarrito;
+    window.actualizarCantidad = actualizarCantidad;
+    window.actualizarPrecio = actualizarPrecio;
+    window.eliminarDelCarrito = eliminarDelCarrito;
   </script>
 
   <script>
     function scrollToTop() {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-
     function scrollToBottom() {
-      window.scrollTo({
-        top: document.documentElement.scrollHeight,
-        behavior: 'smooth'
-      });
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
     }
   </script>
 </body>
