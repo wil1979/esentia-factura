@@ -7,7 +7,71 @@
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       padding: 20px;
-      background: #EECB88;
+      background: #f8f9fa;
+      color: #333;
+    }
+    h1, h2 {
+      color: #6c4ba3;
+    }
+    .boton-accion {
+      background: #6c4ba3;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 4px;
+    }
+    .boton-accion:hover {
+      background: #5a3d8a;
+    }
+    .boton-rojo {
+      background: #d32f2f;
+    }
+    .boton-rojo:hover {
+      background: #b71c1c;
+    }
+    .item {
+      background: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-contenido¡Perfecto! Aquí tienes el **archivo HTML completo actualizado**, con todas las correcciones para que el botón **"➕ Agregar"** funcione correctamente desde el inicio:
+
+- ✅ El selector de productos se llena al abrir el modal.
+- ✅ La búsqueda filtra en tiempo real, y si está vacía, muestra todos los productos.
+- ✅ El precio unitario se toma del JSON (`precioOferta` o `precio`), no es fijo.
+- ✅ Carrito en memoria con edición y eliminación.
+
+---
+
+### ✅ `compras-proveedores.html` (versión corregida y completa)
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>📦 Esentia - Compras a Proveedores</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      background: #f8f9fa;
       color: #333;
     }
     h1, h2 {
@@ -260,7 +324,7 @@
 
     let proveedores = [];
     let todosLosProductos = [];
-    let carritoCompra = []; // ✅ Carrito en memoria
+    let carritoCompra = [];
 
     const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
     const URL_LIMPIEZA = "https://wil1979.github.io/esentia-factura/productos_limpieza_completo.json";
@@ -270,7 +334,6 @@
       await cargarProveedores();
       await cargarFiltroProveedores();
       document.getElementById("lista-compras").innerHTML = "<p>Selecciona un filtro y haz clic en 'Mostrar Compras'.</p>";
-      document.getElementById("fecha-compra").valueAsDate = new Date();
     };
 
     async function cargarProductosJSON() {
@@ -344,27 +407,41 @@
       }
     }
 
-    // ✅ NUEVAS FUNCIONES DEL CARRITO
+    // ✅ FUNCIONES CORREGIDAS DEL CARRITO
+    function llenarSelectProductos() {
+      const select = document.getElementById("select-producto");
+      select.innerHTML = "<option value=''>Selecciona un producto</option>";
+      todosLosProductos.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.nombre;
+        select.appendChild(opt);
+      });
+    }
+
     function filtrarProductosBusqueda() {
-  const busqueda = document.getElementById("buscar-producto").value.toLowerCase().trim();
-  const select = document.getElementById("select-producto");
-  select.innerHTML = "<option value=''>Selecciona un producto</option>";
+      const busqueda = document.getElementById("buscar-producto").value.toLowerCase().trim();
+      const select = document.getElementById("select-producto");
+      select.innerHTML = "<option value=''>Selecciona un producto</option>";
 
-  const listaFiltrada = busqueda
-    ? todosLosProductos.filter(p => p.nombre.toLowerCase().includes(busqueda))
-    : todosLosProductos; // Si está vacío, mostrar todos
+      const listaFiltrada = busqueda
+        ? todosLosProductos.filter(p => p.nombre.toLowerCase().includes(busqueda))
+        : todosLosProductos;
 
-  listaFiltrada.forEach(p => {
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = p.nombre;
-    select.appendChild(opt);
-  });
-}
+      listaFiltrada.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.nombre;
+        select.appendChild(opt);
+      });
+    }
 
     function agregarAlCarrito() {
       const id = document.getElementById("select-producto").value;
-      if (!id) return;
+      if (!id) {
+        alert("⚠️ Por favor selecciona un producto.");
+        return;
+      }
 
       const producto = todosLosProductos.find(p => p.id === id);
       if (!producto) return;
@@ -373,11 +450,13 @@
       if (existente) {
         existente.cantidad += 1;
       } else {
+        // ✅ Usa precioOferta o precio del JSON, no valor fijo
+        const precioUnitario = producto.precioOferta || producto.precio || 1300;
         carritoCompra.push({
           id,
           nombre: producto.nombre,
           cantidad: 1,
-          precioUnitario: 1300
+          precioUnitario: precioUnitario
         });
       }
 
@@ -520,18 +599,17 @@
       document.getElementById("factura-compra").value = "";
       document.getElementById("notas-compra").value = "";
       document.getElementById("forma-pago").value = "Efectivo";
-      
-      // Dentro de abrirModalCompra(), después de limpiar campos:
-document.getElementById("buscar-producto").value = "";
-llenarSelectProductos(); // 👈 Añadir esta línea
+      document.getElementById("buscar-producto").value = "";
 
       carritoCompra = [];
       renderCarrito();
 
+      // ✅ Llenar el selector de productos al abrir
+      llenarSelectProductos();
+
       const modal = document.getElementById("modal-compra");
 
       if (editId) {
-        // Modo edición (opcional: implementar más adelante si lo necesitas)
         alert("La edición de compras aún no está adaptada al nuevo carrito. ¿Deseas continuar?");
         modal.dataset.editId = editId;
         document.getElementById("titulo-modal-compra").textContent = "✏️ Editar Compra";
@@ -856,17 +934,6 @@ llenarSelectProductos(); // 👈 Añadir esta línea
         texto.textContent = "Ocultar Proveedores";
       }
     }
-    
-    function llenarSelectProductos() {
-  const select = document.getElementById("select-producto");
-  select.innerHTML = "<option value=''>Selecciona un producto</option>";
-  todosLosProductos.forEach(p => {
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = p.nombre;
-    select.appendChild(opt);
-  });
-}
 
     // Hacer funciones globales
     window.abrirModalProveedor = abrirModalProveedor;
@@ -888,6 +955,7 @@ llenarSelectProductos(); // 👈 Añadir esta línea
     window.actualizarCantidad = actualizarCantidad;
     window.actualizarPrecio = actualizarPrecio;
     window.eliminarDelCarrito = eliminarDelCarrito;
+    window.llenarSelectProductos = llenarSelectProductos;
   </script>
 
   <script>
