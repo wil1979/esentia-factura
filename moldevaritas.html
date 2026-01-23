@@ -134,4 +134,353 @@
       border: none;
       width: 50px;
       height: 50px;
-      border-radius
+      border-radius: 50%;
+      font-size: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+
+    @media print {
+      .hoja {
+        gap: 5mm;
+        padding: 1.5cm;
+        background: none;
+      }
+      .etiqueta {
+        break-inside: avoid;
+      }
+      .config-modal,
+      #btnAbrirConfig {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Panel de configuración -->
+<div class="config-modal" id="configModal">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+    <h3 style="margin: 0;">Configuración de Etiquetas</h3>
+    <button onclick="toggleConfig()" style="padding: 3px 8px; font-size: 12px;">Cerrar</button>
+  </div>
+
+  <div class="config-group">
+    <label>Fuente de productos:</label>
+    <select id="fuenteProductos" onchange="cambiarFuente()">
+      <option value="manual">Manual (lista personalizada)</option>
+      <option value="firebase">Desde inventario (Firestore)</option>
+    </select>
+  </div>
+
+  <!-- Sección manual -->
+  <div id="seccionManual" class="config-group">
+    <label>Productos (separados por comas):</label>
+    <input type="text" id="listaProductos" 
+      value="lavanda,menta,pino,cipres,navidad,magnolia,manzanaverde" 
+      oninput="generarEtiquetas()">
+  </div>
+
+  <!-- Sección Firebase -->
+  <div id="seccionFirebase" class="config-group" style="display:none;">
+    <label>Productos en stock (con nombre original):</label>
+    <div class="productos-lista" id="listaCheckboxes">
+      <em>Cargando catálogo...</em>
+    </div>
+    <button type="button" onclick="cargarProductosDeFirestore()" style="margin-top:8px; font-size:11px;">↻ Recargar stock</button>
+  </div>
+
+  <div class="config-group">
+    <label>Cantidad por producto:</label>
+    <input type="number" id="cantidadPorProducto" value="20" min="1" step="1" oninput="generarEtiquetas()">
+  </div>
+
+  <div class="config-group">
+    <label>Forma de la etiqueta:</label>
+    <select id="formaEtiqueta" onchange="generarEtiquetas()">
+      <option value="rectangular">Rectangular</option>
+      <option value="redonda">Redonda (círculo)</option>
+      <option value="redondeada">Con esquinas redondeadas</option>
+    </select>
+  </div>
+
+  <div class="config-group">
+    <label>Dimensiones etiqueta (cm):</label>
+    <input type="number" id="anchoEtiqueta" step="0.1" value="2" placeholder="Ancho" oninput="generarEtiquetas()">
+    <input type="number" id="altoEtiqueta" step="0.1" value="4" placeholder="Alto" oninput="generarEtiquetas()">
+  </div>
+
+  <div class="config-group">
+    <label>Tamaño de fuente (px):</label>
+    <input type="number" id="tamanoFuente" value="7" oninput="generarEtiquetas()">
+  </div>
+
+  <div class="config-group">
+    <label>Logo (URL):</label>
+    <input type="text" id="logoUrl" value="https://wil1979.github.io/esentia-factura/images/logo.png" oninput="generarEtiquetas()">
+  </div>
+
+  <div class="config-group">
+    <label>Ancho logo (px):</label>
+    <input type="number" id="anchoLogo" value="67" oninput="generarEtiquetas()">
+  </div>
+
+  <div class="config-group">
+    <label>Tamaño imagen producto (%):</label>
+    <input type="range" id="tamanoImagen" min="30" max="100" value="74" oninput="this.nextElementSibling.value = this.value + '%'; generarEtiquetas()">
+    <output>74%</output>
+  </div>
+
+  <div class="config-group">
+    <label>Precio común (ej: ¤20 ml ¤30 ml):</label>
+    <input type="text" id="precioProducto" value="¤20 ml ¤30 ml ¤60 ml" oninput="generarEtiquetas()">
+  </div>
+
+  <button onclick="generarEtiquetas()" style="margin-top:10px;">Aplicar Cambios</button>
+  <button onclick="window.print()" style="margin-top:10px;">Imprimir</button>
+</div>
+
+<!-- Botón flotante -->
+<button id="btnAbrirConfig" onclick="toggleConfig()">⚙️</button>
+
+<!-- Contenedor de etiquetas -->
+<div class="hoja" id="hojaEtiquetas"></div>
+
+<script>
+  // 🔑 Configura tu Firebase aquí
+  const firebaseConfig = {
+    apiKey: "TU_API_KEY",
+    authDomain: "TU_PROYECTO.firebaseapp.com",
+    projectId: "TU_PROYECTO",
+    storageBucket: "TU_PROYECTO.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef123456"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  let productosCatalogo = {};
+  let productosFirestore = [];
+
+  // 📥 Cargar catálogo
+  async function cargarCatalogo() {
+    try {
+      const response = await fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json");
+      if (!response.ok) throw new Error("HTTP error " + response.status);
+      const data = await response.json();
+      
+      productosCatalogo = {};
+      data.forEach(p => {
+        if (p.id) productosCatalogo[p.id] = p;
+      });
+      console.log("✅ Catálogo cargado:", Object.keys(productosCatalogo).length, "productos");
+      
+      if (document.getElementById('fuenteProductos').value === 'firebase') {
+        cargarProductosDeFirestore();
+      }
+    } catch (error) {
+      console.error("❌ Error al cargar catálogo:", error);
+      document.getElementById('listaCheckboxes').innerHTML = `<em>Error al cargar catálogo: ${error.message}</em>`;
+    }
+  }
+
+  // 📦 Cargar stock y enriquecer con nombreoriginal + imagen
+  async function cargarProductosDeFirestore() {
+    const listaDiv = document.getElementById('listaCheckboxes');
+    listaDiv.innerHTML = '<em>Cargando stock...</em>';
+    
+    try {
+      const snapshot = await db.collection('stock').get();
+      const productosConDatos = [];
+
+      snapshot.forEach(doc => {
+        const stockData = doc.data();
+        const stockId = doc.id;
+
+        let nombreMostrar = stockId;
+        let urlImagen = null;
+
+        const catalogoItem = productosCatalogo[stockId];
+
+        if (catalogoItem) {
+          if (catalogoItem.nombreoriginal) {
+            nombreMostrar = catalogoItem.nombreoriginal;
+          }
+          if (catalogoItem.imagen) {
+            urlImagen = catalogoItem.imagen;
+          }
+        }
+
+        // Fallback para nombre e imagen
+        if (!urlImagen) {
+          const nombreLimpio = nombreMostrar
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/\s+/g, '');
+          urlImagen = `https://wil1979.github.io/esentia-factura/etiqueta/${nombreLimpio}.png`;
+        }
+
+        if ((stockData.cantidad || 0) > 0) {
+          productosConDatos.push({
+            id: stockId,
+            nombre: nombreMostrar.trim(),
+            imagen: urlImagen
+          });
+        }
+      });
+
+      productosConDatos.sort((a, b) => a.nombre.localeCompare(b.nombre));
+      productosFirestore = productosConDatos;
+
+      // Render checkboxes
+      listaDiv.innerHTML = '';
+      if (productosConDatos.length === 0) {
+        listaDiv.innerHTML = '<em>No hay productos en stock.</em>';
+      } else {
+        productosConDatos.forEach(p => {
+          const label = document.createElement('label');
+          label.innerHTML = `<input type="checkbox" name="producto" value="${p.nombre}" checked> ${p.nombre}`;
+          listaDiv.appendChild(label);
+        });
+      }
+
+      generarEtiquetas();
+    } catch (error) {
+      console.error("❌ Error al cargar stock:", error);
+      listaDiv.innerHTML = `<em>Error al cargar stock: ${error.message}</em>`;
+    }
+  }
+
+  function cambiarFuente() {
+    const fuente = document.getElementById('fuenteProductos').value;
+    document.getElementById('seccionManual').style.display = fuente === 'manual' ? 'block' : 'none';
+    document.getElementById('seccionFirebase').style.display = fuente === 'firebase' ? 'block' : 'none';
+    
+    if (fuente === 'firebase') {
+      if (Object.keys(productosCatalogo).length === 0) {
+        cargarCatalogo();
+      } else {
+        cargarProductosDeFirestore();
+      }
+    } else {
+      generarEtiquetas();
+    }
+  }
+
+  function generarEtiquetas() {
+    const config = {
+      ancho: parseFloat(document.getElementById('anchoEtiqueta').value) || 2,
+      alto: parseFloat(document.getElementById('altoEtiqueta').value) || 4,
+      fuente: parseInt(document.getElementById('tamanoFuente').value) || 7,
+      logo: document.getElementById('logoUrl').value.trim(),
+      anchoLogo: parseInt(document.getElementById('anchoLogo').value) || 65,
+      precio: document.getElementById('precioProducto').value,
+      cantidad: parseInt(document.getElementById('cantidadPorProducto').value) || 1,
+      forma: document.getElementById('formaEtiqueta').value,
+      tamanoImagen: parseInt(document.getElementById('tamanoImagen').value) || 74
+    };
+
+    if (config.forma === "redonda" && Math.abs(config.ancho - config.alto) > 0.1) {
+      alert("⚠️ Para forma redonda, se recomienda usar ancho igual a alto (ej: 2x2 cm).");
+    }
+
+    document.documentElement.style.setProperty('--ancho-etiqueta', `${config.ancho}cm`);
+    document.documentElement.style.setProperty('--alto-etiqueta', `${config.alto}cm`);
+    document.documentElement.style.setProperty('--tamano-fuente', `${config.fuente}px`);
+    document.documentElement.style.setProperty('--ancho-logo', `${config.anchoLogo}px`);
+    document.documentElement.style.setProperty('--border-radius',
+      config.forma === "redonda" ? "50%" :
+      config.forma === "redondeada" ? "10px" : "2px"
+    );
+
+    if (config.forma === "redonda") {
+      const diametro = Math.min(config.ancho, config.alto);
+      document.documentElement.style.setProperty('--diametro-etiqueta', `${diametro}cm`);
+    }
+
+    const contenedor = document.getElementById('hojaEtiquetas');
+    contenedor.innerHTML = '';
+
+    const columnas = Math.floor(21.6 / (config.forma === "redonda" ? Math.min(config.ancho, config.alto) : config.ancho));
+    contenedor.style.gridTemplateColumns = `repeat(${columnas}, 1fr)`;
+
+    // Obtener productos con datos completos
+    const fuente = document.getElementById('fuenteProductos').value;
+    let productosConDatos = [];
+
+    if (fuente === 'manual') {
+      const nombres = document.getElementById('listaProductos').value
+        .split(',').map(p => p.trim()).filter(p => p);
+      productosConDatos = nombres.map(nombre => {
+        const nombreLimpio = nombre
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/\s+/g, '');
+        return {
+          nombre: nombre,
+          imagen: `https://wil1979.github.io/esentia-factura/etiqueta/${nombreLimpio}.png`
+        };
+      });
+    } else {
+      const checks = document.querySelectorAll('#listaCheckboxes input[type="checkbox"]:checked');
+      const nombresSeleccionados = Array.from(checks).map(cb => cb.value);
+      productosConDatos = productosFirestore.filter(p => nombresSeleccionados.includes(p.nombre));
+    }
+
+    // Generar etiquetas
+    productosConDatos.forEach(producto => {
+      for (let i = 0; i < config.cantidad; i++) {
+        const etiqueta = document.createElement('div');
+        etiqueta.className = 'etiqueta';
+        if (config.forma === "redonda") etiqueta.classList.add('redonda');
+
+        const imagenStyle = config.forma === "redonda"
+          ? `max-width: ${config.tamanoImagen}%; max-height: ${config.tamanoImagen}%; object-fit: contain; border-radius: 50%;`
+          : `max-width: ${config.tamanoImagen}%; max-height: 1.5cm; object-fit: contain;`;
+
+        etiqueta.innerHTML = `
+          <div><img src="${config.logo}" class="logo" alt="Logo"></div>
+          <div style="flex-grow:1; display:flex; align-items:center; justify-content:center;">
+            <img src="${producto.imagen}" alt="${producto.nombre}" style="${imagenStyle}" 
+                 onerror="this.src='image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%2240%22><text y=%2215%22 x=%2250%22 text-anchor=%22middle%22 font-size=%2210%22 fill=%22gray%22>${encodeURIComponent(producto.nombre)}</text></svg>'">
+          </div>
+          <div class="precio">${config.precio}</div>
+        `;
+
+        contenedor.appendChild(etiqueta);
+      }
+    });
+  }
+
+  function toggleConfig() {
+    const modal = document.getElementById('configModal');
+    modal.classList.toggle('hidden');
+    localStorage.setItem('configVisible', !modal.classList.contains('hidden'));
+  }
+
+  window.addEventListener('load', () => {
+    const visible = localStorage.getItem('configVisible') !== 'false';
+    if (!visible) document.getElementById('configModal').classList.add('hidden');
+    cargarCatalogo();
+  });
+
+  window.addEventListener('beforeprint', () => {
+    document.getElementById('configModal').classList.add('hidden');
+  });
+
+  window.addEventListener('afterprint', () => {
+    if (localStorage.getItem('configVisible') !== 'false') {
+      document.getElementById('configModal').classList.remove('hidden');
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key.toLowerCase() === 'h') {
+      toggleConfig();
+      e.preventDefault();
+    }
+  });
+</script>
+</body>
+</html>
