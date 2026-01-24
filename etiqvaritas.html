@@ -10,6 +10,7 @@
       --ancho-etiqueta: 2cm;
       --alto-etiqueta: 4cm;
       --tamano-fuente: 8px;
+      --tamano-nombre: 7px; /* Nuevo: tamaño del nombre del producto */
       --ancho-logo: 65px;
       --page-size: letter;
       --border-radius: 2px;
@@ -64,6 +65,13 @@
       width: var(--ancho-logo);
       height: auto;
       margin: 0 auto;
+    }
+
+    .nombre-producto {
+      font-size: var(--tamano-nombre);
+      font-weight: bold;
+      margin: 2px 0;
+      line-height: 1.2;
     }
 
     .precio {
@@ -191,6 +199,11 @@
   </div>
 
   <div class="config-group">
+    <label>Tamaño texto nombre (px):</label>
+    <input type="number" id="tamanoNombre" value="7" oninput="generarEtiquetas()">
+  </div>
+
+  <div class="config-group">
     <label>Cantidad por producto:</label>
     <input type="number" id="cantidadPorProducto" value="20" min="1" step="1" oninput="generarEtiquetas()">
   </div>
@@ -286,7 +299,9 @@
       
       productosCatalogo = {};
       data.forEach(p => {
-        if (p.id) productosCatalogo[p.id] = p;
+        if (p.id != null) {
+          productosCatalogo[String(p.id)] = p; // ✅ clave como string
+        }
       });
       console.log("✅ Catálogo cargado:", Object.keys(productosCatalogo).length, "productos");
       
@@ -299,77 +314,73 @@
     }
   }
 
-  // 📦 Cargar stock con nombreOriginal e imagen
- async function cargarProductosDeFirestore() {
-  const listaDiv = document.getElementById('listaCheckboxes');
-  listaDiv.innerHTML = '<em>Cargando stock...</em>';
-  
-  try {
-    const snapshot = await db.collection('stock').get();
-    const productosConDatos = [];
+  // 📦 Cargar stock usando el campo 'id' dentro del documento
+  async function cargarProductosDeFirestore() {
+    const listaDiv = document.getElementById('listaCheckboxes');
+    listaDiv.innerHTML = '<em>Cargando stock...</em>';
+    
+    try {
+      const snapshot = await db.collection('stock').get();
+      const productosConDatos = [];
 
-    snapshot.forEach(doc => {
-      const stockData = doc.data();
-      
-      // ✅ Usar el campo 'id' dentro del documento
-      const rawId = stockData.id;
-      if (rawId == null) return; // omitir si no tiene id
-      
-      const cantidad = stockData.cantidad || 0;
-      if (cantidad <= 0) return;
+      snapshot.forEach(doc => {
+        const stockData = doc.data();
+        const rawId = stockData.id;
+        if (rawId == null) return;
+        
+        const cantidad = stockData.cantidad || 0;
+        if (cantidad <= 0) return;
 
-      const stockId = String(rawId); // convertir a string
+        const stockId = String(rawId);
+        let nombreMostrar = stockData.nombre || stockId;
+        let urlImagen = null;
 
-      let nombreMostrar = stockData.nombre || stockId;
-      let urlImagen = null;
-
-      const catalogoItem = productosCatalogo[stockId];
-      if (catalogoItem) {
-        if (catalogoItem.nombreOriginal) {
-          nombreMostrar = catalogoItem.nombreOriginal;
+        const catalogoItem = productosCatalogo[stockId];
+        if (catalogoItem) {
+          if (catalogoItem.nombreOriginal) {
+            nombreMostrar = catalogoItem.nombreOriginal;
+          }
+          if (catalogoItem.imagen) {
+            urlImagen = catalogoItem.imagen;
+          }
         }
-        if (catalogoItem.imagen) {
-          urlImagen = catalogoItem.imagen;
+
+        if (!urlImagen) {
+          const nombreLimpio = nombreMostrar
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/\s+/g, '')
+            .toLowerCase();
+          urlImagen = `https://wil1979.github.io/esentia-factura/etiqueta/${nombreLimpio}.png`;
         }
+
+        productosConDatos.push({
+          id: stockId,
+          nombre: nombreMostrar.trim(),
+          imagen: urlImagen
+        });
+      });
+
+      productosConDatos.sort((a, b) => a.nombre.localeCompare(b.nombre));
+      productosFirestore = productosConDatos;
+
+      listaDiv.innerHTML = '';
+      if (productosConDatos.length === 0) {
+        listaDiv.innerHTML = '<em>No hay productos en stock.</em>';
+      } else {
+        productosConDatos.forEach(p => {
+          const label = document.createElement('label');
+          label.innerHTML = `<input type="checkbox" name="producto" value="${p.nombre}" checked> ${p.nombre}`;
+          listaDiv.appendChild(label);
+        });
       }
 
-      // Fallback para imagen
-      if (!urlImagen) {
-        const nombreLimpio = nombreMostrar
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/\s+/g, '')
-          .toLowerCase();
-        urlImagen = `https://wil1979.github.io/esentia-factura/etiqueta/${nombreLimpio}.png`;
-      }
-
-      productosConDatos.push({
-        id: stockId,
-        nombre: nombreMostrar.trim(),
-        imagen: urlImagen
-      });
-    });
-
-    productosConDatos.sort((a, b) => a.nombre.localeCompare(b.nombre));
-    productosFirestore = productosConDatos;
-
-    listaDiv.innerHTML = '';
-    if (productosConDatos.length === 0) {
-      listaDiv.innerHTML = '<em>No hay productos en stock.</em>';
-    } else {
-      productosConDatos.forEach(p => {
-        const label = document.createElement('label');
-        label.innerHTML = `<input type="checkbox" name="producto" value="${p.nombre}" checked> ${p.nombre}`;
-        listaDiv.appendChild(label);
-      });
+      generarEtiquetas();
+    } catch (error) {
+      console.error("❌ Error al cargar stock:", error);
+      listaDiv.innerHTML = `<em>Error al cargar stock: ${error.message}</em>`;
     }
-
-    generarEtiquetas();
-  } catch (error) {
-    console.error("❌ Error al cargar stock:", error);
-    listaDiv.innerHTML = `<em>Error al cargar stock: ${error.message}</em>`;
   }
-}
 
   function cambiarFuente() {
     const fuente = document.getElementById('fuenteProductos').value;
@@ -392,6 +403,7 @@
       ancho: parseFloat(document.getElementById('anchoEtiqueta').value) || 2,
       alto: parseFloat(document.getElementById('altoEtiqueta').value) || 4,
       fuente: parseInt(document.getElementById('tamanoFuente').value) || 7,
+      tamanoNombre: parseInt(document.getElementById('tamanoNombre').value) || 7,
       logo: document.getElementById('logoUrl').value.trim(),
       anchoLogo: parseInt(document.getElementById('anchoLogo').value) || 65,
       precio: document.getElementById('precioProducto').value,
@@ -407,6 +419,7 @@
     document.documentElement.style.setProperty('--ancho-etiqueta', `${config.ancho}cm`);
     document.documentElement.style.setProperty('--alto-etiqueta', `${config.alto}cm`);
     document.documentElement.style.setProperty('--tamano-fuente', `${config.fuente}px`);
+    document.documentElement.style.setProperty('--tamano-nombre', `${config.tamanoNombre}px`);
     document.documentElement.style.setProperty('--ancho-logo', `${config.anchoLogo}px`);
     document.documentElement.style.setProperty('--border-radius',
       config.forma === "redonda" ? "50%" :
@@ -448,7 +461,6 @@
       productosConDatos = productosFirestore.filter(p => nombresSeleccionados.includes(p.nombre));
     }
 
-    // 🔍 ¡Diagnóstico!
     depurarProductos(productosConDatos);
 
     // Generar etiquetas
@@ -464,9 +476,10 @@
 
         etiqueta.innerHTML = `
           <div><img src="${config.logo}" class="logo" alt="Logo"></div>
+          <div class="nombre-producto">${producto.nombre}</div>
           <div style="flex-grow:1; display:flex; align-items:center; justify-content:center;">
             <img src="${producto.imagen}" alt="${producto.nombre}" style="${imagenStyle}" 
-                 onerror="this.src='image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%2240%22><text y=%2215%22 x=%2250%22 text-anchor=%22middle%22 font-size=%2210%22 fill=%22gray%22>${encodeURIComponent(producto.nombre)}</text></svg>'">
+                 onerror="this.src='image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%2250%22><text y=%2215%22 x=%2210%22 font-size=%228%22 fill=%22red%22>IMG FALLIDA</text><text y=%2230%22 x=%2210%22 font-size=%227%22 fill=%22gray%22>Nombre: ${encodeURIComponent(producto.nombre)}</text></svg>'">
           </div>
           <div class="precio">${config.precio}</div>
         `;
@@ -507,4 +520,3 @@
 </script>
 </body>
 </html>
-
