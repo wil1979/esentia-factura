@@ -300,70 +300,76 @@
   }
 
   // 📦 Cargar stock con nombreOriginal e imagen
-  async function cargarProductosDeFirestore() {
-    const listaDiv = document.getElementById('listaCheckboxes');
-    listaDiv.innerHTML = '<em>Cargando stock...</em>';
-    
-    try {
-      const snapshot = await db.collection('stock').get();
-      const productosConDatos = [];
+ async function cargarProductosDeFirestore() {
+  const listaDiv = document.getElementById('listaCheckboxes');
+  listaDiv.innerHTML = '<em>Cargando stock...</em>';
+  
+  try {
+    const snapshot = await db.collection('stock').get();
+    const productosConDatos = [];
 
-      snapshot.forEach(doc => {
-        const stockData = doc.data();
-        const stockId = doc.id;
+    snapshot.forEach(doc => {
+      const stockData = doc.data();
+      
+      // ✅ Usar el campo 'id' dentro del documento
+      const rawId = stockData.id;
+      if (rawId == null) return; // omitir si no tiene id
+      
+      const cantidad = stockData.cantidad || 0;
+      if (cantidad <= 0) return;
 
-        let nombreMostrar = stockId;
-        let urlImagen = null;
+      const stockId = String(rawId); // convertir a string
 
-        const catalogoItem = productosCatalogo[stockId];
+      let nombreMostrar = stockData.nombre || stockId;
+      let urlImagen = null;
 
-        if (catalogoItem) {
-          if (catalogoItem.nombreOriginal) {
-            nombreMostrar = catalogoItem.nombreOriginal;
-          }
-          if (catalogoItem.imagen) {
-            urlImagen = catalogoItem.imagen;
-          }
+      const catalogoItem = productosCatalogo[stockId];
+      if (catalogoItem) {
+        if (catalogoItem.nombreOriginal) {
+          nombreMostrar = catalogoItem.nombreOriginal;
         }
-
-        if (!urlImagen) {
-          const nombreLimpio = nombreMostrar
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/\s+/g, '')
-            .toLowerCase();
-          urlImagen = `https://wil1979.github.io/esentia-factura/etiqueta/${nombreLimpio}.png`;
+        if (catalogoItem.imagen) {
+          urlImagen = catalogoItem.imagen;
         }
-
-        if ((stockData.cantidad || 0) > 0) {
-          productosConDatos.push({
-            id: stockId,
-            nombre: nombreMostrar.trim(),
-            imagen: urlImagen
-          });
-        }
-      });
-
-      productosConDatos.sort((a, b) => a.nombre.localeCompare(b.nombre));
-      productosFirestore = productosConDatos;
-
-      listaDiv.innerHTML = '';
-      if (productosConDatos.length === 0) {
-        listaDiv.innerHTML = '<em>No hay productos en stock.</em>';
-      } else {
-        productosConDatos.forEach(p => {
-          const label = document.createElement('label');
-          label.innerHTML = `<input type="checkbox" name="producto" value="${p.nombre}" checked> ${p.nombre}`;
-          listaDiv.appendChild(label);
-        });
       }
 
-      generarEtiquetas();
-    } catch (error) {
-      console.error("❌ Error al cargar stock:", error);
-      listaDiv.innerHTML = `<em>Error al cargar stock: ${error.message}</em>`;
+      // Fallback para imagen
+      if (!urlImagen) {
+        const nombreLimpio = nombreMostrar
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/\s+/g, '')
+          .toLowerCase();
+        urlImagen = `https://wil1979.github.io/esentia-factura/etiqueta/${nombreLimpio}.png`;
+      }
+
+      productosConDatos.push({
+        id: stockId,
+        nombre: nombreMostrar.trim(),
+        imagen: urlImagen
+      });
+    });
+
+    productosConDatos.sort((a, b) => a.nombre.localeCompare(b.nombre));
+    productosFirestore = productosConDatos;
+
+    listaDiv.innerHTML = '';
+    if (productosConDatos.length === 0) {
+      listaDiv.innerHTML = '<em>No hay productos en stock.</em>';
+    } else {
+      productosConDatos.forEach(p => {
+        const label = document.createElement('label');
+        label.innerHTML = `<input type="checkbox" name="producto" value="${p.nombre}" checked> ${p.nombre}`;
+        listaDiv.appendChild(label);
+      });
     }
+
+    generarEtiquetas();
+  } catch (error) {
+    console.error("❌ Error al cargar stock:", error);
+    listaDiv.innerHTML = `<em>Error al cargar stock: ${error.message}</em>`;
   }
+}
 
   function cambiarFuente() {
     const fuente = document.getElementById('fuenteProductos').value;
@@ -501,3 +507,4 @@
 </script>
 </body>
 </html>
+
