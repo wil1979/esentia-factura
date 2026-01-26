@@ -14,14 +14,12 @@
   --tamano-fuente:7px;
   --tamano-nombre:7px;
   --ancho-logo:65px;
-  --diametro-etiqueta:2cm;
-  --border-radius:2px;
+  --color-fondo:#ffffff;
+  --color-texto:#000000;
+  --color-borde:#cccccc;
 }
 
-@page{
-  size:letter;
-  margin:0.5cm;
-}
+@page{ size:letter; margin:0.5cm }
 
 body{
   margin:0;
@@ -39,15 +37,17 @@ body{
 .etiqueta{
   width:var(--ancho-etiqueta);
   height:var(--alto-etiqueta);
-  border:0.5px solid #ccc;
   padding:2mm;
-  font-size:var(--tamano-fuente);
+  box-sizing:border-box;
+  border:0.5px solid var(--color-borde);
+  background:var(--color-fondo);
+  color:var(--color-texto);
   display:flex;
   flex-direction:column;
   justify-content:space-between;
   text-align:center;
-  box-sizing:border-box;
   break-inside:avoid;
+  font-size:var(--tamano-fuente);
 }
 
 .etiqueta.redonda{
@@ -55,31 +55,20 @@ body{
   padding:1mm;
 }
 
-.logo{
-  width:var(--ancho-logo);
-  margin:0 auto;
-}
-
-.nombre-producto{
-  font-size:var(--tamano-nombre);
-  font-weight:bold;
-  line-height:1.1;
-}
-
-.precio{
-  font-weight:bold;
-}
+.logo{ width:var(--ancho-logo); margin:0 auto }
+.nombre-producto{ font-size:var(--tamano-nombre); font-weight:bold }
+.precio{ font-weight:bold }
 
 body.imprimiendo *{
-  animation:none!important;
   transition:none!important;
+  animation:none!important;
 }
 
 .config-modal{
   position:fixed;
   right:0;
   top:0;
-  width:300px;
+  width:320px;
   height:100%;
   background:#fff;
   border-left:1px solid #ccc;
@@ -88,37 +77,67 @@ body.imprimiendo *{
   z-index:1000;
 }
 
-.config-modal.hidden{transform:translateX(100%)}
+.config-modal.hidden{ transform:translateX(100%) }
+
+label{ font-size:12px; font-weight:bold; display:block; margin-top:8px }
+input,select,button{ width:100%; margin-top:4px; font-size:12px }
 
 @media print{
-  .config-modal,#btnConfig{display:none!important}
+  .config-modal,#btnConfig{ display:none!important }
 }
 </style>
 </head>
 
 <body>
 
-<!-- PANEL -->
 <div class="config-modal" id="configModal">
   <h3>Configuración</h3>
 
   <label>Cantidad por producto</label>
-  <input type="number" id="cantidad" value="6" oninput="generarEtiquetas()">
+  <input type="number" id="cantidad" value="6">
 
   <label>Forma</label>
-  <select id="forma" onchange="generarEtiquetas()">
+  <select id="forma">
     <option value="rectangular">Rectangular</option>
     <option value="redonda">Redonda</option>
   </select>
 
   <label>Ancho (cm)</label>
-  <input type="number" id="ancho" value="2" step="0.1" oninput="generarEtiquetas()">
+  <input type="number" id="ancho" value="2" step="0.1">
 
   <label>Alto (cm)</label>
-  <input type="number" id="alto" value="4" step="0.1" oninput="generarEtiquetas()">
+  <input type="number" id="alto" value="4" step="0.1">
 
   <label>Precio</label>
   <input type="text" id="precio" value="¤20 ml ¤30 ml">
+
+  <hr>
+
+  <h4>🎨 Colores</h4>
+
+  <label>Fondo etiqueta</label>
+  <input type="color" id="colorFondo" value="#ffffff">
+
+  <label>Texto</label>
+  <input type="color" id="colorTexto" value="#000000">
+
+  <label>Borde</label>
+  <input type="color" id="colorBorde" value="#cccccc">
+
+  <hr>
+
+  <h4>🧠 Presets</h4>
+
+  <input type="text" id="nombrePreset" placeholder="Nombre del preset">
+  <button onclick="guardarPreset()">💾 Guardar preset</button>
+
+  <select id="listaPresets" onchange="cargarPreset()">
+    <option value="">— Seleccionar preset —</option>
+  </select>
+
+  <button onclick="eliminarPreset()" style="background:#f44336;color:#fff">🗑 Eliminar preset</button>
+
+  <hr>
 
   <button onclick="imprimir()">🧾 Imprimir / PDF rápido</button>
 </div>
@@ -128,22 +147,20 @@ body.imprimiendo *{
 <div class="hoja" id="hoja"></div>
 
 <script>
-/* ================= CONFIG ================= */
-const firebaseConfig={
+/* ========= FIREBASE ========= */
+firebase.initializeApp({
   apiKey:"AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
   authDomain:"esentiacreditos-8345f.firebaseapp.com",
   projectId:"esentiacreditos-8345f"
-};
-
-firebase.initializeApp(firebaseConfig);
+});
 const db=firebase.firestore();
 
-const LOGO_URL="https://wil1979.github.io/esentia-factura/images/logo.png";
-window.DEBUG_ETIQUETAS=false;
-let printing=false;
+/* ========= GLOBAL ========= */
+const LOGO="https://wil1979.github.io/esentia-factura/images/logo.png";
 let productos=[];
+let printing=false;
 
-/* ================= DATA ================= */
+/* ========= DATA ========= */
 async function cargarProductos(){
   const snap=await db.collection("stock").get();
   productos=[];
@@ -151,49 +168,50 @@ async function cargarProductos(){
     const p=d.data();
     if(p.cantidad>0){
       productos.push({
-        nombre:p.nombre||"Producto",
-        imagen:`https://wil1979.github.io/esentia-factura/etiqueta/${(p.nombre||"").toLowerCase().replace(/\s+/g,"")}.png`
+        nombre:p.nombre,
+        imagen:`https://wil1979.github.io/esentia-factura/etiqueta/${p.nombre.toLowerCase().replace(/\s+/g,"")}.png`
       });
     }
   });
   generarEtiquetas();
 }
 
-/* ================= CORE ================= */
+/* ========= CORE ========= */
 function generarEtiquetas(){
   const hoja=document.getElementById("hoja");
   hoja.innerHTML="";
 
   const cfg={
-    cantidad:+document.getElementById("cantidad").value||1,
-    ancho:+document.getElementById("ancho").value||2,
-    alto:+document.getElementById("alto").value||4,
-    forma:document.getElementById("forma").value,
-    precio:document.getElementById("precio").value
+    cantidad:+cantidad.value,
+    ancho:+ancho.value,
+    alto:+alto.value,
+    forma:forma.value,
+    precio:precio.value,
+    fondo:colorFondo.value,
+    texto:colorTexto.value,
+    borde:colorBorde.value
   };
 
   document.documentElement.style.setProperty("--ancho-etiqueta",cfg.ancho+"cm");
   document.documentElement.style.setProperty("--alto-etiqueta",cfg.alto+"cm");
-  document.documentElement.style.setProperty("--border-radius",cfg.forma==="redonda"?"50%":"2px");
+  document.documentElement.style.setProperty("--color-fondo",cfg.fondo);
+  document.documentElement.style.setProperty("--color-texto",cfg.texto);
+  document.documentElement.style.setProperty("--color-borde",cfg.borde);
 
   const frag=document.createDocumentFragment();
-  const MAX_PREVIEW=60;
-  let count=0;
+  let count=0, MAX=60;
 
   productos.forEach(p=>{
     for(let i=0;i<cfg.cantidad;i++){
-      if(!printing && count>=MAX_PREVIEW) return;
+      if(!printing && count>=MAX) return;
       count++;
 
       const e=document.createElement("div");
       e.className="etiqueta"+(cfg.forma==="redonda"?" redonda":"");
-
       e.innerHTML=`
-        <img src="${LOGO_URL}" class="logo" loading="lazy" decoding="async">
+        <img src="${LOGO}" class="logo" loading="lazy">
         <div class="nombre-producto">${p.nombre}</div>
-        <img src="${p.imagen}" loading="lazy" decoding="async"
-             style="max-width:80%;margin:auto"
-             onerror="this.style.display='none'">
+        <img src="${p.imagen}" style="max-width:80%" loading="lazy" onerror="this.style.display='none'">
         <div class="precio">${cfg.precio}</div>
       `;
       frag.appendChild(e);
@@ -203,7 +221,65 @@ function generarEtiquetas(){
   hoja.appendChild(frag);
 }
 
-/* ================= PRINT ================= */
+/* ========= PRESETS ========= */
+function guardarPreset(){
+  const nombre=nombrePreset.value.trim();
+  if(!nombre) return alert("Nombre requerido");
+
+  const preset={
+    cantidad:cantidad.value,
+    ancho:ancho.value,
+    alto:alto.value,
+    forma:forma.value,
+    precio:precio.value,
+    fondo:colorFondo.value,
+    texto:colorTexto.value,
+    borde:colorBorde.value
+  };
+
+  localStorage.setItem("preset_"+nombre,JSON.stringify(preset));
+  cargarListaPresets();
+  nombrePreset.value="";
+}
+
+function cargarPreset(){
+  const key=listaPresets.value;
+  if(!key) return;
+  const p=JSON.parse(localStorage.getItem(key));
+
+  Object.assign(cantidad,p.cantidad);
+  ancho.value=p.ancho;
+  alto.value=p.alto;
+  forma.value=p.forma;
+  precio.value=p.precio;
+  colorFondo.value=p.fondo;
+  colorTexto.value=p.texto;
+  colorBorde.value=p.borde;
+
+  generarEtiquetas();
+}
+
+function eliminarPreset(){
+  const key=listaPresets.value;
+  if(key && confirm("Eliminar preset?")){
+    localStorage.removeItem(key);
+    cargarListaPresets();
+  }
+}
+
+function cargarListaPresets(){
+  listaPresets.innerHTML='<option value="">— Seleccionar preset —</option>';
+  Object.keys(localStorage)
+    .filter(k=>k.startsWith("preset_"))
+    .forEach(k=>{
+      const o=document.createElement("option");
+      o.value=k;
+      o.textContent=k.replace("preset_","");
+      listaPresets.appendChild(o);
+    });
+}
+
+/* ========= PRINT ========= */
 function imprimir(){
   printing=true;
   generarEtiquetas();
@@ -216,12 +292,15 @@ function imprimir(){
   },300);
 }
 
-/* ================= UI ================= */
 function toggleConfig(){
-  document.getElementById("configModal").classList.toggle("hidden");
+  configModal.classList.toggle("hidden");
 }
 
-window.onload=cargarProductos;
+window.onload=()=>{
+  cargarProductos();
+  cargarListaPresets();
+  generarEtiquetas();
+};
 </script>
 
 </body>
