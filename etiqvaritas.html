@@ -3,8 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <title>Generador de Etiquetas Esentia</title>
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <!-- jsPDF + html2canvas para PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     :root {
       --ancho-etiqueta: 2cm;
@@ -15,6 +19,9 @@
       --page-size: letter;
       --border-radius: 2px;
       --diametro-etiqueta: 2cm;
+      --color-texto: #000000;
+      --color-fondo: #ffffff;
+      --color-borde: #dddddd;
     }
 
     @page {
@@ -42,7 +49,7 @@
     .etiqueta {
       box-sizing: border-box;
       padding: 2ch;
-      border: 0.5px solid #ddd;
+      border: 0.5px solid var(--color-borde);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -51,8 +58,9 @@
       height: var(--alto-etiqueta);
       font-size: var(--tamano-fuente);
       border-radius: var(--border-radius);
-      background: rgb(255, 255, 255);
+      background: var(--color-fondo);
       text-align: center;
+      color: var(--color-texto);
     }
 
     .etiqueta.redonda {
@@ -72,12 +80,14 @@
       font-weight: bold;
       margin: 2px 0;
       line-height: 1.2;
+      color: var(--color-texto);
     }
 
     .precio {
       font-weight: bold;
       margin-top: 1px;
       font-size: calc(var(--tamano-fuente) + 0.5px);
+      color: var(--color-texto);
     }
 
     .imagen-producto {
@@ -102,6 +112,7 @@
       font-size: 16px;
       display: block;
       margin-bottom: 4px;
+      color: var(--color-texto);
     }
 
     .config-modal {
@@ -224,6 +235,20 @@
     <button type="button" onclick="cargarProductosDeFirestore()" style="margin-top:8px; font-size:11px;">↻ Recargar stock</button>
   </div>
 
+  <!-- 🔹 Nuevos controles de color -->
+  <div class="config-group">
+    <label>Color texto:</label>
+    <input type="color" id="colorTexto" value="#000000" oninput="aplicarColores()">
+  </div>
+  <div class="config-group">
+    <label>Fondo etiqueta:</label>
+    <input type="color" id="colorFondo" value="#ffffff" oninput="aplicarColores()">
+  </div>
+  <div class="config-group">
+    <label>Borde etiqueta:</label>
+    <input type="color" id="colorBorde" value="#dddddd" oninput="aplicarColores()">
+  </div>
+
   <div class="config-group">
     <label>Tamaño texto nombre (px):</label>
     <input type="number" id="tamanoNombre" value="7" oninput="generarEtiquetas()">
@@ -275,8 +300,9 @@
     <input type="text" id="precioProducto" value="¤20 ml ¤30 ml ¤60 ml" oninput="generarEtiquetas()">
   </div>
 
-  <button onclick="generarEtiquetas()" style="margin-top:10px;">Aplicar Cambios</button>
-  <button onclick="imprimirRapido()" style="margin-top:10px; background:#28a745; color:white;">🖨️ Imprimir Rápido</button>
+  <button onclick="generarEtiquetas()" style="margin-top:10px; width:100%;">Aplicar Cambios</button>
+  <button onclick="imprimirRapido()" style="margin-top:10px; background:#28a745; color:white; width:100%;">🖨️ Imprimir Rápido</button>
+  <button onclick="descargarPDF()" style="margin-top:10px; background:#dc3545; color:white; width:100%;">📥 Descargar PDF</button>
 </div>
 
 <button id="btnAbrirConfig" onclick="toggleConfig()">⚙️</button>
@@ -284,6 +310,7 @@
 <div class="hoja" id="hojaEtiquetas"></div>
 
 <script>
+  // Inicializar Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
     authDomain: "esentiacreditos-8345f.firebaseapp.com",
@@ -292,26 +319,22 @@
     messagingSenderId: "888658236080",
     appId: "1:888658236080:web:506e5e2085b5a452dba175"
   };
-
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
   let productosCatalogo = {};
   let productosFirestore = [];
 
+  // --- Funciones existentes (sin cambios críticos) ---
   async function cargarCatalogo() {
     try {
       const response = await fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json");
       if (!response.ok) throw new Error("HTTP error " + response.status);
       const data = await response.json();
-      
       productosCatalogo = {};
       data.forEach(p => {
-        if (p.id != null) {
-          productosCatalogo[String(p.id)] = p;
-        }
+        if (p.id != null) productosCatalogo[String(p.id)] = p;
       });
-      
       if (document.getElementById('fuenteProductos').value === 'firebase') {
         cargarProductosDeFirestore();
       }
@@ -324,33 +347,23 @@
   async function cargarProductosDeFirestore() {
     const listaDiv = document.getElementById('listaCheckboxes');
     listaDiv.innerHTML = '<em>Cargando stock...</em>';
-    
     try {
       const snapshot = await db.collection('stock').get();
       const productosConDatos = [];
-
       snapshot.forEach(doc => {
         const stockData = doc.data();
         const rawId = stockData.id;
         if (rawId == null) return;
-        
         const cantidad = stockData.cantidad || 0;
         if (cantidad <= 0) return;
-
         const stockId = String(rawId);
         let nombreMostrar = stockData.nombre || stockId;
         let urlImagen = null;
-
         const catalogoItem = productosCatalogo[stockId];
         if (catalogoItem) {
-          if (catalogoItem.nombreOriginal) {
-            nombreMostrar = catalogoItem.nombreOriginal;
-          }
-          if (catalogoItem.imagen) {
-            urlImagen = catalogoItem.imagen;
-          }
+          if (catalogoItem.nombreOriginal) nombreMostrar = catalogoItem.nombreOriginal;
+          if (catalogoItem.imagen) urlImagen = catalogoItem.imagen;
         }
-
         if (!urlImagen) {
           const nombreLimpio = nombreMostrar
             .normalize('NFD')
@@ -359,28 +372,15 @@
             .toLowerCase();
           urlImagen = `https://wil1979.github.io/esentia-factura/etiqueta/${nombreLimpio}.png`;
         }
-
-        productosConDatos.push({
-          id: stockId,
-          nombre: nombreMostrar.trim(),
-          imagen: urlImagen
-        });
+        productosConDatos.push({ id: stockId, nombre: nombreMostrar.trim(), imagen: urlImagen });
       });
-
       productosConDatos.sort((a, b) => a.nombre.localeCompare(b.nombre));
       productosFirestore = productosConDatos;
-
-      listaDiv.innerHTML = '';
-      if (productosConDatos.length === 0) {
-        listaDiv.innerHTML = '<em>No hay productos en stock.</em>';
-      } else {
-        productosConDatos.forEach(p => {
-          const label = document.createElement('label');
-          label.innerHTML = `<input type="checkbox" name="producto" value="${p.nombre}" checked> ${p.nombre}`;
-          listaDiv.appendChild(label);
-        });
-      }
-
+      listaDiv.innerHTML = productosConDatos.length === 0 
+        ? '<em>No hay productos en stock.</em>' 
+        : productosConDatos.map(p => 
+            `<label><input type="checkbox" name="producto" value="${p.nombre}" checked> ${p.nombre}</label>`
+          ).join('');
       generarEtiquetas();
     } catch (error) {
       console.error("❌ Error al cargar stock:", error);
@@ -392,16 +392,19 @@
     const fuente = document.getElementById('fuenteProductos').value;
     document.getElementById('seccionManual').style.display = fuente === 'manual' ? 'block' : 'none';
     document.getElementById('seccionFirebase').style.display = fuente === 'firebase' ? 'block' : 'none';
-    
     if (fuente === 'firebase') {
-      if (Object.keys(productosCatalogo).length === 0) {
-        cargarCatalogo();
-      } else {
-        cargarProductosDeFirestore();
-      }
-    } else {
-      generarEtiquetas();
-    }
+      if (Object.keys(productosCatalogo).length === 0) cargarCatalogo();
+      else cargarProductosDeFirestore();
+    } else generarEtiquetas();
+  }
+
+  function aplicarColores() {
+    const texto = document.getElementById('colorTexto').value;
+    const fondo = document.getElementById('colorFondo').value;
+    const borde = document.getElementById('colorBorde').value;
+    document.documentElement.style.setProperty('--color-texto', texto);
+    document.documentElement.style.setProperty('--color-fondo', fondo);
+    document.documentElement.style.setProperty('--color-borde', borde);
   }
 
   function generarEtiquetas() {
@@ -438,7 +441,7 @@
     }
 
     const contenedor = document.getElementById('hojaEtiquetas');
-    contenedor.className = 'hoja'; // asegura que no esté en modo-ligero
+    contenedor.className = 'hoja';
     contenedor.innerHTML = '';
 
     const columnas = Math.floor(21.6 / (config.forma === "redonda" ? Math.min(config.ancho, config.alto) : config.ancho));
@@ -491,16 +494,70 @@
     });
   }
 
+  // --- NUEVAS FUNCIONES ---
   function imprimirRapido() {
     const hoja = document.getElementById('hojaEtiquetas');
     hoja.classList.add('modo-ligero');
     window.print();
-    // Restaurar después de un breve retraso
-    setTimeout(() => {
-      hoja.classList.remove('modo-ligero');
-    }, 1000);
+    setTimeout(() => hoja.classList.remove('modo-ligero'), 1000);
   }
 
+  async function descargarPDF() {
+    const hoja = document.getElementById('hojaEtiquetas');
+    const originalClass = hoja.className;
+    
+    // Asegurar que no esté en modo ligero
+    hoja.className = 'hoja';
+    
+    // Mostrar mensaje de carga
+    const btn = document.querySelector('button[onclick="descargarPDF()"]');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '⏳ Generando...';
+    btn.disabled = true;
+
+    try {
+      const canvas = await html2canvas(hoja, {
+        scale: 2, // mejor calidad
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jspdf.jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'letter'
+      });
+
+      const imgWidth = 210; // A4 width en mm, pero letter es ~216
+      const pageHeight = 279; // letter height
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        pdf.addPage();
+        position = heightLeft - imgHeight;
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save('etiquetas-esentia.pdf');
+    } catch (error) {
+      console.error('Error al generar PDF:', error);
+      alert('⚠️ Error al generar el PDF. Abre la consola para más detalles.');
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      hoja.className = originalClass;
+    }
+  }
+
+  // --- Utilidades ---
   function toggleConfig() {
     const modal = document.getElementById('configModal');
     modal.classList.toggle('hidden');
@@ -511,6 +568,7 @@
     const visible = localStorage.getItem('configVisible') !== 'false';
     if (!visible) document.getElementById('configModal').classList.add('hidden');
     cargarCatalogo();
+    aplicarColores(); // Aplicar colores iniciales
   });
 
   document.addEventListener('keydown', (e) => {
