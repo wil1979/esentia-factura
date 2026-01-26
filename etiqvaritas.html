@@ -33,7 +33,7 @@ body{
   background:#fff;
 }
 
-/* === CONTENEDOR HOJA === */
+/* ===== HOJA ===== */
 .hoja{
   display:grid;
   gap:5mm;
@@ -42,14 +42,13 @@ body{
   grid-auto-flow:row;
 }
 
-/* === ETIQUETA === */
+/* ===== ETIQUETA ===== */
 .etiqueta{
   width:var(--ancho-etiqueta);
   height:var(--alto-etiqueta);
   padding:2mm;
   box-sizing:border-box;
   border:0.5px solid var(--color-borde);
-  border-radius:15%;
   background:var(--color-fondo);
   color:var(--color-texto);
   display:flex;
@@ -80,7 +79,25 @@ body{
   font-weight:bold;
 }
 
-/* === MODO DEBUG (GUÍAS) === */
+/* ===== IMÁGENES DE PRODUCTO ===== */
+.img-producto{
+  max-width:80%;
+  margin:auto;
+}
+
+/* Ocultar imágenes (pantalla + impresión) */
+body.sin-imagenes .img-producto{
+  display:none!important;
+}
+
+/* Mostrar solo en pantalla (NO imprimir) */
+@media print{
+  body.no-imprimir-imagenes .img-producto{
+    display:none!important;
+  }
+}
+
+/* ===== DEBUG ===== */
 body.debug .etiqueta{
   outline:0.5px dashed var(--debug-color);
 }
@@ -104,18 +121,18 @@ body.debug .hoja{
     );
 }
 
-/* === OPTIMIZACIÓN IMPRESIÓN === */
+/* ===== OPTIMIZACIÓN IMPRESIÓN ===== */
 body.imprimiendo *{
   transition:none!important;
   animation:none!important;
 }
 
-/* === PANEL === */
+/* ===== PANEL ===== */
 .config-modal{
   position:fixed;
   right:0;
   top:0;
-  width:320px;
+  width:330px;
   height:100%;
   background:#fff;
   border-left:1px solid #ccc;
@@ -153,7 +170,7 @@ button{
   z-index:1100;
 }
 
-/* === PRINT === */
+/* ===== PRINT ===== */
 @media print{
   .config-modal,#btnConfig{ display:none!important }
   body.debug .hoja{ background:none!important }
@@ -163,7 +180,6 @@ button{
     page-break-inside: avoid;
   }
 }
-
 </style>
 </head>
 
@@ -193,16 +209,12 @@ button{
 
   <hr>
 
-  <h4>🎨 Colores</h4>
-
-  <label>Fondo</label>
-  <input type="color" id="colorFondo" value="#ffffff">
-
-  <label>Texto</label>
-  <input type="color" id="colorTexto" value="#000000">
-
-  <label>Borde</label>
-  <input type="color" id="colorBorde" value="#cccccc">
+  <h4>🖼️ Imágenes de producto</h4>
+  <select id="modoImagen" onchange="cambiarModoImagen()">
+    <option value="todo">Mostrar imágenes</option>
+    <option value="sin">Ocultar imágenes (solo texto)</option>
+    <option value="pantalla">Mostrar en pantalla / NO imprimir</option>
+  </select>
 
   <hr>
 
@@ -258,23 +270,15 @@ function generarEtiquetas(){
     ancho:+ancho.value||2,
     alto:+alto.value||4,
     forma:forma.value,
-    precio:precio.value,
-    fondo:colorFondo.value,
-    texto:colorTexto.value,
-    borde:colorBorde.value
+    precio:precio.value
   };
 
-  /* === CSS VARIABLES === */
   document.documentElement.style.setProperty("--ancho-etiqueta",cfg.ancho+"cm");
   document.documentElement.style.setProperty("--alto-etiqueta",cfg.alto+"cm");
-  document.documentElement.style.setProperty("--color-fondo",cfg.fondo);
-  document.documentElement.style.setProperty("--color-texto",cfg.texto);
-  document.documentElement.style.setProperty("--color-borde",cfg.borde);
 
-  /* === CALCULO DE COLUMNAS (LETTER) === */
   const ANCHO_HOJA=21.6;
-  const PADDING=3; // 1.5cm x 2
-  const GAP=0.5;   // 5mm
+  const PADDING=3;
+  const GAP=0.5;
 
   const anchoEtiqueta=cfg.forma==="redonda"
     ? Math.min(cfg.ancho,cfg.alto)
@@ -287,7 +291,6 @@ function generarEtiquetas(){
 
   hoja.style.gridTemplateColumns=`repeat(${columnas}, ${anchoEtiqueta}cm)`;
 
-  /* === RENDER === */
   const frag=document.createDocumentFragment();
   let count=0, MAX_PREVIEW=60;
 
@@ -302,8 +305,7 @@ function generarEtiquetas(){
       e.innerHTML=`
         <img src="${LOGO}" class="logo" loading="lazy">
         <div class="nombre-producto">${p.nombre}</div>
-        <img src="${p.imagen}"
-             style="max-width:80%;margin:auto"
+        <img src="${p.imagen}" class="img-producto"
              loading="lazy"
              onerror="this.style.display='none'">
         <div class="precio">${cfg.precio}</div>
@@ -314,6 +316,15 @@ function generarEtiquetas(){
   });
 
   hoja.appendChild(frag);
+}
+
+/* ================= IMÁGENES ================= */
+function cambiarModoImagen(){
+  document.body.classList.remove("sin-imagenes","no-imprimir-imagenes");
+
+  const modo=document.getElementById("modoImagen").value;
+  if(modo==="sin") document.body.classList.add("sin-imagenes");
+  if(modo==="pantalla") document.body.classList.add("no-imprimir-imagenes");
 }
 
 /* ================= DEBUG ================= */
