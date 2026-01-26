@@ -32,6 +32,7 @@ body{
   gap:5mm;
   padding:1.5cm;
   max-width:21.6cm;
+  grid-auto-flow: row;
 }
 
 .etiqueta{
@@ -84,6 +85,11 @@ input,select,button{ width:100%; margin-top:4px; font-size:12px }
 
 @media print{
   .config-modal,#btnConfig{ display:none!important }
+}
+@media print {
+  .etiqueta {
+    page-break-inside: avoid;
+  }
 }
 </style>
 </head>
@@ -191,6 +197,24 @@ function generarEtiquetas(){
     texto:colorTexto.value,
     borde:colorBorde.value
   };
+  // === CALCULO CORRECTO DE COLUMNAS ===
+const hoja = document.getElementById("hoja");
+
+// ancho útil real de hoja Letter (cm)
+const ANCHO_HOJA = 21.6;
+const PADDING = 3; // 1.5cm * 2
+const GAP = 0.5;   // 5mm
+
+const anchoEtiqueta = cfg.forma === "redonda"
+  ? Math.min(cfg.ancho, cfg.alto)
+  : cfg.ancho;
+
+const columnas = Math.max(
+  1,
+  Math.floor((ANCHO_HOJA - PADDING) / (anchoEtiqueta + GAP))
+);
+
+hoja.style.gridTemplateColumns = `repeat(${columnas}, ${anchoEtiqueta}cm)`;
 
   document.documentElement.style.setProperty("--ancho-etiqueta",cfg.ancho+"cm");
   document.documentElement.style.setProperty("--alto-etiqueta",cfg.alto+"cm");
