@@ -14,12 +14,18 @@
   --tamano-fuente:7px;
   --tamano-nombre:7px;
   --ancho-logo:65px;
+
   --color-fondo:#ffffff;
   --color-texto:#000000;
   --color-borde:#cccccc;
+
+  --debug-color:#ff0000;
 }
 
-@page{ size:letter; margin:0.5cm }
+@page{
+  size:letter;
+  margin:0.5cm;
+}
 
 body{
   margin:0;
@@ -27,14 +33,16 @@ body{
   background:#fff;
 }
 
+/* === CONTENEDOR HOJA === */
 .hoja{
   display:grid;
   gap:5mm;
   padding:1.5cm;
   max-width:21.6cm;
-  grid-auto-flow: row;
+  grid-auto-flow:row;
 }
 
+/* === ETIQUETA === */
 .etiqueta{
   width:var(--ancho-etiqueta);
   height:var(--alto-etiqueta);
@@ -47,8 +55,8 @@ body{
   flex-direction:column;
   justify-content:space-between;
   text-align:center;
-  break-inside:avoid;
   font-size:var(--tamano-fuente);
+  break-inside:avoid;
 }
 
 .etiqueta.redonda{
@@ -56,15 +64,52 @@ body{
   padding:1mm;
 }
 
-.logo{ width:var(--ancho-logo); margin:0 auto }
-.nombre-producto{ font-size:var(--tamano-nombre); font-weight:bold }
-.precio{ font-weight:bold }
+.logo{
+  width:var(--ancho-logo);
+  margin:0 auto;
+}
 
+.nombre-producto{
+  font-size:var(--tamano-nombre);
+  font-weight:bold;
+  line-height:1.1;
+}
+
+.precio{
+  font-weight:bold;
+}
+
+/* === MODO DEBUG (GUÍAS) === */
+body.debug .etiqueta{
+  outline:0.5px dashed var(--debug-color);
+}
+
+body.debug .hoja{
+  outline:1px solid var(--debug-color);
+  background:
+    repeating-linear-gradient(
+      to right,
+      rgba(255,0,0,0.08),
+      rgba(255,0,0,0.08) 1px,
+      transparent 1px,
+      transparent 1cm
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255,0,0,0.08),
+      rgba(255,0,0,0.08) 1px,
+      transparent 1px,
+      transparent 1cm
+    );
+}
+
+/* === OPTIMIZACIÓN IMPRESIÓN === */
 body.imprimiendo *{
   transition:none!important;
   animation:none!important;
 }
 
+/* === PANEL === */
 .config-modal{
   position:fixed;
   right:0;
@@ -78,24 +123,46 @@ body.imprimiendo *{
   z-index:1000;
 }
 
-.config-modal.hidden{ transform:translateX(100%) }
+.config-modal.hidden{
+  transform:translateX(100%);
+}
 
-label{ font-size:12px; font-weight:bold; display:block; margin-top:8px }
-input,select,button{ width:100%; margin-top:4px; font-size:12px }
+label{
+  font-size:12px;
+  font-weight:bold;
+  display:block;
+  margin-top:8px;
+}
 
+input,select,button{
+  width:100%;
+  margin-top:4px;
+  font-size:12px;
+}
+
+button{
+  padding:6px;
+  cursor:pointer;
+}
+
+#btnConfig{
+  position:fixed;
+  bottom:15px;
+  right:15px;
+  z-index:1100;
+}
+
+/* === PRINT === */
 @media print{
   .config-modal,#btnConfig{ display:none!important }
-}
-@media print {
-  .etiqueta {
-    page-break-inside: avoid;
-  }
+  body.debug .hoja{ background:none!important }
 }
 </style>
 </head>
 
 <body>
 
+<!-- PANEL -->
 <div class="config-modal" id="configModal">
   <h3>Configuración</h3>
 
@@ -108,10 +175,10 @@ input,select,button{ width:100%; margin-top:4px; font-size:12px }
     <option value="redonda">Redonda</option>
   </select>
 
-  <label>Ancho (cm)</label>
+  <label>Ancho etiqueta (cm)</label>
   <input type="number" id="ancho" value="2" step="0.1">
 
-  <label>Alto (cm)</label>
+  <label>Alto etiqueta (cm)</label>
   <input type="number" id="alto" value="4" step="0.1">
 
   <label>Precio</label>
@@ -121,7 +188,7 @@ input,select,button{ width:100%; margin-top:4px; font-size:12px }
 
   <h4>🎨 Colores</h4>
 
-  <label>Fondo etiqueta</label>
+  <label>Fondo</label>
   <input type="color" id="colorFondo" value="#ffffff">
 
   <label>Texto</label>
@@ -132,28 +199,16 @@ input,select,button{ width:100%; margin-top:4px; font-size:12px }
 
   <hr>
 
-  <h4>🧠 Presets</h4>
-
-  <input type="text" id="nombrePreset" placeholder="Nombre del preset">
-  <button onclick="guardarPreset()">💾 Guardar preset</button>
-
-  <select id="listaPresets" onchange="cargarPreset()">
-    <option value="">— Seleccionar preset —</option>
-  </select>
-
-  <button onclick="eliminarPreset()" style="background:#f44336;color:#fff">🗑 Eliminar preset</button>
-
-  <hr>
-
-  <button onclick="imprimir()">🧾 Imprimir / PDF rápido</button>
+  <button onclick="toggleDebug()">🎯 Mostrar / ocultar guías</button>
+  <button onclick="imprimir()">🧾 Imprimir / PDF</button>
 </div>
 
-<button id="btnConfig" onclick="toggleConfig()" style="position:fixed;bottom:15px;right:15px;">⚙️</button>
+<button id="btnConfig" onclick="toggleConfig()">⚙️</button>
 
 <div class="hoja" id="hoja"></div>
 
 <script>
-/* ========= FIREBASE ========= */
+/* ================= FIREBASE ================= */
 firebase.initializeApp({
   apiKey:"AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
   authDomain:"esentiacreditos-8345f.firebaseapp.com",
@@ -161,12 +216,12 @@ firebase.initializeApp({
 });
 const db=firebase.firestore();
 
-/* ========= GLOBAL ========= */
+/* ================= GLOBAL ================= */
 const LOGO="https://wil1979.github.io/esentia-factura/images/logo.png";
 let productos=[];
 let printing=false;
 
-/* ========= DATA ========= */
+/* ================= DATA ================= */
 async function cargarProductos(){
   const snap=await db.collection("stock").get();
   productos=[];
@@ -175,69 +230,78 @@ async function cargarProductos(){
     if(p.cantidad>0){
       productos.push({
         nombre:p.nombre,
-        imagen:`https://wil1979.github.io/esentia-factura/etiqueta/${p.nombre.toLowerCase().replace(/\s+/g,"")}.png`
+        imagen:`https://wil1979.github.io/esentia-factura/etiqueta/${p.nombre
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g,"")
+          .replace(/\s+/g,"")
+          .toLowerCase()}.png`
       });
     }
   });
   generarEtiquetas();
 }
 
-/* ========= CORE ========= */
+/* ================= CORE ================= */
 function generarEtiquetas(){
   const hoja=document.getElementById("hoja");
   hoja.innerHTML="";
 
   const cfg={
-    cantidad:+cantidad.value,
-    ancho:+ancho.value,
-    alto:+alto.value,
+    cantidad:+cantidad.value||1,
+    ancho:+ancho.value||2,
+    alto:+alto.value||4,
     forma:forma.value,
     precio:precio.value,
     fondo:colorFondo.value,
     texto:colorTexto.value,
     borde:colorBorde.value
   };
-  // === CALCULO CORRECTO DE COLUMNAS ===
-const hoja = document.getElementById("hoja");
 
-// ancho útil real de hoja Letter (cm)
-const ANCHO_HOJA = 21.6;
-const PADDING = 3; // 1.5cm * 2
-const GAP = 0.5;   // 5mm
-
-const anchoEtiqueta = cfg.forma === "redonda"
-  ? Math.min(cfg.ancho, cfg.alto)
-  : cfg.ancho;
-
-const columnas = Math.max(
-  1,
-  Math.floor((ANCHO_HOJA - PADDING) / (anchoEtiqueta + GAP))
-);
-
-hoja.style.gridTemplateColumns = `repeat(${columnas}, ${anchoEtiqueta}cm)`;
-
+  /* === CSS VARIABLES === */
   document.documentElement.style.setProperty("--ancho-etiqueta",cfg.ancho+"cm");
   document.documentElement.style.setProperty("--alto-etiqueta",cfg.alto+"cm");
   document.documentElement.style.setProperty("--color-fondo",cfg.fondo);
   document.documentElement.style.setProperty("--color-texto",cfg.texto);
   document.documentElement.style.setProperty("--color-borde",cfg.borde);
 
+  /* === CALCULO DE COLUMNAS (LETTER) === */
+  const ANCHO_HOJA=21.6;
+  const PADDING=3; // 1.5cm x 2
+  const GAP=0.5;   // 5mm
+
+  const anchoEtiqueta=cfg.forma==="redonda"
+    ? Math.min(cfg.ancho,cfg.alto)
+    : cfg.ancho;
+
+  const columnas=Math.max(
+    1,
+    Math.floor((ANCHO_HOJA-PADDING)/(anchoEtiqueta+GAP))
+  );
+
+  hoja.style.gridTemplateColumns=`repeat(${columnas}, ${anchoEtiqueta}cm)`;
+
+  /* === RENDER === */
   const frag=document.createDocumentFragment();
-  let count=0, MAX=60;
+  let count=0, MAX_PREVIEW=60;
 
   productos.forEach(p=>{
     for(let i=0;i<cfg.cantidad;i++){
-      if(!printing && count>=MAX) return;
+      if(!printing && count>=MAX_PREVIEW) return;
       count++;
 
       const e=document.createElement("div");
       e.className="etiqueta"+(cfg.forma==="redonda"?" redonda":"");
+
       e.innerHTML=`
         <img src="${LOGO}" class="logo" loading="lazy">
         <div class="nombre-producto">${p.nombre}</div>
-        <img src="${p.imagen}" style="max-width:80%" loading="lazy" onerror="this.style.display='none'">
+        <img src="${p.imagen}"
+             style="max-width:80%;margin:auto"
+             loading="lazy"
+             onerror="this.style.display='none'">
         <div class="precio">${cfg.precio}</div>
       `;
+
       frag.appendChild(e);
     }
   });
@@ -245,69 +309,17 @@ hoja.style.gridTemplateColumns = `repeat(${columnas}, ${anchoEtiqueta}cm)`;
   hoja.appendChild(frag);
 }
 
-/* ========= PRESETS ========= */
-function guardarPreset(){
-  const nombre=nombrePreset.value.trim();
-  if(!nombre) return alert("Nombre requerido");
-
-  const preset={
-    cantidad:cantidad.value,
-    ancho:ancho.value,
-    alto:alto.value,
-    forma:forma.value,
-    precio:precio.value,
-    fondo:colorFondo.value,
-    texto:colorTexto.value,
-    borde:colorBorde.value
-  };
-
-  localStorage.setItem("preset_"+nombre,JSON.stringify(preset));
-  cargarListaPresets();
-  nombrePreset.value="";
+/* ================= DEBUG ================= */
+function toggleDebug(){
+  document.body.classList.toggle("debug");
 }
 
-function cargarPreset(){
-  const key=listaPresets.value;
-  if(!key) return;
-  const p=JSON.parse(localStorage.getItem(key));
-
-  Object.assign(cantidad,p.cantidad);
-  ancho.value=p.ancho;
-  alto.value=p.alto;
-  forma.value=p.forma;
-  precio.value=p.precio;
-  colorFondo.value=p.fondo;
-  colorTexto.value=p.texto;
-  colorBorde.value=p.borde;
-
-  generarEtiquetas();
-}
-
-function eliminarPreset(){
-  const key=listaPresets.value;
-  if(key && confirm("Eliminar preset?")){
-    localStorage.removeItem(key);
-    cargarListaPresets();
-  }
-}
-
-function cargarListaPresets(){
-  listaPresets.innerHTML='<option value="">— Seleccionar preset —</option>';
-  Object.keys(localStorage)
-    .filter(k=>k.startsWith("preset_"))
-    .forEach(k=>{
-      const o=document.createElement("option");
-      o.value=k;
-      o.textContent=k.replace("preset_","");
-      listaPresets.appendChild(o);
-    });
-}
-
-/* ========= PRINT ========= */
+/* ================= PRINT ================= */
 function imprimir(){
   printing=true;
   generarEtiquetas();
   document.body.classList.add("imprimiendo");
+
   setTimeout(()=>{
     window.print();
     printing=false;
@@ -316,15 +328,12 @@ function imprimir(){
   },300);
 }
 
+/* ================= UI ================= */
 function toggleConfig(){
   configModal.classList.toggle("hidden");
 }
 
-window.onload=()=>{
-  cargarProductos();
-  cargarListaPresets();
-  generarEtiquetas();
-};
+window.onload=cargarProductos;
 </script>
 
 </body>
