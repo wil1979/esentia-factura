@@ -1095,9 +1095,9 @@ window.enviarWhatsAppCliente = async function (modo = "suave") {
   }
   const totalGeneral = pendientes.reduce((sum, f) => sum + f.saldo, 0);
   let sugerido = 0;
-  if (totalGeneral <= 5000) sugerido = totalGeneral;
+  if (totalGeneral <= 4000) sugerido = totalGeneral;
   else if (totalGeneral <= 10000) sugerido = Math.ceil(totalGeneral / 2 / 1000) * 1000;
-  else sugerido = 5000;
+  else sugerido = 4000;
   const textoModo = {
     suave: `Hola ${nombre} 🌿
 Te compartimos tu estado de cuenta actualizado en *Esentia*. Gracias por tu preferencia 💜
@@ -1193,9 +1193,9 @@ window.enviarWhatsAppA = function(cliente, modo = "suave") {
 
   const totalGeneral = pendientes.reduce((sum, f) => sum + f.saldo, 0);
   let sugerido = 0;
-  if (totalGeneral <= 5000) sugerido = totalGeneral;
+  if (totalGeneral <= 4000) sugerido = totalGeneral;
   else if (totalGeneral <= 10000) sugerido = Math.ceil(totalGeneral / 2 / 1000) * 1000;
-  else sugerido = 5000;
+  else sugerido = 4000;
 
   const textoModo = {
     suave: `Hola ${nombre} 🌿\nTe compartimos tu estado de cuenta actualizado en *Esentia*. Gracias por tu preferencia 💜\n`,
@@ -2249,7 +2249,7 @@ function calcularLealtad(actual = 0, monto = 0) {
 
 function calcularLealtad(lealtad = {}, montoFactura) {
   const config = {
-    valorSello: 5000,
+    valorSello: 4000,
     objetivo: lealtad.objetivo || 6
   };
 
