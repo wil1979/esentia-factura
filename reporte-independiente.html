@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>💰 Clientes con Saldo Pendiente - Esentia</title>
+  <script type="module">
+    // 🔥 Firebase Config
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getFirestore, collection, getDocs, doc, getDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+      authDomain: "esentia-factura-8345f.firebaseapp.com",
+      projectId: "esentiacreditos-8345f",
+      storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+      messagingSenderId: "888658236080",
+      appId: "1:888658236080:web:506e5e2085b5a452dba175"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ===============================
+    // 📊 Estado global
+    // ===============================
+    let clientesConDeuda = [];
+    let filtroMinimo = 0; // Filtro mínimo de deuda
+    let ordenarPor = 'monto'; // 'monto' | 'fecha' | 'nombre'
+    let ordenAsc = false; // false = descendente (mayor a menor)
+
+    // ===============================
+    // 📥 Cargar datos de clientes con deuda
+    // ===============================
+    async function cargarClientesConDeuda() {
+      try {
+        document.getElementById('loading').style.display = 'block';
+        
+        // 1. Cargar clientes base
+        const snapClientes = await getDocs(collection(db, "clientesBD"));
+        const clientesBase = [];
+        
+        for (const docSnap of snapClientes.docs) {
+          const data = docSnap.data();
+          clientesBase.push({
+            id: docSnap.id,
+            nombre: data.nombre || "Sin nombre",
+            telefono: data.telefono || "",
+            cedula: data.cedula || ""
+          });
+        }
+
+        // 2. Cargar facturas y calcular deudas
+        clientesConDeuda = [];
+        
+        for (const cliente of clientesBase) {
+          const refFacturas = doc(db, "facturas", cliente.id);
+          const snapFacturas = await getDoc(refFacturas);
+          
+          if (snapFacturas.exists()) {
+            const data = snapFacturas.data();
+            const compras = data.compras || [];
+            const abonos = data.abonos || [];
+            
+            // Calcular deuda total
+            let deudaTotal = 0;
+            let fechaUltimaCompra = null;
+            let fechaUltimaCompraPendiente = null;
+            let comprasPendientes = [];
+            let totalCompras = 0;
+            let totalPagado = 0;
+            
+            compras.forEach(compra => {
+              const monto = Number(compra.total ?? (compra.monto - (compra.descuento || 0)));
+              const pagado = Number(compra.pagado || 0);
+              const saldo = Math.max(0, monto - pagado);
+              
+              totalCompras += monto;
+              totalPagado += pagado;
+              
+              if (saldo > 0) {
+                deudaTotal += saldo;
+                comprasPendientes.push({
+                  fecha: compra.fecha,
+                  monto: monto,
+                  pagado: pagado,
+                  saldo: saldo,
+                  productos: compra.productos || []
+                });
+                
+                // Fecha de última compra pendiente
+                if (compra.fecha) {
+                  const fechaCompra = new Date(compra.fecha);
+                  if (!fechaUltimaCompraPendiente || fechaCompra > fechaUltimaCompraPendiente) {
+                    fechaUltimaCompraPendiente = fechaCompra;
+                  }
+                }
+              }
+              
+              // Fecha de última compra (cualquiera)
+              if (compra.fecha) {
+                const fechaCompra = new Date(compra.fecha);
+                if (!fechaUltimaCompra || fechaCompra > fechaUltimaCompra) {
+                  fechaUltimaCompra = fechaCompra;
+                }
+              }
+            });
+            
+            // Solo agregar si tiene deuda
+            if (deudaTotal > 0) {
+              clientesConDeuda.push({
+                id: cliente.id,
+                nombre: cliente.nombre,
+                telefono: cliente.telefono,
+                cedula: cliente.cedula,
+                deudaTotal: deudaTotal,
+                totalCompras: totalCompras,
+                totalPagado: totalPagado,
+                fechaUltimaCompra: fechaUltimaCompra,
+                fechaUltimaCompraPendiente: fechaUltimaCompraPendiente,
+                comprasPendientes: comprasPendientes,
+                cantidadFacturasPendientes: comprasPendientes.length
+              });
+            }
+          }
+        }
+        
+        document.getElementById('loading').style.display = 'none';
+        renderizarReporte();
+        actualizarResumen();
+      } catch (error) {
+        console.error("Error cargando datos:", error);
+        document.getElementById('loading').style.display = 'none';
+        alert("❌ Error al cargar los datos: " + error.message);
+      }
+    }
+
+    // ===============================
+    // 📊 Renderizar reporte
+    // ===============================
+    function renderizarReporte() {
+      const contenedor = document.getElementById('tabla-clientes-deuda');
+      
+      // Aplicar filtro mínimo
+      let clientesFiltrados = [...clientesConDeuda];
+      if (filtroMinimo > 0) {
+        clientesFiltrados = clientesFiltrados.filter(c => c.deudaTotal >= filtroMinimo);
+      }
+      
+      // Ordenar
+      clientesFiltrados.sort((a, b) => {
+        let valorA, valorB;
+        
+        if (ordenarPor === 'monto') {
+          valorA = a.deudaTotal;
+          valorB = b.deudaTotal;
+        } else if (ordenarPor === 'fecha') {
+          valorA = a.fechaUltimaCompraPendiente ? a.fechaUltimaCompraPendiente.getTime() : 0;
+          valorB = b.fechaUltimaCompraPendiente ? b.fechaUltimaCompraPendiente.getTime() : 0;
+        } else if (ordenarPor === 'nombre') {
+          valorA = a.nombre.toLowerCase();
+          valorB = b.nombre.toLowerCase();
+        }
+        
+        if (valorA < valorB) return ordenAsc ? -1 : 1;
+        if (valorA > valorB) return ordenAsc ? 1 : -1;
+        return 0;
+      });
+      
+      // Renderizar tabla
+      let html = `
+        <table class="tabla-deuda">
+          <thead>
+            <tr>
+              <th onclick="cambiarOrden('nombre')">Cliente ${getIconoOrden('nombre')}</th>
+              <th>Teléfono</th>
+              <th onclick="cambiarOrden('monto')">Monto Pendiente ${getIconoOrden('monto')}</th>
+              <th>Total Comprado</th>
+              <th>Total Pagado</th>
+              <th>Facturas Pend.</th>
+              <th onclick="cambiarOrden('fecha')">Última Compra ${getIconoOrden('fecha')}</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
+      clientesFiltrados.forEach(cliente => {
+        const fechaUltima = cliente.fechaUltimaCompraPendiente 
+          ? formatearFecha(cliente.fechaUltimaCompraPendiente) 
+          : 'Sin fecha';
+        const diasAtraso = calcularDiasAtraso(cliente.fechaUltimaCompraPendiente);
+        
+        html += `
+          <tr>
+            <td>
+              <strong>${cliente.nombre}</strong>
+              ${cliente.cedula ? `<br><small>🆔 ${cliente.cedula}</small>` : ''}
+            </td>
+            <td>
+              <a href="https://wa.me/506${cliente.telefono}" target="_blank" class="btn-whatsapp">
+                📞 ${cliente.telefono}
+              </a>
+            </td>
+            <td class="numero deuda-alta">
+              <strong>₡${cliente.deudaTotal.toLocaleString('es-CR')}</strong>
+              ${diasAtraso > 0 ? `<br><small class="badge-atraso">⏱ ${diasAtraso} días</small>` : ''}
+            </td>
+            <td class="numero">
+              ₡${cliente.totalCompras.toLocaleString('es-CR')}
+            </td>
+            <td class="numero">
+              ₡${cliente.totalPagado.toLocaleString('es-CR')}
+            </td>
+            <td class="numero">
+              ${cliente.cantidadFacturasPendientes}
+            </td>
+            <td>
+              ${fechaUltima}
+              ${diasAtraso > 7 ? '<br><small class="atraso-alto">🔴 Atrasado</small>' : ''}
+            </td>
+            <td class="acciones">
+              <button onclick="enviarWhatsApp('${cliente.id}', '${cliente.nombre}', '${cliente.telefono}', ${cliente.deudaTotal})" class="btn-accion whatsapp">
+                💬
+              </button>
+              <button onclick="verDetalles('${cliente.id}')" class="btn-accion detalles" title="Ver detalles">
+                📋
+              </button>
+              <button onclick="abrirPago('${cliente.id}')" class="btn-accion pagar" title="Registrar pago">
+                💰
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      
+      if (clientesFiltrados.length === 0) {
+        html += `
+          <tr>
+            <td colspan="8" class="sin-datos">
+              ${clientesConDeuda.length === 0 
+                ? 'No hay clientes con saldos pendientes' 
+                : 'No hay clientes que coincidan con el filtro'}
+            </td>
+          </tr>
+        `;
+      }
+      
+      html += `
+          </tbody>
+        </table>
+        
+        <div class="resumen-pie">
+          <strong>Total de clientes con deuda:</strong> ${clientesFiltrados.length}<br>
+          <strong>Monto total pendiente:</strong> ₡${clientesFiltrados.reduce((sum, c) => sum + c.deudaTotal, 0).toLocaleString('es-CR')}
+        </div>
+        
+        <div class="acciones-exportar">
+          <button onclick="exportarCSV()" class="btn-exportar">
+            📥 Exportar a CSV
+          </button>
+          <button onclick="window.print()" class="btn-imprimir">
+            🖨️ Imprimir
+          </button>
+        </div>
+      `;
+      
+      contenedor.innerHTML = html;
+    }
+
+    // ===============================
+    // 📅 Funciones auxiliares
+    // ===============================
+    function formatearFecha(fecha) {
+      if (!fecha) return 'Sin fecha';
+      if (typeof fecha === 'string') fecha = new Date(fecha);
+      return fecha.toLocaleDateString('es-CR');
+    }
+    
+    function calcularDiasAtraso(fecha) {
+      if (!fecha) return 0;
+      if (typeof fecha === 'string') fecha = new Date(fecha);
+      const hoy = new Date();
+      const diff = hoy - fecha;
+      return Math.floor(diff / (1000 * 60 * 60 * 24));
+    }
+    
+    function cambiarOrden(campo) {
+      if (ordenarPor === campo) {
+        ordenAsc = !ordenAsc;
+      } else {
+        ordenarPor = campo;
+        ordenAsc = false; // Por defecto descendente
+      }
+      renderizarReporte();
+    }
+    
+    function getIconoOrden(campo) {
+      if (ordenarPor !== campo) return '⇅';
+      return ordenAsc ? '↑' : '↓';
+    }
+
+    // ===============================
+    // 💬 WhatsApp
+    // ===============================
+    function enviarWhatsApp(clienteId, nombre, telefono, deudaTotal) {
+      const limpio = telefono.replace(/\D/g, '');
+      if (limpio.length !== 8) {
+        alert("⚠️ Teléfono inválido");
+        return;
+      }
+      
+      const mensaje = `Hola ${nombre} 👋\n\nTe envío tu estado de cuenta actualizado en *Esentia*.\n\n` +
+        `💜 *SALDO PENDIENTE: ₡${deudaTotal.toLocaleString('es-CR')}*\n\n` +
+        `💳 *Formas de pago*\n` +
+        `1️⃣ Efectivo contra entrega\n` +
+        `2️⃣ SINPE Móvil: *7295-2454* (Wilber Calderón)\n` +
+        `3️⃣ Cuenta BAC: *CR59010200009453897656*\n\n` +
+        `✨ Agradecemos tu pronta gestión. Estamos para servirte 💜`;
+      
+      window.open(`https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`, '_blank');
+    }
+
+    // ===============================
+    // 📋 Ver detalles
+    // ===============================
+    function verDetalles(clienteId) {
+      const cliente = clientesConDeuda.find(c => c.id === clienteId);
+      if (!cliente) return;
+      
+      let detalles = `📋 *DETALLES DE ${cliente.nombre.toUpperCase()}*\n\n`;
+      detalles += `📞 Teléfono: ${cliente.telefono}\n`;
+      detalles += `🆔 Cédula: ${cliente.cedula || 'No registrada'}\n\n`;
+      detalles += `💰 DEUDA TOTAL: ₡${cliente.deudaTotal.toLocaleString('es-CR')}\n`;
+      detalles += `📊 Total comprado: ₡${cliente.totalCompras.toLocaleString('es-CR')}\n`;
+      detalles += `✅ Total pagado: ₡${cliente.totalPagado.toLocaleString('es-CR')}\n`;
+      detalles += `🧾 Facturas pendientes: ${cliente.cantidadFacturasPendientes}\n\n`;
+      
+      if (cliente.comprasPendientes.length > 0) {
+        detalles += `📦 FACTURAS PENDIENTES:\n`;
+        cliente.comprasPendientes.forEach((compra, idx) => {
+          const fecha = formatearFecha(compra.fecha);
+          detalles += `\nFactura ${idx + 1} (${fecha}):\n`;
+          detalles += `  Monto: ₡${compra.monto.toLocaleString('es-CR')}\n`;
+          detalles += `  Pagado: ₡${compra.pagado.toLocaleString('es-CR')}\n`;
+          detalles += `  Saldo: ₡${compra.saldo.toLocaleString('es-CR')}\n`;
+          
+          if (compra.productos && compra.productos.length > 0) {
+            detalles += `  Productos:\n`;
+            compra.productos.forEach(p => {
+              detalles += `    • ${p.cantidad}× ${p.nombre}\n`;
+            });
+          }
+        });
+      }
+      
+      alert(detalles);
+    }
+
+    // ===============================
+    // 💰 Abrir pago
+    // ===============================
+    function abrirPago(clienteId) {
+      const cliente = clientesConDeuda.find(c => c.id === clienteId);
+      if (!cliente) return;
+      
+      const monto = prompt(`Registrar pago para ${cliente.nombre}\nDeuda actual: ₡${cliente.deudaTotal.toLocaleString('es-CR')}\n\nIngresa monto a abonar:`, cliente.deudaTotal.toString());
+      
+      if (monto && !isNaN(monto) && Number(monto) > 0) {
+        if (confirm(`¿Registrar pago de ₡${Number(monto).toLocaleString('es-CR')} para ${cliente.nombre}?`)) {
+          alert("✅ Pago registrado exitosamente.\n\nNota: Esta es una versión de visualización. Para registrar pagos reales, usa el sistema principal de clientes.");
+        }
+      }
+    }
+
+    // ===============================
+    // 📊 Actualizar resumen
+    // ===============================
+    function actualizarResumen() {
+      const totalClientes = clientesConDeuda.length;
+      const totalDeuda = clientesConDeuda.reduce((sum, c) => sum + c.deudaTotal, 0);
+      const promedioDeuda = totalClientes > 0 ? totalDeuda / totalClientes : 0;
+      
+      // Calcular clientes por rango de deuda
+      const rango1 = clientesConDeuda.filter(c => c.deudaTotal <= 5000).length;
+      const rango2 = clientesConDeuda.filter(c => c.deudaTotal > 5000 && c.deudaTotal <= 20000).length;
+      const rango3 = clientesConDeuda.filter(c => c.deudaTotal > 20000).length;
+      
+      document.getElementById('resumen-deuda').innerHTML = `
+        <div class="resumen-grid">
+          <div class="resumen-item grande">
+            <span class="etiqueta">Total Deuda</span>
+            <span class="valor">₡${totalDeuda.toLocaleString('es-CR')}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="etiqueta">Clientes</span>
+            <span class="valor">${totalClientes}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="etiqueta">Promedio</span>
+            <span class="valor">₡${Math
