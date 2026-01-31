@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎁 Programa de Lealtad - Sellos - Esentia</title>
+  <script type="module">
+    // 🔥 Firebase Config
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getFirestore, collection, getDocs, doc, getDoc, updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+      authDomain: "esentia-factura-8345f.firebaseapp.com",
+      projectId: "esentiacreditos-8345f",
+      storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+      messagingSenderId: "888658236080",
+      appId: "1:888658236080:web:506e5e2085b5a452dba175"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ===============================
+    // 📊 Estado global
+    // ===============================
+    let clientesConLealtad = [];
+    let configuracion = {
+      valorSello: 5000, // ₡5,000 por sello
+      objetivo: 6,      // 6 sellos = 1 premio
+      fechaInicio: null
+    };
+    let modoCalculo = 'actual'; // 'actual' | 'recalcular'
+
+    // ===============================
+    // 📥 Cargar datos de lealtad
+    // ===============================
+    async function cargarLealtadClientes() {
+      try {
+        document.getElementById('loading').style.display = 'block';
+        
+        // 1. Cargar clientes base
+        const snapClientes = await getDocs(collection(db, "clientesBD"));
+        const clientesBase = [];
+        
+        for (const docSnap of snapClientes.docs) {
+          const data = docSnap.data();
+          clientesBase.push({
+            id: docSnap.id,
+            nombre: data.nombre || "Sin nombre",
+            telefono: data.telefono || "",
+            cedula: data.cedula || "",
+            activo: data.activo !== false
+          });
+        }
+
+        // 2. Cargar lealtad y compras de cada cliente
+        clientesConLealtad = [];
+        
+        for (const cliente of clientesBase) {
+          const refFacturas = doc(db, "facturas", cliente.id);
+          const snapFacturas = await getDoc(refFacturas);
+          
+          if (snapFacturas.exists()) {
+            const data = snapFacturas.data();
+            const compras = data.compras || [];
+            const lealtad = data.lealtad || { sellos: 0, objetivo: 6, premiosPendientes: 0 };
+            
+            // Calcular historial de sellos por compra
+            const historialSellos = [];
+            let sellosAcumulados = 0;
+            let premiosAcumulados = 0;
+            
+            compras.forEach(compra => {
+              const monto = Number(compra.total ?? (compra.monto - (compra.descuento || 0)));
+              const pagado = Number(compra.pagado || 0);
+              
+              // Solo compras pagadas generan sellos
+              if (pagado >= monto && monto > 0) {
+                const sellosGanados = Math.floor(monto / configuracion.valorSello);
+                
+                if (sellosGanados > 0) {
+                  sellosAcumulados += sellosGanados;
+                  
+                  // Verificar si se completó un premio
+                  while (sellosAcumulados >= lealtad.objetivo) {
+                    sellosAcumulados -= lealtad.objetivo;
+                    premiosAcumulados++;
+                  }
+                  
+                  historialSellos.push({
+                    fecha: compra.fecha,
+                    monto: monto,
+                    sellos: sellosGanados,
+                    productos: compra.productos || []
+                  });
+                }
+              }
+            });
+            
+            clientesConLealtad.push({
+              id: cliente.id,
+              nombre: cliente.nombre,
+              telefono: cliente.telefono,
+              cedula: cliente.cedula,
+              activo: cliente.activo,
+              lealtad: lealtad,
+              historialSellos: historialSellos,
+              totalCompras: compras.length,
+              sellosHistoricos: historialSellos.reduce((sum, h) => sum + h.sellos, 0),
+              premiosHistoricos: premiosAcumulados
+            });
+          }
+        }
+        
+        document.getElementById('loading').style.display = 'none';
+        renderizarReporte();
+        actualizarResumen();
+      } catch (error) {
+        console.error("Error cargando datos:", error);
+        document.getElementById('loading').style.display = 'none';
+        alert("❌ Error al cargar los datos: " + error.message);
+      }
+    }
+
+    // ===============================
+    // 📊 Renderizar reporte
+    // ===============================
+    function renderizarReporte() {
+      const contenedor = document.getElementById('tabla-lealtad');
+      const mostrarInactivos = document.getElementById('mostrar-inactivos').checked;
+      const filtroMinSellos = Number(document.getElementById('filtro-sellos').value) || 0;
+      
+      // Filtrar clientes
+      let clientesFiltrados = [...clientesConLealtad];
+      
+      if (!mostrarInactivos) {
+        clientesFiltrados = clientesFiltrados.filter(c => c.activo);
+      }
+      
+      if (filtroMinSellos > 0) {
+        clientesFiltrados = clientesFiltrados.filter(c => 
+          (c.lealtad.sellos || 0) >= filtroMinSellos || 
+          (c.lealtad.premiosPendientes || 0) > 0
+        );
+      }
+      
+      // Ordenar por sellos (descendente)
+      clientesFiltrados.sort((a, b) => 
+        (b.lealtad.premiosPendientes || 0) - (a.lealtad.premiosPendientes || 0) ||
+        (b.lealtad.sellos || 0) - (a.lealtad.sellos || 0)
+      );
+      
+      // Renderizar tabla
+      let html = `
+        <table class="tabla-lealtad">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Teléfono</th>
+              <th>Sellos Actuales</th>
+              <th>Premios Pendientes</th>
+              <th>Sellos Históricos</th>
+              <th>Compras Pagadas</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
+      clientesFiltrados.forEach(cliente => {
+        const sellosActuales = cliente.lealtad.sellos || 0;
+        const premiosPendientes = cliente.lealtad.premiosPendientes || 0;
+        const sellosHistoricos = cliente.sellosHistoricos || 0;
+        const objetivo = cliente.lealtad.objetivo || configuracion.objetivo;
+        
+        // Calcular progreso
+        const progreso = Math.min(100, Math.round((sellosActuales / objetivo) * 100));
+        const barraColor = premiosPendientes > 0 ? '#4CAF50' : 
+                          sellosActuales >= objetivo * 0.75 ? '#FF9800' : '#2196F3';
+        
+        html += `
+          <tr>
+            <td>
+              <strong>${cliente.nombre}</strong>
+              ${cliente.cedula ? `<br><small>🆔 ${cliente.cedula}</small>` : ''}
+            </td>
+            <td>
+              <a href="https://wa.me/506${cliente.telefono}" target="_blank" class="btn-whatsapp">
+                📞 ${cliente.telefono}
+              </a>
+            </td>
+            <td>
+              <div class="sellos-celda">
+                <span class="badge-sellos">${sellosActuales}</span>
+                <div class="barra-progreso">
+                  <div class="progreso" style="width:${progreso}%; background-color:${barraColor}"></div>
+                </div>
+                <small>${sellosActuales}/${objetivo} para premio</small>
+              </div>
+            </td>
+            <td>
+              ${premiosPendientes > 0 
+                ? `<span class="badge-premio">${premiosPendientes} 🎁</span>` 
+                : `<span class="badge-vacio">Sin premios</span>`}
+            </td>
+            <td>
+              <span class="badge-historico">${sellosHistoricos}</span>
+              <br><small>${cliente.historialSellos.length} compras</small>
+            </td>
+            <td>
+              ${cliente.totalCompras}
+            </td>
+            <td class="acciones">
+              <button onclick="verHistorial('${cliente.id}')" class="btn-accion historial" title="Ver historial">
+                📋
+              </button>
+              <button onclick="editarSellos('${cliente.id}')" class="btn-accion editar" title="Editar sellos">
+                ✏️
+              </button>
+              <button onclick="enviarWhatsAppSellos('${cliente.id}')" class="btn-accion whatsapp" title="WhatsApp">
+                💬
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      
+      if (clientesFiltrados.length === 0) {
+        html += `
+          <tr>
+            <td colspan="7" class="sin-datos">
+              ${clientesConLealtad.length === 0 
+                ? 'No hay clientes con programa de lealtad' 
+                : 'No hay clientes que coincidan con los filtros'}
+            </td>
+          </tr>
+        `;
+      }
+      
+      html += `
+          </tbody>
+        </table>
+        
+        <div class="resumen-pie">
+          <strong>Total clientes:</strong> ${clientesFiltrados.length}<br>
+          <strong>Sellos totales:</strong> ${clientesFiltrados.reduce((sum, c) => sum + (c.lealtad.sellos || 0), 0)}<br>
+          <strong>Premios pendientes:</strong> ${clientesFiltrados.reduce((sum, c) => sum + (c.lealtad.premiosPendientes || 0), 0)}
+        </div>
+        
+        <div class="acciones-exportar">
+          <button onclick="exportarCSV()" class="btn-exportar">
+            📥 Exportar a CSV
+          </button>
+          <button onclick="window.print()" class="btn-imprimir">
+            🖨️ Imprimir
+          </button>
+          <button onclick="recalcularSellos()" class="btn-recalcular">
+            🔄 Recalcular Sellos
+          </button>
+        </div>
+      `;
+      
+      contenedor.innerHTML = html;
+    }
+
+    // ===============================
+    // 👁️ Ver historial de sellos
+    // ===============================
+    function verHistorial(clienteId) {
+      const cliente = clientesConLealtad.find(c => c.id === clienteId);
+      if (!cliente) return;
+      
+      const modal = document.getElementById('modal-historial');
+      const contenedor = document.getElementById('historial-detalle');
+      
+      let html = `
+        <h3>📋 Historial de Sellos - ${cliente.nombre}</h3>
+        <div class="info-cliente">
+          <p><strong>Teléfono:</strong> ${cliente.telefono}</p>
+          <p><strong>Sellos actuales:</strong> <span class="badge-sellos">${cliente.lealtad.sellos || 0}</span></p>
+          <p><strong>Premios pendientes:</strong> <span class="badge-premio">${cliente.lealtad.premiosPendientes || 0} 🎁</span></p>
+          <p><strong>Sellos históricos:</strong> ${cliente.sellosHistoricos}</p>
+        </div>
+        <h4>📦 Compras que generaron sellos</h4>
+      `;
+      
+      if (cliente.historialSellos.length === 0) {
+        html += `<p class="sin-datos">No hay compras que hayan generado sellos aún.</p>`;
+      } else {
+        html += `<div class="lista-historial">`;
+        cliente.historialSellos.forEach((registro, idx) => {
+          const fecha = new Date(registro.fecha).toLocaleDateString('es-CR');
+          const productosTxt = registro.productos.map(p => `${p.cantidad}× ${p.nombre}`).join(', ');
+          
+          html += `
+            <div class="registro-historial">
+              <div class="fecha-registro">${fecha}</div>
+              <div class="monto-registro">₡${registro.monto.toLocaleString('es-CR')}</div>
+              <div class="sellos-registro">+${registro.sellos} 🎫</div>
+              <div class="productos-registro">${productosTxt}</div>
+            </div>
+          `;
+        });
+        html += `</div>`;
+      }
+      
+      contenedor.innerHTML = html;
+      modal.style.display = 'flex';
+    }
+
+    // ===============================
+    // ✏️ Editar sellos manualmente
+    // ===============================
+    function editarSellos(clienteId) {
+      const cliente = clientesConLealtad.find(c => c.id === clienteId);
+      if (!cliente) return;
+      
+      const nuevoSellos = prompt(
+        `✏️ Editar Sellos - ${cliente.nombre}\n\n` +
+        `Sellos actuales: ${cliente.lealtad.sellos || 0}\n` +
+        `Premios pendientes: ${cliente.lealtad.premiosPendientes || 0}\n\n` +
+        `Ingrese nueva cantidad de sellos (0-${cliente.lealtad.objetivo - 1}):`,
+        cliente.lealtad.sellos || 0
+      );
+      
+      if (nuevoSellos === null) return;
+      
+      const valor = Number(nuevoSellos);
+      const objetivo = cliente.lealtad.objetivo || configuracion.objetivo;
+      
+      if (isNaN(valor) || valor < 0) {
+        alert("❌ Valor inválido");
+        return;
+      }
+      
+      if (valor >= objetivo) {
+        alert(`⚠️ Para ${objetivo} sellos o más, se genera automáticamente un premio.\nEl máximo permitido es ${objetivo - 1} sellos.`);
+        return;
+      }
+      
+      if (confirm(`¿Cambiar sellos de ${cliente.nombre} de ${cliente.lealtad.sellos || 0} a ${valor}?`)) {
+        actualizarSellosFirebase(clienteId, valor);
+      }
+    }
+
+    async function actualizarSellosFirebase(clienteId, nuevosSellos) {
+      try {
+        const ref = doc(db, "facturas", clienteId);
+        const snap = await getDoc(ref);
+        
+        if (!snap.exists()) {
+          alert("❌ Cliente no encontrado");
+          return;
+        }
+        
+        const data = snap.data();
+        const lealtadActual = data.lealtad || { sellos: 0, objetivo: 6, premiosPendientes: 0 };
+        
+        await updateDoc(ref, {
+          lealtad: {
+            ...lealtadActual,
+            sellos: nuevosSellos
+          }
+        });
+        
+        alert("✅ Sellos actualizados correctamente");
+        await cargarLealtadClientes();
+      } catch (error) {
+        console.error("Error actualizando sellos:", error);
+        alert("❌ Error al actualizar sellos: " + error.message);
+      }
+    }
+
+    // ===============================
+    // 💬 WhatsApp con estado de sellos
+    // ===============================
+    function enviarWhatsAppSellos(clienteId) {
+      const cliente = clientesConLealtad.find(c => c.id === clienteId);
+      if (!cliente) return;
+      
+      const { nombre, telefono, lealtad } = cliente;
+      const limpio = telefono.replace(/\D/g, '');
+      
+      if (limpio.length !== 8) {
+        alert("⚠️ Teléfono inválido");
+        return;
+      }
+      
+      const sellos = lealtad.sellos || 0;
+      const premios = lealtad.premiosPendientes || 0;
+      const objetivo = lealtad.objetivo || configuracion.objetivo;
+      const faltantes = objetivo - sellos;
+      
+      let mensaje = `Hola ${nombre} 🌿\n\n`;
+      mensaje += `🎁 *TU ESTADO DE LEALTAD - ESENTIA*\n\n`;
+      mensaje += `🎫 Sellos actuales: *${sellos}*\n`;
+      mensaje += `🎯 Faltan: *${faltantes}* sellos para tu próximo premio\n`;
+      mensaje += `🏆 Premios pendientes: *${premios}*\n\n`;
+      
+      if (premios > 0) {
+        mensaje += `✨ *¡FELICITACIONES!* Tienes ${premios} premio(s) disponible(s) para canjear.\n`;
+        mensaje += `Pásate por Esentia a reclamar tu recompensa 💜\n\n`;
+      } else if (sellos >= objetivo * 0.75) {
+        mensaje += `🚀 *¡ESTÁS CERCA!* Solo te faltan ${faltantes} sellos para tu premio.\n`;
+        mensaje += `¡Sigue comprando y pronto tendrás tu recompensa! 💜\n\n`;
+      } else {
+        mensaje += `💚 Cada ₡5,000 en compras = 1 sello\n`;
+        mensaje += `💚 ${objetivo} sellos = 1 premio especial\n\n`;
+      }
+      
+      mensaje += `📍 *Esentia - Aromaterapia y Limpieza Natural*\n`;
+      mensaje += `📱 WhatsApp: 7295-2454\n`;
+      mensaje += `💜 ¡Gracias por ser parte de nuestra familia!`;
+      
+      window.open(`https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`, '_blank');
+    }
+
+    // ===============================
+    // 🔄 Recalcular sellos desde cero
+    // ===============================
+    async function recalcularSellos() {
+      if (!confirm(
+        `⚠️ RECALCULAR SELLOS DESDE CERO\n\n` +
+        `Esta acción recalculará todos los sellos basándose únicamente en las compras pagadas.\n` +
+        `Los sellos y premios actuales se sobrescribirán.\n\n` +
+        `¿Deseas continuar?`
+      )) return;
+      
+      try {
+        document.getElementById('loading').style.display = 'block';
+        
+        for (const cliente of clientesConLealtad) {
+          const ref = doc(db, "facturas", cliente.id);
+          const snap = await getDoc(ref);
+          
+          if (!snap.exists()) continue;
+          
+          const data = snap.data();
+          const compras = data.compras || [];
+          
+          // Recalcular desde cero
+          let sellosTotales = 0;
+          let premiosTotales = 0;
+          
+          compras.forEach(compra => {
+            const monto = Number(compra.total ?? (compra.monto - (compra.descuento || 0)));
+            const pagado = Number(compra.pagado || 0);
+            
+            if (pagado >= monto && monto > 0) {
+              sellosTotales += Math.floor(monto / configuracion.valorSello);
+            }
+          });
+          
+          // Convertir sellos a premios
+          const objetivo = configuracion.objetivo;
+          premiosTotales = Math.floor(sellosTotales / objetivo);
+          sellosTotales = sellosTotales % objetivo;
+          
+          // Actualizar en Firebase
+          await updateDoc(ref, {
+            lealtad: {
+              sellos: sellosTotales,
+              premiosPendientes: premiosTotales,
+              objetivo: objetivo
+            }
+          });
+        }
+        
+        document.getElementById('loading').style.display = 'none';
+        alert("✅ Sellos recalculados correctamente");
+        await cargarLealtadClientes();
+      } catch (error) {
+        console.error("Error recalculando sellos:", error);
+        document.getElementById('loading').style.display = 'none';
+        alert("❌ Error al recalcular sellos: " + error.message);
+      }
+    }
+
+    // ===============================
+    // 📊 Actualizar resumen
+    // ===============================
+    function actualizarResumen() {
+      const totalClientes = clientesConLealtad.length;
+      const totalSellos = clientesConLealtad.reduce((sum, c) => sum + (c.lealtad.sellos || 0), 0);
+      const totalPremios = clientesConLealtad.reduce((sum, c) => sum + (c.lealtad.premiosPendientes || 0), 0);
+      const totalSellosHistoricos = clientesConLealtad.reduce((sum, c) => sum + (c.sellosHistoricos || 0), 0);
+      
+      // Clientes por rango
+      const conPremios = clientesConLealtad.filter(c => (c.lealtad.premiosPendientes || 0) > 0).length;
+      const casiPremio = clientesConLealtad.filter(c => {
+        const s = c.lealtad.sellos || 0;
+        const o = c.lealtad.objetivo || configuracion.objetivo;
+        return s > 0 && s >= o * 0.75 && (c.lealtad.premiosPendientes || 0) === 0;
+      }).length;
+      const conSellos = clientesConLealtad.filter(c => (c.lealtad.sellos || 0) > 0).length;
+      
+      document.getElementById('resumen-lealtad').innerHTML = `
+        <div class="resumen-grid">
+          <div class="resumen-item grande">
+            <span class="etiqueta">Sellos Totales</span>
+            <span class="valor">${totalSellos}</span>
+          </div>
+          <div class="resumen-item premio">
+            <span class="etiqueta">Premios 🎁</span>
+            <span class="valor">${totalPremios}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="etiqueta">Clientes</span>
+            <span class="valor">${totalClientes}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="etiqueta">Con Premios</span>
+            <span class="valor">${conPremios}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="etiqueta">Cerca del Premio</span>
+            <span class="valor">${casiPremio}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="etiqueta">Con Sellos</span>
+            <span class="valor">${conSellos}</span>
+          </div>
+        </div>
+        <div class="configuracion">
+          <strong>⚙️ Configuración:</strong> ₡${configuracion.valorSello.toLocaleString('es-CR')} = 1 sello | ${configuracion.objetivo} sellos = 1 premio
+        </div>
+      `;
+    }
+
+    // ===============================
+    // 💾 Exportar CSV
+    // ===============================
+    function exportarCSV() {
+      let csvContent = 'Cliente,Teléfono,Cédula,Sellos Actuales,Premios Pendientes,Sellos Históricos,Compras Pagadas\n';
+      
+      clientesConLealtad.forEach(cliente => {
+        csvContent += `"${cliente.nombre}","${cliente.telefono}","${cliente.cedula || ''}",${cliente.lealtad.sellos || 0},${cliente.lealtad.premiosPendientes || 0},${cliente.sellosHistoricos || 0},${cliente.historialSellos.length}\n`;
+      });
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `programa_lealtad_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // ===============================
+    // 🎛️ Event Listeners
+    // ===============================
+    document.addEventListener('DOMContentLoaded', () => {
+      // Filtros
+      document.getElementById('mostrar-inactivos').addEventListener('change', renderizarReporte);
+      document.getElementById('filtro-sellos').addEventListener('input', renderizarReporte);
+      
+      // Botón recargar
+      document.getElementById('btn-recargar').addEventListener('click', cargarLealtadClientes);
+      
+      // Botón cerrar modal
+      document.getElementById('cerrar-modal').addEventListener('click', () => {
+        document.getElementById('modal-historial').style.display = 'none';
+      });
+      
+      // Click fuera del modal
+      document.getElementById('modal-historial').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('modal-historial')) {
+          e.target.style.display = 'none';
+        }
+      });
+      
+      // Establecer fecha actual
+      document.getElementById('fecha-actual').textContent = new Date().toLocaleDateString('es-CR');
+      
+      // Cargar datos iniciales
+      cargarLealtadClientes();
+    });
+
+    // Exponer funciones globales
+    window.verHistorial = verHistorial;
+    window.editarSellos = editarSellos;
+    window.enviarWhatsAppSellos = enviarWhatsAppSellos;
+    window.cargarLealtadClientes = cargarLealtadClientes;
+    window.exportarCSV = exportarCSV;
+    window.recalcularSellos = recalcularSellos;
+  </script>
+  <style>
+    :root {
+      --color-primary: #8B7500; /* Dorado oscuro */
+      --color-secondary: #2E7D32; /* Verde esmeralda */
+      --color-purple: #9C27B0; /* Púrpura */
+      --color-bg: rgba(255, 255, 255, 0.85);
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+      color: #333;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .contenedor-principal {
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 25px;
+      position: relative;
+    }
+    
+    h1 {
+      font-size: 2.4rem;
+      color: var(--color-purple);
+      margin-bottom: 10px;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+      letter-spacing: -0.5px;
+    }
+    
+    .subtitulo {
+      color: #666;
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+    }
+    
+    .fecha-actual {
+      background: rgba(255, 255, 255, 0.7);
+      display: inline-block;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-weight: 600;
+      color: var(--color-primary);
+      margin-top: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    /* Glassmorphism Panel */
+    .panel {
+      background: var(--color-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 25px;
+      margin-bottom: 25px;
+      border: 1px solid rgba(156, 39, 176, 0.2);
+    }
+    
+    /* Controles de filtro */
+    .controles-filtro {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 15px;
+      border-left: 4px solid var(--color-purple);
+    }
+    
+    .grupo-filtro {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    
+    .grupo-filtro label {
+      font-weight: 600;
+      color: #555;
+      font-size: 0.9rem;
+    }
+    
+    .grupo-filtro input {
+      padding: 10px 15px;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      font-size: 1rem;
+      width: 150px;
+      transition: border-color 0.3s;
+    }
+    
+    .grupo-filtro input:focus {
+      border-color: var(--color-purple);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.2);
+    }
+    
+    .grupo-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .grupo-check input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+    
+    .btn-recargar {
+      background: var(--color-purple);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 15px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(156, 39, 176, 0.3);
+    }
+    
+    .btn-recargar:hover {
+      background: #7B1FA2;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(156, 39, 176, 0.4);
+    }
+    
+    /* Resumen lealtad */
+    .resumen-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    
+    .resumen-item {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transition: transform 0.3s ease;
+      border-top: 4px solid var(--color-purple);
+    }
+    
+    .resumen-item.grande {
+      grid-column: span 2;
+      background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    }
+    
+    .resumen-item.premio {
+      border-top-color: #FF9800;
+      background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    }
+    
+    .resumen-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    }
+    
+    .etiqueta {
+      display: block;
+      color: #777;
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    
+    .valor {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--color-purple);
+    }
+    
+    .configuracion {
+      background: rgba(243, 229, 245, 0.7);
+      padding: 12px;
+      border-radius: 10px;
+      margin-top: 15px;
+      font-size: 0.95rem;
+      color: var(--color-purple);
+      font-weight: 600;
+    }
+    
+    /* Tabla lealtad */
+    .tabla-lealtad {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 0.95rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      border-radius: 15px;
+      overflow: hidden;
+    }
+    
+    .tabla-lealtad th {
+      background: var(--color-purple);
+      color: white;
+      padding: 14px 12px;
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+    
+    .tabla-lealtad td {
+      padding: 14px 12px;
+      border-bottom: 1px solid #eee;
+      vertical-align: middle;
+    }
+    
+    .tabla-lealtad tr:hover {
+      background-color: rgba(243, 229, 245, 0.6);
+    }
+    
+    .tabla-lealtad tr:nth-child(even) {
+      background-color: rgba(250, 250, 250, 0.4);
+    }
+    
+    .badge-sellos {
+      background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      display: inline-block;
+      box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+    }
+    
+    .badge-premio {
+      background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      display: inline-block;
+      box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);
+    }
+    
+    .badge-historico {
+      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 15px;
+      font-weight: 600;
+      font-size: 1rem;
+      display: inline-block;
+    }
+    
+    .badge-vacio {
+      color: #999;
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+    
+    .sellos-celda {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .barra-progreso {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .progreso {
+      height: 100%;
+      transition: width 0.5s ease;
+    }
+    
+    .btn-whatsapp {
+      color: #128C7E;
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-block;
+    }
+    
+    .btn-whatsapp:hover {
+      color: #075E54;
+      text-decoration: underline;
+    }
+    
+    .acciones {
+      text-align: center;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    
+    .btn-accion {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    
+    .btn-accion.historial {
+      background: #42A5F5;
+      color: white;
+    }
+    
+    .btn-accion.historial:hover {
+      background: #1565C0;
+      transform: scale(1.1);
+    }
+    
+    .btn-accion.editar {
+      background: #FF9800;
+      color: white;
+    }
+    
+    .btn-accion.editar:hover {
+      background: #E65100;
+      transform: scale(1.1);
+    }
+    
+    .btn-accion.whatsapp {
+      background: #25D366;
+      color: white;
+    }
+    
+    .btn-accion.whatsapp:hover {
+      background: #128C7E;
+      transform: scale(1.1);
+    }
+    
+    .sin-datos {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+      font-style: italic;
+      background: rgba(245, 245, 245, 0.6);
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+    
+    .resumen-pie {
+      background: rgba(243, 229, 245, 0.7);
+      padding: 15px;
+      border-radius: 12px;
+      margin: 20px 0;
+      border-left: 4px solid var(--color-purple);
+      font-weight: 600;
+      color: var(--color-purple);
+    }
+    
+    /* Botones exportar */
+    .acciones-exportar {
+      display: flex;
+      gap: 15px;
+      justify-content: flex-end;
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 2px dashed rgba(156, 39, 176, 0.3);
+    }
+    
+    .btn-exportar {
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 15px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);
+    }
+    
+    .btn-exportar:hover {
+      background: #0d47a1;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(25, 118, 210, 0.4);
+    }
+    
+    .btn-imprimir {
+      background: #7b1fa2;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 15px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(123, 31, 162, 0.3);
+    }
+    
+    .btn-imprimir:hover {
+      background: #4a148c;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(123, 31, 162, 0.4);
+    }
+    
+    .btn-recalcular {
+      background: #f57c00;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 15px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(245, 124, 0, 0.3);
+    }
+    
+    .btn-recalcular:hover {
+      background: #e65100;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(245, 124, 0, 0.4);
+    }
+    
+    /* Modal historial */
+    #modal-historial {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .modal-contenido {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 800px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    .modal-contenido h3 {
+      color: var(--color-purple);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .info-cliente {
+      background: rgba(243, 229, 245, 0.3);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      border-left: 4px solid var(--color-purple);
+    }
+    
+    .info-cliente p {
+      margin: 8px 0;
+    }
+    
+    .lista-historial {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .registro-historial {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 10px;
+      border-left: 4px solid var(--color-purple);
+    }
+    
+    .fecha-registro {
+      font-weight: 600;
+      color: var(--color-primary);
+      margin-bottom: 5px;
+    }
+    
+    .monto-registro {
+      color: var(--color-secondary);
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    
+    .sellos-registro {
+      color: var(--color-purple);
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 5px;
+    }
+    
+    .productos-registro {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #eee;
+    }
+    
+    .cerrar-modal {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: #f44336;
+      color: white;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+    
+    .cerrar-modal:hover {
+      background: #d32f2f;
+      transform: rotate(90deg);
+    }
+    
+    /* Loading */
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.92);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      display: none;
+    }
+    
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 6px solid rgba(156, 39, 176, 0.2);
+      border-top: 6px solid var(--color-purple);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      font-size: 1.3rem;
+      color: var(--color-purple);
+      font-weight: 600;
+    }
+    
+    /* Impresión */
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      
+      .controles-filtro,
+      .acciones-exportar,
+      .btn-recargar,
+      .acciones,
+      header h1::after {
+        display: none !important;
+      }
+      
+      .panel {
+        box-shadow: none;
+        border: none;
+        padding: 15px;
+      }
+      
+      .tabla-lealtad {
+        width: 100%;
+        font-size: 0.8rem;
+      }
+      
+      .tabla-lealtad th {
+        background: #9C27B0;
+        color: white;
+        page-break-inside: avoid;
+      }
+      
+      .tabla-lealtad tr {
+        page-break-inside: avoid;
+      }
+      
+      .resumen-grid {
+        display: none;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .controles-filtro {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .grupo-filtro input {
+        width: 100%;
+      }
+      
+      .acciones-exportar {
+        flex-direction: column;
+      }
+      
+      .tabla-lealtad {
+        font-size: 0.85rem;
+      }
+      
+      .tabla-lealtad th,
+      .tabla-lealtad td {
+        padding: 8px 6px;
+      }
+      
+      .acciones {
+        flex-direction: column;
+        gap: 4px;
+      }
+      
+      .btn-accion {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+      }
+      
+      .resumen-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+      
+      .resumen-item.grande {
+        grid-column: span 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Cargando programa de lealtad...</div>
+    <div style="color:#777; margin-top:15px">Analizando sellos y compras</div>
+  </div>
+
+  <div class="contenedor-principal">
+    <header>
+      <h1>🎁 Programa de Lealtad - Sellos</h1>
+      <div class="subtitulo">Control y seguimiento de sellos por cliente</div>
+      <div class="fecha-actual" id="fecha-actual">Cargando...</div>
+    </header>
+
+    <div class="panel">
+      <div class="controles-filtro">
+        <div class="grupo-filtro">
+          <label for="filtro-sellos">Mínimo de sellos</label>
+          <input type="number" id="filtro-sellos" min="0" placeholder="0">
+        </div>
+        <div class="grupo-check">
+          <input type="checkbox" id="mostrar-inactivos">
+          <label for="mostrar-inactivos">Mostrar inactivos</label>
+        </div>
+        <button id="btn-recargar" class="btn-recargar">
+          <span>↻</span> Actualizar Datos
+        </button>
+      </div>
+
+      <div id="resumen-lealtad">
+        <!-- Se llenará dinámicamente -->
+        <div class="resumen-grid">
+          <div class="resumen-item grande">
+            <span class="etiqueta">Cargando...</span>
+            <span class="valor">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div id="tabla-lealtad">
+        <div style="text-align:center; padding:40px; color:#888">
+          <div class="spinner" style="margin:0 auto 20px;"></div>
+          <div>Cargando programa de lealtad...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Historial -->
+  <div id="modal-historial">
+    <div class="modal-contenido">
+      <button id="cerrar-modal" class="cerrar-modal">×</button>
+      <div id="historial-detalle">
+        <!-- Se llenará dinámicamente -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if (typeof cargarLealtadClientes === 'undefined') {
+      console.log("Esperando inicialización de Firebase...");
+    }
+  </script>
+</body>
+</html>
