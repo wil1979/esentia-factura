@@ -8,7 +8,7 @@
     // 🔥 Firebase Config
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import {
-      getFirestore, collection, getDocs, doc, getDoc
+      getFirestore, collection, getDocs, doc, getDoc, updateDoc
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -27,9 +27,10 @@
     // 📊 Estado global
     // ===============================
     let clientesConDeuda = [];
-    let filtroMinimo = 0; // Filtro mínimo de deuda
-    let ordenarPor = 'monto'; // 'monto' | 'fecha' | 'nombre'
-    let ordenAsc = false; // false = descendente (mayor a menor)
+    let filtroMinimo = 0;
+    let ordenarPor = 'monto';
+    let ordenAsc = false;
+    let clientePagoSeleccionado = null; // Para modal de pago
 
     // ===============================
     // 📥 Cargar datos de clientes con deuda
@@ -87,10 +88,10 @@
                   monto: monto,
                   pagado: pagado,
                   saldo: saldo,
-                  productos: compra.productos || []
+                  productos: compra.productos || [],
+                  metodoPago: compra.metodoPago || "Pendiente"
                 });
                 
-                // Fecha de última compra pendiente
                 if (compra.fecha) {
                   const fechaCompra = new Date(compra.fecha);
                   if (!fechaUltimaCompraPendiente || fechaCompra > fechaUltimaCompraPendiente) {
@@ -99,7 +100,6 @@
                 }
               }
               
-              // Fecha de última compra (cualquiera)
               if (compra.fecha) {
                 const fechaCompra = new Date(compra.fecha);
                 if (!fechaUltimaCompra || fechaCompra > fechaUltimaCompra) {
@@ -108,7 +108,6 @@
               }
             });
             
-            // Solo agregar si tiene deuda
             if (deudaTotal > 0) {
               clientesConDeuda.push({
                 id: cliente.id,
@@ -121,7 +120,8 @@
                 fechaUltimaCompra: fechaUltimaCompra,
                 fechaUltimaCompraPendiente: fechaUltimaCompraPendiente,
                 comprasPendientes: comprasPendientes,
-                cantidadFacturasPendientes: comprasPendientes.length
+                cantidadFacturasPendientes: comprasPendientes.length,
+                abonos: abonos
               });
             }
           }
@@ -138,18 +138,152 @@
     }
 
     // ===============================
+    // 💰 ABRIR MODAL DE PAGO COMPLETO
+    // ===============================
+    function abrirPago(clienteId) {
+      const cliente = clientesConDeuda.find(c => c.id === clientId);
+      if (!cliente) return;
+      
+      clientePagoSeleccionado = cliente;
+      
+      // Rellenar modal
+      document.getElementById('pago-cliente-nombre').textContent = cliente.nombre;
+      document.getElementById('pago-cliente-deuda').textContent = `₡${cliente.deudaTotal.toLocaleString('es-CR')}`;
+      document.getElementById('pago-monto').value = '';
+      document.getElementById('pago-metodo').value = 'Efectivo';
+      document.getElementById('pago-nota').value = '';
+      
+      // Mostrar modal
+      document.getElementById('modal-registrar-pago').style.display = 'flex';
+    }
+
+    // ===============================
+    // ✅ GUARDAR PAGO COMPLETO
+    // ===============================
+    async function guardarPago() {
+      if (!clientePagoSeleccionado) {
+        alert("❌ No hay cliente seleccionado");
+        return;
+      }
+      
+      const monto = Number(document.getElementById('pago-monto').value);
+      const metodo = document.getElementById('pago-metodo').value;
+      const nota = document.getElementById('pago-nota').value.trim();
+      
+      // Validaciones
+      if (!monto || monto <= 0) {
+        alert("❌ Por favor ingresa un monto válido mayor a ₡0");
+        return;
+      }
+      
+      if (monto > clientePagoSeleccionado.deudaTotal) {
+        if (!confirm(`⚠️ El monto (₡${monto.toLocaleString('es-CR')}) es mayor que la deuda actual (₡${clientePagoSeleccionado.deudaTotal.toLocaleString('es-CR')}).\n\n¿Deseas continuar?`)) {
+          return;
+        }
+      }
+      
+      try {
+        // Obtener documento del cliente
+        const ref = doc(db, "facturas", clientePagoSeleccionado.id);
+        const snap = await getDoc(ref);
+        
+        if (!snap.exists()) {
+          alert("❌ Cliente no encontrado en facturas");
+          return;
+        }
+        
+        const data = snap.data();
+        const compras = [...(data.compras || [])];
+        const abonos = [...(data.abonos || [])];
+        
+        let restante = monto;
+        
+        // Aplicar pago FIFO (primero a las compras más antiguas)
+        const comprasOrdenadas = [...compras].sort((a, b) => {
+          return new Date(a.fecha) - new Date(b.fecha);
+        });
+        
+        comprasOrdenadas.forEach(compra => {
+          if (restante <= 0) return;
+          
+          const totalCompra = Number(compra.total ?? (compra.monto - (compra.descuento || 0)));
+          const pagadoActual = Number(compra.pagado || 0);
+          const saldoActual = totalCompra - pagadoActual;
+          
+          if (saldoActual > 0) {
+            const aplicar = Math.min(saldoActual, restante);
+            compra.pagado = pagadoActual + aplicar;
+            
+            // Actualizar en el array original
+            const index = compras.findIndex(c => c.fecha === compra.fecha && c.monto === compra.monto);
+            if (index !== -1) {
+              compras[index].pagado = compra.pagado;
+              compras[index].metodoPago = metodo; // Actualizar método de pago
+            }
+            
+            restante -= aplicar;
+          }
+        });
+        
+        // Registrar abono
+        const nuevoAbono = {
+          fecha: new Date().toISOString(),
+          monto: monto,
+          metodo: metodo,
+          nota: nota || '-'
+        };
+        
+        abonos.push(nuevoAbono);
+        
+        // Guardar en Firebase
+        await updateDoc(ref, {
+          compras: compras,
+          abonos: abonos
+        });
+        
+        // Cerrar modal
+        cerrarModalPago();
+        
+        // Recargar datos
+        await cargarClientesConDeuda();
+        
+        // Mensaje de éxito
+        const mensajeExito = `
+✅ PAGO REGISTRADO CORRECTAMENTE
+
+Cliente: ${clientePagoSeleccionado.nombre}
+Monto: ₡${monto.toLocaleString('es-CR')}
+Método: ${metodo}
+${nota ? `Nota: ${nota}` : ''}
+        `.trim();
+        
+        alert(mensajeExito);
+        
+      } catch (error) {
+        console.error("Error guardando pago:", error);
+        alert("❌ Error al registrar el pago: " + error.message);
+      }
+    }
+
+    // ===============================
+    // ❌ CERRAR MODAL DE PAGO
+    // ===============================
+    function cerrarModalPago() {
+      document.getElementById('modal-registrar-pago').style.display = 'none';
+      clientePagoSeleccionado = null;
+    }
+
+    // ===============================
     // 📊 Renderizar reporte
     // ===============================
     function renderizarReporte() {
       const contenedor = document.getElementById('tabla-clientes-deuda');
       
-      // Aplicar filtro mínimo
       let clientesFiltrados = [...clientesConDeuda];
       if (filtroMinimo > 0) {
         clientesFiltrados = clientesFiltrados.filter(c => c.deudaTotal >= filtroMinimo);
       }
       
-      // Ordenar
       clientesFiltrados.sort((a, b) => {
         let valorA, valorB;
         
@@ -169,7 +303,6 @@
         return 0;
       });
       
-      // Renderizar tabla
       let html = `
         <table class="tabla-deuda">
           <thead>
@@ -222,7 +355,7 @@
               ${diasAtraso > 7 ? '<br><small class="atraso-alto">🔴 Atrasado</small>' : ''}
             </td>
             <td class="acciones">
-              <button onclick="enviarWhatsApp('${cliente.id}', '${cliente.nombre}', '${cliente.telefono}', ${cliente.deudaTotal})" class="btn-accion whatsapp">
+              <button onclick="enviarWhatsApp('${cliente.id}', '${cliente.nombre}', '${cliente.telefono}', ${cliente.deudaTotal})" class="btn-accion whatsapp" title="WhatsApp">
                 💬
               </button>
               <button onclick="verDetalles('${cliente.id}')" class="btn-accion detalles" title="Ver detalles">
@@ -292,7 +425,7 @@
         ordenAsc = !ordenAsc;
       } else {
         ordenarPor = campo;
-        ordenAsc = false; // Por defecto descendente
+        ordenAsc = false;
       }
       renderizarReporte();
     }
@@ -346,6 +479,7 @@
           detalles += `  Monto: ₡${compra.monto.toLocaleString('es-CR')}\n`;
           detalles += `  Pagado: ₡${compra.pagado.toLocaleString('es-CR')}\n`;
           detalles += `  Saldo: ₡${compra.saldo.toLocaleString('es-CR')}\n`;
+          detalles += `  Método: ${compra.metodoPago}\n`;
           
           if (compra.productos && compra.productos.length > 0) {
             detalles += `  Productos:\n`;
@@ -360,22 +494,6 @@
     }
 
     // ===============================
-    // 💰 Abrir pago
-    // ===============================
-    function abrirPago(clienteId) {
-      const cliente = clientesConDeuda.find(c => c.id === clienteId);
-      if (!cliente) return;
-      
-      const monto = prompt(`Registrar pago para ${cliente.nombre}\nDeuda actual: ₡${cliente.deudaTotal.toLocaleString('es-CR')}\n\nIngresa monto a abonar:`, cliente.deudaTotal.toString());
-      
-      if (monto && !isNaN(monto) && Number(monto) > 0) {
-        if (confirm(`¿Registrar pago de ₡${Number(monto).toLocaleString('es-CR')} para ${cliente.nombre}?`)) {
-          alert("✅ Pago registrado exitosamente.\n\nNota: Esta es una versión de visualización. Para registrar pagos reales, usa el sistema principal de clientes.");
-        }
-      }
-    }
-
-    // ===============================
     // 📊 Actualizar resumen
     // ===============================
     function actualizarResumen() {
@@ -383,7 +501,6 @@
       const totalDeuda = clientesConDeuda.reduce((sum, c) => sum + c.deudaTotal, 0);
       const promedioDeuda = totalClientes > 0 ? totalDeuda / totalClientes : 0;
       
-      // Calcular clientes por rango de deuda
       const rango1 = clientesConDeuda.filter(c => c.deudaTotal <= 5000).length;
       const rango2 = clientesConDeuda.filter(c => c.deudaTotal > 5000 && c.deudaTotal <= 20000).length;
       const rango3 = clientesConDeuda.filter(c => c.deudaTotal > 20000).length;
@@ -424,13 +541,11 @@
     function exportarCSV() {
       let csvContent = 'Cliente,Teléfono,Cédula,Monto Pendiente,Total Comprado,Total Pagado,Facturas Pendientes,Última Compra\n';
       
-      // Aplicar filtro actual
       let clientesFiltrados = [...clientesConDeuda];
       if (filtroMinimo > 0) {
         clientesFiltrados = clientesFiltrados.filter(c => c.deudaTotal >= filtroMinimo);
       }
       
-      // Ordenar según vista actual
       clientesFiltrados.sort((a, b) => {
         let valorA, valorB;
         if (ordenarPor === 'monto') {
@@ -470,42 +585,53 @@
     // 🎛️ Event Listeners
     // ===============================
     document.addEventListener('DOMContentLoaded', () => {
-      // Filtro por monto mínimo
       document.getElementById('filtro-monto').addEventListener('input', (e) => {
         filtroMinimo = Number(e.target.value) || 0;
         renderizarReporte();
       });
       
-      // Botón recargar
       document.getElementById('btn-recargar').addEventListener('click', () => {
         const filtro = document.getElementById('filtro-monto');
         filtroMinimo = Number(filtro.value) || 0;
         cargarClientesConDeuda();
       });
       
-      // Establecer fecha actual
       document.getElementById('fecha-actual').textContent = new Date().toLocaleDateString('es-CR');
       
-      // Cargar datos iniciales
-      cargarClientesConDeuda();
+      // Modal de pago
+      document.getElementById('btn-guardar-pago').addEventListener('click', guardarPago);
+      document.getElementById('btn-cancelar-pago').addEventListener('click', cerrarModalPago);
       
-      // Establecer filtro inicial (opcional)
+      // Cerrar modal al hacer clic fuera
+      document.getElementById('modal-registrar-pago').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('modal-registrar-pago')) {
+          cerrarModalPago();
+        }
+      });
+      
+      // Validación en tiempo real del monto
+      document.getElementById('pago-monto').addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+      });
+      
+      cargarClientesConDeuda();
       document.getElementById('filtro-monto').value = '0';
     });
 
-    // Exponer funciones globales
     window.cambiarOrden = cambiarOrden;
     window.enviarWhatsApp = enviarWhatsApp;
     window.verDetalles = verDetalles;
     window.abrirPago = abrirPago;
     window.exportarCSV = exportarCSV;
     window.cargarClientesConDeuda = cargarClientesConDeuda;
+    window.guardarPago = guardarPago;
+    window.cerrarModalPago = cerrarModalPago;
   </script>
   <style>
     :root {
-      --color-primary: #8B7500; /* Dorado oscuro */
-      --color-secondary: #2E7D32; /* Verde esmeralda */
-      --color-danger: #c62828; /* Rojo oscuro */
+      --color-primary: #8B7500;
+      --color-secondary: #2E7D32;
+      --color-danger: #c62828;
       --color-bg: rgba(255, 255, 255, 0.85);
       --shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
     }
@@ -532,7 +658,6 @@
     header {
       text-align: center;
       margin-bottom: 25px;
-      position: relative;
     }
     
     h1 {
@@ -540,7 +665,6 @@
       color: var(--color-danger);
       margin-bottom: 10px;
       text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-      letter-spacing: -0.5px;
     }
     
     .subtitulo {
@@ -560,11 +684,9 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
-    /* Glassmorphism Panel */
     .panel {
       background: var(--color-bg);
       backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
       border-radius: 20px;
       box-shadow: var(--shadow);
       padding: 25px;
@@ -572,7 +694,6 @@
       border: 1px solid rgba(198, 40, 40, 0.2);
     }
     
-    /* Controles de filtro */
     .controles-filtro {
       display: flex;
       gap: 20px;
@@ -634,7 +755,6 @@
       box-shadow: 0 6px 20px rgba(198, 40, 40, 0.4);
     }
     
-    /* Resumen deuda */
     .resumen-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -676,7 +796,6 @@
       color: var(--color-danger);
     }
     
-    /* Tabla deuda */
     .tabla-deuda {
       width: 100%;
       border-collapse: collapse;
@@ -829,7 +948,6 @@
       color: var(--color-danger);
     }
     
-    /* Botones exportar */
     .acciones-exportar {
       display: flex;
       gap: 15px;
@@ -883,7 +1001,6 @@
       box-shadow: 0 6px 20px rgba(123, 31, 162, 0.4);
     }
     
-    /* Loading */
     #loading {
       position: fixed;
       top: 0;
@@ -920,7 +1037,136 @@
       font-weight: 600;
     }
     
-    /* Impresión */
+    /* ===== MODAL DE PAGO ===== */
+    #modal-registrar-pago {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .modal-contenido-pago {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+    
+    .modal-contenido-pago h3 {
+      color: var(--color-danger);
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 1.8rem;
+    }
+    
+    .info-cliente-pago {
+      background: rgba(255, 245, 245, 0.3);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      border-left: 4px solid var(--color-danger);
+    }
+    
+    .info-cliente-pago p {
+      margin: 8px 0;
+      font-size: 1.05rem;
+    }
+    
+    .info-cliente-pago strong {
+      color: var(--color-danger);
+    }
+    
+    .grupo-formulario {
+      margin-bottom: 15px;
+    }
+    
+    .grupo-formulario label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #555;
+    }
+    
+    .grupo-formulario input,
+    .grupo-formulario select,
+    .grupo-formulario textarea {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+    
+    .grupo-formulario input:focus,
+    .grupo-formulario select:focus,
+    .grupo-formulario textarea:focus {
+      border-color: var(--color-primary);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(139, 117, 0, 0.2);
+    }
+    
+    .grupo-formulario textarea {
+      resize: vertical;
+      min-height: 60px;
+      font-family: inherit;
+    }
+    
+    .botones-modal {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 2px solid #eee;
+    }
+    
+    .btn-modal {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 15px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    #btn-guardar-pago {
+      background: var(--color-danger);
+      color: white;
+      box-shadow: 0 4px 15px rgba(198, 40, 40, 0.3);
+    }
+    
+    #btn-guardar-pago:hover {
+      background: #b71c1c;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(198, 40, 40, 0.4);
+    }
+    
+    #btn-cancelar-pago {
+      background: #757575;
+      color: white;
+      box-shadow: 0 4px 15px rgba(117, 117, 117, 0.3);
+    }
+    
+    #btn-cancelar-pago:hover {
+      background: #424242;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(117, 117, 117, 0.4);
+    }
+    
     @media print {
       body {
         background: white;
@@ -1002,6 +1248,19 @@
       .resumen-item.grande {
         grid-column: span 1;
       }
+      
+      .modal-contenido-pago {
+        padding: 20px;
+        margin: 10px;
+      }
+      
+      .botones-modal {
+        flex-direction: column;
+      }
+      
+      .btn-modal {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -1031,7 +1290,6 @@
       </div>
 
       <div id="resumen-deuda">
-        <!-- Se llenará dinámicamente -->
         <div class="resumen-grid">
           <div class="resumen-item grande">
             <span class="etiqueta">Cargando...</span>
@@ -1047,6 +1305,47 @@
           <div class="spinner" style="margin:0 auto 20px;"></div>
           <div>Cargando reporte de clientes con deuda...</div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Registrar Pago -->
+  <div id="modal-registrar-pago">
+    <div class="modal-contenido-pago">
+      <h3>💰 Registrar Pago</h3>
+      
+      <div class="info-cliente-pago">
+        <p><strong>Cliente:</strong> <span id="pago-cliente-nombre">-</span></p>
+        <p><strong>Deuda actual:</strong> <span id="pago-cliente-deuda">₡0</span></p>
+      </div>
+      
+      <div class="grupo-formulario">
+        <label for="pago-monto">Monto a pagar (₡)</label>
+        <input type="number" id="pago-monto" placeholder="Ingrese monto" min="1">
+      </div>
+      
+      <div class="grupo-formulario">
+        <label for="pago-metodo">Método de Pago</label>
+        <select id="pago-metodo">
+          <option value="Efectivo">💵 Efectivo</option>
+          <option value="SINPE">📱 SINPE Móvil</option>
+          <option value="Transferencia">🏦 Transferencia</option>
+          <option value="Tarjeta">💳 Tarjeta</option>
+        </select>
+      </div>
+      
+      <div class="grupo-formulario">
+        <label for="pago-nota">Notas (opcional)</label>
+        <textarea id="pago-nota" placeholder="Ej: Pago parcial, referencia, etc."></textarea>
+      </div>
+      
+      <div class="botones-modal">
+        <button id="btn-guardar-pago" class="btn-modal">
+          ✅ Registrar Pago
+        </button>
+        <button id="btn-cancelar-pago" class="btn-modal">
+          ❌ Cancelar
+        </button>
       </div>
     </div>
   </div>
