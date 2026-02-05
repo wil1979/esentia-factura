@@ -2,14 +2,13 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>💰 Clientes con Saldo Pendiente - Esentia</title>
   <script type="module">
     // 🔥 Firebase Config
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import {
-      getFirestore, collection, getDocs, doc, getDoc, updateDoc
+      getFirestore, collection, getDocs, doc, getDoc
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -28,18 +27,18 @@
     // 📊 Estado global
     // ===============================
     let clientesConDeuda = [];
-    let filtroMinimo = 0;
-    let ordenarPor = 'monto';
-    let ordenAsc = false;
-    let clientePagoSeleccionado = null;
+    let filtroMinimo = 0; // Filtro mínimo de deuda
+    let ordenarPor = 'monto'; // 'monto' | 'fecha' | 'nombre'
+    let ordenAsc = false; // false = descendente (mayor a menor)
 
     // ===============================
-    // 📥 Cargar datos
+    // 📥 Cargar datos de clientes con deuda
     // ===============================
     async function cargarClientesConDeuda() {
       try {
-        document.getElementById('loading').style.display = 'flex';
+        document.getElementById('loading').style.display = 'block';
         
+        // 1. Cargar clientes base
         const snapClientes = await getDocs(collection(db, "clientesBD"));
         const clientesBase = [];
         
@@ -53,6 +52,7 @@
           });
         }
 
+        // 2. Cargar facturas y calcular deudas
         clientesConDeuda = [];
         
         for (const cliente of clientesBase) {
@@ -64,6 +64,7 @@
             const compras = data.compras || [];
             const abonos = data.abonos || [];
             
+            // Calcular deuda total
             let deudaTotal = 0;
             let fechaUltimaCompra = null;
             let fechaUltimaCompraPendiente = null;
@@ -86,10 +87,10 @@
                   monto: monto,
                   pagado: pagado,
                   saldo: saldo,
-                  productos: compra.productos || [],
-                  metodoPago: compra.metodoPago || "Pendiente"
+                  productos: compra.productos || []
                 });
                 
+                // Fecha de última compra pendiente
                 if (compra.fecha) {
                   const fechaCompra = new Date(compra.fecha);
                   if (!fechaUltimaCompraPendiente || fechaCompra > fechaUltimaCompraPendiente) {
@@ -98,6 +99,7 @@
                 }
               }
               
+              // Fecha de última compra (cualquiera)
               if (compra.fecha) {
                 const fechaCompra = new Date(compra.fecha);
                 if (!fechaUltimaCompra || fechaCompra > fechaUltimaCompra) {
@@ -106,6 +108,7 @@
               }
             });
             
+            // Solo agregar si tiene deuda
             if (deudaTotal > 0) {
               clientesConDeuda.push({
                 id: cliente.id,
@@ -118,8 +121,7 @@
                 fechaUltimaCompra: fechaUltimaCompra,
                 fechaUltimaCompraPendiente: fechaUltimaCompraPendiente,
                 comprasPendientes: comprasPendientes,
-                cantidadFacturasPendientes: comprasPendientes.length,
-                abonos: abonos
+                cantidadFacturasPendientes: comprasPendientes.length
               });
             }
           }
@@ -127,251 +129,27 @@
         
         document.getElementById('loading').style.display = 'none';
         renderizarReporte();
-        actualizarResumen(); // ✅ Función ahora definida
+        actualizarResumen();
       } catch (error) {
         console.error("Error cargando datos:", error);
         document.getElementById('loading').style.display = 'none';
-        mostrarToast("❌ Error al cargar datos");
-      }
-    }
-
-    // ✅ FUNCIÓN CORREGIDA: Actualizar resumen
-    function actualizarResumen() {
-      const totalClientes = clientesConDeuda.length;
-      const totalDeuda = clientesConDeuda.reduce((sum, c) => sum + c.deudaTotal, 0);
-      const promedioDeuda = totalClientes > 0 ? totalDeuda / totalClientes : 0;
-      
-      const rango1 = clientesConDeuda.filter(c => c.deudaTotal <= 5000).length;
-      const rango2 = clientesConDeuda.filter(c => c.deudaTotal > 5000 && c.deudaTotal <= 20000).length;
-      const rango3 = clientesConDeuda.filter(c => c.deudaTotal > 20000).length;
-      
-      document.getElementById('resumen-deuda').innerHTML = `
-        <div class="resumen-grid">
-          <div class="resumen-item grande">
-            <span class="etiqueta">Total Deuda</span>
-            <span class="valor">₡${totalDeuda.toLocaleString('es-CR')}</span>
-          </div>
-          <div class="resumen-item">
-            <span class="etiqueta">Clientes</span>
-            <span class="valor">${totalClientes}</span>
-          </div>
-          <div class="resumen-item">
-            <span class="etiqueta">Promedio</span>
-            <span class="valor">₡${Math.round(promedioDeuda).toLocaleString('es-CR')}</span>
-          </div>
-          <div class="resumen-item">
-            <span class="etiqueta">≤ ₡5k</span>
-            <span class="valor">${rango1}</span>
-          </div>
-          <div class="resumen-item">
-            <span class="etiqueta">₡5k-20k</span>
-            <span class="valor">${rango2}</span>
-          </div>
-          <div class="resumen-item">
-            <span class="etiqueta">> ₡20k</span>
-            <span class="valor">${rango3}</span>
-          </div>
-        </div>
-      `;
-    }
-
-    // ===============================
-    // 💰 Abrir modal de pago
-    // ===============================
-    function abrirPago(clienteId) {
-      const cliente = clientesConDeuda.find(c => c.id === clienteId);
-      if (!cliente) return;
-      
-      clientePagoSeleccionado = cliente;
-      
-      document.getElementById('pago-cliente-nombre').textContent = cliente.nombre;
-      document.getElementById('pago-cliente-deuda').textContent = `₡${cliente.deudaTotal.toLocaleString('es-CR')}`;
-      document.getElementById('pago-monto').value = '';
-      document.getElementById('pago-metodo').value = 'Efectivo';
-      document.getElementById('pago-nota').value = '';
-      
-      const modal = document.getElementById('modal-registrar-pago');
-      modal.style.display = 'block';
-      setTimeout(() => {
-        modal.style.opacity = '1';
-        modal.style.transform = 'translateY(0)';
-        setTimeout(() => {
-          const input = document.getElementById('pago-monto');
-          input.focus();
-          // Forzar teclado en iOS
-          input.click();
-          input.setSelectionRange(0, 0);
-        }, 300);
-      }, 10);
-      
-      document.body.style.overflow = 'hidden';
-    }
-
-    // ===============================
-    // ✅ Guardar pago
-    // ===============================
-    async function guardarPago() {
-      if (!clientePagoSeleccionado) {
-        mostrarToast("❌ No hay cliente seleccionado");
-        return;
-      }
-      
-      const montoStr = document.getElementById('pago-monto').value.trim();
-      const monto = montoStr ? Number(montoStr.replace(/[^0-9]/g, '')) : 0;
-      const metodo = document.getElementById('pago-metodo').value;
-      const nota = document.getElementById('pago-nota').value.trim();
-      
-      if (!montoStr || monto <= 0) {
-        mostrarToast("⚠️ Ingresa monto válido");
-        document.getElementById('pago-monto').focus();
-        return;
-      }
-      
-      if (monto > clientePagoSeleccionado.deudaTotal) {
-        if (!confirm(`⚠️ Monto mayor que deuda (₡${clientePagoSeleccionado.deudaTotal.toLocaleString('es-CR')}). ¿Continuar?`)) {
-          return;
-        }
-      }
-      
-      try {
-        document.getElementById('loading').style.display = 'flex';
-        
-        const ref = doc(db, "facturas", clientePagoSeleccionado.id);
-        const snap = await getDoc(ref);
-        
-        if (!snap.exists()) {
-          document.getElementById('loading').style.display = 'none';
-          mostrarToast("❌ Cliente no encontrado");
-          return;
-        }
-        
-        const data = snap.data();
-        const compras = [...(data.compras || [])];
-        const abonos = [...(data.abonos || [])];
-        
-        let restante = monto;
-        
-        // Aplicar pago FIFO
-        const comprasOrdenadas = [...compras].sort((a, b) => {
-          return new Date(a.fecha) - new Date(b.fecha);
-        });
-        
-        comprasOrdenadas.forEach(compra => {
-          if (restante <= 0) return;
-          
-          const totalCompra = Number(compra.total ?? (compra.monto - (compra.descuento || 0)));
-          const pagadoActual = Number(compra.pagado || 0);
-          const saldoActual = totalCompra - pagadoActual;
-          
-          if (saldoActual > 0) {
-            const aplicar = Math.min(saldoActual, restante);
-            compra.pagado = pagadoActual + aplicar;
-            
-            const index = compras.findIndex(c => 
-              c.fecha === compra.fecha && 
-              Math.abs((c.monto || c.total) - (compra.monto || compra.total)) < 1
-            );
-            
-            if (index !== -1) {
-              compras[index].pagado = compra.pagado;
-              compras[index].metodoPago = metodo;
-            }
-            
-            restante -= aplicar;
-          }
-        });
-        
-        // Registrar abono
-        abonos.push({
-          fecha: new Date().toISOString(),
-          monto: monto,
-          metodo: metodo,
-          nota: nota || '-'
-        });
-        
-        await updateDoc(ref, {
-          compras: compras,
-          abonos: abonos
-        });
-        
-        cerrarModalPago(true);
-        await cargarClientesConDeuda();
-        mostrarToast(`✅ Pago registrado: ₡${monto.toLocaleString('es-CR')}`);
-        
-      } catch (error) {
-        console.error("Error guardando pago:", error);
-        document.getElementById('loading').style.display = 'none';
-        mostrarToast("❌ Error al registrar pago");
+        alert("❌ Error al cargar los datos: " + error.message);
       }
     }
 
     // ===============================
-    // ❌ Cerrar modal
-    // ===============================
-    function cerrarModalPago(conExito = false) {
-      const modal = document.getElementById('modal-registrar-pago');
-      
-      if (conExito) {
-        modal.style.opacity = '0';
-        modal.style.transform = 'translateY(20px)';
-      }
-      
-      setTimeout(() => {
-        modal.style.display = 'none';
-        modal.style.opacity = '0';
-        modal.style.transform = 'translateY(20px)';
-        clientePagoSeleccionado = null;
-        document.body.style.overflow = 'auto';
-      }, 300);
-    }
-
-    // ===============================
-    // 📱 Soporte táctil
-    // ===============================
-    function initEventosMovil() {
-      // Delegación de eventos para botones de pago
-      document.addEventListener('click', function(e) {
-        if (e.target.closest('.btn-pagar')) {
-          const btn = e.target.closest('.btn-pagar');
-          const clienteId = btn.getAttribute('data-cliente-id');
-          if (clienteId) abrirPago(clienteId);
-        }
-      }, { passive: true });
-      
-      // Cerrar modal al tocar fuera
-      document.getElementById('modal-registrar-pago').addEventListener('click', function(e) {
-        if (e.target === this) {
-          cerrarModalPago();
-        }
-      }, { passive: true });
-      
-      // Botones del modal
-      document.getElementById('btn-guardar-pago').addEventListener('click', guardarPago);
-      document.getElementById('btn-cancelar-pago').addEventListener('click', () => cerrarModalPago());
-      
-      // Soporte touch para botones
-      document.querySelectorAll('.btn-accion, .btn-recargar, .btn-exportar').forEach(btn => {
-        btn.addEventListener('touchstart', function() {
-          this.classList.add('activo-touch');
-        }, { passive: true });
-        
-        btn.addEventListener('touchend', function() {
-          this.classList.remove('activo-touch');
-        }, { passive: true });
-      });
-    }
-
-    // ===============================
-    // 🍞 Renderizar reporte
+    // 📊 Renderizar reporte
     // ===============================
     function renderizarReporte() {
       const contenedor = document.getElementById('tabla-clientes-deuda');
       
+      // Aplicar filtro mínimo
       let clientesFiltrados = [...clientesConDeuda];
       if (filtroMinimo > 0) {
         clientesFiltrados = clientesFiltrados.filter(c => c.deudaTotal >= filtroMinimo);
       }
       
+      // Ordenar
       clientesFiltrados.sort((a, b) => {
         let valorA, valorB;
         
@@ -391,19 +169,22 @@
         return 0;
       });
       
+      // Renderizar tabla
       let html = `
-        <div class="tabla-responsive">
-          <table class="tabla-deuda">
-            <thead>
-              <tr>
-                <th>Cliente</th>
-                <th>Teléfono</th>
-                <th>Monto</th>
-                <th>Última Compra</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
+        <table class="tabla-deuda">
+          <thead>
+            <tr>
+              <th onclick="cambiarOrden('nombre')">Cliente ${getIconoOrden('nombre')}</th>
+              <th>Teléfono</th>
+              <th onclick="cambiarOrden('monto')">Monto Pendiente ${getIconoOrden('monto')}</th>
+              <th>Total Comprado</th>
+              <th>Total Pagado</th>
+              <th>Facturas Pend.</th>
+              <th onclick="cambiarOrden('fecha')">Última Compra ${getIconoOrden('fecha')}</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
       `;
       
       clientesFiltrados.forEach(cliente => {
@@ -414,32 +195,42 @@
         
         html += `
           <tr>
-            <td data-label="Cliente">
+            <td>
               <strong>${cliente.nombre}</strong>
-              ${cliente.cedula ? `<br><small class="cedula-movil">🆔 ${cliente.cedula}</small>` : ''}
+              ${cliente.cedula ? `<br><small>🆔 ${cliente.cedula}</small>` : ''}
             </td>
-            <td data-label="Teléfono">
-              <a href="tel:+506${cliente.telefono.replace(/\D/g, '')}" class="btn-whatsapp-movil">
+            <td>
+              <a href="https://wa.me/506${cliente.telefono}" target="_blank" class="btn-whatsapp">
                 📞 ${cliente.telefono}
               </a>
             </td>
-            <td data-label="Monto" class="numero deuda-alta">
+            <td class="numero deuda-alta">
               <strong>₡${cliente.deudaTotal.toLocaleString('es-CR')}</strong>
-              ${diasAtraso > 0 ? `<br><small class="badge-atraso">⏱ ${diasAtraso}d</small>` : ''}
+              ${diasAtraso > 0 ? `<br><small class="badge-atraso">⏱ ${diasAtraso} días</small>` : ''}
             </td>
-            <td data-label="Última Compra">
+            <td class="numero">
+              ₡${cliente.totalCompras.toLocaleString('es-CR')}
+            </td>
+            <td class="numero">
+              ₡${cliente.totalPagado.toLocaleString('es-CR')}
+            </td>
+            <td class="numero">
+              ${cliente.cantidadFacturasPendientes}
+            </td>
+            <td>
               ${fechaUltima}
-              ${diasAtraso > 7 ? '<small class="atraso-alto">🔴</small>' : ''}
+              ${diasAtraso > 7 ? '<br><small class="atraso-alto">🔴 Atrasado</small>' : ''}
             </td>
-            <td data-label="Acciones" class="acciones-movil">
-              <div class="grupo-acciones-movil">
-                <a href="https://wa.me/506${cliente.telefono.replace(/\D/g, '')}" class="btn-accion-movil whatsapp" title="WhatsApp">
-                  💬
-                </a>
-                <button class="btn-accion-movil pagar btn-pagar" data-cliente-id="${cliente.id}" title="Registrar pago">
-                  💰
-                </button>
-              </div>
+            <td class="acciones">
+              <button onclick="enviarWhatsApp('${cliente.id}', '${cliente.nombre}', '${cliente.telefono}', ${cliente.deudaTotal})" class="btn-accion whatsapp">
+                💬
+              </button>
+              <button onclick="verDetalles('${cliente.id}')" class="btn-accion detalles" title="Ver detalles">
+                📋
+              </button>
+              <button onclick="abrirPago('${cliente.id}')" class="btn-accion pagar" title="Registrar pago">
+                💰
+              </button>
             </td>
           </tr>
         `;
@@ -448,23 +239,31 @@
       if (clientesFiltrados.length === 0) {
         html += `
           <tr>
-            <td colspan="5" class="sin-datos">
+            <td colspan="8" class="sin-datos">
               ${clientesConDeuda.length === 0 
-                ? 'No hay clientes con deudas' 
-                : 'Sin resultados para el filtro'}
+                ? 'No hay clientes con saldos pendientes' 
+                : 'No hay clientes que coincidan con el filtro'}
             </td>
           </tr>
         `;
       }
       
       html += `
-            </tbody>
-          </table>
-        </div>
+          </tbody>
+        </table>
         
         <div class="resumen-pie">
-          <strong>${clientesFiltrados.length}</strong> clientes | 
-          <strong>₡${clientesFiltrados.reduce((sum, c) => sum + c.deudaTotal, 0).toLocaleString('es-CR')}</strong> pendientes
+          <strong>Total de clientes con deuda:</strong> ${clientesFiltrados.length}<br>
+          <strong>Monto total pendiente:</strong> ₡${clientesFiltrados.reduce((sum, c) => sum + c.deudaTotal, 0).toLocaleString('es-CR')}
+        </div>
+        
+        <div class="acciones-exportar">
+          <button onclick="exportarCSV()" class="btn-exportar">
+            📥 Exportar a CSV
+          </button>
+          <button onclick="window.print()" class="btn-imprimir">
+            🖨️ Imprimir
+          </button>
         </div>
       `;
       
@@ -488,63 +287,226 @@
       return Math.floor(diff / (1000 * 60 * 60 * 24));
     }
     
-    function mostrarToast(mensaje) {
-      const toast = document.getElementById('toast');
-      toast.textContent = mensaje;
-      toast.className = 'toast show';
-      
-      setTimeout(() => {
-        toast.className = toast.className.replace('show', '');
-      }, 2500);
+    function cambiarOrden(campo) {
+      if (ordenarPor === campo) {
+        ordenAsc = !ordenAsc;
+      } else {
+        ordenarPor = campo;
+        ordenAsc = false; // Por defecto descendente
+      }
+      renderizarReporte();
+    }
+    
+    function getIconoOrden(campo) {
+      if (ordenarPor !== campo) return '⇅';
+      return ordenAsc ? '↑' : '↓';
     }
 
     // ===============================
-    // 🎛️ Inicialización
+    // 💬 WhatsApp
+    // ===============================
+    function enviarWhatsApp(clienteId, nombre, telefono, deudaTotal) {
+      const limpio = telefono.replace(/\D/g, '');
+      if (limpio.length !== 8) {
+        alert("⚠️ Teléfono inválido");
+        return;
+      }
+      
+      const mensaje = `Hola ${nombre} 👋\n\nTe envío tu estado de cuenta actualizado en *Esentia*.\n\n` +
+        `💜 *SALDO PENDIENTE: ₡${deudaTotal.toLocaleString('es-CR')}*\n\n` +
+        `💳 *Formas de pago*\n` +
+        `1️⃣ Efectivo contra entrega\n` +
+        `2️⃣ SINPE Móvil: *7295-2454* (Wilber Calderón)\n` +
+        `3️⃣ Cuenta BAC: *CR59010200009453897656*\n\n` +
+        `✨ Agradecemos tu pronta gestión. Estamos para servirte 💜`;
+      
+      window.open(`https://wa.me/506${limpio}?text=${encodeURIComponent(mensaje)}`, '_blank');
+    }
+
+    // ===============================
+    // 📋 Ver detalles
+    // ===============================
+    function verDetalles(clienteId) {
+      const cliente = clientesConDeuda.find(c => c.id === clienteId);
+      if (!cliente) return;
+      
+      let detalles = `📋 *DETALLES DE ${cliente.nombre.toUpperCase()}*\n\n`;
+      detalles += `📞 Teléfono: ${cliente.telefono}\n`;
+      detalles += `🆔 Cédula: ${cliente.cedula || 'No registrada'}\n\n`;
+      detalles += `💰 DEUDA TOTAL: ₡${cliente.deudaTotal.toLocaleString('es-CR')}\n`;
+      detalles += `📊 Total comprado: ₡${cliente.totalCompras.toLocaleString('es-CR')}\n`;
+      detalles += `✅ Total pagado: ₡${cliente.totalPagado.toLocaleString('es-CR')}\n`;
+      detalles += `🧾 Facturas pendientes: ${cliente.cantidadFacturasPendientes}\n\n`;
+      
+      if (cliente.comprasPendientes.length > 0) {
+        detalles += `📦 FACTURAS PENDIENTES:\n`;
+        cliente.comprasPendientes.forEach((compra, idx) => {
+          const fecha = formatearFecha(compra.fecha);
+          detalles += `\nFactura ${idx + 1} (${fecha}):\n`;
+          detalles += `  Monto: ₡${compra.monto.toLocaleString('es-CR')}\n`;
+          detalles += `  Pagado: ₡${compra.pagado.toLocaleString('es-CR')}\n`;
+          detalles += `  Saldo: ₡${compra.saldo.toLocaleString('es-CR')}\n`;
+          
+          if (compra.productos && compra.productos.length > 0) {
+            detalles += `  Productos:\n`;
+            compra.productos.forEach(p => {
+              detalles += `    • ${p.cantidad}× ${p.nombre}\n`;
+            });
+          }
+        });
+      }
+      
+      alert(detalles);
+    }
+
+    // ===============================
+    // 💰 Abrir pago
+    // ===============================
+    function abrirPago(clienteId) {
+      const cliente = clientesConDeuda.find(c => c.id === clienteId);
+      if (!cliente) return;
+      
+      const monto = prompt(`Registrar pago para ${cliente.nombre}\nDeuda actual: ₡${cliente.deudaTotal.toLocaleString('es-CR')}\n\nIngresa monto a abonar:`, cliente.deudaTotal.toString());
+      
+      if (monto && !isNaN(monto) && Number(monto) > 0) {
+        if (confirm(`¿Registrar pago de ₡${Number(monto).toLocaleString('es-CR')} para ${cliente.nombre}?`)) {
+          alert("✅ Pago registrado exitosamente.\n\nNota: Esta es una versión de visualización. Para registrar pagos reales, usa el sistema principal de clientes.");
+        }
+      }
+    }
+
+    // ===============================
+    // 📊 Actualizar resumen
+    // ===============================
+    function actualizarResumen() {
+      const totalClientes = clientesConDeuda.length;
+      const totalDeuda = clientesConDeuda.reduce((sum, c) => sum + c.deudaTotal, 0);
+      const promedioDeuda = totalClientes > 0 ? totalDeuda / totalClientes : 0;
+      
+      // Calcular clientes por rango de deuda
+      const rango1 = clientesConDeuda.filter(c => c.deudaTotal <= 5000).length;
+      const rango2 = clientesConDeuda.filter(c => c.deudaTotal > 5000 && c.deudaTotal <= 20000).length;
+      const rango3 = clientesConDeuda.filter(c => c.deudaTotal > 20000).length;
+      
+      document.getElementById('resumen-deuda').innerHTML = `
+        <div class="resumen-grid">
+          <div class="resumen-item grande">
+            <span class="etiqueta">Total Deuda</span>
+            <span class="valor">₡${totalDeuda.toLocaleString('es-CR')}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="etiqueta">Clientes</span>
+            <span class="valor">${totalClientes}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="etiqueta">Promedio</span>
+            <span class="valor">₡${Math.round(promedioDeuda).toLocaleString('es-CR')}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="etiqueta">≤ ₡5,000</span>
+            <span class="valor">${rango1}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="etiqueta">₡5k-20k</span>
+            <span class="valor">${rango2}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="etiqueta">> ₡20,000</span>
+            <span class="valor">${rango3}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // ===============================
+    // 💾 Exportar CSV
+    // ===============================
+    function exportarCSV() {
+      let csvContent = 'Cliente,Teléfono,Cédula,Monto Pendiente,Total Comprado,Total Pagado,Facturas Pendientes,Última Compra\n';
+      
+      // Aplicar filtro actual
+      let clientesFiltrados = [...clientesConDeuda];
+      if (filtroMinimo > 0) {
+        clientesFiltrados = clientesFiltrados.filter(c => c.deudaTotal >= filtroMinimo);
+      }
+      
+      // Ordenar según vista actual
+      clientesFiltrados.sort((a, b) => {
+        let valorA, valorB;
+        if (ordenarPor === 'monto') {
+          valorA = a.deudaTotal;
+          valorB = b.deudaTotal;
+        } else if (ordenarPor === 'fecha') {
+          valorA = a.fechaUltimaCompraPendiente ? a.fechaUltimaCompraPendiente.getTime() : 0;
+          valorB = b.fechaUltimaCompraPendiente ? b.fechaUltimaCompraPendiente.getTime() : 0;
+        } else {
+          valorA = a.nombre.toLowerCase();
+          valorB = b.nombre.toLowerCase();
+        }
+        if (valorA < valorB) return ordenAsc ? -1 : 1;
+        if (valorA > valorB) return ordenAsc ? 1 : -1;
+        return 0;
+      });
+      
+      clientesFiltrados.forEach(cliente => {
+        const fecha = cliente.fechaUltimaCompraPendiente 
+          ? cliente.fechaUltimaCompraPendiente.toLocaleDateString('es-CR') 
+          : 'Sin fecha';
+        csvContent += `"${cliente.nombre}","${cliente.telefono}","${cliente.cedula || ''}",${cliente.deudaTotal},${cliente.totalCompras},${cliente.totalPagado},${cliente.cantidadFacturasPendientes},"${fecha}"\n`;
+      });
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `clientes_con_deuda_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // ===============================
+    // 🎛️ Event Listeners
     // ===============================
     document.addEventListener('DOMContentLoaded', () => {
-      initEventosMovil();
-      
+      // Filtro por monto mínimo
       document.getElementById('filtro-monto').addEventListener('input', (e) => {
-        filtroMinimo = Number(e.target.value.replace(/[^0-9]/g, '')) || 0;
-        e.target.value = filtroMinimo || '';
+        filtroMinimo = Number(e.target.value) || 0;
         renderizarReporte();
       });
       
-      document.getElementById('btn-recargar').addEventListener('click', cargarClientesConDeuda);
-      
-      document.getElementById('filtro-monto').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          cargarClientesConDeuda();
-        }
+      // Botón recargar
+      document.getElementById('btn-recargar').addEventListener('click', () => {
+        const filtro = document.getElementById('filtro-monto');
+        filtroMinimo = Number(filtro.value) || 0;
+        cargarClientesConDeuda();
       });
       
+      // Establecer fecha actual
       document.getElementById('fecha-actual').textContent = new Date().toLocaleDateString('es-CR');
-      
-      // Prevenir zoom en inputs
-      document.querySelectorAll('input, select, textarea').forEach(input => {
-        input.addEventListener('focus', function() {
-          document.body.style.zoom = '1';
-        }, { passive: true });
-      });
       
       // Cargar datos iniciales
       cargarClientesConDeuda();
+      
+      // Establecer filtro inicial (opcional)
+      document.getElementById('filtro-monto').value = '0';
     });
 
     // Exponer funciones globales
-    window.cargarClientesConDeuda = cargarClientesConDeuda;
+    window.cambiarOrden = cambiarOrden;
+    window.enviarWhatsApp = enviarWhatsApp;
+    window.verDetalles = verDetalles;
     window.abrirPago = abrirPago;
-    window.guardarPago = guardarPago;
-    window.cerrarModalPago = cerrarModalPago;
-    window.mostrarToast = mostrarToast;
-    window.actualizarResumen = actualizarResumen; // ✅ Exportada globalmente
+    window.exportarCSV = exportarCSV;
+    window.cargarClientesConDeuda = cargarClientesConDeuda;
   </script>
   <style>
     :root {
-      --color-primary: #8B7500;
-      --color-secondary: #2E7D32;
-      --color-danger: #c62828;
-      --color-bg: rgba(255, 255, 255, 0.92);
+      --color-primary: #8B7500; /* Dorado oscuro */
+      --color-secondary: #2E7D32; /* Verde esmeralda */
+      --color-danger: #c62828; /* Rojo oscuro */
+      --color-bg: rgba(255, 255, 255, 0.85);
       --shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
     }
     
@@ -552,87 +514,81 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-      -webkit-tap-highlight-color: rgba(0,0,0,0);
-      -webkit-touch-callout: none;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     
     body {
       background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
       color: #333;
-      padding: 12px;
+      padding: 20px;
       min-height: 100vh;
-      overflow-x: hidden;
-      position: relative;
-      font-size: 16px;
     }
     
     .contenedor-principal {
-      max-width: 100%;
+      max-width: 1600px;
       margin: 0 auto;
     }
     
     header {
       text-align: center;
-      margin-bottom: 15px;
-      padding: 0 8px;
+      margin-bottom: 25px;
+      position: relative;
     }
     
     h1 {
-      font-size: 1.8rem;
+      font-size: 2.4rem;
       color: var(--color-danger);
-      margin-bottom: 8px;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-      line-height: 1.3;
+      margin-bottom: 10px;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+      letter-spacing: -0.5px;
     }
     
     .subtitulo {
       color: #666;
-      font-size: 0.95rem;
-      margin-bottom: 12px;
+      font-size: 1.1rem;
+      margin-bottom: 20px;
     }
     
     .fecha-actual {
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.7);
       display: inline-block;
-      padding: 6px 16px;
-      border-radius: 16px;
+      padding: 8px 20px;
+      border-radius: 20px;
       font-weight: 600;
       color: var(--color-primary);
-      margin-top: 8px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-      font-size: 0.95rem;
+      margin-top: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
+    /* Glassmorphism Panel */
     .panel {
       background: var(--color-bg);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border-radius: 20px;
       box-shadow: var(--shadow);
-      padding: 18px;
-      margin-bottom: 20px;
-      border: 1px solid rgba(198, 40, 40, 0.25);
-      position: relative;
+      padding: 25px;
+      margin-bottom: 25px;
+      border: 1px solid rgba(198, 40, 40, 0.2);
     }
     
+    /* Controles de filtro */
     .controles-filtro {
       display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
+      gap: 20px;
       align-items: center;
-      margin-bottom: 15px;
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.7);
-      border-radius: 16px;
-      border-left: 3px solid var(--color-danger);
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 15px;
+      border-left: 4px solid var(--color-danger);
     }
     
     .grupo-filtro {
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      min-width: 140px;
+      gap: 5px;
     }
     
     .grupo-filtro label {
@@ -642,14 +598,12 @@
     }
     
     .grupo-filtro input {
-      padding: 11px 14px;
+      padding: 10px 15px;
       border: 2px solid #ddd;
-      border-radius: 14px;
-      font-size: 1.1rem;
-      width: 100%;
-      transition: border-color 0.25s;
-      font-weight: 600;
-      touch-action: manipulation;
+      border-radius: 12px;
+      font-size: 1rem;
+      width: 150px;
+      transition: border-color 0.3s;
     }
     
     .grupo-filtro input:focus {
@@ -662,41 +616,40 @@
       background: var(--color-danger);
       color: white;
       border: none;
-      padding: 11px 22px;
-      border-radius: 16px;
+      padding: 12px 25px;
+      border-radius: 15px;
       font-size: 1.05rem;
       font-weight: 600;
       cursor: pointer;
-      touch-action: manipulation;
+      transition: all 0.3s ease;
       display: flex;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 4px 14px rgba(198, 40, 40, 0.35);
-      flex: 1;
-      min-width: 140px;
-      transition: all 0.2s;
+      box-shadow: 0 4px 15px rgba(198, 40, 40, 0.3);
     }
     
-    .btn-recargar:active,
-    .btn-recargar.activo-touch {
-      transform: scale(0.97);
+    .btn-recargar:hover {
       background: #b71c1c;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(198, 40, 40, 0.4);
     }
     
+    /* Resumen deuda */
     .resumen-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-top: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
     }
     
     .resumen-item {
       background: white;
-      padding: 16px;
-      border-radius: 16px;
+      padding: 20px;
+      border-radius: 15px;
       text-align: center;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-      border-top: 3px solid var(--color-danger);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transition: transform 0.3s ease;
+      border-top: 4px solid var(--color-danger);
     }
     
     .resumen-item.grande {
@@ -704,61 +657,65 @@
       background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
     }
     
+    .resumen-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    }
+    
     .etiqueta {
       display: block;
       color: #777;
-      font-size: 0.9rem;
-      margin-bottom: 6px;
+      font-size: 0.95rem;
+      margin-bottom: 8px;
       font-weight: 500;
     }
     
     .valor {
-      font-size: 1.6rem;
+      font-size: 1.8rem;
       font-weight: 700;
       color: var(--color-danger);
-      line-height: 1.2;
     }
     
-    .tabla-responsive {
-      width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      border-radius: 16px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-      margin: 10px 0;
-    }
-    
+    /* Tabla deuda */
     .tabla-deuda {
       width: 100%;
       border-collapse: collapse;
+      margin: 20px 0;
       font-size: 0.95rem;
-      min-width: 600px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      border-radius: 15px;
+      overflow: hidden;
     }
     
     .tabla-deuda th {
       background: var(--color-danger);
       color: white;
-      padding: 12px 10px;
+      padding: 14px 12px;
       text-align: left;
       font-weight: 600;
       position: sticky;
       top: 0;
-      font-size: 0.9rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.3s;
+    }
+    
+    .tabla-deuda th:hover {
+      background: #d32f2f;
     }
     
     .tabla-deuda td {
-      padding: 13px 10px;
-      border-bottom: 1px solid #f0f0f0;
+      padding: 14px 12px;
+      border-bottom: 1px solid #eee;
       vertical-align: middle;
-      font-size: 0.95rem;
     }
     
     .tabla-deuda tr:hover {
-      background-color: rgba(255, 245, 245, 0.5);
+      background-color: rgba(255, 245, 245, 0.6);
     }
     
     .tabla-deuda tr:nth-child(even) {
-      background-color: rgba(255, 250, 250, 0.3);
+      background-color: rgba(255, 250, 250, 0.4);
     }
     
     .numero {
@@ -769,290 +726,187 @@
     
     .deuda-alta {
       color: var(--color-danger);
-      font-size: 1.05rem;
+      font-size: 1.1rem;
     }
     
     .badge-atraso {
       background: #ffcdd2;
       color: var(--color-danger);
-      padding: 2px 7px;
-      border-radius: 9px;
-      font-size: 0.8rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.85rem;
       font-weight: 600;
       display: inline-block;
-      margin-top: 3px;
+      margin-top: 4px;
     }
     
     .atraso-alto {
       color: var(--color-danger);
-      font-weight: 700;
-      margin-left: 4px;
+      font-weight: 600;
+      font-size: 0.9rem;
     }
     
-    .btn-whatsapp-movil {
+    .btn-whatsapp {
       color: #128C7E;
       text-decoration: none;
       font-weight: 600;
       display: inline-block;
-      font-size: 0.95rem;
-      line-height: 1.4;
     }
     
-    .btn-whatsapp-movil:active {
+    .btn-whatsapp:hover {
       color: #075E54;
+      text-decoration: underline;
     }
     
-    .acciones-movil {
+    .acciones {
       text-align: center;
-      padding: 4px 0 !important;
-    }
-    
-    .grupo-acciones-movil {
       display: flex;
-      justify-content: center;
       gap: 8px;
-      flex-wrap: wrap;
+      justify-content: center;
     }
     
-    .btn-accion-movil {
-      width: 40px;
-      height: 40px;
+    .btn-accion {
+      width: 36px;
+      height: 36px;
       border: none;
-      border-radius: 12px;
+      border-radius: 10px;
       cursor: pointer;
-      touch-action: manipulation;
-      font-size: 1.3rem;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-      transition: all 0.2s;
-      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
     
-    .btn-accion-movil:active,
-    .btn-accion-movil.activo-touch {
-      transform: scale(0.92);
-      opacity: 0.85;
-    }
-    
-    .btn-accion-movil.whatsapp {
+    .btn-accion.whatsapp {
       background: #25D366;
       color: white;
     }
     
-    .btn-accion-movil.pagar {
+    .btn-accion.whatsapp:hover {
+      background: #128C7E;
+      transform: scale(1.1);
+    }
+    
+    .btn-accion.detalles {
+      background: #42A5F5;
+      color: white;
+    }
+    
+    .btn-accion.detalles:hover {
+      background: #1565C0;
+      transform: scale(1.1);
+    }
+    
+    .btn-accion.pagar {
       background: #FF9800;
       color: white;
     }
     
-    .cedula-movil {
-      font-size: 0.85rem;
-      color: #777;
-      display: block;
-      margin-top: 3px;
+    .btn-accion.pagar:hover {
+      background: #E65100;
+      transform: scale(1.1);
     }
     
     .sin-datos {
       text-align: center;
-      padding: 30px 15px;
+      padding: 40px;
       color: #999;
       font-style: italic;
       background: rgba(245, 245, 245, 0.6);
-      font-size: 1rem;
+      font-size: 1.1rem;
       font-weight: 500;
-      line-height: 1.4;
     }
     
     .resumen-pie {
-      background: rgba(255, 245, 245, 0.8);
-      padding: 12px;
-      border-radius: 14px;
-      margin: 15px 0;
-      border-left: 3px solid var(--color-danger);
-      font-weight: 600;
-      color: var(--color-danger);
-      font-size: 0.95rem;
-      text-align: center;
-    }
-    
-    /* Modal de pago optimizado para móvil */
-    #modal-registrar-pago {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.75);
-      z-index: 3000;
-      justify-content: center;
-      align-items: flex-end;
-      padding: 20px 0;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-      -webkit-overflow-scrolling: touch;
-      touch-action: manipulation;
-    }
-    
-    .modal-contenido-pago {
-      background: white;
-      border-radius: 24px 24px 0 0;
-      padding: 24px 20px;
-      width: 100%;
-      max-width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.35);
-      position: relative;
-      transform: translateY(0);
-      transition: transform 0.3s;
-      touch-action: pan-y;
-    }
-    
-    .modal-contenido-pago h3 {
-      color: var(--color-danger);
-      margin-bottom: 18px;
-      text-align: center;
-      font-size: 1.7rem;
-      font-weight: 700;
-    }
-    
-    .info-cliente-pago {
-      background: rgba(255, 245, 245, 0.35);
-      padding: 16px;
-      border-radius: 16px;
-      margin-bottom: 20px;
+      background: rgba(255, 245, 245, 0.7);
+      padding: 15px;
+      border-radius: 12px;
+      margin: 20px 0;
       border-left: 4px solid var(--color-danger);
-    }
-    
-    .info-cliente-pago p {
-      margin: 7px 0;
-      font-size: 1.1rem;
-      line-height: 1.5;
-    }
-    
-    .info-cliente-pago strong {
+      font-weight: 600;
       color: var(--color-danger);
-      font-size: 1.15rem;
     }
     
-    .grupo-formulario {
-      margin-bottom: 18px;
-    }
-    
-    .grupo-formulario label {
-      display: block;
-      margin-bottom: 10px;
-      font-weight: 600;
-      color: #444;
-      font-size: 1.05rem;
-    }
-    
-    .grupo-formulario input,
-    .grupo-formulario select,
-    .grupo-formulario textarea {
-      width: 100%;
-      padding: 14px;
-      border: 2px solid #ddd;
-      border-radius: 16px;
-      font-size: 1.25rem;
-      transition: border-color 0.25s;
-      font-weight: 600;
-      touch-action: manipulation;
-    }
-    
-    .grupo-formulario input:focus,
-    .grupo-formulario select:focus,
-    .grupo-formulario textarea:focus {
-      border-color: var(--color-primary);
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(139, 117, 0, 0.25);
-    }
-    
-    .grupo-formulario textarea {
-      resize: vertical;
-      min-height: 80px;
-      font-size: 1.05rem;
-      line-height: 1.5;
-    }
-    
-    .botones-modal {
+    /* Botones exportar */
+    .acciones-exportar {
       display: flex;
-      gap: 14px;
-      justify-content: center;
-      margin-top: 15px;
-      padding-top: 18px;
-      border-top: 2px solid #f0f0f0;
-      flex-direction: column;
+      gap: 15px;
+      justify-content: flex-end;
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 2px dashed rgba(198, 40, 40, 0.3);
     }
     
-    .btn-modal {
-      padding: 16px;
+    .btn-exportar {
+      background: #1976d2;
+      color: white;
       border: none;
-      border-radius: 18px;
-      font-size: 1.25rem;
-      font-weight: 700;
+      padding: 12px 25px;
+      border-radius: 15px;
+      font-size: 1rem;
+      font-weight: 600;
       cursor: pointer;
-      touch-action: manipulation;
+      transition: all 0.3s ease;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
-      width: 100%;
-      transition: all 0.25s;
-      letter-spacing: -0.3px;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);
     }
     
-    #btn-guardar-pago {
-      background: var(--color-danger);
+    .btn-exportar:hover {
+      background: #0d47a1;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(25, 118, 210, 0.4);
+    }
+    
+    .btn-imprimir {
+      background: #7b1fa2;
       color: white;
-      box-shadow: 0 4px 16px rgba(198, 40, 40, 0.4);
+      border: none;
+      padding: 12px 25px;
+      border-radius: 15px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(123, 31, 162, 0.3);
     }
     
-    #btn-guardar-pago:active,
-    #btn-guardar-pago.activo-touch {
-      background: #b71c1c;
-      transform: scale(0.98);
-      box-shadow: 0 2px 10px rgba(198, 40, 40, 0.5);
+    .btn-imprimir:hover {
+      background: #4a148c;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(123, 31, 162, 0.4);
     }
     
-    #btn-cancelar-pago {
-      background: #757575;
-      color: white;
-      box-shadow: 0 4px 16px rgba(117, 117, 117, 0.35);
-    }
-    
-    #btn-cancelar-pago:active,
-    #btn-cancelar-pago.activo-touch {
-      background: #424242;
-      transform: scale(0.98);
-      box-shadow: 0 2px 10px rgba(117, 117, 117, 0.45);
-    }
-    
+    /* Loading */
     #loading {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(255, 255, 255, 0.94);
-      display: none;
+      background: rgba(255, 255, 255, 0.92);
+      display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      z-index: 2500;
+      z-index: 1000;
+      display: none;
     }
     
     .spinner {
-      width: 48px;
-      height: 48px;
-      border: 5px solid rgba(198, 40, 40, 0.25);
-      border-top: 5px solid var(--color-danger);
+      width: 60px;
+      height: 60px;
+      border: 6px solid rgba(198, 40, 40, 0.2);
+      border-top: 6px solid var(--color-danger);
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
     }
     
     @keyframes spin {
@@ -1061,130 +915,107 @@
     }
     
     .loading-text {
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       color: var(--color-danger);
-      font-weight: 700;
-      text-align: center;
-      padding: 0 20px;
-      line-height: 1.4;
+      font-weight: 600;
     }
     
-    #toast {
-      visibility: hidden;
-      min-width: 240px;
-      background-color: #333;
-      color: #fff;
-      text-align: center;
-      border-radius: 16px;
-      padding: 14px 20px;
-      position: fixed;
-      z-index: 4000;
-      left: 50%;
-      bottom: 30px;
-      transform: translateX(-50%) translateY(50px);
-      opacity: 0;
-      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-      font-size: 1.05rem;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      max-width: 90%;
-      word-wrap: break-word;
-    }
-    
-    #toast.show {
-      visibility: visible;
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
-    
-    @media (min-width: 768px) {
+    /* Impresión */
+    @media print {
       body {
-        padding: 20px;
-        font-size: 16px;
-      }
-      
-      .panel {
-        padding: 25px;
-      }
-      
-      .controles-filtro {
-        padding: 15px;
-      }
-      
-      .resumen-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 15px;
-      }
-      
-      .resumen-item.grande {
-        grid-column: span 2;
-      }
-      
-      .tabla-deuda {
-        min-width: auto;
-        font-size: 0.98rem;
-      }
-      
-      .tabla-deuda th {
-        padding: 14px 12px;
-        font-size: 1rem;
-      }
-      
-      .tabla-deuda td {
-        padding: 14px 12px;
-      }
-      
-      .btn-accion-movil {
-        width: 42px;
-        height: 42px;
-        font-size: 1.35rem;
-      }
-      
-      #modal-registrar-pago {
-        align-items: center;
+        background: white;
         padding: 0;
       }
       
-      .modal-contenido-pago {
-        border-radius: 24px;
-        max-width: 520px;
-        padding: 32px 30px;
-        margin: 20px;
+      .controles-filtro,
+      .acciones-exportar,
+      .btn-recargar,
+      .acciones,
+      header h1::after {
+        display: none !important;
       }
       
-      .modal-contenido-pago h3 {
-        font-size: 2rem;
-        margin-bottom: 25px;
+      .panel {
+        box-shadow: none;
+        border: none;
+        padding: 15px;
       }
       
-      .botones-modal {
-        flex-direction: row;
-        gap: 20px;
-        margin-top: 25px;
-        padding-top: 22px;
+      .tabla-deuda {
+        width: 100%;
+        font-size: 0.8rem;
       }
       
-      .btn-modal {
-        padding: 15px 28px;
-        font-size: 1.15rem;
-        width: auto;
+      .tabla-deuda th {
+        background: #d32f2f;
+        color: white;
+        page-break-inside: avoid;
+      }
+      
+      .tabla-deuda tr {
+        page-break-inside: avoid;
+      }
+      
+      .resumen-grid {
+        display: none;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .controles-filtro {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .grupo-filtro input {
+        width: 100%;
+      }
+      
+      .acciones-exportar {
+        flex-direction: column;
+      }
+      
+      .tabla-deuda {
+        font-size: 0.85rem;
+      }
+      
+      .tabla-deuda th,
+      .tabla-deuda td {
+        padding: 8px 6px;
+      }
+      
+      .acciones {
+        flex-direction: column;
+        gap: 4px;
+      }
+      
+      .btn-accion {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+      }
+      
+      .resumen-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+      
+      .resumen-item.grande {
+        grid-column: span 1;
       }
     }
   </style>
 </head>
 <body>
-  <!-- Toast notifications -->
-  <div id="toast"></div>
-  
-  <!-- Loading spinner -->
   <div id="loading">
     <div class="spinner"></div>
-    <div class="loading-text">Cargando clientes...</div>
+    <div class="loading-text">Cargando clientes con deuda...</div>
+    <div style="color:#777; margin-top:15px">Analizando facturas y saldos pendientes</div>
   </div>
 
   <div class="contenedor-principal">
     <header>
       <h1>💰 Clientes con Saldo Pendiente</h1>
-      <div class="subtitulo">Gestiona deudas y registra pagos fácilmente</div>
+      <div class="subtitulo">Reporte detallado de clientes con montos pendientes de pago</div>
       <div class="fecha-actual" id="fecha-actual">Cargando...</div>
     </header>
 
@@ -1192,38 +1023,19 @@
       <div class="controles-filtro">
         <div class="grupo-filtro">
           <label for="filtro-monto">Monto mínimo (₡)</label>
-          <input type="tel" id="filtro-monto" placeholder="0" inputmode="numeric">
+          <input type="number" id="filtro-monto" min="0" placeholder="0">
         </div>
         <button id="btn-recargar" class="btn-recargar">
-          <span>↻</span> Actualizar
+          <span>↻</span> Actualizar Datos
         </button>
       </div>
 
       <div id="resumen-deuda">
+        <!-- Se llenará dinámicamente -->
         <div class="resumen-grid">
           <div class="resumen-item grande">
             <span class="etiqueta">Cargando...</span>
-            <span class="valor">₡0</span>
-          </div>
-          <div class="resumen-item">
-            <span class="etiqueta">Clientes</span>
-            <span class="valor">0</span>
-          </div>
-          <div class="resumen-item">
-            <span class="etiqueta">Promedio</span>
-            <span class="valor">₡0</span>
-          </div>
-          <div class="resumen-item">
-            <span class="etiqueta">≤ ₡5k</span>
-            <span class="valor">0</span>
-          </div>
-          <div class="resumen-item">
-            <span class="etiqueta">₡5k-20k</span>
-            <span class="valor">0</span>
-          </div>
-          <div class="resumen-item">
-            <span class="etiqueta">> ₡20k</span>
-            <span class="valor">0</span>
+            <span class="valor">—</span>
           </div>
         </div>
       </div>
@@ -1231,59 +1043,17 @@
 
     <div class="panel">
       <div id="tabla-clientes-deuda">
-        <div style="text-align:center; padding:35px 20px; color:#888">
-          <div class="spinner" style="margin:0 auto 18px; width:42px; height:42px;"></div>
-          <div>Cargando reporte...</div>
+        <div style="text-align:center; padding:40px; color:#888">
+          <div class="spinner" style="margin:0 auto 20px;"></div>
+          <div>Cargando reporte de clientes con deuda...</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal Registrar Pago -->
-  <div id="modal-registrar-pago">
-    <div class="modal-contenido-pago">
-      <h3>💰 Registrar Pago</h3>
-      
-      <div class="info-cliente-pago">
-        <p><strong>Cliente:</strong> <span id="pago-cliente-nombre">-</span></p>
-        <p><strong>Deuda actual:</strong> <span id="pago-cliente-deuda">₡0</span></p>
-      </div>
-      
-      <div class="grupo-formulario">
-        <label for="pago-monto">Monto a pagar (₡)</label>
-        <input type="tel" id="pago-monto" placeholder="Ingrese monto" inputmode="numeric" autocomplete="off">
-      </div>
-      
-      <div class="grupo-formulario">
-        <label for="pago-metodo">Método de Pago</label>
-        <select id="pago-metodo">
-          <option value="Efectivo">💵 Efectivo</option>
-          <option value="SINPE">📱 SINPE Móvil</option>
-          <option value="Transferencia">🏦 Transferencia</option>
-          <option value="Tarjeta">💳 Tarjeta</option>
-        </select>
-      </div>
-      
-      <div class="grupo-formulario">
-        <label for="pago-nota">Notas (opcional)</label>
-        <textarea id="pago-nota" placeholder="Ej: Referencia, motivo, etc."></textarea>
-      </div>
-      
-      <div class="botones-modal">
-        <button id="btn-guardar-pago" class="btn-modal">
-          ✅ Registrar Pago
-        </button>
-        <button id="btn-cancelar-pago" class="btn-modal">
-          ❌ Cancelar
-        </button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // Polyfill básico para navegadores muy antiguos
-    if (!window.Promise) {
-      console.warn("Navegador antiguo - algunas funciones pueden no funcionar");
+    if (typeof cargarClientesConDeuda === 'undefined') {
+      console.log("Esperando inicialización de Firebase...");
     }
   </script>
 </body>
