@@ -237,40 +237,57 @@
         z-index: 6000;
     }
 
+    .qr-contenedor img {
+        max-width: 150px;
+        margin-top: 10px;
+    }
+
 </style>
 
 </head>
 <!-- Metadatos OG dinámicos Esentia para Facebook -->
 <script>
+// Función para aplanar el JSON categorizado
+function aplanarProductos(data) {
+    if (Array.isArray(data)) return data;
+    let flatList = [];
+    for (const categoria in data) {
+        if (Array.isArray(data[categoria])) {
+            flatList = flatList.concat(data[categoria]);
+        }
+    }
+    return flatList;
+}
+
 (async () => {
   const params = new URLSearchParams(window.location.search);
   const id = params.get("id");
 
   if (!id) return;
 
-  const res = await fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json");
-  const productos = await res.json();
+  try {
+    const res = await fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json");
+    const data = await res.json();
+    const productos = aplanarProductos(data);
 
-  const prod = productos.find(p => String(p.id) === id);
- 
+    const prod = productos.find(p => String(p.id) === String(id));
+    if (!prod) return;
 
-  if (!prod) return;
+    // Datos principales
+    const nombre = prod.nombre || "Producto Esentia";
+    const beneficios = prod.beneficios || "";
+    const uso = prod.usoRecomendado || "";
+    const imagen = prod.imagen || "";
+    const calificacion = prod.calificacion ? `⭐ ${prod.calificacion} / 5` : "";
+    const precio = prod.precioOferta
+        ? `Oferta: ₡${prod.precioOferta.toLocaleString()} (Antes ₡${prod.precioOriginal.toLocaleString()})`
+        : `Precio: ₡${prod.precioOriginal?.toLocaleString() || prod.precio?.toLocaleString()}`;
 
-  // Datos principales
-  const nombre = prod.nombre || "Producto Esentia";
-  const beneficios = prod.beneficios || "";
-  const uso = prod.usoRecomendado || "";
-  const imagen = prod.imagen || "";
-  const calificacion = prod.calificacion ? `⭐ ${prod.calificacion} / 5` : "";
-  const precio = prod.precioOferta
-      ? `Oferta: ₡${prod.precioOferta.toLocaleString()} (Antes ₡${prod.precioOriginal.toLocaleString()})`
-      : `Precio: ₡${prod.precioOriginal?.toLocaleString() || prod.precio?.toLocaleString()}`;
+    // Hashtags premium automáticos
+    const hashtags = "#Esentia #FraganciasQueEnamoran #AromasParaElHogar #Bienestar";
 
-  // Hashtags premium automáticos
-  const hashtags = "#Esentia #FraganciasQueEnamoran #AromasParaElHogar #Bienestar";
-
-  // Texto final para Facebook
-  const desc = `
+    // Texto final para Facebook
+    const desc = `
 ${calificacion}
 ${precio}
 
@@ -278,25 +295,28 @@ Beneficios: ${beneficios}
 Uso recomendado: ${uso}
 
 ${hashtags}
-  `.trim();
+    `.trim();
 
-  const title = `${nombre} – Fragancia Esentia`;
+    const title = `${nombre} – Fragancia Esentia`;
 
-  // Función para insertar metas
-  const addMeta = (property, content) => {
-    const m = document.createElement("meta");
-    m.setAttribute("property", property);
-    m.setAttribute("content", content);
-    document.head.appendChild(m);
-  };
+    // Función para insertar metas
+    const addMeta = (property, content) => {
+      const m = document.createElement("meta");
+      m.setAttribute("property", property);
+      m.setAttribute("content", content);
+      document.head.appendChild(m);
+    };
 
-  // Metadatos OG
-  addMeta("og:title", title);
-  addMeta("og:description", desc);
-  addMeta("og:image", imagen);
-  addMeta("og:type", "product");
-  addMeta("og:url", window.location.href);
-  addMeta("og:site_name", "Esentia Fragancias");
+    // Metadatos OG
+    addMeta("og:title", title);
+    addMeta("og:description", desc);
+    addMeta("og:image", imagen);
+    addMeta("og:type", "product");
+    addMeta("og:url", window.location.href);
+    addMeta("og:site_name", "Esentia Fragancias");
+  } catch (e) {
+    console.error("Error en metadatos OG:", e);
+  }
 })();
 </script>
 
@@ -306,13 +326,6 @@ ${hashtags}
 <header class="header-esentia">
     <h1>Esentia</h1>
 </header>
-
-<!--<div class="select-container">
-    <label>Seleccionar producto</label>
-    <select id="selectorProducto" class="select-esentia">
-        <option value="">-- Elegir aroma --</option>
-    </select>
-</div>-->
 
 <div class="contenedor">
     <div class="card" id="contenedorProducto">
@@ -356,66 +369,27 @@ getDocs(stockCollection).then(snapshot => {
 <script>
 // Obtener ID desde URL
 const params = new URLSearchParams(window.location.search);
-const productId = (params.get("id") || "").toLowerCase().trim();
+const productId = (params.get("id") || "").trim();
 
 // Cargar producto actual
 fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json")
     .then(r => r.json())
-    .then(lista => {
-        const producto = lista.find(p => String(p.id) === productId);
+    .then(data => {
+        const lista = aplanarProductos(data);
+        const producto = lista.find(p => String(p.id) === String(productId));
 
-
-        renderProducto(producto);
+        if (producto) {
+            renderProducto(producto);
+        } else {
+            document.getElementById("contenedorProducto").innerHTML =
+                "<h2>Producto no encontrado</h2><p>Lo sentimos, no pudimos encontrar el aroma solicitado.</p>";
+        }
     })
     .catch(err => {
         console.error("Error cargando producto:", err);
         document.getElementById("contenedorProducto").innerHTML =
             "<h2>Error</h2><p>No fue posible cargar la información.</p>";
     });
-
-// ===== MENÚ DESPLEGABLE (SOLO PRODUCTOS CON STOCK + DISPONIBLES) =====
-function cargarSelectorConStock() {
-    const inv = window.inventario || {};
-
-    // Si inventario aún no está cargado, volver a intentar
-    if (Object.keys(inv).length === 0) {
-        setTimeout(cargarSelectorConStock, 150);
-        return;
-    }
-
-    fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json")
-        .then(r => r.json())
-        .then(lista => {
-            const selector = document.getElementById("selectorProducto");
-            selector.innerHTML = `<option value="">-- Elegir aroma --</option>`;
-
-            const disponibles = lista.filter(p => {
-                const stock = inv[p.nombre] ?? 0;
-                return p.disponible === true && stock > 0;
-            });
-
-            disponibles.forEach(p => {
-                const id = p.imagen.split("/").pop().split(".")[0].toLowerCase();
-                const option = document.createElement("option");
-                option.value = id;
-                option.textContent = `${p.nombre} (${inv[p.nombre]} uds)`;
-                selector.appendChild(option);
-            });
-
-            if (productId) selector.value = productId;
-
-            selector.onchange = () => {
-                if (selector.value) {
-                    window.location.href = `producto.html?id=${selector.value}`;
-                }
-            };
-        })
-        .catch(err => console.error("Error cargando lista para selector:", err));
-}
-
-// lanzar el llenado del selector un poco después para dar tiempo a Firebase
-setTimeout(cargarSelectorConStock, 300);
-
 
 // RENDER PRINCIPAL DEL PRODUCTO
 function renderProducto(p){
@@ -426,6 +400,19 @@ function renderProducto(p){
         const llenas = Math.floor(p.calificacion);
         const media = p.calificacion % 1 >= 0.5;
         estrellas = "⭐".repeat(llenas) + (media ? "✨" : "");
+    }
+
+    // Manejo de variantes (pueden no existir o estar vacías)
+    let variantesHtml = "";
+    if (p.variantes && p.variantes.length > 0) {
+        variantesHtml = `
+            <div class="seccion">
+                <div class="titulo-seccion">Presentaciones</div>
+                <ul>
+                    ${p.variantes.map(v => `<li>${v.nombre || 'Presentación'} – ₡${(v.precio || 0).toLocaleString()}</li>`).join("")}
+                </ul>
+            </div>
+        `;
     }
 
     document.getElementById("contenedorProducto").innerHTML = `
@@ -439,57 +426,32 @@ function renderProducto(p){
             p.precioOferta
             ? `<div class="precio-oferta">₡${p.precioOferta.toLocaleString()}</div>
                <div class="precio-original">₡${p.precioOriginal.toLocaleString()}</div>`
-            : `<div class="precio-oferta">₡${p.precioOriginal.toLocaleString()}</div>`
+            : `<div class="precio-oferta">₡${(p.precioOriginal || 0).toLocaleString()}</div>`
         }
 
-        <p class="descripcion">${p.info}</p>
+        <p class="descripcion">${p.info || ''}</p>
 
         <div class="seccion">
             <div class="titulo-seccion">Beneficios</div>
-            <div>${p.beneficios}</div>
+            <div>${p.beneficios || 'No especificado'}</div>
         </div>
 
         <div class="seccion">
             <div class="titulo-seccion">Uso recomendado</div>
-            <div>${p.usoRecomendado}</div>
+            <div>${p.usoRecomendado || 'No especificado'}</div>
         </div>
 
-        <div class="seccion">
-            <div class="titulo-seccion">Presentaciones</div>
-            <ul>
-                ${p.variantes.map(v => `<li>${v.nombre} – ₡${v.precio.toLocaleString()}</li>`).join("")}
-            </ul>
-        </div>
+        ${variantesHtml}
 
         <button class="btn-wsp" onclick="agregarAlCarrito('${encodeURIComponent(p.nombre)}')">
-    🛒 Agregar al carrito
-</button>
+            🛒 Agregar al carrito
+        </button>
 
         <div class="qr-contenedor">
-
-            Compartir este producto:
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250
-                     &color=200-160-90
-                     &qzone=3
-                     &data=${encodeURIComponent(window.location.href)}">
+            <p>Compartir este producto:</p>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=200-160-90&qzone=3&data=${encodeURIComponent(window.location.href)}">
         </div>
     `;
-}
-
-// ENVÍO A WHATSAPP
-function comprarWhatsApp(nombreProducto){
-    const mensaje = `
-Hola Wilber 👋
-
-Quisiera información sobre:
-
-🧴 *${decodeURIComponent(nombreProducto)}*
-🔗 Link: ${window.location.href}
-
-¡Gracias! 🌿
-    `.trim();
-
-    window.open(`https://wa.me/50672952454?text=${encodeURIComponent(mensaje)}`, "_blank");
 }
 
 // LIGHTBOX
@@ -503,28 +465,27 @@ function cerrarLightbox() {
 
 function agregarAlCarrito(nombreProductoCodificado) {
     const nombreProducto = decodeURIComponent(nombreProductoCodificado);
-
     let carrito = JSON.parse(localStorage.getItem("carrito") || "[]");
 
     fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json")
         .then(r => r.json())
-        .then(lista => {
-
+        .then(data => {
+            const lista = aplanarProductos(data);
             const producto = lista.find(p => p.nombre === nombreProducto);
             if (!producto) {
                 alert("Error: producto no encontrado.");
                 return;
             }
 
-            const id = producto.imagen.split("/").pop().split(".")[0].toLowerCase();
-
-            let existente = carrito.find(i => i.id === id);
+            // Usamos el ID del producto para el carrito
+            const idCarrito = String(producto.id);
+            let existente = carrito.find(i => String(i.id) === idCarrito);
 
             if (existente) {
                 existente.cantidad += 1;
             } else {
                 carrito.push({
-                    id: id,
+                    id: idCarrito,
                     nombre: producto.nombre,
                     precio: producto.precioOferta ?? producto.precioOriginal,
                     cantidad: 1,
@@ -533,22 +494,16 @@ function agregarAlCarrito(nombreProductoCodificado) {
             }
 
             localStorage.setItem("carrito", JSON.stringify(carrito));
-
             window.location.href = "catalogo.html?added=1";
         });
 }
-
-
 </script>
-
 
 <!-- LIGHTBOX -->
 <div id="lightbox" class="lightbox-overlay">
     <span class="lightbox-close" onclick="cerrarLightbox()">×</span>
     <img id="lightbox-img" class="lightbox-img" src="">
 </div>
-
-
 
 </body>
 </html>
