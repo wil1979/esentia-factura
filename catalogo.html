@@ -6,575 +6,6 @@
   <link rel="icon" href="images/logo.png" sizes="192x192" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="catalogo.css" />
-
-  <!-- Estilos generales -->
-  <style>
-    .btn-filtro {
-      background: #f0f0f0;
-      border: 2px solid #ccc;
-      padding: 8px 16px;
-      margin: 0 5px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: all 0.3s;
-    }
-
-    .btn-filtro:hover { background: #e0e0e0; }
-
-    .btn-filtro.activo {
-      background: #6c4ba3;
-      color: white;
-      border-color: #6c4ba3;
-    }
-
-    .modal-carrito {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0, 0, 0, 0.7);
-    }
-
-    .modal-contenido {
-      background-color: #fefefe;
-      margin: 5% auto;
-      padding: 20px;
-      border: 1px solid #888;
-      width: 90%;
-      max-width: 600px;
-      border-radius: 12px;
-      position: relative;
-    }
-
-    .producto-card {
-      position: relative;
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #4caf50;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 8px;
-      display: none;
-      z-index: 2000;
-    }
-  </style>
-
-  <!-- Bottom sheet admin negro/dorado -->
-  <style>
-    .admin-sheet-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.55);
-      backdrop-filter: blur(4px);
-      display: none;
-      justify-content: flex-end;
-      align-items: stretch;
-      z-index: 1200;
-    }
-
-    .admin-sheet {
-      background: #050505;
-      border-radius: 20px 20px 0 0;
-      border-top: 2px solid #d4af37;
-      box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.6);
-      padding: 16px 20px 22px;
-      width: 25%;
-      max-height: 65vh;
-      animation: adminSheetIn 0.25s ease-out;
-    }
-
-    @keyframes adminSheetIn {
-      from {
-        transform: translateY(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-
-    .admin-sheet-handle {
-      width: 48px;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.25);
-      border-radius: 999px;
-      margin: 0 auto 12px;
-    }
-
-    .admin-sheet-title {
-      color: #f5eec2;
-      font-size: 1.05rem;
-      margin-bottom: 10px;
-      text-align: center;
-    }
-
-    .admin-sheet-desc {
-      color: #d4af37;
-      font-size: 0.9rem;
-      text-align: center;
-      margin-bottom: 16px;
-    }
-
-    .admin-sheet-btn {
-      width: 100%;
-      padding: 10px 14px;
-      margin-top: 8px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      background: linear-gradient(135deg, #d4af37, #b8891e);
-      color: #000;
-      font-weight: 600;
-    }
-
-    .admin-sheet-btn-secondary {
-      width: 100%;
-      padding: 9px 14px;
-      margin-top: 10px;
-      border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      background: transparent;
-      color: #f5f5f5;
-      cursor: pointer;
-      font-size: 0.95rem;
-    }
-
-    .admin-dot-btn {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 28px;
-      height: 28px;
-      border-radius: 999px;
-      border: 1px solid rgba(212, 175, 55, 0.9);
-      background: rgba(0, 0, 0, 0.7);
-      color: #f5eec2;
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      z-index: 20;
-      backdrop-filter: blur(2px);
-    }
-
-    .admin-dot-btn:hover {
-      background: rgba(18, 18, 18, 0.95);
-    }
-   
- 
-   #modalLoginRegistro {
-  backdrop-filter: blur(12px) saturate(180%);
-  background: rgba(10, 8, 22, 0.78); /* fondo morado oscuro translúcido */
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 1100;
-  inset: 0;
-}
-#modalLoginRegistro .modal-contenido {
-  background: radial-gradient(circle at 20% 30%, rgba(212, 175, 55, 0.12), transparent 60%),
-              radial-gradient(circle at 80% 70%, rgba(108, 75, 163, 0.25), transparent 70%),
-              rgba(12, 10, 25, 0.85);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(212, 175, 55, 0.55);
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.6),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-  border-radius: 20px !important;
-  padding: 28px 24px !important;
-  max-width: 380px !important;
-  color: #f5eec2;
-  animation: glassFadeIn 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
-  position: relative;
-  overflow: hidden;
-}
-#modalLoginRegistro .modal-contenido::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.4), transparent 50%);
-  z-index: -1;
-  border-radius: 22px;
-  opacity: 0.6;
-}
-#modalLoginRegistro h2 {
-  text-align: center;
-  margin-top: 0;
-  margin-bottom: 14px;
-  font-size: 1.45rem;
-  letter-spacing: 0.8px;
-  color: #f5eec2;
-  text-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
-}
-.btn-tab {
-  flex: 1;
-  padding: 10px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: transparent;
-  color: #f5eec2;
-  cursor: pointer;
-  font-size: 0.95rem;
-  transition: all 0.25s ease;
-}
-.btn-tab.activo {
-  background: linear-gradient(90deg, #d4af37, #efd28f);
-  color: #000;
-  border-color: transparent;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
-}
-#modalLoginRegistro input {
-  background: rgba(0, 0, 0, 0.45) !important;
-  color: #f5eec2 !important;
-  border: 1px solid rgba(212, 175, 55, 0.35) !important;
-  border-radius: 10px !important;
-  padding: 12px !important;
-  font-size: 1rem;
-  transition: border-color 0.3s, box-shadow 0.3s;
-}
-#modalLoginRegistro input:focus {
-  outline: none;
-  border-color: #d4af37 !important;
-  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.4);
-}
-#modalLoginRegistro input::placeholder {
-  color: rgba(245, 238, 194, 0.7);
-}
-#modalLoginRegistro button {
-  background: linear-gradient(90deg, #d4af37, #b8891e);
-  color: #000 !important;
-  font-weight: 600;
-  border: none;
-  border-radius: 10px !important;
-  padding: 12px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-#modalLoginRegistro button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.5);
-}
-#loginMensaje {
-  color: #ffb3b3 !important;
-  min-height: 1.2em;
-  font-size: 0.9rem;
-  text-align: center;
-}
-
-  
- 
-    /* Contenedor flotante de la tarjeta de lealtad */
-    .lealtad-container {
-      position: fixed;
-      bottom: 100px;
-      right: 20px;
-      z-index: 998;
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .lealtad-container.activo {
-      display: flex;
-    }
-
-    /* Tarjeta de lealtad flotante */
-    .tarjeta-lealtad {
-      background: linear-gradient(135deg, #6c4ba3 0%, #8b6bb4 100%);
-      border-radius: 16px;
-      padding: 20px;
-      width: 320px;
-      box-shadow: 0 8px 24px rgba(108, 75, 163, 0.3);
-      color: white;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      animation: slideInRight 0.4s ease-out;
-    }
-
-    @keyframes slideInRight {
-      from {
-        opacity: 0;
-        transform: translateX(100px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-
-    .tarjeta-lealtad-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-      padding-bottom: 12px;
-    }
-
-    .tarjeta-lealtad-header h3 {
-      margin: 0;
-      font-size: 1.2rem;
-      font-weight: 600;
-    }
-
-    .btn-cerrar-tarjeta {
-      background: rgba(255, 255, 255, 0.2);
-      border: none;
-      color: white;
-      font-size: 1.2rem;
-      cursor: pointer;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-    }
-
-    .btn-cerrar-tarjeta:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: scale(1.1);
-    }
-
-    .cliente-info {
-      margin-bottom: 16px;
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      font-size: 0.95rem;
-    }
-
-    .cliente-info p {
-      margin: 4px 0;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .cliente-info strong {
-      color: #ffd700;
-    }
-
-    /* Sellos de lealtad */
-    .sellos-container {
-      margin: 16px 0;
-      padding: 16px;
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-    }
-
-    .sellos-titulo {
-      font-size: 0.9rem;
-      font-weight: 600;
-      margin-bottom: 12px;
-      text-align: center;
-      color: #ffd700;
-    }
-
-    .sellos-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .sello {
-      width: 100%;
-      aspect-ratio: 1;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.8rem;
-      font-weight: bold;
-      border: 2px dashed rgba(255, 255, 255, 0.3);
-      background: rgba(255, 255, 255, 0.05);
-      transition: all 0.3s ease;
-    }
-
-    .sello.activo {
-      background: linear-gradient(135deg, #ffd700, #ffed4e);
-      border-color: #ffd700;
-      color: #333;
-      box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
-      animation: popIn 0.5s ease-out;
-    }
-
-    @keyframes popIn {
-      0% {
-        transform: scale(0.5);
-        opacity: 0;
-      }
-      50% {
-        transform: scale(1.15);
-      }
-      100% {
-        transform: scale(1);
-        opacity: 1;
-      }
-    }
-
-    .sello.inactivo {
-      color: rgba(255, 255, 255, 0.4);
-    }
-
-    .progreso-lealtad {
-      margin-top: 12px;
-      text-align: center;
-      font-size: 0.85rem;
-      color: #ffd700;
-      font-weight: 600;
-    }
-
-    /* Caja de regalo flotante */
-    .caja-regalo-flotante {
-      width: 20px;
-      height: 20px;
-      background: linear-gradient(135deg, #ff6b6b, #962b3b);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.5rem;
-      cursor: pointer;
-      box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
-      animation: bounce 2s infinite;
-      transition: all 0.3s ease;
-    }
-
-    .caja-regalo-flotante:hover {
-      transform: scale(1.1);
-      box-shadow: 0 8px 24px rgba(255, 107, 107, 0.4);
-    }
-
-    @keyframes bounce {
-      0%, 100% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(-10px);
-      }
-    }
-
-    /* Estado premio obtenido */
-    .estado-premio {
-      background: linear-gradient(135deg, #4caf50, #66bb6a);
-      padding: 12px;
-      border-radius: 8px;
-      text-align: center;
-      font-weight: 600;
-      margin-top: 12px;
-      animation: slideInUp 0.4s ease-out;
-    }
-
-    @keyframes slideInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* Responsive */
-    @media (max-width: 480px) {
-      .lealtad-container {
-        bottom: 80px;
-        right: 10px;
-      }
-
-      .tarjeta-lealtad {
-        width: 280px;
-        padding: 16px;
-      }
-
-      .sellos-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .caja-regalo-flotante {
-        width: 20px;
-        height: 20px;
-        font-size: 2rem;
-      }
-    }
-
-    .glass-visitas {
-  position: fixed;
-  top: 90px;
-  right: 20px;
-  width: 320px;
-  max-height: 60vh;
-  overflow-y: auto;
-  padding: 16px;
-  border-radius: 18px;
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(212,175,55,0.5);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-  color: #f5eec2;
-  z-index: 1300;
-}
-
-.glass-visitas h3 {
-  margin-top: 0;
-  text-align: center;
-  color: #d4af37;
-}
-
-.hidden { display: none; }
-
-.btn-toggle-visitas {
-  position: fixed;
-  top: 90px;
-  right: 20px;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid rgba(212,175,55,0.7);
-  background: rgba(0,0,0,0.65);
-  backdrop-filter: blur(10px);
-  color: #f5eec2;
-  font-size: 1.2rem;
-  cursor: pointer;
-  z-index: 1400;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
-}
-
-.btn-toggle-visitas:hover {
-  background: rgba(15,15,15,0.9);
-  transform: scale(1.05);
-}
-
-.btn-toggle-visitas.hidden {
-  display: none;
-}
-  
-
-  </style>
 </head>
 
 <body>
@@ -1159,16 +590,35 @@ async function buscarCedulaHacienda(cedula) {
       }
     }
 
-    async function cargarProductos() {
-      try {
-        const resp = await fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json");
-        productos = await resp.json();
+   // ============================================
+// CARGAR PRODUCTOS DESDE JSON ESTRUCTURADO POR TIPOS
+// ============================================
+async function cargarProductos() {
+    try {
+        //const resp = await fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json");
+        const resp = await fetch("1productos_esentia.json");
+        const datosPorTipo = await resp.json();
+        
+        // Aplanar el JSON estructurado por tipos a un array simple
+        productos = [];
+        for (const tipo in datosPorTipo) {
+            if (Array.isArray(datosPorTipo[tipo])) {
+                datosPorTipo[tipo].forEach(producto => {
+                    productos.push({
+                        ...producto,
+                        tipo: tipo // Añadir el tipo a cada producto
+                    });
+                });
+            }
+        }
+        
+        console.log("Productos cargados:", productos.length);
         intentarRenderizar();
-      } catch (error) {
+    } catch (error) {
         console.error("Error cargando productos:", error);
         mostrarErrorCarga();
-      }
     }
+}
 
     function mostrarErrorCarga() {
       document.getElementById("loader").style.display = "none";
@@ -1177,79 +627,310 @@ async function buscarCedulaHacienda(cedula) {
     }
 
     function renderizarProductos() {
-      const container = document.getElementById("productos-hogar");
-      const loader = document.getElementById("loader");
-      if (!container || !loader) return;
-      loader.style.display = "none";
-      container.innerHTML = "";
-
-      const fila = document.createElement("div");
-      fila.className = "productos";
-      fila.style.display = "flex";
-      fila.style.flexWrap = "wrap";
-      fila.style.gap = "1.5rem";
-
-      const productosFiltrados = productos.filter(
+    const container = document.getElementById("productos-hogar");
+    const loader = document.getElementById("loader");
+    if (!container || !loader) return;
+    
+    loader.style.display = "none";
+    container.innerHTML = "";
+    
+    // Filtrar productos disponibles con stock
+    const productosFiltrados = productos.filter(
         p => p.disponible && (inventario[p.nombre] ?? 0) > 0
-      );
-
-      if (productosFiltrados.length === 0) {
-        const m = document.createElement("p");
-        m.textContent = "📭 No hay productos disponibles.";
-        m.style.textAlign = "center";
-        m.style.fontSize = "1.2rem";
-        m.style.color = "#666";
-        fila.appendChild(m);
-      }
-
-      productosFiltrados.forEach(p => {
-        const precioFinal = p.precioOferta || p.precio;
-        let estrellas = "";
-        if (p.calificacion) {
-          const llenas = Math.floor(p.calificacion);
-          const media = p.calificacion % 1 >= 0.5;
-          for (let i = 0; i < llenas; i++) estrellas += "⭐";
-          if (media) estrellas += "✨";
-          while (estrellas.length < 5) estrellas += "☆";
-        }
-
-        const precioHTML = p.precioOferta
-          ? `<p><span class="precio-original">₡${p.precioOriginal}</span> ₡${p.precioOferta}</p>`
-          : `<p>₡${p.precio}</p>`;
-
-        const nombreEsc = p.nombre.replace(/'/g, "\\'");
-        const infoEsc = (p.info || "").replace(/`/g, "\\`");
-        const benefEsc = (p.beneficios || "").replace(/`/g, "\\`");
-        const usoEsc = (p.usoRecomendado || "").replace(/`/g, "\\`");
-
-        const div = document.createElement("div");
-        div.className = p.precioOferta ? "producto oferta producto-card" : "producto producto-card";
-        div.dataset.nombre = p.nombre;
-        div.innerHTML = `
-          <div style="position:relative;">
-            <img src="${p.imagen}" alt="${p.nombre}"
-              style="width:100%; max-width:220px; height:220px; object-fit:contain; border-radius:12px; cursor:pointer;"
-              onclick="mostrarInfoProducto('${nombreEsc}', ${precioFinal}, '${p.imagen}', \`${infoEsc}\`, \`${benefEsc}\`, \`${usoEsc}\`)">
-          </div>
-          <h3>${p.nombre}</h3>
-          <div class="estrellas">${estrellas}</div>
-          ${precioHTML}
-          <p class="stock-label">Cargando stock...</p>
-          <button class="btn-agregar"
-            onclick="mostrarInfoProducto('${nombreEsc}', ${precioFinal}, '${p.imagen}', \`${infoEsc}\`, \`${benefEsc}\`, \`${usoEsc}\`)">
-            Ver detalles
-          </button>
+    );
+    
+    if (productosFiltrados.length === 0) {
+        container.innerHTML = `
+            <p style="text-align:center; font-size:1.4rem; color:#666; padding:40px;">
+                📭 No hay productos disponibles.
+            </p>
         `;
-        fila.appendChild(div);
-      });
-
-      container.appendChild(fila);
-
-      if (typeof actualizarCatalogoConStock === "function") actualizarCatalogoConStock();
-      if (localStorage.getItem("adminEsentia") === "1") activarAccionesAdminTarjetas();
+        return;
     }
+    
+    // Agrupar productos por tipo
+    const productosPorTipo = {};
+    productosFiltrados.forEach(p => {
+        const tipo = p.tipo || 'Otros';
+        if (!productosPorTipo[tipo]) {
+            productosPorTipo[tipo] = [];
+        }
+        productosPorTipo[tipo].push(p);
+    });
+    
+    // Crear contenedor principal
+    const mainContainer = document.createElement("div");
+    mainContainer.style.display = "flex";
+    mainContainer.style.flexDirection = "column";
+    mainContainer.style.gap = "30px";
+    
+    // Renderizar cada sección de tipo
+    const tipos = Object.keys(productosPorTipo).sort();
+    
+    tipos.forEach(tipo => {
+        const seccion = document.createElement("div");
+        seccion.className = "seccion-tipo";
+        seccion.style.background = "linear-gradient(135deg, rgba(108, 75, 163, 0.08), transparent)";
+        seccion.style.padding = "25px";
+        seccion.style.borderRadius = "16px";
+        seccion.style.border = "1px solid rgba(108, 75, 163, 0.2)";
+        seccion.style.marginBottom = "20px";
+        
+        const cantidad = productosPorTipo[tipo].length;
+        
+        // Título de la sección
+        const titulo = document.createElement("h2");
+        titulo.className = "titulo-tipo";
+        titulo.style.display = "flex";
+        titulo.style.alignItems = "center";
+        titulo.style.gap = "12px";
+        titulo.style.color = "#6c4ba3";
+        titulo.style.fontSize = "1.8rem";
+        titulo.style.fontWeight = "700";
+        titulo.style.margin = "0 0 20px 0";
+        titulo.style.paddingBottom = "12px";
+        titulo.style.borderBottom = "3px solid rgba(108, 75, 163, 0.3)";
+        titulo.innerHTML = `
+            ${getIconoTipo(tipo)} ${capitalizarPrimeraLetra(tipo)}
+            <span style="font-size:1.2rem; color:#666; font-weight:400; 
+                        background:rgba(212, 175, 55, 0.15); padding:4px 12px; 
+                        border-radius:20px;">
+                ${cantidad} producto${cantidad !== 1 ? 's' : ''}
+            </span>
+        `;
+        seccion.appendChild(titulo);
+        
+        // Grid de productos
+        const grid = document.createElement("div");
+        grid.className = "productos-grid";
+        grid.style.display = "grid";
+        grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(240px, 1fr))";
+        grid.style.gap = "24px";
+        
+        // Renderizar tarjetas de productos
+        productosPorTipo[tipo].forEach(p => {
+            const card = crearTarjetaProducto(p);
+            grid.appendChild(card);
+        });
+        
+        seccion.appendChild(grid);
+        mainContainer.appendChild(seccion);
+    });
+    
+    container.appendChild(mainContainer);
+    
+    if (typeof actualizarCatalogoConStock === "function") {
+        actualizarCatalogoConStock();
+    }
+    
+    if (localStorage.getItem("adminEsentia") === "1") {
+        activarAccionesAdminTarjetas();
+    }
+}
 
-    function mostrarInfoProducto(nombre, precio, imagen, info, beneficios, usoRecomendado) {
+// Función para obtener icono según el tipo
+function getIconoTipo(tipo) {
+    const iconos = {
+        'Aromaterapia': '🌿',
+        'Difusores': '💨',
+        'Velas': '🕯️',
+        'Aceites': '💧',
+        'Perfumes': '🌸',
+        'Ambientadores': '🏠',
+        'Regalos': '🎁',
+        'Limpieza': '🧼',
+        'Otros': '📦'
+    };
+    return iconos[tipo] || '📦';
+}
+
+// Crear tarjeta de producto
+function crearTarjetaProducto(p) {
+    const precioFinal = p.precioOferta || p.precioOriginal || 3000;
+    const precioOriginal = p.precioOriginal || 0;
+    
+    // Generar estrellas según calificación
+    let estrellas = "";
+    if (p.calificacion) {
+        const llenas = Math.floor(p.calificacion);
+        const media = p.calificacion % 1 >= 0.5;
+        for (let i = 0; i < llenas; i++) estrellas += "⭐";
+        if (media) estrellas += "✨";
+        while (estrellas.length < 5) estrellas += "☆";
+    }
+    
+    // Badge de "Nuevo"
+    let badgeNuevo = "";
+    if (p.esNuevo) {
+        badgeNuevo = `
+            <div style="position:absolute; top:10px; left:10px; 
+                        background:linear-gradient(135deg, #ff6b6b, #ff8e8e); 
+                        color:white; padding:4px 10px; border-radius:16px; 
+                        font-size:0.75rem; font-weight:600; 
+                        box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+                🆕 Nuevo
+            </div>
+        `;
+    }
+    
+    // Badge de tipo
+    let badgeTipo = "";
+    if (p.tipo) {
+        badgeTipo = `
+            <div style="position:absolute; top:10px; right:10px; 
+                        background:linear-gradient(135deg, #6c4ba3, #8b6bb4); 
+                        color:white; padding:4px 10px; border-radius:16px; 
+                        font-size:0.75rem; font-weight:600; 
+                        box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+                ${p.tipo}
+            </div>
+        `;
+    }
+    
+    // Formatear precios
+    let precioHTML = "";
+    if (p.precioOferta && precioOriginal > 0) {
+        precioHTML = `
+            <p style="margin:8px 0;">
+                <span style="text-decoration:line-through; color:#999; font-size:0.9rem;">
+                    ₡${precioOriginal.toLocaleString()}
+                </span>
+                <span style="color:#d4af37; font-weight:bold; font-size:1.3rem; margin-left:8px;">
+                    ₡${p.precioOferta.toLocaleString()}
+                </span>
+            </p>
+        `;
+    } else {
+        precioHTML = `
+            <p style="margin:8px 0; font-size:1.3rem; font-weight:bold; color:#6c4ba3;">
+                ₡${precioFinal.toLocaleString()}
+            </p>
+        `;
+    }
+    
+    // Escapar caracteres para onclick
+    const nombreEsc = p.nombre.replace(/'/g, "\\'");
+    const infoEsc = (p.info || "").replace(/`/g, "\\`");
+    const benefEsc = (p.beneficios || "").replace(/`/g, "\\`");
+    const usoEsc = (p.usoRecomendado || "").replace(/`/g, "\\`");
+    
+    // Crear tarjeta
+    const div = document.createElement("div");
+    div.className = p.precioOferta ? "producto-card oferta" : "producto-card";
+    div.dataset.nombre = p.nombre;
+    div.dataset.tipo = p.tipo || 'Otros';
+    div.style.position = "relative";
+    div.style.background = "white";
+    div.style.borderRadius = "16px";
+    div.style.padding = "16px";
+    div.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
+    div.style.transition = "transform 0.3s, box-shadow 0.3s";
+    
+    div.innerHTML = `
+        <div style="position:relative; text-align:center; margin-bottom:12px;">
+            ${badgeNuevo}
+            ${badgeTipo}
+            <img src="${p.imagen.trim()}" alt="${p.nombre}"
+                style="width:100%; height:220px; object-fit:contain; 
+                       border-radius:12px; cursor:pointer; 
+                       transition:transform 0.3s;"
+                onmouseover="this.style.transform='scale(1.05)'"
+                onmouseout="this.style.transform='scale(1)'"
+                onclick="mostrarInfoProducto('${nombreEsc}', ${precioFinal}, '${p.imagen.trim()}', \`${infoEsc}\`, \`${benefEsc}\`, \`${usoEsc}\`)">
+        </div>
+        <h3 style="min-height:2rem; margin:10px 0; font-size:1.1rem; color:#333;">
+            ${p.nombre}
+        </h3>
+        <div style="color:#ffc107; margin:5px 0; min-height:1.2rem;">
+            ${estrellas}
+        </div>
+        ${precioHTML}
+        <p class="stock-label" style="font-size:0.9rem; color:#666; margin:8px 0;">
+            Cargando stock...
+        </p>
+        <button class="btn-agregar"
+            style="width:100%; padding:10px; margin-top:8px; 
+                   background:#6c4ba3; color:white; border:none; 
+                   border-radius:8px; cursor:pointer; font-weight:600;
+                   transition:background 0.3s;"
+            onmouseover="this.style.background='#8b6bb4'"
+            onmouseout="this.style.background='#6c4ba3'"
+            onclick="mostrarInfoProducto('${nombreEsc}', ${precioFinal}, '${p.imagen.trim()}', \`${infoEsc}\`, \`${benefEsc}\`, \`${usoEsc}\`)">
+            Ver detalles
+        </button>
+    `;
+    
+    return div;
+}
+// Obtener icono según el tipo
+function getIconoTipo(tipo) {
+    const iconos = {
+        'frutal': '🍎',
+        'aromatico': '🌿',
+        'citrico': '🍊',
+        'floral': '🌸',
+        'maderoso': '🪵',
+        'dulce': '🍬',
+        'especiado': '🌶️',
+        'fresco': '❄️',
+        'otros': '📦'
+    };
+    return iconos[tipo.toLowerCase()] || '📦';
+}
+
+// Capitalizar primera letra
+function capitalizarPrimeraLetra(str) {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// Actualizar stock en las tarjetas
+function actualizarCatalogoConStock() {
+    const cards = document.querySelectorAll(".producto-card");
+    cards.forEach(card => {
+        const nombre = card.dataset.nombre;
+        const stock = inventario[nombre] ?? 0;
+        const label = card.querySelector(".stock-label");
+        
+        if (!label) return;
+        
+        if (stock > 10) {
+            label.textContent = "✅ En stock";
+            label.style.color = "#28a745";
+        } else if (stock > 0) {
+            label.textContent = `⚠️ Stock: ${stock}`;
+            label.style.color = "#f0ad4e";
+        } else {
+            label.textContent = "❌ Agotado";
+            label.style.color = "#dc3545";
+            const btn = card.querySelector(".btn-agregar");
+            if (btn) btn.disabled = true;
+        }
+    });
+}
+// Filtrar productos por tipo
+function filtrarProductosPorTipo(tipo) {
+    const grids = document.querySelectorAll('.productos-grid');
+    const cards = document.querySelectorAll('.producto-card');
+    
+    if (tipo === 'todos') {
+        // Mostrar todos
+        grids.forEach(grid => grid.style.display = 'grid');
+        return;
+    }
+    
+    // Ocultar todos los grids
+    grids.forEach(grid => grid.style.display = 'none');
+    
+    // Mostrar solo el grid del tipo seleccionado
+    const gridId = `grid-${tipo.toLowerCase().replace(/\s+/g, '-')}`;
+    const gridSeleccionado = document.getElementById(gridId);
+    if (gridSeleccionado) {
+        gridSeleccionado.style.display = 'grid';
+    }
+}
+
+     function mostrarInfoProducto(nombre, precio, imagen, info, beneficios, usoRecomendado) {
       document.getElementById("modalProductoNombre").textContent = nombre;
       document.getElementById("modalProductoImagen").src = imagen;
       document.getElementById("modalProductoInfo").textContent = info;
@@ -1282,13 +963,13 @@ async function buscarCedulaHacienda(cedula) {
 
       document.getElementById("modalProducto").style.display = "flex";
       if (typeof actualizarModalConStock === "function") actualizarModalConStock(nombre);
-    }
+     }
 
-    function cerrarModalProducto() {
+     function cerrarModalProducto() {
       document.getElementById("modalProducto").style.display = "none";
-    }
+     }
 
-    function agregarAlCarritoDesdeModal() {
+     function agregarAlCarritoDesdeModal() {
       if (!productoSeleccionado) return;
 
       let variante = { nombre: "30 ml", precio: 3000 };
@@ -1314,29 +995,29 @@ async function buscarCedulaHacienda(cedula) {
       renderCarrito();
       cerrarModalProducto();
       mostrarToast("Producto añadido al carrito 🛒");
-    }
+     }
 
-    function abrirModalCarrito() {
+     function abrirModalCarrito() {
       document.getElementById("modalCarrito").style.display = "flex";
-    }
+     }
 
-    function cerrarModalCarrito() {
+     function cerrarModalCarrito() {
       document.getElementById("modalCarrito").style.display = "none";
-    }
+     }
 
-    function solicitarAroma() {
+     function solicitarAroma() {
       const msg = encodeURIComponent(
         "Hola, me gustaría un aroma personalizado para mi hogar. 🌸"
       );
       window.open(`https://wa.me/50672952454?text=${msg}`, "_blank");
-    }
+     }
 
-    function copiarEnlaceRecomendacion() {
+     function copiarEnlaceRecomendacion() {
       const url = window.location.href;
       navigator.clipboard.writeText(url).then(() => {
         mostrarToast("Enlace copiado para recomendar 💌");
       });
-    }
+     }
 
     function cerrarSesion() {
       localStorage.removeItem("sesionEsentia");
