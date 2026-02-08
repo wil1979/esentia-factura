@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -35,6 +36,7 @@
     };
     let transacciones = [];
     let clientesCache = {};
+    let metodoDetalleActual = null; // Para el modal de detalle
 
     // ===============================
     // 📥 Cargar datos de métodos de pago
@@ -106,7 +108,9 @@
               pagado: pagado,
               saldo: saldo,
               estado: estado,
-              productos: compra.productos || []
+              productos: compra.productos || [],
+              descuento: compra.descuento || 0,
+              metodoPagoOriginal: compra.metodoPago || 'Pendiente'
             });
           });
         }
@@ -123,7 +127,7 @@
     }
 
     // ===============================
-    // 📊 Renderizar resumen visual
+    // 📊 Renderizar resumen visual CON CLICK
     // ===============================
     function renderizarResumen() {
       const contenedor = document.getElementById('resumen-metodos');
@@ -149,14 +153,23 @@
       `;
       
       contenedor.innerHTML = html;
+      
+      // 👆 Agregar eventos de clic a las tarjetas
+      document.querySelectorAll('.tarjeta-metodo').forEach(tarjeta => {
+        tarjeta.addEventListener('click', function() {
+          const metodo = this.getAttribute('data-metodo');
+          mostrarDetalleMetodo(metodo);
+        });
+      });
     }
     
     function crearTarjetaMetodo(metodo, nombre, color) {
       const datos = resumenMetodos[metodo];
       const porcentaje = datos.monto > 0 ? Math.round((datos.monto / Object.values(resumenMetodos).reduce((sum, m) => sum + m.monto, 0)) * 100) : 0;
       
+      // 🎯 Añadir clase clickable y atributo data-metodo
       return `
-        <div class="resumen-item metodo" style="--color:${color}">
+        <div class="resumen-item metodo tarjeta-metodo" data-metodo="${metodo}" style="--color:${color}">
           <div class="icono-metodo" style="background-color:${color}22; color:${color}">
             ${nombre.split(' ')[0]}
           </div>
@@ -165,13 +178,285 @@
             <span class="valor">₡${datos.monto.toLocaleString('es-CR')}</span>
             <span class="subvalor">${datos.cantidad} pagos | ${datos.clientes.size} clientes</span>
             ${porcentaje > 0 ? `<div class="barra-porcentaje" style="width:${porcentaje}%; background-color:${color}"></div>` : ''}
+            <div class="badge-click">👆 Ver detalle</div>
           </div>
         </div>
       `;
     }
 
     // ===============================
-    // 📋 Renderizar transacciones detalladas
+    // 👁️ MOSTRAR DETALLE DE MÉTODO EN MODAL
+    // ===============================
+    function mostrarDetalleMetodo(metodo) {
+      metodoDetalleActual = metodo;
+      
+      // Mapear nombre legible
+      const nombres = {
+        'efectivo': '💵 Efectivo',
+        'sinpe': '📱 SINPE Móvil',
+        'transferencia': '🏦 Transferencia',
+        'tarjeta': '💳 Tarjeta',
+        'pendiente': '⏳ Pendiente/Crédito'
+      };
+      
+      const nombreMetodo = nombres[metodo] || metodo;
+      const color = {
+        'efectivo': '#4CAF50',
+        'sinpe': '#2196F3',
+        'transferencia': '#FF9800',
+        'tarjeta': '#9C27B0',
+        'pendiente': '#F44336'
+      }[metodo];
+      
+      // Filtrar transacciones de este método
+      const transaccionesMetodo = transacciones.filter(t => t.metodo === metodo);
+      
+      // Calcular totales para este método
+      const totalMonto = transaccionesMetodo.reduce((sum, t) => sum + t.monto, 0);
+      const totalTransacciones = transaccionesMetodo.length;
+      const clientesUnicos = new Set(transaccionesMetodo.map(t => t.clienteId)).size;
+      
+      // Renderizar modal
+      const modal = document.getElementById('modal-detalle-metodo');
+      const contenedor = document.getElementById('detalle-metodo-contenido');
+      
+      let html = `
+        <div class="cabecera-modal" style="border-left-color:${color}">
+          <h2>${nombreMetodo}</h2>
+          <p class="totales-modal">
+            <span class="total-monto" style="color:${color}">₡${totalMonto.toLocaleString('es-CR')}</span>
+            <span class="total-transacciones">${totalTransacciones} transacciones</span>
+            <span class="total-clientes">${clientesUnicos} clientes únicos</span>
+          </p>
+        </div>
+        
+        <div class="acciones-modal">
+          <button onclick="exportarDetalleMetodo('${metodo}')" class="btn-exportar-modal">
+            📥 Exportar a CSV
+          </button>
+          <button onclick="imprimirDetalleMetodo()" class="btn-imprimir-modal">
+            🖨️ Imprimir
+          </button>
+        </div>
+        
+        <div class="tabla-detalle-container">
+          <table class="tabla-detalle-metodo">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Teléfono</th>
+                <th>Monto</th>
+                <th>Descuento</th>
+                <th>Total Factura</th>
+                <th>Estado</th>
+                <th>Productos</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      // Ordenar por fecha descendente
+      transaccionesMetodo.sort((a, b) => (b.fechaObj || 0) - (a.fechaObj || 0));
+      
+      transaccionesMetodo.forEach(trans => {
+        const productosTxt = trans.productos && trans.productos.length > 0
+          ? trans.productos.map(p => `${p.cantidad}× ${p.nombre}`).join(', ')
+          : 'Sin productos';
+        
+        html += `
+          <tr>
+            <td data-label="Fecha">${trans.fecha}</td>
+            <td data-label="Cliente"><strong>${trans.clienteNombre}</strong></td>
+            <td data-label="Teléfono">
+              <a href="https://wa.me/506${trans.clienteTelefono.replace(/\D/g, '')}" 
+                 class="btn-whatsapp-mini" target="_blank">
+                📞 ${trans.clienteTelefono}
+              </a>
+            </td>
+            <td data-label="Monto" class="numero">
+              <strong>₡${trans.monto.toLocaleString('es-CR')}</strong>
+              ${trans.saldo > 0 ? `<br><small class="saldo-pendiente">Saldo: ₡${trans.saldo.toLocaleString('es-CR')}</small>` : ''}
+            </td>
+            <td data-label="Descuento" class="numero">
+              ${trans.descuento > 0 ? `₡${trans.descuento.toLocaleString('es-CR')}` : '-'}
+            </td>
+            <td data-label="Total" class="numero">
+              ₡${trans.montoTotalFactura.toLocaleString('es-CR')}
+            </td>
+            <td data-label="Estado">
+              <span class="badge-estado ${trans.estado === 'pagado' ? 'pagado' : 'pendiente'}">
+                ${trans.estado === 'pagado' ? '✅ Pagado' : '⏳ Pendiente'}
+              </span>
+            </td>
+            <td data-label="Productos" class="productos-col">
+              <small>${productosTxt}</small>
+            </td>
+          </tr>
+        `;
+      });
+      
+      if (transaccionesMetodo.length === 0) {
+        html += `
+          <tr>
+            <td colspan="8" class="sin-datos">
+              No hay transacciones para este método de pago
+            </td>
+          </tr>
+        `;
+      }
+      
+      html += `
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="resumen-pie-modal">
+          <strong>Total:</strong> ${totalTransacciones} transacciones | 
+          <strong>₡${totalMonto.toLocaleString('es-CR')}</strong> total
+        </div>
+      `;
+      
+      contenedor.innerHTML = html;
+      modal.style.display = 'flex';
+      
+      // Prevenir scroll en background
+      document.body.style.overflow = 'hidden';
+    }
+
+    // ===============================
+    // ❌ CERRAR MODAL DETALLE
+    // ===============================
+    function cerrarModalDetalleMetodo() {
+      document.getElementById('modal-detalle-metodo').style.display = 'none';
+      document.body.style.overflow = 'auto';
+      metodoDetalleActual = null;
+    }
+
+    // ===============================
+    // 💾 EXPORTAR DETALLE DE MÉTODO A CSV
+    // ===============================
+    function exportarDetalleMetodo(metodo) {
+      const transaccionesMetodo = transacciones.filter(t => t.metodo === metodo);
+      
+      // Mapear nombre legible
+      const nombres = {
+        'efectivo': 'Efectivo',
+        'sinpe': 'SINPE_Movil',
+        'transferencia': 'Transferencia',
+        'tarjeta': 'Tarjeta',
+        'pendiente': 'Pendiente_Credito'
+      };
+      
+      let csvContent = 'Fecha,Cliente,Teléfono,Monto,Descuento,Total Factura,Estado,Método Original,Productos\n';
+      
+      transaccionesMetodo.forEach(trans => {
+        const productosTxt = trans.productos && trans.productos.length > 0
+          ? trans.productos.map(p => `${p.cantidad}x ${p.nombre}`).join(' | ')
+          : '';
+        
+        csvContent += `"${trans.fecha}","${trans.clienteNombre}","${trans.clienteTelefono}",${trans.monto},${trans.descuento},${trans.montoTotalFactura},"${trans.estado}","${trans.metodoPagoOriginal}","${productosTxt}"\n`;
+      });
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `detalle_${nombres[metodo] || metodo}_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      mostrarToast(`✅ Exportado: ${transaccionesMetodo.length} transacciones`);
+    }
+
+    // ===============================
+    // 🖨️ IMPRIMIR DETALLE
+    // ===============================
+    function imprimirDetalleMetodo() {
+      if (!metodoDetalleActual) return;
+      
+      const metodo = metodoDetalleActual;
+      const nombres = {
+        'efectivo': '💵 Efectivo',
+        'sinpe': '📱 SINPE Móvil',
+        'transferencia': '🏦 Transferencia',
+        'tarjeta': '💳 Tarjeta',
+        'pendiente': '⏳ Pendiente/Crédito'
+      };
+      
+      const transaccionesMetodo = transacciones.filter(t => t.metodo === metodo);
+      const totalMonto = transaccionesMetodo.reduce((sum, t) => sum + t.monto, 0);
+      
+      let contenidoImpresion = `
+        <html>
+        <head>
+          <title>Detalle ${nombres[metodo]}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { color: #333; text-align: center; }
+            .resumen { background: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 8px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+            th { background: #5c6bc0; color: white; }
+            .numero { text-align: right; }
+            .pagado { color: green; }
+            .pendiente { color: red; }
+          </style>
+        </head>
+        <body>
+          <h1>Detalle de Transacciones - ${nombres[metodo]}</h1>
+          <div class="resumen">
+            <p><strong>Total:</strong> ₡${totalMonto.toLocaleString('es-CR')} | ${transaccionesMetodo.length} transacciones</p>
+            <p><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-CR')}</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Monto</th>
+                <th>Total Factura</th>
+                <th>Estado</th>
+                <th>Productos</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      transaccionesMetodo.forEach(trans => {
+        const productosTxt = trans.productos && trans.productos.length > 0
+          ? trans.productos.map(p => `${p.cantidad}x ${p.nombre}`).join(', ')
+          : '';
+        
+        contenidoImpresion += `
+          <tr>
+            <td>${trans.fecha}</td>
+            <td>${trans.clienteNombre}</td>
+            <td class="numero">₡${trans.monto.toLocaleString('es-CR')}</td>
+            <td class="numero">₡${trans.montoTotalFactura.toLocaleString('es-CR')}</td>
+            <td class="${trans.estado}">${trans.estado}</td>
+            <td>${productosTxt}</td>
+          </tr>
+        `;
+      });
+      
+      contenidoImpresion += `
+            </tbody>
+          </table>
+        </body>
+        </html>
+      `;
+      
+      const ventanaImpresion = window.open('', '_blank');
+      ventanaImpresion.document.write(contenidoImpresion);
+      ventanaImpresion.document.close();
+      ventanaImpresion.print();
+    }
+
+    // ===============================
+    // 📋 Renderizar transacciones detalladas (tabla principal)
     // ===============================
     function renderizarTransacciones() {
       const contenedor = document.getElementById('tabla-transacciones');
@@ -272,33 +557,25 @@
     }
 
     // ===============================
-    // 📈 Generar gráficos con Canvas (sin librerías externas)
+    // 📈 Generar gráficos con Canvas
     // ===============================
     function actualizarGraficos() {
-      // Gráfico de Montos por Método
       const canvasMonto = document.getElementById('grafico-monto');
       const ctxMonto = canvasMonto.getContext('2d');
       
-      // Gráfico de Cantidad por Método
       const canvasCantidad = document.getElementById('grafico-cantidad');
       const ctxCantidad = canvasCantidad.getContext('2d');
       
       const metodos = ['efectivo', 'sinpe', 'transferencia', 'tarjeta', 'pendiente'];
       const colores = ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#F44336'];
-      const labels = ['Efectivo', 'SINPE', 'Transferencia', 'Tarjeta', 'Pendiente'];
       
-      // Datos para gráficos
       const montos = metodos.map(m => resumenMetodos[m].monto);
       const cantidades = metodos.map(m => resumenMetodos[m].cantidad);
       
-      // Limpiar canvases anteriores
       ctxMonto.clearRect(0, 0, canvasMonto.width, canvasMonto.height);
       ctxCantidad.clearRect(0, 0, canvasCantidad.width, canvasCantidad.height);
       
-      // Dibujar gráfico de montos
       dibujarGraficoBarras(ctxMonto, montos, colores, 'Montos Totales');
-      
-      // Dibujar gráfico de cantidades
       dibujarGraficoBarras(ctxCantidad, cantidades, colores, 'Cantidad de Pagos');
     }
     
@@ -309,20 +586,16 @@
       const anchoBarra = 40;
       const espacioBarra = 15;
       
-      // Encontrar máximo para escala
       const maximo = Math.max(...valores, 1);
       
-      // Fondo
       ctx.fillStyle = '#f8f9fa';
       ctx.fillRect(0, 0, ancho, alto);
       
-      // Título
       ctx.fillStyle = '#333';
       ctx.font = 'bold 16px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(titulo, ancho / 2, 25);
       
-      // Dibujar barras
       valores.forEach((valor, i) => {
         if (valor === 0) return;
         
@@ -330,15 +603,12 @@
         const x = margen + i * (anchoBarra + espacioBarra);
         const y = alto - margen - alturaBarra;
         
-        // Barra
         ctx.fillStyle = colores[i];
         ctx.fillRect(x, y, anchoBarra, alturaBarra);
         
-        // Borde superior decorativo
         ctx.fillStyle = colores[i].replace(')', ', 0.8)').replace('rgb', 'rgba');
         ctx.fillRect(x - 2, y - 5, anchoBarra + 4, 5);
         
-        // Valor encima
         ctx.fillStyle = '#333';
         ctx.font = 'bold 12px sans-serif';
         ctx.textAlign = 'center';
@@ -349,7 +619,6 @@
           x + anchoBarra/2, y - 10
         );
         
-        // Etiqueta debajo
         ctx.fillStyle = '#666';
         ctx.font = '11px sans-serif';
         ctx.fillText(
@@ -361,7 +630,6 @@
         );
       });
       
-      // Línea base
       ctx.strokeStyle = '#ddd';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -371,13 +639,12 @@
     }
 
     // ===============================
-    // 💾 Exportar a CSV
+    // 💾 Exportar CSV general
     // ===============================
     function exportarCSV() {
       const fechaDesde = document.getElementById('fecha-desde').value || 'inicio';
       const fechaHasta = document.getElementById('fecha-hasta').value || 'actualidad';
       
-      // Filtrar según controles actuales
       let filtradas = [...transacciones];
       if (document.getElementById('fecha-desde').value) {
         filtradas = filtradas.filter(t => t.fecha >= document.getElementById('fecha-desde').value);
@@ -431,13 +698,22 @@
     // 🎛️ Inicialización
     // ===============================
     document.addEventListener('DOMContentLoaded', () => {
-      // Eventos de filtros
       document.getElementById('fecha-desde').addEventListener('change', aplicarFiltros);
       document.getElementById('fecha-hasta').addEventListener('change', aplicarFiltros);
       document.getElementById('filtro-metodo').addEventListener('change', aplicarFiltros);
       
       document.getElementById('btn-recargar').addEventListener('click', cargarMetodosPago);
       document.getElementById('btn-exportar').addEventListener('click', exportarCSV);
+      
+      // Cerrar modal al hacer clic fuera
+      document.getElementById('modal-detalle-metodo').addEventListener('click', function(e) {
+        if (e.target === this) {
+          cerrarModalDetalleMetodo();
+        }
+      });
+      
+      // Botón cerrar modal
+      document.getElementById('btn-cerrar-modal').addEventListener('click', cerrarModalDetalleMetodo);
       
       // Establecer fechas por defecto (últimos 30 días)
       const hoy = new Date();
@@ -465,6 +741,10 @@
     window.cargarMetodosPago = cargarMetodosPago;
     window.exportarCSV = exportarCSV;
     window.aplicarFiltros = aplicarFiltros;
+    window.mostrarDetalleMetodo = mostrarDetalleMetodo;
+    window.cerrarModalDetalleMetodo = cerrarModalDetalleMetodo;
+    window.exportarDetalleMetodo = exportarDetalleMetodo;
+    window.imprimirDetalleMetodo = imprimirDetalleMetodo;
   </script>
   <style>
     :root {
@@ -612,6 +892,15 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       position: relative;
       overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+    
+    .resumen-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      border-color: var(--color);
     }
     
     .resumen-item.metodo {
@@ -626,6 +915,7 @@
       color: white;
       text-align: center;
       padding: 22px;
+      cursor: default;
     }
     
     .resumen-item.total .etiqueta {
@@ -686,6 +976,18 @@
       border-radius: 3px;
       margin-top: 8px;
       background-color: var(--color);
+    }
+    
+    .badge-click {
+      margin-top: 8px;
+      padding: 4px 10px;
+      background: var(--color)15;
+      color: var(--color);
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-block;
+      text-align: center;
     }
     
     .graficos-container {
@@ -850,6 +1152,205 @@
       background: #1b5e20;
     }
     
+    /* ===== MODAL DETALLE MÉTODO ===== */
+    #modal-detalle-metodo {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 3000;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    
+    .modal-contenido-detalle {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      width: 100%;
+      max-width: 1200px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      position: relative;
+      margin-top: 40px;
+    }
+    
+    .cabecera-modal {
+      padding-bottom: 20px;
+      margin-bottom: 25px;
+      border-bottom: 3px solid #5c6bc0;
+      border-left: 6px solid #5c6bc0;
+      padding-left: 15px;
+    }
+    
+    .cabecera-modal h2 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 2rem;
+    }
+    
+    .totales-modal {
+      display: flex;
+      gap: 25px;
+      margin-top: 10px;
+      font-size: 1.1rem;
+    }
+    
+    .total-monto {
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+    
+    .total-transacciones,
+    .total-clientes {
+      color: #666;
+      font-weight: 500;
+    }
+    
+    .acciones-modal {
+      display: flex;
+      gap: 15px;
+      justify-content: flex-end;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .btn-exportar-modal,
+    .btn-imprimir-modal {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 15px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s;
+    }
+    
+    .btn-exportar-modal {
+      background: #2e7d32;
+      color: white;
+      box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
+    }
+    
+    .btn-exportar-modal:hover {
+      background: #1b5e20;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
+    }
+    
+    .btn-imprimir-modal {
+      background: #7b1fa2;
+      color: white;
+      box-shadow: 0 4px 15px rgba(123, 31, 162, 0.3);
+    }
+    
+    .btn-imprimir-modal:hover {
+      background: #4a148c;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(123, 31, 162, 0.4);
+    }
+    
+    .tabla-detalle-container {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    
+    .tabla-detalle-metodo {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+      min-width: 800px;
+    }
+    
+    .tabla-detalle-metodo th {
+      background: #5c6bc0;
+      color: white;
+      padding: 14px 12px;
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      font-size: 0.95rem;
+    }
+    
+    .tabla-detalle-metodo td {
+      padding: 14px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: middle;
+      font-size: 0.95rem;
+    }
+    
+    .tabla-detalle-metodo tr:hover {
+      background-color: rgba(232, 240, 254, 0.5);
+    }
+    
+    .productos-col {
+      max-width: 300px;
+      word-wrap: break-word;
+      font-size: 0.9rem;
+      color: #666;
+    }
+    
+    .btn-whatsapp-mini {
+      color: #128C7E;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    
+    .btn-whatsapp-mini:hover {
+      color: #075E54;
+      text-decoration: underline;
+    }
+    
+    .resumen-pie-modal {
+      background: rgba(232, 240, 254, 0.4);
+      padding: 16px;
+      border-radius: 14px;
+      margin-top: 25px;
+      border-left: 4px solid #5c6bc0;
+      font-weight: 600;
+      color: #3949ab;
+      font-size: 1.1rem;
+      text-align: center;
+    }
+    
+    #btn-cerrar-modal {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: #f44336;
+      color: white;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+      transition: all 0.3s;
+    }
+    
+    #btn-cerrar-modal:hover {
+      background: #d32f2f;
+      transform: rotate(90deg);
+    }
+    
     #loading {
       position: fixed;
       top: 0;
@@ -971,6 +1472,20 @@
       .grupo-fecha {
         min-width: 160px;
       }
+      
+      .modal-contenido-detalle {
+        margin-top: 60px;
+        padding: 40px;
+      }
+      
+      .totales-modal {
+        gap: 40px;
+      }
+      
+      .tabla-detalle-metodo {
+        min-width: 1000px;
+        font-size: 1rem;
+      }
     }
   </style>
 </head>
@@ -1016,7 +1531,6 @@
       </div>
 
       <div id="resumen-metodos">
-        <!-- Se llenará dinámicamente -->
         <div class="resumen-grid">
           <div class="resumen-item" style="grid-column: span 2;">
             <div style="text-align:center; padding:30px; color:#888">
@@ -1055,8 +1569,17 @@
     </div>
   </div>
 
+  <!-- Modal Detalle por Método -->
+  <div id="modal-detalle-metodo">
+    <div class="modal-contenido-detalle">
+      <button id="btn-cerrar-modal">×</button>
+      <div id="detalle-metodo-contenido">
+        <!-- Se llenará dinámicamente -->
+      </div>
+    </div>
+  </div>
+
   <script>
-    // Polyfill básico
     if (!window.customElements) {
       console.log("Cargando en navegador básico");
     }
