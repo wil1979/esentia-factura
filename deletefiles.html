@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🗑️ Eliminar Facturas - Esentia</title>
+  <script type="module">
+    // 🔥 Firebase Config
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getFirestore, collection, getDocs, doc, getDoc, updateDoc, addDoc, deleteDoc, query, where, orderBy
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+      authDomain: "esentia-factura-8345f.firebaseapp.com",
+      projectId: "esentiacreditos-8345f",
+      storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+      messagingSenderId: "888658236080",
+      appId: "1:888658236080:web:506e5e2085b5a452dba175"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ===============================
+    // 📊 Estado global
+    // ===============================
+    let todasLasFacturas = [];
+    let clientesCache = {};
+    let facturaSeleccionada = null;
+    let modoSeguro = true; // Requiere confirmación de 2 pasos
+
+    // ===============================
+    // 📥 Cargar todas las facturas
+    // ===============================
+    async function cargarTodasFacturas() {
+      try {
+        document.getElementById('loading').style.display = 'flex';
+        
+        // 1. Cargar clientes base para nombres
+        const snapClientes = await getDocs(collection(db, "clientesBD"));
+        clientesCache = {};
+        snapClientes.forEach(doc => {
+          clientesCache[doc.id] = { id: doc.id, ...doc.data() };
+        });
+
+        // 2. Cargar TODAS las facturas de todos los clientes
+        todasLasFacturas = [];
+        const snapFacturas = await getDocs(collection(db, "facturas"));
+        
+        for (const docSnap of snapFacturas.docs) {
+          const clienteId = docSnap.id;
+          const cliente = clientesCache[clienteId] || { nombre: 'Cliente #' + clienteId.slice(0,5), telefono: '' };
+          const data = docSnap.data();
+          const compras = data.compras || [];
+          const abonos = data.abonos || [];
+          
+          compras.forEach((compra, index) => {
+            const fecha = compra.fecha ? new Date(compra.fecha) : null;
+            const monto = Number(compra.total ?? (compra.monto - (compra.descuento || 0)));
+            const pagado = Number(compra.pagado || 0);
+            const saldo = Math.max(0, monto - pagado);
+            const tienePagos = pagado > 0;
+            const productos = compra.productos || [];
+            
+            todasLasFacturas.push({
+              id: `${clienteId}_${index}`,
+              clienteId: clienteId,
+              clienteNombre: cliente.nombre || 'Sin nombre',
+              clienteTelefono: cliente.telefono || '',
+              clienteCedula: cliente.cedula || '',
+              index: index,
+              fecha: fecha ? fecha.toISOString().split('T')[0] : 'Sin fecha',
+              fechaObj: fecha,
+              monto: monto,
+              pagado: pagado,
+              saldo: saldo,
+              descuento: Number(compra.descuento || 0),
+              metodoPago: compra.metodoPago || 'Pendiente',
+              productos: productos,
+              tienePagos: tienePagos,
+              abonosRelacionados: abonos.filter(a => {
+                // Heurística: abonos cercanos en fecha y monto
+                const fechaAbono = new Date(a.fecha);
+                const diffDias = Math.abs((fechaAbono - fecha) / (1000 * 60 * 60 * 24));
+                return diffDias <= 2 && a.monto <= monto;
+              })
+            });
+          });
+        }
+        
+        // Ordenar por fecha descendente
+        todasLasFacturas.sort((a, b) => (b.fechaObj || 0) - (a.fechaObj || 0));
+        
+        document.getElementById('loading').style.display = 'none';
+        renderizarListaFacturas();
+        actualizarResumen();
+      } catch (error) {
+        console.error("Error cargando facturas:", error);
+        document.getElementById('loading').style.display = 'none';
+        mostrarToast("❌ Error al cargar facturas: " + error.message);
+      }
+    }
+
+    // ===============================
+    // 📋 Renderizar lista de facturas
+    // ===============================
+    function renderizarListaFacturas() {
+      const contenedor = document.getElementById('lista-facturas');
+      const fechaDesde = document.getElementById('fecha-desde').value;
+      const fechaHasta = document.getElementById('fecha-hasta').value;
+      const clienteFiltro = document.getElementById('filtro-cliente').value.toLowerCase().trim();
+      const montoMin = Number(document.getElementById('monto-min').value) || 0;
+      const incluirPagadas = document.getElementById('incluir-pagadas').checked;
+      const soloConPagos = document.getElementById('solo-con-pagos').checked;
+      
+      // Filtrar facturas
+      let filtradas = [...todasLasFacturas];
+      
+      if (fechaDesde) {
+        filtradas = filtradas.filter(f => f.fecha >= fechaDesde);
+      }
+      if (fechaHasta) {
+        filtradas = filtradas.filter(f => f.fecha <= fechaHasta);
+      }
+      if (clienteFiltro) {
+        filtradas = filtradas.filter(f => 
+          f.clienteNombre.toLowerCase().includes(clienteFiltro) ||
+          f.clienteTelefono.includes(clienteFiltro)
+        );
+      }
+      if (montoMin > 0) {
+        filtradas = filtradas.filter(f => f.monto >= montoMin);
+      }
+      if (!incluirPagadas) {
+        filtradas = filtradas.filter(f => f.saldo > 0);
+      }
+      if (soloConPagos) {
+        filtradas = filtradas.filter(f => f.tienePagos);
+      }
+      
+      // Renderizar
+      let html = `
+        <div class="tabla-responsive">
+          <table class="tabla-facturas">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Monto</th>
+                <th>Pagado</th>
+                <th>Saldo</th>
+                <th>Pagos</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      if (filtradas.length === 0) {
+        html += `
+          <tr>
+            <td colspan="7" class="sin-datos">
+              No hay facturas que coincidan con los filtros
+            </td>
+          </tr>
+        `;
+      } else {
+        filtradas.forEach((factura, idx) => {
+          const colorFila = factura.tienePagos ? '#fff8e1' : '#e8f5e9';
+          const badgePagos = factura.tienePagos 
+            ? `<span class="badge-pagos">${factura.abonosRelacionados.length} pago(s)</span>` 
+            : `<span class="badge-sin-pagos">Sin pagos</span>`;
+          
+          html += `
+            <tr style="background-color:${colorFila}">
+              <td data-label="Fecha">${factura.fecha}</td>
+              <td data-label="Cliente">
+                <strong>${factura.clienteNombre}</strong>
+                ${factura.clienteTelefono ? `<br><small>📞 ${factura.clienteTelefono}</small>` : ''}
+              </td>
+              <td data-label="Monto" class="numero">
+                ₡${factura.monto.toLocaleString('es-CR')}
+              </td>
+              <td data-label="Pagado" class="numero ${factura.pagado > 0 ? 'pagado-positivo' : ''}">
+                ${factura.pagado > 0 ? `₡${factura.pagado.toLocaleString('es-CR')}` : '-'}
+              </td>
+              <td data-label="Saldo" class="numero ${factura.saldo > 0 ? 'saldo-pendiente' : 'saldo-pagado'}">
+                ${factura.saldo > 0 ? `₡${factura.saldo.toLocaleString('es-CR')}` : '✅ Pagada'}
+              </td>
+              <td data-label="Pagos" class="centrado">
+                ${badgePagos}
+              </td>
+              <td data-label="Acciones" class="acciones">
+                <button class="btn-accion ver" onclick="verFactura('${factura.id}')">
+                  👁️
+                </button>
+                <button class="btn-accion eliminar ${factura.tienePagos ? 'riesgo-alto' : ''}" 
+                        onclick="confirmarEliminacion('${factura.id}')"
+                        title="${factura.tienePagos ? '⚠️ Tiene pagos registrados' : 'Eliminar factura'}">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+      }
+      
+      html += `
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="resumen-pie">
+          <strong>${filtradas.length}</strong> facturas | 
+          <strong>₡${filtradas.reduce((sum, f) => sum + f.monto, 0).toLocaleString('es-CR')}</strong> total
+        </div>
+      `;
+      
+      contenedor.innerHTML = html;
+    }
+
+    // ===============================
+    // 👁️ Ver factura en modal
+    // ===============================
+    function verFactura(facturaId) {
+      const factura = todasLasFacturas.find(f => f.id === facturaId);
+      if (!factura) return;
+      
+      facturaSeleccionada = factura;
+      
+      const modal = document.getElementById('modal-vista-factura');
+      const contenedor = document.getElementById('detalle-factura');
+      
+      // Productos
+      const productosHtml = factura.productos.map(p => `
+        <li>
+          ${p.cantidad} × ${p.nombre} 
+          ${p.presentacion ? `(${p.presentacion})` : ''}
+          — ₡${(p.precio || 0).toLocaleString('es-CR')}
+          = ₡${(p.cantidad * (p.precio || 0)).toLocaleString('es-CR')}
+        </li>
+      `).join('');
+      
+      // Abonos relacionados
+      const abonosHtml = factura.abonosRelacionados.length > 0 
+        ? factura.abonosRelacionados.map(a => `
+          <div class="abono-item">
+            📅 ${new Date(a.fecha).toLocaleDateString('es-CR')}<br>
+            💰 ₡${a.monto.toLocaleString('es-CR')} — ${a.metodo}<br>
+            ${a.nota ? `<small>📝 ${a.nota}</small>` : ''}
+          </div>
+        `).join('')
+        : '<div class="sin-datos">Sin abonos registrados</div>';
+      
+      contenedor.innerHTML = `
+        <h3>🧾 Factura Detallada</h3>
+        
+        <div class="info-cliente">
+          <p><strong>Cliente:</strong> ${factura.clienteNombre}</p>
+          <p><strong>Teléfono:</strong> ${factura.clienteTelefono}</p>
+          ${factura.clienteCedula ? `<p><strong>Cédula:</strong> ${factura.clienteCedula}</p>` : ''}
+          <p><strong>Fecha:</strong> ${factura.fecha}</p>
+        </div>
+        
+        <div class="info-montos">
+          <p><strong>Monto:</strong> ₡${factura.monto.toLocaleString('es-CR')}</p>
+          <p><strong>Descuento:</strong> ₡${factura.descuento.toLocaleString('es-CR')}</p>
+          <p><strong>Pagado:</strong> ₡${factura.pagado.toLocaleString('es-CR')}</p>
+          <p class="${factura.saldo > 0 ? 'saldo-pendiente' : 'saldo-pagado'}">
+            <strong>Saldo:</strong> ₡${factura.saldo.toLocaleString('es-CR')}
+          </p>
+          <p><strong>Método:</strong> ${factura.metodoPago}</p>
+        </div>
+        
+        <div class="productos-seccion">
+          <h4>📦 Productos (${factura.productos.length})</h4>
+          <ul>
+            ${productosHtml || '<li>Sin productos registrados</li>'}
+          </ul>
+        </div>
+        
+        <div class="abonos-seccion">
+          <h4>💰 Abonos (${factura.abonosRelacionados.length})</h4>
+          ${abonosHtml}
+        </div>
+        
+        <div class="advertencia ${factura.tienePagos ? 'riesgo-alto' : ''}">
+          ${factura.tienePagos 
+            ? '⚠️ <strong>Esta factura tiene pagos registrados.</strong> Eliminarla afectará el historial financiero del cliente.'
+            : 'ℹ️ Esta factura no tiene pagos registrados. Puede eliminarse sin afectar saldos.'}
+        </div>
+      `;
+      
+      modal.style.display = 'flex';
+    }
+
+    // ===============================
+    // ❌ Confirmar eliminación (2 pasos)
+    // ===============================
+    function confirmarEliminacion(facturaId) {
+      const factura = todasLasFacturas.find(f => f.id === facturaId);
+      if (!factura) return;
+      
+      facturaSeleccionada = factura;
+      
+      // Mostrar modal de confirmación
+      const modal = document.getElementById('modal-confirmar-eliminacion');
+      document.getElementById('confirm-cliente').textContent = factura.clienteNombre;
+      document.getElementById('confirm-monto').textContent = `₡${factura.monto.toLocaleString('es-CR')}`;
+      document.getElementById('confirm-fecha').textContent = factura.fecha;
+      document.getElementById('confirm-pagos').textContent = factura.tienePagos 
+        ? `⚠️ Tiene ${factura.abonosRelacionados.length} pago(s) registrado(s)`
+        : '✅ Sin pagos registrados';
+      
+      // Reset campo de confirmación
+      document.getElementById('campo-confirmacion').value = '';
+      
+      // Mostrar advertencia si tiene pagos
+      const advertencia = document.getElementById('advertencia-eliminacion');
+      if (factura.tienePagos) {
+        advertencia.style.display = 'block';
+        advertencia.innerHTML = `
+          ⚠️ <strong>ADVERTENCIA:</strong> Esta factura tiene pagos registrados.<br>
+          Al eliminarla:<br>
+          • Se perderá el historial de pagos<br>
+          • El saldo del cliente cambiará<br>
+          • No se podrá revertir fácilmente<br><br>
+          ¿Estás <strong>totalmente seguro</strong> de continuar?
+        `;
+      } else {
+        advertencia.style.display = 'none';
+      }
+      
+      modal.style.display = 'flex';
+    }
+
+    // ===============================
+    // ✅ Eliminar factura REAL
+    // ===============================
+    async function eliminarFacturaConfirmada() {
+      if (!facturaSeleccionada) {
+        mostrarToast("❌ No hay factura seleccionada");
+        return;
+      }
+      
+      // Validar campo de confirmación
+      const campo = document.getElementById('campo-confirmacion').value.trim().toLowerCase();
+      const nombreEsperado = facturaSeleccionada.clienteNombre.toLowerCase().split(' ')[0];
+      
+      if (campo !== nombreEsperado) {
+        mostrarToast(`❌ Debes escribir "${nombreEsperado}" para confirmar`);
+        document.getElementById('campo-confirmacion').focus();
+        return;
+      }
+      
+      try {
+        document.getElementById('loading').style.display = 'flex';
+        document.getElementById('modal-confirmar-eliminacion').style.display = 'none';
+        
+        // 1. Obtener documento del cliente
+        const ref = doc(db, "facturas", facturaSeleccionada.clienteId);
+        const snap = await getDoc(ref);
+        
+        if (!snap.exists()) {
+          document.getElementById('loading').style.display = 'none';
+          mostrarToast("❌ Cliente no encontrado");
+          return;
+        }
+        
+        const data = snap.data();
+        const compras = [...(data.compras || [])];
+        
+        // 2. Eliminar la compra específica
+        if (facturaSeleccionada.index >= compras.length) {
+          document.getElementById('loading').style.display = 'none';
+          mostrarToast("❌ Índice de factura inválido");
+          return;
+        }
+        
+        const compraEliminada = compras[facturaSeleccionada.index];
+        compras.splice(facturaSeleccionada.index, 1);
+        
+        // 3. Guardar auditoría de eliminación
+        await addDoc(collection(db, "eliminaciones_facturas"), {
+          clienteId: facturaSeleccionada.clienteId,
+          clienteNombre: facturaSeleccionada.clienteNombre,
+          facturaIndex: facturaSeleccionada.index,
+          monto: facturaSeleccionada.monto,
+          pagado: facturaSeleccionada.pagado,
+          fechaEliminacion: new Date().toISOString(),
+          fechaFactura: facturaSeleccionada.fecha,
+          productos: compraEliminada.productos || [],
+          usuario: "admin", // Podrías integrar autenticación aquí
+          motivo: "Eliminación manual desde herramienta de gestión"
+        });
+        
+        // 4. Actualizar documento
+        await updateDoc(ref, { compras });
+        
+        // 5. Actualizar UI
+        document.getElementById('loading').style.display = 'none';
+        mostrarToast(`✅ Factura eliminada: ${facturaSeleccionada.clienteNombre} - ₡${facturaSeleccionada.monto.toLocaleString('es-CR')}`);
+        
+        // Recargar lista
+        await cargarTodasFacturas();
+        
+      } catch (error) {
+        console.error("Error eliminando factura:", error);
+        document.getElementById('loading').style.display = 'none';
+        mostrarToast("❌ Error al eliminar factura: " + error.message);
+      }
+    }
+
+    // ===============================
+    // 📊 Actualizar resumen
+    // ===============================
+    function actualizarResumen() {
+      const totalFacturas = todasLasFacturas.length;
+      const totalMonto = todasLasFacturas.reduce((sum, f) => sum + f.monto, 0);
+      const facturasConPagos = todasLasFacturas.filter(f => f.tienePagos).length;
+      const totalPagado = todasLasFacturas.reduce((sum, f) => sum + f.pagado, 0);
+      
+      document.getElementById('resumen-facturas').innerHTML = `
+        <div class="resumen-grid">
+          <div class="resumen-item">
+            <span class="etiqueta">Total Facturas</span>
+            <span class="valor">${totalFacturas}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="etiqueta">Monto Total</span>
+            <span class="valor">₡${totalMonto.toLocaleString('es-CR')}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="etiqueta">Con Pagos</span>
+            <span class="valor">${facturasConPagos}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="etiqueta">Total Pagado</span>
+            <span class="valor">₡${totalPagado.toLocaleString('es-CR')}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // ===============================
+    // 💾 Exportar listado (solo lectura)
+    // ===============================
+    function exportarListado() {
+      let csvContent = 'Fecha,Cliente,Teléfono,Monto,Pagado,Saldo,Tiene Pagos\n';
+      
+      todasLasFacturas.forEach(f => {
+        csvContent += `"${f.fecha}","${f.clienteNombre}","${f.clienteTelefono}",${f.monto},${f.pagado},${f.saldo},${f.tienePagos ? 'Sí' : 'No'}\n`;
+      });
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `listado_facturas_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      mostrarToast(`✅ Exportado: ${todasLasFacturas.length} facturas`);
+    }
+
+    // ===============================
+    // 📅 Funciones auxiliares
+    // ===============================
+    function mostrarToast(mensaje) {
+      const toast = document.getElementById('toast');
+      toast.textContent = mensaje;
+      toast.className = 'toast show';
+      
+      setTimeout(() => {
+        toast.className = toast.className.replace('show', '');
+      }, 3000);
+    }
+    
+    function aplicarFiltros() {
+      renderizarListaFacturas();
+    }
+    
+    function cerrarModalVista() {
+      document.getElementById('modal-vista-factura').style.display = 'none';
+      facturaSeleccionada = null;
+    }
+    
+    function cerrarModalConfirmacion() {
+      document.getElementById('modal-confirmar-eliminacion').style.display = 'none';
+      facturaSeleccionada = null;
+    }
+
+    // ===============================
+    // 🎛️ Inicialización
+    // ===============================
+    document.addEventListener('DOMContentLoaded', () => {
+      // Filtros
+      document.getElementById('fecha-desde').addEventListener('change', aplicarFiltros);
+      document.getElementById('fecha-hasta').addEventListener('change', aplicarFiltros);
+      document.getElementById('filtro-cliente').addEventListener('input', aplicarFiltros);
+      document.getElementById('monto-min').addEventListener('input', aplicarFiltros);
+      document.getElementById('incluir-pagadas').addEventListener('change', aplicarFiltros);
+      document.getElementById('solo-con-pagos').addEventListener('change', aplicarFiltros);
+      
+      // Botones
+      document.getElementById('btn-recargar').addEventListener('click', cargarTodasFacturas);
+      document.getElementById('btn-exportar').addEventListener('click', exportarListado);
+      
+      // Modales
+      document.getElementById('modal-vista-factura').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('modal-vista-factura')) {
+          cerrarModalVista();
+        }
+      });
+      
+      document.getElementById('btn-cerrar-vista').addEventListener('click', cerrarModalVista);
+      document.getElementById('btn-cerrar-confirmacion').addEventListener('click', cerrarModalConfirmacion);
+      document.getElementById('btn-cancelar-eliminacion').addEventListener('click', cerrarModalConfirmacion);
+      document.getElementById('btn-confirmar-eliminacion').addEventListener('click', eliminarFacturaConfirmada);
+      
+      // Tecla Enter en campo de confirmación
+      document.getElementById('campo-confirmacion').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          eliminarFacturaConfirmada();
+        }
+      });
+      
+      // Establecer fechas por defecto (últimos 90 días)
+      const hoy = new Date();
+      const hace90 = new Date();
+      hace90.setDate(hoy.getDate() - 90);
+      
+      document.getElementById('fecha-desde').valueAsDate = hace90;
+      document.getElementById('fecha-hasta').valueAsDate = hoy;
+      
+      // Cargar datos iniciales
+      cargarTodasFacturas();
+      
+      // Prevenir zoom en inputs móviles
+      document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('focus', () => {
+          document.body.style.zoom = '1';
+        }, { passive: true });
+      });
+    });
+
+    // Exponer funciones globales
+    window.verFactura = verFactura;
+    window.confirmarEliminacion = confirmarEliminacion;
+    window.eliminarFacturaConfirmada = eliminarFacturaConfirmada;
+    window.cerrarModalVista = cerrarModalVista;
+    window.cerrarModalConfirmacion = cerrarModalConfirmacion;
+    window.cargarTodasFacturas = cargarTodasFacturas;
+    window.mostrarToast = mostrarToast;
+  </script>
+  <style>
+    :root {
+      --color-primary: #8B7500;
+      --color-danger: #c62828;
+      --color-warning: #ff8f00;
+      --color-success: #2e7d32;
+      --color-bg: rgba(255, 255, 255, 0.92);
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      -webkit-tap-highlight-color: rgba(0,0,0,0);
+    }
+    
+    body {
+      background: linear-gradient(135deg, #fff3e0 0%, #ffecb3 100%);
+      color: #333;
+      padding: 12px;
+      min-height: 100vh;
+      overflow-x: hidden;
+      font-size: 16px;
+    }
+    
+    .contenedor-principal {
+      max-width: 100%;
+      margin: 0 auto;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 15px;
+      padding: 0 8px;
+    }
+    
+    h1 {
+      font-size: 1.9rem;
+      color: var(--color-danger);
+      margin-bottom: 8px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+      line-height: 1.3;
+    }
+    
+    .subtitulo {
+      color: #666;
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+      background: rgba(255, 243, 224, 0.7);
+      padding: 10px;
+      border-radius: 12px;
+      border-left: 3px solid var(--color-warning);
+    }
+    
+    .panel {
+      background: var(--color-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(198, 40, 40, 0.25);
+    }
+    
+    .controles-filtro {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 16px;
+      border-left: 3px solid var(--color-danger);
+    }
+    
+    .grupo-filtro {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 140px;
+    }
+    
+    .grupo-filtro label {
+      font-weight: 600;
+      color: #555;
+      font-size: 0.9rem;
+    }
+    
+    .grupo-filtro input,
+    .grupo-filtro select {
+      padding: 11px 14px;
+      border: 2px solid #ddd;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      width: 100%;
+      transition: border-color 0.25s;
+    }
+    
+    .grupo-filtro input:focus,
+    .grupo-filtro select:focus {
+      border-color: var(--color-danger);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.2);
+    }
+    
+    .grupo-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 180px;
+    }
+    
+    .grupo-check input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+    
+    .btn-recargar {
+      background: var(--color-danger);
+      color: white;
+      border: none;
+      padding: 11px 22px;
+      border-radius: 16px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(198, 40, 40, 0.35);
+      flex: 1;
+      min-width: 140px;
+      transition: all 0.2s;
+    }
+    
+    .btn-recargar:active {
+      transform: scale(0.97);
+      background: #b71c1c;
+    }
+    
+    .resumen-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    
+    .resumen-item {
+      background: white;
+      padding: 18px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      border-top: 3px solid var(--color-danger);
+    }
+    
+    .etiqueta {
+      display: block;
+      color: #777;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    
+    .valor {
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: var(--color-danger);
+      line-height: 1.2;
+    }
+    
+    .tabla-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 16px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      margin: 10px 0;
+    }
+    
+    .tabla-facturas {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+      min-width: 650px;
+    }
+    
+    .tabla-facturas th {
+      background: var(--color-danger);
+      color: white;
+      padding: 13px 12px;
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      font-size: 0.95rem;
+    }
+    
+    .tabla-facturas td {
+      padding: 14px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: middle;
+      font-size: 0.95rem;
+    }
+    
+    .tabla-facturas tr:hover {
+      background-color: rgba(255, 245, 245, 0.5) !important;
+    }
+    
+    .numero {
+      text-align: right;
+      font-family: 'Courier New', monospace;
+      font-weight: 600;
+    }
+    
+    .pagado-positivo {
+      color: var(--color-success);
+    }
+    
+    .saldo-pendiente {
+      color: var(--color-danger);
+      font-weight: bold;
+    }
+    
+    .saldo-pagado {
+      color: var(--color-success);
+      font-weight: bold;
+    }
+    
+    .centrado {
+      text-align: center;
+    }
+    
+    .badge-pagos {
+      background: #fff8e1;
+      color: var(--color-warning);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: 1.5px solid #ffd54f;
+    }
+    
+    .badge-sin-pagos {
+      background: #e8f5e9;
+      color: var(--color-success);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: 1.5px solid #81c784;
+    }
+    
+    .acciones {
+      text-align: center;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    
+    .btn-accion {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      transition: all 0.2s;
+    }
+    
+    .btn-accion:active {
+      transform: scale(0.92);
+      opacity: 0.85;
+    }
+    
+    .btn-accion.ver {
+      background: #42A5F5;
+      color: white;
+    }
+    
+    .btn-accion.eliminar {
+      background: var(--color-danger);
+      color: white;
+    }
+    
+    .btn-accion.riesgo-alto {
+      background: var(--color-warning);
+      color: white;
+      box-shadow: 0 0 0 2px rgba(255, 143, 0, 0.5);
+    }
+    
+    .sin-datos {
+      text-align: center;
+      padding: 35px 20px;
+      color: #999;
+      font-style: italic;
+      background: rgba(245, 245, 245, 0.6);
+      font-size: 1.05rem;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+    
+    .resumen-pie {
+      background: rgba(255, 245, 245, 0.8);
+      padding: 14px;
+      border-radius: 14px;
+      margin: 18px 0 10px;
+      border-left: 3px solid var(--color-danger);
+      font-weight: 600;
+      color: var(--color-danger);
+      font-size: 1.05rem;
+      text-align: center;
+    }
+    
+    .acciones-exportar {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 15px;
+    }
+    
+    .btn-exportar {
+      background: #5c6bc0;
+      color: white;
+      border: none;
+      padding: 13px 28px;
+      border-radius: 18px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 16px rgba(92, 107, 192, 0.35);
+      transition: all 0.25s;
+    }
+    
+    .btn-exportar:active {
+      transform: scale(0.97);
+      background: #3949ab;
+    }
+    
+    /* ===== MODAL VISTA FACTURA ===== */
+    #modal-vista-factura {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 3000;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    
+    .modal-contenido-vista {
+      background: white;
+      border-radius: 20px;
+      padding: 25px;
+      width: 100%;
+      max-width: 800px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      position: relative;
+      margin-top: 40px;
+    }
+    
+    .modal-contenido-vista h3 {
+      color: var(--color-danger);
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 1.8rem;
+    }
+    
+    .info-cliente,
+    .info-montos {
+      background: rgba(255, 245, 245, 0.3);
+      padding: 16px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      border-left: 4px solid var(--color-danger);
+    }
+    
+    .info-montos p {
+      margin: 8px 0;
+      font-size: 1.05rem;
+    }
+    
+    .productos-seccion,
+    .abonos-seccion {
+      margin: 25px 0;
+    }
+    
+    .productos-seccion h4,
+    .abonos-seccion h4 {
+      color: var(--color-primary);
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+    }
+    
+    .productos-seccion ul {
+      list-style: none;
+      padding-left: 10px;
+    }
+    
+    .productos-seccion li {
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .abono-item {
+      background: #f9f9f9;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      border-left: 3px solid var(--color-success);
+    }
+    
+    .advertencia {
+      background: #fff8e1;
+      padding: 15px;
+      border-radius: 14px;
+      margin-top: 20px;
+      border-left: 4px solid var(--color-warning);
+      font-weight: 500;
+      color: #5d4037;
+    }
+    
+    .advertencia.riesgo-alto {
+      background: #ffebee;
+      border-left-color: var(--color-danger);
+      color: var(--color-danger);
+    }
+    
+    #btn-cerrar-vista {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: #f44336;
+      color: white;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+    }
+    
+    #btn-cerrar-vista:hover {
+      background: #d32f2f;
+      transform: rotate(90deg);
+    }
+    
+    /* ===== MODAL CONFIRMACIÓN ===== */
+    #modal-confirmar-eliminacion {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 3500;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    
+    .modal-contenido-confirmacion {
+      background: white;
+      border-radius: 24px;
+      padding: 30px;
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+      position: relative;
+      animation: modalEntrada 0.4s ease-out;
+    }
+    
+    @keyframes modalEntrada {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    
+    .modal-contenido-confirmacion h3 {
+      color: var(--color-danger);
+      font-size: 2.2rem;
+      margin-bottom: 15px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .datos-factura {
+      background: rgba(255, 245, 245, 0.4);
+      padding: 20px;
+      border-radius: 18px;
+      margin: 20px 0;
+      border: 2px solid rgba(198, 40, 40, 0.3);
+    }
+    
+    .datos-factura p {
+      margin: 10px 0;
+      font-size: 1.15rem;
+    }
+    
+    .datos-factura strong {
+      color: var(--color-danger);
+      font-size: 1.3rem;
+    }
+    
+    #advertencia-eliminacion {
+      background: #ffebee;
+      color: var(--color-danger);
+      padding: 18px;
+      border-radius: 16px;
+      margin: 20px 0;
+      font-weight: 500;
+      line-height: 1.5;
+      display: none;
+    }
+    
+    .grupo-confirmacion {
+      margin: 25px 0;
+    }
+    
+    .grupo-confirmacion label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 600;
+      color: #555;
+      font-size: 1.05rem;
+    }
+    
+    .grupo-confirmacion input {
+      width: 100%;
+      padding: 14px;
+      border: 3px solid var(--color-danger);
+      border-radius: 16px;
+      font-size: 1.3rem;
+      font-weight: 700;
+      text-align: center;
+      background: rgba(255, 245, 245, 0.3);
+    }
+    
+    .grupo-confirmacion input:focus {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(198, 40, 40, 0.2);
+    }
+    
+    .botones-confirmacion {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 15px;
+    }
+    
+    .btn-confirmar {
+      background: var(--color-danger);
+      color: white;
+      border: none;
+      padding: 16px 30px;
+      border-radius: 20px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex: 1;
+      box-shadow: 0 6px 20px rgba(198, 40, 40, 0.4);
+    }
+    
+    .btn-confirmar:active {
+      transform: scale(0.95);
+      background: #b71c1c;
+    }
+    
+    .btn-cancelar {
+      background: #757575;
+      color: white;
+      border: none;
+      padding: 16px 30px;
+      border-radius: 20px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex: 1;
+      box-shadow: 0 6px 20px rgba(117, 117, 117, 0.4);
+    }
+    
+    .btn-cancelar:active {
+      transform: scale(0.95);
+      background: #424242;
+    }
+    
+    #btn-cerrar-confirmacion {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: rgba(0,0,0,0.1);
+      color: #333;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    
+    #btn-cerrar-confirmacion:hover {
+      background: rgba(0,0,0,0.2);
+    }
+    
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.94);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 2500;
+    }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(198, 40, 40, 0.25);
+      border-top: 5px solid var(--color-danger);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      font-size: 1.5rem;
+      color: var(--color-danger);
+      font-weight: 700;
+      text-align: center;
+      padding: 0 20px;
+      line-height: 1.4;
+    }
+    
+    #toast {
+      visibility: hidden;
+      min-width: 250px;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 16px;
+      padding: 15px 22px;
+      position: fixed;
+      z-index: 4000;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%) translateY(50px);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      font-size: 1.1rem;
+      box-shadow: 0 5px 18px rgba(0,0,0,0.35);
+      max-width: 90%;
+    }
+    
+    #toast.show {
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    
+    @media (min-width: 768px) {
+      body {
+        padding: 20px;
+      }
+      
+      .resumen-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      
+      .tabla-facturas {
+        min-width: auto;
+        font-size: 1rem;
+      }
+      
+      .tabla-facturas th,
+      .tabla-facturas td {
+        padding: 15px 14px;
+      }
+      
+      .btn-accion {
+        width: 44px;
+        height: 44px;
+        font-size: 1.4rem;
+      }
+      
+      .acciones-exportar {
+        justify-content: flex-end;
+      }
+      
+      .modal-contenido-vista {
+        padding: 35px;
+        margin-top: 60px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="toast"></div>
+  
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Cargando facturas...</div>
+    <div style="color:#777; margin-top:12px">Analizando historial completo</div>
+  </div>
+
+  <div class="contenedor-principal">
+    <header>
+      <h1>🗑️ Eliminar Facturas</h1>
+      <div class="subtitulo">
+        ⚠️ <strong>Herramienta de eliminación segura</strong><br>
+        • Vista previa antes de eliminar<br>
+        • Confirmación de 2 pasos obligatoria<br>
+        • Registro de auditoría automático<br>
+        • Advertencias para facturas con pagos
+      </div>
+    </header>
+
+    <div class="panel">
+      <div class="controles-filtro">
+        <div class="grupo-filtro">
+          <label for="fecha-desde">Desde</label>
+          <input type="date" id="fecha-desde">
+        </div>
+        <div class="grupo-filtro">
+          <label for="fecha-hasta">Hasta</label>
+          <input type="date" id="fecha-hasta">
+        </div>
+        <div class="grupo-filtro">
+          <label for="filtro-cliente">Cliente</label>
+          <input type="text" id="filtro-cliente" placeholder="Nombre o teléfono">
+        </div>
+        <div class="grupo-filtro">
+          <label for="monto-min">Monto mínimo (₡)</label>
+          <input type="number" id="monto-min" placeholder="0">
+        </div>
+        <div class="grupo-check">
+          <input type="checkbox" id="incluir-pagadas" checked>
+          <label for="incluir-pagadas">Incluir pagadas</label>
+        </div>
+        <div class="grupo-check">
+          <input type="checkbox" id="solo-con-pagos">
+          <label for="solo-con-pagos">Solo con pagos</label>
+        </div>
+        <button id="btn-recargar" class="btn-recargar">
+          <span>↻</span> Actualizar
+        </button>
+      </div>
+
+      <div id="resumen-facturas">
+        <div class="resumen-grid">
+          <div class="resumen-item">
+            <span class="etiqueta">Cargando...</span>
+            <span class="valor">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="acciones-exportar">
+        <button id="btn-exportar" class="btn-exportar">
+          📥 Exportar Listado (solo lectura)
+        </button>
+      </div>
+      
+      <div id="lista-facturas">
+        <div style="text-align:center; padding:40px 20px; color:#888">
+          <div class="spinner" style="width:45px; height:45px; margin:0 auto 20px;"></div>
+          <div>Cargando facturas...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Vista Factura -->
+  <div id="modal-vista-factura">
+    <div class="modal-contenido-vista">
+      <button id="btn-cerrar-vista">×</button>
+      <div id="detalle-factura">
+        <!-- Se llenará dinámicamente -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Confirmación Eliminación -->
+  <div id="modal-confirmar-eliminacion">
+    <div class="modal-contenido-confirmacion">
+      <button id="btn-cerrar-confirmacion">×</button>
+      <h3>⚠️ ¿Eliminar Factura?</h3>
+      
+      <div class="datos-factura">
+        <p><strong>Cliente:</strong> <span id="confirm-cliente">-</span></p>
+        <p><strong>Monto:</strong> <span id="confirm-monto">₡0</span></p>
+        <p><strong>Fecha:</strong> <span id="confirm-fecha">-</span></p>
+        <p><strong>Estado:</strong> <span id="confirm-pagos">-</span></p>
+      </div>
+      
+      <div id="advertencia-eliminacion"></div>
+      
+      <div class="grupo-confirmacion">
+        <label for="campo-confirmacion">
+          Para confirmar, escribe el <strong>primer nombre</strong> del cliente:
+        </label>
+        <input type="text" id="campo-confirmacion" placeholder="Ej: MARIA">
+      </div>
+      
+      <div class="botones-confirmacion">
+        <button id="btn-cancelar-eliminacion" class="btn-cancelar">
+          ❌ Cancelar
+        </button>
+        <button id="btn-confirmar-eliminacion" class="btn-confirmar">
+          ✅ SÍ, ELIMINAR
+        </button>
+      </div>
+      
+      <div style="margin-top:25px; padding:15px; background:#ffebee; border-radius:14px; font-size:0.9rem;">
+        <strong>ℹ️ Auditoría:</strong> Todas las eliminaciones se registran en la colección <code>eliminaciones_facturas</code> con fecha, usuario y detalles.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Polyfill básico
+    if (!window.customElements) {
+      console.log("Navegador básico detectado");
+    }
+  </script>
+</body>
+</html>
