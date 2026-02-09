@@ -9,7 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Adelia&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Adelia&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-gold: #D4AF37;
@@ -31,7 +31,7 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 12px;
@@ -555,6 +555,18 @@
             font-weight: 600;
             color: #333;
             font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .form-label .catalog-badge {
+            font-size: 0.75rem;
+            background: #E3F2FD;
+            color: var(--primary-green);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
         }
 
         .form-input {
@@ -571,6 +583,18 @@
             outline: none;
             border-color: var(--primary-green);
             box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+
+        .form-input.found {
+            border-color: var(--secondary-green);
+            background: #F1F8E9;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
+        }
+
+        .form-input.not-found {
+            border-color: #F44336;
+            background: #FFEBEE;
+            box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.15);
         }
 
         .form-row {
@@ -761,6 +785,125 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Lista de IDs disponibles */
+        .id-list-container {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #E0E0E0;
+            border-radius: 10px;
+            margin-top: 8px;
+            background: white;
+            display: none;
+        }
+
+        .id-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .id-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 1px solid #F5F5F5;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .id-item:hover {
+            background: #F1F8E9;
+            color: var(--primary-green);
+        }
+
+        .id-item span.id-number {
+            font-weight: 600;
+            color: var(--primary-green);
+            min-width: 40px;
+        }
+
+        .id-item span.id-name {
+            color: #666;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .id-item span.id-category {
+            background: #E3F2FD;
+            color: var(--primary-green);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        /* Autocomplete styles */
+        .autocomplete {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-top: none;
+            z-index: 99;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .autocomplete-items div {
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #E0E0E0;
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+
+        .autocomplete-items div:hover {
+            background-color: #F1F8E9;
+            color: var(--primary-green);
+        }
+
+        .autocomplete-active {
+            background-color: #E8F5E9 !important;
+            color: var(--primary-green) !important;
+        }
+
+        /* Botón de limpiar */
+        .clear-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 4px;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .clear-btn:hover {
+            color: var(--primary-green);
+            background: var(--light-bg);
+        }
+
         /* Optimización específica para iPhone */
         @media (max-width: 768px) {
             body {
@@ -900,6 +1043,59 @@
         /* Animaciones adicionales */
         .fade-in {
             animation: fadeIn 0.5s ease;
+        }
+
+        /* Badge de producto encontrado */
+        .product-found-badge {
+            display: inline-block;
+            margin-top: 6px;
+            padding: 6px 12px;
+            background: #E8F5E9;
+            color: var(--primary-green);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .product-not-found {
+            display: inline-block;
+            margin-top: 6px;
+            padding: 6px 12px;
+            background: #FFEBEE;
+            color: #F44336;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        /* Spinner dentro del input */
+        .input-with-spinner {
+            position: relative;
+        }
+
+        .input-spinner {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(46, 125, 50, 0.3);
+            border-top-color: var(--primary-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
     </style>
 </head>
@@ -1051,17 +1247,22 @@
             </div>
             <form id="productForm">
                 <input type="hidden" id="docId">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">ID Producto *</label>
-                        <input type="text" class="form-input" id="productId" required placeholder="Ej: 123">
+                <div class="form-group">
+                    <label class="form-label">
+                        ID Producto <span class="catalog-badge">Buscar en catálogo</span> *
+                        <i class="fas fa-info-circle" title="Ingresa el ID del producto y los datos se llenarán automáticamente desde el catálogo" style="margin-left: 6px; color: #999; font-size: 0.9rem; cursor: help;"></i>
+                    </label>
+                    <div class="autocomplete">
+                        <input type="text" class="form-input" id="productId" required placeholder="Ej: 123" oninput="searchProductById()" autocomplete="off">
+                        <div id="autocomplete-list" class="autocomplete-items"></div>
                     </div>
+                    <div id="productInfoBadge" style="margin-top: 8px;"></div>
+                </div>
+                <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Nombre *</label>
                         <input type="text" class="form-input" id="productName" required placeholder="Nombre del producto">
                     </div>
-                </div>
-                <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Categoría *</label>
                         <select class="form-input" id="productCategory" required>
@@ -1070,20 +1271,20 @@
                             <option value="Otros">Otros</option>
                         </select>
                     </div>
+                </div>
+                <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Cantidad *</label>
                         <input type="number" class="form-input" id="productQuantity" min="0" value="0" required placeholder="0">
                     </div>
-                </div>
-                <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Precio Venta (₡)</label>
                         <input type="number" class="form-input" id="productPriceSale" min="0" step="0.01" placeholder="0.00">
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Precio Costo (₡)</label>
-                        <input type="number" class="form-input" id="productPriceCost" min="0" step="0.01" placeholder="0.00">
-                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Precio Costo (₡)</label>
+                    <input type="number" class="form-input" id="productPriceCost" min="0" step="0.01" placeholder="0.00">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal()">
@@ -1117,6 +1318,7 @@
 
         let stockData = [];
         let catalogData = {};
+        let allProductIds = [];
 
         // Inicializar al cargar
         window.addEventListener('DOMContentLoaded', async () => {
@@ -1160,13 +1362,169 @@
                 
                 const combined = [...aromaterapia, ...limpieza];
                 catalogData = {};
+                allProductIds = [];
                 
                 combined.forEach(product => {
                     catalogData[product.id] = product;
+                    allProductIds.push({
+                        id: product.id,
+                        nombre: product.nombre || product.nombreOriginal || 'Sin nombre',
+                        categoria: product.categoria || 'N/A'
+                    });
                 });
+                
+                // Ordenar por ID
+                allProductIds.sort((a, b) => a.id - b.id);
             } catch (error) {
                 console.warn('No se pudieron cargar catálogos:', error);
             }
+        }
+
+        // Buscar producto por ID y autocompletar
+        function searchProductById() {
+            const productIdInput = document.getElementById('productId');
+            const productNameInput = document.getElementById('productName');
+            const productCategoryInput = document.getElementById('productCategory');
+            const productPriceSaleInput = document.getElementById('productPriceSale');
+            const productPriceCostInput = document.getElementById('productPriceCost');
+            const productInfoBadge = document.getElementById('productInfoBadge');
+            
+            const productId = productIdInput.value.trim();
+            
+            // Limpiar estilos previos
+            productIdInput.classList.remove('found', 'not-found');
+            productInfoBadge.innerHTML = '';
+            
+            if (!productId) {
+                // Limpiar campos si el ID está vacío
+                productNameInput.value = '';
+                productPriceSaleInput.value = '';
+                productPriceCostInput.value = '';
+                return;
+            }
+            
+            // Buscar en el catálogo
+            const product = catalogData[productId];
+            
+            if (product) {
+                // Producto encontrado - llenar campos automáticamente
+                productIdInput.classList.add('found');
+                
+                productNameInput.value = product.nombre || product.nombreOriginal || '';
+                productPriceSaleInput.value = product.precioOferta || product.precio || '';
+                productPriceCostInput.value = product.preciocompra || '';
+                
+                // Seleccionar categoría
+                if (product.categoria && productCategoryInput.querySelector(`option[value="${product.categoria}"]`)) {
+                    productCategoryInput.value = product.categoria;
+                }
+                
+                // Mostrar badge de confirmación
+                productInfoBadge.innerHTML = `
+                    <div class="product-found-badge">
+                        <i class="fas fa-check-circle"></i> 
+                        Producto encontrado: <strong>${product.nombre || product.nombreOriginal || 'Sin nombre'}</strong>
+                        ${product.categoria ? ` - ${product.categoria}` : ''}
+                    </div>
+                `;
+                
+                showToast(`✅ Datos cargados: ${product.nombre || 'Producto'}`, 'success');
+            } else {
+                // Producto no encontrado
+                productIdInput.classList.add('not-found');
+                
+                // Mostrar badge de error
+                productInfoBadge.innerHTML = `
+                    <div class="product-not-found">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        ID no encontrado en catálogo. Ingresa los datos manualmente.
+                    </div>
+                `;
+                
+                // Limpiar campos (excepto ID)
+                productNameInput.value = '';
+                productPriceSaleInput.value = '';
+                productPriceCostInput.value = '';
+            }
+        }
+
+        // Autocompletar al seleccionar de la lista
+        function autocomplete(inp, arr) {
+            let currentFocus;
+            
+            inp.addEventListener("input", function(e) {
+                let a, b, i, val = this.value;
+                closeAllLists();
+                if (!val) { return false; }
+                currentFocus = -1;
+                
+                a = document.createElement("DIV");
+                a.setAttribute("id", this.id + "autocomplete-list");
+                a.setAttribute("class", "autocomplete-items");
+                this.parentNode.appendChild(a);
+                
+                for (i = 0; i < arr.length; i++) {
+                    const item = arr[i];
+                    const product = catalogData[item.id];
+                    if (item.id.toString().includes(val) || (product && (product.nombre || '').toLowerCase().includes(val.toLowerCase()))) {
+                        b = document.createElement("DIV");
+                        b.innerHTML = `<strong>${item.id}</strong> - ${item.nombre} 
+                            <span style="color: #666; margin-left: 8px;">(${item.categoria})</span>`;
+                        b.innerHTML += "<input type='hidden' value='" + item.id + "'>";
+                        
+                        b.addEventListener("click", function(e) {
+                            inp.value = this.getElementsByTagName("input")[0].value;
+                            closeAllLists();
+                            searchProductById(); // Autocompletar después de seleccionar
+                        });
+                        a.appendChild(b);
+                    }
+                }
+            });
+            
+            inp.addEventListener("keydown", function(e) {
+                let x = document.getElementById(this.id + "autocomplete-list");
+                if (x) x = x.getElementsByTagName("div");
+                if (e.keyCode == 40) {
+                    currentFocus++;
+                    addActive(x);
+                } else if (e.keyCode == 38) {
+                    currentFocus--;
+                    addActive(x);
+                } else if (e.keyCode == 13) {
+                    e.preventDefault();
+                    if (currentFocus > -1) {
+                        if (x) x[currentFocus].click();
+                    }
+                }
+            });
+            
+            function addActive(x) {
+                if (!x) return false;
+                removeActive(x);
+                if (currentFocus >= x.length) currentFocus = 0;
+                if (currentFocus < 0) currentFocus = (x.length - 1);
+                x[currentFocus].classList.add("autocomplete-active");
+            }
+            
+            function removeActive(x) {
+                for (let i = 0; i < x.length; i++) {
+                    x[i].classList.remove("autocomplete-active");
+                }
+            }
+            
+            function closeAllLists(elmnt) {
+                const x = document.getElementsByClassName("autocomplete-items");
+                for (let i = 0; i < x.length; i++) {
+                    if (elmnt != x[i] && elmnt != inp) {
+                        x[i].parentNode.removeChild(x[i]);
+                    }
+                }
+            }
+            
+            document.addEventListener("click", function (e) {
+                closeAllLists(e.target);
+            });
         }
 
         // Normalizar stock
@@ -1219,6 +1577,12 @@
             document.getElementById('saveButtonText').textContent = 'Agregar Producto';
             document.getElementById('productForm').reset();
             document.getElementById('docId').value = '';
+            document.getElementById('productInfoBadge').innerHTML = '';
+            document.getElementById('productId').classList.remove('found', 'not-found');
+            
+            // Inicializar autocomplete
+            autocomplete(document.getElementById('productId'), allProductIds);
+            
             document.getElementById('productModal').classList.add('show');
         }
 
@@ -1233,11 +1597,23 @@
             document.getElementById('productQuantity').value = product.cantidad || 0;
             document.getElementById('productPriceSale').value = product.precioOferta || '';
             document.getElementById('productPriceCost').value = product.preciocompra || '';
+            document.getElementById('productInfoBadge').innerHTML = '';
+            document.getElementById('productId').classList.remove('found', 'not-found');
             document.getElementById('productModal').classList.add('show');
         }
 
         function closeModal() {
             document.getElementById('productModal').classList.remove('show');
+            closeAllAutocompleteLists();
+        }
+
+        function closeAllAutocompleteLists() {
+            const x = document.getElementsByClassName("autocomplete-items");
+            for (let i = 0; i < x.length; i++) {
+                if (x[i].parentNode) {
+                    x[i].parentNode.removeChild(x[i]);
+                }
+            }
         }
 
         // Guardar producto (agregar o editar)
@@ -1245,8 +1621,18 @@
             e.preventDefault();
             
             const docId = document.getElementById('docId').value;
+            const productId = document.getElementById('productId').value.trim();
+            
+            // Validar que el ID exista en el catálogo o confirmar si es manual
+            const productExistsInCatalog = catalogData[productId];
+            
+            if (!productExistsInCatalog) {
+                const confirmed = confirm('⚠️ Este ID no existe en el catálogo. ¿Deseas agregarlo manualmente?');
+                if (!confirmed) return;
+            }
+            
             const data = {
-                id: document.getElementById('productId').value.trim(),
+                id: productId,
                 nombre: document.getElementById('productName').value.trim(),
                 categoria: document.getElementById('productCategory').value,
                 cantidad: parseInt(document.getElementById('productQuantity').value),
@@ -1262,8 +1648,19 @@
                     await db.collection('stock').doc(docId).update(data);
                     showToast('✅ Producto actualizado', 'success');
                 } else {
-                    await db.collection('stock').add(data);
-                    showToast('✅ Producto agregado', 'success');
+                    // Verificar si ya existe en stock
+                    const existing = stockData.find(p => p.id === productId);
+                    if (existing) {
+                        if (!confirm(`⚠️ El producto con ID ${productId} ya existe en el inventario. ¿Deseas actualizarlo en lugar de crear uno nuevo?`)) {
+                            hideProgress();
+                            return;
+                        }
+                        await db.collection('stock').doc(existing.docId).update(data);
+                        showToast('✅ Producto actualizado', 'success');
+                    } else {
+                        await db.collection('stock').add(data);
+                        showToast('✅ Producto agregado', 'success');
+                    }
                 }
                 
                 hideProgress();
