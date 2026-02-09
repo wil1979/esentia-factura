@@ -1,632 +1,1192 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Esentia - Gestión de Inventario</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrador de Stock - Esentia</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-gold: #D4AF37;
+            --primary-green: #2E7D32;
+            --secondary-green: #4CAF50;
+            --dark-green: #1B5E20;
+            --light-bg: #f8f9fa;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --border-radius: 12px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-hover: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: var(--card-bg);
+            padding: 20px 30px;
+            border-radius: var(--border-radius);
+            margin-bottom: 25px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            font-size: 2.5rem;
+            color: var(--primary-gold);
+        }
+
+        .logo-text {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--primary-gold), var(--primary-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light-bg);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--dark-green);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            color: var(--primary-gold);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: var(--light-bg);
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-green);
+            margin: 5px 0;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: var(--primary-green);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--dark-green);
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: #FF9800;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #F57C00;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #F44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #D32F2F;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #607D8B;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #455A64;
+            transform: translateY(-2px);
+        }
+
+        .btn i {
+            font-size: 1.1rem;
+        }
+
+        .table-container {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            overflow-x: auto;
+        }
+
+        .table-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--dark-green);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--primary-green);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--light-bg);
+        }
+
+        tr:hover {
+            background: var(--light-bg);
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-ok {
+            background: #E8F5E9;
+            color: var(--primary-green);
+        }
+
+        .status-warning {
+            background: #FFF3E0;
+            color: #FF9800;
+        }
+
+        .status-error {
+            background: #FFEBEE;
+            color: #F44336;
+        }
+
+        .status-missing {
+            background: #ECEFF1;
+            color: #607D8B;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: var(--shadow);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-success {
+            background: var(--secondary-green);
+        }
+
+        .toast-error {
+            background: #F44336;
+        }
+
+        .toast-warning {
+            background: #FF9800;
+        }
+
+        .toast-info {
+            background: #2196F3;
+        }
+
+        .progress-container {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            display: none;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: var(--light-bg);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-green), var(--secondary-green));
+            transition: width 0.3s ease;
+            border-radius: 12px;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-weight: 600;
+            color: var(--dark-green);
+            margin-top: 5px;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-input {
+            padding: 10px 15px;
+            border: 2px solid var(--light-bg);
+            border-radius: 8px;
+            font-size: 1rem;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--primary-green);
+        }
+
+        .action-cell {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn.edit {
+            background: var(--primary-green);
+            color: white;
+        }
+
+        .action-btn.delete {
+            background: #F44336;
+            color: white;
+        }
+
+        .action-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light-bg);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark-green);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--light-bg);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-green);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+            justify-content: flex-end;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>📋 Esentia - Gestión de Inventario</h1>
-    
-    <div class="tabs">
-      <div class="tab active" onclick="switchTab('inventario')">📦 Inventario</div>
-      <div class="tab" onclick="switchTab('agregar')">➕ Agregar Productos</div>
-      <div class="tab" onclick="switchTab('reportes')">📊 Reportes</div>
-    </div>
-    
-    <!-- Inventario Tab -->
-    <div id="inventario" class="tab-content active">
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">📦 Inventario de Productos</h2>
-          <button class="btn-primary" onclick="loadProducts()">↻ Actualizar</button>
-        </div>
-
-        <!-- Toggle para filtrar por stock > 1 -->
-        <div style="margin: 15px 0; padding: 10px; background: var(--secondary); border-radius: 8px;">
-          <label style="display: flex; align-items: center; gap: 8px;">
-            <input type="checkbox" id="filterStockAboveOne" onchange="toggleStockFilter()">
-            <span>Mostrar solo productos con stock > 1 unidad</span>
-          </label>
-        </div>
-        
-        <div class="inventory-summary">
-          <div class="summary-card">
-            <h3 id="totalProducts">0</h3>
-            <p>Total Productos</p>
-          </div>
-          <div class="summary-card">
-            <h3 id="totalStock">0</h3>
-            <p>Total en Stock</p>
-          </div>
-        </div>
-        
-        <div class="search-container">
-          <div class="search-input">
-            <input type="text" id="searchProduct" placeholder="Buscar producto..." onkeyup="searchProducts()">
-          </div>
-        </div>
-        
-        <div class="table-container">
-          <table id="inventoryTable">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Stock</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="inventoryBody">
-              <!-- Productos se cargarán aquí -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Agregar Productos Tab -->
-    <div id="agregar" class="tab-content">
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">➕ Agregar Productos al Inventario</h2>
-        </div>
-        
-        <div class="form-group">
-          <label for="sourceType">Fuente de Productos:</label>
-          <select id="sourceType" onchange="loadProductSources()">
-            <option value="esencia">Productos de Aromaterapia</option>
-            <!-- <option value="limpieza">Productos de Limpieza</option> -->
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label for="productSelect">Seleccionar Producto:</label>
-          <select id="productSelect" size="10" style="height: auto; min-height: 200px;">
-            <option value="">Cargando productos...</option>
-          </select>
-        </div>
-        
-        <div class="form-row">
-          <div>
-            <label for="productQuantity">Cantidad a Agregar:</label>
-            <input type="number" id="productQuantity" min="1" value="1">
-          </div>
-          <div>
-            <label for="productNotes">Notas (Opcional):</label>
-            <input type="text" id="productNotes" placeholder="Ej: Lote especial, promoción, etc.">
-          </div>
-        </div>
-        
-        <div style="margin-top: 20px;">
-          <button class="btn-success" onclick="addSelectedProduct()">Agregar al Inventario</button>
-          <button class="btn-primary" style="margin-left: 10px;" onclick="openAddAllModal()">Agregar Todos los Productos</button>
-        </div>
-        
-        <div id="productPreview" style="margin-top: 20px; padding: 15px; background: var(--secondary); border-radius: 8px; display: none;">
-          <h3>Producto Seleccionado</h3>
-          <div style="display: flex; align-items: flex-start; gap: 15px;">
-            <img id="previewImage" src="" alt="Imagen del producto" style="width: 10px; height: 10px; object-fit: cover; border-radius: 6px; border: 1px solid #d11515;">
-            <div>
-              <p><strong>Nombre:</strong> <span id="previewName"></span></p>
-              <p><strong>Categoría:</strong> <span id="previewCategory"></span></p>
-              <p><strong>Precio:</strong> ₡<span id="previewPrice"></span></p>
-              <p><strong>Presentación:</strong> <span id="previewPresentation"></span></p>
-              <p><strong>Aroma:</strong> <span id="previewScent"></span></p>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-boxes logo-icon"></i>
+                <span class="logo-text">Administrador de Stock - Esentia</span>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Reportes Tab -->
-    <div id="reportes" class="tab-content">
-      <div class="card">
-        <h2 class="card-title">📊 Reportes de Inventario</h2>
-        
-        <div class="form-row" style="margin-bottom: 20px;">
-          <div>
-            <label for="reportType">Tipo de Reporte:</label>
-            <select id="reportType" onchange="generateReport()">
-              <option value="inventory">Inventario Actual</option>
-              <option value="low-stock">Productos con Bajo Stock</option>
-            </select>
-          </div>
-          <div style="display: flex; align-items: flex-end;">
-            <button class="btn-primary" onclick="generateReport()">Generar Reporte</button>
-          </div>
-        </div>
-        
-        <div id="reportContent">
-          <p style="text-align: center; color: var(--text-light); padding: 40px;">
-            Selecciona un tipo de reporte para generar.
-          </p>
-        </div>
-        
-        <div style="margin-top: 20px; text-align: center;">
-          <button class="btn-secondary" onclick="printReport()">🖨️ Imprimir Reporte</button>
-        </div>
-      </div>
-    </div>
-    
-    <div class="scroll-buttons">
-      <button class="scroll-btn" onclick="scrollToTop()">↑</button>
-      <button class="scroll-btn" onclick="scrollToBottom()">↓</button>
-    </div>
-  </div>
-  
-  <!-- Modal para agregar todos los productos -->
-  <div id="addAllModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 class="modal-title">⚠️ Confirmar Agregar Todos</h2>
-        <span class="close" onclick="closeModal('addAllModal')">&times;</span>
-      </div>
-      <div>
-        <p>¿Estás seguro de que deseas agregar todos los productos de <strong id="confirmSource"></strong> al inventario?</p>
-        <p>Cantidad de productos: <strong id="confirmCount"></strong></p>
-        <p>Cantidad por producto: <strong id="confirmQuantity"></strong></p>
-        <p><em>Esta acción no se puede deshacer.</em></p>
-        
-        <div class="flex" style="margin-top: 20px;">
-          <button type="button" class="btn-secondary flex-1" onclick="closeModal('addAllModal')">Cancelar</button>
-          <button type="button" class="btn-danger flex-1" onclick="confirmAddAllProducts()">Sí, Agregar Todos</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Modal para editar stock -->
-  <div id="editStockModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 class="modal-title" id="editStockTitle">✏️ Editar Stock</h2>
-        <span class="close" onclick="closeModal('editStockModal')">&times;</span>
-      </div>
-      <div>
-        <div class="form-group">
-          <label for="editQuantity">Cantidad Actual:</label>
-          <input type="number" id="editQuantity" min="0">
-        </div>
-        <div class="form-group">
-          <label for="editAction">Acción:</label>
-          <select id="editAction">
-            <option value="set">Establecer cantidad</option>
-            <option value="add">Agregar a cantidad existente</option>
-            <option value="subtract">Restar de cantidad existente</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="editNotes">Notas (Opcional):</label>
-          <input type="text" id="editNotes" placeholder="Motivo del cambio">
-        </div>
-        <div class="flex" style="margin-top: 20px;">
-          <button type="button" class="btn-secondary flex-1" onclick="closeModal('editStockModal')">Cancelar</button>
-          <button type="button" class="btn-primary flex-1" onclick="saveStockEdit()">Guardar Cambios</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <script type="module">
-  // Importar Firebase (¡sin espacios al final!)
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-  
-  // Configuración de Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
-    authDomain: "esentiacreditos-8345f.firebaseapp.com",
-    projectId: "esentiacreditos-8345f",
-    storageBucket: "esentiacreditos-8345f.firebasestorage.app",
-    messagingSenderId: "888658236080",
-    appId: "1:888658236080:web:506e5e2085b5a452dba175"
-  };
-  
-  // Inicializar Firebase
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  
-  // Colección de inventario
-  const stockCollection = collection(db, "stock");
-  
-  // URLs de los JSON (¡CORREGIDAS: sin espacios al final!)
-  const URL_ESENCIA = "https://wil1979.github.io/esentia-factura/productos_esentia.json";
-  const URL_LIMPIEZA = "https://wil1979.github.io/esentia-factura/productos_limpieza_completo.json";
-  
-  // Variables globales
-  let allProducts = [];
-  let currentSource = 'esencia';
-  let currentEditProductId = null;
-  let cachedInventory = [];
+            <div class="header-actions">
+                <span id="lastUpdate" class="last-update"></span>
+            </div>
+        </header>
 
-  // Función para corregir rutas de imagen (elimina /Inventario/)
-  function fixImageUrl(url) {
-    if (!url) return '';
-    return url.replace('/Inventario/images/', '/images/').trim();
-  }
+        <!-- Dashboard de Estadísticas -->
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📊 Estadísticas Generales</span>
+                    <i class="fas fa-chart-bar card-icon"></i>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalProducts">-</div>
+                        <div class="stat-label">Total Productos</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="normalizedCount">-</div>
+                        <div class="stat-label">Normalizados</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="missingIdCount">-</div>
+                        <div class="stat-label">Sin ID</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="lowStockCount">-</div>
+                        <div class="stat-label">Bajo Stock</div>
+                    </div>
+                </div>
+            </div>
 
-  window.switchTab = function(tabName) {
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-    document.getElementById(tabName).classList.add('active');
-    const tabIndex = { 'inventario': 0, 'agregar': 1, 'reportes': 2 }[tabName] + 1;
-    document.querySelector(`.tab:nth-child(${tabIndex})`).classList.add('active');
-    
-    if (tabName === 'inventario') loadProducts();
-    else if (tabName === 'agregar') loadProductSources();
-  }
-  
-  window.scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-  window.scrollToBottom = () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
-  
-  window.loadProductSources = async function() {
-    currentSource = document.getElementById('sourceType').value;
-    const url = currentSource === 'esencia' ? URL_ESENCIA : URL_LIMPIEZA;
-    try {
-      const response = await fetch(url);
-      allProducts = await response.json();
-      renderProductSelect();
-    } catch (error) {
-      console.error("Error al cargar productos:", error);
-      alert("Error al cargar los productos. Por favor, intenta de nuevo.");
-    }
-  }
-  
-  function renderProductSelect() {
-    const select = document.getElementById('productSelect');
-    select.innerHTML = '';
-    if (allProducts.length === 0) {
-      select.innerHTML = '<option>No se encontraron productos</option>';
-      return;
-    }
-    allProducts.forEach((product, index) => {
-      const option = document.createElement('option');
-      option.value = index;
-      option.textContent = `${product.nombre}${product.presentacion ? ` - ${product.presentacion}` : ''}${product.aroma ? ` - ${product.aroma}` : ''}`;
-      select.appendChild(option);
-    });
-    document.getElementById('productPreview').style.display = 'none';
-  }
-  
-  document.getElementById('productSelect').addEventListener('change', function() {
-    const selectedIndex = this.value;
-    if (selectedIndex === '') return;
-    const product = allProducts[selectedIndex];
-    if (!product) return;
-    
-    document.getElementById('previewName').textContent = product.nombre;
-    document.getElementById('previewCategory').textContent = currentSource === 'esencia' ? 'Aromaterapia' : 'Limpieza';
-    document.getElementById('previewPrice').textContent = (product.precioOferta || product.precioPublico || 0).toLocaleString();
-    document.getElementById('previewPresentation').textContent = product.presentacion || 'No especificada';
-    document.getElementById('previewScent').textContent = product.aroma || 'No aplica';
-    // ✅ Placeholder corregido (sin espacios)
-    document.getElementById('previewImage').src = fixImageUrl(product.imagen) || 'https://via.placeholder.com/80?text=Sin+imagen';
-    
-    document.getElementById('productPreview').style.display = 'block';
-  });
-  
-  window.searchProducts = function() {
-    const searchTerm = document.getElementById('searchProduct').value.toLowerCase();
-    let productsToRender = [...cachedInventory];
-    if (document.getElementById('filterStockAboveOne')?.checked) {
-      productsToRender = productsToRender.filter(p => p.cantidad > 1);
-    }
-    if (searchTerm) {
-      productsToRender = productsToRender.filter(p => p.nombre.toLowerCase().includes(searchTerm));
-    }
-    renderInventory(productsToRender);
-  }
-  
-  window.loadProducts = async function() {
-    try {
-      const snapshot = await getDocs(stockCollection);
-      const products = [];
-      snapshot.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
-      cachedInventory = products;
-      applyFilters();
-      updateInventorySummary(products);
-    } catch (error) {
-      console.error("Error al cargar inventario:", error);
-      alert("Error al cargar el inventario.");
-    }
-  }
-  
-  function renderInventory(products) {
-    const tbody = document.getElementById('inventoryBody');
-    tbody.innerHTML = '';
-    if (products.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-light)">No hay productos que coincidan</td></tr>';
-      return;
-    }
-    products.forEach(product => {
-      const safeName = product.nombre.replace(/'/g, "\\'");
-      // ✅ Placeholder corregido (sin espacios)
-      const imgSrc = fixImageUrl(product.imagen) || 'https://via.placeholder.com/48?text=—';
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="display:flex;align-items:center;gap:12px;">
-          <img src="${imgSrc}" alt="${product.nombre}" class="inventory-table-image">
-          ${product.nombre}
-        </td>
-        <td>${product.cantidad}</td>
-        <td class="actions">
-          <button class="btn-warning" onclick="openEditStockModal('${product.id}', '${safeName}', ${product.cantidad})">Editar</button>
-          <button class="btn-danger" onclick="deleteProduct('${product.id}', '${safeName}')">Eliminar</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-  
-  function updateInventorySummary(products) {
-    document.getElementById('totalProducts').textContent = products.length;
-    document.getElementById('totalStock').textContent = products.reduce((sum, p) => sum + p.cantidad, 0).toLocaleString();
-  }
-  
-  function applyFilters() {
-    let productsToRender = [...cachedInventory];
-    if (document.getElementById('filterStockAboveOne')?.checked) {
-      productsToRender = productsToRender.filter(p => p.cantidad > 0);
-    }
-    renderInventory(productsToRender);
-  }
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🔧 Acciones Rápidas</span>
+                    <i class="fas fa-bolt card-icon"></i>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="normalizeStock()">
+                        <i class="fas fa-magic"></i> Normalizar Stock
+                    </button>
+                    <button class="btn btn-warning" onclick="generateReport()">
+                        <i class="fas fa-file-alt"></i> Generar Reporte
+                    </button>
+                </div>
+                <div class="btn-group" style="margin-top: 10px;">
+                    <button class="btn btn-secondary" onclick="showUpdateModal()">
+                        <i class="fas fa-edit"></i> Actualizar Producto
+                    </button>
+                    <button class="btn btn-danger" onclick="exportData()">
+                        <i class="fas fa-download"></i> Exportar Datos
+                    </button>
+                </div>
+            </div>
 
-  window.toggleStockFilter = () => applyFilters();
-  
-  window.addSelectedProduct = async function() {
-    const selectedIndex = document.getElementById('productSelect').value;
-    const quantity = parseInt(document.getElementById('productQuantity').value);
-    const notes = document.getElementById('productNotes').value.trim();
-    
-    if (selectedIndex === '' || isNaN(quantity) || quantity <= 0) {
-      alert('Selecciona un producto e ingresa una cantidad válida.');
-      return;
-    }
-    
-    const product = allProducts[selectedIndex];
-    if (!product) return alert('Producto no encontrado.');
-    
-    try {
-      const snapshot = await getDocs(stockCollection);
-      let existingProduct = null;
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        if (data.nombre === product.nombre) existingProduct = { id: doc.id, ...data };
-      });
-      
-      if (existingProduct) {
-        const newQuantity = existingProduct.cantidad + quantity;
-        await updateDoc(doc(db, "stock", existingProduct.id), {
-          cantidad: newQuantity,
-          ultimaActualizacion: new Date().toISOString(),
-          imagen: fixImageUrl(product.imagen),
-          notas: notes || existingProduct.notas || ''
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📈 Salud de la Base</span>
+                    <i class="fas fa-heartbeat card-icon"></i>
+                </div>
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 4rem; margin-bottom: 10px;" id="healthIcon">❓</div>
+                    <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 5px;" id="healthStatus">Verificando...</div>
+                    <div style="color: #666;" id="healthMessage">Analizando estructura de datos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barra de Progreso -->
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-header">
+                <span class="progress-title" id="progressTitle">Procesando...</span>
+                <span class="progress-text" id="progressText">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Reporte de Productos -->
+        <div class="table-container">
+            <div class="table-title">
+                <i class="fas fa-list"></i> Reporte Detallado de Stock
+            </div>
+            <div class="filter-bar">
+                <input type="text" class="filter-input" id="searchFilter" placeholder="🔍 Buscar por nombre, ID o categoría..." onkeyup="filterTable()">
+                <select class="filter-input" id="statusFilter" onchange="filterTable()">
+                    <option value="all">Todos los estados</option>
+                    <option value="ok">✅ Normalizados</option>
+                    <option value="missing">⚠️ Sin campo ID</option>
+                    <option value="low">📉 Bajo stock</option>
+                </select>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="stockTable">
+                    <thead>
+                        <tr>
+                            <th>ID Documento</th>
+                            <th>ID Producto</th>
+                            <th>Nombre</th>
+                            <th>Categoría</th>
+                            <th>Cantidad</th>
+                            <th>Precio Venta</th>
+                            <th>Precio Costo</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stockTableBody">
+                        <tr>
+                            <td colspan="9" style="text-align: center; padding: 40px; color: #999;">
+                                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-right: 10px;"></i>
+                                Cargando datos del stock...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Actualización -->
+    <div class="modal" id="updateModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">✏️ Actualizar Producto</span>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="updateForm">
+                <input type="hidden" id="docId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">ID Producto</label>
+                        <input type="text" class="form-input" id="productId" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-input" id="productName" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Categoría</label>
+                        <select class="form-input" id="productCategory" required>
+                            <option value="Aromaterapia">Aromaterapia</option>
+                            <option value="Limpieza">Limpieza</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cantidad</label>
+                        <input type="number" class="form-input" id="productQuantity" min="0" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Precio Venta (₡)</label>
+                        <input type="number" class="form-input" id="productPriceSale" min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Precio Costo (₡)</label>
+                        <input type="number" class="form-input" id="productPriceCost" min="0" step="0.01">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDkQGJyTjlbZ2cSGGwUjdm5-2_UvbwJl7w",
+            authDomain: "esentiacreditos-8345f.firebaseapp.com",
+            projectId: "esentiacreditos-8345f",
+            storageBucket: "esentiacreditos-8345f.appspot.com",
+            messagingSenderId: "1013654266372",
+            appId: "1:1013654266372:web:9197b56798838924c88e95"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let stockData = [];
+        let catalogData = {};
+
+        // Inicializar al cargar
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadStockData();
+            await loadCatalogData();
+            updateDashboard();
         });
-        alert(`Producto actualizado.\nNuevo stock: ${newQuantity}`);
-      } else {
-        await addDoc(stockCollection, {
-          nombre: product.nombre,
-          cantidad: quantity,
-          categoria: currentSource === 'esencia' ? 'Aromaterapia' : 'Limpieza',
-          precio: product.precioOferta || product.precioPublico || 0,
-          presentacion: product.presentacion || '',
-          aroma: product.aroma || '',
-          imagen: fixImageUrl(product.imagen),
-          fechaCreacion: new Date().toISOString(),
-          ultimaActualizacion: new Date().toISOString(),
-          notas: notes
-        });
-        alert('Producto agregado al inventario.');
-      }
-      
-      document.getElementById('productQuantity').value = '1';
-      document.getElementById('productNotes').value = '';
-      document.getElementById('productPreview').style.display = 'none';
-    } catch (error) {
-      console.error("Error al agregar producto:", error);
-      alert("Error al agregar el producto.");
-    }
-  }
-  
-  window.openAddAllModal = function() {
-    const quantity = parseInt(document.getElementById('productQuantity').value);
-    if (isNaN(quantity) || quantity <= 0 || allProducts.length === 0) {
-      alert(allProducts.length === 0 ? 'No hay productos.' : 'Cantidad inválida.');
-      return;
-    }
-    document.getElementById('confirmSource').textContent = currentSource === 'esencia' ? 'Aromaterapia' : 'Limpieza';
-    document.getElementById('confirmCount').textContent = allProducts.length;
-    document.getElementById('confirmQuantity').textContent = quantity;
-    document.getElementById('addAllModal').style.display = 'flex';
-  }
-  
-  window.closeModal = (modalId) => document.getElementById(modalId).style.display = 'none';
-  
-  window.confirmAddAllProducts = async function() {
-    const quantity = parseInt(document.getElementById('productQuantity').value);
-    try {
-      const snapshot = await getDocs(stockCollection);
-      const currentInventory = {};
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        currentInventory[data.nombre] = { id: doc.id, ...data };
-      });
-      
-      let added = 0, updated = 0;
-      for (const product of allProducts) {
-        const cleanImage = fixImageUrl(product.imagen);
-        if (currentInventory[product.nombre]) {
-          const ex = currentInventory[product.nombre];
-          await updateDoc(doc(db, "stock", ex.id), {
-            cantidad: ex.cantidad + quantity,
-            ultimaActualizacion: new Date().toISOString(),
-            imagen: cleanImage,
-            notas: ex.notas || ''
-          });
-          updated++;
-        } else {
-          await addDoc(stockCollection, {
-            nombre: product.nombre,
-            cantidad: quantity,
-            categoria: currentSource === 'esencia' ? 'Aromaterapia' : 'Limpieza',
-            precio: product.precioOferta || product.precioPublico || 0,
-            presentacion: product.presentacion || '',
-            aroma: product.aroma || '',
-            imagen: cleanImage,
-            fechaCreacion: new Date().toISOString(),
-            ultimaActualizacion: new Date().toISOString()
-          });
-          added++;
+
+        // Cargar datos del stock
+        async function loadStockData() {
+            try {
+                showProgress('Cargando datos del stock...', 30);
+                const snapshot = await db.collection('stock').get();
+                stockData = [];
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    stockData.push({
+                        docId: doc.id,
+                        ...data
+                    });
+                });
+                
+                hideProgress();
+                showToast('Datos cargados exitosamente', 'success');
+                renderTable();
+            } catch (error) {
+                hideProgress();
+                showToast('Error al cargar stock: ' + error.message, 'error');
+                console.error('Error loading stock:', error);
+            }
         }
-      }
-      alert(`✅ Completado.\nAgregados: ${added}\nActualizados: ${updated}`);
-      closeModal('addAllModal');
-      switchTab('inventario');
-      loadProducts();
-    } catch (error) {
-      console.error("Error al agregar todos:", error);
-      alert("Error al procesar.");
-    }
-  }
-  
-  window.openEditStockModal = function(productId, name, qty) {
-    currentEditProductId = productId;
-    document.getElementById('editStockTitle').textContent = `✏️ Editar Stock: ${name}`;
-    document.getElementById('editQuantity').value = qty;
-    document.getElementById('editAction').value = 'set';
-    document.getElementById('editNotes').value = '';
-    document.getElementById('editStockModal').style.display = 'flex';
-  }
-  
-  window.saveStockEdit = async function() {
-    const qty = parseInt(document.getElementById('editQuantity').value);
-    const action = document.getElementById('editAction').value;
-    const notes = document.getElementById('editNotes').value.trim();
-    
-    if (isNaN(qty) || qty < 0 || !currentEditProductId) {
-      alert('Datos inválidos.');
-      return;
-    }
-    
-    try {
-      const docRef = doc(db, "stock", currentEditProductId);
-      const snap = await getDoc(docRef);
-      if (!snap.exists()) return alert('Producto no encontrado.');
-      
-      const data = snap.data();
-      let finalQty = qty;
-      if (action === 'add') finalQty = data.cantidad + qty;
-      else if (action === 'subtract') finalQty = Math.max(0, data.cantidad - qty);
-      
-      await updateDoc(docRef, {
-        cantidad: finalQty,
-        ultimaActualizacion: new Date().toISOString(),
-        notas: notes || data.notas || ''
-      });
-      alert('Stock actualizado.');
-      closeModal('editStockModal');
-      loadProducts();
-    } catch (error) {
-      console.error("Error al editar stock:", error);
-      alert("Error al guardar cambios.");
-    }
-  }
-  
-  window.deleteProduct = async function(id, name) {
-    if (!confirm(`¿Eliminar "${name}" del inventario?`)) return;
-    try {
-      await deleteDoc(doc(db, "stock", id));
-      alert('Producto eliminado.');
-      loadProducts();
-    } catch (error) {
-      console.error("Error al eliminar:", error);
-      alert("Error al eliminar producto.");
-    }
-  }
-  
-  // Reportes
-  window.generateReport = function() {
-    const type = document.getElementById('reportType').value;
-    document.getElementById('reportContent').innerHTML = 
-      type === 'inventory' ? generateInventoryReport() :
-      type === 'low-stock' ? generateLowStockReport() :
-      '<p>Selecciona un tipo de reporte.</p>';
-  }
-  
-  function generateInventoryReport() {
-    const rows = Array.from(document.querySelectorAll('#inventoryBody tr')).filter(r => !r.textContent.includes('No hay productos'));
-    if (rows.length === 0) return '<p style="text-align:center;color:#d32f2f;padding:40px;">No hay productos en el inventario</p>';
-    
-    const products = rows.map(r => {
-      const tds = r.querySelectorAll('td');
-      return { nombre: tds[0].textContent.replace(/^(.*?)(?=\s*₡|$)/, '').trim(), cantidad: parseInt(tds[1].textContent) };
-    });
-    
-    let html = `<h3>📊 Reporte de Inventario - ${new Date().toLocaleDateString()}</h3>`;
-    html += `<div style="margin:20px 0;padding:15px;background:#f5f5f5;border-radius:8px;">`;
-    html += `<p><strong>Total Productos:</strong> ${products.length}</p>`;
-    html += `<p><strong>Total Stock:</strong> ${products.reduce((a,b)=>a+b.cantidad,0)}</p></div>`;
-    html += `<table style="width:100%;border-collapse:collapse;margin:15px 0;"><thead><tr style="background:#6c4ba3;color:white;">`;
-    html += `<th style="padding:10px;text-align:left;">Producto</th><th style="padding:10px;text-align:center;">Cantidad</th></tr></thead><tbody>`;
-    products.forEach(p => html += `<tr><td style="padding:10px;border-bottom:1px solid #ddd;">${p.nombre}</td><td style="padding:10px;text-align:center;border-bottom:1px solid #ddd;">${p.cantidad}</td></tr>`);
-    html += `</tbody></table>`;
-    return html;
-  }
-  
-  function generateLowStockReport() {
-    const rows = Array.from(document.querySelectorAll('#inventoryBody tr')).filter(r => !r.textContent.includes('No hay productos'));
-    const products = rows.map(r => {
-      const tds = r.querySelectorAll('td');
-      return { nombre: tds[0].textContent.replace(/^(.*?)(?=\s*₡|$)/, '').trim(), cantidad: parseInt(tds[1].textContent) };
-    }).filter(p => p.cantidad <= 5);
-    
-    if (products.length === 0) return '<p style="text-align:center;color:#388e3c;font-weight:bold;padding:40px;">¡No hay productos con bajo stock!</p>';
-    
-    let html = `<h3>⚠️ Reporte de Bajo Stock - ${new Date().toLocaleDateString()}</h3>`;
-    html += `<p style="color:#d32f2f;font-weight:bold;">${products.length} productos necesitan reabastecimiento.</p>`;
-    html += `<table style="width:100%;border-collapse:collapse;margin:15px 0;"><thead><tr style="background:#d32f2f;color:white;">`;
-    html += `<th style="padding:10px;text-align:left;">Producto</th><th style="padding:10px;text-align:center;">Cantidad</th></tr></thead><tbody>`;
-    products.forEach(p => html += `<tr><td style="padding:10px;border-bottom:1px solid #ddd;">${p.nombre}</td><td style="padding:10px;text-align:center;color:#d32f2f;font-weight:bold;border-bottom:1px solid #ddd;">${p.cantidad}</td></tr>`);
-    html += `</tbody></table>`;
-    html += `<div style="margin-top:20px;padding:15px;background:#fff8e1;border-radius:8px;"><h4>Recomendaciones</h4><ul><li>Revisar stock crítico (<5 u)</li><li>Contactar proveedores</li></ul></div>`;
-    return html;
-  }
-  
-  window.printReport = function() {
-    const content = document.getElementById('reportContent').innerHTML;
-    if (!content || content.includes('Selecciona')) return alert('Genera un reporte primero.');
-    
-    const title = document.getElementById('reportType').value === 'low-stock' 
-      ? 'Reporte de Productos con Bajo Stock' 
-      : 'Reporte de Inventario';
-    
-    const win = window.open('', '_blank', 'width=800,height=600');
-    win.document.write(`
-      <html><head><title>${title}</title><style>
-        body { font-family: Arial, sans-serif; padding: 40px; color: #333; max-width: 1000px; margin: 0 auto; }
-        h1, h2, h3 { color: #6c4ba3; }
-        h1 { text-align: center; border-bottom: 3px solid #6c4ba3; padding-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #6c4ba3; color: white; }
-        @media print { .no-print { display: none; } }
-      </style></head>
-      <body><h1>${title}</h1><p><strong>Fecha:</strong> ${new Date().toLocaleDateString()}</p><hr>${content}
-      <div class="no-print" style="text-align:center;margin-top:30px;">
-        <button onclick="window.print()" style="padding:10px 20px;background:#6c4ba3;color:white;border:none;border-radius:5px;">🖨️ Imprimir</button>
-      </div></body></html>
-    `);
-    win.document.close();
-  }
-  
-  document.addEventListener('DOMContentLoaded', () => {
-    loadProducts();
-    loadProductSources();
-    document.getElementById('searchProduct').addEventListener('keyup', searchProducts);
-  });
-</script>
+
+        // Cargar catálogo (JSON local o desde Firestore)
+        async function loadCatalogData() {
+            try {
+                // Intentar cargar desde archivos JSON locales
+                const [aromaterapia, limpieza] = await Promise.all([
+                    fetch('productos_esentia.json').then(r => r.json()).catch(() => []),
+                    fetch('productos_limpieza_completo.json').then(r => r.json()).catch(() => [])
+                ]);
+                
+                // Combinar catálogos
+                const combined = [...aromaterapia, ...limpieza];
+                catalogData = {};
+                
+                combined.forEach(product => {
+                    catalogData[product.id] = product;
+                });
+            } catch (error) {
+                console.warn('No se pudieron cargar catálogos locales:', error);
+            }
+        }
+
+        // Normalizar stock
+        async function normalizeStock() {
+            try {
+                const missingIdDocs = stockData.filter(p => !p.id);
+                
+                if (missingIdDocs.length === 0) {
+                    showToast('✅ Todos los documentos ya tienen campo ID', 'success');
+                    return;
+                }
+
+                if (!confirm(`Se encontrarán ${missingIdDocs.length} documentos sin campo ID. ¿Deseas normalizarlos?`)) {
+                    return;
+                }
+
+                showProgress('Normalizando documentos...', 0);
+                let updated = 0;
+
+                for (let i = 0; i < missingIdDocs.length; i++) {
+                    const product = missingIdDocs[i];
+                    const progress = Math.round((i / missingIdDocs.length) * 100);
+                    updateProgress(`Procesando ${i + 1}/${missingIdDocs.length}...`, progress);
+
+                    try {
+                        // Intentar obtener ID del catálogo o usar docId como fallback
+                        const catalogMatch = Object.values(catalogData).find(catProd => 
+                            catProd.nombreOriginal === product.nombre || 
+                            catProd.nombre === product.nombre
+                        );
+
+                        const newId = catalogMatch ? catalogMatch.id : product.docId;
+
+                        await db.collection('stock').doc(product.docId).update({
+                            id: newId.toString()
+                        });
+
+                        updated++;
+                    } catch (error) {
+                        console.error(`Error actualizando ${product.docId}:`, error);
+                    }
+                }
+
+                hideProgress();
+                showToast(`✅ Normalización completada: ${updated} documentos actualizados`, 'success');
+                await loadStockData();
+            } catch (error) {
+                hideProgress();
+                showToast('Error en normalización: ' + error.message, 'error');
+            }
+        }
+
+        // Actualizar producto individual
+        function showUpdateModal(product = null) {
+            document.getElementById('updateModal').classList.add('show');
+            
+            if (product) {
+                document.getElementById('docId').value = product.docId;
+                document.getElementById('productId').value = product.id || '';
+                document.getElementById('productName').value = product.nombre || '';
+                document.getElementById('productCategory').value = product.categoria || 'Aromaterapia';
+                document.getElementById('productQuantity').value = product.cantidad || 0;
+                document.getElementById('productPriceSale').value = product.precioOferta || '';
+                document.getElementById('productPriceCost').value = product.preciocompra || '';
+            } else {
+                document.getElementById('updateForm').reset();
+                document.getElementById('docId').value = '';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('updateModal').classList.remove('show');
+        }
+
+        document.getElementById('updateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const docId = document.getElementById('docId').value;
+            const data = {
+                id: document.getElementById('productId').value.trim(),
+                nombre: document.getElementById('productName').value.trim(),
+                categoria: document.getElementById('productCategory').value,
+                cantidad: parseInt(document.getElementById('productQuantity').value),
+                precioOferta: parseFloat(document.getElementById('productPriceSale').value) || null,
+                preciocompra: parseFloat(document.getElementById('productPriceCost').value) || null,
+                ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                showProgress('Guardando cambios...', 50);
+                
+                if (docId) {
+                    // Actualizar documento existente
+                    await db.collection('stock').doc(docId).update(data);
+                    showToast('✅ Producto actualizado exitosamente', 'success');
+                } else {
+                    // Crear nuevo documento
+                    await db.collection('stock').add(data);
+                    showToast('✅ Producto creado exitosamente', 'success');
+                }
+                
+                hideProgress();
+                closeModal();
+                await loadStockData();
+            } catch (error) {
+                hideProgress();
+                showToast('Error al guardar: ' + error.message, 'error');
+            }
+        });
+
+        // Generar reporte
+        function generateReport() {
+            const missingId = stockData.filter(p => !p.id);
+            const lowStock = stockData.filter(p => p.cantidad < 5 && p.cantidad >= 0);
+            const normalized = stockData.filter(p => p.id);
+
+            let report = `=== REPORTE DE STOCK - ESENTIA ===\n`;
+            report += `Fecha: ${new Date().toLocaleString()}\n\n`;
+            report += `ESTADÍSTICAS GENERALES:\n`;
+            report += `Total productos: ${stockData.length}\n`;
+            report += `Normalizados: ${normalized.length}\n`;
+            report += `Sin campo ID: ${missingId.length}\n`;
+            report += `Bajo stock (<5): ${lowStock.length}\n\n`;
+
+            if (missingId.length > 0) {
+                report += `⚠️ PRODUCTOS SIN CAMPO ID:\n`;
+                missingId.forEach(p => {
+                    report += `- DocID: ${p.docId} | Nombre: ${p.nombre || 'N/A'} | Cantidad: ${p.cantidad || 0}\n`;
+                });
+                report += `\n`;
+            }
+
+            if (lowStock.length > 0) {
+                report += `📉 PRODUCTOS CON BAJO STOCK:\n`;
+                lowStock.forEach(p => {
+                    report += `- ID: ${p.id || 'N/A'} | ${p.nombre || 'N/A'} | Stock: ${p.cantidad}\n`;
+                });
+                report += `\n`;
+            }
+
+            report += `✅ PRODUCTOS NORMALIZADOS: ${normalized.length}\n`;
+            
+            // Descargar reporte
+            const blob = new Blob([report], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `reporte_stock_${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showToast('📄 Reporte generado y descargado', 'success');
+        }
+
+        // Exportar datos
+        function exportData() {
+            const exportData = stockData.map(p => ({
+                id: p.id || 'N/A',
+                nombre: p.nombre || 'N/A',
+                categoria: p.categoria || 'N/A',
+                cantidad: p.cantidad || 0,
+                precioOferta: p.precioOferta || 0,
+                preciocompra: p.preciocompra || 0,
+                docId: p.docId
+            }));
+
+            const csv = convertToCSV(exportData);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `stock_completo_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showToast('📊 Datos exportados a CSV', 'success');
+        }
+
+        function convertToCSV(data) {
+            if (data.length === 0) return '';
+            
+            const headers = Object.keys(data[0]);
+            const rows = data.map(obj => 
+                headers.map(header => {
+                    const value = obj[header];
+                    return `"${value !== null && value !== undefined ? value.toString().replace(/"/g, '""') : ''}"`;
+                }).join(',')
+            );
+            
+            return [headers.join(','), ...rows].join('\n');
+        }
+
+        // Renderizar tabla
+        function renderTable() {
+            const tbody = document.getElementById('stockTableBody');
+            tbody.innerHTML = '';
+
+            if (stockData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 40px; color: #999;">
+                            <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 10px;"></i><br>
+                            No hay productos en el stock
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            stockData.forEach(product => {
+                const hasId = !!product.id;
+                const isLowStock = product.cantidad < 5 && product.cantidad >= 0;
+                const status = !hasId ? 'missing' : isLowStock ? 'low' : 'ok';
+                
+                const catalogInfo = catalogData[product.id] || {};
+                const categoryName = product.categoria || catalogInfo.categoria || 'N/A';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="font-family: monospace; font-size: 0.9rem;">${product.docId.substring(0, 8)}...</td>
+                    <td style="font-weight: 600;">${product.id || '⚠️ N/A'}</td>
+                    <td>${product.nombre || 'Sin nombre'}</td>
+                    <td><span style="background: #E3F2FD; padding: 4px 10px; border-radius: 12px; font-size: 0.9rem;">${categoryName}</span></td>
+                    <td style="font-weight: 700; color: ${isLowStock ? '#F44336' : '#2E7D32'};">
+                        ${product.cantidad || 0}
+                    </td>
+                    <td>₡${(product.precioOferta || catalogInfo.precioOferta || 0).toLocaleString()}</td>
+                    <td>₡${(product.preciocompra || catalogInfo.preciocompra || 0).toLocaleString()}</td>
+                    <td>
+                        <span class="status-badge status-${status}">
+                            ${!hasId ? '⚠️ Sin ID' : isLowStock ? '📉 Bajo stock' : '✅ OK'}
+                        </span>
+                    </td>
+                    <td class="action-cell">
+                        <button class="action-btn edit" onclick="showUpdateModal(${JSON.stringify(product).replace(/'/g, '\\\'')})" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        ${!hasId ? `<button class="action-btn edit" onclick="fixMissingId('${product.docId}')" title="Asignar ID">
+                            <i class="fas fa-magic"></i>
+                        </button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Filtrar tabla
+        function filterTable() {
+            const searchTerm = document.getElementById('searchFilter').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            const filtered = stockData.filter(product => {
+                // Búsqueda
+                const matchesSearch = 
+                    (product.id && product.id.toString().includes(searchTerm)) ||
+                    (product.nombre && product.nombre.toLowerCase().includes(searchTerm)) ||
+                    (product.categoria && product.categoria.toLowerCase().includes(searchTerm)) ||
+                    (product.docId && product.docId.includes(searchTerm));
+                
+                // Filtro de estado
+                const hasId = !!product.id;
+                const isLowStock = product.cantidad < 5 && product.cantidad >= 0;
+                const status = !hasId ? 'missing' : isLowStock ? 'low' : 'ok';
+                
+                const matchesStatus = statusFilter === 'all' || 
+                    (statusFilter === 'missing' && !hasId) ||
+                    (statusFilter === 'low' && isLowStock) ||
+                    (statusFilter === 'ok' && hasId && !isLowStock);
+                
+                return matchesSearch && matchesStatus;
+            });
+            
+            // Re-renderizar con datos filtrados
+            const tbody = document.getElementById('stockTableBody');
+            tbody.innerHTML = '';
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 40px; color: #999;">
+                            <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 10px;"></i><br>
+                            No se encontraron resultados
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            filtered.forEach(product => {
+                const hasId = !!product.id;
+                const isLowStock = product.cantidad < 5 && product.cantidad >= 0;
+                const status = !hasId ? 'missing' : isLowStock ? 'low' : 'ok';
+                
+                const catalogInfo = catalogData[product.id] || {};
+                const categoryName = product.categoria || catalogInfo.categoria || 'N/A';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="font-family: monospace; font-size: 0.9rem;">${product.docId.substring(0, 8)}...</td>
+                    <td style="font-weight: 600;">${product.id || '⚠️ N/A'}</td>
+                    <td>${product.nombre || 'Sin nombre'}</td>
+                    <td><span style="background: #E3F2FD; padding: 4px 10px; border-radius: 12px; font-size: 0.9rem;">${categoryName}</span></td>
+                    <td style="font-weight: 700; color: ${isLowStock ? '#F44336' : '#2E7D32'};">
+                        ${product.cantidad || 0}
+                    </td>
+                    <td>₡${(product.precioOferta || catalogInfo.precioOferta || 0).toLocaleString()}</td>
+                    <td>₡${(product.preciocompra || catalogInfo.preciocompra || 0).toLocaleString()}</td>
+                    <td>
+                        <span class="status-badge status-${status}">
+                            ${!hasId ? '⚠️ Sin ID' : isLowStock ? '📉 Bajo stock' : '✅ OK'}
+                        </span>
+                    </td>
+                    <td class="action-cell">
+                        <button class="action-btn edit" onclick="showUpdateModal(${JSON.stringify(product).replace(/'/g, '\\\'')})" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        ${!hasId ? `<button class="action-btn edit" onclick="fixMissingId('${product.docId}')" title="Asignar ID">
+                            <i class="fas fa-magic"></i>
+                        </button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Arreglar documento sin ID
+        async function fixMissingId(docId) {
+            const product = stockData.find(p => p.docId === docId);
+            if (!product) return;
+
+            if (!confirm(`¿Deseas asignar un ID al producto "${product.nombre || 'Sin nombre'}"?`)) {
+                return;
+            }
+
+            try {
+                showProgress('Asignando ID...', 50);
+                
+                // Buscar en catálogo
+                const catalogMatch = Object.values(catalogData).find(catProd => 
+                    catProd.nombreOriginal === product.nombre || 
+                    catProd.nombre === product.nombre
+                );
+
+                const newId = catalogMatch ? catalogMatch.id : docId;
+
+                await db.collection('stock').doc(docId).update({
+                    id: newId.toString()
+                });
+
+                hideProgress();
+                showToast('✅ ID asignado exitosamente', 'success');
+                await loadStockData();
+            } catch (error) {
+                hideProgress();
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Actualizar dashboard
+        function updateDashboard() {
+            const total = stockData.length;
+            const normalized = stockData.filter(p => p.id).length;
+            const missingId = stockData.filter(p => !p.id).length;
+            const lowStock = stockData.filter(p => p.cantidad < 5 && p.cantidad >= 0).length;
+
+            document.getElementById('totalProducts').textContent = total;
+            document.getElementById('normalizedCount').textContent = normalized;
+            document.getElementById('missingIdCount').textContent = missingId;
+            document.getElementById('lowStockCount').textContent = lowStock;
+
+            // Salud de la base
+            const healthPercent = total > 0 ? Math.round((normalized / total) * 100) : 0;
+            const healthIcon = document.getElementById('healthIcon');
+            const healthStatus = document.getElementById('healthStatus');
+            const healthMessage = document.getElementById('healthMessage');
+
+            if (healthPercent === 100) {
+                healthIcon.textContent = '💚';
+                healthStatus.textContent = 'Excelente';
+                healthMessage.textContent = 'Todos los documentos están normalizados';
+            } else if (healthPercent >= 80) {
+                healthIcon.textContent = '💛';
+                healthStatus.textContent = 'Bueno';
+                healthMessage.textContent = `${missingId} documentos necesitan normalización`;
+            } else {
+                healthIcon.textContent = '💔';
+                healthStatus.textContent = 'Requiere atención';
+                healthMessage.textContent = `${missingId} documentos sin campo ID`;
+            }
+
+            // Última actualización
+            document.getElementById('lastUpdate').textContent = 
+                `Última actualización: ${new Date().toLocaleTimeString()}`;
+        }
+
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast toast-${type} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Progress bar
+        function showProgress(title, percent) {
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('progressTitle').textContent = title;
+            updateProgress(title, percent);
+        }
+
+        function updateProgress(title, percent) {
+            document.getElementById('progressTitle').textContent = title;
+            document.getElementById('progressText').textContent = `${percent}%`;
+            document.getElementById('progressFill').style.width = `${percent}%`;
+        }
+
+        function hideProgress() {
+            document.getElementById('progressContainer').style.display = 'none';
+        }
+
+        // Cerrar modal con ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
 </body>
 </html>
