@@ -2,11 +2,14 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Administrador de Stock - Esentia</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Adelia&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-gold: #D4AF37;
@@ -15,9 +18,10 @@
             --dark-green: #1B5E20;
             --light-bg: #f8f9fa;
             --card-bg: rgba(255, 255, 255, 0.95);
-            --border-radius: 12px;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --shadow-hover: 0 6px 12px rgba(0, 0, 0, 0.15);
+            --border-radius: 16px;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.2);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         * {
@@ -30,7 +34,15 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 12px;
+            color: #333;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        @font-face {
+            font-family: 'Adelia';
+            src: url('fonts/Adelia-Regular.ttf') format('truetype');
         }
 
         .container {
@@ -38,54 +50,77 @@
             margin: 0 auto;
         }
 
+        /* Header optimizado para móvil */
         header {
             background: var(--card-bg);
-            padding: 20px 30px;
+            padding: 16px 20px;
             border-radius: var(--border-radius);
-            margin-bottom: 25px;
+            margin-bottom: 16px;
             box-shadow: var(--shadow);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            position: sticky;
+            top: 12px;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
+            justify-content: space-between;
+        }
+
+        .logo-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
         }
 
         .logo-icon {
-            font-size: 2.5rem;
+            font-size: 1.8rem;
             color: var(--primary-gold);
         }
 
         .logo-text {
-            font-size: 1.8rem;
+            font-family: 'Adelia', cursive;
+            font-size: 1.6rem;
             font-weight: 700;
             background: linear-gradient(45deg, var(--primary-gold), var(--primary-green));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            white-space: nowrap;
         }
 
+        .last-update {
+            font-size: 0.85rem;
+            color: #666;
+            text-align: right;
+            flex: 1;
+        }
+
+        /* Dashboard responsive */
         .dashboard {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin-bottom: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
         }
 
         .card {
             background: var(--card-bg);
-            padding: 25px;
+            padding: 20px;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
         }
 
         .card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-4px);
             box-shadow: var(--shadow-hover);
         }
 
@@ -93,187 +128,260 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
             border-bottom: 2px solid var(--light-bg);
         }
 
         .card-title {
-            font-size: 1.3rem;
+            font-size: 1.15rem;
             font-weight: 600;
             color: var(--dark-green);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .card-icon {
-            font-size: 2rem;
+            font-size: 1.6rem;
             color: var(--primary-gold);
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
+            gap: 12px;
         }
 
         .stat-item {
             text-align: center;
-            padding: 15px;
+            padding: 12px;
             background: var(--light-bg);
-            border-radius: 8px;
+            border-radius: 10px;
+            transition: var(--transition);
+        }
+
+        .stat-item:hover {
+            background: #e8f5e9;
+            transform: scale(1.02);
         }
 
         .stat-value {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 700;
             color: var(--primary-green);
-            margin: 5px 0;
+            margin: 4px 0;
+            font-family: 'Adelia', cursive;
         }
 
         .stat-label {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #666;
+            font-weight: 500;
         }
 
+        /* Botones optimizados para móvil */
         .btn-group {
             display: flex;
             gap: 10px;
-            margin-top: 15px;
+            margin-top: 12px;
+            flex-wrap: wrap;
         }
 
         .btn {
-            padding: 12px 20px;
+            padding: 12px 16px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
+            font-size: 0.95rem;
             flex: 1;
+            min-width: 120px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn i {
+            font-size: 1rem;
         }
 
         .btn-primary {
-            background: var(--primary-green);
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
             color: white;
         }
 
         .btn-primary:hover {
-            background: var(--dark-green);
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
         }
 
         .btn-warning {
-            background: #FF9800;
+            background: linear-gradient(135deg, #FF9800, #F57C00);
             color: white;
         }
 
         .btn-warning:hover {
-            background: #F57C00;
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
         }
 
         .btn-danger {
-            background: #F44336;
+            background: linear-gradient(135deg, #F44336, #D32F2F);
             color: white;
         }
 
         .btn-danger:hover {
-            background: #D32F2F;
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
         }
 
         .btn-secondary {
-            background: #607D8B;
+            background: linear-gradient(135deg, #607D8B, #455A64);
             color: white;
         }
 
         .btn-secondary:hover {
-            background: #455A64;
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(96, 125, 139, 0.4);
         }
 
-        .btn i {
-            font-size: 1.1rem;
+        .btn-success {
+            background: linear-gradient(135deg, var(--secondary-green), #388E3C);
+            color: white;
         }
 
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+
+        /* Tabla optimizada para móvil */
         .table-container {
             background: var(--card-bg);
-            padding: 25px;
+            padding: 16px;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
-            margin-bottom: 25px;
-            overflow-x: auto;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
         }
 
         .table-title {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: 600;
             color: var(--dark-green);
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filter-input {
+            padding: 10px 14px;
+            border: 2px solid var(--light-bg);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            flex: 1;
+            min-width: 180px;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 0.95rem;
         }
 
         th {
-            background: var(--primary-green);
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
             color: white;
-            padding: 15px;
+            padding: 12px 10px;
             text-align: left;
             font-weight: 600;
             position: sticky;
             top: 0;
+            z-index: 10;
+            font-size: 0.9rem;
         }
 
         td {
-            padding: 12px 15px;
-            border-bottom: 1px solid var(--light-bg);
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            vertical-align: middle;
+        }
+
+        tr {
+            transition: background-color 0.2s;
         }
 
         tr:hover {
-            background: var(--light-bg);
+            background: rgba(232, 245, 233, 0.5);
         }
 
+        /* Badges de estado */
         .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
+            padding: 5px 10px;
+            border-radius: 16px;
+            font-size: 0.8rem;
             font-weight: 600;
             display: inline-block;
+            font-family: inherit;
         }
 
         .status-ok {
             background: #E8F5E9;
             color: var(--primary-green);
+            border: 1px solid #C8E6C9;
         }
 
         .status-warning {
             background: #FFF3E0;
             color: #FF9800;
+            border: 1px solid #FFE0B2;
         }
 
         .status-error {
             background: #FFEBEE;
             color: #F44336;
+            border: 1px solid #FFCDD2;
         }
 
         .status-missing {
             background: #ECEFF1;
             color: #607D8B;
+            border: 1px solid #CFD8DC;
         }
 
+        /* Toast notifications */
         .toast {
             position: fixed;
             top: 20px;
             right: 20px;
-            padding: 15px 25px;
-            border-radius: 8px;
+            padding: 14px 20px;
+            border-radius: 10px;
             color: white;
             font-weight: 500;
             box-shadow: var(--shadow);
@@ -283,6 +391,8 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            font-size: 0.95rem;
+            max-width: 350px;
         }
 
         .toast.show {
@@ -290,49 +400,53 @@
         }
 
         .toast-success {
-            background: var(--secondary-green);
+            background: linear-gradient(135deg, var(--secondary-green), #2E7D32);
         }
 
         .toast-error {
-            background: #F44336;
+            background: linear-gradient(135deg, #F44336, #C62828);
         }
 
         .toast-warning {
-            background: #FF9800;
+            background: linear-gradient(135deg, #FF9800, #E65100);
         }
 
         .toast-info {
-            background: #2196F3;
+            background: linear-gradient(135deg, #2196F3, #0D47A1);
         }
 
+        /* Progress bar */
         .progress-container {
             background: var(--card-bg);
-            padding: 25px;
+            padding: 16px;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
-            margin-bottom: 25px;
+            margin-bottom: 16px;
             display: none;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .progress-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            align-items: center;
         }
 
         .progress-bar {
             width: 100%;
-            height: 25px;
+            height: 20px;
             background: var(--light-bg);
-            border-radius: 12px;
+            border-radius: 10px;
             overflow: hidden;
+            border: 2px solid #E0E0E0;
         }
 
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, var(--primary-green), var(--secondary-green));
             transition: width 0.3s ease;
-            border-radius: 12px;
+            border-radius: 8px;
         }
 
         .progress-text {
@@ -340,58 +454,10 @@
             font-weight: 600;
             color: var(--dark-green);
             margin-top: 5px;
-        }
-
-        .filter-bar {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .filter-input {
-            padding: 10px 15px;
-            border: 2px solid var(--light-bg);
-            border-radius: 8px;
-            font-size: 1rem;
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .filter-input:focus {
-            outline: none;
-            border-color: var(--primary-green);
-        }
-
-        .action-cell {
-            display: flex;
-            gap: 8px;
-        }
-
-        .action-btn {
-            padding: 8px 12px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
             font-size: 0.9rem;
-            transition: all 0.2s ease;
         }
 
-        .action-btn.edit {
-            background: var(--primary-green);
-            color: white;
-        }
-
-        .action-btn.delete {
-            background: #F44336;
-            color: white;
-        }
-
-        .action-btn:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -403,20 +469,41 @@
             z-index: 10000;
             justify-content: center;
             align-items: center;
+            backdrop-filter: blur(5px);
         }
 
         .modal.show {
             display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .modal-content {
             background: white;
-            padding: 30px;
+            padding: 24px;
             border-radius: var(--border-radius);
-            max-width: 600px;
-            width: 90%;
+            max-width: 95%;
+            width: 500px;
             max-height: 90vh;
             overflow-y: auto;
+            box-shadow: var(--shadow-hover);
+            animation: slideUp 0.3s ease;
+            position: relative;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
         .modal-header {
@@ -429,9 +516,12 @@
         }
 
         .modal-title {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 600;
             color: var(--dark-green);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .modal-close {
@@ -440,10 +530,23 @@
             font-size: 1.5rem;
             cursor: pointer;
             color: #666;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            background: var(--light-bg);
+            color: var(--primary-green);
+            transform: rotate(90deg);
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
 
         .form-label {
@@ -451,20 +554,23 @@
             margin-bottom: 8px;
             font-weight: 600;
             color: #333;
+            font-size: 0.95rem;
         }
 
         .form-input {
             width: 100%;
             padding: 12px 15px;
             border: 2px solid var(--light-bg);
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 1rem;
-            transition: border-color 0.3s ease;
+            transition: var(--transition);
+            font-family: inherit;
         }
 
         .form-input:focus {
             outline: none;
             border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
         }
 
         .form-row {
@@ -475,31 +581,325 @@
 
         .modal-footer {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             margin-top: 25px;
             justify-content: flex-end;
+            padding-top: 15px;
+            border-top: 2px solid var(--light-bg);
         }
 
+        /* Botón flotante para iPhone */
+        .floating-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
+            z-index: 9999;
+            transition: var(--transition);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
+            }
+            50% {
+                box-shadow: 0 6px 30px rgba(46, 125, 50, 0.6);
+            }
+        }
+
+        .floating-btn:hover {
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 8px 25px rgba(46, 125, 50, 0.5);
+        }
+
+        .floating-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Edición rápida de cantidad */
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .qty-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary-green);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            font-size: 1rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .qty-btn:active {
+            transform: scale(0.95);
+        }
+
+        .qty-btn.minus {
+            background: linear-gradient(135deg, #F44336, #D32F2F);
+        }
+
+        .qty-btn.plus {
+            background: linear-gradient(135deg, var(--secondary-green), #2E7D32);
+        }
+
+        .qty-display {
+            min-width: 45px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--dark-green);
+            background: var(--light-bg);
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 2px solid #E0E0E0;
+        }
+
+        /* Acciones en tabla */
+        .action-cell {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .action-btn.edit {
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+            color: white;
+        }
+
+        .action-btn.delete {
+            background: linear-gradient(135deg, #F44336, #D32F2F);
+            color: white;
+        }
+
+        .action-btn.magic {
+            background: linear-gradient(135deg, #FF9800, #F57C00);
+            color: white;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px) scale(1.1);
+            opacity: 0.95;
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        .action-btn i {
+            font-size: 1rem;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            margin-top: 10px;
+            opacity: 0.7;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Optimización específica para iPhone */
         @media (max-width: 768px) {
+            body {
+                padding: 8px;
+            }
+
+            header {
+                padding: 14px 16px;
+                margin-bottom: 12px;
+            }
+
+            .logo-text {
+                font-size: 1.4rem;
+            }
+
             .dashboard {
                 grid-template-columns: 1fr;
             }
-            
+
             .stats-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
             }
-            
-            .form-row {
-                grid-template-columns: 1fr;
+
+            .stat-value {
+                font-size: 1.6rem;
             }
-            
+
             .btn-group {
                 flex-direction: column;
             }
-            
+
             .btn {
                 width: 100%;
+                padding: 14px;
+                font-size: 1rem;
             }
+
+            .table-container {
+                padding: 12px;
+                overflow-x: auto;
+            }
+
+            table {
+                font-size: 0.9rem;
+                min-width: 800px;
+            }
+
+            th, td {
+                padding: 10px 8px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                max-height: 85vh;
+            }
+
+            .floating-btn {
+                bottom: 25px;
+                right: 15px;
+                width: 55px;
+                height: 55px;
+            }
+
+            .qty-btn {
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
+            }
+
+            .qty-display {
+                min-width: 40px;
+                font-size: 1rem;
+                padding: 5px 8px;
+            }
+        }
+
+        /* iPhone SE / dispositivos muy pequeños */
+        @media (max-width: 375px) {
+            .logo-text {
+                font-size: 1.2rem;
+                display: none;
+            }
+
+            .last-update {
+                font-size: 0.8rem;
+            }
+
+            .card-title {
+                font-size: 1rem;
+            }
+
+            .stat-value {
+                font-size: 1.4rem;
+            }
+
+            .stat-label {
+                font-size: 0.8rem;
+            }
+
+            .floating-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.3rem;
+            }
+
+            table {
+                min-width: 750px;
+                font-size: 0.85rem;
+            }
+
+            .action-btn {
+                width: 32px;
+                height: 32px;
+            }
+
+            .action-btn i {
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Scroll suave */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Selección de texto */
+        .selectable {
+            user-select: text;
+            -webkit-user-select: text;
+        }
+
+        /* Animaciones adicionales */
+        .fade-in {
+            animation: fadeIn 0.5s ease;
         }
     </style>
 </head>
@@ -507,11 +907,11 @@
     <div class="container">
         <header>
             <div class="logo">
-                <i class="fas fa-boxes logo-icon"></i>
-                <span class="logo-text">Administrador de Stock - Esentia</span>
-            </div>
-            <div class="header-actions">
-                <span id="lastUpdate" class="last-update"></span>
+                <div class="logo-left">
+                    <i class="fas fa-boxes logo-icon"></i>
+                    <span class="logo-text">Stock Esentia</span>
+                </div>
+                <span class="last-update" id="lastUpdate">Cargando...</span>
             </div>
         </header>
 
@@ -519,13 +919,15 @@
         <div class="dashboard">
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">📊 Estadísticas Generales</span>
-                    <i class="fas fa-chart-bar card-icon"></i>
+                    <span class="card-title">
+                        <i class="fas fa-chart-bar"></i> Estadísticas
+                    </span>
+                    <i class="fas fa-chart-pie card-icon"></i>
                 </div>
                 <div class="stats-grid">
                     <div class="stat-item">
                         <div class="stat-value" id="totalProducts">-</div>
-                        <div class="stat-label">Total Productos</div>
+                        <div class="stat-label">Total</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-value" id="normalizedCount">-</div>
@@ -544,36 +946,40 @@
 
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">🔧 Acciones Rápidas</span>
-                    <i class="fas fa-bolt card-icon"></i>
+                    <span class="card-title">
+                        <i class="fas fa-bolt"></i> Acciones Rápidas
+                    </span>
+                    <i class="fas fa-rocket card-icon"></i>
                 </div>
                 <div class="btn-group">
                     <button class="btn btn-primary" onclick="normalizeStock()">
-                        <i class="fas fa-magic"></i> Normalizar Stock
+                        <i class="fas fa-magic"></i> Normalizar
                     </button>
                     <button class="btn btn-warning" onclick="generateReport()">
-                        <i class="fas fa-file-alt"></i> Generar Reporte
+                        <i class="fas fa-file-alt"></i> Reporte
                     </button>
                 </div>
-                <div class="btn-group" style="margin-top: 10px;">
-                    <button class="btn btn-secondary" onclick="showUpdateModal()">
-                        <i class="fas fa-edit"></i> Actualizar Producto
+                <div class="btn-group" style="margin-top: 8px;">
+                    <button class="btn btn-success" onclick="showAddProductModal()">
+                        <i class="fas fa-plus"></i> Agregar
                     </button>
                     <button class="btn btn-danger" onclick="exportData()">
-                        <i class="fas fa-download"></i> Exportar Datos
+                        <i class="fas fa-download"></i> Exportar
                     </button>
                 </div>
             </div>
 
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">📈 Salud de la Base</span>
-                    <i class="fas fa-heartbeat card-icon"></i>
+                    <span class="card-title">
+                        <i class="fas fa-heartbeat"></i> Salud BD
+                    </span>
+                    <i class="fas fa-database card-icon"></i>
                 </div>
-                <div style="text-align: center; padding: 20px;">
-                    <div style="font-size: 4rem; margin-bottom: 10px;" id="healthIcon">❓</div>
-                    <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 5px;" id="healthStatus">Verificando...</div>
-                    <div style="color: #666;" id="healthMessage">Analizando estructura de datos</div>
+                <div style="text-align: center; padding: 16px;">
+                    <div style="font-size: 3.5rem; margin-bottom: 8px;" id="healthIcon">❓</div>
+                    <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 4px;" id="healthStatus">Verificando...</div>
+                    <div style="color: #666; font-size: 0.9rem;" id="healthMessage">Analizando datos</div>
                 </div>
             </div>
         </div>
@@ -592,14 +998,14 @@
         <!-- Reporte de Productos -->
         <div class="table-container">
             <div class="table-title">
-                <i class="fas fa-list"></i> Reporte Detallado de Stock
+                <i class="fas fa-list"></i> Inventario
             </div>
             <div class="filter-bar">
-                <input type="text" class="filter-input" id="searchFilter" placeholder="🔍 Buscar por nombre, ID o categoría..." onkeyup="filterTable()">
-                <select class="filter-input" id="statusFilter" onchange="filterTable()">
-                    <option value="all">Todos los estados</option>
+                <input type="text" class="filter-input" id="searchFilter" placeholder="🔍 Buscar producto..." onkeyup="filterTable()">
+                <select class="filter-input" id="statusFilter" onchange="filterTable()" style="min-width: 150px;">
+                    <option value="all">Todos</option>
                     <option value="ok">✅ Normalizados</option>
-                    <option value="missing">⚠️ Sin campo ID</option>
+                    <option value="missing">⚠️ Sin ID</option>
                     <option value="low">📉 Bajo stock</option>
                 </select>
             </div>
@@ -607,22 +1013,20 @@
                 <table id="stockTable">
                     <thead>
                         <tr>
-                            <th>ID Documento</th>
-                            <th>ID Producto</th>
-                            <th>Nombre</th>
+                            <th>ID</th>
+                            <th>Producto</th>
                             <th>Categoría</th>
                             <th>Cantidad</th>
                             <th>Precio Venta</th>
-                            <th>Precio Costo</th>
                             <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="stockTableBody">
                         <tr>
-                            <td colspan="9" style="text-align: center; padding: 40px; color: #999;">
-                                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-right: 10px;"></i>
-                                Cargando datos del stock...
+                            <td colspan="7" class="empty-state">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Cargando inventario...</p>
                             </td>
                         </tr>
                     </tbody>
@@ -631,28 +1035,35 @@
         </div>
     </div>
 
-    <!-- Modal de Actualización -->
-    <div class="modal" id="updateModal">
+    <!-- Botón flotante para agregar producto (iPhone optimizado) -->
+    <button class="floating-btn" onclick="showAddProductModal()" title="Agregar Producto">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Modal de Agregar/Editar Producto -->
+    <div class="modal" id="productModal">
         <div class="modal-content">
             <div class="modal-header">
-                <span class="modal-title">✏️ Actualizar Producto</span>
+                <span class="modal-title" id="modalTitle">
+                    <i class="fas fa-plus"></i> Agregar Producto
+                </span>
                 <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
-            <form id="updateForm">
+            <form id="productForm">
                 <input type="hidden" id="docId">
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">ID Producto</label>
-                        <input type="text" class="form-input" id="productId" required>
+                        <label class="form-label">ID Producto *</label>
+                        <input type="text" class="form-input" id="productId" required placeholder="Ej: 123">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Nombre</label>
-                        <input type="text" class="form-input" id="productName" required>
+                        <label class="form-label">Nombre *</label>
+                        <input type="text" class="form-input" id="productName" required placeholder="Nombre del producto">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Categoría</label>
+                        <label class="form-label">Categoría *</label>
                         <select class="form-input" id="productCategory" required>
                             <option value="Aromaterapia">Aromaterapia</option>
                             <option value="Limpieza">Limpieza</option>
@@ -660,26 +1071,26 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Cantidad</label>
-                        <input type="number" class="form-input" id="productQuantity" min="0" required>
+                        <label class="form-label">Cantidad *</label>
+                        <input type="number" class="form-input" id="productQuantity" min="0" value="0" required placeholder="0">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Precio Venta (₡)</label>
-                        <input type="number" class="form-input" id="productPriceSale" min="0" step="0.01">
+                        <input type="number" class="form-input" id="productPriceSale" min="0" step="0.01" placeholder="0.00">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Precio Costo (₡)</label>
-                        <input type="number" class="form-input" id="productPriceCost" min="0" step="0.01">
+                        <input type="number" class="form-input" id="productPriceCost" min="0" step="0.01" placeholder="0.00">
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal()">
                         <i class="fas fa-times"></i> Cancelar
                     </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Guardar Cambios
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> <span id="saveButtonText">Agregar Producto</span>
                     </button>
                 </div>
             </form>
@@ -717,7 +1128,7 @@
         // Cargar datos del stock
         async function loadStockData() {
             try {
-                showProgress('Cargando datos del stock...', 30);
+                showProgress('Cargando inventario...', 30);
                 const snapshot = await db.collection('stock').get();
                 stockData = [];
                 
@@ -730,25 +1141,23 @@
                 });
                 
                 hideProgress();
-                showToast('Datos cargados exitosamente', 'success');
+                showToast('✅ Inventario cargado', 'success');
                 renderTable();
             } catch (error) {
                 hideProgress();
-                showToast('Error al cargar stock: ' + error.message, 'error');
+                showToast('❌ Error al cargar: ' + error.message, 'error');
                 console.error('Error loading stock:', error);
             }
         }
 
-        // Cargar catálogo (JSON local o desde Firestore)
+        // Cargar catálogo
         async function loadCatalogData() {
             try {
-                // Intentar cargar desde archivos JSON locales
                 const [aromaterapia, limpieza] = await Promise.all([
                     fetch('productos_esentia.json').then(r => r.json()).catch(() => []),
                     fetch('productos_limpieza_completo.json').then(r => r.json()).catch(() => [])
                 ]);
                 
-                // Combinar catálogos
                 const combined = [...aromaterapia, ...limpieza];
                 catalogData = {};
                 
@@ -756,83 +1165,83 @@
                     catalogData[product.id] = product;
                 });
             } catch (error) {
-                console.warn('No se pudieron cargar catálogos locales:', error);
+                console.warn('No se pudieron cargar catálogos:', error);
             }
         }
 
         // Normalizar stock
         async function normalizeStock() {
-            try {
-                const missingIdDocs = stockData.filter(p => !p.id);
-                
-                if (missingIdDocs.length === 0) {
-                    showToast('✅ Todos los documentos ya tienen campo ID', 'success');
-                    return;
-                }
-
-                if (!confirm(`Se encontrarán ${missingIdDocs.length} documentos sin campo ID. ¿Deseas normalizarlos?`)) {
-                    return;
-                }
-
-                showProgress('Normalizando documentos...', 0);
-                let updated = 0;
-
-                for (let i = 0; i < missingIdDocs.length; i++) {
-                    const product = missingIdDocs[i];
-                    const progress = Math.round((i / missingIdDocs.length) * 100);
-                    updateProgress(`Procesando ${i + 1}/${missingIdDocs.length}...`, progress);
-
-                    try {
-                        // Intentar obtener ID del catálogo o usar docId como fallback
-                        const catalogMatch = Object.values(catalogData).find(catProd => 
-                            catProd.nombreOriginal === product.nombre || 
-                            catProd.nombre === product.nombre
-                        );
-
-                        const newId = catalogMatch ? catalogMatch.id : product.docId;
-
-                        await db.collection('stock').doc(product.docId).update({
-                            id: newId.toString()
-                        });
-
-                        updated++;
-                    } catch (error) {
-                        console.error(`Error actualizando ${product.docId}:`, error);
-                    }
-                }
-
-                hideProgress();
-                showToast(`✅ Normalización completada: ${updated} documentos actualizados`, 'success');
-                await loadStockData();
-            } catch (error) {
-                hideProgress();
-                showToast('Error en normalización: ' + error.message, 'error');
+            const missingIdDocs = stockData.filter(p => !p.id);
+            
+            if (missingIdDocs.length === 0) {
+                showToast('✅ Todos los productos tienen ID', 'success');
+                return;
             }
+
+            if (!confirm(`Se encontrarán ${missingIdDocs.length} productos sin ID. ¿Deseas normalizarlos?`)) {
+                return;
+            }
+
+            showProgress('Normalizando...', 0);
+            let updated = 0;
+
+            for (let i = 0; i < missingIdDocs.length; i++) {
+                const product = missingIdDocs[i];
+                const progress = Math.round((i / missingIdDocs.length) * 100);
+                updateProgress(`Procesando ${i + 1}/${missingIdDocs.length}...`, progress);
+
+                try {
+                    const catalogMatch = Object.values(catalogData).find(catProd => 
+                        catProd.nombreOriginal === product.nombre || 
+                        catProd.nombre === product.nombre
+                    );
+
+                    const newId = catalogMatch ? catalogMatch.id : product.docId;
+
+                    await db.collection('stock').doc(product.docId).update({
+                        id: newId.toString()
+                    });
+
+                    updated++;
+                } catch (error) {
+                    console.error(`Error actualizando ${product.docId}:`, error);
+                }
+            }
+
+            hideProgress();
+            showToast(`✅ Normalización completada: ${updated} productos actualizados`, 'success');
+            await loadStockData();
         }
 
-        // Actualizar producto individual
-        function showUpdateModal(product = null) {
-            document.getElementById('updateModal').classList.add('show');
-            
-            if (product) {
-                document.getElementById('docId').value = product.docId;
-                document.getElementById('productId').value = product.id || '';
-                document.getElementById('productName').value = product.nombre || '';
-                document.getElementById('productCategory').value = product.categoria || 'Aromaterapia';
-                document.getElementById('productQuantity').value = product.cantidad || 0;
-                document.getElementById('productPriceSale').value = product.precioOferta || '';
-                document.getElementById('productPriceCost').value = product.preciocompra || '';
-            } else {
-                document.getElementById('updateForm').reset();
-                document.getElementById('docId').value = '';
-            }
+        // Mostrar modal para agregar producto
+        function showAddProductModal() {
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus"></i> Agregar Producto';
+            document.getElementById('saveButtonText').textContent = 'Agregar Producto';
+            document.getElementById('productForm').reset();
+            document.getElementById('docId').value = '';
+            document.getElementById('productModal').classList.add('show');
+        }
+
+        // Mostrar modal para editar producto
+        function showEditModal(product) {
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Editar Producto';
+            document.getElementById('saveButtonText').textContent = 'Guardar Cambios';
+            document.getElementById('docId').value = product.docId;
+            document.getElementById('productId').value = product.id || '';
+            document.getElementById('productName').value = product.nombre || '';
+            document.getElementById('productCategory').value = product.categoria || 'Aromaterapia';
+            document.getElementById('productQuantity').value = product.cantidad || 0;
+            document.getElementById('productPriceSale').value = product.precioOferta || '';
+            document.getElementById('productPriceCost').value = product.preciocompra || '';
+            document.getElementById('productModal').classList.add('show');
         }
 
         function closeModal() {
-            document.getElementById('updateModal').classList.remove('show');
+            document.getElementById('productModal').classList.remove('show');
         }
 
-        document.getElementById('updateForm').addEventListener('submit', async (e) => {
+        // Guardar producto (agregar o editar)
+        document.getElementById('productForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const docId = document.getElementById('docId').value;
@@ -847,16 +1256,14 @@
             };
 
             try {
-                showProgress('Guardando cambios...', 50);
+                showProgress('Guardando...', 50);
                 
                 if (docId) {
-                    // Actualizar documento existente
                     await db.collection('stock').doc(docId).update(data);
-                    showToast('✅ Producto actualizado exitosamente', 'success');
+                    showToast('✅ Producto actualizado', 'success');
                 } else {
-                    // Crear nuevo documento
                     await db.collection('stock').add(data);
-                    showToast('✅ Producto creado exitosamente', 'success');
+                    showToast('✅ Producto agregado', 'success');
                 }
                 
                 hideProgress();
@@ -864,9 +1271,44 @@
                 await loadStockData();
             } catch (error) {
                 hideProgress();
-                showToast('Error al guardar: ' + error.message, 'error');
+                showToast('❌ Error: ' + error.message, 'error');
             }
         });
+
+        // Editar cantidad rápidamente
+        async function updateQuantity(docId, delta) {
+            const product = stockData.find(p => p.docId === docId);
+            if (!product) return;
+
+            const newQuantity = (product.cantidad || 0) + delta;
+            if (newQuantity < 0) return;
+
+            try {
+                await db.collection('stock').doc(docId).update({
+                    cantidad: newQuantity,
+                    ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Actualizar visualmente sin recargar todo
+                const qtyDisplay = document.querySelector(`#qty-${docId}`);
+                if (qtyDisplay) {
+                    qtyDisplay.textContent = newQuantity;
+                    
+                    // Efecto visual de actualización
+                    qtyDisplay.style.backgroundColor = '#FFF3E0';
+                    qtyDisplay.style.color = '#FF9800';
+                    setTimeout(() => {
+                        qtyDisplay.style.backgroundColor = '';
+                        qtyDisplay.style.color = '';
+                    }, 500);
+                }
+
+                showToast(`✅ Cantidad actualizada a ${newQuantity}`, 'success');
+                await loadStockData(); // Recargar para mantener sincronizado
+            } catch (error) {
+                showToast('❌ Error: ' + error.message, 'error');
+            }
+        }
 
         // Generar reporte
         function generateReport() {
@@ -874,42 +1316,42 @@
             const lowStock = stockData.filter(p => p.cantidad < 5 && p.cantidad >= 0);
             const normalized = stockData.filter(p => p.id);
 
-            let report = `=== REPORTE DE STOCK - ESENTIA ===\n`;
-            report += `Fecha: ${new Date().toLocaleString()}\n\n`;
-            report += `ESTADÍSTICAS GENERALES:\n`;
-            report += `Total productos: ${stockData.length}\n`;
-            report += `Normalizados: ${normalized.length}\n`;
-            report += `Sin campo ID: ${missingId.length}\n`;
-            report += `Bajo stock (<5): ${lowStock.length}\n\n`;
+            let report = `=== REPORTE DE INVENTARIO - ESENTIA ===\n`;
+            report += `Fecha: ${new Date().toLocaleString('es-ES')}\n\n`;
+            report += `ESTADÍSTICAS:\n`;
+            report += `• Total productos: ${stockData.length}\n`;
+            report += `• Normalizados: ${normalized.length}\n`;
+            report += `• Sin campo ID: ${missingId.length}\n`;
+            report += `• Bajo stock (<5): ${lowStock.length}\n\n`;
 
             if (missingId.length > 0) {
-                report += `⚠️ PRODUCTOS SIN CAMPO ID:\n`;
+                report += `⚠️ PRODUCTOS SIN ID:\n`;
                 missingId.forEach(p => {
-                    report += `- DocID: ${p.docId} | Nombre: ${p.nombre || 'N/A'} | Cantidad: ${p.cantidad || 0}\n`;
+                    report += `• DocID: ${p.docId.substring(0, 8)} | ${p.nombre || 'N/A'} | Stock: ${p.cantidad || 0}\n`;
                 });
                 report += `\n`;
             }
 
             if (lowStock.length > 0) {
-                report += `📉 PRODUCTOS CON BAJO STOCK:\n`;
+                report += `📉 BAJO STOCK:\n`;
                 lowStock.forEach(p => {
-                    report += `- ID: ${p.id || 'N/A'} | ${p.nombre || 'N/A'} | Stock: ${p.cantidad}\n`;
+                    report += `• ID: ${p.id || 'N/A'} | ${p.nombre || 'N/A'} | Stock: ${p.cantidad}\n`;
                 });
                 report += `\n`;
             }
 
-            report += `✅ PRODUCTOS NORMALIZADOS: ${normalized.length}\n`;
+            report += `✅ TOTAL NORMALIZADOS: ${normalized.length}\n`;
             
-            // Descargar reporte
+            // Descargar
             const blob = new Blob([report], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `reporte_stock_${new Date().toISOString().split('T')[0]}.txt`;
+            a.download = `inventario_${new Date().toISOString().split('T')[0]}.txt`;
             a.click();
             URL.revokeObjectURL(url);
             
-            showToast('📄 Reporte generado y descargado', 'success');
+            showToast('📄 Reporte descargado', 'success');
         }
 
         // Exportar datos
@@ -919,21 +1361,21 @@
                 nombre: p.nombre || 'N/A',
                 categoria: p.categoria || 'N/A',
                 cantidad: p.cantidad || 0,
-                precioOferta: p.precioOferta || 0,
-                preciocompra: p.preciocompra || 0,
-                docId: p.docId
+                precio_venta: p.precioOferta || 0,
+                precio_costo: p.preciocompra || 0,
+                doc_id: p.docId
             }));
 
             const csv = convertToCSV(exportData);
-            const blob = new Blob([csv], { type: 'text/csv' });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `stock_completo_${new Date().toISOString().split('T')[0]}.csv`;
+            a.download = `inventario_completo_${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
             URL.revokeObjectURL(url);
             
-            showToast('📊 Datos exportados a CSV', 'success');
+            showToast('📊 CSV exportado', 'success');
         }
 
         function convertToCSV(data) {
@@ -958,9 +1400,9 @@
             if (stockData.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="9" style="text-align: center; padding: 40px; color: #999;">
-                            <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 10px;"></i><br>
-                            No hay productos en el stock
+                        <td colspan="7" class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>No hay productos en el inventario</p>
                         </td>
                     </tr>
                 `;
@@ -976,26 +1418,33 @@
                 const categoryName = product.categoria || catalogInfo.categoria || 'N/A';
                 
                 const row = document.createElement('tr');
+                row.className = 'fade-in';
                 row.innerHTML = `
-                    <td style="font-family: monospace; font-size: 0.9rem;">${product.docId.substring(0, 8)}...</td>
-                    <td style="font-weight: 600;">${product.id || '⚠️ N/A'}</td>
-                    <td>${product.nombre || 'Sin nombre'}</td>
-                    <td><span style="background: #E3F2FD; padding: 4px 10px; border-radius: 12px; font-size: 0.9rem;">${categoryName}</span></td>
-                    <td style="font-weight: 700; color: ${isLowStock ? '#F44336' : '#2E7D32'};">
-                        ${product.cantidad || 0}
+                    <td style="font-family: monospace; font-size: 0.9rem; font-weight: 600;">${product.id || '⚠️'}</td>
+                    <td class="selectable">${product.nombre || 'Sin nombre'}</td>
+                    <td><span style="background: #E3F2FD; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 500;">${categoryName}</span></td>
+                    <td>
+                        <div class="quantity-control">
+                            <button class="qty-btn minus" onclick="updateQuantity('${product.docId}', -1)" title="Restar 1">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <div class="qty-display" id="qty-${product.docId}">${product.cantidad || 0}</div>
+                            <button class="qty-btn plus" onclick="updateQuantity('${product.docId}', 1)" title="Sumar 1">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
                     </td>
                     <td>₡${(product.precioOferta || catalogInfo.precioOferta || 0).toLocaleString()}</td>
-                    <td>₡${(product.preciocompra || catalogInfo.preciocompra || 0).toLocaleString()}</td>
                     <td>
                         <span class="status-badge status-${status}">
-                            ${!hasId ? '⚠️ Sin ID' : isLowStock ? '📉 Bajo stock' : '✅ OK'}
+                            ${!hasId ? '⚠️ Sin ID' : isLowStock ? '📉 Bajo' : '✅ OK'}
                         </span>
                     </td>
                     <td class="action-cell">
-                        <button class="action-btn edit" onclick="showUpdateModal(${JSON.stringify(product).replace(/'/g, '\\\'')})" title="Editar">
+                        <button class="action-btn edit" onclick="showEditModal(${JSON.stringify(product).replace(/'/g, '\\\'')})" title="Editar">
                             <i class="fas fa-edit"></i>
                         </button>
-                        ${!hasId ? `<button class="action-btn edit" onclick="fixMissingId('${product.docId}')" title="Asignar ID">
+                        ${!hasId ? `<button class="action-btn magic" onclick="fixMissingId('${product.docId}')" title="Asignar ID">
                             <i class="fas fa-magic"></i>
                         </button>` : ''}
                     </td>
@@ -1010,14 +1459,12 @@
             const statusFilter = document.getElementById('statusFilter').value;
             
             const filtered = stockData.filter(product => {
-                // Búsqueda
                 const matchesSearch = 
                     (product.id && product.id.toString().includes(searchTerm)) ||
                     (product.nombre && product.nombre.toLowerCase().includes(searchTerm)) ||
                     (product.categoria && product.categoria.toLowerCase().includes(searchTerm)) ||
                     (product.docId && product.docId.includes(searchTerm));
                 
-                // Filtro de estado
                 const hasId = !!product.id;
                 const isLowStock = product.cantidad < 5 && product.cantidad >= 0;
                 const status = !hasId ? 'missing' : isLowStock ? 'low' : 'ok';
@@ -1030,16 +1477,15 @@
                 return matchesSearch && matchesStatus;
             });
             
-            // Re-renderizar con datos filtrados
             const tbody = document.getElementById('stockTableBody');
             tbody.innerHTML = '';
             
             if (filtered.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="9" style="text-align: center; padding: 40px; color: #999;">
-                            <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 10px;"></i><br>
-                            No se encontraron resultados
+                        <td colspan="7" class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <p>No se encontraron resultados</p>
                         </td>
                     </tr>
                 `;
@@ -1056,25 +1502,31 @@
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td style="font-family: monospace; font-size: 0.9rem;">${product.docId.substring(0, 8)}...</td>
-                    <td style="font-weight: 600;">${product.id || '⚠️ N/A'}</td>
-                    <td>${product.nombre || 'Sin nombre'}</td>
-                    <td><span style="background: #E3F2FD; padding: 4px 10px; border-radius: 12px; font-size: 0.9rem;">${categoryName}</span></td>
-                    <td style="font-weight: 700; color: ${isLowStock ? '#F44336' : '#2E7D32'};">
-                        ${product.cantidad || 0}
+                    <td style="font-family: monospace; font-size: 0.9rem; font-weight: 600;">${product.id || '⚠️'}</td>
+                    <td class="selectable">${product.nombre || 'Sin nombre'}</td>
+                    <td><span style="background: #E3F2FD; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 500;">${categoryName}</span></td>
+                    <td>
+                        <div class="quantity-control">
+                            <button class="qty-btn minus" onclick="updateQuantity('${product.docId}', -1)" title="Restar 1">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <div class="qty-display" id="qty-${product.docId}">${product.cantidad || 0}</div>
+                            <button class="qty-btn plus" onclick="updateQuantity('${product.docId}', 1)" title="Sumar 1">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
                     </td>
                     <td>₡${(product.precioOferta || catalogInfo.precioOferta || 0).toLocaleString()}</td>
-                    <td>₡${(product.preciocompra || catalogInfo.preciocompra || 0).toLocaleString()}</td>
                     <td>
                         <span class="status-badge status-${status}">
-                            ${!hasId ? '⚠️ Sin ID' : isLowStock ? '📉 Bajo stock' : '✅ OK'}
+                            ${!hasId ? '⚠️ Sin ID' : isLowStock ? '📉 Bajo' : '✅ OK'}
                         </span>
                     </td>
                     <td class="action-cell">
-                        <button class="action-btn edit" onclick="showUpdateModal(${JSON.stringify(product).replace(/'/g, '\\\'')})" title="Editar">
+                        <button class="action-btn edit" onclick="showEditModal(${JSON.stringify(product).replace(/'/g, '\\\'')})" title="Editar">
                             <i class="fas fa-edit"></i>
                         </button>
-                        ${!hasId ? `<button class="action-btn edit" onclick="fixMissingId('${product.docId}')" title="Asignar ID">
+                        ${!hasId ? `<button class="action-btn magic" onclick="fixMissingId('${product.docId}')" title="Asignar ID">
                             <i class="fas fa-magic"></i>
                         </button>` : ''}
                     </td>
@@ -1088,14 +1540,13 @@
             const product = stockData.find(p => p.docId === docId);
             if (!product) return;
 
-            if (!confirm(`¿Deseas asignar un ID al producto "${product.nombre || 'Sin nombre'}"?`)) {
+            if (!confirm(`¿Asignar ID a "${product.nombre || 'Sin nombre'}"?`)) {
                 return;
             }
 
             try {
                 showProgress('Asignando ID...', 50);
                 
-                // Buscar en catálogo
                 const catalogMatch = Object.values(catalogData).find(catProd => 
                     catProd.nombreOriginal === product.nombre || 
                     catProd.nombre === product.nombre
@@ -1108,11 +1559,11 @@
                 });
 
                 hideProgress();
-                showToast('✅ ID asignado exitosamente', 'success');
+                showToast('✅ ID asignado', 'success');
                 await loadStockData();
             } catch (error) {
                 hideProgress();
-                showToast('Error: ' + error.message, 'error');
+                showToast('❌ Error: ' + error.message, 'error');
             }
         }
 
@@ -1137,20 +1588,19 @@
             if (healthPercent === 100) {
                 healthIcon.textContent = '💚';
                 healthStatus.textContent = 'Excelente';
-                healthMessage.textContent = 'Todos los documentos están normalizados';
+                healthMessage.textContent = 'Todo normalizado';
             } else if (healthPercent >= 80) {
                 healthIcon.textContent = '💛';
                 healthStatus.textContent = 'Bueno';
-                healthMessage.textContent = `${missingId} documentos necesitan normalización`;
+                healthMessage.textContent = `${missingId} requieren atención`;
             } else {
                 healthIcon.textContent = '💔';
-                healthStatus.textContent = 'Requiere atención';
-                healthMessage.textContent = `${missingId} documentos sin campo ID`;
+                healthStatus.textContent = 'Atención';
+                healthMessage.textContent = `${missingId} sin campo ID`;
             }
 
-            // Última actualización
             document.getElementById('lastUpdate').textContent = 
-                `Última actualización: ${new Date().toLocaleTimeString()}`;
+                `Actualizado: ${new Date().toLocaleTimeString('es-ES')}`;
         }
 
         // Toast notifications
@@ -1161,13 +1611,12 @@
             
             setTimeout(() => {
                 toast.classList.remove('show');
-            }, 3000);
+            }, 2500);
         }
 
         // Progress bar
         function showProgress(title, percent) {
             document.getElementById('progressContainer').style.display = 'block';
-            document.getElementById('progressTitle').textContent = title;
             updateProgress(title, percent);
         }
 
@@ -1187,6 +1636,22 @@
                 closeModal();
             }
         });
+
+        // Prevenir zoom en iPhone al hacer doble tap
+        document.addEventListener('touchstart', function(event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
     </script>
 </body>
 </html>
