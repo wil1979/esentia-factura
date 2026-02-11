@@ -11,7 +11,7 @@
 <body>
   <header class="header">
     <div class="header-left">
-      <img src="images/logo.png" alt="Esentia" class="logo">
+      <img src="https://wil1979.github.io/esentia-factura/images/logo.png" alt="Esentia" class="logo">
       <div>
         <h1>Catálogo Esentia</h1>
         <p>Fragancias que enamoran</p>
@@ -596,7 +596,7 @@ async function buscarCedulaHacienda(cedula) {
 async function cargarProductos() {
     try {
         const resp = await fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json");
-       // const resp = await fetch("1productos_esentia.json");
+        //const resp = await fetch("1productos_esentia.json");
         const datosPorTipo = await resp.json();
         
         // Aplanar el JSON estructurado por tipos a un array simple
@@ -625,6 +625,69 @@ async function cargarProductos() {
       const cont = document.getElementById("productos-hogar");
       cont.innerHTML = "<p>Error cargando catálogo. Intenta más tarde.</p>";
     }
+
+    function cargarVariantesProducto(p) {
+  const select = document.getElementById("select-variante");
+  if (!select) return;
+
+  select.innerHTML = "";
+
+  // 🏷️ Nombres fijos por posición (según tu negocio)
+  const nombresPresentacion = [
+    "Auto",
+    "Hogar / Oficina 30 ml",
+    "Hogar / Oficina 120 ml"
+  ];
+
+  // 🧴 Si no hay variantes, fallback seguro
+  if (!Array.isArray(p.variantes) || p.variantes.length === 0) {
+    const opt = document.createElement("option");
+    opt.value = JSON.stringify({
+      nombre: "Presentación única",
+      precio: p.precioOferta || p.precio || 3000
+    });
+    opt.textContent = "Presentación única";
+    select.appendChild(opt);
+    return;
+  }
+
+  // ✅ Cargar variantes correctamente
+  p.variantes.forEach((v, i) => {
+    const variante = {
+      nombre: nombresPresentacion[i] || "Presentación",
+      precio: v.precio
+    };
+
+    const opt = document.createElement("option");
+    opt.value = JSON.stringify(variante);
+    opt.textContent = `${variante.nombre} — ₡${variante.precio.toLocaleString("es-CR")}`;
+
+    // ⭐ Seleccionar ₡3000 por defecto
+    if (v.precio === 3000) opt.selected = true;
+
+    select.appendChild(opt);
+  });
+
+  // 🔄 Actualizar precio visible al cambiar variante
+  select.onchange = () => {
+    if (!select.value) return;
+    const v = JSON.parse(select.value);
+    const contPrecio = document.getElementById("modalProductoPrecio");
+    if (contPrecio) {
+      contPrecio.textContent = `₡${v.precio.toLocaleString("es-CR")}`;
+    }
+  };
+
+  // 🟢 Forzar precio inicial (₡3000 si existe)
+  const inicial = [...select.options].find(o =>
+    JSON.parse(o.value).precio === 3000
+  );
+  if (inicial) {
+    select.value = inicial.value;
+    select.dispatchEvent(new Event("change"));
+  }
+}
+
 
     function renderizarProductos() {
     const container = document.getElementById("productos-hogar");
@@ -942,24 +1005,59 @@ function filtrarProductosPorTipo(tipo) {
       const p = productos.find(x => x.nombre === nombre);
       productoSeleccionado = { ...p };
 
-      const sel = document.getElementById("selectorVariante");
-      sel.innerHTML = "";
+     const sel = document.getElementById("selectorVariante");
+sel.innerHTML = "";
 
-      if (p.variantes && p.variantes.length > 0) {
-        const select = document.createElement("select");
-        select.id = "varianteSeleccionada";
-        select.style.width = "100%";
-        select.style.marginTop = "1rem";
-        select.style.padding = "10px";
-        select.innerHTML = '<option value="">-- Selecciona una presentación --</option>';
-        p.variantes.forEach(v => {
-          const opt = document.createElement("option");
-          opt.value = JSON.stringify(v);
-          opt.textContent = `${v.nombre} – ₡${v.precio.toLocaleString()}`;
-          select.appendChild(opt);
-        });
-        sel.appendChild(select);
-      }
+if (p.variantes && p.variantes.length > 0) {
+
+  const select = document.createElement("select");
+  select.id = "varianteSeleccionada";
+  select.style.width = "100%";
+  select.style.marginTop = "1rem";
+  select.style.padding = "10px";
+
+  // 🏷️ Primera opción
+  select.innerHTML = '<option value="">-- Selecciona una presentación --</option>';
+
+  // 🧴 Nombres fijos por posición
+  const nombresPresentacion = [
+    "Auto",
+    "Hogar / Oficina 30 ml",
+    "Hogar / Oficina 120 ml"
+  ];
+
+  p.variantes.forEach((v, i) => {
+
+    const variante = {
+      nombre: nombresPresentacion[i] || "Presentación",
+      precio: v.precio
+    };
+
+    const opt = document.createElement("option");
+    opt.value = JSON.stringify(variante);
+    opt.textContent = `${variante.nombre} – ₡${variante.precio.toLocaleString("es-CR")}`;
+
+    // ⭐ Seleccionar ₡3000 por defecto
+    if (v.precio === 3000) {
+      opt.selected = true;
+    }
+
+    select.appendChild(opt);
+  });
+
+  // 🔄 Cambiar precio visible al cambiar variante
+  select.addEventListener("change", () => {
+    if (!select.value) return;
+    const v = JSON.parse(select.value);
+    const precioLabel = document.getElementById("modalProductoPrecio");
+    if (precioLabel) {
+      precioLabel.textContent = `₡${v.precio.toLocaleString("es-CR")}`;
+    }
+  });
+
+  sel.appendChild(select);
+}
+
 
       document.getElementById("modalProducto").style.display = "flex";
       if (typeof actualizarModalConStock === "function") actualizarModalConStock(nombre);
@@ -970,32 +1068,43 @@ function filtrarProductosPorTipo(tipo) {
      }
 
      function agregarAlCarritoDesdeModal() {
-      if (!productoSeleccionado) return;
+       if (!window.productoSeleccionado) {
+    alert("Seleccione un producto");
+    return;
+  }
 
-      let variante = { nombre: "30 ml", precio: 3000 };
-      const select = document.getElementById("varianteSeleccionada");
-      if (select && select.value) {
-        try {
-          variante = JSON.parse(select.value);
-        } catch {}
-      }
+  let variante = {
+    nombre: "Hogar / Oficina 30 ml",
+    precio: 3000
+  };
 
-      const item = {
-        id: productoSeleccionado.imagen.split("/").pop().split(".")[0].toLowerCase(),
-        nombre: `${productoSeleccionado.nombre} ${variante.nombre}`,
-        precio: variante.precio || 3000,
-        cantidad: 1,
-        imagen: productoSeleccionado.imagen
-      };
+  const selectVar = document.getElementById("select-variante");
+  if (selectVar && selectVar.value) {
+    try {
+      variante = JSON.parse(selectVar.value);
+    } catch {
+      // fallback seguro
+    }
+  }
 
-      const existente = carrito.find(x => x.id === item.id && x.nombre === item.nombre);
-      if (existente) existente.cantidad += 1;
-      else carrito.push(item);
+  const cantidad = Math.max(
+    1,
+    Number(document.getElementById("input-cantidad")?.value || 1)
+  );
 
-      renderCarrito();
-      cerrarModalProducto();
-      mostrarToast("Producto añadido al carrito 🛒");
-     }
+  window.carrito.push({
+    id: window.productoSeleccionado.id,
+    nombre: window.productoSeleccionado.nombre,
+    imagen: window.productoSeleccionado.imagen,
+    variante: variante.nombre,
+    precio: variante.precio,
+    cantidad
+  });
+
+  guardarCarritoLocal();
+  renderCarritoModal();
+  actualizarResumenVenta();
+};
 
      function abrirModalCarrito() {
       document.getElementById("modalCarrito").style.display = "flex";
