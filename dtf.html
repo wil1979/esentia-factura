@@ -748,7 +748,7 @@
     <input type="file" id="configFileInput" accept=".json" style="display: none;" onchange="handleConfigImport(event)">
 
     <script>
-        // Variables globales
+       // Variables globales
 let labelWidthCm = 5;
 let labelHeightCm = 5;
 let labelWidthPx = 200;
@@ -788,8 +788,7 @@ let previewLabels = [];
         let selectedProducts = new Map();
         let productosJSON = [];
         let indicacionesJSON = null;
-        let currentPreviewIndex = -1;
-        let previewLabels = [];
+      
        
 
         // Event Listeners
@@ -1909,7 +1908,7 @@ async function createLabelCanvas(labelData, options = {}) {
         mirrorEffect = false,
         mode = 'dtf-textil'
     } = options;
-
+    
     // Obtener configuraciones actuales
     const widthCm = parseFloat(document.getElementById('labelWidth').value) || 5;
     const heightCm = parseFloat(document.getElementById('labelHeight').value) || 5;
@@ -1919,12 +1918,12 @@ async function createLabelCanvas(labelData, options = {}) {
     const pxPerCm = dpi / 2.54;
     const widthPx = Math.round(widthCm * pxPerCm);
     const heightPx = Math.round(heightCm * pxPerCm);
-
+    
     const canvas = document.createElement('canvas');
     canvas.width = widthPx;
     canvas.height = heightPx;
     const ctx = canvas.getContext('2d');
-
+    
     // Fondo
     if (!transparentBg) {
         const backgroundType = document.getElementById('backgroundType').value;
@@ -1941,20 +1940,19 @@ async function createLabelCanvas(labelData, options = {}) {
             }
         }
     }
-
+    
     // Efecto espejo
     if (mirrorEffect) {
         ctx.translate(widthPx, 0);
         ctx.scale(-1, 1);
     }
-
+    
     // Borde
     const borderWidth = (parseFloat(document.getElementById('borderWidth').value) || 0) * (pxPerCm / 38); // Escalar borde
     if (borderWidth > 0) {
         ctx.strokeStyle = document.getElementById('borderColor').value;
         ctx.lineWidth = borderWidth;
         const shape = document.querySelector('input[name="labelShape"]:checked').value;
-        
         if (shape === 'rounded') {
             const radius = 15 * (pxPerCm / 38);
             drawRoundedRect(ctx, borderWidth/2, borderWidth/2, widthPx - borderWidth, heightPx - borderWidth, radius);
@@ -1967,7 +1965,7 @@ async function createLabelCanvas(labelData, options = {}) {
             ctx.strokeRect(borderWidth/2, borderWidth/2, widthPx - borderWidth, heightPx - borderWidth);
         }
     }
-
+    
     // Imagen del producto
     const showProductImage = document.getElementById('showProductImage').checked;
     if (showProductImage && labelData.product && labelData.product.imagen) {
@@ -1978,15 +1976,40 @@ async function createLabelCanvas(labelData, options = {}) {
             const imgX = (parseFloat(document.getElementById('productImagePosX').value) / 100) * widthPx;
             const imgY = (parseFloat(document.getElementById('productImagePosY').value) / 100) * heightPx;
             const imgRot = (parseFloat(document.getElementById('productImageRotation').value) || 0) * Math.PI / 180;
-
+            
             ctx.save();
             ctx.translate(imgX, imgY);
             ctx.rotate(imgRot);
             ctx.drawImage(img, -imgW/2, -imgH/2, imgW, imgH);
             ctx.restore();
-        } catch (e) { console.error("Error loading product image", e); }
+        } catch (e) { 
+            console.error("Error loading product image", e); 
+        }
     }
-
+    
+    // Imágenes adicionales
+    for (let i = 1; i <= 3; i++) {
+        const imgSrc = additionalImages[`img${i}`];
+        if (imgSrc) {
+            try {
+                const img = await loadImage(imgSrc);
+                const imgW = (parseFloat(document.getElementById(`img${i}Width`).value) || 50) * (pxPerCm / 38);
+                const imgH = (parseFloat(document.getElementById(`img${i}Width`).value) || 50) * (pxPerCm / 38);
+                const imgX = (parseFloat(document.getElementById(`img${i}PosX`).value) / 100) * widthPx;
+                const imgY = (parseFloat(document.getElementById(`img${i}PosY`).value) / 100) * heightPx;
+                const imgRot = (parseFloat(document.getElementById(`img${i}Rotation`).value) || 0) * Math.PI / 180;
+                
+                ctx.save();
+                ctx.translate(imgX, imgY);
+                ctx.rotate(imgRot);
+                ctx.drawImage(img, -imgW/2, -imgH/2, imgW, imgH);
+                ctx.restore();
+            } catch (e) { 
+                console.error(`Error loading additional image ${i}`, e); 
+            }
+        }
+    }
+    
     // Nombre del producto
     const fontSize = (parseFloat(document.getElementById('fontSize').value) || 16) * (pxPerCm / 38);
     const fontRot = (parseFloat(document.getElementById('fontRotation').value) || 0) * Math.PI / 180;
@@ -1994,7 +2017,7 @@ async function createLabelCanvas(labelData, options = {}) {
     const fontY = (parseFloat(document.getElementById('fontPosY').value) / 100) * heightPx;
     const textColor = document.getElementById('textColor').value;
     const selectedFont = document.getElementById('selectedFont').value;
-
+    
     ctx.save();
     ctx.translate(fontX, fontY);
     ctx.rotate(fontRot);
@@ -2004,7 +2027,7 @@ async function createLabelCanvas(labelData, options = {}) {
     ctx.textBaseline = 'middle';
     ctx.fillText(labelData.name, 0, 0);
     ctx.restore();
-
+    
     // Precio
     const priceFormat = document.getElementById('priceFormat').value;
     if (priceFormat) {
@@ -2013,10 +2036,81 @@ async function createLabelCanvas(labelData, options = {}) {
         ctx.fillStyle = document.getElementById('borderColor').value;
         ctx.font = `bold ${fontSize * 0.8}px ${selectedFont}`;
         ctx.textAlign = 'center';
-        ctx.fillText(labelData.price, 0, 0);
+        ctx.fillText(priceFormat, 0, 0);
         ctx.restore();
     }
-
+    
+    // Textos adicionales
+    for (let i = 1; i <= 3; i++) {
+        const text = document.getElementById(`additionalText${i}`).value;
+        if (text) {
+            const textFontSize = (parseFloat(document.getElementById(`text${i}FontSize`).value) || 12) * (pxPerCm / 38);
+            const textColor = document.getElementById(`text${i}Color`).value;
+            const textX = (parseFloat(document.getElementById(`text${i}PosX`).value) / 100) * widthPx;
+            const textY = (parseFloat(document.getElementById(`text${i}PosY`).value) / 100) * heightPx;
+            const textRot = (parseFloat(document.getElementById(`text${i}Rotation`).value) || 0) * Math.PI / 180;
+            
+            ctx.save();
+            ctx.translate(textX, textY);
+            ctx.rotate(textRot);
+            ctx.fillStyle = textColor;
+            ctx.font = `${i === 1 ? 'bold' : 'normal'} ${textFontSize}px ${selectedFont}`;
+            ctx.textAlign = 'center';
+            ctx.fillText(text, 0, 0);
+            ctx.restore();
+        }
+    }
+    
+    // Indicaciones
+    if (document.getElementById('showInstructions').checked && indicacionesJSON) {
+        const instFontSize = (parseFloat(document.getElementById('instructionsFontSize').value) || 10) * (pxPerCm / 38);
+        const instColor = document.getElementById('instructionsColor').value;
+        const instRotation = (parseFloat(document.getElementById('instructionsRotation').value) || 0) * Math.PI / 180;
+        const instPosX = (parseFloat(document.getElementById('instructionsPosX').value) / 100) * widthPx;
+        const instPosY = (parseFloat(document.getElementById('instructionsPosY').value) / 100) * heightPx;
+        const instWidth = (parseFloat(document.getElementById('instructionsWidth').value) / 100) * widthPx;
+        
+        let indicacionesText = '';
+        if (Array.isArray(indicacionesJSON)) {
+            const current = indicacionesJSON.current || indicacionesJSON[0];
+            if (current) {
+                if (current.indicaciones && current.indicaciones.length > 0) {
+                    indicacionesText += current.indicaciones.join('<br>');
+                }
+                if (current.advertencias && current.advertencias.length > 0) {
+                    indicacionesText += '<br><br><strong>Advertencias:</strong><br>';
+                    indicacionesText += current.advertencias.join('<br>');
+                }
+            }
+        } else {
+            if (indicacionesJSON.indicaciones) {
+                indicacionesText += indicacionesJSON.indicaciones.join('<br>');
+            }
+            if (indicacionesJSON.advertencias) {
+                indicacionesText += '<br><br><strong>Advertencias:</strong><br>';
+                indicacionesText += indicacionesJSON.advertencias.join('<br>');
+            }
+        }
+        
+        if (indicacionesText) {
+            ctx.save();
+            ctx.translate(instPosX, instPosY);
+            ctx.rotate(instRotation);
+            
+            // Dividir texto en líneas
+            const lines = indicacionesText.split('<br>');
+            const lineHeight = instFontSize * 1.2;
+            
+            // Dibujar cada línea
+            lines.forEach((line, index) => {
+                const y = (index - lines.length/2) * lineHeight;
+                ctx.fillText(line, 0, y);
+            });
+            
+            ctx.restore();
+        }
+    }
+    
     return canvas;
 }
 
@@ -2541,6 +2635,7 @@ function closePreviewModal() {
 }
 
 // Renderizar vista previa grande
+// Renderizar vista previa grande
 function renderLargePreview() {
     if (currentPreviewIndex < 0 || currentPreviewIndex >= previewLabels.length) return;
     
@@ -2564,7 +2659,8 @@ function renderLargePreview() {
     // Aplicar dimensiones grandes (400x400px)
     labelDiv.style.width = '400px';
     labelDiv.style.height = '400px';
-    labelDiv.className = 'label-preview ' + (transparentBg ? 'dtf-transparent' : '');
+    labelDiv.className = `label-preview ${transparentBg ? 'dtf-transparent' : ''} clickable`;
+    labelDiv.style.cursor = 'pointer';
     labelDiv.style.borderColor = document.getElementById('borderColor').value;
     labelDiv.style.borderWidth = '4px';
     labelDiv.style.fontFamily = selectedFont;
@@ -2585,142 +2681,163 @@ function renderLargePreview() {
     if (backgroundType === 'color') {
         labelDiv.style.backgroundColor = document.getElementById('backgroundColor').value;
     } else if (backgroundType === 'image') {
-        var bgUrl = document.getElementById('backgroundImageUrl').value || document.getElementById('previewBackground').src;
+        const bgUrl = document.getElementById('backgroundImageUrl').value || document.getElementById('previewBackground').src;
         if (bgUrl) {
-            labelDiv.style.backgroundImage = 'url(' + bgUrl + ')';
+            labelDiv.style.backgroundImage = `url(${bgUrl})`;
             labelDiv.style.backgroundSize = 'cover';
             labelDiv.style.backgroundPosition = 'center';
             labelDiv.style.opacity = document.getElementById('backgroundOpacity').value;
         }
     }
     
-    var html = '<div class="label-content" style="position: relative; width: 100%; height: 100%;">';
+    let html = '<div class="label-content" style="position: relative; width: 100%; height: 100%;">';
     
     // Imagen del producto
     if (showProductImage && labelData.product && labelData.product.imagen) {
-        var imgWidth = document.getElementById('productImageWidth').value;
-        var imgHeight = document.getElementById('productImageHeight').value;
-        var imgPosX = document.getElementById('productImagePosX').value;
-        var imgPosY = document.getElementById('productImagePosY').value;
-        var imgRotation = document.getElementById('productImageRotation').value;
+        const imgWidth = document.getElementById('productImageWidth').value;
+        const imgHeight = document.getElementById('productImageHeight').value;
+        const imgPosX = document.getElementById('productImagePosX').value;
+        const imgPosY = document.getElementById('productImagePosY').value;
+        const imgRotation = document.getElementById('productImageRotation').value;
         
-        html += '<img src="' + labelData.product.imagen.trim() + '" ' +
-        'class="product-image" ' +
-        'style="position: absolute; ' +
-        'width: ' + imgWidth + 'px; ' +
-        'height: ' + imgHeight + 'px; ' +
-        'left: calc(' + imgPosX + '% - ' + (imgWidth/2) + 'px); ' +
-        'top: calc(' + imgPosY + '% - ' + (imgHeight/2) + 'px); ' +
-        'transform: rotate(' + imgRotation + 'deg); ' +
-        'object-fit: contain;" ' +
-        'onerror="this.style.display=\'none\'">';
+        html += `
+        <img src="${labelData.product.imagen.trim()}"
+        class="product-image"
+        style="position: absolute;
+        width: ${imgWidth}px;
+        height: ${imgHeight}px;
+        left: calc(${imgPosX}% - ${imgWidth/2}px);
+        top: calc(${imgPosY}% - ${imgHeight/2}px);
+        transform: rotate(${imgRotation}deg);
+        object-fit: contain;"
+        onerror="this.style.display='none'">
+        `;
     }
     
     // Imágenes adicionales
-    for (var i = 1; i <= 3; i++) {
-        var imgSrc = additionalImages['img' + i];
+    for (let i = 1; i <= 3; i++) {
+        const imgSrc = additionalImages[`img${i}`];
         if (imgSrc) {
-            var imgWidth = document.getElementById('img' + i + 'Width').value;
-            var imgPosX = document.getElementById('img' + i + 'PosX').value;
-            var imgPosY = document.getElementById('img' + i + 'PosY').value;
-            var imgRotation = document.getElementById('img' + i + 'Rotation').value;
+            const imgWidth = document.getElementById(`img${i}Width`).value;
+            const imgPosX = document.getElementById(`img${i}PosX`).value;
+            const imgPosY = document.getElementById(`img${i}PosY`).value;
+            const imgRotation = document.getElementById(`img${i}Rotation`).value;
             
-            html += '<img src="' + imgSrc + '" ' +
-            'style="position: absolute; ' +
-            'width: ' + imgWidth + 'px; ' +
-            'left: calc(' + imgPosX + '% - ' + (imgWidth/2) + 'px); ' +
-            'top: calc(' + imgPosY + '% - ' + (imgWidth/2) + 'px); ' +
-            'transform: rotate(' + imgRotation + 'deg); ' +
-            'object-fit: contain;" ' +
-            'onerror="this.style.display=\'none\'">';
+            html += `
+            <img src="${imgSrc}"
+            style="position: absolute;
+            width: ${imgWidth}px;
+            left: calc(${imgPosX}% - ${imgWidth/2}px);
+            top: calc(${imgPosY}% - ${imgWidth/2}px);
+            transform: rotate(${imgRotation}deg);
+            object-fit: contain;"
+            onerror="this.style.display='none'">
+            `;
         }
     }
     
     // Nombre del producto
-    html += '<div class="label-name" ' +
-    'style="position: absolute; ' +
-    'left: calc(' + fontPosX + '% - 50%); ' +
-    'top: calc(' + fontPosY + '% - 50%); ' +
-    'transform: translate(-50%, -50%) rotate(' + fontRotation + 'deg); ' +
-    'font-size: ' + fontSize + 'px; ' +
-    'color: ' + document.getElementById('textColor').value + '; ' +
-    'text-align: center; ' +
-    'width: 90%; ' +
-    'font-weight: bold;">' +
-    labelData.name +
-    '</div>';
+    html += `
+    <div class="label-name"
+    style="position: absolute;
+    left: calc(${fontPosX}% - 50%);
+    top: calc(${fontPosY}% - 50%);
+    transform: translate(-50%, -50%) rotate(${fontRotation}deg);
+    font-size: ${fontSize}px;
+    color: ${document.getElementById('textColor').value};
+    text-align: center;
+    width: 90%;
+    font-weight: bold;">
+    ${labelData.name}
+    </div>
+    `;
     
     // Precio
-    html += '<div class="label-price" ' +
-    'style="position: absolute; ' +
-    'left: 50%; ' +
-    'top: 65%; ' +
-    'transform: translate(-50%, -50%); ' +
-    'text-align: center; ' +
-    'width: 90%; ' +
-    'font-weight: bold; ' +
-    'color: ' + document.getElementById('borderColor').value + ';">' +
-    priceFormat +
-    '</div>';
+    html += `
+    <div class="label-price"
+    style="position: absolute;
+    left: 50%;
+    top: 65%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 90%;
+    font-weight: bold;
+    color: ${document.getElementById('borderColor').value};">
+    ${priceFormat}
+    </div>
+    `;
     
     // Indicaciones
     if (showInstructions && indicacionesJSON) {
-        var instFontSize = document.getElementById('instructionsFontSize').value;
-        var instColor = document.getElementById('instructionsColor').value;
-        var instRotation = document.getElementById('instructionsRotation').value;
-        var instPosX = document.getElementById('instructionsPosX').value;
-        var instPosY = document.getElementById('instructionsPosY').value;
-        var instWidth = document.getElementById('instructionsWidth').value;
+        const instFontSize = document.getElementById('instructionsFontSize').value;
+        const instColor = document.getElementById('instructionsColor').value;
+        const instRotation = document.getElementById('instructionsRotation').value;
+        const instPosX = document.getElementById('instructionsPosX').value;
+        const instPosY = document.getElementById('instructionsPosY').value;
+        const instWidth = document.getElementById('instructionsWidth').value;
         
-        var indicacionesText = '';
+        let indicacionesText = '';
         if (Array.isArray(indicacionesJSON)) {
-            var current = indicacionesJSON[0];
+            const current = indicacionesJSON.current || indicacionesJSON[0];
             if (current) {
-                indicacionesText = (current.indicaciones || []).join('<br>') + '<br><br>' +
-                '<strong>Advertencias:</strong><br>' +
-                (current.advertencias || []).join('<br>');
+                if (current.indicaciones && current.indicaciones.length > 0) {
+                    indicacionesText += current.indicaciones.join('<br>');
+                }
+                if (current.advertencias && current.advertencias.length > 0) {
+                    indicacionesText += '<br><br><strong>Advertencias:</strong><br>';
+                    indicacionesText += current.advertencias.join('<br>');
+                }
             }
-        } else if (indicacionesJSON.indicaciones) {
-            indicacionesText = indicacionesJSON.indicaciones.join('<br>') + '<br><br>' +
-            '<strong>Advertencias:</strong><br>' +
-            indicacionesJSON.advertencias.join('<br>');
+        } else {
+            // Formato antiguo
+            if (indicacionesJSON.indicaciones) {
+                indicacionesText += indicacionesJSON.indicaciones.join('<br>');
+            }
+            if (indicacionesJSON.advertencias) {
+                indicacionesText += '<br><br><strong>Advertencias:</strong><br>';
+                indicacionesText += indicacionesJSON.advertencias.join('<br>');
+            }
         }
         
         if (indicacionesText) {
-            html += '<div style="position: absolute; ' +
-            'left: calc(' + instPosX + '% - ' + (instWidth/2) + '%); ' +
-            'top: calc(' + instPosY + '% - 50%); ' +
-            'width: ' + instWidth + '%; ' +
-            'font-size: ' + instFontSize + 'px; ' +
-            'color: ' + instColor + '; ' +
-            'transform: rotate(' + instRotation + 'deg); ' +
-            'text-align: left; ' +
-            'line-height: 1.4;">' +
-            indicacionesText +
-            '</div>';
+            html += `
+            <div style="position: absolute;
+            left: calc(${instPosX}% - ${instWidth/2}%);
+            top: calc(${instPosY}% - 50%);
+            width: ${instWidth}%;
+            font-size: ${instFontSize}px;
+            color: ${instColor};
+            transform: rotate(${instRotation}deg);
+            text-align: left;
+            line-height: 1.4;">
+            ${indicacionesText}
+            </div>
+            `;
         }
     }
     
     // Textos adicionales
-    for (var i = 1; i <= 3; i++) {
-        var text = document.getElementById('additionalText' + i).value;
+    for (let i = 1; i <= 3; i++) {
+        const text = document.getElementById(`additionalText${i}`).value;
         if (text) {
-            var textFontSize = document.getElementById('text' + i + 'FontSize').value;
-            var textColor = document.getElementById('text' + i + 'Color').value;
-            var textPosX = document.getElementById('text' + i + 'PosX').value;
-            var textPosY = document.getElementById('text' + i + 'PosY').value;
-            var textRotation = document.getElementById('text' + i + 'Rotation').value;
+            const textFontSize = document.getElementById(`text${i}FontSize`).value;
+            const textColor = document.getElementById(`text${i}Color`).value;
+            const textPosX = document.getElementById(`text${i}PosX`).value;
+            const textPosY = document.getElementById(`text${i}PosY`).value;
+            const textRotation = document.getElementById(`text${i}Rotation`).value;
             
-            html += '<div style="position: absolute; ' +
-            'left: calc(' + textPosX + '% - 50%); ' +
-            'top: calc(' + textPosY + '% - 50%); ' +
-            'transform: rotate(' + textRotation + 'deg); ' +
-            'font-size: ' + textFontSize + 'px; ' +
-            'color: ' + textColor + '; ' +
-            'text-align: center; ' +
-            'font-weight: ' + (i === 1 ? 'bold' : 'normal') + ';">' +
-            text +
-            '</div>';
+            html += `
+            <div style="position: absolute;
+            left: calc(${textPosX}% - 50%);
+            top: calc(${textPosY}% - 50%);
+            transform: rotate(${textRotation}deg);
+            font-size: ${textFontSize}px;
+            color: ${textColor};
+            text-align: center;
+            font-weight: ${i === 1 ? 'bold' : 'normal'};">
+            ${text}
+            </div>
+            `;
         }
     }
     
@@ -2728,16 +2845,16 @@ function renderLargePreview() {
     labelDiv.innerHTML = html;
     
     // Insertar en contenedor
-    var container = document.getElementById('largePreviewContainer');
+    const container = document.getElementById('largePreviewContainer');
     container.innerHTML = '';
     container.appendChild(labelDiv);
     
     // Actualizar información
-    document.getElementById('modalLabelIndex').textContent = (currentPreviewIndex + 1) + ' de ' + previewLabels.length;
+    document.getElementById('modalLabelIndex').textContent = `${currentPreviewIndex + 1} de ${previewLabels.length}`;
     document.getElementById('modalProductName').textContent = labelData.name;
     document.getElementById('modalProductId').textContent = labelData.productId || 'N/A';
     document.getElementById('modalProductCategory').textContent = (labelData.product && labelData.product.categoria) || 'Sin categoría';
-    document.getElementById('modalLabelSize').textContent = labelWidthCm + ' x ' + labelHeightCm + ' cm (' + labelWidthPx + ' x ' + labelHeightPx + ' px)';
+    document.getElementById('modalLabelSize').textContent = `${labelWidthCm} x ${labelHeightCm} cm (${labelWidthPx} x ${labelHeightPx} px)`;
 }
 
 // Navegar a etiqueta anterior
@@ -2850,4 +2967,3 @@ document.addEventListener('click', (e) => {
 
 </body>
 </html>
-
