@@ -56,11 +56,11 @@
                 <div id="customSize" style="display: none;">
                     <div class="control-group">
                         <label for="sheetWidth">Ancho hoja (cm):</label>
-                        <input type="number" id="sheetWidth" value="28" step="0.1" min="1">
+                        <input type="number" id="sheetWidth" value="50" step="0.1" min="1">
                     </div>
                     <div class="control-group">
                         <label for="sheetHeight">Alto hoja (cm):</label>
-                        <input type="number" id="sheetHeight" value="100" step="0.1" min="1">
+                        <input type="number" id="sheetHeight" value="50" step="0.1" min="1">
                     </div>
                 </div>
 
@@ -72,6 +72,13 @@
                 <div class="control-group">
                     <label for="labelHeight">Alto etiqueta (cm):</label>
                     <input type="number" id="labelHeight" value="4" step="0.5" min="1">
+                </div>
+
+                <div class="control-group">
+                 <label>Dimensiones actuales:</label>
+                  <div id="currentSheetDimensions" style="font-weight: bold; color: #006400;">
+                  28 x 100 cm
+                 </div>
                 </div>
 
                 <button class="btn" onclick="applyLabelSize()">🔄 Aplicar Cambios de Tamaño</button>
@@ -172,8 +179,9 @@
                     </div>
 
                     <div class="btn-select-container">
-                        <button class="btn-select-all" onclick="selectAllProducts()">✓ Seleccionar Todos</button>
-                        <button class="btn-select-none" onclick="deselectAllProducts()">✗ Deseleccionar Todos</button>
+                        <button class="btn-select-all" onclick="selectAllProducts()">✓ </button>
+                        <button class="btn-select-none" onclick="deselectAllProducts()">✗</button>
+                        <button class="btn btn-success" onclick="generateLabels()">🔄 </button>
                     </div>
 
                     <div class="product-list-container" id="productList">
@@ -221,12 +229,12 @@
 <div class="control-group"></div>
                 <div class="control-group">
                     <label for="quantityPerProduct">Cantidad por producto:</label>
-                    <input type="number" id="quantityPerProduct" value="10" min="1">
+                    <input type="number" id="quantityPerProduct" value="1" min="1">
                 </div>
 
                 <div class="control-group">
                     <label for="fontSize">Tamaño texto nombre (px):</label>
-                    <input type="number" id="fontSize" value="16" min="8" max="48">
+                    <input type="number" id="fontSize" value="10" min="8" max="48">
                 </div>
 
                 <div class="control-group">
@@ -241,18 +249,19 @@
 
                 <div class="control-group">
                     <label for="fontPosX">Posición X texto nombre (%) :</label>
-                    <input type="number" id="fontPosX" value="50" min="0" max="100">
+                    <input type="number" id="fontPosX" value="148" min="0" max="100">
                 </div>
 
                 <div class="control-group">
                     <label for="fontPosY">Posición Y texto nombre (%) :</label>
-                    <input type="number" id="fontPosY" value="50" min="0" max="100">
+                    <input type="number" id="fontPosY" value="100" min="0" max="100">
                 </div>
 
                 <div class="control-group">
                     <label for="priceFormat">Precio común (ej: ¤20 ml ¤30 ml):</label>
-                    <input type="text" id="priceFormat" value="¤10 ml">
+                    <input type="text" id="priceFormat" value="">
                 </div>
+                <button class="btn btn-secondary" onclick="previewChanges()">👁️ Vista previa</button>
             </div>
 
             </div>
@@ -275,19 +284,19 @@
                     </div>
                     <div class="control-group">
                         <label for="productImageWidth">Ancho imagen (px):</label>
-                        <input type="number" id="productImageWidth" value="100" min="10" max="500">
+                        <input type="number" id="productImageWidth" value="90" min="10" max="500">
                     </div>
                     <div class="control-group">
                         <label for="productImageHeight">Alto imagen (px):</label>
-                        <input type="number" id="productImageHeight" value="100" min="10" max="500">
+                        <input type="number" id="productImageHeight" value="90" min="10" max="500">
                     </div>
                     <div class="control-group">
                         <label for="productImagePosX">Posición X (%) :</label>
-                        <input type="number" id="productImagePosX" value="50" min="0" max="100">
+                        <input type="number" id="productImagePosX" value="60" min="0" max="100">
                     </div>
                     <div class="control-group">
                         <label for="productImagePosY">Posición Y (%) :</label>
-                        <input type="number" id="productImagePosY" value="30" min="0" max="100">
+                        <input type="number" id="productImagePosY" value="75" min="0" max="100">
                     </div>
                     <div class="control-group">
                         <label for="productImageRotation">Rotación (grados):</label>
@@ -315,17 +324,18 @@
                         <label>Cargar imagen adicional 1:</label>
                         <input type="file" id="additionalImage1" accept="image/*" onchange="previewAdditionalImage(1)">
                         <img id="previewImage1" class="additional-image-preview" style="display: none;">
+                            <button class="btn btn-small btn-danger" onclick="removeAdditionalImage(1)" style="display: none;" id="removeBtn1">X ELIMINAR</button>
                         <div class="control-group">
                             <label for="img1Width">Ancho (px):</label>
-                            <input type="number" id="img1Width" value="50" min="10" max="300">
+                            <input type="number" id="img1Width" value="80" min="10" max="300">
                         </div>
                         <div class="control-group">
                             <label for="img1PosX">Posición X (%) :</label>
-                            <input type="number" id="img1PosX" value="10" min="0" max="100">
+                            <input type="number" id="img1PosX" value="60" min="0" max="100">
                         </div>
                         <div class="control-group">
                             <label for="img1PosY">Posición Y (%) :</label>
-                            <input type="number" id="img1PosY" value="80" min="0" max="100">
+                            <input type="number" id="img1PosY" value="20" min="0" max="100">
                         </div>
                         <div class="control-group">
                             <label for="img1Rotation">Rotación (grados):</label>
@@ -342,17 +352,18 @@
                         <label>Cargar imagen adicional 2:</label>
                         <input type="file" id="additionalImage2" accept="image/*" onchange="previewAdditionalImage(2)">
                         <img id="previewImage2" class="additional-image-preview" style="display: none;">
+                            <button class="btn btn-small btn-danger" onclick="removeAdditionalImage(2)" style="display: none;" id="removeBtn2">X ELIMINAR</button>
                         <div class="control-group">
                             <label for="img2Width">Ancho (px):</label>
-                            <input type="number" id="img2Width" value="50" min="10" max="300">
+                            <input type="number" id="img2Width" value="80" min="10" max="300">
                         </div>
                         <div class="control-group">
                             <label for="img2PosX">Posición X (%) :</label>
-                            <input type="number" id="img2PosX" value="90" min="0" max="100">
+                            <input type="number" id="img2PosX" value="80" min="0" max="100">
                         </div>
                         <div class="control-group">
                             <label for="img2PosY">Posición Y (%) :</label>
-                            <input type="number" id="img2PosY" value="80" min="0" max="100">
+                            <input type="number" id="img2PosY" value="20" min="0" max="100">
                         </div>
                         <div class="control-group">
                             <label for="img2Rotation">Rotación (grados):</label>
@@ -369,17 +380,18 @@
                         <label>Cargar imagen adicional 3:</label>
                         <input type="file" id="additionalImage3" accept="image/*" onchange="previewAdditionalImage(3)">
                         <img id="previewImage3" class="additional-image-preview" style="display: none;">
+                        <button class="btn btn-small btn-danger" onclick="removeAdditionalImage(3)" style="display: none;" id="removeBtn3">✖ Eliminar</button>
                         <div class="control-group">
                             <label for="img3Width">Ancho (px):</label>
                             <input type="number" id="img3Width" value="80" min="10" max="300">
                         </div>
                         <div class="control-group">
                             <label for="img3PosX">Posición X (%) :</label>
-                            <input type="number" id="img3PosX" value="50" min="0" max="100">
+                            <input type="number" id="img3PosX" value="20" min="0" max="100">
                         </div>
                         <div class="control-group">
                             <label for="img3PosY">Posición Y (%) :</label>
-                            <input type="number" id="img3PosY" value="90" min="0" max="100">
+                            <input type="number" id="img3PosY" value="80" min="0" max="100">
                         </div>
                         <div class="control-group">
                             <label for="img3Rotation">Rotación (grados):</label>
@@ -407,6 +419,10 @@
                                 <img src="https://wil1979.github.io/esentia-factura/images/qr.png" alt="QR">
                                 <div>QR</div>
                             </div>
+                            <div class="image-option" onclick="selectExampleImage('https://wil1979.github.io/esentia-factura/images/qr.png')">
+                                <img src="https://wil1979.github.io/esentia-factura/images/qr.png" alt="CT">
+                                <div>Contac</div>
+                            </div>
                         </div>
                     </div>
 
@@ -429,12 +445,27 @@
                             <label for="showInstructions">Mostrar indicaciones de uso</label>
                         </div>
                     </div>
+
                     <div class="control-group">
-                        <label for="instructionsSource">Fuente de indicaciones:</label>
+                     <label for="instructionsSource">Tipo de instrucciones:</label>
+                     <select id="instructionsSource" onchange="cargarTipoInstruccion()">
+                      <option value="">Selecciona un tipo...</option>
+                               <!-- Las opciones se cargarán dinámicamente -->
+                     </select>
+                    </div>
+
+                    <!--
+                    <div class="control-group">
+                        <label for="instructionsSource">Fuente de indicaciones:</label>                        
                         <select id="instructionsSource" onchange="loadInstructions()">
-                            <option value="default">Predeterminado (JSON)</option>
-                            <option value="custom">Personalizado</option>
-                        </select>
+                         <option value="Aromaterapia">Aromaterapia</option>
+                         <option value="Masajes">Masajes</option>
+                         <option value="Controlador de Olor">Controlador de Olor</option>
+                         <option value="Desinfectante">Desinfectante</option>
+                         <option value="default">Predeterminado (JSON)</option>
+                         <option value="custom">Personalizado</option>
+                        </select>-->
+
                     </div>
                     <div id="customInstructions" style="display: none;">
                         <div class="control-group">
@@ -444,7 +475,7 @@
                     </div>
                     <div class="control-group">
                         <label for="instructionsFontSize">Tamaño texto (px):</label>
-                        <input type="number" id="instructionsFontSize" value="10" min="8" max="24">
+                        <input type="number" id="instructionsFontSize" value="8" min="8" max="24">
                     </div>
                     <div class="control-group">
                         <label for="instructionsColor">Color texto:</label>
@@ -461,15 +492,15 @@
                     </div>
                     <div class="control-group">
                         <label for="instructionsPosX">Posición X (%) :</label>
-                        <input type="number" id="instructionsPosX" value="50" min="0" max="100">
+                        <input type="number" id="instructionsPosX" value="10" min="0" max="100">
                     </div>
                     <div class="control-group">
                         <label for="instructionsPosY">Posición Y (%) :</label>
-                        <input type="number" id="instructionsPosY" value="70" min="0" max="100">
+                        <input type="number" id="instructionsPosY" value="60" min="0" max="100">
                     </div>
                     <div class="control-group">
                         <label for="instructionsWidth">Ancho máximo (%) :</label>
-                        <input type="number" id="instructionsWidth" value="80" min="20" max="100">
+                        <input type="number" id="instructionsWidth" value="30" min="20" max="100">
                     </div>
                     <button class="btn btn-secondary" onclick="previewChanges()">👁️ Vista previa</button>
                     <div id="preview-indicaciones" style="margin-top: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
@@ -494,19 +525,19 @@
                     </div>
                     <div class="control-group">
                         <label for="text1FontSize">Tamaño fuente 1 (px):</label>
-                        <input type="number" id="text1FontSize" value="12" min="8" max="48">
+                        <input type="number" id="text1FontSize" value="10" min="8" max="48">
                     </div>
                     <div class="control-group">
                         <label for="text1Color">Color 1:</label>
-                        <input type="color" id="text1Color" value="#8B4513">
+                        <input type="color" id="text1Color" value="#f45601">
                     </div>
                     <div class="control-group">
                         <label for="text1PosX">Posición X 1 (%) :</label>
-                        <input type="number" id="text1PosX" value="50" min="0" max="100">
+                        <input type="number" id="text1PosX" value="55" min="0" max="100">
                     </div>
                     <div class="control-group">
                         <label for="text1PosY">Posición Y 1 (%) :</label>
-                        <input type="number" id="text1PosY" value="10" min="0" max="100">
+                        <input type="number" id="text1PosY" value="60" min="0" max="100">
                     </div>
                     <div class="control-group">
                         <label for="text1Rotation">Rotación 1 (grados):</label>
@@ -589,6 +620,7 @@
                             <div class="font-option" style="font-family: Georgia;" onclick="setFont('Georgia')">Georgia</div>
                             <div class="font-option" style="font-family: Verdana;" onclick="setFont('Verdana')">Verdana</div>
                             <div class="font-option" style="font-family: Impact;" onclick="setFont('Impact')">Impact</div>
+                            <div class="font-option" style="font-family: adelia;" onclick="setFont('adelia')">adelia</div>
                         </div>
                         <input type="hidden" id="selectedFont" value="Arial">
                     </div>
@@ -794,8 +826,8 @@ let previewLabels = [];
         // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
 
-            
-            document.getElementById('sheetSize').addEventListener('change', toggleCustomSize);
+            document.getElementById('sheetSize').addEventListener('change', updateSheetDimensions);
+           // document.getElementById('sheetSize').addEventListener('change', toggleCustomSize);
             document.getElementById('dtfMode').addEventListener('change', updateDTFMode);
             document.getElementById('instructionsSource').addEventListener('change', toggleCustomInstructions);
             document.getElementById('labelWidth').addEventListener('change', updateLabelDimensions);
@@ -816,34 +848,73 @@ let previewLabels = [];
             // Cargar configuración guardada al iniciar
             loadConfig();
         });
+        function updateSheetDimensions() {
+          const sheetSize = document.getElementById('sheetSize').value;
+          const sheetWidthInput = document.getElementById('sheetWidth');
+          const sheetHeightInput = document.getElementById('sheetHeight');
+    
+          // Definir dimensiones preestablecidas (en cm)
+          const sizes = {
+           'letter': { width: 21.59, height: 27.94 },    // 8.5x11 pulgadas
+           'a4': { width: 21, height: 29.7 },            // 21x29.7 cm
+           'legal': { width: 21.59, height: 35.56 },     // 8.5x14 pulgadas
+           'tabloid': { width: 27.94, height: 43.18 },   // 11x17 pulgadas
+           'dtf-uv': { width: 28, height: 100 },         // 28x100 cm
+           'custom': { width: 50, height: 50 }          // Personalizado
+           
+         };
+    
+    const size = sizes[sheetSize];
+    
+    if (size) {
+        sheetWidthInput.value = size.width;
+        sheetHeightInput.value = size.height;
+        
+        // Mostrar/ocultar inputs personalizados
+        document.getElementById('customSize').style.display = 
+            sheetSize === 'custom' ? 'block' : 'none';
+        
+        showToast(`📏 Hoja ${sheetSize.toUpperCase()} seleccionada: ${size.width}x${size.height} cm`, 'success');
+    }
+    // Al final de updateSheetDimensions()
+document.getElementById('currentSheetDimensions').textContent = 
+    `${size.width} x ${size.height} cm`;
+}
 
         // Funciones principales
         function toggleCustomSize() {
-            const customSizeDiv = document.getElementById('customSize');
-            customSizeDiv.style.display = 
-                document.getElementById('sheetSize').value === 'custom' ? 'block' : 'none';
-        }
+    const customSizeDiv = document.getElementById('customSize');
+    const sheetSize = document.getElementById('sheetSize').value;
+    
+    customSizeDiv.style.display = sheetSize === 'custom' ? 'block' : 'none';
+    
+    // Si no es personalizado, actualizar dimensiones
+    if (sheetSize !== 'custom') {
+        updateSheetDimensions();
+    }
+}
 
         function updateDTFMode() {
-            const mode = document.getElementById('dtfMode').value;
-            const transparentBg = document.getElementById('transparentBg');
-            const mirrorEffect = document.getElementById('mirrorEffect');
-            const sheetSize = document.getElementById('sheetSize');
-
-            if (mode === 'uv') {
-                transparentBg.checked = true;
-                mirrorEffect.checked = false;
-                sheetSize.value = 'dtf-uv';
-                showToast('Modo DTF UV activado: Fondo transparente y tamaño 28x100 cm', 'success');
-            } else if (mode === 'textil') {
-                transparentBg.checked = false;
-                mirrorEffect.checked = true;
-                showToast('Modo DTF Textil Reversible activado: Efecto espejo aplicado', 'success');
-            } else {
-                transparentBg.checked = false;
-                mirrorEffect.checked = false;
-            }
-        }
+    const mode = document.getElementById('dtfMode').value;
+    const transparentBg = document.getElementById('transparentBg');
+    const mirrorEffect = document.getElementById('mirrorEffect');
+    const sheetSize = document.getElementById('sheetSize');
+    
+    if (mode === 'uv') {
+        transparentBg.checked = true;
+        mirrorEffect.checked = false;
+        sheetSize.value = 'dtf-uv';
+        updateSheetDimensions(); // ✅ Actualizar dimensiones
+        showToast('Modo DTF UV activado: Fondo transparente y tamaño 28x100 cm', 'success');
+    } else if (mode === 'textil') {
+        transparentBg.checked = false;
+        mirrorEffect.checked = true;
+        showToast('Modo DTF Textil Reversible activado: Efecto espejo aplicado', 'success');
+    } else {
+        transparentBg.checked = false;
+        mirrorEffect.checked = false;
+    }
+}
 
         // Actualizar dimensiones de la etiqueta
         function updateLabelDimensions() {
@@ -897,44 +968,77 @@ let previewLabels = [];
             document.getElementById('selectedFont').value = fontName;
             previewChanges();
         }
-
-        // Imágenes adicionales - guardar como base64
-        function previewAdditionalImage(index) {
-            const input = document.getElementById(`additionalImage${index}`);
-            const preview = document.getElementById(`previewImage${index}`);
+//funcion para eliminar imagenes adicionales
+        function removeAdditionalImage(index) {
+    // Limpiar la variable global
+    additionalImages[`img${index}`] = null;
+    
+    // Limpiar el preview
+    const preview = document.getElementById(`previewImage${index}`);
+    preview.src = '';
+    preview.style.display = 'none';
+    
+    // Ocultar el botón de eliminar
+    const removeBtn = document.getElementById(`removeBtn${index}`);
+    if (removeBtn) {
+        removeBtn.style.display = 'none';
+    }
+    
+    // Resetear el input file
+    const input = document.getElementById(`additionalImage${index}`);
+    input.value = '';
+    
+    // Actualizar vista previa
+    previewChanges();
+    
+    showToast(`✅ Imagen adicional ${index} eliminada`, 'success');
+}
+function previewAdditionalImage(index) {
+    const input = document.getElementById(`additionalImage${index}`);
+    const preview = document.getElementById(`previewImage${index}`);
+    const removeBtn = document.getElementById(`removeBtn${index}`);
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const base64 = e.target.result;
+            preview.src = base64;
+            preview.style.display = 'block';
             
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const base64 = e.target.result;
-                    preview.src = base64;
-                    preview.style.display = 'block';
-                    
-                    // Guardar en variable global
-                    additionalImages[`img${index}`] = base64;
-                    
-                    previewChanges();
-                };
-                reader.readAsDataURL(input.files[0]);
+            // ✅ Mostrar botón de eliminar
+            if (removeBtn) {
+                removeBtn.style.display = 'inline-block';
             }
-        }
-
-        function selectExampleImage(url) {
-            for (let i = 1; i <= 3; i++) {
-                const preview = document.getElementById(`previewImage${i}`);
-                if (!preview.src || preview.style.display === 'none') {
-                    preview.src = url;
-                    preview.style.display = 'block';
-                    
-                    // Guardar URL en variable global
-                    additionalImages[`img${i}`] = url;
-                    
-                    showToast(`Imagen de ejemplo asignada a posición ${i}`, 'success');
-                    previewChanges();
-                    break;
-                }
+            
+            // Guardar en variable global
+            additionalImages[`img${index}`] = base64;
+            previewChanges();
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+function selectExampleImage(url) {
+    for (let i = 1; i <= 3; i++) {
+        const preview = document.getElementById(`previewImage${i}`);
+        const removeBtn = document.getElementById(`removeBtn${i}`);
+        
+        if (!preview.src || preview.style.display === 'none') {
+            preview.src = url;
+            preview.style.display = 'block';
+            
+            // ✅ Mostrar botón de eliminar
+            if (removeBtn) {
+                removeBtn.style.display = 'inline-block';
             }
+            
+            // Guardar URL en variable global
+            additionalImages[`img${i}`] = url;
+            showToast(`Imagen de ejemplo asignada a posición ${i}`, 'success');
+            previewChanges();
+            break;
         }
+    }
+}
 
         // Fondo de etiqueta
         function toggleBackgroundOptions() {
@@ -988,112 +1092,180 @@ let previewLabels = [];
             loadInstructions();
         }
 
-       async function loadInstructions() {
-    const source = document.getElementById('instructionsSource').value;
-    if (source === 'default') {
-        try {
-            const response = await fetch('https://wil1979.github.io/esentia-factura/indicaciones.json');
-            if (response.ok) {
-                const data = await response.json();
-                
-                // Verificar si es array o objeto
-                if (Array.isArray(data)) {
-                    indicacionesJSON = data;
-                    // Por defecto usar el primer elemento
-                    indicacionesJSON.current = data[0];
-                    showToast('✅ Indicaciones cargadas desde JSON', 'success');
-                } else {
-                    indicacionesJSON = data;
-                    showToast('✅ Indicaciones cargadas (formato antiguo)', 'success');
-                }
-                
-                // Mostrar preview
-                mostrarPreviewIndicaciones();
-                previewChanges();
-            } else {
-                throw new Error('No se pudo cargar el JSON de indicaciones');
-            }
-        } catch (error) {
-            console.error('Error cargando indicaciones:', error);
-            // Indicaciones por defecto como array
-            indicacionesJSON = [
-                {
-                    "tipo": "Aromaterapia",
+async function loadInstructions() {
+    try {
+        const response = await fetch('https://wil1979.github.io/esentia-factura/indicaciones.json');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // ✅ Verificar estructura del JSON
+        if (!Array.isArray(data)) {
+            console.error('Formato de JSON incorrecto. Se esperaba un array.');
+            showToast('❌ Formato de JSON incorrecto', 'error');
+            return;
+        }
+        
+        // ✅ Guardar todas las instrucciones
+        indicacionesJSON = data;
+        
+        // ✅ Seleccionar primer tipo por defecto
+        if (data.length > 0) {
+            indicacionesJSON.current = data[0].info;
+            indicacionesJSON.currentTipo = data[0].tipo;
+            mostrarPreviewIndicaciones();
+            previewChanges();
+            showToast(`✅ Cargados ${data.length} tipos de instrucciones`, 'success');
+        }
+        
+    } catch (error) {
+        console.error('Error cargando indicaciones:', error);
+        showToast('❌ Error al cargar las instrucciones', 'error');
+        
+        // ✅ Indicaciones por defecto
+        indicacionesJSON = [
+            {
+                "tipo": "Aromaterapia",
+                "info": {
                     "titulo": "Indicaciones de uso",
                     "indicaciones": [
-                        "- Agregar de 5 a 10 gotas en un difusor con agua.",
-                        "- Utilizar en espacios ventilados.",
-                        "- Ideal para sesiones de relajación o meditación."
+                        "Agregar de 5 a 10 gotas por cada 100 ml de agua en el difusor.",
+                        "Utilizar en espacios ventilados.",
+                        "Ideal para sesiones de relajación o meditación."
                     ],
+                    "advertencias_titulo": "Advertencias",
                     "advertencias": [
-                        "✖ No ingerir.",
-                        "✖ Evitar contacto directo con los ojos.",
-                        "✖ Mantener fuera del alcance de los niños y mascotas."
+                        "No ingerir.",
+                        "Evitar contacto directo con los ojos.",
+                        "Mantener fuera del alcance de niños y mascotas."
                     ]
                 }
-            ];
-            indicacionesJSON.current = indicacionesJSON[0];
-            showToast('⚠️ Usando indicaciones predeterminadas', 'warning');
-        }
+            }
+        ];
+        indicacionesJSON.current = indicacionesJSON[0].info;
+        indicacionesJSON.currentTipo = "Aromaterapia";
+        mostrarPreviewIndicaciones();
+        previewChanges();
     }
 }
 
-// Nueva función para mostrar preview de indicaciones
+// ✅ Nueva función: Cargar tipos en el dropdown
+function cargarTiposEnDropdown() {
+    const dropdown = document.getElementById('instructionsSource');
+    if (!dropdown || !indicacionesJSON) return;
+    
+    // Limpiar opciones existentes (excepto la primera)
+    while (dropdown.options.length > 1) {
+        dropdown.remove(1);
+    }
+    
+    // Agregar cada tipo del JSON
+    indicacionesJSON.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.tipo;
+        option.textContent = item.tipo;
+        dropdown.appendChild(option);
+    });
+    
+    // Seleccionar el tipo actual si existe
+    if (indicacionesJSON.currentTipo) {
+        dropdown.value = indicacionesJSON.currentTipo;
+    }
+}
+
+// ✅ Nueva función: Cargar tipo de instrucción seleccionado
+function cargarTipoInstruccion() {
+    const tipoSeleccionado = document.getElementById('instructionsSource').value;
+    
+    if (!tipoSeleccionado || !indicacionesJSON) {
+        return;
+    }
+    
+    // Buscar el tipo en el JSON
+    const encontrada = indicacionesJSON.find(item => 
+        item.tipo === tipoSeleccionado
+    );
+    
+    if (encontrada) {
+        indicacionesJSON.current = encontrada.info;
+        indicacionesJSON.currentTipo = tipoSeleccionado;
+        mostrarPreviewIndicaciones();
+        previewChanges();
+        showToast(`✅ Instrucciones "${tipoSeleccionado}" cargadas`, 'success');
+    } else {
+        showToast('⚠️ Tipo no encontrado', 'warning');
+    }
+}
+function cargarTiposEnDropdown() {
+    const dropdown = document.getElementById('instructionsSource');
+    if (!dropdown || !indicacionesJSON) return;
+    
+    // ✅ Limpiar opciones existentes (excepto la primera)
+    while (dropdown.options.length > 1) {
+        dropdown.remove(1);
+    }
+    
+    // ✅ Agregar cada tipo del JSON
+    indicacionesJSON.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.tipo;
+        option.textContent = item.tipo;
+        dropdown.appendChild(option);
+    });
+    
+    // ✅ Seleccionar el tipo actual si existe
+    if (indicacionesJSON.currentTipo) {
+        dropdown.value = indicacionesJSON.currentTipo;
+    }
+}
+
 function mostrarPreviewIndicaciones() {
     const preview = document.getElementById('preview-indicaciones');
-    if (!preview || !indicacionesJSON) return;
-    
-    let html = '<div class="preview-indicaciones">';
-    
-    if (Array.isArray(indicacionesJSON)) {
-        html += '<h4>Tipos disponibles:</h4><ul>';
-        indicacionesJSON.forEach((item, index) => {
-            html += `<li><strong>${item.tipo}</strong>: ${item.titulo}</li>`;
-        });
-        html += '</ul>';
-        
-        // Mostrar el actual
-        const current = indicacionesJSON.current || indicacionesJSON[0];
-        if (current) {
-            html += `<h4>${current.titulo}</h4>`;
-            if (current.indicaciones && current.indicaciones.length > 0) {
-                html += '<strong>Instrucciones:</strong><ul>';
-                current.indicaciones.forEach(ind => {
-                    html += `<li>${ind}</li>`;
-                });
-                html += '</ul>';
-            }
-            if (current.advertencias && current.advertencias.length > 0) {
-                html += '<strong>Advertencias:</strong><ul class="advertencias">';
-                current.advertencias.forEach(adv => {
-                    html += `<li>${adv}</li>`;
-                });
-                html += '</ul>';
-            }
-        }
-    } else {
-        // Formato antiguo
-        html += `<h4>${indicacionesJSON.titulo || 'Indicaciones'}</h4>`;
-        if (indicacionesJSON.indicaciones) {
-            html += '<strong>Instrucciones:</strong><ul>';
-            indicacionesJSON.indicaciones.forEach(ind => {
-                html += `<li>${ind}</li>`;
-            });
-            html += '</ul>';
-        }
-        if (indicacionesJSON.advertencias) {
-            html += '<strong>Advertencias:</strong><ul class="advertencias">';
-            indicacionesJSON.advertencias.forEach(adv => {
-                html += `<li>${adv}</li>`;
-            });
-            html += '</ul>';
-        }
+    if (!preview || !indicacionesJSON || !indicacionesJSON.current) {
+        return;
     }
     
-    html += '</div>';
-    preview.innerHTML = html;
+    const data = indicacionesJSON.current;
+    let contenidoHTML = '';
+    
+    // ✅ Título
+    if (data.titulo) {
+        contenidoHTML += `<h4 style="margin-bottom: 10px; color: #006400;">${data.titulo}</h4>`;
+    }
+    
+    // ✅ Indicaciones
+    if (data.indicaciones && data.indicaciones.length > 0) {
+        contenidoHTML += `<div style="margin-bottom: 15px;">`;
+        contenidoHTML += `<strong style="color: #8B4513;">Instrucciones:</strong><ul style="margin-left: 20px; margin-top: 5px;">`;
+        
+        data.indicaciones.forEach(texto => {
+            contenidoHTML += `<li style="margin-bottom: 5px;">${texto}</li>`;
+        });
+        
+        contenidoHTML += `</ul></div>`;
+    }
+    
+    // ✅ Advertencias
+    if (data.advertencias && data.advertencias.length > 0) {
+        contenidoHTML += `<div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd;">`;
+        
+        if (data.advertencias_titulo) {
+            contenidoHTML += `<strong style="color: #dc3545;">${data.advertencias_titulo}</strong><ul style="margin-left: 20px; margin-top: 5px;">`;
+        } else {
+            contenidoHTML += `<strong style="color: #dc3545;">Advertencias:</strong><ul style="margin-left: 20px; margin-top: 5px;">`;
+        }
+        
+        data.advertencias.forEach(texto => {
+            contenidoHTML += `<li style="margin-bottom: 5px; color: #dc3545;">${texto}</li>`;
+        });
+        
+        contenidoHTML += `</ul></div>`;
+    }
+    
+    preview.innerHTML = contenidoHTML;
 }
-
         // Vista previa en tiempo real
         function previewChanges() {
             if (generatedLabels.length > 0) {
@@ -1638,6 +1810,7 @@ async function loadFromJSON() {
             const showInstructions = document.getElementById('showInstructions').checked;
             const selectedFont = document.getElementById('selectedFont').value;
             const backgroundType = document.getElementById('backgroundType').value;
+            
 
             const previewGrid = document.getElementById('previewGrid');
             previewGrid.innerHTML = '';
@@ -1810,52 +1983,48 @@ function createLabelElement(name, price, fontSize, fontRotation, fontPosX, fontP
     `;
     
     // Indicaciones
-    if (showInstructions && indicacionesJSON) {
-        const instFontSize = document.getElementById('instructionsFontSize').value;
-        const instColor = document.getElementById('instructionsColor').value;
-        const instRotation = document.getElementById('instructionsRotation').value;
-        const instPosX = document.getElementById('instructionsPosX').value;
-        const instPosY = document.getElementById('instructionsPosY').value;
-        const instWidth = document.getElementById('instructionsWidth').value;
-        
-        let indicacionesText = '';
-        if (Array.isArray(indicacionesJSON)) {
-            const current = indicacionesJSON.current || indicacionesJSON[0];
-            if (current) {
-                if (current.indicaciones && current.indicaciones.length > 0) {
-                    indicacionesText += current.indicaciones.join('<br>');
-                }
-                if (current.advertencias && current.advertencias.length > 0) {
-                    indicacionesText += '<br><br><strong>Advertencias:</strong><br>';
-                    indicacionesText += current.advertencias.join('<br>');
-                }
-            }
-        } else {
-            if (indicacionesJSON.indicaciones) {
-                indicacionesText += indicacionesJSON.indicaciones.join('<br>');
-            }
-            if (indicacionesJSON.advertencias) {
-                indicacionesText += '<br><br><strong>Advertencias:</strong><br>';
-                indicacionesText += indicacionesJSON.advertencias.join('<br>');
-            }
-        }
-        
-        if (indicacionesText) {
-            html += `
-            <div style="position: absolute;
-            left: calc(${instPosX}% - ${instWidth / 2}%);
+if (showInstructions && indicacionesJSON && indicacionesJSON.current) {
+    const instFontSize = document.getElementById('instructionsFontSize').value;
+    const instColor = document.getElementById('instructionsColor').value;
+    const instRotation = document.getElementById('instructionsRotation').value;
+    const instPosX = document.getElementById('instructionsPosX').value;
+    const instPosY = document.getElementById('instructionsPosY').value;
+    const instWidth = document.getElementById('instructionsWidth').value;
+    
+    const current = indicacionesJSON.current;
+    let indicacionesText = '';
+    
+    // ✅ Indicaciones
+    if (current.indicaciones && current.indicaciones.length > 0) {
+        indicacionesText += current.indicaciones.join('<br>');
+    }
+    
+    // ✅ Advertencias
+    if (current.advertencias && current.advertencias.length > 0) {
+        indicacionesText += '<br><br><strong>Advertencias:</strong><br>';
+        indicacionesText += current.advertencias.join('<br>');
+    }
+    
+    if (indicacionesText) {
+        html += `
+        <div style="position: absolute;
+            left: calc(${instPosX}% - ${instWidth/2}%);
             top: calc(${instPosY}% - 50%);
             width: ${instWidth}%;
             font-size: ${instFontSize}px;
             color: ${instColor};
             transform: rotate(${instRotation}deg);
             text-align: left;
-            line-height: 1.4;">
+            line-height: 1.4;
+            background-color: white;
+            padding: 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
             ${indicacionesText}
-            </div>
-            `;
-        }
+        </div>
+        `;
     }
+}
     
     // Textos adicionales
     for (let i = 1; i <= 3; i++) {
@@ -1892,35 +2061,153 @@ function createLabelElement(name, price, fontSize, fontRotation, fontPosX, fontP
                 `📊 ${total} etiquetas generadas (${productCount} productos × ${quantity.toFixed(1)} promedio)`;
         }
 
-        function calculateProduction() {
-            const sheetSize = document.getElementById('sheetSize').value;
-            const labelWidth = parseFloat(document.getElementById('labelWidth').value);
-            const labelHeight = parseFloat(document.getElementById('labelHeight').value);
-            
-            let sheetW, sheetH;
-            
-            if (sheetSize === 'dtf-uv') {
-                sheetW = 28; sheetH = 100;
-            } else if (sheetSize === 'letter') {
-                sheetW = 21.59; sheetH = 27.94;
-            } else if (sheetSize === 'a4') {
-                sheetW = 21; sheetH = 29.7;
-            } else if (sheetSize === 'legal') {
-                sheetW = 21.59; sheetH = 35.56;
-            } else if (sheetSize === 'tabloid') {
-                sheetW = 27.94; sheetH = 43.18;
-            } else {
-                sheetW = parseFloat(document.getElementById('sheetWidth').value);
-                sheetH = parseFloat(document.getElementById('sheetHeight').value);
-            }
-
-            const labelsPerRow = Math.floor(sheetW / labelWidth);
-            const labelsPerCol = Math.floor(sheetH / labelHeight);
-            const totalLabels = labelsPerRow * labelsPerCol;
-
-            showToast(`📐 Hoja: ${sheetW}x${sheetH}cm | Etiqueta: ${labelWidth}x${labelHeight}cm | ${totalLabels} etiquetas por hoja (${labelsPerRow}×${labelsPerCol})`, 'warning');
-        }
-
+    function calculateProduction() {
+    const previewGrid = document.getElementById('previewGrid');
+    previewGrid.innerHTML = '';
+    
+    if (generatedLabels.length === 0) {
+        previewGrid.innerHTML = '<p class="no-labels">⚠️ Genera etiquetas primero</p>';
+        return;
+    }
+    
+    // ✅ Obtener dimensiones de la etiqueta
+    const labelW = parseFloat(document.getElementById('labelWidth').value) || 5;
+    const labelH = parseFloat(document.getElementById('labelHeight').value) || 5;
+    
+    // ✅ Calcular dimensiones en píxeles (300 DPI)
+    const dpi = 300;
+    const pxPerCm = dpi / 2.54;
+    const labelWPx = Math.round(labelW * pxPerCm);
+    const labelHPx = Math.round(labelH * pxPerCm);
+    
+    // ✅ Calcular cuántas etiquetas caben por fila
+    const gridWidth = previewGrid.clientWidth;
+    const labelsPerRow = Math.max(1, Math.floor(gridWidth / (labelWPx + 20)));
+    
+    // ✅ Configurar el grid
+    previewGrid.style.display = 'grid';
+    previewGrid.style.gridTemplateColumns = `repeat(${labelsPerRow}, 1fr)`;
+    previewGrid.style.gap = '15px';
+    previewGrid.style.padding = '15px';
+    previewGrid.style.backgroundColor = '#f8f9fa';
+    previewGrid.style.overflow = 'auto';
+    previewGrid.style.maxHeight = '600px';
+    
+    let totalLabels = 0;
+    
+    // ✅ Generar cada etiqueta
+    generatedLabels.forEach((labelData, index) => {
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'preview-label';
+        labelDiv.style.position = 'relative';
+        labelDiv.style.boxSizing = 'border-box';
+        labelDiv.style.border = '2px solid #e0e0e0';
+        labelDiv.style.borderRadius = '4px';
+        labelDiv.style.background = 'white';
+        labelDiv.style.display = 'flex';
+        labelDiv.style.flexDirection = 'column';
+        labelDiv.style.alignItems = 'center';
+        labelDiv.style.justifyContent = 'center';
+        labelDiv.style.overflow = 'hidden';
+        labelDiv.style.padding = '10px';
+        labelDiv.style.aspectRatio = `${labelW}/${labelH}`;
+        labelDiv.style.cursor = 'pointer';
+        labelDiv.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+        labelDiv.style.transition = 'transform 0.2s, box-shadow 0.2s';
+        
+        // ✅ Efecto hover
+        labelDiv.addEventListener('mouseenter', () => {
+            labelDiv.style.transform = 'scale(1.05)';
+            labelDiv.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+        });
+        
+        labelDiv.addEventListener('mouseleave', () => {
+            labelDiv.style.transform = 'scale(1)';
+            labelDiv.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+        });
+        
+        // ✅ Click para ver vista previa grande
+        labelDiv.addEventListener('click', () => {
+            currentPreviewIndex = index;
+            previewLabels = generatedLabels;
+            openLargePreview();
+        });
+        
+        // ✅ Contenido de la etiqueta
+        const contentDiv = document.createElement('div');
+        contentDiv.style.width = '100%';
+        contentDiv.style.height = '100%';
+        contentDiv.style.display = 'flex';
+        contentDiv.style.flexDirection = 'column';
+        contentDiv.style.alignItems = 'center';
+        contentDiv.style.justifyContent = 'center';
+        contentDiv.style.textAlign = 'center';
+        contentDiv.style.position = 'relative';
+        
+        // ✅ Nombre del producto
+        const nameDiv = document.createElement('div');
+        nameDiv.style.fontWeight = 'bold';
+        nameDiv.style.fontSize = '14px';
+        nameDiv.style.color = document.getElementById('textColor').value;
+        nameDiv.style.marginBottom = '5px';
+        nameDiv.style.maxWidth = '90%';
+        nameDiv.style.wordWrap = 'break-word';
+        nameDiv.textContent = labelData.name;
+        
+        // ✅ ID del producto
+        const idDiv = document.createElement('div');
+        idDiv.style.fontSize = '11px';
+        idDiv.style.color = '#666';
+        idDiv.textContent = `ID: ${labelData.productId || 'N/A'}`;
+        
+        // ✅ Categoría
+        const categoryDiv = document.createElement('div');
+        categoryDiv.style.fontSize = '10px';
+        categoryDiv.style.color = '#888';
+        categoryDiv.style.marginTop = '3px';
+        categoryDiv.textContent = labelData.product?.categoria || 'Sin categoría';
+        
+        // ✅ Badge con dimensiones
+        const sizeBadge = document.createElement('div');
+        sizeBadge.style.position = 'absolute';
+        sizeBadge.style.bottom = '5px';
+        sizeBadge.style.right = '5px';
+        sizeBadge.style.background = 'rgba(0,0,0,0.7)';
+        sizeBadge.style.color = 'white';
+        sizeBadge.style.fontSize = '9px';
+        sizeBadge.style.padding = '2px 5px';
+        sizeBadge.style.borderRadius = '3px';
+        sizeBadge.textContent = `${labelW}x${labelH} cm`;
+        
+        contentDiv.appendChild(nameDiv);
+        contentDiv.appendChild(idDiv);
+        contentDiv.appendChild(categoryDiv);
+        contentDiv.appendChild(sizeBadge);
+        
+        labelDiv.appendChild(contentDiv);
+        previewGrid.appendChild(labelDiv);
+        totalLabels++;
+    });
+    
+    // ✅ Mostrar resumen
+    const summaryDiv = document.createElement('div');
+    summaryDiv.style.gridColumn = '1 / -1';
+    summaryDiv.style.padding = '15px';
+    summaryDiv.style.backgroundColor = '#e8f5e9';
+    summaryDiv.style.borderRadius = '8px';
+    summaryDiv.style.marginBottom = '15px';
+    summaryDiv.style.textAlign = 'center';
+    summaryDiv.innerHTML = `
+        <strong>📊 Resumen de Producción</strong><br>
+        Total: ${totalLabels} etiquetas<br>
+        Grid: ${labelsPerRow} columnas x ${Math.ceil(totalLabels / labelsPerRow)} filas<br>
+        Dimensiones: ${labelW}x${labelH} cm (${labelWPx}x${labelHPx} px)
+    `;
+    
+    previewGrid.insertBefore(summaryDiv, previewGrid.firstChild);
+    
+    showToast(`✅ Vista previa generada: ${totalLabels} etiquetas en grid de ${labelsPerRow} columnas`, 'success');
+}
         // ========== FUNCIONES DE EXPORTACIÓN COMPLETAS ==========
 
 // CORREGIDO: Función para crear canvas de etiqueta a 300 DPI
@@ -2096,7 +2383,7 @@ async function createLabelCanvas(labelData, options = {}) {
         
         let indicacionesText = '';
         if (Array.isArray(indicacionesJSON)) {
-            const current = indicacionesJSON.current || indicacionesJSON[0];
+            const current = indicacionesJSON.current;
             if (current) {
                 if (current.indicaciones && current.indicaciones.length > 0) {
                     indicacionesText += current.indicaciones.join('<br>');
@@ -2164,6 +2451,10 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 }
 
 async function generateSheetCanvas() {
+
+    console.log('📄 Hoja seleccionada:', document.getElementById('sheetSize').value);
+    console.log('📏 Dimensiones: ', document.getElementById('sheetWidth').value, 'x', document.getElementById('sheetHeight').value, 'cm');
+
     const sheetW = parseFloat(document.getElementById('sheetWidth').value) || 58;
     const sheetH = parseFloat(document.getElementById('sheetHeight').value) || 100;
     const labelW = parseFloat(document.getElementById('labelWidth').value) || 5;
@@ -2172,53 +2463,105 @@ async function generateSheetCanvas() {
     const dpi = 300;
     const pxPerCm = dpi / 2.54;
     
+    // ✅ Calcular dimensiones de hoja en píxeles
     const sheetWPx = Math.round(sheetW * pxPerCm);
     const sheetHPx = Math.round(sheetH * pxPerCm);
+    
+    // ✅ Calcular dimensiones de etiqueta en píxeles
     const labelWPx = Math.round(labelW * pxPerCm);
     const labelHPx = Math.round(labelH * pxPerCm);
+    
+    // ✅ Calcular cuántas etiquetas caben POR FILA y COLUMNA en píxeles
+    const labelsPerRow = Math.floor(sheetWPx / labelWPx);
+    const labelsPerCol = Math.floor(sheetHPx / labelHPx);
+    
+    // ✅ Calcular márgenes para centrar
+    const totalWidthUsed = labelsPerRow * labelWPx;
+    const totalHeightUsed = labelsPerCol * labelHPx;
+    const marginX = Math.round((sheetWPx - totalWidthUsed) / 2);
+    const marginY = Math.round((sheetHPx - totalHeightUsed) / 2);
+    
+    console.log(`📄 Hoja: ${sheetW}x${sheetH} cm (${sheetWPx}x${sheetHPx} px)`);
+    console.log(`🏷️ Etiqueta: ${labelW}x${labelH} cm (${labelWPx}x${labelHPx} px)`);
+    console.log(`📊 Grid: ${labelsPerRow}x${labelsPerCol} = ${labelsPerRow * labelsPerCol} etiquetas`);
+    console.log(`📐 Márgenes: X=${marginX}px, Y=${marginY}px`);
     
     const canvas = document.createElement('canvas');
     canvas.width = sheetWPx;
     canvas.height = sheetHPx;
     const ctx = canvas.getContext('2d');
     
+    // ✅ Fondo blanco o transparente
     const transparentBg = document.getElementById('transparentBg').checked;
     if (!transparentBg) {
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, sheetWPx, sheetHPx);
+    } else {
+        // Fondo transparente (por defecto)
     }
-    
-    const labelsPerRow = Math.floor(sheetW / labelW);
-    const labelsPerCol = Math.floor(sheetH / labelH);
-    const marginX = (sheetWPx - (labelsPerRow * labelWPx)) / 2;
-    const marginY = (sheetHPx - (labelsPerCol * labelHPx)) / 2;
     
     const mode = document.getElementById('dtfMode').value;
     const mirrorEffect = document.getElementById('mirrorEffect').checked;
     
     let labelIndex = 0;
+    let drawnCount = 0;
+    
+    // ✅ Dibujar etiquetas en grid
     for (let row = 0; row < labelsPerCol; row++) {
         for (let col = 0; col < labelsPerRow; col++) {
             if (labelIndex >= generatedLabels.length) break;
             
-            const labelData = generatedLabels[labelIndex];
-            const labelCanvas = await createLabelCanvas(labelData, {
-                transparentBg,
-                mirrorEffect,
-                mode
-            });
-            
-            const x = marginX + (col * labelWPx);
-            const y = marginY + (row * labelHPx);
-            
-            ctx.drawImage(labelCanvas, x, y);
-            labelIndex++;
+            try {
+                const labelData = generatedLabels[labelIndex];
+                const labelCanvas = await createLabelCanvas(labelData, {
+                    transparentBg,
+                    mirrorEffect,
+                    mode
+                });
+                
+                // ✅ Posición exacta con márgenes
+                const x = marginX + (col * labelWPx);
+                const y = marginY + (row * labelHPx);
+                
+                // ✅ ESPECIFICAR TAMAÑO AL DIBUJAR (¡CRÍTICO!)
+                ctx.drawImage(labelCanvas, x, y, labelWPx, labelHPx);
+                
+                drawnCount++;
+                labelIndex++;
+            } catch (error) {
+                console.error(`Error generando etiqueta ${labelIndex}:`, error);
+            }
         }
         if (labelIndex >= generatedLabels.length) break;
     }
     
+    console.log(`✅ Generadas ${drawnCount} etiquetas en la plancha`);
+    
+    // ✅ Dibujar líneas de guía (opcional, para visualización)
+    ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+    ctx.lineWidth = 1;
+    
+    // Líneas verticales
+    for (let col = 0; col <= labelsPerRow; col++) {
+        const x = marginX + (col * labelWPx);
+        ctx.beginPath();
+        ctx.moveTo(x, marginY);
+        ctx.lineTo(x, marginY + (labelsPerCol * labelHPx));
+        ctx.stroke();
+    }
+    
+    // Líneas horizontales
+    for (let row = 0; row <= labelsPerCol; row++) {
+        const y = marginY + (row * labelHPx);
+        ctx.beginPath();
+        ctx.moveTo(marginX, y);
+        ctx.lineTo(marginX + (labelsPerRow * labelWPx), y);
+        ctx.stroke();
+    }
+    
     return canvas;
 }
+
 
 async function exportDTF() {
     if (generatedLabels.length === 0) {
@@ -2557,16 +2900,24 @@ function printLabel() {
                 
                 // Restaurar imágenes adicionales
                 if (config.additionalImages) {
-                    additionalImages = config.additionalImages;
-                    // Restaurar previews si existen
-                    for (let i = 1; i <= 3; i++) {
-                        if (additionalImages[`img${i}`]) {
-                            const preview = document.getElementById(`previewImage${i}`);
-                            preview.src = additionalImages[`img${i}`];
-                            preview.style.display = 'block';
-                        }
+            additionalImages = config.additionalImages;
+            
+            // Restaurar previews y botones
+            for (let i = 1; i <= 3; i++) {
+                if (additionalImages[`img${i}`]) {
+                    const preview = document.getElementById(`previewImage${i}`);
+                    const removeBtn = document.getElementById(`removeBtn${i}`);
+                    
+                    preview.src = additionalImages[`img${i}`];
+                    preview.style.display = 'block';
+                    
+                    // ✅ Mostrar botón de eliminar
+                    if (removeBtn) {
+                        removeBtn.style.display = 'inline-block';
                     }
                 }
+            }
+        }
                 
                 document.getElementById('img1Width').value = config.img1Width || '50';
                 document.getElementById('img1PosX').value = config.img1PosX || '10';
@@ -2691,34 +3042,152 @@ function printLabel() {
 
 
 // Abrir vista previa grande al hacer clic en una etiqueta
-function openPreviewModal(index) {
+function calculateProduction() {
+    const previewGrid = document.getElementById('previewGrid');
+    previewGrid.innerHTML = '';
+    
     if (generatedLabels.length === 0) {
-        showToast('⚠️ No hay etiquetas generadas', 'error');
+        previewGrid.innerHTML = '<p class="no-labels">⚠️ Genera etiquetas primero</p>';
         return;
     }
     
-    currentPreviewIndex = index;
-    previewLabels = [...generatedLabels];
+    // ✅ Obtener dimensiones de la etiqueta
+    const labelW = parseFloat(document.getElementById('labelWidth').value) || 5;
+    const labelH = parseFloat(document.getElementById('labelHeight').value) || 5;
     
-    // Mostrar modal
-    const modal = document.getElementById('previewModal');
-    if (!modal) {
-        console.error('Modal no encontrado');
-        return;
-    }
+    // ✅ Calcular dimensiones en píxeles (300 DPI)
+    const dpi = 300;
+    const pxPerCm = dpi / 2.54;
+    const labelWPx = Math.round(labelW * pxPerCm);
+    const labelHPx = Math.round(labelH * pxPerCm);
     
-    modal.style.display = 'block';
-    setTimeout(() => {
-        modal.classList.add('show');
-    }, 10);
+    // ✅ Calcular cuántas etiquetas caben por fila
+    const gridWidth = previewGrid.clientWidth;
+    const labelsPerRow = Math.max(1, Math.floor(gridWidth / (labelWPx + 20)));
     
-    // Renderizar vista previa grande
-    renderLargePreview();
+    // ✅ Configurar el grid
+    previewGrid.style.display = 'grid';
+    previewGrid.style.gridTemplateColumns = `repeat(${labelsPerRow}, 1fr)`;
+    previewGrid.style.gap = '15px';
+    previewGrid.style.padding = '15px';
+    previewGrid.style.backgroundColor = '#f8f9fa';
+    previewGrid.style.overflow = 'auto';
+    previewGrid.style.maxHeight = '600px';
     
-    // Prevenir scroll del body
-    document.body.style.overflow = 'hidden';
+    let totalLabels = 0;
     
-    showToast(`👁️ Viendo etiqueta ${index + 1} de ${generatedLabels.length}`, 'success');
+    // ✅ Generar cada etiqueta
+    generatedLabels.forEach((labelData, index) => {
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'preview-label';
+        labelDiv.style.position = 'relative';
+        labelDiv.style.boxSizing = 'border-box';
+        labelDiv.style.border = '2px solid #e0e0e0';
+        labelDiv.style.borderRadius = '4px';
+        labelDiv.style.background = 'white';
+        labelDiv.style.display = 'flex';
+        labelDiv.style.flexDirection = 'column';
+        labelDiv.style.alignItems = 'center';
+        labelDiv.style.justifyContent = 'center';
+        labelDiv.style.overflow = 'hidden';
+        labelDiv.style.padding = '10px';
+        labelDiv.style.aspectRatio = `${labelW}/${labelH}`;
+        labelDiv.style.cursor = 'pointer';
+        labelDiv.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+        labelDiv.style.transition = 'transform 0.2s, box-shadow 0.2s';
+        
+        // ✅ Efecto hover
+        labelDiv.addEventListener('mouseenter', () => {
+            labelDiv.style.transform = 'scale(1.05)';
+            labelDiv.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+        });
+        
+        labelDiv.addEventListener('mouseleave', () => {
+            labelDiv.style.transform = 'scale(1)';
+            labelDiv.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+        });
+        
+        // ✅ Click para ver vista previa grande - CORREGIDO: openPreviewModal en lugar de openLargePreview
+        labelDiv.addEventListener('click', () => {
+            currentPreviewIndex = index;
+            previewLabels = generatedLabels;
+            openPreviewModal(); // ✅ CORRECTO: openPreviewModal
+        });
+        
+        // ✅ Contenido de la etiqueta
+        const contentDiv = document.createElement('div');
+        contentDiv.style.width = '100%';
+        contentDiv.style.height = '100%';
+        contentDiv.style.display = 'flex';
+        contentDiv.style.flexDirection = 'column';
+        contentDiv.style.alignItems = 'center';
+        contentDiv.style.justifyContent = 'center';
+        contentDiv.style.textAlign = 'center';
+        contentDiv.style.position = 'relative';
+        
+        // ✅ Nombre del producto
+        const nameDiv = document.createElement('div');
+        nameDiv.style.fontWeight = 'bold';
+        nameDiv.style.fontSize = '14px';
+        nameDiv.style.color = document.getElementById('textColor').value;
+        nameDiv.style.marginBottom = '5px';
+        nameDiv.style.maxWidth = '90%';
+        nameDiv.style.wordWrap = 'break-word';
+        nameDiv.textContent = labelData.name;
+        
+        // ✅ ID del producto
+        const idDiv = document.createElement('div');
+        idDiv.style.fontSize = '11px';
+        idDiv.style.color = '#666';
+        idDiv.textContent = `ID: ${labelData.productId || 'N/A'}`;
+        
+        // ✅ Categoría
+        const categoryDiv = document.createElement('div');
+        categoryDiv.style.fontSize = '10px';
+        categoryDiv.style.color = '#888';
+        categoryDiv.style.marginTop = '3px';
+        categoryDiv.textContent = labelData.product?.categoria || 'Sin categoría';
+        
+        // ✅ Badge con dimensiones
+        const sizeBadge = document.createElement('div');
+        sizeBadge.style.position = 'absolute';
+        sizeBadge.style.bottom = '5px';
+        sizeBadge.style.right = '5px';
+        sizeBadge.style.background = 'rgba(0,0,0,0.7)';
+        sizeBadge.style.color = 'white';
+        sizeBadge.style.fontSize = '9px';
+        sizeBadge.style.padding = '2px 5px';
+        sizeBadge.style.borderRadius = '3px';
+        sizeBadge.textContent = `${labelW}x${labelH} cm`;
+        
+        contentDiv.appendChild(nameDiv);
+        contentDiv.appendChild(idDiv);
+        contentDiv.appendChild(categoryDiv);
+        contentDiv.appendChild(sizeBadge);
+        
+        labelDiv.appendChild(contentDiv);
+        previewGrid.appendChild(labelDiv);
+        totalLabels++;
+    });
+    
+    // ✅ Mostrar resumen
+    const summaryDiv = document.createElement('div');
+    summaryDiv.style.gridColumn = '1 / -1';
+    summaryDiv.style.padding = '15px';
+    summaryDiv.style.backgroundColor = '#e8f5e9';
+    summaryDiv.style.borderRadius = '8px';
+    summaryDiv.style.marginBottom = '15px';
+    summaryDiv.style.textAlign = 'center';
+    summaryDiv.innerHTML = `
+        <strong>📊 Resumen de Producción</strong><br>
+        Total: ${totalLabels} etiquetas<br>
+        Grid: ${labelsPerRow} columnas x ${Math.ceil(totalLabels / labelsPerRow)} filas<br>
+        Dimensiones: ${labelW}x${labelH} cm (${labelWPx}x${labelHPx} px)
+    `;
+    
+    previewGrid.insertBefore(summaryDiv, previewGrid.firstChild);
+    
+    showToast(`✅ Vista previa generada: ${totalLabels} etiquetas en grid de ${labelsPerRow} columnas`, 'success');
 }
 
 // Cerrar modal
@@ -2739,7 +3208,17 @@ function renderLargePreview() {
     const labelData = previewLabels[currentPreviewIndex];
     const labelDiv = document.createElement('div');
     
-    // Obtener configuración actual
+    // ✅ Obtener dimensiones ACTUALES del formulario
+    const labelWidth = parseFloat(document.getElementById('labelWidth').value) || 5;
+    const labelHeight = parseFloat(document.getElementById('labelHeight').value) || 5;
+    
+    // ✅ Calcular dimensiones en píxeles (300 DPI)
+    const dpi = 300;
+    const pxPerCm = dpi / 2.54;
+    const labelWidthPx = Math.round(labelWidth * pxPerCm);
+    const labelHeightPx = Math.round(labelHeight * pxPerCm);
+    
+    // ✅ Obtener configuración actual
     const fontSize = document.getElementById('fontSize').value;
     const fontRotation = document.getElementById('fontRotation').value;
     const fontPosX = document.getElementById('fontPosX').value;
@@ -2753,9 +3232,9 @@ function renderLargePreview() {
     const selectedFont = document.getElementById('selectedFont').value;
     const backgroundType = document.getElementById('backgroundType').value;
     
-    // Aplicar dimensiones grandes (400x400px)
-    labelDiv.style.width = '400px';
-    labelDiv.style.height = '400px';
+    // ✅ Aplicar dimensiones CORRECTAS
+    labelDiv.style.width = `${labelWidthPx}px`;
+    labelDiv.style.height = `${labelHeightPx}px`;
     labelDiv.className = `label-preview ${transparentBg ? 'dtf-transparent' : ''} clickable`;
     labelDiv.style.cursor = 'pointer';
     labelDiv.style.borderColor = document.getElementById('borderColor').value;
@@ -2774,7 +3253,7 @@ function renderLargePreview() {
         labelDiv.style.transform = 'scaleX(-1)';
     }
     
-    // Aplicar fondo
+    // ✅ Aplicar fondo
     if (backgroundType === 'color') {
         labelDiv.style.backgroundColor = document.getElementById('backgroundColor').value;
     } else if (backgroundType === 'image') {
@@ -2789,7 +3268,7 @@ function renderLargePreview() {
     
     let html = '<div class="label-content" style="position: relative; width: 100%; height: 100%;">';
     
-    // Imagen del producto
+    // ✅ Imagen del producto
     if (showProductImage && labelData.product && labelData.product.imagen) {
         const imgWidth = document.getElementById('productImageWidth').value;
         const imgHeight = document.getElementById('productImageHeight').value;
@@ -2799,19 +3278,19 @@ function renderLargePreview() {
         
         html += `
         <img src="${labelData.product.imagen.trim()}"
-        class="product-image"
-        style="position: absolute;
-        width: ${imgWidth}px;
-        height: ${imgHeight}px;
-        left: calc(${imgPosX}% - ${imgWidth/2}px);
-        top: calc(${imgPosY}% - ${imgHeight/2}px);
-        transform: rotate(${imgRotation}deg);
-        object-fit: contain;"
-        onerror="this.style.display='none'">
+            class="product-image"
+            style="position: absolute;
+                width: ${imgWidth}px;
+                height: ${imgHeight}px;
+                left: calc(${imgPosX}% - ${imgWidth/2}px);
+                top: calc(${imgPosY}% - ${imgHeight/2}px);
+                transform: rotate(${imgRotation}deg);
+                object-fit: contain;"
+            onerror="this.style.display='none'">
         `;
     }
     
-    // Imágenes adicionales
+    // ✅ Imágenes adicionales
     for (let i = 1; i <= 3; i++) {
         const imgSrc = additionalImages[`img${i}`];
         if (imgSrc) {
@@ -2822,83 +3301,72 @@ function renderLargePreview() {
             
             html += `
             <img src="${imgSrc}"
-            style="position: absolute;
-            width: ${imgWidth}px;
-            left: calc(${imgPosX}% - ${imgWidth/2}px);
-            top: calc(${imgPosY}% - ${imgWidth/2}px);
-            transform: rotate(${imgRotation}deg);
-            object-fit: contain;"
-            onerror="this.style.display='none'">
+                style="position: absolute;
+                    width: ${imgWidth}px;
+                    left: calc(${imgPosX}% - ${imgWidth/2}px);
+                    top: calc(${imgPosY}% - ${imgWidth/2}px);
+                    transform: rotate(${imgRotation}deg);
+                    object-fit: contain;"
+                onerror="this.style.display='none'">
             `;
         }
     }
     
-    // Nombre del producto
+    // ✅ Nombre del producto
     html += `
     <div class="label-name"
-    style="position: absolute;
-    left: calc(${fontPosX}% - 50%);
-    top: calc(${fontPosY}% - 50%);
-    transform: translate(-50%, -50%) rotate(${fontRotation}deg);
-    font-size: ${fontSize}px;
-    color: ${document.getElementById('textColor').value};
-    text-align: center;
-    width: 90%;
-    font-weight: bold;">
-    ${labelData.name}
+        style="position: absolute;
+            left: calc(${fontPosX}% - 50%);
+            top: calc(${fontPosY}% - 50%);
+            transform: translate(-50%, -50%) rotate(${fontRotation}deg);
+            font-size: ${fontSize}px;
+            color: ${document.getElementById('textColor').value};
+            text-align: center;
+            width: 90%;
+            font-weight: bold;">
+        ${labelData.name}
     </div>
     `;
     
-    // Precio
+    // ✅ Precio
     html += `
     <div class="label-price"
-    style="position: absolute;
-    left: 50%;
-    top: 65%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    width: 90%;
-    font-weight: bold;
-    color: ${document.getElementById('borderColor').value};">
-    ${priceFormat}
+        style="position: absolute;
+            left: 50%;
+            top: 65%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 90%;
+            font-weight: bold;
+            color: ${document.getElementById('borderColor').value};">
+        ${priceFormat}
     </div>
     `;
     
-    // Indicaciones
-    if (showInstructions && indicacionesJSON) {
-        const instFontSize = document.getElementById('instructionsFontSize').value;
-        const instColor = document.getElementById('instructionsColor').value;
-        const instRotation = document.getElementById('instructionsRotation').value;
-        const instPosX = document.getElementById('instructionsPosX').value;
-        const instPosY = document.getElementById('instructionsPosY').value;
-        const instWidth = document.getElementById('instructionsWidth').value;
-        
-        let indicacionesText = '';
-        if (Array.isArray(indicacionesJSON)) {
-            const current = indicacionesJSON.current || indicacionesJSON[0];
-            if (current) {
-                if (current.indicaciones && current.indicaciones.length > 0) {
-                    indicacionesText += current.indicaciones.join('<br>');
-                }
-                if (current.advertencias && current.advertencias.length > 0) {
-                    indicacionesText += '<br><br><strong>Advertencias:</strong><br>';
-                    indicacionesText += current.advertencias.join('<br>');
-                }
-            }
-        } else {
-            // Formato antiguo
-            if (indicacionesJSON.indicaciones) {
-                indicacionesText += indicacionesJSON.indicaciones.join('<br>');
-            }
-            if (indicacionesJSON.advertencias) {
-                indicacionesText += '<br><br><strong>Advertencias:</strong><br>';
-                indicacionesText += indicacionesJSON.advertencias.join('<br>');
-            }
-        }
-        
-        if (indicacionesText) {
-            html += `
-            <div style="position: absolute;
+    // ✅ Indicaciones
+if (showInstructions && indicacionesJSON && indicacionesJSON.current) {
+    const instFontSize = document.getElementById('instructionsFontSize').value;
+    const instColor = document.getElementById('instructionsColor').value;
+    const instRotation = document.getElementById('instructionsRotation').value;
+    const instPosX = document.getElementById('instructionsPosX').value;
+    const instPosY = document.getElementById('instructionsPosY').value;
+    const instWidth = document.getElementById('instructionsWidth').value;
+    
+    const current = indicacionesJSON.current;
+    let indicacionesText = '';
+    
+    if (current.indicaciones && current.indicaciones.length > 0) {
+        indicacionesText += current.indicaciones.join('<br>');
+    }
+    
+    if (current.advertencias && current.advertencias.length > 0) {
+        indicacionesText += '<br><br><strong>Advertencias:</strong><br>';
+        indicacionesText += current.advertencias.join('<br>');
+    }
+    
+    if (indicacionesText) {
+        html += `
+        <div style="position: absolute;
             left: calc(${instPosX}% - ${instWidth/2}%);
             top: calc(${instPosY}% - 50%);
             width: ${instWidth}%;
@@ -2906,14 +3374,18 @@ function renderLargePreview() {
             color: ${instColor};
             transform: rotate(${instRotation}deg);
             text-align: left;
-            line-height: 1.4;">
+            line-height: 1.4;
+            background-color: white;
+            padding: 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
             ${indicacionesText}
-            </div>
-            `;
-        }
+        </div>
+        `;
     }
+}
     
-    // Textos adicionales
+    // ✅ Textos adicionales
     for (let i = 1; i <= 3; i++) {
         const text = document.getElementById(`additionalText${i}`).value;
         if (text) {
@@ -2925,14 +3397,14 @@ function renderLargePreview() {
             
             html += `
             <div style="position: absolute;
-            left: calc(${textPosX}% - 50%);
-            top: calc(${textPosY}% - 50%);
-            transform: rotate(${textRotation}deg);
-            font-size: ${textFontSize}px;
-            color: ${textColor};
-            text-align: center;
-            font-weight: ${i === 1 ? 'bold' : 'normal'};">
-            ${text}
+                left: calc(${textPosX}% - 50%);
+                top: calc(${textPosY}% - 50%);
+                transform: rotate(${textRotation}deg);
+                font-size: ${textFontSize}px;
+                color: ${textColor};
+                text-align: center;
+                font-weight: ${i === 1 ? 'bold' : 'normal'};">
+                ${text}
             </div>
             `;
         }
@@ -2941,19 +3413,20 @@ function renderLargePreview() {
     html += '</div>';
     labelDiv.innerHTML = html;
     
-    // Insertar en contenedor
+    // ✅ Insertar en contenedor
     const container = document.getElementById('largePreviewContainer');
     container.innerHTML = '';
     container.appendChild(labelDiv);
     
-    // Actualizar información
+    // ✅ Actualizar información
     document.getElementById('modalLabelIndex').textContent = `${currentPreviewIndex + 1} de ${previewLabels.length}`;
     document.getElementById('modalProductName').textContent = labelData.name;
     document.getElementById('modalProductId').textContent = labelData.productId || 'N/A';
     document.getElementById('modalProductCategory').textContent = (labelData.product && labelData.product.categoria) || 'Sin categoría';
-    document.getElementById('modalLabelSize').textContent = `${labelWidthCm} x ${labelHeightCm} cm (${labelWidthPx} x ${labelHeightPx} px)`;
+    
+    // ✅ Mostrar dimensiones CORRECTAS
+    document.getElementById('modalLabelSize').textContent = `${labelWidth} x ${labelHeight} cm (${labelWidthPx} x ${labelHeightPx} px)`;
 }
-
 // Navegar a etiqueta anterior
 function prevLabel() {
     if (currentPreviewIndex > 0) {
@@ -3012,7 +3485,127 @@ document.addEventListener('click', (e) => {
     }
 });
 
+function loadInstructions() {
+    const source = document.getElementById('instructionsSource').value;
+    
+    // ✅ Si es un tipo específico de instrucción (Aromaterapia, Masajes, etc.)
+    if (source !== 'default' && source !== 'custom') {
+        try {
+            const response = fetch('https://wil1979.github.io/esentia-factura/indicaciones.json');
+            response.then(res => res.json()).then(data => {
+                if (Array.isArray(data)) {
+                    indicacionesJSON = data;
+                    
+                    // ✅ Buscar el tipo seleccionado
+                    const selected = data.find(item => 
+                        item.tipo.toLowerCase() === source.toLowerCase()
+                    );
+                    
+                    if (selected) {
+                        indicacionesJSON.current = selected;
+                        showToast(`✅ Indicaciones "${source}" cargadas`, 'success');
+                    } else {
+                        indicacionesJSON.current = data[0];
+                        showToast(`⚠️ Tipo "${source}" no encontrado, usando predeterminado`, 'warning');
+                    }
+                    
+                    mostrarPreviewIndicaciones();
+                    previewChanges();
+                    // ✅ Cargar tipos en el dropdown
+                    cargarTiposEnDropdown();
+                }
+            });
+        } catch (error) {
+            console.error('Error cargando indicaciones:', error);
+            showToast('❌ Error al cargar indicaciones', 'error');
+        }
+        return;
+    }
+    
+    // ✅ Si es "default" o "custom"
+    if (source === 'default') {
+        try {
+            const response = fetch('https://wil1971979.github.io/esentia-factura/indicaciones.json');
+            response.then(res => res.json()).then(data => {
+                if (Array.isArray(data)) {
+                    indicacionesJSON = data;
+                    indicacionesJSON.current = data[0]; // Primer elemento por defecto
+                    showToast('✅ Indicaciones cargadas desde JSON', 'success');
+                } else {
+                    indicacionesJSON = data;
+                    showToast('✅ Indicaciones cargadas (formato antiguo)', 'success');
+                }
+                
+                mostrarPreviewIndicaciones();
+                previewChanges();
+            });
+        } catch (error) {
+            console.error('Error cargando indicaciones:', error);
+            // Indicaciones por defecto
+            indicacionesJSON = [{
+                "tipo": "Aromaterapia",
+                "titulo": "Indicaciones de uso",
+                "indicaciones": [
+                    "- Agregar de 5 a 10 gotas en un difusor con agua.",
+                    "- Utilizar en espacios ventilados.",
+                    "- Ideal para sesiones de relajación o meditación."
+                ],
+                "advertencias": [
+                    "✖ No ingerir.",
+                    "✖ Evitar contacto directo con los ojos.",
+                    "✖ Mantener fuera del alcance de los niños y mascotas."
+                ]
+            }];
+            indicacionesJSON.current = indicacionesJSON[0];
+            showToast('⚠️ Usando indicaciones predeterminadas', 'warning');
+        }
+    }
+    
+    // ✅ Mostrar/ocultar campo personalizado
+    document.getElementById('customInstructions').style.display = 
+        source === 'custom' ? 'block' : 'none';
+}
 
+
+function cargarTipoInstruccion() {
+    const tipoSeleccionado = document.getElementById('instructionsSource').value;
+    
+    if (!tipoSeleccionado || !indicacionesJSON) {
+        return;
+    }
+    
+    // ✅ Buscar el tipo en el JSON
+    const encontrada = indicacionesJSON.find(item => 
+        item.tipo === tipoSeleccionado
+    );
+    
+    if (encontrada) {
+        indicacionesJSON.current = encontrada.info;
+        indicacionesJSON.currentTipo = tipoSeleccionado;
+        mostrarPreviewIndicaciones();
+        previewChanges();
+        showToast(`✅ Instrucciones "${tipoSeleccionado}" cargadas`, 'success');
+    } else {
+        showToast('⚠️ Tipo no encontrado', 'warning');
+    }
+}
+
+/*function seleccionarInstruccion() {
+    const tipoSeleccionado = document.getElementById("tipoInstruccion").value;
+
+    const encontrada = indicacionesJSON.find(item =>
+        item.tipo.toLowerCase() === tipoSeleccionado.toLowerCase()
+    );
+
+    if (encontrada) {
+        indicacionesJSON.current = encontrada;
+
+        mostrarPreviewIndicaciones(); // preview lateral
+        previewChanges(); // regenerar etiqueta real
+    }
+}
+
+*/
 
     </script>
 <!-- Modal de Vista Previa Grande -->
