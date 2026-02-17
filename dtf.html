@@ -81,6 +81,7 @@
                  </div>
                 </div>
 
+
                 <button class="btn" onclick="applyLabelSize()">🔄 Aplicar Cambios de Tamaño</button>
             </div>
 
@@ -226,6 +227,7 @@
         <!--88888888888888888888888888888888888888888888888888888888888888-->
          <div class="control-card">
             <div class="collapse-section">
+                   <div class="collapse-header" onclick="toggleCollapse('productImage')">
 <div class="control-group"></div>
                 <div class="control-group">
                     <label for="quantityPerProduct">Cantidad por producto:</label>
@@ -266,6 +268,7 @@
 
             </div>
             </div>
+            /<div>
                 <!--88888888888888888888888888888888888888888888888888888888888888-->
 
         <!-- Imagen de Productos -->
@@ -452,20 +455,9 @@
                       <option value="">Selecciona un tipo...</option>
                                <!-- Las opciones se cargarán dinámicamente -->
                      </select>
-                    </div>
+                    
 
-                    <!--
-                    <div class="control-group">
-                        <label for="instructionsSource">Fuente de indicaciones:</label>                        
-                        <select id="instructionsSource" onchange="loadInstructions()">
-                         <option value="Aromaterapia">Aromaterapia</option>
-                         <option value="Masajes">Masajes</option>
-                         <option value="Controlador de Olor">Controlador de Olor</option>
-                         <option value="Desinfectante">Desinfectante</option>
-                         <option value="default">Predeterminado (JSON)</option>
-                         <option value="custom">Personalizado</option>
-                        </select>-->
-
+                   
                     </div>
                     <div id="customInstructions" style="display: none;">
                         <div class="control-group">
@@ -741,21 +733,22 @@
                 </button>
                 <!--<button class="btn" onclick="printLabels()">
                     🖨️ Imprimir etiquetas
-                </button>-->
+                </button>
                 <button class="btn btn-warning" onclick="downloadAllZIP()">
                     💾 Todas (ZIP)
-                </button>
+                </button>-->
                 <button class="btn" onclick="exportPDF()">
                     📥  PDF
                 </button>
                 <button class="btn btn-dtf" onclick="exportDTF()">
                     🧵 PNG DTF
                 </button>
-                <button class="btn" onclick="toggleDarkMode()">
+                <button class="btn" onclick="applyLabelSize()">🔄 Aplicar Tamaño</button>
+                <!--<button class="btn" onclick="toggleDarkMode()">
                     🌑 Modo Oscuro
                 </button>
-                <button class="btn" onclick="applyLabelSize()">🔄 Aplicar Tamaño</button>
-                <button class="btn-select-all" onclick="selectAllProducts()">✓ </button>
+                
+                <button class="btn-select-all" onclick="selectAllProducts()">✓ </button>-->
             </div>
         </div>
 
@@ -848,6 +841,24 @@ let previewLabels = [];
             // Cargar configuración guardada al iniciar
             loadConfig();
         });
+
+        // ✅ FACTOR DE ESCALA ÚNICO PARA TODO EL SISTEMA
+// Convierte "píxeles de pantalla (96 DPI)" a "píxeles de impresión (300 DPI)"
+function toPrintPixels(screenPixels) {
+    return Math.round(screenPixels * (300 / 96)); // Factor exacto: 3.125
+}
+
+// Convierte posición porcentual a píxeles de impresión
+function percentToPrintPx(percent, containerSizePx) {
+    return (percent / 100) * containerSizePx;
+}
+
+       // Convierte posición porcentual a píxeles de impresión
+        function percentToPrintPx(percent, containerSizePx) {
+        return (percent / 100) * containerSizePx;
+        }
+
+
         function updateSheetDimensions() {
           const sheetSize = document.getElementById('sheetSize').value;
           const sheetWidthInput = document.getElementById('sheetWidth');
@@ -936,11 +947,12 @@ document.getElementById('currentSheetDimensions').textContent =
 
         // Aplicar cambios de tamaño explícitamente
         function applyLabelSize() {
-            updateLabelDimensions();
-            if (generatedLabels.length > 0) {
-                generateLabels(); // Regenerar con nuevo tamaño
-            }
-        }
+    updateLabelDimensions();
+    // Solo regenera si ya hay etiquetas, pero sin llamar a calculateProduction()
+    if (generatedLabels.length > 0) {
+        generateLabels(); // ✅ OK: regenera etiquetas normales
+    }
+}
 
         function applyChanges() {
             showToast('Cambios aplicados correctamente', 'success');
@@ -1335,12 +1347,12 @@ function mostrarPreviewIndicaciones() {
                             String(p.id) === String(product.id)
                         );
                         
-                        if (productoJSON && productoJSON.nombreOriginal) {
-                            product.nombreOriginal = productoJSON.nombreOriginal;
+                        if (productoJSON && productoJSON.nombre) {
+                            product.nombre = productoJSON.nombre;
                             product.categoria = productoJSON.categoria || product.categoria || 'Sin categoría';
                             product.imagen = productoJSON.imagen || '';
                         } else {
-                            product.nombreOriginal = product.nombre || `ID ${product.id}`;
+                            product.nombre = product.nombre || `ID ${product.id}`;
                             productosSinNombreJSON++;
                         }
                         
@@ -1349,7 +1361,7 @@ function mostrarPreviewIndicaciones() {
                 });
 
                 allProducts.sort((a, b) => 
-                    (a.nombreOriginal || '').localeCompare(b.nombreOriginal || '')
+                    (a.nombre || '').localeCompare(b.nombre || '')
                 );
 
                 allProducts.forEach(product => {
@@ -1360,7 +1372,7 @@ function mostrarPreviewIndicaciones() {
                                    data-id="${product.firebaseId}"
                                    onchange="toggleProductSelection('${product.firebaseId}')">
                             <div class="product-info">
-                                <div class="product-name">${product.nombreOriginal}</div>
+                                <div class="product-name">${product.nombre}</div>
                                 <div class="product-category">${product.categoria || 'Sin categoría'}</div>
                                 <div class="product-stock">Stock: ${product.cantidad}</div>
                                 <div class="product-id">ID: ${product.id}</div>
@@ -1423,7 +1435,7 @@ function mostrarPreviewIndicaciones() {
                     const catA = a.categoria || '';
                     const catB = b.categoria || '';
                     if (catA !== catB) return catA.localeCompare(catB);
-                    return (a.nombreOriginal || '').localeCompare(b.nombreOriginal || '');
+                    return (a.nombre || '').localeCompare(b.nombre || '');
                 });
 
                 allProducts.forEach((product, index) => {
@@ -1443,7 +1455,7 @@ function mostrarPreviewIndicaciones() {
                                    data-id="${productId}"
                                    onchange="toggleProductSelection('${productId}', true)">
                             <div class="product-info">
-                                <div class="product-name">${product.nombreOriginal || product.nombre || 'Sin nombre'}</div>
+                                <div class="product-name">${product.nombre || product.nombre || 'Sin nombre'}</div>
                                 <div class="product-category">${product.categoria || 'Sin categoría'}</div>
                                 <div class="product-id">ID: ${product.id || 'N/A'}</div>
                             </div>
@@ -1507,7 +1519,7 @@ async function fetchAndFlattenJSON() {
                         categoria: categoria,
                         id: producto.id || producto.ID || null,
                         nombre: producto.nombre || producto.Nombre || producto.name || 'Sin nombre',
-                        nombreOriginal: producto.nombreOriginal || producto.nombre || producto.Nombre || producto.name || 'Sin nombre',
+                        nombre: producto.nombre || producto.nombre || producto.Nombre || producto.name || 'Sin nombre',
                         precio: producto.precio || producto.Precio || producto.price || 0,
                         imagen: producto.imagen || producto.Imagen || producto.image || '',
                         stock: producto.stock || producto.Stock || 0
@@ -1522,7 +1534,7 @@ async function fetchAndFlattenJSON() {
                         categoria: categoria,
                         id: producto.id || producto.ID || key,
                         nombre: producto.nombre || producto.Nombre || producto.name || key,
-                        nombreOriginal: producto.nombreOriginal || producto.nombre || producto.Nombre || producto.name || key,
+                        nombre: producto.nombre || producto.nombre || producto.Nombre || producto.name || key,
                         precio: producto.precio || producto.Precio || producto.price || 0,
                         imagen: producto.imagen || producto.Imagen || producto.image || '',
                         stock: producto.stock || producto.Stock || 0
@@ -1571,8 +1583,8 @@ async function loadFromJSON() {
             const catB = (b.categoria || '').toLowerCase();
             if (catA !== catB) return catA.localeCompare(catB);
             
-            const nameA = (a.nombreOriginal || '').toLowerCase();
-            const nameB = (b.nombreOriginal || '').toLowerCase();
+            const nameA = (a.nombre || '').toLowerCase();
+            const nameB = (b.nombre || '').toLowerCase();
             return nameA.localeCompare(nameB);
         });
         
@@ -1595,7 +1607,7 @@ async function loadFromJSON() {
                     data-id="${productId}"
                     onchange="toggleProductSelection('${productId}', true)">
                 <div class="product-info">
-                    <div class="product-name">${product.nombreOriginal || product.nombre || 'Sin nombre'}</div>
+                    <div class="product-name">${product.nombre || product.nombre || 'Sin nombre'}</div>
                     <div class="product-category">${product.categoria || 'Sin categoría'}</div>
                     ${product.precio ? `<div class="product-stock">Precio: ₡${parseInt(product.precio).toLocaleString()}</div>` : ''}
                     ${product.stock !== undefined ? `<div class="product-stock">Stock: ${product.stock}</div>` : ''}
@@ -1655,8 +1667,8 @@ async function loadFromJSON() {
             const catB = (b.categoria || '').toLowerCase();
             if (catA !== catB) return catA.localeCompare(catB);
             
-            const nameA = (a.nombreOriginal || '').toLowerCase();
-            const nameB = (b.nombreOriginal || '').toLowerCase();
+            const nameA = (a.nombre || '').toLowerCase();
+            const nameB = (b.nombre || '').toLowerCase();
             return nameA.localeCompare(nameB);
         });
         
@@ -1679,7 +1691,7 @@ async function loadFromJSON() {
                     data-id="${productId}"
                     onchange="toggleProductSelection('${productId}', true)">
                 <div class="product-info">
-                    <div class="product-name">${product.nombreOriginal || product.nombre || 'Sin nombre'}</div>
+                    <div class="product-name">${product.nombre || product.nombre || 'Sin nombre'}</div>
                     <div class="product-category">${product.categoria || 'Sin categoría'}</div>
                     ${product.precio ? `<div class="product-stock">Precio: ₡${parseInt(product.precio).toLocaleString()}</div>` : ''}
                     ${product.stock !== undefined ? `<div class="product-stock">Stock: ${product.stock}</div>` : ''}
@@ -1722,7 +1734,7 @@ async function loadFromJSON() {
                 );
                 
                 selectedProducts.set(productId, {
-                    product: product || { nombreOriginal: productId, id: productId },
+                    product: product || { nombre: productId, id: productId },
                     quantity: 1,
                     isJSON: isJSON
                 });
@@ -1797,6 +1809,336 @@ async function loadFromJSON() {
             `;
         }
 
+        // Abrir vista previa grande al hacer clic en una etiqueta
+function openPreviewModal(index) {
+    if (generatedLabels.length === 0) {
+        showToast('⚠️ No hay etiquetas generadas', 'error');
+        return;
+    }
+    
+    currentPreviewIndex = index;
+    previewLabels = [...generatedLabels];
+    
+    // Mostrar modal
+    const modal = document.getElementById('previewModal');
+    if (!modal) {
+        console.error('Modal no encontrado');
+        return;
+    }
+    
+    modal.style.display = 'block';
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+    
+    // Renderizar vista previa grande
+    renderLargePreview();
+    
+    // Prevenir scroll del body
+    document.body.style.overflow = 'hidden';
+    
+    showToast(`👁️ Viendo etiqueta ${index + 1} de ${generatedLabels.length}`, 'success');
+}
+
+// Cerrar modal
+function closePreviewModal() {
+    const modal = document.getElementById('previewModal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }, 300);
+}
+
+// Renderizar vista previa grande
+// CORREGIDO: Función para vista previa grande - ¡FUNCIONA CORRECTAMENTE!
+function renderLargePreview() {
+    if (currentPreviewIndex < 0 || currentPreviewIndex >= previewLabels.length) return;
+    
+    const labelData = previewLabels[currentPreviewIndex];
+    const labelDiv = document.createElement('div');
+    
+    // ✅ Obtener dimensiones ACTUALES del formulario
+    const labelWidth = parseFloat(document.getElementById('labelWidth').value) || 5;
+    const labelHeight = parseFloat(document.getElementById('labelHeight').value) || 5;
+    
+    // ✅ Calcular dimensiones en píxeles (300 DPI)
+    const dpi = 300;
+    const pxPerCm = dpi / 2.54;
+    const labelWidthPx = Math.round(labelWidth * pxPerCm);
+    const labelHeightPx = Math.round(labelHeight * pxPerCm);
+    
+    // ✅ Obtener configuración actual
+    const fontSize = document.getElementById('fontSize').value;
+    const fontRotation = document.getElementById('fontRotation').value;
+    const fontPosX = document.getElementById('fontPosX').value;
+    const fontPosY = document.getElementById('fontPosY').value;
+    const priceFormat = document.getElementById('priceFormat').value;
+    const transparentBg = document.getElementById('transparentBg').checked;
+    const mirrorEffect = document.getElementById('mirrorEffect').checked;
+    const shape = document.querySelector('input[name="labelShape"]:checked').value;
+    const showProductImage = document.getElementById('showProductImage').checked;
+    const showInstructions = document.getElementById('showInstructions').checked;
+    const selectedFont = document.getElementById('selectedFont').value;
+    const backgroundType = document.getElementById('backgroundType').value;
+    
+    // ✅ Aplicar dimensiones CORRECTAS
+    labelDiv.style.width = `${labelWidthPx}px`;
+    labelDiv.style.height = `${labelHeightPx}px`;
+    labelDiv.className = `label-preview ${transparentBg ? 'dtf-transparent' : ''} clickable`;
+    labelDiv.style.cursor = 'pointer';
+    labelDiv.style.borderColor = document.getElementById('borderColor').value;
+    labelDiv.style.borderWidth = '4px';
+    labelDiv.style.fontFamily = selectedFont;
+    
+    if (shape === 'rounded') {
+        labelDiv.style.borderRadius = '20px';
+    } else if (shape === 'circle') {
+        labelDiv.style.borderRadius = '50%';
+    } else {
+        labelDiv.style.borderRadius = '0';
+    }
+    
+    if (mirrorEffect) {
+        labelDiv.style.transform = 'scaleX(-1)';
+    }
+    
+    // ✅ Aplicar fondo
+    if (backgroundType === 'color') {
+        labelDiv.style.backgroundColor = document.getElementById('backgroundColor').value;
+    } else if (backgroundType === 'image') {
+        const bgUrl = document.getElementById('backgroundImageUrl').value || document.getElementById('previewBackground').src;
+        if (bgUrl) {
+            labelDiv.style.backgroundImage = `url(${bgUrl})`;
+            labelDiv.style.backgroundSize = 'cover';
+            labelDiv.style.backgroundPosition = 'center';
+            labelDiv.style.opacity = document.getElementById('backgroundOpacity').value;
+        }
+    }
+    
+    let html = '<div class="label-content" style="position: relative; width: 100%; height: 100%;">';
+    
+    // ✅ Imagen del producto
+    if (showProductImage && labelData.product && labelData.product.imagen) {
+        const imgWidth = document.getElementById('productImageWidth').value;
+        const imgHeight = document.getElementById('productImageHeight').value;
+        const imgPosX = document.getElementById('productImagePosX').value;
+        const imgPosY = document.getElementById('productImagePosY').value;
+        const imgRotation = document.getElementById('productImageRotation').value;
+        
+        // ✅ CORRECCIÓN: Calcular posiciones en píxeles
+        const imgX = (imgPosX / 100) * labelWidthPx;
+        const imgY = (imgPosY / 100) * labelHeightPx;
+        
+        html += `
+        <img src="${labelData.product.imagen.trim()}"
+            class="product-image"
+            style="position: absolute;
+                width: ${imgWidth}px;
+                height: ${imgHeight}px;
+                left: ${imgX}px;
+                top: ${imgY}px;
+                transform: rotate(${imgRotation}deg);
+                object-fit: contain;"
+            onerror="this.style.display='none'">
+        `;
+    }
+    
+    // ✅ Imágenes adicionales
+    for (let i = 1; i <= 3; i++) {
+        const imgSrc = additionalImages[`img${i}`];
+        if (imgSrc) {
+            const imgWidth = document.getElementById(`img${i}Width`).value;
+            const imgPosX = document.getElementById(`img${i}PosX`).value;
+            const imgPosY = document.getElementById(`img${i}PosY`).value;
+            const imgRotation = document.getElementById(`img${i}Rotation`).value;
+            
+            // ✅ CORRECCIÓN: Calcular posiciones en píxeles
+            const imgX = (imgPosX / 100) * labelWidthPx;
+            const imgY = (imgPosY / 100) * labelHeightPx;
+            
+            html += `
+            <img src="${imgSrc}"
+                style="position: absolute;
+                    width: ${imgWidth}px;
+                    left: ${imgX}px;
+                    top: ${imgY}px;
+                    transform: rotate(${imgRotation}deg);
+                    object-fit: contain;"
+                onerror="this.style.display='none'">
+            `;
+        }
+    }
+    
+    // ✅ Nombre del producto
+    html += `
+    <div class="label-name"
+        style="position: absolute;
+            left: calc(${fontPosX}% - 50%);
+            top: calc(${fontPosY}% - 50%);
+            transform: translate(-50%, -50%) rotate(${fontRotation}deg);
+            font-size: ${fontSize}px;
+            color: ${document.getElementById('textColor').value};
+            text-align: center;
+            width: 90%;
+            font-weight: bold;">
+        ${labelData.name}
+    </div>
+    `;
+    
+    // ✅ Precio
+    html += `
+    <div class="label-price"
+        style="position: absolute;
+            left: 50%;
+            top: 65%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 90%;
+            font-weight: bold;
+            color: ${document.getElementById('borderColor').value};">
+        ${priceFormat}
+    </div>
+    `;
+    
+    // ✅ Indicaciones
+    if (showInstructions && indicacionesJSON && indicacionesJSON.current) {
+        const instFontSize = document.getElementById('instructionsFontSize').value;
+        const instColor = document.getElementById('instructionsColor').value;
+        const instRotation = document.getElementById('instructionsRotation').value;
+        const instPosX = document.getElementById('instructionsPosX').value;
+        const instPosY = document.getElementById('instructionsPosY').value;
+        const instWidth = document.getElementById('instructionsWidth').value;
+        const current = indicacionesJSON.current;
+        let indicacionesText = '';
+        
+        // ✅ Indicaciones
+        if (current.indicaciones && current.indicaciones.length > 0) {
+            indicacionesText += current.indicaciones.join('<br>');
+        }
+        // ✅ Advertencias
+        if (current.advertencias && current.advertencias.length > 0) {
+            if (indicacionesText) indicacionesText += '<br><br>';
+            indicacionesText += '<strong>Advertencias:</strong><br>';
+            indicacionesText += current.advertencias.join('<br>');
+        }
+        
+        if (indicacionesText) {
+            html += `
+            <div style="position: absolute;
+                left: calc(${instPosX}% - ${instWidth/2}%);
+                top: calc(${instPosY}% - 50%);
+                width: ${instWidth}%;
+                font-size: ${instFontSize}px;
+                color: ${instColor};
+                transform: rotate(${instRotation}deg);
+                text-align: left;
+                line-height: 1.4;
+                background-color: white;
+                padding: 8px;
+                border-radius: 4px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                ${indicacionesText}
+            </div>
+            `;
+        }
+    }
+    
+    // ✅ Textos adicionales
+    for (let i = 1; i <= 3; i++) {
+        const text = document.getElementById(`additionalText${i}`).value;
+        if (text) {
+            const textFontSize = document.getElementById(`text${i}FontSize`).value;
+            const textColor = document.getElementById(`text${i}Color`).value;
+            const textPosX = document.getElementById(`text${i}PosX`).value;
+            const textPosY = document.getElementById(`text${i}PosY`).value;
+            const textRotation = document.getElementById(`text${i}Rotation`).value;
+            
+            html += `
+            <div style="position: absolute;
+                left: calc(${textPosX}% - 50%);
+                top: calc(${textPosY}% - 50%);
+                transform: rotate(${textRotation}deg);
+                font-size: ${textFontSize}px;
+                color: ${textColor};
+                text-align: center;
+                font-weight: ${i === 1 ? 'bold' : 'normal'};">
+                ${text}
+            </div>
+            `;
+        }
+    }
+    
+    html += '</div>';
+    labelDiv.innerHTML = html;
+    
+    // ✅ Insertar en contenedor
+    const container = document.getElementById('largePreviewContainer');
+    container.innerHTML = '';
+    container.appendChild(labelDiv);
+    
+    // ✅ Actualizar información
+    document.getElementById('modalLabelIndex').textContent = `${currentPreviewIndex + 1} de ${previewLabels.length}`;
+    document.getElementById('modalProductName').textContent = labelData.name;
+    document.getElementById('modalProductId').textContent = labelData.productId || 'N/A';
+    document.getElementById('modalProductCategory').textContent = (labelData.product && labelData.product.categoria) || 'Sin categoría';
+    document.getElementById('modalLabelSize').textContent = `${labelWidth} x ${labelHeight} cm (${labelWidthPx} x ${labelHeightPx} px)`;
+}
+
+
+// ✅ NUEVA: Imprimir etiqueta seleccionada
+function printLabel() {
+    if (currentPreviewIndex < 0) return;
+    
+    const labelData = previewLabels[currentPreviewIndex];
+    showToast(`🖨️ Imprimiendo: ${labelData.name}`, 'success');
+    
+    // Generar solo la etiqueta seleccionada
+    createLabelCanvas(labelData)
+        .then(canvas => {
+            // Crear una ventana para imprimir solo la etiqueta
+            const printWin = window.open('', '', 'width=800,height=600');
+            printWin.document.write(`
+                <html>
+                <head>
+                    <title>Etiqueta para imprimir</title>
+                    <style>
+                        @media print {
+                            body { margin: 0; padding: 0; }
+                            .print-only { display: block; }
+                            .no-print { display: none; }
+                        }
+                        @media screen {
+                            .print-only { display: none; }
+                            .no-print { display: block; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-only">
+                        <img src="${canvas.toDataURL()}" style="width: 100%; height: auto;">
+                    </div>
+                    <div class="no-print">
+                        <p>Esta sección no se imprimirá</p>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWin.document.close();
+            
+            // Esperar a que se cargue la imagen antes de imprimir
+            setTimeout(() => {
+                printWin.print();
+                printWin.close();
+                showToast('🖨️ Etiqueta enviada a impresora', 'success');
+            }, 500);
+        })
+        .catch(error => {
+            console.error('Error generando etiqueta para impresión:', error);
+            showToast('❌ Error al preparar la etiqueta para impresión', 'error');
+        });
+}
+
         function generateLabels() {
             const fontSize = document.getElementById('fontSize').value;
             const fontRotation = document.getElementById('fontRotation').value;
@@ -1826,7 +2168,7 @@ async function loadFromJSON() {
             selectedProducts.forEach((item, productId) => {
                 const product = item.product;
                 const quantity = item.quantity;
-                const name = product.nombreOriginal || product.nombre || productId;
+                const name = product.nombre || product.nombre || productId;
 
                 for (let i = 0; i < quantity; i++) {
                     createLabelElement(name, priceFormat, fontSize, fontRotation, fontPosX, fontPosY, transparentBg, mirrorEffect, shape, showProductImage, product.imagen, showInstructions, selectedFont, backgroundType, labelCount);
@@ -1859,9 +2201,9 @@ function createLabelElement(name, price, fontSize, fontRotation, fontPosX, fontP
     const dpi = 300;
     const pxPerCm = dpi / 2.54;
     
-    // Calcular dimensiones en píxeles
-    const labelWidthPx = Math.round(labelWidth * pxPerCm);
-    const labelHeightPx = Math.round(labelHeight * pxPerCm);
+   // ✅ CORRECCIÓN: Calcular posiciones en píxeles correctamente
+     const labelWidthPx = Math.round(labelWidth * pxPerCm);
+     const labelHeightPx = Math.round(labelHeight * pxPerCm);
     
     // Aplicar dimensiones de la etiqueta
     labelDiv.style.width = `${labelWidthPx}px`;
@@ -1901,38 +2243,59 @@ function createLabelElement(name, price, fontSize, fontRotation, fontPosX, fontP
     
     // Imagen del producto
     if (showProductImage && imageUrl) {
-        const imgWidth = document.getElementById('productImageWidth').value;
-        const imgHeight = document.getElementById('productImageHeight').value;
+        
         const imgPosX = document.getElementById('productImagePosX').value;
         const imgPosY = document.getElementById('productImagePosY').value;
         const imgRotation = document.getElementById('productImageRotation').value;
+        // ✅ AHORA: Escalar TODO a 300 DPI
+        const scaleFactor = 300 / 96; // Factor de conversión
+        const imgWidth = toPrintPixels(parseFloat(document.getElementById('productImageWidth').value) || 90);
+        const imgHeight = toPrintPixels(parseFloat(document.getElementById('productImageHeight').value) || 90);
+        const fontSize = toPrintPixels(parseFloat(document.getElementById('fontSize').value) || 10);
+
+// Para imágenes adicionales (dentro del bucle for)
+for (let i = 1; i <= 3; i++) {
+    // ...
+    const imgWidth = toPrintPixels(parseFloat(document.getElementById(`img${i}Width`).value) || 80);
+    // ...
+}
+
+// Para textos adicionales
+for (let i = 1; i <= 3; i++) {
+    // ...
+    const textFontSize = toPrintPixels(parseFloat(document.getElementById(`text${i}FontSize`).value) || 10);
+    // ...
+}
+
         
         // Calcular posiciones en píxeles
         const imgX = (imgPosX / 100) * labelWidthPx;
         const imgY = (imgPosY / 100) * labelHeightPx;
         
-        html += `
-        <img src="${imageUrl.trim()}"
-        class="product-image"
-        style="position: absolute;
-        width: ${imgWidth}px;
-        height: ${imgHeight}px;
-        left: calc(${imgPosX}% - ${imgWidth / 2}px);
-        top: calc(${imgPosY}% - ${imgHeight / 2}px);
-        transform: rotate(${imgRotation}deg);
-        object-fit: contain;"
-        onerror="this.style.display='none'">
-        `;
+ // ✅ CORRECCIÓN: Aplicar posiciones en píxeles
+  html += `
+  <img src="${imageUrl.trim()}"
+    class="product-image"
+    style="position: absolute;
+      width: ${imgWidth}px;
+      height: ${imgHeight}px;
+      left: ${imgX}px;
+      top: ${imgY}px;
+      transform: rotate(${imgRotation}deg);
+      object-fit: contain;"
+    onerror="this.style.display='none'">
+  `;
     }
     
     // Imágenes adicionales
     for (let i = 1; i <= 3; i++) {
-        const imgSrc = additionalImages[`img${i}`];
-        if (imgSrc) {
+  const imgSrc = additionalImages[`img${i}`];
+  if (imgSrc) {
             const imgWidth = document.getElementById(`img${i}Width`).value;
             const imgPosX = document.getElementById(`img${i}PosX`).value;
             const imgPosY = document.getElementById(`img${i}PosY`).value;
             const imgRotation = document.getElementById(`img${i}Rotation`).value;
+
             
             // Calcular posiciones en píxeles
             const imgX = (imgPosX / 100) * labelWidthPx;
@@ -2063,28 +2426,30 @@ if (showInstructions && indicacionesJSON && indicacionesJSON.current) {
 
     function calculateProduction() {
     const previewGrid = document.getElementById('previewGrid');
+    
+    // ✅ 1. Limpiar completamente el contenedor (incluyendo eventos y clases)
     previewGrid.innerHTML = '';
+    previewGrid.className = 'preview-grid'; // Restaurar clase base
     
     if (generatedLabels.length === 0) {
         previewGrid.innerHTML = '<p class="no-labels">⚠️ Genera etiquetas primero</p>';
+        showToast('❌ No hay etiquetas para calcular producción', 'warning');
         return;
     }
-    
-    // ✅ Obtener dimensiones de la etiqueta
+
+    // ✅ 2. Obtener dimensiones en píxeles (300 DPI)
     const labelW = parseFloat(document.getElementById('labelWidth').value) || 5;
     const labelH = parseFloat(document.getElementById('labelHeight').value) || 5;
-    
-    // ✅ Calcular dimensiones en píxeles (300 DPI)
     const dpi = 300;
     const pxPerCm = dpi / 2.54;
     const labelWPx = Math.round(labelW * pxPerCm);
     const labelHPx = Math.round(labelH * pxPerCm);
-    
-    // ✅ Calcular cuántas etiquetas caben por fila
+
+    // ✅ 3. Calcular cuántas caben por fila
     const gridWidth = previewGrid.clientWidth;
     const labelsPerRow = Math.max(1, Math.floor(gridWidth / (labelWPx + 20)));
-    
-    // ✅ Configurar el grid
+
+    // ✅ 4. Configurar grid limpio
     previewGrid.style.display = 'grid';
     previewGrid.style.gridTemplateColumns = `repeat(${labelsPerRow}, 1fr)`;
     previewGrid.style.gap = '15px';
@@ -2092,13 +2457,11 @@ if (showInstructions && indicacionesJSON && indicacionesJSON.current) {
     previewGrid.style.backgroundColor = '#f8f9fa';
     previewGrid.style.overflow = 'auto';
     previewGrid.style.maxHeight = '600px';
-    
-    let totalLabels = 0;
-    
-    // ✅ Generar cada etiqueta
+
+    // ✅ 5. Generar miniaturas (sin interferir con la vista normal)
     generatedLabels.forEach((labelData, index) => {
         const labelDiv = document.createElement('div');
-        labelDiv.className = 'preview-label';
+        labelDiv.className = 'preview-label production-miniature'; // Clase específica
         labelDiv.style.position = 'relative';
         labelDiv.style.boxSizing = 'border-box';
         labelDiv.style.border = '2px solid #e0e0e0';
@@ -2109,31 +2472,28 @@ if (showInstructions && indicacionesJSON && indicacionesJSON.current) {
         labelDiv.style.alignItems = 'center';
         labelDiv.style.justifyContent = 'center';
         labelDiv.style.overflow = 'hidden';
-        labelDiv.style.padding = '10px';
-        labelDiv.style.aspectRatio = `${labelW}/${labelH}`;
         labelDiv.style.cursor = 'pointer';
-        labelDiv.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+        labelDiv.style.aspectRatio = `${labelW}/${labelH}`;
         labelDiv.style.transition = 'transform 0.2s, box-shadow 0.2s';
-        
-        // ✅ Efecto hover
+
+        // ✅ Hover efecto
         labelDiv.addEventListener('mouseenter', () => {
             labelDiv.style.transform = 'scale(1.05)';
             labelDiv.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
         });
-        
         labelDiv.addEventListener('mouseleave', () => {
             labelDiv.style.transform = 'scale(1)';
             labelDiv.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
         });
-        
-        // ✅ Click para ver vista previa grande
+
+        // ✅ Click → abrir vista grande (como antes)
         labelDiv.addEventListener('click', () => {
             currentPreviewIndex = index;
-            previewLabels = generatedLabels;
-            openLargePreview();
+            previewLabels = [...generatedLabels];
+            openPreviewModal(); // ✅ Usa la función ya existente
         });
-        
-        // ✅ Contenido de la etiqueta
+
+        // ✅ Contenido de la miniatura
         const contentDiv = document.createElement('div');
         contentDiv.style.width = '100%';
         contentDiv.style.height = '100%';
@@ -2143,74 +2503,65 @@ if (showInstructions && indicacionesJSON && indicacionesJSON.current) {
         contentDiv.style.justifyContent = 'center';
         contentDiv.style.textAlign = 'center';
         contentDiv.style.position = 'relative';
-        
-        // ✅ Nombre del producto
+
+        // Nombre
         const nameDiv = document.createElement('div');
         nameDiv.style.fontWeight = 'bold';
-        nameDiv.style.fontSize = '14px';
+        nameDiv.style.fontSize = '12px';
         nameDiv.style.color = document.getElementById('textColor').value;
-        nameDiv.style.marginBottom = '5px';
+        nameDiv.style.marginBottom = '4px';
         nameDiv.style.maxWidth = '90%';
         nameDiv.style.wordWrap = 'break-word';
         nameDiv.textContent = labelData.name;
-        
-        // ✅ ID del producto
+
+        // ID
         const idDiv = document.createElement('div');
-        idDiv.style.fontSize = '11px';
+        idDiv.style.fontSize = '10px';
         idDiv.style.color = '#666';
         idDiv.textContent = `ID: ${labelData.productId || 'N/A'}`;
-        
-        // ✅ Categoría
-        const categoryDiv = document.createElement('div');
-        categoryDiv.style.fontSize = '10px';
-        categoryDiv.style.color = '#888';
-        categoryDiv.style.marginTop = '3px';
-        categoryDiv.textContent = labelData.product?.categoria || 'Sin categoría';
-        
-        // ✅ Badge con dimensiones
+
+        // Badge de dimensiones
         const sizeBadge = document.createElement('div');
         sizeBadge.style.position = 'absolute';
-        sizeBadge.style.bottom = '5px';
-        sizeBadge.style.right = '5px';
-        sizeBadge.style.background = 'rgba(0,0,0,0.7)';
+        sizeBadge.style.bottom = '4px';
+        sizeBadge.style.right = '4px';
+        sizeBadge.style.background = 'rgba(0,0,0,0.6)';
         sizeBadge.style.color = 'white';
-        sizeBadge.style.fontSize = '9px';
-        sizeBadge.style.padding = '2px 5px';
-        sizeBadge.style.borderRadius = '3px';
+        sizeBadge.style.fontSize = '8px';
+        sizeBadge.style.padding = '1px 4px';
+        sizeBadge.style.borderRadius = '2px';
         sizeBadge.textContent = `${labelW}x${labelH} cm`;
-        
+
         contentDiv.appendChild(nameDiv);
         contentDiv.appendChild(idDiv);
-        contentDiv.appendChild(categoryDiv);
         contentDiv.appendChild(sizeBadge);
-        
         labelDiv.appendChild(contentDiv);
+
         previewGrid.appendChild(labelDiv);
-        totalLabels++;
     });
-    
-    // ✅ Mostrar resumen
+
+    // ✅ 6. Resumen
     const summaryDiv = document.createElement('div');
     summaryDiv.style.gridColumn = '1 / -1';
-    summaryDiv.style.padding = '15px';
+    summaryDiv.style.padding = '12px';
     summaryDiv.style.backgroundColor = '#e8f5e9';
     summaryDiv.style.borderRadius = '8px';
-    summaryDiv.style.marginBottom = '15px';
+    summaryDiv.style.marginBottom = '12px';
     summaryDiv.style.textAlign = 'center';
+    summaryDiv.style.fontSize = '0.9rem';
     summaryDiv.innerHTML = `
-        <strong>📊 Resumen de Producción</strong><br>
-        Total: ${totalLabels} etiquetas<br>
-        Grid: ${labelsPerRow} columnas x ${Math.ceil(totalLabels / labelsPerRow)} filas<br>
-        Dimensiones: ${labelW}x${labelH} cm (${labelWPx}x${labelHPx} px)
+        <strong>📊 Producción</strong><br>
+        Total: ${generatedLabels.length} etiquetas | 
+        Grid: ${labelsPerRow} × ${Math.ceil(generatedLabels.length / labelsPerRow)} |
+        Dim: ${labelW}×${labelH} cm (${labelWPx}×${labelHPx} px)
     `;
-    
     previewGrid.insertBefore(summaryDiv, previewGrid.firstChild);
-    
-    showToast(`✅ Vista previa generada: ${totalLabels} etiquetas en grid de ${labelsPerRow} columnas`, 'success');
+
+    showToast(`✅ Vista de producción generada: ${generatedLabels.length} etiquetas`, 'success');
 }
         // ========== FUNCIONES DE EXPORTACIÓN COMPLETAS ==========
 
-// CORREGIDO: Función para crear canvas de etiqueta a 300 DPI
+// CORREGIDO: Función para crear canvas de etiqueta a 300 DPI - ¡SIN ESCALADO INCONSISTENTE!
 async function createLabelCanvas(labelData, options = {}) {
     const {
         transparentBg = false,
@@ -2218,7 +2569,7 @@ async function createLabelCanvas(labelData, options = {}) {
         mode = 'dtf-textil'
     } = options;
     
-    // Usar 300 DPI para exportación (300 DPI / 2.54 cm/inch ≈ 118.11 px/cm)
+    // ✅ Usar 300 DPI para exportación (118.11 px/cm)
     const dpi = 300;
     const pxPerCm = dpi / 2.54;
     
@@ -2226,7 +2577,7 @@ async function createLabelCanvas(labelData, options = {}) {
     const widthCm = parseFloat(document.getElementById('labelWidth').value) || 5;
     const heightCm = parseFloat(document.getElementById('labelHeight').value) || 5;
     
-    // Calcular dimensiones en píxeles
+    // Calcular dimensiones en píxeles (300 DPI)
     const widthPx = Math.round(widthCm * pxPerCm);
     const heightPx = Math.round(heightCm * pxPerCm);
     
@@ -2234,6 +2585,10 @@ async function createLabelCanvas(labelData, options = {}) {
     canvas.width = widthPx;
     canvas.height = heightPx;
     const ctx = canvas.getContext('2d');
+    
+    // ✅ Ajustar calidad de imagen para impresión
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high'; // Mejor calidad de escalado
     
     // Fondo
     if (!transparentBg) {
@@ -2259,13 +2614,14 @@ async function createLabelCanvas(labelData, options = {}) {
     }
     
     // Borde
-    const borderWidth = (parseFloat(document.getElementById('borderWidth').value) || 0) * (pxPerCm / 38);
+    const borderWidth = parseFloat(document.getElementById('borderWidth').value) || 0;
     if (borderWidth > 0) {
         ctx.strokeStyle = document.getElementById('borderColor').value;
         ctx.lineWidth = borderWidth;
         const shape = document.querySelector('input[name="labelShape"]:checked').value;
         if (shape === 'rounded') {
-            const radius = 15 * (pxPerCm / 38);
+            // ✅ Radio fijo de 15px (igual que en CSS preview)
+            const radius = 15;
             drawRoundedRect(ctx, borderWidth/2, borderWidth/2, widthPx - borderWidth, heightPx - borderWidth, radius);
             ctx.stroke();
         } else if (shape === 'circle') {
@@ -2282,10 +2638,12 @@ async function createLabelCanvas(labelData, options = {}) {
     if (showProductImage && labelData.product && labelData.product.imagen) {
         try {
             const img = await loadImage(labelData.product.imagen);
-            const imgW = (parseFloat(document.getElementById('productImageWidth').value) || 100) * (pxPerCm / 38);
-            const imgH = (parseFloat(document.getElementById('productImageHeight').value) || 100) * (pxPerCm / 38);
-            const imgX = (parseFloat(document.getElementById('productImagePosX').value) / 100) * widthPx;
-            const imgY = (parseFloat(document.getElementById('productImagePosY').value) / 100) * heightPx;
+            const imgW = parseFloat(document.getElementById('productImageWidth').value) || 100;
+            const imgH = parseFloat(document.getElementById('productImageHeight').value) || 100;
+            
+            // ✅ CORRECCIÓN: Calcular posiciones en píxeles (no en porcentajes)
+            const imgX = (parseFloat(document.getElementById('productImagePosX').value) * widthPx) / 100;
+            const imgY = (parseFloat(document.getElementById('productImagePosY').value) * heightPx) / 100;
             const imgRot = (parseFloat(document.getElementById('productImageRotation').value) || 0) * Math.PI / 180;
             
             ctx.save();
@@ -2293,8 +2651,8 @@ async function createLabelCanvas(labelData, options = {}) {
             ctx.rotate(imgRot);
             ctx.drawImage(img, -imgW/2, -imgH/2, imgW, imgH);
             ctx.restore();
-        } catch (e) { 
-            console.error("Error loading product image", e); 
+        } catch (e) {
+            console.error("Error loading product image", e);
         }
     }
     
@@ -2304,8 +2662,9 @@ async function createLabelCanvas(labelData, options = {}) {
         if (imgSrc) {
             try {
                 const img = await loadImage(imgSrc);
-                const imgW = (parseFloat(document.getElementById(`img${i}Width`).value) || 50) * (pxPerCm / 38);
-                const imgH = (parseFloat(document.getElementById(`img${i}Width`).value) || 50) * (pxPerCm / 38);
+                const imgW = parseFloat(document.getElementById(`img${i}Width`).value) || 50;
+                // ✅ Usar mismo ancho para alto (imágenes cuadradas)
+                const imgH = imgW;
                 const imgX = (parseFloat(document.getElementById(`img${i}PosX`).value) / 100) * widthPx;
                 const imgY = (parseFloat(document.getElementById(`img${i}PosY`).value) / 100) * heightPx;
                 const imgRot = (parseFloat(document.getElementById(`img${i}Rotation`).value) || 0) * Math.PI / 180;
@@ -2315,14 +2674,14 @@ async function createLabelCanvas(labelData, options = {}) {
                 ctx.rotate(imgRot);
                 ctx.drawImage(img, -imgW/2, -imgH/2, imgW, imgH);
                 ctx.restore();
-            } catch (e) { 
-                console.error(`Error loading additional image ${i}`, e); 
+            } catch (e) {
+                console.error(`Error loading additional image ${i}`, e);
             }
         }
     }
     
     // Nombre del producto
-    const fontSize = (parseFloat(document.getElementById('fontSize').value) || 16) * (pxPerCm / 38);
+    const fontSize = parseFloat(document.getElementById('fontSize').value) || 16;
     const fontRot = (parseFloat(document.getElementById('fontRotation').value) || 0) * Math.PI / 180;
     const fontX = (parseFloat(document.getElementById('fontPosX').value) / 100) * widthPx;
     const fontY = (parseFloat(document.getElementById('fontPosY').value) / 100) * heightPx;
@@ -2355,7 +2714,7 @@ async function createLabelCanvas(labelData, options = {}) {
     for (let i = 1; i <= 3; i++) {
         const text = document.getElementById(`additionalText${i}`).value;
         if (text) {
-            const textFontSize = (parseFloat(document.getElementById(`text${i}FontSize`).value) || 12) * (pxPerCm / 38);
+            const textFontSize = parseFloat(document.getElementById(`text${i}FontSize`).value) || 12;
             const textColor = document.getElementById(`text${i}Color`).value;
             const textX = (parseFloat(document.getElementById(`text${i}PosX`).value) / 100) * widthPx;
             const textY = (parseFloat(document.getElementById(`text${i}PosY`).value) / 100) * heightPx;
@@ -2373,34 +2732,20 @@ async function createLabelCanvas(labelData, options = {}) {
     }
     
     // Indicaciones
-    if (document.getElementById('showInstructions').checked && indicacionesJSON) {
-        const instFontSize = (parseFloat(document.getElementById('instructionsFontSize').value) || 10) * (pxPerCm / 38);
+    if (document.getElementById('showInstructions').checked && indicacionesJSON && indicacionesJSON.current) {
+        const instFontSize = parseFloat(document.getElementById('instructionsFontSize').value) || 10;
         const instColor = document.getElementById('instructionsColor').value;
         const instRotation = (parseFloat(document.getElementById('instructionsRotation').value) || 0) * Math.PI / 180;
         const instPosX = (parseFloat(document.getElementById('instructionsPosX').value) / 100) * widthPx;
         const instPosY = (parseFloat(document.getElementById('instructionsPosY').value) / 100) * heightPx;
         const instWidth = (parseFloat(document.getElementById('instructionsWidth').value) / 100) * widthPx;
+        const current = indicacionesJSON.current;
         
         let indicacionesText = '';
-        if (Array.isArray(indicacionesJSON)) {
-            const current = indicacionesJSON.current;
-            if (current) {
-                if (current.indicaciones && current.indicaciones.length > 0) {
-                    indicacionesText += current.indicaciones.join('<br>');
-                }
-                if (current.advertencias && current.advertencias.length > 0) {
-                    indicacionesText += '<br><br><strong>Advertencias:</strong><br>';
-                    indicacionesText += current.advertencias.join('<br>');
-                }
-            }
-        } else {
-            if (indicacionesJSON.indicaciones) {
-                indicacionesText += indicacionesJSON.indicaciones.join('<br>');
-            }
-            if (indicacionesJSON.advertencias) {
-                indicacionesText += '<br><br><strong>Advertencias:</strong><br>';
-                indicacionesText += indicacionesJSON.advertencias.join('<br>');
-            }
+        if (current.indicaciones && current.indicaciones.length > 0) {
+            indicacionesText = (current.indicaciones || []).join('<br>') + '<br><br>' +
+                '<strong>Advertencias:</strong><br>' +
+                (current.advertencias || []).join('<br>');
         }
         
         if (indicacionesText) {
@@ -2408,14 +2753,36 @@ async function createLabelCanvas(labelData, options = {}) {
             ctx.translate(instPosX, instPosY);
             ctx.rotate(instRotation);
             
-            // Dividir texto en líneas
+            // ✅ Dibujar fondo blanco con borde
             const lines = indicacionesText.split('<br>');
-            const lineHeight = instFontSize * 1.2;
+            const lineHeight = instFontSize * 1.4;
+            const textHeight = lines.length * lineHeight;
+            const padding = 8;
             
-            // Dibujar cada línea
+            // Medir ancho máximo del texto
+            let maxWidth = 0;
+            lines.forEach(line => {
+                const metrics = ctx.measureText(line);
+                if (metrics.width > maxWidth) maxWidth = metrics.width;
+            });
+            
+            // Dibujar cuadro blanco
+            ctx.fillStyle = 'white';
+            ctx.fillRect(-maxWidth/2 - padding, -textHeight/2 - padding, maxWidth + padding*2, textHeight + padding*2);
+            
+            // Dibujar borde
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(-maxWidth/2 - padding, -textHeight/2 - padding, maxWidth + padding*2, textHeight + padding*2);
+            
+            // Dibujar texto
+            ctx.fillStyle = instColor;
+            ctx.font = `${instFontSize}px ${selectedFont}`;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
             lines.forEach((line, index) => {
-                const y = (index - lines.length/2) * lineHeight;
-                ctx.fillText(line, 0, y);
+                const y = -textHeight/2 + index * lineHeight + padding;
+                ctx.fillText(line, -maxWidth/2, y);
             });
             
             ctx.restore();
@@ -2703,6 +3070,36 @@ function downloadLabel() {
         console.error('Error generando etiqueta:', error);
         showToast('❌ Error al generar la etiqueta', 'error');
     });
+}
+
+// ✅ NUEVA: Función para descargar etiqueta seleccionada
+function downloadSelectedLabel() {
+  if (currentPreviewIndex < 0 || currentPreviewIndex >= previewLabels.length) {
+    showToast('⚠️ No hay etiqueta seleccionada', 'error');
+    return;
+  }
+  
+  showToast('💾 Descargando etiqueta seleccionada...', 'warning');
+  
+  try {
+    // Generar solo la etiqueta seleccionada
+    createLabelCanvas(previewLabels[currentPreviewIndex])
+      .then(canvas => {
+        // Convertir a imagen y descargar
+        canvas.toBlob(blob => {
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          saveAs(blob, `etiqueta_seleccionada_${timestamp}.png`);
+          showToast('✅ Etiqueta descargada exitosamente', 'success');
+        }, 'image/png', 1.0);
+      })
+      .catch(error => {
+        console.error('Error generando etiqueta:', error);
+        showToast('❌ Error al generar la etiqueta', 'error');
+      });
+  } catch (error) {
+    console.error('Error al descargar etiqueta:', error);
+    showToast('❌ Error al descargar la etiqueta', 'error');
+  }
 }
 
 // CORREGIDO: Imprimir solo la etiqueta seleccionada
@@ -3045,7 +3442,6 @@ function printLabel() {
 function calculateProduction() {
     const previewGrid = document.getElementById('previewGrid');
     previewGrid.innerHTML = '';
-    
     if (generatedLabels.length === 0) {
         previewGrid.innerHTML = '<p class="no-labels">⚠️ Genera etiquetas primero</p>';
         return;
@@ -3101,17 +3497,16 @@ function calculateProduction() {
             labelDiv.style.transform = 'scale(1.05)';
             labelDiv.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
         });
-        
         labelDiv.addEventListener('mouseleave', () => {
             labelDiv.style.transform = 'scale(1)';
             labelDiv.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
         });
         
-        // ✅ Click para ver vista previa grande - CORREGIDO: openPreviewModal en lugar de openLargePreview
+        // ✅ Click para ver vista previa grande
         labelDiv.addEventListener('click', () => {
             currentPreviewIndex = index;
             previewLabels = generatedLabels;
-            openPreviewModal(); // ✅ CORRECTO: openPreviewModal
+            openPreviewModal();
         });
         
         // ✅ Contenido de la etiqueta
@@ -3164,7 +3559,6 @@ function calculateProduction() {
         contentDiv.appendChild(idDiv);
         contentDiv.appendChild(categoryDiv);
         contentDiv.appendChild(sizeBadge);
-        
         labelDiv.appendChild(contentDiv);
         previewGrid.appendChild(labelDiv);
         totalLabels++;
@@ -3184,12 +3578,10 @@ function calculateProduction() {
         Grid: ${labelsPerRow} columnas x ${Math.ceil(totalLabels / labelsPerRow)} filas<br>
         Dimensiones: ${labelW}x${labelH} cm (${labelWPx}x${labelHPx} px)
     `;
-    
     previewGrid.insertBefore(summaryDiv, previewGrid.firstChild);
     
     showToast(`✅ Vista previa generada: ${totalLabels} etiquetas en grid de ${labelsPerRow} columnas`, 'success');
 }
-
 // Cerrar modal
 function closePreviewModal() {
     const modal = document.getElementById('previewModal');
@@ -3200,8 +3592,7 @@ function closePreviewModal() {
     }, 300);
 }
 
-// Renderizar vista previa grande
-// Renderizar vista previa grande
+// CORREGIDO: Función para vista previa grande - ¡FUNCIONA CORRECTAMENTE!
 function renderLargePreview() {
     if (currentPreviewIndex < 0 || currentPreviewIndex >= previewLabels.length) return;
     
@@ -3344,46 +3735,46 @@ function renderLargePreview() {
     `;
     
     // ✅ Indicaciones
-if (showInstructions && indicacionesJSON && indicacionesJSON.current) {
-    const instFontSize = document.getElementById('instructionsFontSize').value;
-    const instColor = document.getElementById('instructionsColor').value;
-    const instRotation = document.getElementById('instructionsRotation').value;
-    const instPosX = document.getElementById('instructionsPosX').value;
-    const instPosY = document.getElementById('instructionsPosY').value;
-    const instWidth = document.getElementById('instructionsWidth').value;
-    
-    const current = indicacionesJSON.current;
-    let indicacionesText = '';
-    
-    if (current.indicaciones && current.indicaciones.length > 0) {
-        indicacionesText += current.indicaciones.join('<br>');
+    if (showInstructions && indicacionesJSON && indicacionesJSON.current) {
+        const instFontSize = document.getElementById('instructionsFontSize').value;
+        const instColor = document.getElementById('instructionsColor').value;
+        const instRotation = document.getElementById('instructionsRotation').value;
+        const instPosX = document.getElementById('instructionsPosX').value;
+        const instPosY = document.getElementById('instructionsPosY').value;
+        const instWidth = document.getElementById('instructionsWidth').value;
+        
+        const current = indicacionesJSON.current;
+        let indicacionesText = '';
+        
+        if (current.indicaciones && current.indicaciones.length > 0) {
+            indicacionesText += current.indicaciones.join('<br>');
+        }
+        if (current.advertencias && current.advertencias.length > 0) {
+            if (indicacionesText) indicacionesText += '<br><br>';
+            indicacionesText += '<strong>Advertencias:</strong><br>';
+            indicacionesText += current.advertencias.join('<br>');
+        }
+        
+        if (indicacionesText) {
+            html += `
+            <div style="position: absolute;
+                left: calc(${instPosX}% - ${instWidth/2}%);
+                top: calc(${instPosY}% - 50%);
+                width: ${instWidth}%;
+                font-size: ${instFontSize}px;
+                color: ${instColor};
+                transform: rotate(${instRotation}deg);
+                text-align: left;
+                line-height: 1.4;
+                background-color: white;
+                padding: 8px;
+                border-radius: 4px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                ${indicacionesText}
+            </div>
+            `;
+        }
     }
-    
-    if (current.advertencias && current.advertencias.length > 0) {
-        indicacionesText += '<br><br><strong>Advertencias:</strong><br>';
-        indicacionesText += current.advertencias.join('<br>');
-    }
-    
-    if (indicacionesText) {
-        html += `
-        <div style="position: absolute;
-            left: calc(${instPosX}% - ${instWidth/2}%);
-            top: calc(${instPosY}% - 50%);
-            width: ${instWidth}%;
-            font-size: ${instFontSize}px;
-            color: ${instColor};
-            transform: rotate(${instRotation}deg);
-            text-align: left;
-            line-height: 1.4;
-            background-color: white;
-            padding: 8px;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            ${indicacionesText}
-        </div>
-        `;
-    }
-}
     
     // ✅ Textos adicionales
     for (let i = 1; i <= 3; i++) {
@@ -3423,10 +3814,65 @@ if (showInstructions && indicacionesJSON && indicacionesJSON.current) {
     document.getElementById('modalProductName').textContent = labelData.name;
     document.getElementById('modalProductId').textContent = labelData.productId || 'N/A';
     document.getElementById('modalProductCategory').textContent = (labelData.product && labelData.product.categoria) || 'Sin categoría';
-    
-    // ✅ Mostrar dimensiones CORRECTAS
     document.getElementById('modalLabelSize').textContent = `${labelWidth} x ${labelHeight} cm (${labelWidthPx} x ${labelHeightPx} px)`;
 }
+
+
+
+// ✅ NUEVA: Imprimir etiqueta seleccionada
+function printLabel() {
+    if (currentPreviewIndex < 0) return;
+    
+    const labelData = previewLabels[currentPreviewIndex];
+    showToast(`🖨️ Imprimiendo: ${labelData.name}`, 'success');
+    
+    // Generar solo la etiqueta seleccionada
+    createLabelCanvas(labelData)
+        .then(canvas => {
+            // Crear una ventana para imprimir solo la etiqueta
+            const printWin = window.open('', '', 'width=800,height=600');
+            printWin.document.write(`
+                <html>
+                <head>
+                    <title>Etiqueta para imprimir</title>
+                    <style>
+                        @media print {
+                            body { margin: 0; padding: 0; }
+                            .print-only { display: block; }
+                            .no-print { display: none; }
+                        }
+                        @media screen {
+                            .print-only { display: none; }
+                            .no-print { display: block; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-only">
+                        <img src="${canvas.toDataURL()}" style="width: 100%; height: auto;">
+                    </div>
+                    <div class="no-print">
+                        <p>Esta sección no se imprimirá</p>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWin.document.close();
+            
+            // Esperar a que se cargue la imagen antes de imprimir
+            setTimeout(() => {
+                printWin.print();
+                printWin.close();
+                showToast('🖨️ Etiqueta enviada a impresora', 'success');
+            }, 500);
+        })
+        .catch(error => {
+            console.error('Error generando etiqueta para impresión:', error);
+            showToast('❌ Error al preparar la etiqueta para impresión', 'error');
+        });
+}
+
+
 // Navegar a etiqueta anterior
 function prevLabel() {
     if (currentPreviewIndex > 0) {
@@ -3447,19 +3893,7 @@ function nextLabel() {
     }
 }
 
-// Descargar etiqueta individual como PNG
-function downloadLabel() {
-    if (currentPreviewIndex < 0) return;
-    
-    const labelData = previewLabels[currentPreviewIndex];
-    showToast(`💾 Descargando etiqueta: ${labelData.name}`, 'success');
-    
-    // Aquí podrías implementar el código para convertir el canvas a PNG
-    // Por ahora solo muestra mensaje
-    setTimeout(() => {
-        showToast('✅ Etiqueta lista para descargar', 'success');
-    }, 800);
-}
+
 
 // Imprimir etiqueta individual
 function printLabel() {
@@ -3642,14 +4076,20 @@ function cargarTipoInstruccion() {
             <button class="btn btn-secondary" onclick="prevLabel()">
                 ← Anterior
             </button>
+            
             <button class="btn btn-secondary" onclick="downloadLabel()">
-                💾 Descargar PNG
-            </button>
-            <button class="btn btn-secondary" onclick="printLabel()">
-                🖨️ Imprimir
-            </button>
+    💾 Descargar PNG
+</button>
+<button class="btn btn-secondary" onclick="printLabel()">
+    🖨️ Imprimir
+</button>
             <button class="btn btn-secondary" onclick="nextLabel()">
                 Siguiente →
+            </button>
+
+            <!-- En el modal de vista previa grande, reemplaza el botón de descarga -->
+            <button class="btn btn-secondary" onclick="downloadSelectedLabel()">
+             💾 Descargar PNG
             </button>
         </div>
     </div>
