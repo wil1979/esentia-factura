@@ -64,10 +64,47 @@
         }
 
         .control-card {
-            
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
             transition: var(--transition);
+            background: white;
+            padding: 20px;
+        }
+        
+        /* Nueva clase para barra de herramientas compacta */
+        .toolbar-compact {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: flex-end;
+            background: linear-gradient(135deg, #8B4513, #DAA520);
+            padding: 15px;
+            border-radius: 12px;
+            color: white;
+            margin-bottom: 20px;
+        }
+        
+        .toolbar-item {
+            flex: 1;
+            min-width: 100px;
+        }
+        
+        .toolbar-item label {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 4px;
+            display: block;
+            white-space: nowrap;
+        }
+        
+        .toolbar-item input, .toolbar-item select {
+            width: 100% !important;
+            padding: 6px !important;
+            border-radius: 4px !important;
+            border: none !important;
+            background: white !important;
+            color: #333 !important;
+            height: 32px !important;
         }
 
         .control-card:hover {
@@ -229,15 +266,12 @@
             background: white;
             border: 2px solid #ddd;
             border-radius: 8px;
-            padding: 15px;
+            padding: 0;
             text-align: center;
             position: relative;
             overflow: hidden;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            /* display: flex; REMOVIDO: Interfiere con posicionamiento absoluto */
             transition: all 0.3s ease;
         }
 
@@ -257,9 +291,7 @@
         }
 
         .product-image {
-            max-width: 100%;
-            max-height: 100px;
-            margin-bottom: 10px;
+            margin: 0;
             object-fit: contain;
         }
 
@@ -704,18 +736,20 @@
 
         .font-selector {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 8px;
+            margin-top: 8px;
         }
 
         .font-option {
-            padding: 8px;
+            padding: 6px;
             border: 2px solid #ddd;
             border-radius: 6px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
+            font-size: 0.85rem;
+            background: white;
         }
 
         .font-option:hover {
@@ -727,6 +761,20 @@
             border-color: var(--secondary-color);
             background: rgba(218, 165, 32, 0.2);
             box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.3);
+        }
+        
+        /* Estilo para el selector de fuente en cada bloque */
+        .font-select-container {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        
+        body.dark-mode .font-select-container {
+            background: #3a3a3a;
+            border-color: #555;
         }
 
         .config-buttons {
@@ -931,8 +979,6 @@ body.dark-mode .modal-content {
 }
 
 .large-preview-container .label-preview {
-    width: 400px !important;
-    height: 400px !important;
     border-width: 4px !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     transform: scale(1) !important;
@@ -1199,8 +1245,6 @@ body.dark-mode .modal-content {
 }
 
 .large-preview-container .label-preview {
-    width: 400px !important;
-    height: 400px !important;
     border-width: 4px !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     transform: scale(1) !important;
