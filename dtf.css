@@ -1,12 +1,12 @@
  :root {
             --primary-color: #8B4513;
             --secondary-color: #DAA520;
-            --bg-light: #f8f9fa;
+            --bg-light: #1f7cda;
             --bg-dark: #2d2d2d;
             --text-light: #333;
             --text-dark: #f8f9fa;
             --border-radius: 12px;
-            --shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            /*--shadow: 0 4px 15px rgba(0, 0, 0, 0.15);*/
             --transition: all 0.3s ease;
         }
 
@@ -66,9 +66,7 @@
         .control-card {
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
-            transition: var(--transition);
-            background: white;
-            padding: 20px;
+            transition: var(--transition);          
         }
         
         /* Nueva clase para barra de herramientas compacta */
@@ -140,7 +138,7 @@
             font-size: 0.9rem;
         }
 
-        select, input[type="text"], input[type="number"], input[type="color"], input[type="file"], textarea {
+        select, input[type="text"], input[type="number"],  input[type="file"], textarea {
               width: auto;
               height: auto;
               padding: 0;
@@ -151,6 +149,44 @@
               margin-right: 5px;
               transition: var(--transition);
         }
+        /* ✅ FIX: Selectores de color visibles y funcionales */
+input[type="color"] {
+    width: 150px !important;
+    height: 24px !important;
+    padding: 0 !important;
+    border: 2px solid #8B4513 !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    background: transparent !important;
+    -webkit-appearance: auto !important; /* Mantiene apariencia nativa */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    transition: all 0.2s ease !important;
+}
+
+input[type="color"]:hover {
+    border-color: #DAA520 !important;
+    box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.2) !important;
+}
+
+/* Selectores pequeños en secciones de texto */
+.text-color-selector input[type="color"],
+.background-color-selector input[type="color"] {
+    width: 36px !important;
+    height: 36px !important;
+    border-width: 2px !important;
+}
+
+/* Badge de color visible al lado del selector */
+.color-badge {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.2);
+    margin-left: 8px;
+    vertical-align: middle;
+}
         /* Para los selectores de color pequeños en las secciones de texto 
              .text-color-selector input[type="color"],
              .background-color-selector input[type="color"] {
@@ -618,56 +654,66 @@
             color: var(--secondary-color);
         }
 
-        .collapse-section {
-            margin-top: 1px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-        }
+        /* ✅ FIX: Secciones colapsables compactas y organizadas */
+.collapse-section {
+    margin-top: 15px;    
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    max-width: 400px; /* Límite máximo de ancho */        
+}
 
-        body.dark-mode .collapse-section {
-            border-color: #555;
-        }
 
-        .collapse-header {
-    padding: 8px 14px;        /* antes probablemente 15px o más */
-    font-size: 14px;          /* más pequeño */
+body.dark-mode .collapse-section {
+    border-color: #4a4a4a;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.collapse-header {
+    padding: 12px 18px !important; /* Más compacto */
+    font-size: 16px !important;
     font-weight: 600;
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(90deg, #6d5f0f, #DAA520);
+    background: linear-gradient(90deg, #8B4513, #A0522D);
     color: white;
-    border-radius: 8px;
+    border-radius: 10px 10px 0 0 !important;
     transition: all 0.2s ease;
+    position: relative;
+}
 
-    .collapse-header:hover {
-        
-.collapse-header span {
-    font-size: 12px;
+
+.collapse-content.show .collapse-header::after {
+    transform: rotate(180deg);
 }
 
 .collapse-content {
-    padding: 12px;
-    background: #f8f8f8;
+    padding: 18px;
+    background: #fafafa;
+    display: none;
+    border-top: 1px solid #eee;
+    max-height: none;
+    overflow: visible;
+    border-radius: 0 0 10px 10px;
 }
-    opacity: 0.9;
+body.dark-mode .collapse-content {
+    background: #2a2a2a;
+    border-color: #444;
 }
-}
-        .collapse-content {
-            padding: 15px;
-            background: #f9f9f9;
-            display: none;
-        }
 
-        body.dark-mode .collapse-content {
-            background: #333;
-        }
+.collapse-content.show {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
 
-        .collapse-content.show {
-            display: block;
-        }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 
         .additional-image-preview {
             max-width: 100px;
@@ -1525,4 +1571,80 @@ body.dark-mode .config-section {
 
 .btn-danger:hover {
     background-color: #c82333;
+}
+/* Contenedor para los controles dentro de secciones */
+.section-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 10px;
+}
+
+/* Estilo para los grupos de control dentro de secciones */
+.control-group.section-group {
+    margin-bottom: 12px;
+}
+
+.control-group.section-group label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 6px;
+    display: block;
+}
+
+body.dark-mode .control-group.section-group label {
+    color: #ccc;
+}
+/* ✅ Estilos para controles de patrón */
+#backgroundPatternOption {
+    background: rgba(139, 69, 19, 0.03);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+    border: 1px solid #e0d6c9;
+}
+
+.pattern-preview {
+    display: flex;
+    gap: 15px;
+    margin: 15px 0;
+    flex-wrap: wrap;
+}
+
+.pattern-sample {
+    width: 60px;
+    height: 60px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    background: white;
+}
+
+.pattern-sample.active {
+    border-color: #8B4513;
+    box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.2);
+}
+
+.pattern-sample::after {
+    content: '✓';
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    color: #8B4513;
+    font-weight: bold;
+    display: none;
+}
+
+.pattern-sample.active::after {
+    display: block;
+}
+
+.pattern-label {
+    text-align: center;
+    font-size: 0.8rem;
+    margin-top: 5px;
+    color: #666;
 }
