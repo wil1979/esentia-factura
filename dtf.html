@@ -14,6 +14,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -281,7 +282,7 @@
                 👁️ Vista previa
             </button>
         </div>
-            <div>
+            /<div>
                 <!--88888888888888888888888888888888888888888888888888888888888888-->
 
         <!-- Imagen de Productos -->
@@ -731,40 +732,109 @@
                     </div>
 
                     <div id="backgroundPatternOption" style="display: none;">
-    <div class="control-group">
-        <label for="patternType">Tipo de patrón:</label>
-        <select id="patternType" onchange="previewPattern()">
-            <option value="dots">Puntos</option>
-            <option value="lines">Líneas</option>
-            <option value="grid">Cuadrícula</option>
-            <option value="diagonal">Diagonal</option>
-        </select>
-    </div>
-    
-    <div class="control-group">
-        <label for="patternColor">Color del patrón:</label>
-        <input type="color" id="patternColor" value="#8B4513" onchange="previewPattern()">
-    </div>
-    
-    <div class="control-group">
-        <label for="patternOpacity">Opacidad del patrón:</label>
-        <input type="number" id="patternOpacity" value="0.2" step="0.1" min="0.1" max="1" onchange="previewPattern()">
-    </div>
-    
-    <div class="control-group">
-        <label>Vista previa de patrones:</label>
-        <div class="pattern-preview">
-            <div class="pattern-sample" onclick="selectPatternSample('dots')" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%2210%22><circle cx=%222%22 cy=%222%22 r=%221%22 fill=%22%238B4513%22/></svg>')"></div>
-            <div class="pattern-sample" onclick="selectPatternSample('lines')" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22><rect x=%220%22 y=%220%22 width=%222%22 height=%2212%22 fill=%22%238B4513%22/></svg>')"></div>
-            <div class="pattern-sample" onclick="selectPatternSample('grid')" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%228%22 height=%228%22><path d=%22M0 4h8M4 0v8%22 stroke=%22%238B4513%22 stroke-width=%221%22/></svg>')"></div>
-            <div class="pattern-sample" onclick="selectPatternSample('diagonal')" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22><path d=%22M0 12 12 0%22 stroke=%22%238B4513%22 stroke-width=%221.5%22/></svg>')"></div>
-        </div>
-    </div>
-    
-    <!--<button class="btn btn-secondary" onclick="previewChanges()">👁️ Aplicar a vista previa</button>-->
-</div>
+                        <div class="control-group">
+                            <label for="patternType">Tipo de patrón:</label>
+                            <select id="patternType">
+                                <option value="dots">Puntos</option>
+                                <option value="lines">Líneas</option>
+                                <option value="grid">Cuadrícula</option>
+                                <option value="diagonal">Diagonal</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="patternColor">Color del patrón:</label>
+                            <input type="color" id="patternColor" value="#8B4513">
+                        </div>
+                        <div class="control-group">
+                            <label for="patternOpacity">Opacidad del patrón:</label>
+                            <input type="number" id="patternOpacity" value="0.2" step="0.1" min="0" max="1">
+                        </div>
+                    </div>
 
                     <button class="btn btn-secondary" onclick="previewChanges()">👁️ Vista previa</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Código de Barras -->
+        <div class="control-card">
+            <div class="collapse-section">
+                <div class="collapse-header" onclick="toggleCollapse('barcode')">
+                    📊 Código de Barras<span id="arrowBarcode">▼</span>
+                </div>
+                <div class="collapse-content" id="barcodeContent">
+                    <div class="control-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="showBarcode" checked onchange="previewChanges()">
+                            <label for="showBarcode">Mostrar código de barras</label>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="barcodeType">Tipo de código de barras:</label>
+                        <select id="barcodeType" onchange="previewChanges()">
+                            <option value="CODE128">CODE128 (Recomendado)</option>
+                            <option value="EAN13">EAN-13</option>
+                            <option value="CODE39">CODE39</option>
+                            <option value="ITF14">ITF-14</option>
+                            <option value="UPC">UPC-A</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="barcodeWidth">Ancho de barras (px):</label>
+                        <input type="number" id="barcodeWidth" value="2" min="1" max="10" onchange="previewChanges()">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="barcodeHeight">Alto de código (px):</label>
+                        <input type="number" id="barcodeHeight" value="50" min="20" max="200" onchange="previewChanges()">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="barcodePosX">Posición X (%) :</label>
+                        <input type="number" id="barcodePosX" value="50" min="0" max="100" onchange="previewChanges()">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="barcodePosY">Posición Y (%) :</label>
+                        <input type="number" id="barcodePosY" value="85" min="0" max="100" onchange="previewChanges()">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="barcodeRotation">Rotación (grados):</label>
+                        <select id="barcodeRotation" onchange="previewChanges()">
+                            <option value="0">0°</option>
+                            <option value="90">90°</option>
+                            <option value="180">180°</option>
+                            <option value="270">270°</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="barcodeTextSize">Tamaño texto (px):</label>
+                        <input type="number" id="barcodeTextSize" value="14" min="8" max="30" onchange="previewChanges()">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="barcodeTextColor">Color texto:</label>
+                        <input type="color" id="barcodeTextColor" value="#000000" onchange="previewChanges()">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="barcodeBgColor">Color fondo:</label>
+                        <input type="color" id="barcodeBgColor" value="#FFFFFF" onchange="previewChanges()">
+                    </div>
+                    
+                    <button class="btn btn-secondary" onclick="previewChanges()">👁️ Vista previa</button>
+                    
+                    <div style="margin-top: 15px; padding: 10px; background: #f9f9f9; border-radius: 8px;">
+                        <strong>ℹ️ Información:</strong>
+                        <p style="margin: 8px 0 0 0; font-size: 0.9rem;">
+                            El código de barras se generará automáticamente usando el <strong>ID del producto</strong>.<br>
+                            Para EAN-13 y UPC-A, el ID debe tener la longitud correcta (13 y 12 dígitos respectivamente).
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -896,9 +966,7 @@ let previewLabels = [];
             loadConfig();
         });
 
-        
-
-       
+        // ✅ FACTOR DE ESCALA ÚNICO PARA TODO EL SISTEMA
 // Convierte "píxeles de pantalla (96 DPI)" a "píxeles de impresión (300 DPI)"
 function toPrintPixels(screenPixels) {
     return Math.round(screenPixels * (300 / 96)); // Factor exacto: 3.125
@@ -1169,8 +1237,8 @@ function selectExampleImage(url) {
 
 async function loadInstructions() {
     try {
-       const response = fetch('https://wil1979.github.io/esentia-factura/indicaciones.json');
-            //const response = fetch('indicaciones.json');
+       // const response = await fetch('https://wil1979.github.io/esentia-factura/indicaciones.json');
+        const response = await fetch('indicaciones.json');
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -1411,13 +1479,12 @@ function mostrarPreviewIndicaciones() {
                             String(p.id) === String(product.id)
                         );
                         
-                        if (productoJSON && productoJSON.nombreOriginal) {
-                            product.nombre = productoJSON.nombreOriginal;
+                        if (productoJSON && productoJSON.nombre) {
+                            product.nombre = productoJSON.nombre;
                             product.categoria = productoJSON.categoria || product.categoria || 'Sin categoría';
                             product.imagen = productoJSON.imagen || '';
-                            product.id = productoJSON.id || product.id; // ✅ COPIAR ID ORIGINAL AQUÍ
                         } else {
-                            product.nombreOriginal = product.nombre || `ID ${product.id}`;
+                            product.nombre = product.nombre || `ID ${product.id}`;
                             productosSinNombreJSON++;
                         }
                         
@@ -1820,8 +1887,23 @@ function renderLargePreview() {
             labelDiv.style.backgroundPosition = 'center';
             labelDiv.style.opacity = document.getElementById('backgroundOpacity').value;
         }
+    } else if (backgroundType === 'pattern') {
+        const pType = document.getElementById('patternType').value;
+        const pColor = document.getElementById('patternColor').value;
+        const pOpacity = document.getElementById('patternOpacity').value;
         
-    }    
+        if (pType === 'dots') {
+            labelDiv.style.backgroundImage = `radial-gradient(${pColor} 2px, transparent 2px)`;
+            labelDiv.style.backgroundSize = '20px 20px';
+        } else if (pType === 'lines') {
+            labelDiv.style.backgroundImage = `linear-gradient(45deg, ${pColor} 25%, transparent 25%, transparent 50%, ${pColor} 50%, ${pColor} 75%, transparent 75%, transparent)`;
+            labelDiv.style.backgroundSize = '20px 20px';
+        } else if (pType === 'grid') {
+            labelDiv.style.backgroundImage = `linear-gradient(${pColor} 1px, transparent 1px), linear-gradient(90deg, ${pColor} 1px, transparent 1px)`;
+            labelDiv.style.backgroundSize = '20px 20px';
+        }
+        labelDiv.style.opacity = pOpacity;
+    }
     
     let html = '<div class="label-content" style="position: relative; width: 100%; height: 100%;">';
     
@@ -1971,6 +2053,40 @@ function renderLargePreview() {
         }
     }
     
+    // ✅ Código de Barras
+    if (document.getElementById('showBarcode').checked && labelData.product && labelData.product.id) {
+        const bType = document.getElementById('barcodeType').value;
+        const bWidth = document.getElementById('barcodeWidth').value;
+        const bHeight = document.getElementById('barcodeHeight').value;
+        const bPosX = document.getElementById('barcodePosX').value;
+        const bPosY = document.getElementById('barcodePosY').value;
+        const bRotation = document.getElementById('barcodeRotation').value;
+        const bTextSize = document.getElementById('barcodeTextSize').value;
+        const bTextColor = document.getElementById('barcodeTextColor').value;
+        const bBgColor = document.getElementById('barcodeBgColor').value;
+        
+        const barcodeCanvas = generateBarcodeCanvas(labelData.product.id.toString(), {
+            type: bType,
+            width: parseInt(bWidth),
+            height: parseInt(bHeight),
+            text: parseInt(bTextSize),
+            textColor: bTextColor,
+            bgColor: bBgColor
+        });
+        
+        html += `
+        <div style="position: absolute;
+            left: ${bPosX}%;
+            top: ${bPosY}%;
+            transform: translate(-50%, -50%) rotate(${bRotation}deg);
+            background: ${bBgColor};
+            padding: 2px;
+            border-radius: 4px;">
+            <img src="${barcodeCanvas.toDataURL()}" style="max-width: 100%; height: auto; display: block;">
+        </div>
+        `;
+    }
+    
     html += '</div>';
     labelDiv.innerHTML = html;
     
@@ -1982,9 +2098,7 @@ function renderLargePreview() {
     // ✅ Actualizar información
     document.getElementById('modalLabelIndex').textContent = `${currentPreviewIndex + 1} de ${previewLabels.length}`;
     document.getElementById('modalProductName').textContent = labelData.name;
-    // ✅ AHORA (muestra ID original del JSON):
-    const originalId = (labelData.product && labelData.product.id) || labelData.productId || 'N/A';
-    document.getElementById('modalProductId').textContent = `ID: ${originalId}`;
+    document.getElementById('modalProductId').textContent = labelData.productId || 'N/A';
     document.getElementById('modalProductCategory').textContent = (labelData.product && labelData.product.categoria) || 'Sin categoría';
     document.getElementById('modalLabelSize').textContent = `${labelWidth} x ${labelHeight} cm (${labelWidthPx} x ${labelHeightPx} px)`;
 }
@@ -1996,9 +2110,51 @@ function printLabel() {
     
     const labelData = previewLabels[currentPreviewIndex];
     showToast(`🖨️ Imprimiendo: ${labelData.name}`, 'success');
-
-
-
+    
+    // Generar solo la etiqueta seleccionada
+    createLabelCanvas(labelData)
+        .then(canvas => {
+            // Crear una ventana para imprimir solo la etiqueta
+            const printWin = window.open('', '', 'width=800,height=600');
+            printWin.document.write(`
+                <html>
+                <head>
+                    <title>Etiqueta para imprimir</title>
+                    <style>
+                        @media print {
+                            body { margin: 0; padding: 0; }
+                            .print-only { display: block; }
+                            .no-print { display: none; }
+                        }
+                        @media screen {
+                            .print-only { display: none; }
+                            .no-print { display: block; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-only">
+                        <img src="${canvas.toDataURL()}" style="width: 100%; height: auto;">
+                    </div>
+                    <div class="no-print">
+                        <p>Esta sección no se imprimirá</p>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWin.document.close();
+            
+            // Esperar a que se cargue la imagen antes de imprimir
+            setTimeout(() => {
+                printWin.print();
+                printWin.close();
+                showToast('🖨️ Etiqueta enviada a impresora', 'success');
+            }, 500);
+        })
+        .catch(error => {
+            console.error('Error generando etiqueta para impresión:', error);
+            showToast('❌ Error al preparar la etiqueta para impresión', 'error');
+        });
 }
 
         function generateLabels() {
@@ -2088,36 +2244,18 @@ function createLabelElement(name, price, fontSize, fontRotation, fontPosX, fontP
         labelDiv.style.transform = 'scaleX(-1)';
     }
     
-    // ✅ APLICAR FONDO - CORREGIDO CON SOPORTE PARA PATRONES
-if (backgroundType === 'color') {
-    labelDiv.style.backgroundColor = document.getElementById('backgroundColor').value;
-} else if (backgroundType === 'image') {
-    const bgUrl = document.getElementById('backgroundImageUrl').value || document.getElementById('previewBackground').src;
-    if (bgUrl) {
-        labelDiv.style.backgroundImage = `url(${bgUrl})`;
-        labelDiv.style.backgroundSize = 'cover';
-        labelDiv.style.backgroundPosition = 'center';
-        labelDiv.style.opacity = document.getElementById('backgroundOpacity').value;
+    // Aplicar fondo
+    if (backgroundType === 'color') {
+        labelDiv.style.backgroundColor = document.getElementById('backgroundColor').value;
+    } else if (backgroundType === 'image') {
+        const bgUrl = document.getElementById('backgroundImageUrl').value || document.getElementById('previewBackground').src;
+        if (bgUrl) {
+            labelDiv.style.backgroundImage = `url(${bgUrl})`;
+            labelDiv.style.backgroundSize = 'cover';
+            labelDiv.style.backgroundPosition = 'center';
+            labelDiv.style.opacity = document.getElementById('backgroundOpacity').value;
+        }
     }
-} else if (backgroundType === 'pattern') {
-    const patternType = document.getElementById('patternType').value;
-    const patternColor = document.getElementById('patternColor').value;
-    const patternOpacity = parseFloat(document.getElementById('patternOpacity').value) || 0.2;
-    
-    // ✅ Generar patrón y convertir a data URL
-    const patternCanvas = generatePatternCanvas(
-        patternType,
-        patternColor,
-        patternOpacity,
-        labelWidthPx,
-        labelHeightPx
-    );
-    
-    const patternUrl = patternCanvas.toDataURL('image/png');
-    labelDiv.style.backgroundImage = `url(${patternUrl})`;
-    labelDiv.style.backgroundSize = 'cover';
-    labelDiv.style.backgroundPosition = 'center';
-}
     
     let html = '<div class="label-content" style="position: relative; width: 100%; height: 100%;">';
     
@@ -2303,7 +2441,84 @@ if (showInstructions && indicacionesJSON && indicacionesJSON.current) {
 
             showToast(`📐 Hoja: ${sheetW}x${sheetH}cm | Etiqueta: ${labelWidth}x${labelHeight}cm | ${totalLabels} etiquetas por hoja (${labelsPerRow}×${labelsPerCol})`, 'warning');
         }
-        // ========== FUNCIONES DE EXPORTACIÓN COMPLETAS ==========
+        // ✅ Función para dibujar texto con salto de línea automático en Canvas
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+    const words = text.split(' ');
+    let line = '';
+    let lines = [];
+
+    for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctx.measureText(testLine);
+        const testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+            lines.push(line);
+            line = words[n] + ' ';
+        } else {
+            line = testLine;
+        }
+    }
+    lines.push(line);
+    return lines;
+}
+
+        // ✅ Función para generar código de barras en canvas
+function generateBarcodeCanvas(barcodeData, options = {}) {
+    const {
+        type = 'CODE128',
+        width = 2,
+        height = 50,
+        text = 14,
+        textColor = '#000000',
+        bgColor = '#FFFFFF',
+        displayValue = true
+    } = options;
+    
+    // Crear canvas temporal
+    const tempCanvas = document.createElement('canvas');
+    const ctx = tempCanvas.getContext('2d');
+    
+    // Verificar si JsBarcode está cargado
+    if (typeof JsBarcode === 'undefined') {
+        console.error("JsBarcode no está cargado.");
+        tempCanvas.width = 150;
+        tempCanvas.height = 50;
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, 150, 50);
+        ctx.fillStyle = "red";
+        ctx.font = "12px Arial";
+        ctx.fillText("JsBarcode no cargado", 10, 30);
+        return tempCanvas;
+    }
+    
+    try {
+        // JsBarcode puede fallar si los datos no son válidos para el formato
+        JsBarcode(tempCanvas, barcodeData, {
+            format: type,
+            lineColor: textColor,
+            width: width,
+            height: height,
+            displayValue: displayValue,
+            fontSize: text,
+            textColor: textColor,
+            background: bgColor,
+            margin: 10
+        });
+    } catch (e) {
+        console.error("Error generando código de barras:", e);
+        tempCanvas.width = 150;
+        tempCanvas.height = 50;
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, 150, 50);
+        ctx.fillStyle = "red";
+        ctx.font = "12px Arial";
+        ctx.fillText("Error en Barcode", 10, 30);
+    }
+    
+    return tempCanvas;
+}
+
+// ========== FUNCIONES DE EXPORTACIÓN COMPLETAS ==========
 
 
 // CORREGIDO: Función para crear canvas de etiqueta a 300 DPI - ¡SIN ESCALADO INCONSISTENTE!
@@ -2335,38 +2550,65 @@ async function createLabelCanvas(labelData, options = {}) {
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high'; // Mejor calidad de escalado
     
-    // ✅ FONDO - CORREGIDO CON SOPORTE PARA PATRONES
-if (!transparentBg) {
-    const backgroundType = document.getElementById('backgroundType').value;
-    
-    if (backgroundType === 'color') {
-        ctx.fillStyle = document.getElementById('backgroundColor').value;
-        ctx.fillRect(0, 0, widthPx, heightPx);
-    } else if (backgroundType === 'image') {
-        const bgUrl = document.getElementById('backgroundImageUrl').value || document.getElementById('previewBackground').src;
-        if (bgUrl) {
-            const bgImg = await loadImage(bgUrl);
-            ctx.globalAlpha = parseFloat(document.getElementById('backgroundOpacity').value) || 1;
-            ctx.drawImage(bgImg, 0, 0, widthPx, heightPx);
-            ctx.globalAlpha = 1;
+    // Fondo
+    if (!transparentBg) {
+        const backgroundType = document.getElementById('backgroundType').value;
+        if (backgroundType === 'color') {
+            ctx.fillStyle = document.getElementById('backgroundColor').value;
+            ctx.fillRect(0, 0, widthPx, heightPx);
+        } else if (backgroundType === 'image') {
+            const bgUrl = document.getElementById('backgroundImageUrl').value || document.getElementById('previewBackground').src;
+            if (bgUrl) {
+                const bgImg = await loadImage(bgUrl);
+                ctx.globalAlpha = parseFloat(document.getElementById('backgroundOpacity').value) || 1;
+                ctx.drawImage(bgImg, 0, 0, widthPx, heightPx);
+                ctx.globalAlpha = 1;
+            }
+        } else if (backgroundType === 'pattern') {
+            const pType = document.getElementById('patternType').value;
+            const pColor = document.getElementById('patternColor').value;
+            const pOpacity = parseFloat(document.getElementById('patternOpacity').value) || 0.2;
+            
+            ctx.save();
+            ctx.globalAlpha = pOpacity;
+            ctx.fillStyle = pColor;
+            ctx.strokeStyle = pColor;
+            
+            const step = 40; // Espaciado del patrón
+            if (pType === 'dots') {
+                for (let x = 0; x < widthPx; x += step) {
+                    for (let y = 0; y < heightPx; y += step) {
+                        ctx.beginPath();
+                        ctx.arc(x, y, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            } else if (pType === 'lines') {
+                ctx.lineWidth = 2;
+                for (let i = -heightPx; i < widthPx; i += step) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, 0);
+                    ctx.lineTo(i + heightPx, heightPx);
+                    ctx.stroke();
+                }
+            } else if (pType === 'grid') {
+                ctx.lineWidth = 1;
+                for (let x = 0; x < widthPx; x += step) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, heightPx);
+                    ctx.stroke();
+                }
+                for (let y = 0; y < heightPx; y += step) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(widthPx, y);
+                    ctx.stroke();
+                }
+            }
+            ctx.restore();
         }
-    } else if (backgroundType === 'pattern') {
-        const patternType = document.getElementById('patternType').value;
-        const patternColor = document.getElementById('patternColor').value;
-        const patternOpacity = parseFloat(document.getElementById('patternOpacity').value) || 0.2;
-        
-        // ✅ Generar patrón y dibujarlo en el canvas
-        const patternCanvas = generatePatternCanvas(
-            patternType,
-            patternColor,
-            patternOpacity,
-            widthPx,
-            heightPx
-        );
-        
-        ctx.drawImage(patternCanvas, 0, 0, widthPx, heightPx);
     }
-}
     
     // Efecto espejo
     if (mirrorEffect) {
@@ -2447,13 +2689,13 @@ if (!transparentBg) {
     const fontX = (parseFloat(document.getElementById('fontPosX').value) / 100) * widthPx;
     const fontY = (parseFloat(document.getElementById('fontPosY').value) / 100) * heightPx;
     const textColor = document.getElementById('textColor').value;
-    const selectedFont = document.getElementById('selectedFont').value;
+    const nameFont = document.getElementById('nameFont').value;
     
     ctx.save();
     ctx.translate(fontX, fontY);
     ctx.rotate(fontRot);
     ctx.fillStyle = textColor;
-    ctx.font = `bold ${fontSize}px ${selectedFont}`;
+    ctx.font = `bold ${fontSize}px ${nameFont}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(labelData.name, 0, 0);
@@ -2480,100 +2722,108 @@ if (!transparentBg) {
             const textX = (parseFloat(document.getElementById(`text${i}PosX`).value) / 100) * widthPx;
             const textY = (parseFloat(document.getElementById(`text${i}PosY`).value) / 100) * heightPx;
             const textRot = (parseFloat(document.getElementById(`text${i}Rotation`).value) || 0) * Math.PI / 180;
+            const textFont = document.getElementById(`text${i}Font`).value;
             
             ctx.save();
             ctx.translate(textX, textY);
             ctx.rotate(textRot);
             ctx.fillStyle = textColor;
-            ctx.font = `${i === 1 ? 'bold' : 'normal'} ${textFontSize}px ${selectedFont}`;
+            ctx.font = `${i === 1 ? 'bold' : 'normal'} ${textFontSize}px ${textFont}`;
             ctx.textAlign = 'center';
             ctx.fillText(text, 0, 0);
             ctx.restore();
         }
     }
     
-    // ✅ INDICACIONES - CORREGIDO: Variables definidas y formato correcto
-if (document.getElementById('showInstructions').checked && indicacionesJSON) {
-    const instFontSize = parseFloat(document.getElementById('instructionsFontSize').value) || 10;
-    const instColor = document.getElementById('instructionsColor').value;
-    const instRotation = (parseFloat(document.getElementById('instructionsRotation').value) || 0) * Math.PI / 180;
-    const instPosX = (parseFloat(document.getElementById('instructionsPosX').value) / 100) * widthPx;
-    const instPosY = (parseFloat(document.getElementById('instructionsPosY').value) / 100) * heightPx;
-    const selectedFont = document.getElementById('selectedFont').value; // Asegurar disponibilidad
-    
-    // ✅ Construir texto PLANO (sin HTML)
-    let indicacionesText = '';
-    if (Array.isArray(indicacionesJSON)) {
-        const current = indicacionesJSON.current || indicacionesJSON[0];
-        if (current) {
-            if (current.indicaciones && current.indicaciones.length > 0) {
-                indicacionesText += current.indicaciones.join('\n');
-            }
-            if (current.advertencias && current.advertencias.length > 0) {
-                if (indicacionesText) indicacionesText += '\n\nADVERTENCIAS:\n';
-                indicacionesText += current.advertencias.join('\n');
-            }
-        }
-    } else {
-        if (indicacionesJSON.indicaciones) {
-            indicacionesText += indicacionesJSON.indicaciones.join('\n');
-        }
-        if (indicacionesJSON.advertencias) {
-            if (indicacionesText) indicacionesText += '\n\nADVERTENCIAS:\n';
-            indicacionesText += indicacionesJSON.advertencias.join('\n');
-        }
-    }
-    
-    if (indicacionesText) {
+    // ✅ Código de Barras
+    if (document.getElementById('showBarcode').checked && labelData.product && labelData.product.id) {
+        const bType = document.getElementById('barcodeType').value;
+        const bWidth = parseInt(document.getElementById('barcodeWidth').value);
+        const bHeight = parseInt(document.getElementById('barcodeHeight').value);
+        const bPosX = (parseFloat(document.getElementById('barcodePosX').value) / 100) * widthPx;
+        const bPosY = (parseFloat(document.getElementById('barcodePosY').value) / 100) * heightPx;
+        const bRotation = (parseFloat(document.getElementById('barcodeRotation').value) || 0) * Math.PI / 180;
+        const bTextSize = parseInt(document.getElementById('barcodeTextSize').value);
+        const bTextColor = document.getElementById('barcodeTextColor').value;
+        const bBgColor = document.getElementById('barcodeBgColor').value;
+        
+        const barcodeCanvas = generateBarcodeCanvas(labelData.product.id.toString(), {
+            type: bType,
+            width: bWidth,
+            height: bHeight,
+            text: bTextSize,
+            textColor: bTextColor,
+            bgColor: bBgColor
+        });
+        
         ctx.save();
-        ctx.translate(instPosX, instPosY);
-        ctx.rotate(instRotation);
-        
-        // ✅ DEFINIR VARIABLES FALTANTES (¡CRÍTICO!)
-        const lines = indicacionesText.split('\n'); // Usar \n, NO <br>
-        const lineHeight = instFontSize * 1.4;
-        const textHeight = lines.length * lineHeight;
-        const padding = 8; // Padding fijo para el cuadro blanco
-        
-        // ✅ Calcular ancho máximo del texto
-        let maxWidth = 0;
-        lines.forEach(line => {
-            const metrics = ctx.measureText(line);
-            if (metrics.width > maxWidth) maxWidth = metrics.width;
-        });
-        
-        // ✅ Dibujar fondo blanco CON BORDE
-        ctx.fillStyle = 'white';
-        ctx.fillRect(
-            -maxWidth/2 - padding, 
-            -textHeight/2 - padding, 
-            maxWidth + padding * 2, 
-            textHeight + padding * 2
-        );
-        
-        ctx.strokeStyle = '#ddd';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(
-            -maxWidth/2 - padding, 
-            -textHeight/2 - padding, 
-            maxWidth + padding * 2, 
-            textHeight + padding * 2
-        );
-        
-        // ✅ Dibujar texto
-        ctx.fillStyle = instColor;
-        ctx.font = `${instFontSize}px ${selectedFont}`;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        
-        lines.forEach((line, index) => {
-            const y = -textHeight/2 + (index * lineHeight) + padding;
-            ctx.fillText(line, -maxWidth/2, y);
-        });
-        
+        ctx.translate(bPosX, bPosY);
+        ctx.rotate(bRotation);
+        ctx.drawImage(barcodeCanvas, -barcodeCanvas.width/2, -barcodeCanvas.height/2);
         ctx.restore();
     }
-}
+
+    // ✅ INDICACIONES - CORREGIDO: Respetando Ancho Máximo (%)
+    if (document.getElementById('showInstructions').checked && indicacionesJSON) {
+        const instFontSize = parseFloat(document.getElementById('instructionsFontSize').value) || 10;
+        const instColor = document.getElementById('instructionsColor').value;
+        const instRotation = (parseFloat(document.getElementById('instructionsRotation').value) || 0) * Math.PI / 180;
+        const instPosX = (parseFloat(document.getElementById('instructionsPosX').value) / 100) * widthPx;
+        const instPosY = (parseFloat(document.getElementById('instructionsPosY').value) / 100) * heightPx;
+        const instMaxPercent = parseFloat(document.getElementById('instructionsWidth').value) || 30;
+        const instMaxWidthPx = (instMaxPercent / 100) * widthPx;
+        const selectedFont = document.getElementById('selectedFont').value || 'Arial';
+        
+        let rawText = '';
+        if (Array.isArray(indicacionesJSON)) {
+            const current = indicacionesJSON.current || indicacionesJSON[0];
+            if (current) {
+                if (current.indicaciones) rawText += current.indicaciones.join(' ');
+                if (current.advertencias) rawText += ' ADVERTENCIAS: ' + current.advertencias.join(' ');
+            }
+        } else {
+            if (indicacionesJSON.indicaciones) rawText += indicacionesJSON.indicaciones.join(' ');
+            if (indicacionesJSON.advertencias) rawText += ' ADVERTENCIAS: ' + indicacionesJSON.advertencias.join(' ');
+        }
+        
+        if (rawText) {
+            ctx.save();
+            ctx.font = `${instFontSize}px ${selectedFont}`;
+            const lineHeight = instFontSize * 1.2;
+            const padding = 10;
+            
+            // Generar líneas respetando el ancho máximo
+            const wrappedLines = wrapText(ctx, rawText, 0, 0, instMaxWidthPx - (padding * 2), lineHeight);
+            const totalHeight = wrappedLines.length * lineHeight;
+            
+            // Calcular el ancho real más largo de las líneas generadas
+            let actualMaxWidth = 0;
+            wrappedLines.forEach(l => {
+                const m = ctx.measureText(l).width;
+                if (m > actualMaxWidth) actualMaxWidth = m;
+            });
+
+            ctx.translate(instPosX, instPosY);
+            ctx.rotate(instRotation);
+            
+            // Dibujar fondo
+            ctx.fillStyle = 'white';
+            ctx.fillRect(-actualMaxWidth/2 - padding, -totalHeight/2 - padding, actualMaxWidth + padding*2, totalHeight + padding*2);
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(-actualMaxWidth/2 - padding, -totalHeight/2 - padding, actualMaxWidth + padding*2, totalHeight + padding*2);
+            
+            // Dibujar texto
+            ctx.fillStyle = instColor;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            wrappedLines.forEach((line, i) => {
+                ctx.fillText(line, -actualMaxWidth/2, -totalHeight/2 + (i * lineHeight));
+            });
+            
+            ctx.restore();
+        }
+    }
     
     return canvas;
 }
@@ -2601,83 +2851,6 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
     ctx.lineTo(x, y + radius);
     ctx.quadraticCurveTo(x, y, x + radius, y);
     ctx.closePath();
-}
-
-// ✅ CORREGIDO: Función para generar canvas de patrones - NIVEL SUPERIOR
-function generatePatternCanvas(patternType, color, opacity, width, height) {
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    
-    // Fondo transparente
-    ctx.clearRect(0, 0, width, height);
-    
-    // Configurar color y opacidad
-    ctx.fillStyle = color;
-    ctx.globalAlpha = opacity;
-    
-    // Generar patrón según tipo
-    switch(patternType) {
-        case 'dots':
-            const dotSize = 4;
-            const spacing = 12;
-            for (let y = 0; y < height; y += spacing) {
-                for (let x = 0; x < width; x += spacing) {
-                    ctx.beginPath();
-                    ctx.arc(x, y, dotSize, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-            break;
-            
-        case 'lines':
-            const lineWidth = 2;
-            const lineSpacing = 15;
-            for (let x = 0; x < width; x += lineSpacing) {
-                ctx.fillRect(x, 0, lineWidth, height);
-            }
-            break;
-            
-        case 'grid':
-            const gridSize = 10;
-            ctx.lineWidth = 1;
-            ctx.strokeStyle = color;
-            ctx.globalAlpha = opacity * 0.7;
-            
-            // Líneas verticales
-            for (let x = 0; x < width; x += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, height);
-                ctx.stroke();
-            }
-            
-            // Líneas horizontales
-            for (let y = 0; y < height; y += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(width, y);
-                ctx.stroke();
-            }
-            break;
-            
-        case 'diagonal':
-            const diagSize = 15;
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = color;
-            ctx.globalAlpha = opacity * 0.8;
-            
-            for (let x = -height; x < width + height; x += diagSize) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x + height, height);
-                ctx.stroke();
-            }
-            break;
-    }
-    
-    return canvas;
 }
 
 async function generateSheetCanvas() {
@@ -3285,7 +3458,19 @@ function printLabel() {
                     productImageHeight: document.getElementById('productImageHeight').value,
                     productImagePosX: document.getElementById('productImagePosX').value,
                     productImagePosY: document.getElementById('productImagePosY').value,
-                    productImageRotation: document.getElementById('productImageRotation').value,
+                               patternOpacity: document.getElementById('patternOpacity').value,
+                    
+                    // Código de Barras
+                    showBarcode: document.getElementById('showBarcode').checked,
+                    barcodeType: document.getElementById('barcodeType').value,
+                    barcodeWidth: document.getElementById('barcodeWidth').value,
+                    barcodeHeight: document.getElementById('barcodeHeight').value,
+                    barcodePosX: document.getElementById('barcodePosX').value,
+                    barcodePosY: document.getElementById('barcodePosY').value,
+                    barcodeRotation: document.getElementById('barcodeRotation').value,
+                    barcodeTextSize: document.getElementById('barcodeTextSize').value,
+                    barcodeTextColor: document.getElementById('barcodeTextColor').value,
+                    barcodeBgColor: document.getElementById('barcodeBgColor').value,
                     
                     // Imágenes adicionales
                     img1Width: document.getElementById('img1Width').value,
@@ -3333,6 +3518,11 @@ function printLabel() {
                     text3PosX: document.getElementById('text3PosX').value,
                     text3PosY: document.getElementById('text3PosY').value,
                     text3Rotation: document.getElementById('text3Rotation').value,
+                    text3Font: document.getElementById('text3Font').value,
+                    
+                    nameFont: document.getElementById('nameFont').value,
+                    text1Font: document.getElementById('text1Font').value,
+                    text2Font: document.getElementById('text2Font').value,
                     
                     selectedFont: document.getElementById('selectedFont').value,
                     backgroundType: document.getElementById('backgroundType').value,
@@ -3494,10 +3684,10 @@ function calculateProduction() {
         nameDiv.textContent = labelData.name;
         
         // ✅ ID del producto
-        // ✅ AHORA:
-        const previewId = (labelData.product && labelData.product.id) || labelData.productId || 'N/A';
-        idDiv.textContent = `ID: ${previewId}`;
-        //idDiv.textContent = `ID: ${labelData.productId || 'N/A'}`;
+        const idDiv = document.createElement('div');
+        idDiv.style.fontSize = '11px';
+        idDiv.style.color = '#666';
+        idDiv.textContent = `ID: ${labelData.productId || 'N/A'}`;
         
         // ✅ Categoría
         const categoryDiv = document.createElement('div');
@@ -3555,8 +3745,10 @@ function closePreviewModal() {
     }, 300);
 }
 
+// CORREGIDO: Función para vista previa grande - ¡FUNCIONA CORRECTAMENTE!
 function renderLargePreview() {
     if (currentPreviewIndex < 0 || currentPreviewIndex >= previewLabels.length) return;
+    
     const labelData = previewLabels[currentPreviewIndex];
     const labelDiv = document.createElement('div');
     
@@ -3592,6 +3784,7 @@ function renderLargePreview() {
     labelDiv.style.borderColor = document.getElementById('borderColor').value;
     labelDiv.style.borderWidth = '4px';
     labelDiv.style.fontFamily = selectedFont;
+    
     if (shape === 'rounded') {
         labelDiv.style.borderRadius = '20px';
     } else if (shape === 'circle') {
@@ -3599,6 +3792,7 @@ function renderLargePreview() {
     } else {
         labelDiv.style.borderRadius = '0';
     }
+    
     if (mirrorEffect) {
         labelDiv.style.transform = 'scaleX(-1)';
     }
@@ -3614,6 +3808,22 @@ function renderLargePreview() {
             labelDiv.style.backgroundPosition = 'center';
             labelDiv.style.opacity = document.getElementById('backgroundOpacity').value;
         }
+    } else if (backgroundType === 'pattern') {
+        const pType = document.getElementById('patternType').value;
+        const pColor = document.getElementById('patternColor').value;
+        const pOpacity = document.getElementById('patternOpacity').value;
+        
+        if (pType === 'dots') {
+            labelDiv.style.backgroundImage = `radial-gradient(${pColor} 2px, transparent 2px)`;
+            labelDiv.style.backgroundSize = '20px 20px';
+        } else if (pType === 'lines') {
+            labelDiv.style.backgroundImage = `linear-gradient(45deg, ${pColor} 25%, transparent 25%, transparent 50%, ${pColor} 50%, ${pColor} 75%, transparent 75%, transparent)`;
+            labelDiv.style.backgroundSize = '20px 20px';
+        } else if (pType === 'grid') {
+            labelDiv.style.backgroundImage = `linear-gradient(${pColor} 1px, transparent 1px), linear-gradient(90deg, ${pColor} 1px, transparent 1px)`;
+            labelDiv.style.backgroundSize = '20px 20px';
+        }
+        labelDiv.style.opacity = pOpacity;
     }
     
     let html = '<div class="label-content" style="position: relative; width: 100%; height: 100%;">';
@@ -3625,17 +3835,18 @@ function renderLargePreview() {
         const imgPosX = document.getElementById('productImagePosX').value;
         const imgPosY = document.getElementById('productImagePosY').value;
         const imgRotation = document.getElementById('productImageRotation').value;
+        
         html += `
-            <img src="${labelData.product.imagen.trim()}"
-                class="product-image"
-                style="position: absolute;
-                    width: ${imgWidth}px;
-                    height: ${imgHeight}px;
-                    left: ${imgPosX}%;
-                    top: ${imgPosY}%;
-                    transform: translate(-50%, -50%) rotate(${imgRotation}deg);
-                    object-fit: contain;"
-                onerror="this.style.display='none'">
+        <img src="${labelData.product.imagen.trim()}"
+            class="product-image"
+            style="position: absolute;
+                width: ${imgWidth}px;
+                height: ${imgHeight}px;
+                left: ${imgPosX}%;
+                top: ${imgPosY}%;
+                transform: translate(-50%, -50%) rotate(${imgRotation}deg);
+                object-fit: contain;"
+            onerror="this.style.display='none'">
         `;
     }
     
@@ -3647,48 +3858,49 @@ function renderLargePreview() {
             const imgPosX = document.getElementById(`img${i}PosX`).value;
             const imgPosY = document.getElementById(`img${i}PosY`).value;
             const imgRotation = document.getElementById(`img${i}Rotation`).value;
+            
             html += `
-                <img src="${imgSrc}"
-                    style="position: absolute;
-                        width: ${imgWidth}px;
-                        height: ${imgWidth}px;
-                        left: ${imgPosX}%;
-                        top: ${imgPosY}%;
-                        transform: translate(-50%, -50%) rotate(${imgRotation}deg);
-                        object-fit: contain;">
+            <img src="${imgSrc}"
+                style="position: absolute;
+                    width: ${imgWidth}px;
+                    left: ${imgPosX}%;
+                    top: ${imgPosY}%;
+                    transform: translate(-50%, -50%) rotate(${imgRotation}deg);
+                    object-fit: contain;"
+                onerror="this.style.display='none'">
             `;
         }
     }
     
     // ✅ Nombre del producto
     html += `
-        <div class="label-name"
-            style="position: absolute;
-                left: calc(${fontPosX}% - 50%);
-                top: calc(${fontPosY}% - 50%);
-                transform: translate(-50%, -50%) rotate(${fontRotation}deg);
-                font-size: ${fontSize}px;
-                color: ${document.getElementById('textColor').value};
-                text-align: center;
-                width: 90%;
-                font-weight: bold;">
-            ${labelData.name}
-        </div>
+    <div class="label-name"
+        style="position: absolute;
+            left: calc(${fontPosX}% - 50%);
+            top: calc(${fontPosY}% - 50%);
+            transform: translate(-50%, -50%) rotate(${fontRotation}deg);
+            font-size: ${fontSize}px;
+            color: ${document.getElementById('textColor').value};
+            text-align: center;
+            width: 90%;
+            font-weight: bold;">
+        ${labelData.name}
+    </div>
     `;
     
     // ✅ Precio
     html += `
-        <div class="label-price"
-            style="position: absolute;
-                left: 50%;
-                top: 65%;
-                transform: translate(-50%, -50%);
-                text-align: center;
-                width: 90%;
-                font-weight: bold;
-                color: ${document.getElementById('borderColor').value};">
-            ${priceFormat}
-        </div>
+    <div class="label-price"
+        style="position: absolute;
+            left: 50%;
+            top: 65%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 90%;
+            font-weight: bold;
+            color: ${document.getElementById('borderColor').value};">
+        ${priceFormat}
+    </div>
     `;
     
     // ✅ Indicaciones
@@ -3699,6 +3911,7 @@ function renderLargePreview() {
         const instPosX = document.getElementById('instructionsPosX').value;
         const instPosY = document.getElementById('instructionsPosY').value;
         const instWidth = document.getElementById('instructionsWidth').value;
+        
         const current = indicacionesJSON.current;
         let indicacionesText = '';
         
@@ -3710,23 +3923,24 @@ function renderLargePreview() {
             indicacionesText += '<strong>Advertencias:</strong><br>';
             indicacionesText += current.advertencias.join('<br>');
         }
+        
         if (indicacionesText) {
             html += `
-                <div style="position: absolute;
-                    left: ${instPosX}%;
-                    top: ${instPosY}%;
-                    transform: translate(-50%, -50%) rotate(${instRotation}deg);
-                    width: ${instWidth}%;
-                    font-size: ${instFontSize}px;
-                    color: ${instColor};
-                    text-align: left;
-                    line-height: 1.4;
-                    background-color: white;
-                    padding: 8px;
-                    border-radius: 4px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    ${indicacionesText}
-                </div>
+            <div style="position: absolute;
+                left: ${instPosX}%;
+                top: ${instPosY}%;
+                transform: translate(-50%, -50%) rotate(${instRotation}deg);
+                width: ${instWidth}%;
+                font-size: ${instFontSize}px;
+                color: ${instColor};
+                text-align: left;
+                line-height: 1.4;
+                background-color: white;
+                padding: 8px;
+                border-radius: 4px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                ${indicacionesText}
+            </div>
             `;
         }
     }
@@ -3741,21 +3955,56 @@ function renderLargePreview() {
             const textPosY = document.getElementById(`text${i}PosY`).value;
             const textRotation = document.getElementById(`text${i}Rotation`).value;
             const textFont = document.getElementById(`text${i}Font`).value;
+            
             html += `
-                <div style="position: absolute;
-                    left: ${textPosX}%;
-                    top: ${textPosY}%;
-                    transform: translate(-50%, -50%) rotate(${textRotation}deg);
-                    font-size: ${textFontSize}px;
-                    font-family: ${textFont};
-                    color: ${textColor};
-                    text-align: center;
-                    width: 90%;
-                    font-weight: ${i === 1 ? 'bold' : 'normal'};">
-                    ${text}
-                </div>
+            <div style="position: absolute;
+                left: ${textPosX}%;
+                top: ${textPosY}%;
+                transform: translate(-50%, -50%) rotate(${textRotation}deg);
+                font-size: ${textFontSize}px;
+                font-family: ${textFont};
+                color: ${textColor};
+                text-align: center;
+                width: 90%;
+                font-weight: ${i === 1 ? 'bold' : 'normal'};">
+                ${text}
+            </div>
             `;
         }
+    }
+    
+    // ✅ Código de Barras
+    if (document.getElementById('showBarcode').checked && labelData.product && labelData.product.id) {
+        const bType = document.getElementById('barcodeType').value;
+        const bWidth = document.getElementById('barcodeWidth').value;
+        const bHeight = document.getElementById('barcodeHeight').value;
+        const bPosX = document.getElementById('barcodePosX').value;
+        const bPosY = document.getElementById('barcodePosY').value;
+        const bRotation = document.getElementById('barcodeRotation').value;
+        const bTextSize = document.getElementById('barcodeTextSize').value;
+        const bTextColor = document.getElementById('barcodeTextColor').value;
+        const bBgColor = document.getElementById('barcodeBgColor').value;
+        
+        const barcodeCanvas = generateBarcodeCanvas(labelData.product.id.toString(), {
+            type: bType,
+            width: parseInt(bWidth),
+            height: parseInt(bHeight),
+            text: parseInt(bTextSize),
+            textColor: bTextColor,
+            bgColor: bBgColor
+        });
+        
+        html += `
+        <div style="position: absolute;
+            left: ${bPosX}%;
+            top: ${bPosY}%;
+            transform: translate(-50%, -50%) rotate(${bRotation}deg);
+            background: ${bBgColor};
+            padding: 2px;
+            border-radius: 4px;">
+            <img src="${barcodeCanvas.toDataURL()}" style="max-width: 100%; height: auto; display: block;">
+        </div>
+        `;
     }
     
     html += '</div>';
@@ -3766,14 +4015,10 @@ function renderLargePreview() {
     container.innerHTML = '';
     container.appendChild(labelDiv);
     
-    // ✅ Actualizar información - ¡CORREGIDO PARA MOSTRAR ID ORIGINAL!
+    // ✅ Actualizar información
     document.getElementById('modalLabelIndex').textContent = `${currentPreviewIndex + 1} de ${previewLabels.length}`;
     document.getElementById('modalProductName').textContent = labelData.name;
-    
-    // ✅ ¡¡¡CORRECCIÓN CLAVE AQUÍ!!!
-    const originalId = (labelData.product && labelData.product.id) || labelData.productId || 'N/A';
-    document.getElementById('modalProductId').textContent = `ID: ${originalId}`;
-    
+    document.getElementById('modalProductId').textContent = labelData.productId || 'N/A';
     document.getElementById('modalProductCategory').textContent = (labelData.product && labelData.product.categoria) || 'Sin categoría';
     document.getElementById('modalLabelSize').textContent = `${labelWidth} x ${labelHeight} cm (${labelWidthPx} x ${labelHeightPx} px)`;
 }
@@ -3889,7 +4134,6 @@ function loadInstructions() {
     if (source !== 'default' && source !== 'custom') {
         try {
             const response = fetch('https://wil1979.github.io/esentia-factura/indicaciones.json');
-            //const response = fetch('indicaciones.json');
             response.then(res => res.json()).then(data => {
                 if (Array.isArray(data)) {
                     indicacionesJSON = data;
@@ -3923,8 +4167,7 @@ function loadInstructions() {
     // ✅ Si es "default" o "custom"
     if (source === 'default') {
         try {
-            const response = fetch('https://wil1979.github.io/esentia-factura/indicaciones.json');
-            //const response = fetch('indicaciones.json');
+            const response = fetch('https://wil1971979.github.io/esentia-factura/indicaciones.json');
             response.then(res => res.json()).then(data => {
                 if (Array.isArray(data)) {
                     indicacionesJSON = data;
@@ -3989,32 +4232,23 @@ function cargarTipoInstruccion() {
     }
 }
 
-// ✅ Vista previa interactiva de patrones
-function previewPattern() {
-    const patternType = document.getElementById('patternType').value;
-    const patternColor = document.getElementById('patternColor').value;
-    const patternOpacity = parseFloat(document.getElementById('patternOpacity').value) || 0.2;
-    
-    // Actualizar muestras visuales
-    document.querySelectorAll('.pattern-sample').forEach((sample, index) => {
-        const types = ['dots', 'lines', 'grid', 'diagonal'];
-        if (types[index] === patternType) {
-            sample.classList.add('active');
-            // Generar miniatura del patrón seleccionado
-            const miniCanvas = generatePatternCanvas(patternType, patternColor, patternOpacity, 60, 60);
-            sample.style.backgroundImage = `url(${miniCanvas.toDataURL()})`;
-        } else {
-            sample.classList.remove('active');
-        }
-    });
-    
-    previewChanges(); // Actualizar vista previa de etiquetas
+/* SUGERENCIA DE ELIMINACIÓN: Esta función seleccionarInstruccion() ya estaba comentada en el original.
+function seleccionarInstruccion() {
+    const tipoSeleccionado = document.getElementById("tipoInstruccion").value;
+
+    const encontrada = indicacionesJSON.find(item =>
+        item.tipo.toLowerCase() === tipoSeleccionado.toLowerCase()
+    );
+
+    if (encontrada) {
+        indicacionesJSON.current = encontrada;
+
+        mostrarPreviewIndicaciones(); // preview lateral
+        previewChanges(); // regenerar etiqueta real
+    }
 }
 
-function selectPatternSample(patternType) {
-    document.getElementById('patternType').value = patternType;
-    previewPattern();
-}
+*/
 
     </script>
 <!-- Modal de Vista Previa Grande -->
