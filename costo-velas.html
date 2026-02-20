@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Costos para Velas</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f6f8fa;
+            color: #24292e;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            border-bottom: 1px solid #e1e4e8;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5da;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #2ea44f;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #2c974b;
+        }
+        .results {
+            margin-top: 30px;
+            background-color: #f1f8ff;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid #c8e1ff;
+        }
+        .results h2 {
+            border: none;
+            margin-top: 0;
+        }
+        .results p {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .results span {
+            font-weight: bold;
+            color: #0366d6;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Calculadora de Costos y Precios para Velas</h1>
+
+    <h2>1. Costos de Materiales</h2>
+    <div class="form-group">
+        <label for="ceraCosto">Costo del paquete de cera (ej. 1kg)</label>
+        <input type="number" id="ceraCosto" placeholder="Ej: 15">
+    </div>
+    <div class="form-group">
+        <label for="ceraGramos">Gramos de cera por vela</label>
+        <input type="number" id="ceraGramos" placeholder="Ej: 200">
+    </div>
+    <div class="form-group">
+        <label for="fraganciaCosto">Costo del frasco de esencia (ej. 100ml)</label>
+        <input type="number" id="fraganciaCosto" placeholder="Ej: 10">
+    </div>
+    <div class="form-group">
+        <label for="fraganciaMl">Militros (ml) de esencia por vela</label>
+        <input type="number" id="fraganciaMl" placeholder="Ej: 15">
+    </div>
+    <div class="form-group">
+        <label for="envaseCosto">Costo por envase/recipiente</label>
+        <input type="number" id="envaseCosto" placeholder="Ej: 2.50">
+    </div>
+    <div class="form-group">
+        <label for="pabiloCosto">Costo por pabilo (mecha)</label>
+        <input type="number" id="pabiloCosto" placeholder="Ej: 0.20">
+    </div>
+     <div class="form-group">
+        <label for="empaqueCosto">Costo total del empaque (caja, etiqueta, etc.)</label>
+        <input type="number" id="empaqueCosto" placeholder="Ej: 1.50">
+    </div>
+
+    <h2>2. Costos de Producción</h2>
+    <div class="form-group">
+        <label for="tarifaHora">Tu tarifa por hora de trabajo</label>
+        <input type="number" id="tarifaHora" placeholder="Ej: 15">
+    </div>
+    <div class="form-group">
+        <label for="loteCantidad">¿Cuántas velas haces en un lote?</label>
+        <input type="number" id="loteCantidad" placeholder="Ej: 10">
+    </div>
+    <div class="form-group">
+        <label for="loteHoras">¿Cuántas horas te toma producir ese lote?</label>
+        <input type="number" id="loteHoras" placeholder="Ej: 2">
+    </div>
+
+    <h2>3. Margen de Ganancia y Precio Final</h2>
+    <div class="form-group">
+        <label for="margenGanancia">Margen de Ganancia Deseado (%)</label>
+        <input type="number" id="margenGanancia" value="100" placeholder="Ej: 100">
+    </div>
+
+    <button onclick="calcularCostos()">Calcular Precio</button>
+
+    <div class="results" id="resultados" style="display:none;">
+        <h2>Resultados por Vela</h2>
+        <p>Costo de Materiales: <span id="costoMateriales"></span></p>
+        <p>Costo de Mano de Obra: <span id="costoManoObra"></span></p>
+        <p><strong>Costo Total de Producción (por vela):</strong> <span id="costoTotal"></span></p>
+        <hr>
+        <p>Precio Sugerido (Venta al Público): <span id="precioVenta"></span></p>
+    </div>
+</div>
+
+<script>
+    function v(id) {
+        const value = document.getElementById(id).value;
+        return parseFloat(value) || 0;
+    }
+
+    function calcularCostos() {
+        // 1. Costos de Materiales
+        const costoCeraPorGramo = v('ceraCosto') / 1000; // Asumimos que el costo es por 1kg
+        const costoCeraVela = costoCeraPorGramo * v('ceraGramos');
+
+        const costoFraganciaPorMl = v('fraganciaCosto') / 100; // Asumimos que el costo es por 100ml
+        const costoFraganciaVela = costoFraganciaPorMl * v('fraganciaMl');
+
+        const costoMaterialesUnitario = costoCeraVela + costoFraganciaVela + v('envaseCosto') + v('pabiloCosto') + v('empaqueCosto');
+
+        // 2. Costos de Producción
+        const costoTotalManoObraLote = v('tarifaHora') * v('loteHoras');
+        const costoManoObraUnitario = costoTotalManoObraLote / v('loteCantidad');
+
+        // 3. Costo Total
+        const costoTotalUnitario = costoMaterialesUnitario + costoManoObraUnitario;
+
+        // 4. Precio de Venta
+        const margen = v('margenGanancia') / 100;
+        const precioVenta = costoTotalUnitario * (1 + margen);
+
+        // Mostrar resultados
+        document.getElementById('resultados').style.display = 'block';
+        document.getElementById('costoMateriales').innerText = '$' + costoMaterialesUnitario.toFixed(2);
+        document.getElementById('costoManoObra').innerText = '$' + costoManoObraUnitario.toFixed(2);
+        document.getElementById('costoTotal').innerText = '$' + costoTotalUnitario.toFixed(2);
+        document.getElementById('precioVenta').innerText = '$' + precioVenta.toFixed(2);
+    }
+</script>
+
+</body>
+</html>
