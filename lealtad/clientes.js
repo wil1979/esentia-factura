@@ -1693,31 +1693,46 @@ function recalcularComprasDesdeAbonos(compras, abonos) {
 // ➕ AGREGAR AL CARRITO
 // ===============================
 window.agregarAlCarritoModal = function () {
-  if (!window.productoSeleccionado) {
-    alert("Seleccione un producto");
-    return;
-  }
-
-  const selectVar = document.getElementById("select-variante");
-  const variante = selectVar?.value ? JSON.parse(selectVar.value) : null;
-
-  const cantidad = Math.max(
-    1,
-    Number(document.getElementById("input-cantidad")?.value || 1)
-  );
-
-  window.carrito.push({
-    id: window.productoSeleccionado.id,            // ✅ ID REAL
-    nombre: window.productoSeleccionado.nombre,
-    imagen: window.productoSeleccionado.imagen,    // ✅ IMAGEN REAL
-    variante: variante?.nombre || "Hogar / Oficina 30 ml",
-    precio: variante?.precio || 3000,
-    cantidad
-  });
-
-  guardarCarritoLocal();
-  renderCarritoModal();
-  actualizarResumenVenta();
+    if (!window.productoSeleccionado) {
+        alert("Seleccione un producto");
+        return;
+    }
+    
+    const prod = window.productoSeleccionado;
+    const selectVar = document.getElementById("select-variante");
+    const precioInput = document.getElementById("precio-editable");
+    
+    // 🔑 Obtener precio: de variante O del input editable
+    let precioFinal = 0;
+    let varianteNombre = "Única";
+    
+    if (prod.variantes && prod.variantes.length > 0 && selectVar?.value) {
+        // Tiene variantes - usar precio de la variante seleccionada
+        const variante = JSON.parse(selectVar.value);
+        precioFinal = variante.precio;
+        varianteNombre = variante.nombre;
+    } else {
+        // No tiene variantes - usar precio del input editable o del producto
+        precioFinal = Number(precioInput?.value || prod.precio || 0);
+    }
+    
+    const cantidad = Math.max(
+        1,
+        Number(document.getElementById("input-cantidad")?.value || 1)
+    );
+    
+    window.carrito.push({
+        id: prod.id,
+        nombre: prod.nombre,
+        imagen: prod.imagen,
+        variante: varianteNombre,
+        precio: precioFinal,  // ✅ Ahora usa el precio correcto
+        cantidad
+    });
+    
+    guardarCarritoLocal();
+    renderCarritoModal();
+    actualizarResumenVenta();
 };
 
 
@@ -2430,54 +2445,77 @@ async function cargarProductosDisponibles() {
 
 
 function cargarVariantesProducto(prod) {
-  const selectVar = document.getElementById("select-variante");
-  if (!selectVar) return;
-
-  selectVar.innerHTML = "";
-
-  const nombres = ["Auto", "Hogar / Oficina 30 ml", "Hogar / Oficina 120 ml"];
-
-  prod.variantes.forEach((v, i) => {
-    const opt = document.createElement("option");
-    opt.value = JSON.stringify({
-      nombre: nombres[i] || "Presentación",
-      precio: v.precio
+    const selectVar = document.getElementById("select-variante");
+    if (!selectVar) return;
+    
+    // ✅ Si no tiene variantes, ocultar el selector
+    if (!prod.variantes || prod.variantes.length === 0) {
+        selectVar.style.display = "none";
+        selectVar.innerHTML = "";
+        return;
+    }
+    
+    selectVar.style.display = "block";
+    selectVar.innerHTML = "";
+    
+    const nombres = ["Auto", "Hogar / Oficina 30 ml", "Hogar / Oficina 120 ml"];
+    prod.variantes.forEach((v, i) => {
+        const opt = document.createElement("option");
+        opt.value = JSON.stringify({
+            nombre: nombres[i] || "Presentación",
+            precio: v.precio
+        });
+        opt.textContent = `${nombres[i] || "Presentación"} — ₡${v.precio.toLocaleString("es-CR")}`;
+        if (v.precio === 3000) opt.selected = true;
+        selectVar.appendChild(opt);
     });
-    opt.textContent = `${nombres[i] || "Presentación"} — ₡${v.precio.toLocaleString("es-CR")}`;
-
-    // ⭐ por defecto seleccionar ₡3000
-    if (v.precio === 3000) opt.selected = true;
-
-    selectVar.appendChild(opt);
-  });
 }
-
 
 // ===============================
 // 👁️ MOSTRAR VISTA PREVIA / VARIANTES
 // ===============================
 function mostrarVistaPrevia() {
-  const select = document.getElementById("select-producto");
-  if (!select || window.productosFiltrados.length === 0) return;
-
-  const index = Number(select.value);
-  const prod = window.productosFiltrados[index]; // ← AHORA es el correcto
-  if (!prod) return;
-
-  window.productoSeleccionado = prod;
-
-  const previewDiv = document.getElementById("vista-previa-producto");
-  if (previewDiv) {
-    previewDiv.innerHTML = `
-      <strong>${prod.nombre}</strong><br>
-      ${prod.descripcion ? `<small>${prod.descripcion}</small><br>` : ""}
-      Precio: ₡${(prod.precio || (prod.variantes?.[0]?.precio || 0)).toLocaleString()}
-    `;
-  }
-
-  cargarVariantesProducto(prod);
+    const select = document.getElementById("select-producto");
+    if (!select || window.productosFiltrados.length === 0) return;
+    
+    const index = Number(select.value);
+    const prod = window.productosFiltrados[index];
+    if (!prod) return;
+    
+    window.productoSeleccionado = prod;
+    
+    // 🔑 Determinar precio base correcto
+    const precioBase = prod.precio ?? 
+                       prod.precioOferta ?? 
+                       prod.precioPublico ?? 
+                       prod.precioOriginal ?? 
+                       (prod.variantes?.[0]?.precio ?? 0);
+    
+    const previewDiv = document.getElementById("vista-previa-producto");
+    if (previewDiv) {
+        const tieneVariantes = prod.variantes && prod.variantes.length > 0;
+        
+        previewDiv.innerHTML = `
+            <strong>${prod.nombre}</strong><br>
+            ${prod.descripcion ? `<small>${prod.descripcion}</small><br>` : ""}
+            ${tieneVariantes 
+                ? `<span id="precio-vista-previa">Precio: ₡${precioBase.toLocaleString()}</span>`
+                : `
+                <div style="margin:8px 0;">
+                    <label>💰 Precio (₡):</label>
+                    <input type="number" id="precio-editable" 
+                           value="${precioBase}" 
+                           min="0" 
+                           step="100"
+                           style="width:120px; padding:4px; border:1px solid #ccc; border-radius:4px;">
+                </div>
+                `
+            }
+        `;
+    }
+    
+    cargarVariantesProducto(prod);
 }
-
 // ===============================
 // 🎛 Inicialización completa (DOM READY)
 // ===============================
