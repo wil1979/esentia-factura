@@ -331,20 +331,40 @@ function mmToPt(mm){
 /* -------------------------
   Cargar JSON de productos
 --------------------------*/
+/* -------------------------
+Cargar JSON de productos (ACTUALIZADO para categorías)
+--------------------------*/
 fetch(jsonUrl)
-  .then(r => r.json())
-  .then(data => {
-    productos = data.map(p => ({
-      ...p,
-      id: Number(p.id)
-    }));
+.then(r => r.json())
+.then(data => {
+    // Detectar si es estructura por categorías o array plano
+    if (Array.isArray(data)) {
+        // Estructura antigua (array plano)
+        productos = data.map(p => ({
+            ...p,
+            id: Number(p.id)
+        }));
+    } else {
+        // Estructura nueva por categorías/tipos
+        productos = [];
+        Object.keys(data).forEach(categoria => {
+            const items = Array.isArray(data[categoria]) ? data[categoria] : [];
+            items.forEach(p => {
+                productos.push({
+                    ...p,
+                    id: Number(p.id),
+                    categoria: categoria  // Guardar la categoría para referencia
+                });
+            });
+        });
+    }
     llenarListaProductos();
-    status.innerText = "Productos cargados.";
-  })
-  .catch(e => {
+    status.innerText = `Productos cargados: ${productos.length}`;
+})
+.catch(e => {
     console.error("No se cargó JSON", e);
     status.innerText = "Error cargando productos_esentia.json";
-  });
+});
 
 function llenarListaProductos(){
   const select = document.getElementById('productSelect');
