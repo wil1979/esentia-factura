@@ -24,6 +24,12 @@
       </div>
       <button id="btnLogin" onclick="abrirLoginRegistro()" class="btn-login">Iniciar sesión</button>
     </div>
+    <!-- En el header-right de catalogo.html -->
+<button id="btnAdminVelas" onclick="window.location.href='admin-velas.html'" 
+        style="display:none; background:#6c4ba3; color:white; border:none; 
+               padding:10px 16px; border-radius:10px; cursor:pointer;">
+  🕯️ Admin Velas
+</button>
   </header>
 
   <main class="contenedor">
@@ -550,6 +556,8 @@ async function buscarCedulaHacienda(cedula) {
     }
 
     function verificarSesion() {
+
+     
       const sesion = localStorage.getItem("sesionEsentia");
       if (sesion) {
         clienteAutenticado = JSON.parse(sesion);
@@ -576,6 +584,12 @@ async function buscarCedulaHacienda(cedula) {
         document.getElementById("modalLoginRegistro").style.display = "flex";
         document.getElementById("btnLogin").style.display = "inline-block";
       }
+
+       /* En verificarSesion() de catalogo.html
+        const btnAdmin = document.getElementById("btnAdminVelas");
+        if (btnAdmin) {
+        btnAdmin.style.display = esAdmin ? "inline-block" : "none";
+        }*/
 
       activarControlesAdmin(); // ✅ CLAVE
       renderTarjetaLealtad(window.clienteSeleccionado);
@@ -1067,44 +1081,74 @@ if (p.variantes && p.variantes.length > 0) {
       document.getElementById("modalProducto").style.display = "none";
      }
 
-     function agregarAlCarritoDesdeModal() {
-       if (!window.productoSeleccionado) {
-    alert("Seleccione un producto");
-    return;
-  }
+     function guardarCarritoLocal() {
+    localStorage.setItem("carrito", JSON.stringify(carrito));
+    document.getElementById("contadorCarrito").textContent = carrito.length;
+}
 
-  let variante = {
-    nombre: "Hogar / Oficina 30 ml",
-    precio: 3000
-  };
+function renderCarritoModal() {
+    renderCarrito(); // Reutiliza la función existente
+}
 
-  const selectVar = document.getElementById("select-variante");
-  if (selectVar && selectVar.value) {
-    try {
-      variante = JSON.parse(selectVar.value);
-    } catch {
-      // fallback seguro
+function actualizarResumenVenta() {
+    // Opcional: actualizar total en el modal
+    const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+    const totalEl = document.getElementById("totalModal");
+    if (totalEl) {
+        totalEl.textContent = `Total: ₡${total.toLocaleString()}`;
     }
-  }
+}
 
-  const cantidad = Math.max(
-    1,
-    Number(document.getElementById("input-cantidad")?.value || 1)
-  );
+     function agregarAlCarritoDesdeModal() {
+    if (!productoSeleccionado) {
+        mostrarToast("Seleccione un producto primero", "#E74C3C");
+        return;
+    }
 
-  window.carrito.push({
-    id: window.productoSeleccionado.id,
-    nombre: window.productoSeleccionado.nombre,
-    imagen: window.productoSeleccionado.imagen,
-    variante: variante.nombre,
-    precio: variante.precio,
-    cantidad
-  });
+    // ✅ CORRECCIÓN: Usar el ID correcto "varianteSeleccionada"
+    const selectVar = document.getElementById("varianteSeleccionada");
+    
+    let variante = {
+        nombre: "Hogar / Oficina 30 ml",
+        precio: 3000
+    };
 
-  guardarCarritoLocal();
-  renderCarritoModal();
-  actualizarResumenVenta();
-};
+    // Si hay selector de variantes y tiene valor seleccionado
+    if (selectVar && selectVar.value) {
+        try {
+            variante = JSON.parse(selectVar.value);
+        } catch (e) {
+            console.error("Error parseando variante:", e);
+        }
+    }
+
+    // Validar que se haya seleccionado una variante si el producto tiene variantes
+    if (productoSeleccionado.variantes && productoSeleccionado.variantes.length > 0) {
+        if (!selectVar || !selectVar.value) {
+            mostrarToast("⚠️ Seleccione una presentación", "#E74C3C");
+            selectVar?.focus();
+            return;
+        }
+    }
+
+    const cantidad = Math.max(1, Number(document.getElementById("input-cantidad")?.value || 1));
+
+    carrito.push({
+        id: productoSeleccionado.id || Date.now(),
+        nombre: productoSeleccionado.nombre,
+        imagen: productoSeleccionado.imagen,
+        variante: variante.nombre,
+        precio: variante.precio,
+        cantidad: cantidad
+    });
+
+    guardarCarritoLocal();
+    renderCarritoModal();
+    actualizarResumenVenta();
+    
+    cerrarModalProducto();
+    mostrarToast("✅ Producto agregado al carrito", "#4caf50");
+}
 
      function abrirModalCarrito() {
       document.getElementById("modalCarrito").style.display = "flex";
