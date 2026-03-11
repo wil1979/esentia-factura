@@ -2,209 +2,193 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Catálogo Esentia</title>
-  <link rel="icon" href="images/logo.png" sizes="192x192" />
+  <title>Esentia | Esencias Premium</title>
+  <link rel="icon" href="https://wil1979.github.io/esentia-factura/images/logo.png" sizes="192x192" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="catalogo.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="esentia.css">
 </head>
 
 <body>
+  <!-- Header -->
   <header class="header">
-    <div class="header-left">
-      <img src="https://wil1979.github.io/esentia-factura/images/logo.png" alt="Esentia" class="logo">
-      <div>
-        <h1>Catálogo Esentia</h1>
-        <p>Fragancias que enamoran</p>
+    <div class="header-content">
+      <div class="header-left">
+        <img src="https://wil1979.github.io/esentia-factura/images/logo.png" alt="Esentia" class="logo">
+        <div class="brand-text">
+          <h1>Esentia</h1>
+          <p>Esencias que transforman</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div id="panelUsuario" class="user-panel" style="display:none;">
+          <span id="nombreUsuario"></span>
+          <button onclick="abrirHistorial()" class="btn-historial" title="Ver historial">📋 Historial</button>
+          <button onclick="cerrarSesion()" class="btn-cerrar-sesion">Salir</button>
+        </div>
+        <button id="btnLogin" onclick="abrirLoginRegistro()" class="btn-login">Iniciar sesión</button>
+        <button id="btnAdminVelas" onclick="window.location.href='admin-velas.html'" style="display:none;">🕯️ Admin</button>
       </div>
     </div>
-    <div class="header-right">
-      <div id="panelUsuario" style="display:none; align-items:center; gap:10px;">
-        <span id="nombreUsuario"></span>
-        <button onclick="cerrarSesion()" class="btn-cerrar-sesion">Salir</button>
-      </div>
-      <button id="btnLogin" onclick="abrirLoginRegistro()" class="btn-login">Iniciar sesión</button>
-    </div>
-    <!-- En el header-right de catalogo.html -->
-<button id="btnAdminVelas" onclick="window.location.href='admin-velas.html'" 
-        style="display:none; background:#6c4ba3; color:white; border:none; 
-               padding:10px 16px; border-radius:10px; cursor:pointer;">
-  🕯️ Admin Velas
-</button>
   </header>
 
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <h2>Descubre Nuestras Esencias</h2>
+      <p>Aromas premium seleccionados para crear ambientes únicos y memorables</p>
+    </div>
+  </section>
+
+  <!-- Main Content -->
   <main class="contenedor">
-    <div id="loader" style="display:flex; justify-content:center; align-items:center; height:300px; color:#6c4ba3; font-size:1.5rem; font-weight:bold;">
-      <div style="text-align:center;">
-        <div style="font-size:3rem; margin-bottom:10px;">⏳</div>
-        <div>Estamos Actualizando el Inventario...</div>
-      </div>
+    <div id="loader">
+      <div class="loader-spinner"></div>
+      <div>Cargando esencias...</div>
     </div>
     <div id="productos-hogar"></div>
 
-    <div style="text-align:center; margin:2rem 0; padding:1.2rem; background:#f9f7ff; border-radius:12px; max-width:600px; margin-left:auto; margin-right:auto;">
-      <h3 style="margin-top:0; color:#6c4ba3;">¿No encuentras lo que buscas?</h3>
-      <button onclick="solicitarAroma()" style="display:block; width:100%; padding:10px; margin:8px 0; background:#6c4ba3; color:white; border:none; border-radius:8px; cursor:pointer;">
-        🌸 Solicitar un aroma especial
-      </button>
-      <button onclick="copiarEnlaceRecomendacion()" style="display:block; width:100%; padding:10px; margin:8px 0; background:#4caf50; color:white; border:none; border-radius:8px; cursor:pointer;">
-        🔗 Copiar enlace para recomendar
-      </button>
+    <div class="acciones-container">
+      <h3>¿Necesitas algo especial?</h3>
+      <button onclick="solicitarAroma()" class="btn-accion btn-primario">🌸 Solicitar aroma personalizado</button>
+      <button onclick="copiarEnlaceRecomendacion()" class="btn-accion btn-secundario">🔗 Compartir catálogo</button>
     </div>
   </main>
 
   <!-- Modal Producto -->
   <div id="modalProducto" class="modal-carrito">
     <div class="modal-contenido">
-      <span onclick="cerrarModalProducto()" style="position:absolute; top:10px; right:15px; cursor:pointer; font-size:22px;">&times;</span>
-      <h2 id="modalProductoNombre"></h2>
-      <img id="modalProductoImagen" src="" alt="Producto"
-           style="width:100%; max-width:280px; height:auto; object-fit:contain; border-radius:8px; margin:10px 0; background:#fff;">
-      <p id="modalProductoInfo"></p>
-      <p id="modalProductoUso"></p>
-      <p id="modalProductoPrecio" style="font-size:1.4rem; font-weight:bold;"></p>
+      <button onclick="cerrarModalProducto()" class="modal-cerrar">×</button>
+      <h2 class="modal-titulo" id="modalProductoNombre"></h2>
+      <img id="modalProductoImagen" src="" alt="Producto" class="producto-detalle-img">
+      <p class="producto-detalle-info" id="modalProductoInfo"></p>
+      <p class="producto-detalle-info" id="modalProductoUso"></p>
+      <div class="producto-detalle-precio" id="modalProductoPrecio"></div>
       <div id="selectorVariante"></div>
-      <button onclick="agregarAlCarritoDesdeModal()"
-              style="display:block; width:100%; padding:10px; margin-top:10px; background:#6c4ba3; color:white; border:none; border-radius:8px; cursor:pointer;">
-        🛒 Agregar al carrito
-      </button>
+      <button onclick="agregarAlCarritoDesdeModal()" class="btn-submit">🛒 Agregar al carrito</button>
     </div>
   </div>
 
   <!-- Modal Carrito -->
   <div id="modalCarrito" class="modal-carrito">
     <div class="modal-contenido">
-      <span onclick="cerrarModalCarrito()" style="position:absolute; top:10px; right:15px; cursor:pointer; font-size:22px;">&times;</span>
-      <h2>Tu carrito</h2>
-      <ul id="listaCarrito"></ul>
-      <p id="totalModal"></p>
-      <input type="text" id="codigoPremio" placeholder="Código de promoción o premio"
-             style="width:100%; padding:8px; margin:10px 0;" />
-      <button id="btnAplicarCodigo"
-              style="width:100%; padding:8px; background:#6c4ba3; color:white; border:none; border-radius:8px; cursor:pointer;">
-        🎁 Aplicar código
-      </button>
-      <button onclick="finalizarPedido()"
-              style="width:100%; padding:10px; margin-top:10px; background:#4caf50; color:white; border:none; border-radius:8px; cursor:pointer;">
-        ✅ Finalizar pedido por WhatsApp
-      </button>
+      <button onclick="cerrarModalCarrito()" class="modal-cerrar">×</button>
+      <h2 class="modal-titulo">Tu Carrito</h2>
+      <ul id="listaCarrito" class="lista-carrito"></ul>
+      <div class="carrito-total" id="totalModal">Total: ₡0</div>
+      <input type="text" id="codigoPremio" placeholder="Código de promoción" class="input-codigo">
+      <button onclick="aplicarCodigoPremio()" class="btn-submit" style="margin-bottom: 10px;">🎁 Aplicar código</button>
+      <button onclick="finalizarPedido()" class="btn-submit" style="background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);">✅ Finalizar por WhatsApp</button>
     </div>
   </div>
 
-  <!-- Modal Login / Registro (glass) -->
+  <!-- Modal Login -->
   <div id="modalLoginRegistro" class="modal-carrito">
     <div class="modal-contenido">
-      <h2>Bienvenido a Esentia</h2>
-      <div style="display:flex; gap:10px; margin-bottom:10px;">
-        <button class="btn-tab activo" data-tab="login">Iniciar sesión</button>
-        <button class="btn-tab" data-tab="registro">Registrarse</button>
+      <button onclick="cerrarModalLogin()" class="modal-cerrar">×</button>
+      <h2 class="modal-titulo">Bienvenido a Esentia</h2>
+      <div class="tabs-container">
+        <button class="btn-tab activo" onclick="cambiarTab('login')">Iniciar sesión</button>
+        <button class="btn-tab" onclick="cambiarTab('registro')">Registrarse</button>
       </div>
-
       <form id="formLogin">
-        <input type="text" id="loginCedulaTel" placeholder="Cédula o Teléfono" required
-               style="width:100%; padding:12px; margin:8px 0; border-radius:8px;">
-        <button type="submit" style="width:100%; padding:12px; margin-top:10px;">
-          Entrar
-        </button>
+        <div class="input-group">
+          <input type="text" id="loginCedulaTel" placeholder="Cédula o Teléfono" required>
+        </div>
+        <button type="submit" class="btn-submit">Entrar</button>
       </form>
-
       <form id="formRegistro" style="display:none;">
-  
-  
-  <div style="position:relative;">
-    <input type="text" id="regCedula" placeholder="Cédula (9 dígitos)" required
-           maxlength="9" inputmode="numeric" autocomplete="off"
-           style="width:100%; padding:12px 40px 12px 12px; margin:8px 0; border-radius:8px;">
-    <span id="cedulaStatus" style="position:absolute; right:12px; top:22px; font-size:1.2rem;"></span>
-  </div>
-
-  <input type="text" id="regTelefono" placeholder="Teléfono (ej: 88888888)" required
-         maxlength="8" inputmode="tel" autocomplete="tel"
-         style="width:100%; padding:12px; margin:8px 0; border-radius:8px;">
-
-         <input type="text" id="regNombre" placeholder="Nombre completo" readonly
-         style="width:100%; padding:12px; margin:8px 0; border-radius:8px; background:#f0f0f0;">
-  
-  <button type="submit" id="btnRegistrar" 
-          style="width:100%; padding:12px; margin-top:10px; background:#6c4ba3; color:white; border:none; border-radius:8px; cursor:pointer;"
-          disabled>
-    🔄 Verificando cédula...
-  </button>
-</form>
-
-      <div id="loginMensaje" style="margin-top:15px; min-height:20px; text-align:center; font-size:0.9rem;"></div>
+        <div class="input-group">
+          <input type="text" id="regCedula" placeholder="Cédula (9 dígitos)" maxlength="9" required>
+          <span id="cedulaStatus" class="input-status"></span>
+        </div>
+        <div class="input-group">
+          <input type="tel" id="regTelefono" placeholder="Teléfono (8 dígitos)" maxlength="8" required>
+        </div>
+        <div class="input-group">
+          <input type="text" id="regNombre" placeholder="Nombre completo" readonly style="background: rgba(108, 75, 163, 0.05);">
+        </div>
+        <button type="submit" id="btnRegistrar" class="btn-submit" disabled>Verificando cédula...</button>
+      </form>
+      <div id="loginMensaje" class="mensaje-error"></div>
     </div>
   </div>
 
-  <!-- Botón flotante del carrito -->
-  <button id="botonCarrito" onclick="abrirModalCarrito()" style="
-    position:fixed;
-    bottom:20px;
-    right:20px;
-    padding:12px 16px;
-    background:#6c4ba3;
-    color:white;
-    border:none;
-    border-radius:50%;
-    width:60px;
-    height:60px;
-    font-size:1.4rem;
-    box-shadow:0 4px 12px rgba(0,0,0,0.3);
-    z-index:999;
-  ">
-    🛒 <span id="contadorCarrito">0</span>
-  </button>
+  <!-- Modal Historial de Compras -->
+  <div id="modalHistorial" class="modal-carrito">
+    <div class="modal-contenido modal-grande">
+      <button onclick="cerrarModalHistorial()" class="modal-cerrar">×</button>
+      <h2 class="modal-titulo">📋 Mi Historial de Compras</h2>
+      <div id="resumenCompras" class="resumen-compras">
+        <div class="stat-card">
+          <div class="stat-numero" id="totalCompras">0</div>
+          <div class="stat-label">Compras realizadas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-numero" id="totalGastado">₡0</div>
+          <div class="stat-label">Total en compras</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-numero" id="ultimaCompra">-</div>
+          <div class="stat-label">Última compra</div>
+        </div>
+      </div>
+      <div id="listaHistorial" class="lista-historial">
+        <div class="loading-historial">Cargando tu historial...</div>
+      </div>
+    </div>
+  </div>
 
+  <!-- Botón Carrito -->
+  <button id="botonCarrito" onclick="abrirModalCarrito()">🛒<span id="contadorCarrito">0</span></button>
+
+  <!-- Toast -->
   <div id="toast" class="toast"></div>
 
-  <!-- TARJETA DE LEALTAD FLOTANTE -->
+  <!-- Tarjeta Lealtad -->
   <div class="lealtad-container" id="lealtadContainer">
-    <!-- Tarjeta de lealtad (visible cuando está abierta) -->
     <div class="tarjeta-lealtad" id="tarjetaLealtad">
       <div class="tarjeta-lealtad-header">
         <h3>💳 Mi Lealtad</h3>
-        <button class="btn-cerrar-tarjeta" onclick="cerrarTarjetaLealtad()">×</button>
+        <button onclick="cerrarTarjetaLealtad()" class="btn-cerrar-tarjeta">×</button>
       </div>
-
-      <div class="cliente-info" id="clienteInfoLealtad">
-        <p><span>Cliente:</span> <strong id="nombreClienteLealtad">-</strong></p>
-        <p><span>Sellos:</span> <strong id="sellsActualesLealtad">0</strong> / <strong id="sellsObjetivoLealtad">6</strong></p>
+      <div class="cliente-info">
+        <p>Cliente: <strong id="nombreClienteLealtad">-</strong></p>
+        <p>Sellos: <strong id="sellsActualesLealtad">0</strong> / <strong id="sellsObjetivoLealtad">6</strong></p>
       </div>
-
       <div class="sellos-container">
-        <div class="sellos-titulo">Tus sellos de compra</div>
-        <div class="sellos-grid" id="sellsGrid">
-          <!-- Los sellos se generarán dinámicamente -->
-        </div>
-        <div class="progreso-lealtad" id="progresoLealtad">
-          Completa 6 sellos para obtener tu regalo
-        </div>
+        <div class="sellos-titulo">Progreso</div>
+        <div class="sellos-grid" id="sellsGrid"></div>
+        <div class="progreso-lealtad" id="progresoLealtad">Completa 6 sellos para tu regalo</div>
       </div>
-
       <div id="estadoPremioLealtad"></div>
     </div>
-
-    <!-- Caja de regalo (visible cuando la tarjeta está cerrada) -->
-    <div class="caja-regalo-flotante" id="cajaRegaloFlotante" onclick="abrirTarjetaLealtad()" style="display:none;" title="Abre tu tarjeta de lealtad">
-      🎁
-    </div>
+    <div class="caja-regalo-flotante" id="cajaRegaloFlotante" onclick="abrirTarjetaLealtad()" style="display:none;">🎁</div>
   </div>
 
+  <!-- Panel Admin -->
+  <div id="panelVisitas" class="glass-visitas hidden">
+    <h3>👁️ Visitas Recientes</h3>
+    <div id="listaVisitas"></div>
+  </div>
+  <button id="btnToggleVisitas" class="btn-toggle-visitas hidden" onclick="togglePanelVisitas()" title="Ver visitas">👁️</button>
+
+  <!-- Admin Sheet -->
+  <div id="adminSheetOverlay" class="admin-sheet-overlay" onclick="cerrarAdminSheet(event)">
+    <div class="admin-sheet" onclick="event.stopPropagation()">
+      <div class="admin-sheet-handle"></div>
+      <div class="admin-sheet-title">Acciones Admin</div>
+      <div class="admin-sheet-desc">Herramientas para este producto</div>
+      <button class="admin-sheet-btn" onclick="publicarFacebookOG()">📣 Publicar en Facebook (Vista PRO)</button>
+      <button class="admin-sheet-btn-secondary" onclick="publicarFacebookDirecto()">🔗 Publicar enlace directo</button>
+      <button class="admin-sheet-btn-secondary" onclick="cerrarAdminSheet()">Cancelar</button>
+    </div>
+  </div>
 
   <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import {
-  getFirestore,
-  collection,
-  getDocs,
-  getDoc,       // ✅
-  doc,          // ✅
-  setDoc,       // ✅
-  query,
-  where,
-  addDoc,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, getDoc, doc, setDoc, query, where, addDoc, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
@@ -220,17 +204,7 @@
     const stockCollection = collection(db, "stock");
 
     window.db = db;
-    window.firebaseUtils = {
-  query,
-  where,
-  collection,
-  getDocs,
-  getDoc,      // ✅
-  doc,         // ✅
-  setDoc,      // ✅
-  addDoc,
-  serverTimestamp
-};
+    window.firebaseUtils = { query, where, collection, getDocs, getDoc, doc, setDoc, addDoc, serverTimestamp, orderBy };
 
     let inventario = {};
     window.inventario = inventario;
@@ -242,1619 +216,16 @@
           const data = doc.data();
           inventario[data.nombre] = data.cantidad;
         });
-        // ✅ Actualizar tarjeta de lealtad
-        if (typeof actualizarLealtadAlAutenticar === "function") {
-          actualizarLealtadAlAutenticar();
-        }
-
-        if (typeof intentarRenderizar === "function" && window.catalogoListo) {
-          intentarRenderizar();
-        }
+        if (typeof actualizarLealtadAlAutenticar === "function") actualizarLealtadAlAutenticar();
+        if (typeof intentarRenderizar === "function" && window.catalogoListo) intentarRenderizar();
       } catch (error) {
         console.error("Error cargando inventario:", error);
-        if (typeof mostrarErrorCarga === "function") {
-          mostrarErrorCarga();
-        }
       }
     }
 
     document.addEventListener("DOMContentLoaded", cargarInventario);
   </script>
 
-  <!-- Lógica principal -->
-  <script>
-    let carrito = [];
-    let productos = [];
-    let productoSeleccionado = null;
-    let codigoAplicado = null;
-    let descuentoAplicado = 0;
-    let difusorAplicado = null;
-    let clienteAutenticado = null;
-    window.catalogoListo = false;
-    // ============================================
-    // FUNCIONES DE TARJETA DE LEALTAD
-    // ============================================
-
-    let datosLealtadCliente = null;
-    let tarjetaLealtadAbierta = true;
-    
-    /**
-     * Abre la tarjeta de lealtad y oculta la caja de regalo
-     */
-    function abrirTarjetaLealtad() {
-      const tarjeta = document.getElementById('tarjetaLealtad');
-      const cajaRegalo = document.getElementById('cajaRegaloFlotante');
-      if (tarjeta) tarjeta.style.display = 'block';
-      if (cajaRegalo) cajaRegalo.style.display = 'none';
-      tarjetaLealtadAbierta = true;
-      localStorage.setItem('tarjetaLealtadAbierta', 'true');
-    }
-
-    /**
-     * Cierra la tarjeta de lealtad y muestra la caja de regalo
-     */
-    function cerrarTarjetaLealtad() {
-      const tarjeta = document.getElementById('tarjetaLealtad');
-      const cajaRegalo = document.getElementById('cajaRegaloFlotante');
-      if (tarjeta) tarjeta.style.display = 'none';
-      if (cajaRegalo) cajaRegalo.style.display = 'flex';
-      tarjetaLealtadAbierta = false;
-      localStorage.setItem('tarjetaLealtadAbierta', 'false');
-    }
-
-    /**
-     * Muestra la tarjeta de lealtad solo si el cliente está autenticado
-     */
-    function mostrarTarjetaLealtad() {
-      const container = document.getElementById('lealtadContainer');
-      if (!container) return;
-
-      if (clienteAutenticado) {
-        container.classList.add('activo');
-        cargarDatosLealtadCliente();
-        activarControlesAdmin();
-      } else {
-        container.classList.remove('activo');
-      }
-    }
-
-    /**
-     * Carga los datos de lealtad del cliente desde Firestore
-     */
-async function cargarDatosLealtadCliente() {
-  if (!clienteAutenticado) return;
-
-  try {
-    const { doc, getDoc } = window.firebaseUtils;
-
-    // 🔥 AQUÍ ESTABA EL ERROR: debe ser "facturas"
-    const ref = doc(window.db, "facturas", clienteAutenticado.id);
-    const snap = await getDoc(ref);
-
-    if (!snap.exists()) {
-      datosLealtadCliente = {
-        nombre: clienteAutenticado.nombre,
-        sellos: 0,
-        objetivo: 6,
-        premiosPendientes: 0
-      };
-    } else {
-      const data = snap.data();
-      datosLealtadCliente = {
-        nombre: clienteAutenticado.nombre,
-        ...(data.lealtad || {
-          sellos: 0,
-          objetivo: 6,
-          premiosPendientes: 0
-        })
-      };
-    }
-
-    renderizarTarjetaLealtad();
-
-  } catch (error) {
-    console.error("Error cargando lealtad:", error);
-  }
-}
-
-function renderizarTarjetaLealtad() {
-  if (!datosLealtadCliente) return;
-
-  document.getElementById("nombreClienteLealtad").textContent =
-    datosLealtadCliente.nombre;
-
-  document.getElementById("sellsActualesLealtad").textContent =
-    datosLealtadCliente.sellos;
-
-  document.getElementById("sellsObjetivoLealtad").textContent =
-    datosLealtadCliente.objetivo;
-
-  const grid = document.getElementById("sellsGrid");
-  grid.innerHTML = "";
-
-  for (let i = 1; i <= datosLealtadCliente.objetivo; i++) {
-    const div = document.createElement("div");
-    div.className = "sello " + (i <= datosLealtadCliente.sellos ? "activo" : "inactivo");
-    div.textContent = "★";
-    grid.appendChild(div);
-  }
-}
-
-    /**
-     * Actualiza la visualización de la tarjeta de lealtad con los datos del cliente
-     */
-    function actualizarVisualizacionLealtad() {
-      if (!datosLealtadCliente) return;
-
-      const lealtad = datosLealtadCliente.lealtad || {};
-      const sellos = lealtad.sellos || 0;
-      const objetivo = lealtad.objetivo || 6;
-      const premiosPendientes = lealtad.premiosPendientes || 0;
-
-      // Actualizar información del cliente
-      document.getElementById('nombreClienteLealtad').textContent = datosLealtadCliente.nombre || '-';
-      document.getElementById('sellsActualesLealtad').textContent = sellos;
-      document.getElementById('sellsObjetivoLealtad').textContent = objetivo;
-
-      // Generar los sellos visuales
-      const sellsGrid = document.getElementById('sellsGrid');
-      sellsGrid.innerHTML = '';
-
-      for (let i = 1; i <= objetivo; i++) {
-        const sello = document.createElement('div');
-        sello.className = i <= sellos ? 'sello activo' : 'sello inactivo';
-        sello.textContent = '⭐';
-        sellsGrid.appendChild(sello);
-      }
-
-      // Actualizar progreso
-      const progresoDiv = document.getElementById('progresoLealtad');
-      if (sellos >= objetivo) {
-        progresoDiv.innerHTML = `<div class="estado-premio">🎉 ¡Completaste tu tarjeta! Reclama tu regalo</div>`;
-      } else {
-        const faltantes = objetivo - sellos;
-        progresoDiv.textContent = `Faltan ${faltantes} sello${faltantes !== 1 ? 's' : ''} para tu regalo`;
-      }
-
-      // Mostrar estado de premios pendientes
-      const estadoPremio = document.getElementById('estadoPremioLealtad');
-      if (premiosPendientes > 0) {
-        estadoPremio.innerHTML = `<div class="estado-premio">🎁 Tienes ${premiosPendientes} premio${premiosPendientes !== 1 ? 's' : ''} por reclamar</div>`;
-      } else {
-        estadoPremio.innerHTML = '';
-      }
-    }
-
-    /**
-     * Actualiza la tarjeta de lealtad cuando el cliente se autentica
-     */
-    
-    /**
-     * Registra la visita del cliente a catalogo.html en Firestore
-     * Crea un documento en la colección "registroVisitas"
-     */
-    async function registrarVisita() {
-  if (!clienteAutenticado) return;
-
-  try {
-    const { doc, setDoc, serverTimestamp } = window.firebaseUtils;
-
-    const ref = doc(window.db, "registroVisitas", clienteAutenticado.id);
-
-    await setDoc(ref, {
-      nombre: clienteAutenticado.nombre,
-      cedula: clienteAutenticado.cedula || "",
-      pagina: "catalogo.html",
-      ultimaVisita: serverTimestamp(),
-      navegador: navigator.userAgent
-    }, { merge: true });
-
-  } catch (error) {
-    console.error("Error registrando visita:", error);
-  }
-}
-
-    function actualizarLealtadAlAutenticar() {
-      mostrarTarjetaLealtad();
-      registrarVisita();  // ✅ Registrar visita
-      
-      
-      // Restaurar el estado de la tarjeta (abierta o cerrada)
-      const tarjetaAbierta = localStorage.getItem('tarjetaLealtadAbierta') !== 'false';
-      if (tarjetaAbierta) {
-        abrirTarjetaLealtad();
-        renderTarjetaLealtad(window.clienteSeleccionado);
-      } else {
-        cerrarTarjetaLealtad();
-      }
-    }
-
-    /**
-     * Oculta la tarjeta de lealtad cuando el cliente cierra sesión
-     */
-    function ocultarTarjetaLealtadAlCerrarSesion() {
-      const container = document.getElementById('lealtadContainer');
-      if (container) container.classList.remove('activo');
-      datosLealtadCliente = null;
-
-      renderTarjetaLealtad(window.clienteSeleccionado);
-    }
-
-
-    function mostrarToast(mensaje, color = "#4caf50") {
-      const t = document.getElementById("toast");
-      t.textContent = mensaje;
-      t.style.backgroundColor = color;
-      t.style.display = "block";
-      t.style.opacity = "1";
-      setTimeout(() => {
-        t.style.transition = "opacity 0.5s";
-        t.style.opacity = "0";
-        setTimeout(() => {
-          t.style.display = "none";
-          t.style.transition = "";
-        }, 500);
-      }, 2000);
-    }
-
-   async function mostrarPanelVisitasAdmin() {
-  if (localStorage.getItem("adminEsentia") !== "1") return;
-
-  const panel = document.getElementById("panelVisitas");
-  const lista = document.getElementById("listaVisitas");
-  if (!panel || !lista) return;
-
-  panel.classList.remove("hidden");
-  lista.innerHTML = "Cargando...";
-
-  try {
-    const { collection, getDocs } = window.firebaseUtils;
-    const snap = await getDocs(collection(window.db, "registroVisitas"));
-
-    lista.innerHTML = "";
-
-   snap.docs
-  .sort((a, b) =>
-    (b.data().ultimaVisita?.seconds || 0) -
-    (a.data().ultimaVisita?.seconds || 0)
-  )
-  .forEach(d => {
-    const v = d.data();
-    const fecha = v.ultimaVisita?.seconds
-      ? new Date(v.ultimaVisita.seconds * 1000).toLocaleString("es-CR")
-      : "—";
-
-    lista.innerHTML += `
-      <div style="margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.2)">
-        <strong>${v.nombre || "Sin nombre"}</strong><br>
-        <small>Última visita:</small><br>
-        <small>${fecha}</small>
-      </div>
-    `;
-  });
-
-  } catch (e) {
-    lista.innerHTML = "Error cargando visitas";
-  }
-}
-
-async function buscarCedulaHacienda(cedula) {
-  try {
-    const resp = await fetch(
-      `https://api.hacienda.go.cr/fe/ae?identificacion=${cedula}`
-    );
-    if (!resp.ok) return null;
-    const data = await resp.json();
-    return data?.nombre || null;
-  } catch {
-    return null;
-  }
-}
-
-    function abrirLoginRegistro() {
-      document.getElementById("modalLoginRegistro").style.display = "flex";
-    }
-
-    function verificarSesion() {
-
-     
-      const sesion = localStorage.getItem("sesionEsentia");
-      if (sesion) {
-        clienteAutenticado = JSON.parse(sesion);
-        document.getElementById("nombreUsuario").textContent = clienteAutenticado.nombre;
-        document.getElementById("panelUsuario").style.display = "flex";
-        document.getElementById("btnLogin").style.display = "none";
-        document.getElementById("modalLoginRegistro").style.display = "none";
-
-        const esAdmin =
-          clienteAutenticado.cedula === "110350666" ||
-          clienteAutenticado.id === "110350666" ||
-          clienteAutenticado.telefono === "110350666";
-
-        if (esAdmin) {
-          localStorage.setItem("adminEsentia", "1");
-        } else {
-          localStorage.removeItem("adminEsentia");
-        }
-
-        window.catalogoListo = true;
-        intentarRenderizar();
-      } else {
-        document.getElementById("loader").style.display = "none";
-        document.getElementById("modalLoginRegistro").style.display = "flex";
-        document.getElementById("btnLogin").style.display = "inline-block";
-      }
-
-       /* En verificarSesion() de catalogo.html
-        const btnAdmin = document.getElementById("btnAdminVelas");
-        if (btnAdmin) {
-        btnAdmin.style.display = esAdmin ? "inline-block" : "none";
-        }*/
-
-      activarControlesAdmin(); // ✅ CLAVE
-      renderTarjetaLealtad(window.clienteSeleccionado);
-
-      actualizarLealtadAlAutenticar();
-
-    }
-
-    function intentarRenderizar() {
-      if (window.catalogoListo && Object.keys(inventario).length > 0 && productos.length > 0) {
-        renderizarProductos();
-      }
-    }
-
-   // ============================================
-// CARGAR PRODUCTOS DESDE JSON ESTRUCTURADO POR TIPOS
-// ============================================
-async function cargarProductos() {
-    try {
-        const resp = await fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json");
-        //const resp = await fetch("1productos_esentia.json");
-        const datosPorTipo = await resp.json();
-        
-        // Aplanar el JSON estructurado por tipos a un array simple
-        productos = [];
-        for (const tipo in datosPorTipo) {
-            if (Array.isArray(datosPorTipo[tipo])) {
-                datosPorTipo[tipo].forEach(producto => {
-                    productos.push({
-                        ...producto,
-                        tipo: tipo // Añadir el tipo a cada producto
-                    });
-                });
-            }
-        }
-        
-        console.log("Productos cargados:", productos.length);
-        intentarRenderizar();
-    } catch (error) {
-        console.error("Error cargando productos:", error);
-        mostrarErrorCarga();
-    }
-}
-
-    function mostrarErrorCarga() {
-      document.getElementById("loader").style.display = "none";
-      const cont = document.getElementById("productos-hogar");
-      cont.innerHTML = "<p>Error cargando catálogo. Intenta más tarde.</p>";
-    }
-
-    function cargarVariantesProducto(p) {
-  const select = document.getElementById("select-variante");
-  if (!select) return;
-
-  select.innerHTML = "";
-
-  // 🏷️ Nombres fijos por posición (según tu negocio)
-  const nombresPresentacion = [
-    "Auto",
-    "Hogar / Oficina 30 ml",
-    "Hogar / Oficina 120 ml"
-  ];
-
-  // 🧴 Si no hay variantes, fallback seguro
-  if (!Array.isArray(p.variantes) || p.variantes.length === 0) {
-    const opt = document.createElement("option");
-    opt.value = JSON.stringify({
-      nombre: "Presentación única",
-      precio: p.precioOferta || p.precio || 3000
-    });
-    opt.textContent = "Presentación única";
-    select.appendChild(opt);
-    return;
-  }
-
-  // ✅ Cargar variantes correctamente
-  p.variantes.forEach((v, i) => {
-    const variante = {
-      nombre: nombresPresentacion[i] || "Presentación",
-      precio: v.precio
-    };
-
-    const opt = document.createElement("option");
-    opt.value = JSON.stringify(variante);
-    opt.textContent = `${variante.nombre} — ₡${variante.precio.toLocaleString("es-CR")}`;
-
-    // ⭐ Seleccionar ₡3000 por defecto
-    if (v.precio === 3000) opt.selected = true;
-
-    select.appendChild(opt);
-  });
-
-  // 🔄 Actualizar precio visible al cambiar variante
-  select.onchange = () => {
-    if (!select.value) return;
-    const v = JSON.parse(select.value);
-    const contPrecio = document.getElementById("modalProductoPrecio");
-    if (contPrecio) {
-      contPrecio.textContent = `₡${v.precio.toLocaleString("es-CR")}`;
-    }
-  };
-
-  // 🟢 Forzar precio inicial (₡3000 si existe)
-  const inicial = [...select.options].find(o =>
-    JSON.parse(o.value).precio === 3000
-  );
-  if (inicial) {
-    select.value = inicial.value;
-    select.dispatchEvent(new Event("change"));
-  }
-}
-
-
-    function renderizarProductos() {
-    const container = document.getElementById("productos-hogar");
-    const loader = document.getElementById("loader");
-    if (!container || !loader) return;
-    
-    loader.style.display = "none";
-    container.innerHTML = "";
-    
-    // Filtrar productos disponibles con stock
-    const productosFiltrados = productos.filter(
-        p => p.disponible && (inventario[p.nombre] ?? 0) > 0
-    );
-    
-    if (productosFiltrados.length === 0) {
-        container.innerHTML = `
-            <p style="text-align:center; font-size:1.4rem; color:#666; padding:40px;">
-                📭 No hay productos disponibles.
-            </p>
-        `;
-        return;
-    }
-    
-    // Agrupar productos por tipo
-    const productosPorTipo = {};
-    productosFiltrados.forEach(p => {
-        const tipo = p.tipo || 'Otros';
-        if (!productosPorTipo[tipo]) {
-            productosPorTipo[tipo] = [];
-        }
-        productosPorTipo[tipo].push(p);
-    });
-    
-    // Crear contenedor principal
-    const mainContainer = document.createElement("div");
-    mainContainer.style.display = "flex";
-    mainContainer.style.flexDirection = "column";
-    mainContainer.style.gap = "30px";
-    
-    // Renderizar cada sección de tipo
-    const tipos = Object.keys(productosPorTipo).sort();
-    
-    tipos.forEach(tipo => {
-        const seccion = document.createElement("div");
-        seccion.className = "seccion-tipo";
-        seccion.style.background = "linear-gradient(135deg, rgba(108, 75, 163, 0.08), transparent)";
-        seccion.style.padding = "25px";
-        seccion.style.borderRadius = "16px";
-        seccion.style.border = "1px solid rgba(108, 75, 163, 0.2)";
-        seccion.style.marginBottom = "20px";
-        
-        const cantidad = productosPorTipo[tipo].length;
-        
-        // Título de la sección
-        const titulo = document.createElement("h2");
-        titulo.className = "titulo-tipo";
-        titulo.style.display = "flex";
-        titulo.style.alignItems = "center";
-        titulo.style.gap = "12px";
-        titulo.style.color = "#6c4ba3";
-        titulo.style.fontSize = "1.8rem";
-        titulo.style.fontWeight = "700";
-        titulo.style.margin = "0 0 20px 0";
-        titulo.style.paddingBottom = "12px";
-        titulo.style.borderBottom = "3px solid rgba(108, 75, 163, 0.3)";
-        titulo.innerHTML = `
-            ${getIconoTipo(tipo)} ${capitalizarPrimeraLetra(tipo)}
-            <span style="font-size:1.2rem; color:#666; font-weight:400; 
-                        background:rgba(212, 175, 55, 0.15); padding:4px 12px; 
-                        border-radius:20px;">
-                ${cantidad} producto${cantidad !== 1 ? 's' : ''}
-            </span>
-        `;
-        seccion.appendChild(titulo);
-        
-        // Grid de productos
-        const grid = document.createElement("div");
-        grid.className = "productos-grid";
-        grid.style.display = "grid";
-        grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(240px, 1fr))";
-        grid.style.gap = "24px";
-        
-        // Renderizar tarjetas de productos
-        productosPorTipo[tipo].forEach(p => {
-            const card = crearTarjetaProducto(p);
-            grid.appendChild(card);
-        });
-        
-        seccion.appendChild(grid);
-        mainContainer.appendChild(seccion);
-    });
-    
-    container.appendChild(mainContainer);
-    
-    if (typeof actualizarCatalogoConStock === "function") {
-        actualizarCatalogoConStock();
-    }
-    
-    if (localStorage.getItem("adminEsentia") === "1") {
-        activarAccionesAdminTarjetas();
-    }
-}
-
-// Función para obtener icono según el tipo
-function getIconoTipo(tipo) {
-    const iconos = {
-        'Aromaterapia': '🌿',
-        'Difusores': '💨',
-        'Velas': '🕯️',
-        'Aceites': '💧',
-        'Perfumes': '🌸',
-        'Ambientadores': '🏠',
-        'Regalos': '🎁',
-        'Limpieza': '🧼',
-        'Otros': '📦'
-    };
-    return iconos[tipo] || '📦';
-}
-
-// Crear tarjeta de producto
-function crearTarjetaProducto(p) {
-    const precioFinal = p.precioOferta || p.precioOriginal || 3000;
-    const precioOriginal = p.precioOriginal || 0;
-    
-    // Generar estrellas según calificación
-    let estrellas = "";
-    if (p.calificacion) {
-        const llenas = Math.floor(p.calificacion);
-        const media = p.calificacion % 1 >= 0.5;
-        for (let i = 0; i < llenas; i++) estrellas += "⭐";
-        if (media) estrellas += "✨";
-        while (estrellas.length < 5) estrellas += "☆";
-    }
-    
-    // Badge de "Nuevo"
-    let badgeNuevo = "";
-    if (p.esNuevo) {
-        badgeNuevo = `
-            <div style="position:absolute; top:10px; left:10px; 
-                        background:linear-gradient(135deg, #ff6b6b, #ff8e8e); 
-                        color:white; padding:4px 10px; border-radius:16px; 
-                        font-size:0.75rem; font-weight:600; 
-                        box-shadow:0 2px 8px rgba(0,0,0,0.2);">
-                🆕 Nuevo
-            </div>
-        `;
-    }
-    
-    // Badge de tipo
-    let badgeTipo = "";
-    if (p.tipo) {
-        badgeTipo = `
-            <div style="position:absolute; top:10px; right:10px; 
-                        background:linear-gradient(135deg, #6c4ba3, #8b6bb4); 
-                        color:white; padding:4px 10px; border-radius:16px; 
-                        font-size:0.75rem; font-weight:600; 
-                        box-shadow:0 2px 8px rgba(0,0,0,0.2);">
-                ${p.tipo}
-            </div>
-        `;
-    }
-    
-    // Formatear precios
-    let precioHTML = "";
-    if (p.precioOferta && precioOriginal > 0) {
-        precioHTML = `
-            <p style="margin:8px 0;">
-                <span style="text-decoration:line-through; color:#999; font-size:0.9rem;">
-                    ₡${precioOriginal.toLocaleString()}
-                </span>
-                <span style="color:#d4af37; font-weight:bold; font-size:1.3rem; margin-left:8px;">
-                    ₡${p.precioOferta.toLocaleString()}
-                </span>
-            </p>
-        `;
-    } else {
-        precioHTML = `
-            <p style="margin:8px 0; font-size:1.3rem; font-weight:bold; color:#6c4ba3;">
-                ₡${precioFinal.toLocaleString()}
-            </p>
-        `;
-    }
-    
-    // Escapar caracteres para onclick
-    const nombreEsc = p.nombre.replace(/'/g, "\\'");
-    const infoEsc = (p.info || "").replace(/`/g, "\\`");
-    const benefEsc = (p.beneficios || "").replace(/`/g, "\\`");
-    const usoEsc = (p.usoRecomendado || "").replace(/`/g, "\\`");
-    
-    // Crear tarjeta
-    const div = document.createElement("div");
-    div.className = p.precioOferta ? "producto-card oferta" : "producto-card";
-    div.dataset.nombre = p.nombre;
-    div.dataset.tipo = p.tipo || 'Otros';
-    div.style.position = "relative";
-    div.style.background = "white";
-    div.style.borderRadius = "16px";
-    div.style.padding = "16px";
-    div.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
-    div.style.transition = "transform 0.3s, box-shadow 0.3s";
-    
-    div.innerHTML = `
-        <div style="position:relative; text-align:center; margin-bottom:12px;">
-            ${badgeNuevo}
-            ${badgeTipo}
-            <img src="${p.imagen.trim()}" alt="${p.nombre}"
-                style="width:100%; height:220px; object-fit:contain; 
-                       border-radius:12px; cursor:pointer; 
-                       transition:transform 0.3s;"
-                onmouseover="this.style.transform='scale(1.05)'"
-                onmouseout="this.style.transform='scale(1)'"
-                onclick="mostrarInfoProducto('${nombreEsc}', ${precioFinal}, '${p.imagen.trim()}', \`${infoEsc}\`, \`${benefEsc}\`, \`${usoEsc}\`)">
-        </div>
-        <h3 style="min-height:2rem; margin:10px 0; font-size:1.1rem; color:#333;">
-            ${p.nombre}
-        </h3>
-        <div style="color:#ffc107; margin:5px 0; min-height:1.2rem;">
-            ${estrellas}
-        </div>
-        ${precioHTML}
-        <p class="stock-label" style="font-size:0.9rem; color:#666; margin:8px 0;">
-            Cargando stock...
-        </p>
-        <button class="btn-agregar"
-            style="width:100%; padding:10px; margin-top:8px; 
-                   background:#6c4ba3; color:white; border:none; 
-                   border-radius:8px; cursor:pointer; font-weight:600;
-                   transition:background 0.3s;"
-            onmouseover="this.style.background='#8b6bb4'"
-            onmouseout="this.style.background='#6c4ba3'"
-            onclick="mostrarInfoProducto('${nombreEsc}', ${precioFinal}, '${p.imagen.trim()}', \`${infoEsc}\`, \`${benefEsc}\`, \`${usoEsc}\`)">
-            Ver detalles
-        </button>
-    `;
-    
-    return div;
-}
-// Obtener icono según el tipo
-function getIconoTipo(tipo) {
-    const iconos = {
-        'frutal': '🍎',
-        'aromatico': '🌿',
-        'citrico': '🍊',
-        'floral': '🌸',
-        'maderoso': '🪵',
-        'dulce': '🍬',
-        'especiado': '🌶️',
-        'fresco': '❄️',
-        'otros': '📦'
-    };
-    return iconos[tipo.toLowerCase()] || '📦';
-}
-
-// Capitalizar primera letra
-function capitalizarPrimeraLetra(str) {
-    if (!str) return '';
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-// Actualizar stock en las tarjetas
-function actualizarCatalogoConStock() {
-    const cards = document.querySelectorAll(".producto-card");
-    cards.forEach(card => {
-        const nombre = card.dataset.nombre;
-        const stock = inventario[nombre] ?? 0;
-        const label = card.querySelector(".stock-label");
-        
-        if (!label) return;
-        
-        if (stock > 10) {
-            label.textContent = "✅ En stock";
-            label.style.color = "#28a745";
-        } else if (stock > 0) {
-            label.textContent = `⚠️ Stock: ${stock}`;
-            label.style.color = "#f0ad4e";
-        } else {
-            label.textContent = "❌ Agotado";
-            label.style.color = "#dc3545";
-            const btn = card.querySelector(".btn-agregar");
-            if (btn) btn.disabled = true;
-        }
-    });
-}
-// Filtrar productos por tipo
-function filtrarProductosPorTipo(tipo) {
-    const grids = document.querySelectorAll('.productos-grid');
-    const cards = document.querySelectorAll('.producto-card');
-    
-    if (tipo === 'todos') {
-        // Mostrar todos
-        grids.forEach(grid => grid.style.display = 'grid');
-        return;
-    }
-    
-    // Ocultar todos los grids
-    grids.forEach(grid => grid.style.display = 'none');
-    
-    // Mostrar solo el grid del tipo seleccionado
-    const gridId = `grid-${tipo.toLowerCase().replace(/\s+/g, '-')}`;
-    const gridSeleccionado = document.getElementById(gridId);
-    if (gridSeleccionado) {
-        gridSeleccionado.style.display = 'grid';
-    }
-}
-
-     function mostrarInfoProducto(nombre, precio, imagen, info, beneficios, usoRecomendado) {
-      document.getElementById("modalProductoNombre").textContent = nombre;
-      document.getElementById("modalProductoImagen").src = imagen;
-      document.getElementById("modalProductoInfo").textContent = info;
-      document.getElementById("modalProductoUso").innerHTML =
-        `<strong>✨ Beneficios:</strong> ${beneficios}<br><strong>🏠 Uso recomendado:</strong> ${usoRecomendado}`;
-      document.getElementById("modalProductoPrecio").textContent =
-        `₡${precio.toLocaleString()}`;
-
-      const p = productos.find(x => x.nombre === nombre);
-      productoSeleccionado = { ...p };
-
-     const sel = document.getElementById("selectorVariante");
-sel.innerHTML = "";
-
-if (p.variantes && p.variantes.length > 0) {
-
-  const select = document.createElement("select");
-  select.id = "varianteSeleccionada";
-  select.style.width = "100%";
-  select.style.marginTop = "1rem";
-  select.style.padding = "10px";
-
-  // 🏷️ Primera opción
-  select.innerHTML = '<option value="">-- Selecciona una presentación --</option>';
-
-  // 🧴 Nombres fijos por posición
-  const nombresPresentacion = [
-    "Auto",
-    "Hogar / Oficina 30 ml",
-    "Hogar / Oficina 120 ml"
-  ];
-
-  p.variantes.forEach((v, i) => {
-
-    const variante = {
-      nombre: nombresPresentacion[i] || "Presentación",
-      precio: v.precio
-    };
-
-    const opt = document.createElement("option");
-    opt.value = JSON.stringify(variante);
-    opt.textContent = `${variante.nombre} – ₡${variante.precio.toLocaleString("es-CR")}`;
-
-    // ⭐ Seleccionar ₡3000 por defecto
-    if (v.precio === 3000) {
-      opt.selected = true;
-    }
-
-    select.appendChild(opt);
-  });
-
-  // 🔄 Cambiar precio visible al cambiar variante
-  select.addEventListener("change", () => {
-    if (!select.value) return;
-    const v = JSON.parse(select.value);
-    const precioLabel = document.getElementById("modalProductoPrecio");
-    if (precioLabel) {
-      precioLabel.textContent = `₡${v.precio.toLocaleString("es-CR")}`;
-    }
-  });
-
-  sel.appendChild(select);
-}
-
-
-      document.getElementById("modalProducto").style.display = "flex";
-      if (typeof actualizarModalConStock === "function") actualizarModalConStock(nombre);
-     }
-
-     function cerrarModalProducto() {
-      document.getElementById("modalProducto").style.display = "none";
-     }
-
-     function guardarCarritoLocal() {
-    localStorage.setItem("carrito", JSON.stringify(carrito));
-    document.getElementById("contadorCarrito").textContent = carrito.length;
-}
-
-function renderCarritoModal() {
-    renderCarrito(); // Reutiliza la función existente
-}
-
-function actualizarResumenVenta() {
-    // Opcional: actualizar total en el modal
-    const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-    const totalEl = document.getElementById("totalModal");
-    if (totalEl) {
-        totalEl.textContent = `Total: ₡${total.toLocaleString()}`;
-    }
-}
-
-     function agregarAlCarritoDesdeModal() {
-    if (!productoSeleccionado) {
-        mostrarToast("Seleccione un producto primero", "#E74C3C");
-        return;
-    }
-
-    // ✅ CORRECCIÓN: Usar el ID correcto "varianteSeleccionada"
-    const selectVar = document.getElementById("varianteSeleccionada");
-    
-    let variante = {
-        nombre: "Hogar / Oficina 30 ml",
-        precio: 3000
-    };
-
-    // Si hay selector de variantes y tiene valor seleccionado
-    if (selectVar && selectVar.value) {
-        try {
-            variante = JSON.parse(selectVar.value);
-        } catch (e) {
-            console.error("Error parseando variante:", e);
-        }
-    }
-
-    // Validar que se haya seleccionado una variante si el producto tiene variantes
-    if (productoSeleccionado.variantes && productoSeleccionado.variantes.length > 0) {
-        if (!selectVar || !selectVar.value) {
-            mostrarToast("⚠️ Seleccione una presentación", "#E74C3C");
-            selectVar?.focus();
-            return;
-        }
-    }
-
-    const cantidad = Math.max(1, Number(document.getElementById("input-cantidad")?.value || 1));
-
-    carrito.push({
-        id: productoSeleccionado.id || Date.now(),
-        nombre: productoSeleccionado.nombre,
-        imagen: productoSeleccionado.imagen,
-        variante: variante.nombre,
-        precio: variante.precio,
-        cantidad: cantidad
-    });
-
-    guardarCarritoLocal();
-    renderCarritoModal();
-    actualizarResumenVenta();
-    
-    cerrarModalProducto();
-    mostrarToast("✅ Producto agregado al carrito", "#4caf50");
-}
-
-     function abrirModalCarrito() {
-      document.getElementById("modalCarrito").style.display = "flex";
-     }
-
-     function cerrarModalCarrito() {
-      document.getElementById("modalCarrito").style.display = "none";
-     }
-
-     function solicitarAroma() {
-      const msg = encodeURIComponent(
-        "Hola, me gustaría un aroma personalizado para mi hogar. 🌸"
-      );
-      window.open(`https://wa.me/50672952454?text=${msg}`, "_blank");
-     }
-
-     function copiarEnlaceRecomendacion() {
-      const url = window.location.href;
-      navigator.clipboard.writeText(url).then(() => {
-        mostrarToast("Enlace copiado para recomendar 💌");
-      });
-     }
-
-    function cerrarSesion() {
-      localStorage.removeItem("sesionEsentia");
-      renderTarjetaLealtad(null);
-      localStorage.removeItem("adminEsentia");
-      clienteAutenticado = null;
-      carrito = [];
-      localStorage.removeItem("carrito");
-      renderCarrito();
-      
-      codigoAplicado = null;
-      descuentoAplicado = 0;
-      difusorAplicado = null;
-
-      document.getElementById("panelUsuario").style.display = "none";
-      document.getElementById("btnLogin").style.display = "inline-block";
-      document.getElementById("loader").style.display = "none";
-      document.getElementById("productos-hogar").innerHTML = "";
-      document.getElementById("modalLoginRegistro").style.display = "flex";
-    }
-
-    // Login
-    document.getElementById("formLogin")?.addEventListener("submit", async e => {
-      e.preventDefault();
-      const valor = document.getElementById("loginCedulaTel").value.trim();
-      const msg = document.getElementById("loginMensaje");
-      if (!valor) {
-        msg.textContent = "Ingresa cédula o teléfono.";
-        return;
-      }
-
-      try {
-        msg.textContent = "Buscando cliente...";
-        const { query, where, collection, getDocs } = window.firebaseUtils;
-        const col = collection(window.db, "clientesBD");
-        const q1 = query(col, where("cedula", "==", valor));
-        const q2 = query(col, where("telefono", "==", valor));
-
-        const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-        let docSnap = null;
-
-        if (!snap1.empty) docSnap = snap1.docs[0];
-        else if (!snap2.empty) docSnap = snap2.docs[0];
-
-        if (!docSnap) {
-          msg.textContent = "Cliente no registrado. Usa 'Registrarse'.";
-          return;
-        }
-
-        const data = docSnap.data();
-        clienteAutenticado = {
-          id: docSnap.id,
-          nombre: data.nombre,
-          cedula: data.cedula,
-          telefono: data.telefono
-        };
-
-        localStorage.setItem("sesionEsentia", JSON.stringify(clienteAutenticado));
-
-        const esAdmin =
-          data.cedula === "110350666" ||
-          data.telefono === "110350666" ||
-          valor === "110350666";
-
-        if (esAdmin) {
-          localStorage.setItem("adminEsentia", "1");
-        } else {
-          localStorage.removeItem("adminEsentia");
-        }
-
-        document.getElementById("nombreUsuario").textContent = clienteAutenticado.nombre;
-        document.getElementById("panelUsuario").style.display = "flex";
-        document.getElementById("btnLogin").style.display = "none";
-        document.getElementById("modalLoginRegistro").style.display = "none";
-        msg.textContent = "";
-        document.getElementById("loader").style.display = "flex";
-        window.catalogoListo = true;
-        setTimeout(intentarRenderizar, 300);
-      } catch (err) {
-        console.error("Error login:", err);
-        msg.textContent = "Error de conexión.";
-      }
-
-      activarControlesAdmin();
-    });
-
-    // Registro
-// ================================
-// 🔐 Registro mejorado con validación CR
-// ================================
-
-let cedulaValidaCache = null; // { cedula: "123...", nombre: "Nombre" }
-
-function limpiarCedula(cedula) {
-  return cedula.replace(/\D/g, "").padStart(9, "0").slice(-9);
-}
-
-async function cargarLealtadCliente(clienteId) {
-  const { doc, getDoc } = window.firebaseUtils;
-
-  const ref = doc(window.db, "facturas", clienteId);
-  const snap = await getDoc(ref);
-
-  if (!snap.exists()) {
-    return {
-      sellos: 0,
-      objetivo: 6,
-      premiosPendientes: 0
-    };
-  }
-
-  return snap.data().lealtad || {
-    sellos: 0,
-    objetivo: 6,
-    premiosPendientes: 0
-  };
-}
-
-
-function renderTarjetaLealtad(cliente) {
-  const card = document.getElementById("tarjeta-lealtad");
-  if (!card) return;
-
-  if (!cliente || !cliente.lealtad) {
-    card.innerHTML = `
-      <h4>🎁 Lealtad</h4>
-      <p>Sin datos</p>
-    `;
-    return;
-  }
-
-  const { sellos = 0, objetivo = 6, premiosPendientes = 0 } = cliente.lealtad;
-
-  card.innerHTML = `
-    <h4>🎁 Lealtad</h4>
-    <p>Sellos: ${sellos} / ${objetivo}</p>
-    <p>🎉 Premios pendientes: <strong>${premiosPendientes}</strong></p>
-  `;
-}
-
-async function cargarLealtadCliente(clienteId) {
-  const ref = doc(db, "facturas", clienteId);
-  const snap = await getDoc(ref);
-
-  if (!snap.exists()) {
-    return {
-      sellos: 0,
-      objetivo: 6,
-      premiosPendientes: 0
-    };
-  }
-
-  return snap.data().lealtad || {
-    sellos: 0,
-    objetivo: 6,
-    premiosPendientes: 0
-  };
-}
-
-
-
-async function verificarCedulaEnHacienda(cedula) {
-  const msg = document.getElementById("loginMensaje");
-  const statusIcon = document.getElementById("cedulaStatus");
-  const btn = document.getElementById("btnRegistrar");
-  
-  if (!cedula || cedula.length !== 9) {
-    statusIcon.textContent = "";
-    btn.disabled = false;
-    btn.innerHTML = "Registrarme";
-    btn.style.background = "#6c4ba3";
-    return null;
-  }
-
-  statusIcon.textContent = "🔍";
-  btn.disabled = true;
-  btn.innerHTML = "Verificando cédula...";
-  msg.textContent = "Consultando cédula con Hacienda...";
-
-  try {
-    const nombreHacienda = await buscarCedulaHacienda(cedula);
-    if (nombreHacienda) {
-      statusIcon.textContent = "✅";
-      msg.textContent = "";
-      btn.disabled = false;
-      btn.innerHTML = "Registrarme";
-      btn.style.background = "#4caf50";
-      document.getElementById("regNombre").value = nombreHacienda;
-      cedulaValidaCache = { cedula, nombre: nombreHacienda };
-      return nombreHacienda;
-    } else {
-      statusIcon.textContent = "❌";
-      msg.textContent = "❌ Cédula no válida en Hacienda";
-      btn.disabled = true;
-      btn.innerHTML = "Cédula inválida";
-      btn.style.background = "#ff5252";
-      cedulaValidaCache = null;
-      return null;
-    }
-  } catch (err) {
-    console.error("Error en API de Hacienda:", err);
-    statusIcon.textContent = "⚠️";
-    msg.textContent = "⚠️ Error al consultar Hacienda";
-    btn.disabled = true;
-    btn.innerHTML = "Reintentar";
-    btn.style.background = "#ffa726";
-    return null;
-  }
-}
-
-// Validación automática en tiempo real
-document.getElementById("regCedula")?.addEventListener("input", (e) => {
-  let val = e.target.value.replace(/\D/g, "");
-  e.target.value = val;
-  if (val.length === 9) {
-    verificarCedulaEnHacienda(val);
-  } else if (val.length === 0) {
-    document.getElementById("cedulaStatus").textContent = "";
-    document.getElementById("regNombre").value = "";
-    document.getElementById("loginMensaje").textContent = "";
-    cedulaValidaCache = null;
-  }
-});
-
-document.getElementById("regCedula")?.addEventListener("blur", (e) => {
-  const cedula = limpiarCedula(e.target.value);
-  if (cedula.length === 9 && (!cedulaValidaCache || cedulaValidaCache.cedula !== cedula)) {
-    verificarCedulaEnHacienda(cedula);
-  }
-});
-
-// Submit del formulario
-document.getElementById("formRegistro")?.addEventListener("submit", async e => {
-  e.preventDefault();
-  
-  const msg = document.getElementById("loginMensaje");
-  const cedula = limpiarCedula(document.getElementById("regCedula").value);
-  const telefono = document.getElementById("regTelefono").value.trim();
-  const nombre = document.getElementById("regNombre").value.trim();
-
-  // ✅ Validar que haya nombre (de Hacienda o manual)
-  if (!nombre) {
-    msg.textContent = "❌ Debes ingresar una cédula válida o escribir tu nombre.";
-    return;
-  }
-
-  // ✅ Validar teléfono (mínimo 8 dígitos)
-  if (!telefono || telefono.replace(/\D/g, "").length < 8) {
-    msg.textContent = "❌ Teléfono inválido. Debe tener al menos 8 dígitos.";
-    return;
-  }
-
-  // ✅ Asegurar coherencia: si hay cédula, debe ser válida
-  if (cedula && cedula.length === 9) {
-    if (!cedulaValidaCache || cedulaValidaCache.cedula !== cedula) {
-      msg.textContent = "❌ Cédula no verificada. Espera la validación.";
-      return;
-    }
-    if (cedulaValidaCache.nombre !== nombre) {
-      msg.textContent = "❌ Inconsistencia: el nombre no coincide con Hacienda.";
-      return;
-    }
-  }
-
-  // ✅ Registrar
-  try {
-    msg.textContent = "Registrando cliente...";
-    const { collection, addDoc } = window.firebaseUtils;
-    
-    const nuevoCliente = {
-      nombre: nombre,
-      cedula: cedula && cedula !== "000000000" ? cedula : "",
-      telefono: telefono.replace(/\D/g, ""),
-      creado: new Date()
-    };
-
-    const ref = await addDoc(collection(window.db, "clientesBD"), nuevoCliente);
-    
-    clienteAutenticado = {
-      id: ref.id,
-      nombre: nombre,
-      cedula: nuevoCliente.cedula,
-      telefono: nuevoCliente.telefono
-    };
-
-    // 🔥 cargar lealtad REAL desde facturas
-const lealtad = await cargarLealtadCliente(clienteAutenticado.id);
-clienteAutenticado.lealtad = lealtad;
-    
-    localStorage.setItem("sesionEsentia", JSON.stringify(clienteAutenticado));
-    
-    // ¿Es admin?
-    const esAdmin = cedula === "110350666" || telefono.includes("110350666");
-    if (esAdmin) {
-      localStorage.setItem("adminEsentia", "1");
-    } else {
-      localStorage.removeItem("adminEsentia");
-    }
-
-    // ✅ Éxito
-    document.getElementById("nombreUsuario").textContent = nombre;
-    document.getElementById("panelUsuario").style.display = "flex";
-    renderTarjetaLealtad(clienteAutenticado);
-    document.getElementById("btnLogin").style.display = "none";
-    document.getElementById("modalLoginRegistro").style.display = "none";
-    msg.textContent = "";
-    document.getElementById("loader").style.display = "flex";
-    window.catalogoListo = true;
-    setTimeout(intentarRenderizar, 300);
-
-    mostrarToast(`✅ Bienvenido, ${nombre}!`, "#4caf50");
-
-  } catch (err) {
-    console.error("Error en registro:", err);
-    msg.textContent = "❌ Error al registrar. Intenta de nuevo.";
-  }
-});
-
-    // Tabs login/registro
-    document.querySelectorAll(".btn-tab").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".btn-tab").forEach(b => b.classList.remove("activo"));
-    btn.classList.add("activo");
-    const tab = btn.dataset.tab;
-    document.getElementById("formLogin").style.display = tab === "login" ? "block" : "none";
-    document.getElementById("formRegistro").style.display = tab === "registro" ? "block" : "none";
-    document.getElementById("loginMensaje").textContent = ""; // ✅ limpiar mensaje al cambiar
-  });
-});
-    // Acciones admin
-    let adminProductoActualId = null;
-
-    function activarAccionesAdminTarjetas() {
-      const esAdmin = localStorage.getItem("adminEsentia") === "1";
-      if (!esAdmin) return;
-
-      const cards = document.querySelectorAll(".producto-card");
-      cards.forEach(card => {
-        if (card.dataset.adminEnhanced === "1") return;
-        const img = card.querySelector("img");
-        if (!img) return;
-        const src = img.getAttribute("src") || "";
-        if (!src) return;
-        const file = src.split("/").pop().split(".")[0].toLowerCase();
-
-        const wrapper = img.parentElement;
-        if (!wrapper) return;
-        if (getComputedStyle(wrapper).position === "static") {
-          wrapper.style.position = "relative";
-        }
-
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "admin-dot-btn";
-        btn.textContent = "⋮";
-        btn.addEventListener("click", e => {
-          e.stopPropagation();
-          abrirAdminSheet(file);
-        });
-
-        wrapper.appendChild(btn);
-        card.dataset.adminEnhanced = "1";
-      });
-    }
-
-    function abrirAdminSheet(idProducto) {
-      adminProductoActualId = idProducto;
-      const overlay = document.getElementById("adminSheetOverlay");
-      if (!overlay) return;
-      overlay.style.display = "flex";
-    }
-
-    function cerrarAdminSheet() {
-      const overlay = document.getElementById("adminSheetOverlay");
-      if (overlay) overlay.style.display = "none";
-      adminProductoActualId = null;
-    }
-
-    function publicarFacebook(idProducto) {
-      if (!idProducto) return;
-      const urlProducto = `https://wil1979.github.io/esentia-factura/producto.html?id=${encodeURIComponent(
-        idProducto
-      )}`;
-      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-        urlProducto
-      )}`;
-      window.open(shareUrl, "_blank");
-    }
-
-    function publicarFacebookDesdeSheet() {
-      if (!adminProductoActualId) return;
-      publicarFacebook(adminProductoActualId);
-    }
-
-    function activarControlesAdmin() {
-  const esAdmin = localStorage.getItem("adminEsentia") === "1";
-  const btn = document.getElementById("btnToggleVisitas");
-  const panel = document.getElementById("panelVisitas");
-
-  if (!btn || !panel) return;
-
-  if (!esAdmin) {
-    btn.classList.add("hidden");
-    panel.classList.add("hidden");
-    return;
-  }
-
-  btn.classList.remove("hidden");
-
-  // Restaurar estado anterior
-  const visible = localStorage.getItem("visitasVisible") === "1";
-  if (visible) {
-    panel.classList.remove("hidden");
-    mostrarPanelVisitasAdmin();
-  } else {
-    panel.classList.add("hidden");
-  }
-}
-
-    // Cerrar bottom sheet al tocar fuera
-    window.addEventListener("click", e => {
-      const overlay = document.getElementById("adminSheetOverlay");
-      if (!overlay || overlay.style.display !== "flex") return;
-      if (e.target === overlay) {
-        cerrarAdminSheet();
-      }
-    });
-
-    // Aviso al salir si hay productos en carrito
-    window.addEventListener("beforeunload", e => {
-      try {
-        const data = localStorage.getItem("carrito");
-        if (!data) return;
-        const c = JSON.parse(data);
-        if (!Array.isArray(c) || c.length === 0) return;
-        const mensaje =
-          "Tienes productos en tu carrito. ¿Seguro que deseas salir sin completar tu compra?";
-        e.returnValue = mensaje;
-        return mensaje;
-      } catch {
-        return;
-      }
-    });
-
-    document.addEventListener("DOMContentLoaded", () => {
-      cargarCarrito();
-      document
-        .getElementById("btnAplicarCodigo")
-        ?.addEventListener("click", aplicarCodigoPremio);
-      verificarSesion();
-      cargarProductos(); // 🔥 importante para que cargue el catálogo
-
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("added") === "1") {
-        setTimeout(() => {
-          mostrarToast("Producto añadido al carrito 🛒");
-        }, 600);
-      }
-    });
-
-    function cargarCarrito() {
-      const data = localStorage.getItem("carrito");
-      if (data) carrito = JSON.parse(data);
-      renderCarrito();
-    }
-
-    function renderCarrito() {
-      const lista = document.getElementById("listaCarrito");
-      const contador = document.getElementById("contadorCarrito");
-      const totalModal = document.getElementById("totalModal");
-
-      if (!lista || !contador || !totalModal) return;
-
-      lista.innerHTML = "";
-      let total = 0;
-
-      carrito.forEach((item, index) => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span>${item.nombre} (${item.cantidad})</span>
-          <strong>₡${(item.precio * item.cantidad).toLocaleString()}</strong>
-        </div>
-        <button onclick="eliminarDelCarrito(${index})"
-          style="background:#ff5b5b; color:white; border:none; padding:5px 8px; border-radius:6px; margin-top:6px; cursor:pointer;">
-          🗑 Quitar
-        </button>
-      `;
-        lista.appendChild(li);
-        total += item.precio * item.cantidad;
-      });
-
-      totalModal.textContent = `Total: ₡${total.toLocaleString()}`;
-      contador.textContent = carrito.length;
-      localStorage.setItem("carrito", JSON.stringify(carrito));
-    }
-
-    function eliminarDelCarrito(i) {
-      carrito.splice(i, 1);
-      renderCarrito();
-    }
-
-    function aplicarCodigoPremio() {
-      const input = document.getElementById("codigoPremio");
-      if (!input) return;
-
-      const codigo = input.value.trim().toUpperCase();
-      if (!codigo) {
-        mostrarToast("Ingresa un código válido ❗", "#E74C3C");
-        return;
-      }
-
-      const codigosValidos = {
-        ESENTIA10: { tipo: "porcentaje", valor: 10 },
-        ESENTIA20: { tipo: "porcentaje", valor: 20 },
-        NAVIDAD: { tipo: "monto", valor: 1500 },
-        PREMIO1: { tipo: "monto", valor: 1000 }
-      };
-
-      const promo = codigosValidos[codigo];
-      if (!promo) {
-        mostrarToast("Código inválido ❌", "#E74C3C");
-        return;
-      }
-
-      let total = carrito.reduce(
-        (sum, item) => sum + item.precio * item.cantidad,
-        0
-      );
-
-      let descuento = 0;
-      if (promo.tipo === "porcentaje") {
-        descuento = Math.round(total * (promo.valor / 100));
-      } else if (promo.tipo === "monto") {
-        descuento = promo.valor;
-      }
-
-      total -= descuento;
-      if (total < 0) total = 0;
-
-      document.getElementById("totalModal").textContent = `Total con descuento: ₡${total.toLocaleString()} (-₡${descuento.toLocaleString()})`;
-
-      mostrarToast(
-        `Código aplicado 🎉 Descuento: ₡${descuento.toLocaleString()}`
-      );
-
-      codigoAplicado = codigo;
-      descuentoAplicado = descuento;
-    }
-
-    // Aquí deberías tener tu función finalizarPedido() original
-    function finalizarPedido() {
-      if (!clienteAutenticado) {
-        mostrarToast("Inicia sesión para finalizar el pedido", "#E74C3C");
-        abrirLoginRegistro();
-        return;
-      }
-      if (!carrito.length) {
-        mostrarToast("Tu carrito está vacío 🛒", "#E74C3C");
-        return;
-      }
-
-      let mensaje = `Hola Wilber 👋\n\nQuiero hacer un pedido:\n\n`;
-      carrito.forEach(item => {
-        mensaje += `• ${item.nombre} x${item.cantidad} – ₡${(item.precio * item.cantidad).toLocaleString()}\n`;
-      });
-      let total = carrito.reduce(
-        (sum, item) => sum + item.precio * item.cantidad,
-        0
-      );
-      if (descuentoAplicado > 0) {
-        mensaje += `\nDescuento aplicado: -₡${descuentoAplicado.toLocaleString()}`;
-        total -= descuentoAplicado;
-      }
-      mensaje += `\n\nTotal a pagar: ₡${total.toLocaleString()}\n\n`;
-      mensaje += `Cliente: ${clienteAutenticado.nombre}\nTel: ${clienteAutenticado.telefono || "No registrado"}`;
-
-      window.open(
-        `https://wa.me/50672952454?text=${encodeURIComponent(mensaje)}`,
-        "_blank"
-      );
-    }
-
-    function publicarFacebookOG() {
-  if (!adminProductoActualId) return;
-
-  const urlOG = `https://wil1979.github.io/esentia-factura/og/${adminProductoActualId}.html`;
-  const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlOG)}`;
-  window.open(shareUrl, "_blank");
-}
-
-function publicarFacebookDirecto() {
-  if (!adminProductoActualId) return;
-
-  const urlProducto = `https://wil1979.github.io/esentia-factura/producto.html?id=${encodeURIComponent(adminProductoActualId)}`;
-  const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlProducto)}`;
-  window.open(shareUrl, "_blank");
-}
-
-function actualizarCatalogoConStock() {
-  const cards = document.querySelectorAll(".producto-card");
-
-  cards.forEach(card => {
-    const nombre = card.dataset.nombre;
-
-    // Lectura del stock desde inventario
-    const stock = inventario[nombre] ?? 0;
-
-    // Busca la etiqueta donde se muestra el stock
-    const label = card.querySelector(".stock-label");
-
-    if (!label) return;
-
-    if (stock > 10) {
-      label.textContent = "En stock";
-      label.style.color = "#28a745"; // verde
-    } else if (stock > 0) {
-      label.textContent = `Stock: ${stock}`;
-      label.style.color = "#f0ad4e"; // amarillo
-    } else {
-      label.textContent = "Agotado";
-      label.style.color = "#dc3545"; // rojo
-      // (Opcional: desactivar botón si querés)
-      const btn = card.querySelector(".btn-agregar");
-      if (btn) btn.disabled = true;
-    }
-  });
-}
-
-function togglePanelVisitas() {
-  const panel = document.getElementById("panelVisitas");
-  if (!panel) return;
-
-  const visible = !panel.classList.contains("hidden");
-
-  if (visible) {
-    panel.classList.add("hidden");
-    localStorage.setItem("visitasVisible", "0");
-  } else {
-    panel.classList.remove("hidden");
-    localStorage.setItem("visitasVisible", "1");
-    mostrarPanelVisitasAdmin(); // recarga si se abre
-  }
-}
-
-  </script>
-
-  <!-- Bottom sheet admin -->
- <div id="adminSheetOverlay" class="admin-sheet-overlay">
-  <div class="admin-sheet">
-    <div class="admin-sheet-handle"></div>
-    <div class="admin-sheet-title">Acciones de administrador</div>
-    <div class="admin-sheet-desc">Herramientas rápidas para este producto.</div>
-
-    <!-- Vista PRO con página OG -->
-    <button type="button" class="admin-sheet-btn" onclick="publicarFacebookOG()">
-      <span>📣</span> <span>Publicar en Facebook (Vista PRO)</span>
-    </button>
-
-    <!-- Enlace directo normal al producto -->
-    <button type="button" class="admin-sheet-btn-secondary" onclick="publicarFacebookDirecto()">
-      🔗 Publicar en Facebook (Enlace directo)
-    </button>
-
-    <button type="button" class="admin-sheet-btn-secondary" onclick="cerrarAdminSheet()">
-      Cancelar
-    </button>
-  </div>
-</div>
-
-<div id="panelVisitas" class="glass-visitas hidden">
-  <h3>👁️ Visitas al catálogo</h3>
-  <div id="listaVisitas"></div>
-</div>
-
-<button id="btnToggleVisitas" class="btn-toggle-visitas hidden"
-        onclick="togglePanelVisitas()"
-        title="Mostrar / ocultar visitas">
-  👁️
-</button> 
-
- <button type="button" class="admin-sheet-btn-secondary" onclick="mostrarPanelVisitasAdmin()"></button>
-
- 
-  
+  <script src="esentia.js"></script>
 </body>
 </html>
