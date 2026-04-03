@@ -6,10 +6,10 @@
   <title>📊 Reportes de Ventas - Esentia</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script type="module">
-    // 🔥 Firebase Config (igual que clientes.js)
+    // 🔥 Firebase Config
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import {
-      getFirestore, collection, getDocs, doc, getDoc, query, where, orderBy
+      getFirestore, collection, getDocs
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -27,11 +27,13 @@
     // ===============================
     // 📊 Estado global
     // ===============================
-    let todasLasVentas = [];
-    let clientesCache = {};
-    let reporteActual = 'por-dia'; // 'por-dia' | 'por-producto'
-    let ventasAgrupadas = []; // Almacenará las ventas agrupadas para referencia por índice
-    let ventaSeleccionada = null; // Almacenará la venta seleccionada actualmente
+    window.appState = {
+      todasLasVentas: [],
+      clientesCache: {},
+      reporteActual: 'por-dia',
+      ventasAgrupadas: [],
+      ventaSeleccionada: null
+    };
 
     // ===============================
     // 📥 Cargar datos
@@ -40,24 +42,21 @@
       try {
         document.getElementById('loading').style.display = 'flex';
         
-        // 1. Cargar clientes base para nombres
         const snapClientes = await getDocs(collection(db, "clientesBD"));
         snapClientes.forEach(doc => {
-          clientesCache[doc.id] = { id: doc.id, ...doc.data() };
+          window.appState.clientesCache[doc.id] = { id: doc.id, ...doc.data() };
         });
 
-        // 2. Cargar TODAS las facturas (compras por cliente)
-        todasLasVentas = [];
+        window.appState.todasLasVentas = [];
         const snapFacturas = await getDocs(collection(db, "facturas"));
         
         for (const docSnap of snapFacturas.docs) {
           const clienteId = docSnap.id;
-          const cliente = clientesCache[clienteId] || { nombre: 'Cliente #' + clienteId.slice(0,5), telefono: '' };
+          const cliente = window.appState.clientesCache[clienteId] || { nombre: 'Cliente #' + clienteId.slice(0,5), telefono: '' };
           const data = docSnap.data();
           const compras = data.compras || [];
           
           compras.forEach(compra => {
-            // Normalizar estructura de compra
             const productos = compra.productos || [];
             const fecha = compra.fecha ? new Date(compra.fecha) : null;
             const monto = Number(compra.total ?? (compra.monto - (compra.descuento || 0)));
@@ -65,7 +64,7 @@
             const saldo = Math.max(0, monto - pagado);
             
             productos.forEach(producto => {
-              todasLasVentas.push({
+              window.appState.todasLasVentas.push({
                 clienteId,
                 clienteNombre: cliente.nombre || 'Sin nombre',
                 clienteTelefono: cliente.telefono || '',
@@ -114,7 +113,7 @@
     // 📊 Renderizar reporte actual
     // ===============================
     function renderizarReporte() {
-      if (reporteActual === 'por-dia') {
+      if (window.appState.reporteActual === 'por-dia') {
         renderizarReportePorDia();
       } else {
         renderizarReportePorProducto();
@@ -129,8 +128,7 @@
       const fechaDesde = document.getElementById('fecha-desde').value;
       const fechaHasta = document.getElementById('fecha-hasta').value;
       
-      // Filtrar por rango de fechas
-      let ventasFiltradas = [...todasLasVentas];
+      let ventasFiltradas = [...window.appState.todasLasVentas];
       if (fechaDesde) {
         ventasFiltradas = ventasFiltradas.filter(v => v.fecha >= fechaDesde);
       }
@@ -138,7 +136,6 @@
         ventasFiltradas = ventasFiltradas.filter(v => v.fecha <= fechaHasta);
       }
       
-      // Agrupar por cliente y fecha
       const agrupado = {};
       ventasFiltradas.forEach(venta => {
         const clave = `${venta.clienteId}|${venta.fecha}`;
@@ -167,14 +164,12 @@
         agrupado[clave].montoTotal += venta.subtotal;
       });
       
-      // Convertir a array y ordenar (fecha descendente + cliente)
-      ventasAgrupadas = Object.values(agrupado)
+      window.appState.ventasAgrupadas = Object.values(agrupado)
         .sort((a, b) => {
           if (b.fecha !== a.fecha) return b.fecha.localeCompare(a.fecha);
           return a.clienteNombre.localeCompare(b.clienteNombre);
         });
       
-      // Renderizar tabla
       let html = `
         <table class="tabla-reporte">
           <thead>
@@ -194,7 +189,7 @@
           <tbody>
       `;
       
-      ventasAgrupadas.forEach((venta, index) => {
+      window.appState.ventasAgrupadas.forEach((venta, index) => {
         const productosTxt = venta.productos
           .map(p => `${p.nombre} (${p.cantidad})`)
           .join(', ');
@@ -216,7 +211,7 @@
               <button class="btn-pdf" onclick="descargarPDF(${index})" title="Descargar Factura PDF">
                 📄 PDF
               </button>
-              <button class="btn-whatsapp" onclick="prepararEnvioWhatsApp(${index})" title="Enviar por WhatsApp">
+              <button class="btn-whatsapp" onclick="abrirModalWhatsApp(${index})" title="Enviar por WhatsApp">
                 💬 WhatsApp
               </button>
             </td>
@@ -224,7 +219,7 @@
         `;
       });
       
-      if (ventasAgrupadas.length === 0) {
+      if (window.appState.ventasAgrupadas.length === 0) {
         html += `
           <tr>
             <td colspan="10" class="sin-datos">
@@ -258,8 +253,7 @@
       const fechaDesde = document.getElementById('fecha-desde').value;
       const fechaHasta = document.getElementById('fecha-hasta').value;
       
-      // Filtrar por rango de fechas
-      let ventasFiltradas = [...todasLasVentas];
+      let ventasFiltradas = [...window.appState.todasLasVentas];
       if (fechaDesde) {
         ventasFiltradas = ventasFiltradas.filter(v => v.fecha >= fechaDesde);
       }
@@ -267,7 +261,6 @@
         ventasFiltradas = ventasFiltradas.filter(v => v.fecha <= fechaHasta);
       }
       
-      // Agrupar por producto
       const agrupado = {};
       ventasFiltradas.forEach(venta => {
         if (!agrupado[venta.producto]) {
@@ -279,7 +272,6 @@
           };
         }
         
-        // Buscar si ya existe el cliente en este producto
         const clienteExistente = agrupado[venta.producto].clientes.find(
           c => c.clienteId === venta.clienteId && c.fecha === venta.fecha
         );
@@ -302,11 +294,9 @@
         agrupado[venta.producto].montoTotal += venta.subtotal;
       });
       
-      // Convertir a array y ordenar (monto descendente)
-      ventasAgrupadas = Object.values(agrupado)
+      window.appState.ventasAgrupadas = Object.values(agrupado)
         .sort((a, b) => b.montoTotal - a.montoTotal);
       
-      // Renderizar tabla
       let html = `
         <table class="tabla-reporte">
           <thead>
@@ -320,7 +310,7 @@
           <tbody>
       `;
       
-      ventasAgrupadas.forEach(producto => {
+      window.appState.ventasAgrupadas.forEach(producto => {
         const detalleClientes = producto.clientes
           .map(c => `${c.clienteNombre} (${c.cantidad})`)
           .join(', ');
@@ -335,7 +325,7 @@
         `;
       });
       
-      if (ventasAgrupadas.length === 0) {
+      if (window.appState.ventasAgrupadas.length === 0) {
         html += `
           <tr>
             <td colspan="4" class="sin-datos">
@@ -368,7 +358,7 @@
       const fechaDesde = document.getElementById('fecha-desde').value;
       const fechaHasta = document.getElementById('fecha-hasta').value;
       
-      let ventasFiltradas = [...todasLasVentas];
+      let ventasFiltradas = [...window.appState.todasLasVentas];
       if (fechaDesde) {
         ventasFiltradas = ventasFiltradas.filter(v => v.fecha >= fechaDesde);
       }
@@ -411,13 +401,13 @@
       
       if (tipo === 'por-dia') {
         csv = 'Fecha,Cliente,Teléfono,Productos,Cantidad Total,Monto Total,Pagado,Saldo,Método Pago\n';
-        todasLasVentas.forEach(venta => {
+        window.appState.todasLasVentas.forEach(venta => {
           csv += `"${venta.fecha}","${venta.clienteNombre}","${venta.clienteTelefono}","${venta.producto}",${venta.cantidad},${venta.subtotal},${venta.pagadoTotalFactura},${venta.saldoTotalFactura},"${venta.metodoPago}"\n`;
         });
       } else {
         csv = 'Producto,Clientes,Cantidad Total,Monto Total\n';
         const agrupado = {};
-        todasLasVentas.forEach(venta => {
+        window.appState.todasLasVentas.forEach(venta => {
           if (!agrupado[venta.producto]) {
             agrupado[venta.producto] = { cantidad: 0, monto: 0, clientes: new Set() };
           }
@@ -440,108 +430,120 @@
     }
 
     // ===============================
-    // 📄 Descargar PDF de factura
+    // 📄 Generar HTML de Factura
     // ===============================
-    async function descargarPDF(indice) {
+    function generarHTMLFactura(venta) {
+      return `
+        <div style="font-family: Arial, sans-serif; padding: 30px; max-width: 800px; margin: 0 auto; background: white;">
+          <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #8B7500; padding-bottom: 20px;">
+            <h1 style="color: #8B7500; margin: 0; font-size: 2.5rem;">ESENTIA</h1>
+            <p style="color: #666; margin: 10px 0 0 0; font-size: 1.2rem; font-weight: bold;">Factura de Venta</p>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+            <div>
+              <p style="margin: 8px 0; font-size: 0.95rem;"><strong style="color: #8B7500;">CLIENTE:</strong></p>
+              <p style="margin: 5px 0; font-size: 1.1rem; font-weight: bold;">${venta.clienteNombre}</p>
+              <p style="margin: 5px 0; color: #666;"><strong>Teléfono:</strong> ${venta.clienteTelefono}</p>
+            </div>
+            <div style="text-align: right;">
+              <p style="margin: 8px 0; font-size: 0.95rem;"><strong style="color: #8B7500;">INFORMACIÓN:</strong></p>
+              <p style="margin: 5px 0;"><strong>Fecha:</strong> ${venta.fecha}</p>
+              <p style="margin: 5px 0;"><strong>Factura #:</strong> ${venta.compraId}</p>
+            </div>
+          </div>
+          
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+            <thead>
+              <tr style="background-color: #8B7500; color: white;">
+                <th style="padding: 12px; text-align: left; border: 1px solid #8B7500; font-weight: bold;">Producto</th>
+                <th style="padding: 12px; text-align: center; border: 1px solid #8B7500; font-weight: bold;">Cantidad</th>
+                <th style="padding: 12px; text-align: right; border: 1px solid #8B7500; font-weight: bold;">Precio Unit.</th>
+                <th style="padding: 12px; text-align: right; border: 1px solid #8B7500; font-weight: bold;">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${venta.productos.map(p => `
+                <tr style="border-bottom: 1px solid #ddd;">
+                  <td style="padding: 12px; text-align: left;">${p.nombre}</td>
+                  <td style="padding: 12px; text-align: center;">${p.cantidad}</td>
+                  <td style="padding: 12px; text-align: right;">₡${p.precioUnitario.toLocaleString('es-CR')}</td>
+                  <td style="padding: 12px; text-align: right; font-weight: bold;">₡${p.subtotal.toLocaleString('es-CR')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div style="display: grid; grid-template-columns: 1fr 350px; gap: 20px;">
+            <div></div>
+            <div style="border-top: 3px solid #8B7500; padding-top: 15px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem;">
+                <span>Subtotal:</span>
+                <span style="font-weight: bold;">₡${venta.montoTotal.toLocaleString('es-CR')}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem;">
+                <span>Pagado:</span>
+                <span style="font-weight: bold;">₡${venta.pagadoTotal.toLocaleString('es-CR')}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid #ddd; font-size: 1.1rem;">
+                <strong>Saldo:</strong>
+                <strong style="color: ${venta.saldoTotal > 0 ? '#c62828' : '#2e7d32'};">₡${venta.saldoTotal.toLocaleString('es-CR')}</strong>
+              </div>
+            </div>
+          </div>
+          
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666; font-size: 0.9rem;">
+            <p style="margin: 5px 0;"><strong>Método de Pago:</strong> ${venta.metodoPago}</p>
+            <p style="margin: 10px 0 0 0; font-style: italic;">Gracias por su compra. Esentia</p>
+          </div>
+        </div>
+      `;
+    }
+
+    // ===============================
+    // 📄 Descargar PDF
+    // ===============================
+    function descargarPDF(indice) {
       try {
-        const venta = ventasAgrupadas[indice];
+        const venta = window.appState.ventasAgrupadas[indice];
         
         if (!venta) {
           alert("❌ No se encontró la factura");
           return;
         }
         
-        // Mostrar indicador de carga
         const btnPDF = event.target.closest('.btn-pdf');
         const textoOriginal = btnPDF.innerHTML;
         btnPDF.innerHTML = '⏳ Generando...';
         btnPDF.disabled = true;
         
-        // Crear elemento HTML para el PDF
+        // Crear contenedor temporal
         const element = document.createElement('div');
-        element.innerHTML = `
-          <div style="font-family: Arial, sans-serif; padding: 30px; max-width: 800px; margin: 0 auto; background: white;">
-            <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #8B7500; padding-bottom: 20px;">
-              <h1 style="color: #8B7500; margin: 0; font-size: 2.5rem;">ESENTIA</h1>
-              <p style="color: #666; margin: 10px 0 0 0; font-size: 1.2rem; font-weight: bold;">Factura de Venta</p>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
-              <div>
-                <p style="margin: 8px 0; font-size: 0.95rem;"><strong style="color: #8B7500;">CLIENTE:</strong></p>
-                <p style="margin: 5px 0; font-size: 1.1rem; font-weight: bold;">${venta.clienteNombre}</p>
-                <p style="margin: 5px 0; color: #666;"><strong>Teléfono:</strong> ${venta.clienteTelefono}</p>
-              </div>
-              <div style="text-align: right;">
-                <p style="margin: 8px 0; font-size: 0.95rem;"><strong style="color: #8B7500;">INFORMACIÓN:</strong></p>
-                <p style="margin: 5px 0;"><strong>Fecha:</strong> ${venta.fecha}</p>
-                <p style="margin: 5px 0;"><strong>Factura #:</strong> ${venta.compraId}</p>
-              </div>
-            </div>
-            
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
-              <thead>
-                <tr style="background-color: #8B7500; color: white;">
-                  <th style="padding: 12px; text-align: left; border: 1px solid #8B7500; font-weight: bold;">Producto</th>
-                  <th style="padding: 12px; text-align: center; border: 1px solid #8B7500; font-weight: bold;">Cantidad</th>
-                  <th style="padding: 12px; text-align: right; border: 1px solid #8B7500; font-weight: bold;">Precio Unit.</th>
-                  <th style="padding: 12px; text-align: right; border: 1px solid #8B7500; font-weight: bold;">Subtotal</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${venta.productos.map(p => `
-                  <tr style="border-bottom: 1px solid #ddd;">
-                    <td style="padding: 12px; text-align: left;">${p.nombre}</td>
-                    <td style="padding: 12px; text-align: center;">${p.cantidad}</td>
-                    <td style="padding: 12px; text-align: right;">₡${p.precioUnitario.toLocaleString('es-CR')}</td>
-                    <td style="padding: 12px; text-align: right; font-weight: bold;">₡${p.subtotal.toLocaleString('es-CR')}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-            
-            <div style="display: grid; grid-template-columns: 1fr 350px; gap: 20px;">
-              <div></div>
-              <div style="border-top: 3px solid #8B7500; padding-top: 15px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem;">
-                  <span>Subtotal:</span>
-                  <span style="font-weight: bold;">₡${venta.montoTotal.toLocaleString('es-CR')}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem;">
-                  <span>Pagado:</span>
-                  <span style="font-weight: bold;">₡${venta.pagadoTotal.toLocaleString('es-CR')}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid #ddd; font-size: 1.1rem;">
-                  <strong>Saldo:</strong>
-                  <strong style="color: ${venta.saldoTotal > 0 ? '#c62828' : '#2e7d32'};">₡${venta.saldoTotal.toLocaleString('es-CR')}</strong>
-                </div>
-              </div>
-            </div>
-            
-            <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666; font-size: 0.9rem;">
-              <p style="margin: 5px 0;"><strong>Método de Pago:</strong> ${venta.metodoPago}</p>
-              <p style="margin: 10px 0 0 0; font-style: italic;">Gracias por su compra. Esentia</p>
-            </div>
-          </div>
-        `;
+        element.innerHTML = generarHTMLFactura(venta);
+        
+        // Agregar al DOM temporalmente (necesario para html2pdf)
+        element.style.position = 'absolute';
+        element.style.left = '-9999px';
+        document.body.appendChild(element);
         
         // Configurar opciones de html2pdf
         const opt = {
           margin: 10,
           filename: `Factura-${venta.clienteNombre.replace(/\s+/g, '_')}-${venta.fecha}.pdf`,
           image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
+          html2canvas: { scale: 2, useCORS: true, logging: false },
           jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
         };
         
         // Generar y descargar PDF
-        html2pdf().set(opt).from(element).save();
-        
-        // Restaurar botón
-        setTimeout(() => {
+        html2pdf().set(opt).from(element).save().then(() => {
+          // Remover elemento temporal
+          document.body.removeChild(element);
+          
+          // Restaurar botón
           btnPDF.innerHTML = textoOriginal;
           btnPDF.disabled = false;
-        }, 1500);
+        });
         
       } catch (error) {
         console.error("Error descargando PDF:", error);
@@ -555,11 +557,11 @@
     }
 
     // ===============================
-    // 💬 Preparar envío por WhatsApp
+    // 💬 Abrir Modal WhatsApp
     // ===============================
-    function prepararEnvioWhatsApp(indice) {
+    function abrirModalWhatsApp(indice) {
       try {
-        const venta = ventasAgrupadas[indice];
+        const venta = window.appState.ventasAgrupadas[indice];
         
         if (!venta) {
           alert("❌ No se encontró la factura");
@@ -571,15 +573,12 @@
           return;
         }
         
-        // Guardar la venta seleccionada en memoria global
-        ventaSeleccionada = venta;
-        
-        // Mostrar modal de confirmación
+        window.appState.ventaSeleccionada = venta;
         mostrarModalEnvioWhatsApp(venta);
         
       } catch (error) {
-        console.error("Error preparando envío:", error);
-        alert("❌ Error al preparar el envío: " + error.message);
+        console.error("Error abriendo modal:", error);
+        alert("❌ Error al abrir el modal: " + error.message);
       }
     }
 
@@ -649,7 +648,7 @@
               📥 Descargar PDF
             </button>
             <button class="btn-cancelar" onclick="cerrarModalWhatsApp()">Cancelar</button>
-            <button class="btn-enviar-whatsapp" onclick="enviarFacturaWhatsApp()">
+            <button class="btn-enviar-whatsapp" onclick="enviarPorWhatsApp()">
               ✓ Enviar por WhatsApp
             </button>
           </div>
@@ -663,106 +662,47 @@
     // ===============================
     // 📥 Descargar PDF desde Modal
     // ===============================
-    async function descargarPDFDesdeModal() {
+    function descargarPDFDesdeModal() {
       try {
-        const venta = ventaSeleccionada;
+        const venta = window.appState.ventaSeleccionada;
         
         if (!venta) {
           alert("❌ No se encontró la factura");
           return;
         }
         
-        // Mostrar indicador de carga
         const btnDescargar = event.target.closest('.btn-descargar-modal');
         const textoOriginal = btnDescargar.innerHTML;
         btnDescargar.innerHTML = '⏳ Generando...';
         btnDescargar.disabled = true;
         
-        // Crear elemento HTML para el PDF
+        // Crear contenedor temporal
         const element = document.createElement('div');
-        element.innerHTML = `
-          <div style="font-family: Arial, sans-serif; padding: 30px; max-width: 800px; margin: 0 auto; background: white;">
-            <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #8B7500; padding-bottom: 20px;">
-              <h1 style="color: #8B7500; margin: 0; font-size: 2.5rem;">ESENTIA</h1>
-              <p style="color: #666; margin: 10px 0 0 0; font-size: 1.2rem; font-weight: bold;">Factura de Venta</p>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
-              <div>
-                <p style="margin: 8px 0; font-size: 0.95rem;"><strong style="color: #8B7500;">CLIENTE:</strong></p>
-                <p style="margin: 5px 0; font-size: 1.1rem; font-weight: bold;">${venta.clienteNombre}</p>
-                <p style="margin: 5px 0; color: #666;"><strong>Teléfono:</strong> ${venta.clienteTelefono}</p>
-              </div>
-              <div style="text-align: right;">
-                <p style="margin: 8px 0; font-size: 0.95rem;"><strong style="color: #8B7500;">INFORMACIÓN:</strong></p>
-                <p style="margin: 5px 0;"><strong>Fecha:</strong> ${venta.fecha}</p>
-                <p style="margin: 5px 0;"><strong>Factura #:</strong> ${venta.compraId}</p>
-              </div>
-            </div>
-            
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
-              <thead>
-                <tr style="background-color: #8B7500; color: white;">
-                  <th style="padding: 12px; text-align: left; border: 1px solid #8B7500; font-weight: bold;">Producto</th>
-                  <th style="padding: 12px; text-align: center; border: 1px solid #8B7500; font-weight: bold;">Cantidad</th>
-                  <th style="padding: 12px; text-align: right; border: 1px solid #8B7500; font-weight: bold;">Precio Unit.</th>
-                  <th style="padding: 12px; text-align: right; border: 1px solid #8B7500; font-weight: bold;">Subtotal</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${venta.productos.map(p => `
-                  <tr style="border-bottom: 1px solid #ddd;">
-                    <td style="padding: 12px; text-align: left;">${p.nombre}</td>
-                    <td style="padding: 12px; text-align: center;">${p.cantidad}</td>
-                    <td style="padding: 12px; text-align: right;">₡${p.precioUnitario.toLocaleString('es-CR')}</td>
-                    <td style="padding: 12px; text-align: right; font-weight: bold;">₡${p.subtotal.toLocaleString('es-CR')}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-            
-            <div style="display: grid; grid-template-columns: 1fr 350px; gap: 20px;">
-              <div></div>
-              <div style="border-top: 3px solid #8B7500; padding-top: 15px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem;">
-                  <span>Subtotal:</span>
-                  <span style="font-weight: bold;">₡${venta.montoTotal.toLocaleString('es-CR')}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem;">
-                  <span>Pagado:</span>
-                  <span style="font-weight: bold;">₡${venta.pagadoTotal.toLocaleString('es-CR')}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid #ddd; font-size: 1.1rem;">
-                  <strong>Saldo:</strong>
-                  <strong style="color: ${venta.saldoTotal > 0 ? '#c62828' : '#2e7d32'};">₡${venta.saldoTotal.toLocaleString('es-CR')}</strong>
-                </div>
-              </div>
-            </div>
-            
-            <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666; font-size: 0.9rem;">
-              <p style="margin: 5px 0;"><strong>Método de Pago:</strong> ${venta.metodoPago}</p>
-              <p style="margin: 10px 0 0 0; font-style: italic;">Gracias por su compra. Esentia</p>
-            </div>
-          </div>
-        `;
+        element.innerHTML = generarHTMLFactura(venta);
+        
+        // Agregar al DOM temporalmente
+        element.style.position = 'absolute';
+        element.style.left = '-9999px';
+        document.body.appendChild(element);
         
         // Configurar opciones de html2pdf
         const opt = {
           margin: 10,
           filename: `Factura-${venta.clienteNombre.replace(/\s+/g, '_')}-${venta.fecha}.pdf`,
           image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
+          html2canvas: { scale: 2, useCORS: true, logging: false },
           jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
         };
         
         // Generar y descargar PDF
-        html2pdf().set(opt).from(element).save();
-        
-        // Restaurar botón
-        setTimeout(() => {
+        html2pdf().set(opt).from(element).save().then(() => {
+          // Remover elemento temporal
+          document.body.removeChild(element);
+          
+          // Restaurar botón
           btnDescargar.innerHTML = textoOriginal;
           btnDescargar.disabled = false;
-        }, 1500);
+        });
         
       } catch (error) {
         console.error("Error descargando PDF:", error);
@@ -783,25 +723,22 @@
       if (modal) {
         modal.remove();
       }
-      ventaSeleccionada = null;
+      window.appState.ventaSeleccionada = null;
     }
 
     // ===============================
-    // 📤 Enviar factura por WhatsApp
+    // 📤 Enviar por WhatsApp
     // ===============================
-    function enviarFacturaWhatsApp() {
+    function enviarPorWhatsApp() {
       try {
-        const venta = ventaSeleccionada;
+        const venta = window.appState.ventaSeleccionada;
         
         if (!venta) {
           alert("❌ No se encontró la factura");
           return;
         }
         
-        // Limpiar formato de teléfono (solo números)
         const telefonoLimpio = venta.clienteTelefono.replace(/\D/g, '');
-        
-        // Construir mensaje
         const incluirMensaje = document.getElementById('incluir-mensaje').checked;
         const mensajePersonalizado = document.getElementById('mensaje-personalizado').value;
         
@@ -815,13 +752,9 @@
         
         mensaje += `Gracias por tu compra en Esentia.`;
         
-        // Crear URL de WhatsApp
         const urlWhatsApp = `https://wa.me/${telefonoLimpio}?text=${encodeURIComponent(mensaje)}`;
-        
-        // Abrir WhatsApp
         window.open(urlWhatsApp, '_blank');
         
-        // Cerrar modal después de abrir WhatsApp
         setTimeout(() => {
           cerrarModalWhatsApp();
         }, 500);
@@ -836,16 +769,15 @@
     // 🎯 Inicialización
     // ===============================
     document.addEventListener('DOMContentLoaded', () => {
-      // Configurar botones de navegación
       document.getElementById('btn-por-dia').addEventListener('click', () => {
-        reporteActual = 'por-dia';
+        window.appState.reporteActual = 'por-dia';
         document.querySelectorAll('.btn-reporte').forEach(btn => btn.classList.remove('activo'));
         document.getElementById('btn-por-dia').classList.add('activo');
         renderizarReporte();
       });
       
       document.getElementById('btn-por-producto').addEventListener('click', () => {
-        reporteActual = 'por-producto';
+        window.appState.reporteActual = 'por-producto';
         document.querySelectorAll('.btn-reporte').forEach(btn => btn.classList.remove('activo'));
         document.getElementById('btn-por-producto').classList.add('activo');
         renderizarReporte();
@@ -853,7 +785,6 @@
       
       document.getElementById('btn-recargar').addEventListener('click', filtrarPorFechas);
       
-      // Establecer fechas por defecto (últimos 30 días)
       const hoy = new Date();
       const hace30 = new Date();
       hace30.setDate(hoy.getDate() - 30);
@@ -861,7 +792,6 @@
       document.getElementById('fecha-desde').valueAsDate = hace30;
       document.getElementById('fecha-hasta').valueAsDate = hoy;
       
-      // Cargar datos iniciales
       cargarDatosReporte();
     });
 
@@ -870,16 +800,16 @@
     window.filtrarPorFechas = filtrarPorFechas;
     window.cargarDatosReporte = cargarDatosReporte;
     window.descargarPDF = descargarPDF;
-    window.prepararEnvioWhatsApp = prepararEnvioWhatsApp;
+    window.abrirModalWhatsApp = abrirModalWhatsApp;
     window.cerrarModalWhatsApp = cerrarModalWhatsApp;
-    window.enviarFacturaWhatsApp = enviarFacturaWhatsApp;
+    window.enviarPorWhatsApp = enviarPorWhatsApp;
     window.descargarPDFDesdeModal = descargarPDFDesdeModal;
   </script>
   <style>
     :root {
-      --color-primary: #8B7500; /* Dorado oscuro */
-      --color-secondary: #2E7D32; /* Verde esmeralda */
-      --color-light: #FFF9E6; /* Dorado claro */
+      --color-primary: #8B7500;
+      --color-secondary: #2E7D32;
+      --color-light: #FFF9E6;
       --color-bg: rgba(255, 255, 255, 0.85);
       --shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
     }
@@ -906,7 +836,6 @@
     header {
       text-align: center;
       margin-bottom: 25px;
-      position: relative;
     }
     
     h1 {
@@ -923,7 +852,6 @@
       margin-bottom: 20px;
     }
     
-    /* Glassmorphism Panel */
     .panel {
       background: var(--color-bg);
       backdrop-filter: blur(10px);
@@ -935,7 +863,6 @@
       border: 1px solid rgba(139, 117, 0, 0.2);
     }
     
-    /* Controles de fecha */
     .controles-fechas {
       display: flex;
       gap: 20px;
@@ -996,7 +923,6 @@
       box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
     }
     
-    /* Navegación de reportes */
     .navegacion-reportes {
       display: flex;
       gap: 15px;
@@ -1030,7 +956,6 @@
       transform: translateY(-2px);
     }
     
-    /* Tabla de reportes */
     .tabla-reporte {
       width: 100%;
       border-collapse: collapse;
@@ -1100,7 +1025,6 @@
       background: rgba(245, 245, 245, 0.6);
     }
     
-    /* Acciones en fila */
     .acciones-fila {
       text-align: center;
       display: flex;
@@ -1157,7 +1081,6 @@
       box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
     }
     
-    /* Resumen */
     .resumen-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -1193,7 +1116,6 @@
       color: var(--color-primary);
     }
     
-    /* Botones exportar */
     .acciones-exportar {
       display: flex;
       gap: 15px;
@@ -1247,7 +1169,6 @@
       box-shadow: 0 6px 20px rgba(123, 31, 162, 0.4);
     }
     
-    /* Modal WhatsApp */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -1370,11 +1291,6 @@
       height: 18px;
     }
     
-    .opciones-envio textarea {
-      margin-top: 10px;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    
     .instrucciones {
       background: rgba(25, 118, 210, 0.05);
       padding: 15px;
@@ -1468,7 +1384,6 @@
       box-shadow: 0 6px 16px rgba(37, 211, 102, 0.4);
     }
     
-    /* Loading */
     #loading {
       position: fixed;
       top: 0;
@@ -1505,7 +1420,6 @@
       font-weight: 600;
     }
     
-    /* Impresión */
     @media print {
       body {
         background: white;
@@ -1516,8 +1430,7 @@
       .navegacion-reportes,
       .acciones-exportar,
       .btn-recargar,
-      .acciones-fila,
-      header h1::after {
+      .acciones-fila {
         display: none !important;
       }
       
@@ -1640,7 +1553,6 @@
       </div>
 
       <div class="resumen-container" id="resumen-ventas">
-        <!-- Se llenará dinámicamente -->
         <div class="resumen-item">
           <span class="etiqueta">Cargando...</span>
           <span class="valor">—</span>
@@ -1662,12 +1574,5 @@
       </div>
     </div>
   </div>
-
-  <script>
-    // Para navegadores que no soportan módulos en inline script
-    if (typeof cargarDatosReporte === 'undefined') {
-      console.log("Esperando inicialización de Firebase...");
-    }
-  </script>
 </body>
 </html>
