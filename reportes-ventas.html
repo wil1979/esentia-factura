@@ -30,7 +30,8 @@
     let todasLasVentas = [];
     let clientesCache = {};
     let reporteActual = 'por-dia'; // 'por-dia' | 'por-producto'
-    let facturaActualParaEnvio = null;
+    let ventasAgrupadas = []; // Almacenará las ventas agrupadas para referencia por índice
+    let ventaSeleccionada = null; // Almacenará la venta seleccionada actualmente
 
     // ===============================
     // 📥 Cargar datos
@@ -167,7 +168,7 @@
       });
       
       // Convertir a array y ordenar (fecha descendente + cliente)
-      const reporte = Object.values(agrupado)
+      ventasAgrupadas = Object.values(agrupado)
         .sort((a, b) => {
           if (b.fecha !== a.fecha) return b.fecha.localeCompare(a.fecha);
           return a.clienteNombre.localeCompare(b.clienteNombre);
@@ -193,12 +194,10 @@
           <tbody>
       `;
       
-      reporte.forEach((venta, index) => {
+      ventasAgrupadas.forEach((venta, index) => {
         const productosTxt = venta.productos
           .map(p => `${p.nombre} (${p.cantidad})`)
           .join(', ');
-        
-        const ventaJSON = JSON.stringify(venta).replace(/"/g, '&quot;');
         
         html += `
           <tr>
@@ -214,10 +213,10 @@
             </td>
             <td>${venta.metodoPago}</td>
             <td class="acciones-fila">
-              <button class="btn-pdf" onclick="descargarPDF('${ventaJSON}')" title="Descargar Factura PDF">
+              <button class="btn-pdf" onclick="descargarPDF(${index})" title="Descargar Factura PDF">
                 📄 PDF
               </button>
-              <button class="btn-whatsapp" onclick="prepararEnvioWhatsApp('${ventaJSON}')" title="Enviar por WhatsApp">
+              <button class="btn-whatsapp" onclick="prepararEnvioWhatsApp(${index})" title="Enviar por WhatsApp">
                 💬 WhatsApp
               </button>
             </td>
@@ -225,7 +224,7 @@
         `;
       });
       
-      if (reporte.length === 0) {
+      if (ventasAgrupadas.length === 0) {
         html += `
           <tr>
             <td colspan="10" class="sin-datos">
@@ -304,7 +303,7 @@
       });
       
       // Convertir a array y ordenar (monto descendente)
-      const reporte = Object.values(agrupado)
+      ventasAgrupadas = Object.values(agrupado)
         .sort((a, b) => b.montoTotal - a.montoTotal);
       
       // Renderizar tabla
@@ -321,7 +320,7 @@
           <tbody>
       `;
       
-      reporte.forEach(producto => {
+      ventasAgrupadas.forEach(producto => {
         const detalleClientes = producto.clientes
           .map(c => `${c.clienteNombre} (${c.cantidad})`)
           .join(', ');
@@ -336,7 +335,7 @@
         `;
       });
       
-      if (reporte.length === 0) {
+      if (ventasAgrupadas.length === 0) {
         html += `
           <tr>
             <td colspan="4" class="sin-datos">
@@ -443,9 +442,14 @@
     // ===============================
     // 📄 Descargar PDF de factura
     // ===============================
-    async function descargarPDF(ventaJSON) {
+    async function descargarPDF(indice) {
       try {
-        const venta = JSON.parse(ventaJSON);
+        const venta = ventasAgrupadas[indice];
+        
+        if (!venta) {
+          alert("❌ No se encontró la factura");
+          return;
+        }
         
         // Mostrar indicador de carga
         const btnPDF = event.target.closest('.btn-pdf');
@@ -543,22 +547,32 @@
         console.error("Error descargando PDF:", error);
         alert("❌ Error al descargar el PDF: " + error.message);
         const btnPDF = event.target.closest('.btn-pdf');
-        btnPDF.innerHTML = '📄 PDF';
-        btnPDF.disabled = false;
+        if (btnPDF) {
+          btnPDF.innerHTML = '📄 PDF';
+          btnPDF.disabled = false;
+        }
       }
     }
 
     // ===============================
     // 💬 Preparar envío por WhatsApp
     // ===============================
-    function prepararEnvioWhatsApp(ventaJSON) {
+    function prepararEnvioWhatsApp(indice) {
       try {
-        const venta = JSON.parse(ventaJSON);
+        const venta = ventasAgrupadas[indice];
+        
+        if (!venta) {
+          alert("❌ No se encontró la factura");
+          return;
+        }
         
         if (!venta.clienteTelefono) {
           alert("❌ El cliente no tiene número de teléfono registrado");
           return;
         }
+        
+        // Guardar la venta seleccionada en memoria global
+        ventaSeleccionada = venta;
         
         // Mostrar modal de confirmación
         mostrarModalEnvioWhatsApp(venta);
@@ -631,11 +645,11 @@
           </div>
           
           <div class="modal-footer">
-            <button class="btn-descargar-modal" onclick="descargarPDFDesdeModal('${ventaJSON}')">
+            <button class="btn-descargar-modal" onclick="descargarPDFDesdeModal()">
               📥 Descargar PDF
             </button>
             <button class="btn-cancelar" onclick="cerrarModalWhatsApp()">Cancelar</button>
-            <button class="btn-enviar-whatsapp" onclick="enviarFacturaWhatsApp('${venta.clienteTelefono}', '${venta.compraId}', '${venta.clienteNombre}')">
+            <button class="btn-enviar-whatsapp" onclick="enviarFacturaWhatsApp()">
               ✓ Enviar por WhatsApp
             </button>
           </div>
@@ -649,9 +663,14 @@
     // ===============================
     // 📥 Descargar PDF desde Modal
     // ===============================
-    async function descargarPDFDesdeModal(ventaJSON) {
+    async function descargarPDFDesdeModal() {
       try {
-        const venta = JSON.parse(ventaJSON);
+        const venta = ventaSeleccionada;
+        
+        if (!venta) {
+          alert("❌ No se encontró la factura");
+          return;
+        }
         
         // Mostrar indicador de carga
         const btnDescargar = event.target.closest('.btn-descargar-modal');
@@ -749,8 +768,10 @@
         console.error("Error descargando PDF:", error);
         alert("❌ Error al descargar el PDF: " + error.message);
         const btnDescargar = event.target.closest('.btn-descargar-modal');
-        btnDescargar.innerHTML = '📥 Descargar PDF';
-        btnDescargar.disabled = false;
+        if (btnDescargar) {
+          btnDescargar.innerHTML = '📥 Descargar PDF';
+          btnDescargar.disabled = false;
+        }
       }
     }
 
@@ -762,22 +783,30 @@
       if (modal) {
         modal.remove();
       }
+      ventaSeleccionada = null;
     }
 
     // ===============================
     // 📤 Enviar factura por WhatsApp
     // ===============================
-    function enviarFacturaWhatsApp(telefono, facturaId, nombreCliente) {
+    function enviarFacturaWhatsApp() {
       try {
+        const venta = ventaSeleccionada;
+        
+        if (!venta) {
+          alert("❌ No se encontró la factura");
+          return;
+        }
+        
         // Limpiar formato de teléfono (solo números)
-        const telefonoLimpio = telefono.replace(/\D/g, '');
+        const telefonoLimpio = venta.clienteTelefono.replace(/\D/g, '');
         
         // Construir mensaje
         const incluirMensaje = document.getElementById('incluir-mensaje').checked;
         const mensajePersonalizado = document.getElementById('mensaje-personalizado').value;
         
-        let mensaje = `Hola ${nombreCliente},\n\n`;
-        mensaje += `Te compartimos tu factura #${facturaId}.\n\n`;
+        let mensaje = `Hola ${venta.clienteNombre},\n\n`;
+        mensaje += `Te compartimos tu factura #${venta.compraId}.\n\n`;
         mensaje += `Por favor, revisa el archivo PDF adjunto con los detalles de tu compra.\n\n`;
         
         if (incluirMensaje && mensajePersonalizado) {
