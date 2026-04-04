@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>📊 Reportes de Ventas - Esentia</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- jsPDF y jsPDF-AutoTable para generación confiable de PDFs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   <script type="module">
     // 🔥 Firebase Config
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
@@ -430,74 +432,152 @@
     }
 
     // ===============================
-    // 📄 Generar HTML de Factura
+    // 📄 Generar PDF con jsPDF
     // ===============================
-    function generarHTMLFactura(venta) {
-      return `
-        <div style="font-family: Arial, sans-serif; padding: 30px; max-width: 800px; margin: 0 auto; background: white;">
-          <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #8B7500; padding-bottom: 20px;">
-            <h1 style="color: #8B7500; margin: 0; font-size: 2.5rem;">ESENTIA</h1>
-            <p style="color: #666; margin: 10px 0 0 0; font-size: 1.2rem; font-weight: bold;">Factura de Venta</p>
-          </div>
-          
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
-            <div>
-              <p style="margin: 8px 0; font-size: 0.95rem;"><strong style="color: #8B7500;">CLIENTE:</strong></p>
-              <p style="margin: 5px 0; font-size: 1.1rem; font-weight: bold;">${venta.clienteNombre}</p>
-              <p style="margin: 5px 0; color: #666;"><strong>Teléfono:</strong> ${venta.clienteTelefono}</p>
-            </div>
-            <div style="text-align: right;">
-              <p style="margin: 8px 0; font-size: 0.95rem;"><strong style="color: #8B7500;">INFORMACIÓN:</strong></p>
-              <p style="margin: 5px 0;"><strong>Fecha:</strong> ${venta.fecha}</p>
-              <p style="margin: 5px 0;"><strong>Factura #:</strong> ${venta.compraId}</p>
-            </div>
-          </div>
-          
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
-            <thead>
-              <tr style="background-color: #8B7500; color: white;">
-                <th style="padding: 12px; text-align: left; border: 1px solid #8B7500; font-weight: bold;">Producto</th>
-                <th style="padding: 12px; text-align: center; border: 1px solid #8B7500; font-weight: bold;">Cantidad</th>
-                <th style="padding: 12px; text-align: right; border: 1px solid #8B7500; font-weight: bold;">Precio Unit.</th>
-                <th style="padding: 12px; text-align: right; border: 1px solid #8B7500; font-weight: bold;">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${venta.productos.map(p => `
-                <tr style="border-bottom: 1px solid #ddd;">
-                  <td style="padding: 12px; text-align: left;">${p.nombre}</td>
-                  <td style="padding: 12px; text-align: center;">${p.cantidad}</td>
-                  <td style="padding: 12px; text-align: right;">₡${p.precioUnitario.toLocaleString('es-CR')}</td>
-                  <td style="padding: 12px; text-align: right; font-weight: bold;">₡${p.subtotal.toLocaleString('es-CR')}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-          
-          <div style="display: grid; grid-template-columns: 1fr 350px; gap: 20px;">
-            <div></div>
-            <div style="border-top: 3px solid #8B7500; padding-top: 15px;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem;">
-                <span>Subtotal:</span>
-                <span style="font-weight: bold;">₡${venta.montoTotal.toLocaleString('es-CR')}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem;">
-                <span>Pagado:</span>
-                <span style="font-weight: bold;">₡${venta.pagadoTotal.toLocaleString('es-CR')}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid #ddd; font-size: 1.1rem;">
-                <strong>Saldo:</strong>
-                <strong style="color: ${venta.saldoTotal > 0 ? '#c62828' : '#2e7d32'};">₡${venta.saldoTotal.toLocaleString('es-CR')}</strong>
-              </div>
-            </div>
-          </div>
-          
-          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666; font-size: 0.9rem;">
-            <p style="margin: 5px 0;"><strong>Método de Pago:</strong> ${venta.metodoPago}</p>
-            <p style="margin: 10px 0 0 0; font-style: italic;">Gracias por su compra. Esentia</p>
-          </div>
-        </div>
-      `;
+    function generarPDFFactura(venta) {
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        // Colores
+        const colorPrimario = [139, 117, 0];
+        const colorTexto = [51, 51, 51];
+        const colorGris = [102, 102, 102];
+        
+        let yPos = 15;
+        
+        // ===== ENCABEZADO =====
+        doc.setFillColor(...colorPrimario);
+        doc.rect(10, 8, 190, 20, 'F');
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(28);
+        doc.setFont(undefined, 'bold');
+        doc.text('ESENTIA', 20, 25);
+        
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'normal');
+        doc.text('Factura de Venta', 20, 32);
+        
+        yPos = 35;
+        
+        // ===== INFORMACIÓN GENERAL =====
+        doc.setTextColor(...colorTexto);
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'bold');
+        doc.text('CLIENTE:', 15, yPos);
+        doc.setFont(undefined, 'normal');
+        doc.text(venta.clienteNombre, 40, yPos);
+        
+        doc.setFont(undefined, 'bold');
+        doc.text('TELÉFONO:', 130, yPos);
+        doc.setFont(undefined, 'normal');
+        doc.text(venta.clienteTelefono, 160, yPos);
+        
+        yPos += 8;
+        doc.setFont(undefined, 'bold');
+        doc.text('FACTURA #:', 15, yPos);
+        doc.setFont(undefined, 'normal');
+        doc.text(venta.compraId, 40, yPos);
+        
+        doc.setFont(undefined, 'bold');
+        doc.text('FECHA:', 130, yPos);
+        doc.setFont(undefined, 'normal');
+        doc.text(venta.fecha, 160, yPos);
+        
+        yPos += 12;
+        
+        // ===== TABLA DE PRODUCTOS =====
+        const tableData = venta.productos.map(p => [
+          p.nombre,
+          p.cantidad.toString(),
+          '₡' + p.precioUnitario.toLocaleString('es-CR'),
+          '₡' + p.subtotal.toLocaleString('es-CR')
+        ]);
+        
+        doc.autoTable({
+          head: [['Producto', 'Cantidad', 'Precio Unit.', 'Subtotal']],
+          body: tableData,
+          startY: yPos,
+          theme: 'grid',
+          headStyles: {
+            fillColor: colorPrimario,
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 10,
+            padding: 5
+          },
+          bodyStyles: {
+            textColor: colorTexto,
+            fontSize: 9,
+            padding: 4
+          },
+          columnStyles: {
+            0: { halign: 'left' },
+            1: { halign: 'center' },
+            2: { halign: 'right' },
+            3: { halign: 'right' }
+          },
+          margin: { left: 15, right: 15 }
+        });
+        
+        yPos = doc.lastAutoTable.finalY + 15;
+        
+        // ===== TOTALES =====
+        const totalWidth = 60;
+        const xTotal = 210 - 15 - totalWidth;
+        
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...colorGris);
+        
+        doc.text('Subtotal:', xTotal, yPos);
+        doc.setTextColor(...colorTexto);
+        doc.setFont(undefined, 'bold');
+        doc.text('₡' + venta.montoTotal.toLocaleString('es-CR'), 210 - 15, yPos, { align: 'right' });
+        
+        yPos += 8;
+        doc.setTextColor(...colorGris);
+        doc.setFont(undefined, 'normal');
+        doc.text('Pagado:', xTotal, yPos);
+        doc.setTextColor(...colorTexto);
+        doc.setFont(undefined, 'bold');
+        doc.text('₡' + venta.pagadoTotal.toLocaleString('es-CR'), 210 - 15, yPos, { align: 'right' });
+        
+        yPos += 10;
+        
+        // Línea separadora
+        doc.setDrawColor(...colorPrimario);
+        doc.setLineWidth(1);
+        doc.line(xTotal - 5, yPos - 2, 210 - 15, yPos - 2);
+        
+        yPos += 5;
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        const colorSaldo = venta.saldoTotal > 0 ? [198, 40, 40] : [46, 125, 50];
+        doc.setTextColor(...colorSaldo);
+        doc.text('SALDO:', xTotal, yPos);
+        doc.text('₡' + venta.saldoTotal.toLocaleString('es-CR'), 210 - 15, yPos, { align: 'right' });
+        
+        yPos += 15;
+        
+        // ===== INFORMACIÓN ADICIONAL =====
+        doc.setFontSize(9);
+        doc.setTextColor(...colorGris);
+        doc.setFont(undefined, 'normal');
+        doc.text('Método de Pago: ' + venta.metodoPago, 15, yPos);
+        
+        yPos = 270;
+        doc.setFontSize(8);
+        doc.setTextColor([200, 200, 200]);
+        doc.text('Gracias por su compra en Esentia', 105, yPos, { align: 'center' });
+        
+        return doc;
+        
+      } catch (error) {
+        console.error("Error generando PDF:", error);
+        throw error;
+      }
     }
 
     // ===============================
@@ -517,33 +597,16 @@
         btnPDF.innerHTML = '⏳ Generando...';
         btnPDF.disabled = true;
         
-        // Crear contenedor temporal
-        const element = document.createElement('div');
-        element.innerHTML = generarHTMLFactura(venta);
+        // Generar PDF
+        const doc = generarPDFFactura(venta);
         
-        // Agregar al DOM temporalmente (necesario para html2pdf)
-        element.style.position = 'absolute';
-        element.style.left = '-9999px';
-        document.body.appendChild(element);
+        // Descargar
+        const nombreArchivo = `Factura-${venta.clienteNombre.replace(/\s+/g, '_')}-${venta.fecha}.pdf`;
+        doc.save(nombreArchivo);
         
-        // Configurar opciones de html2pdf
-        const opt = {
-          margin: 10,
-          filename: `Factura-${venta.clienteNombre.replace(/\s+/g, '_')}-${venta.fecha}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, logging: false },
-          jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
-        };
-        
-        // Generar y descargar PDF
-        html2pdf().set(opt).from(element).save().then(() => {
-          // Remover elemento temporal
-          document.body.removeChild(element);
-          
-          // Restaurar botón
-          btnPDF.innerHTML = textoOriginal;
-          btnPDF.disabled = false;
-        });
+        // Restaurar botón
+        btnPDF.innerHTML = textoOriginal;
+        btnPDF.disabled = false;
         
       } catch (error) {
         console.error("Error descargando PDF:", error);
@@ -676,33 +739,16 @@
         btnDescargar.innerHTML = '⏳ Generando...';
         btnDescargar.disabled = true;
         
-        // Crear contenedor temporal
-        const element = document.createElement('div');
-        element.innerHTML = generarHTMLFactura(venta);
+        // Generar PDF
+        const doc = generarPDFFactura(venta);
         
-        // Agregar al DOM temporalmente
-        element.style.position = 'absolute';
-        element.style.left = '-9999px';
-        document.body.appendChild(element);
+        // Descargar
+        const nombreArchivo = `Factura-${venta.clienteNombre.replace(/\s+/g, '_')}-${venta.fecha}.pdf`;
+        doc.save(nombreArchivo);
         
-        // Configurar opciones de html2pdf
-        const opt = {
-          margin: 10,
-          filename: `Factura-${venta.clienteNombre.replace(/\s+/g, '_')}-${venta.fecha}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, logging: false },
-          jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
-        };
-        
-        // Generar y descargar PDF
-        html2pdf().set(opt).from(element).save().then(() => {
-          // Remover elemento temporal
-          document.body.removeChild(element);
-          
-          // Restaurar botón
-          btnDescargar.innerHTML = textoOriginal;
-          btnDescargar.disabled = false;
-        });
+        // Restaurar botón
+        btnDescargar.innerHTML = textoOriginal;
+        btnDescargar.disabled = false;
         
       } catch (error) {
         console.error("Error descargando PDF:", error);
