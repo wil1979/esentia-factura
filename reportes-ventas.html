@@ -460,53 +460,61 @@
         let yPos = 15;
         
         // ===== ENCABEZADO =====
-        doc.setFillColor(...colorPrimario);
+        doc.setFillColor(colorPrimario[0], colorPrimario[1], colorPrimario[2]);
         doc.rect(10, 8, 190, 20, 'F');
         
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(28);
-        doc.setFont(undefined, 'bold');
+        doc.setFont('helvetica', 'bold');
         doc.text('ESENTIA', 20, 22);
         
         doc.setFontSize(11);
-        doc.setFont(undefined, 'normal');
+        doc.setFont('helvetica', 'normal');
         doc.text('Factura de Venta', 20, 29);
         
         yPos = 35;
         
         // ===== INFORMACIÓN GENERAL =====
-        doc.setTextColor(...colorTexto);
+        doc.setTextColor(colorTexto[0], colorTexto[1], colorTexto[2]);
         doc.setFontSize(10);
-        doc.setFont(undefined, 'bold');
+        doc.setFont('helvetica', 'bold');
         doc.text('CLIENTE:', 15, yPos);
-        doc.setFont(undefined, 'normal');
-        doc.text(venta.clienteNombre || 'Sin nombre', 40, yPos);
+        doc.setFont('helvetica', 'normal');
+        const clienteNombre = String(venta.clienteNombre || 'Sin nombre').substring(0, 40);
+        doc.text(clienteNombre, 40, yPos);
         
-        doc.setFont(undefined, 'bold');
+        doc.setFont('helvetica', 'bold');
         doc.text('TELÉFONO:', 130, yPos);
-        doc.setFont(undefined, 'normal');
-        doc.text(venta.clienteTelefono || 'N/A', 160, yPos);
+        doc.setFont('helvetica', 'normal');
+        doc.text(String(venta.clienteTelefono || 'N/A'), 160, yPos);
         
         yPos += 8;
-        doc.setFont(undefined, 'bold');
+        doc.setFont('helvetica', 'bold');
         doc.text('FACTURA #:', 15, yPos);
-        doc.setFont(undefined, 'normal');
-        doc.text(venta.compraId || 'N/A', 40, yPos);
+        doc.setFont('helvetica', 'normal');
+        doc.text(String(venta.compraId || 'N/A'), 40, yPos);
         
-        doc.setFont(undefined, 'bold');
+        doc.setFont('helvetica', 'bold');
         doc.text('FECHA:', 130, yPos);
-        doc.setFont(undefined, 'normal');
-        doc.text(venta.fecha || 'N/A', 160, yPos);
+        doc.setFont('helvetica', 'normal');
+        doc.text(String(venta.fecha || 'N/A'), 160, yPos);
         
         yPos += 12;
         
         // ===== TABLA DE PRODUCTOS =====
-        const tableData = (venta.productos || []).map(p => [
-          p.nombre || 'Producto',
-          (p.cantidad || 1).toString(),
-          '₡' + (p.precioUnitario || 0).toLocaleString('es-CR'),
-          '₡' + (p.subtotal || 0).toLocaleString('es-CR')
-        ]);
+        const productos = venta.productos || [];
+        const tableData = productos.map(p => {
+          const nombre = String(p.nombre || 'Producto').substring(0, 35);
+          const cantidad = String(p.cantidad || 1);
+          const precio = '₡' + Number(p.precioUnitario || 0).toLocaleString('es-CR');
+          const subtotal = '₡' + Number(p.subtotal || 0).toLocaleString('es-CR');
+          return [nombre, cantidad, precio, subtotal];
+        });
+        
+        // Si no hay productos, agregar una fila vacía
+        if (tableData.length === 0) {
+          tableData.push(['Sin productos', '0', '₡0', '₡0']);
+        }
         
         // Verificar que autoTable esté disponible
         if (typeof doc.autoTable !== 'function') {
@@ -531,10 +539,10 @@
             padding: 4
           },
           columnStyles: {
-            0: { halign: 'left' },
-            1: { halign: 'center' },
-            2: { halign: 'right' },
-            3: { halign: 'right' }
+            0: { halign: 'left', cellWidth: 80 },
+            1: { halign: 'center', cellWidth: 25 },
+            2: { halign: 'right', cellWidth: 35 },
+            3: { halign: 'right', cellWidth: 35 }
           },
           margin: { left: 15, right: 15 }
         });
@@ -546,64 +554,67 @@
         const xTotal = 210 - 15 - totalWidth;
         
         doc.setFontSize(10);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...colorGris);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(colorGris[0], colorGris[1], colorGris[2]);
         
         doc.text('Subtotal:', xTotal, yPos);
-        doc.setTextColor(...colorTexto);
-        doc.setFont(undefined, 'bold');
-        doc.text('₡' + (venta.montoTotal || 0).toLocaleString('es-CR'), 210 - 15, yPos, { align: 'right' });
+        doc.setTextColor(colorTexto[0], colorTexto[1], colorTexto[2]);
+        doc.setFont('helvetica', 'bold');
+        const montoTotal = Number(venta.montoTotal || 0);
+        doc.text('₡' + montoTotal.toLocaleString('es-CR'), 195, yPos, { align: 'right' });
         
         yPos += 8;
-        doc.setTextColor(...colorGris);
-        doc.setFont(undefined, 'normal');
+        doc.setTextColor(colorGris[0], colorGris[1], colorGris[2]);
+        doc.setFont('helvetica', 'normal');
         doc.text('Pagado:', xTotal, yPos);
-        doc.setTextColor(...colorTexto);
-        doc.setFont(undefined, 'bold');
-        doc.text('₡' + (venta.pagadoTotal || 0).toLocaleString('es-CR'), 210 - 15, yPos, { align: 'right' });
+        doc.setTextColor(colorTexto[0], colorTexto[1], colorTexto[2]);
+        doc.setFont('helvetica', 'bold');
+        const pagadoTotal = Number(venta.pagadoTotal || 0);
+        doc.text('₡' + pagadoTotal.toLocaleString('es-CR'), 195, yPos, { align: 'right' });
         
         yPos += 10;
         
         // Línea separadora
-        doc.setDrawColor(...colorPrimario);
-        doc.setLineWidth(1);
-        doc.line(xTotal - 5, yPos - 2, 210 - 15, yPos - 2);
+        doc.setDrawColor(colorPrimario[0], colorPrimario[1], colorPrimario[2]);
+        doc.setLineWidth(0.5);
+        doc.line(xTotal - 5, yPos - 2, 195, yPos - 2);
         
         yPos += 5;
         doc.setFontSize(11);
-        doc.setFont(undefined, 'bold');
-        const colorSaldo = (venta.saldoTotal || 0) > 0 ? [198, 40, 40] : [46, 125, 50];
-        doc.setTextColor(...colorSaldo);
+        doc.setFont('helvetica', 'bold');
+        const saldoTotal = Number(venta.saldoTotal || 0);
+        const colorSaldo = saldoTotal > 0 ? [198, 40, 40] : [46, 125, 50];
+        doc.setTextColor(colorSaldo[0], colorSaldo[1], colorSaldo[2]);
         doc.text('SALDO:', xTotal, yPos);
-        doc.text('₡' + (venta.saldoTotal || 0).toLocaleString('es-CR'), 210 - 15, yPos, { align: 'right' });
+        doc.text('₡' + saldoTotal.toLocaleString('es-CR'), 195, yPos, { align: 'right' });
         
         yPos += 15;
         
         // ===== PUNTOS DE LEALTAD =====
-        const puntos = calcularPuntos(venta.montoTotal || 0);
+        const puntos = calcularPuntos(montoTotal);
         doc.setFillColor(255, 249, 230);
-        doc.roundedRect(15, yPos - 5, 180, 20, 3, 3, 'F');
-        doc.setTextColor(...colorPrimario);
+        doc.rect(15, yPos - 5, 180, 20, 'F');
+        doc.setTextColor(colorPrimario[0], colorPrimario[1], colorPrimario[2]);
         doc.setFontSize(10);
-        doc.setFont(undefined, 'bold');
-        doc.text('⭐ PUNTOS OBTENIDOS POR TU COMPRA:', 20, yPos + 3);
+        doc.setFont('helvetica', 'bold');
+        doc.text('PUNTOS OBTENIDOS POR TU COMPRA:', 20, yPos + 3);
         doc.setFontSize(12);
-        doc.text(`${puntos} punto${puntos !== 1 ? 's' : ''} Lealtad`, 20, yPos + 10);
+        doc.text(puntos + ' punto' + (puntos !== 1 ? 's' : '') + ' Lealtad', 20, yPos + 10);
         doc.setFontSize(8);
-        doc.setFont(undefined, 'normal');
+        doc.setFont('helvetica', 'normal');
         doc.text('Por cada ₡4,000 en compras = 1 punto Lealtad', 20, yPos + 15);
         
         yPos += 25;
         
         // ===== INFORMACIÓN ADICIONAL =====
         doc.setFontSize(9);
-        doc.setTextColor(...colorGris);
-        doc.setFont(undefined, 'normal');
-        doc.text('Método de Pago: ' + (venta.metodoPago || 'Pendiente'), 15, yPos);
+        doc.setTextColor(colorGris[0], colorGris[1], colorGris[2]);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Metodo de Pago: ' + String(venta.metodoPago || 'Pendiente'), 15, yPos);
         
         yPos = 270;
         doc.setFontSize(8);
-        doc.setTextColor([200, 200, 200]);
+        doc.setTextColor(150, 150, 150);
         doc.text('Gracias por su compra en Esentia', 105, yPos, { align: 'center' });
         
         return doc;
