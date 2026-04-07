@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <title>Esentia | Esencias Premium</title>
   <link rel="icon" href="https://wil1979.github.io/esentia-factura/images/logo.png" sizes="192x192" />
+  <!-- Preconnect a GitHub para faster fetch -->
+  <link rel="preconnect" href="https://wil1979.github.io">
+  <link rel="dns-prefetch" href="https://wil1979.github.io">
+
+<!-- Preload del JSON de productos -->
+<link rel="preload" href="https://wil1979.github.io/esentia-factura/productos_esentia.json" as="fetch" crossorigin>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="esentia.css">
@@ -16,8 +22,16 @@
       <div class="header-left">
         <img src="https://wil1979.github.io/esentia-factura/images/logo.png" alt="Esentia" class="logo">
         <div class="brand-text">
-          <h1>Esentia</h1>
-          <p>Esencias que transforman</p>
+            <h1 style="font-family: 'adelia', cursive;">Esentia</h1>
+            <style>
+            @font-face {
+              font-family: 'adelia';
+              src: url('https://fonts.cdnfonts.com/s/16286/ADELIA.otf') format('opentype');
+              font-weight: normal;
+              font-style: normal;
+            }
+            </style>
+          <p>Fragancias que Enamoran</p>
         </div>
       </div>
       <div class="header-right">
@@ -29,7 +43,168 @@
         <button id="btnLogin" onclick="abrirLoginRegistro()" class="btn-login">Iniciar sesión</button>
         <button id="btnAdminVelas" onclick="window.location.href='admin-velas.html'" style="display:none;">🕯️ Admin</button>
       </div>
+    <!-- Menú Admin Dropdown -->
+<div class="admin-dropdown" style="display:none;" id="adminDropdownContainer">
+    <button id="btnAdminVelas" class="btn-admin-main" onclick="toggleAdminMenu()">
+        🕯️ Admin <span class="dropdown-arrow">▼</span>
+    </button>
+    
+    <div id="adminMenu" class="admin-menu-content" style="display:none;">
+        <!-- Sección: Visitas -->
+        <div class="admin-menu-section">
+            <div class="admin-section-title">👁️ Tráfico</div>
+            <button onclick="mostrarPanelVisitasAdmin()">
+                <span class="icon">👁️</span> Ver Visitas Recientes
+            </button>
+            <button onclick="mostrarEstadisticas()">
+                <span class="icon">📊</span> Estadísticas del Sitio
+            </button>
+            
+        </div>
+        
+    
+        <!-- Sección: Pedidos -->
+        <div class="admin-menu-section">
+            <div class="admin-section-title">🛒 Pedidos</div>
+            <button onclick="verPedidosPendientes()">
+                <span class="icon">⏳</span> Pedidos Pendientes
+            </button>
+            <button onclick="verHistorialCompleto()">
+                <span class="icon">📋</span> Historial Completo
+            </button>
+        </div>
+        
+        <!-- Sección: Marketing -->
+        <div class="admin-menu-section">
+            <div class="admin-section-title">📣 Marketing</div>
+            <button onclick="cargarPromosAdmin();">
+                <span class="icon">🎁</span> Ver Códigos Promo
+            </button>
+            <button onclick="enviarNotificacionMasiva()">
+                <span class="icon">🔔</span> Notificación Masiva
+            </button>
+             <button onclick="generarCodigoPromoAuto()">➕🎁Generar Código</button>
+             <div id="listaPromos"></div>
+
+
+            
+        </div>
+
+
+        <!-- En la sección de Productos del menú admin -->
+<div class="admin-menu-section">
+     <div class="admin-section-title">📦 Facturacion</div>
+        <button onclick="abrirModalFacturacion()" class="btn-submit">
+        🧾 Facturar rápido
+       </button>
+
+    <div class="admin-section-title">📦 Productos</div>
+      <button onclick="gestionarInventario()">
+        <span class="icon">📋</span> Gestionar Inventario
+      </button>
+    <button onclick="verProductosAgotados()">
+        <span class="icon">⚠️</span> Productos Agotados
+    </button>
+    <button onclick="exportarInventario()">
+        <span class="icon">📥</span> Exportar Inventario
+    </button>
+    <button onclick="importarInventario()">
+        <span class="icon">📤</span> Importar CSV
+    </button>
+</div>
+        
+        <!-- Sección: Sistema -->
+        <div class="admin-menu-section">
+            <div class="admin-section-title">⚙️ Sistema</div>
+            <button onclick="limpiarCache()">
+                <span class="icon">🧹</span> Limpiar Caché
+            </button>
+            <button onclick="verLogsErrores()">
+                <span class="icon">🐛</span> Ver Logs de Errores
+            </button>
+            <button onclick="cerrarSesionAdmin()" class="btn-danger">
+                <span class="icon">🚪</span> Salir de Admin
+            </button>
+        </div>
     </div>
+</div>
+
+<!-- Panel de Visitas (ya existe, solo asegurarse que esté) -->
+<div id="panelVisitas" class="hidden">
+  <div class="dashboard-container">
+
+    <div class="dashboard-header">
+      <h2>📊 Dashboard de Visitas</h2>
+      <button onclick="cerrarPanelVisitas()">✖</button>
+    </div>
+
+    <div class="dashboard-cards">
+      <div class="card">
+        <h3 id="totalVisitas">0</h3>
+        <p>Total Visitas</p>
+      </div>
+
+      <div class="card">
+        <h3 id="visitantesUnicos">0</h3>
+        <p>Visitantes Únicos</p>
+      </div>
+
+      <div class="card">
+        <h3 id="visitasHoy">0</h3>
+        <p>Visitas Hoy</p>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div>
+        <h3>🏆 Top Visitantes</h3>
+        <div id="topVisitantes"></div>
+      </div>
+
+      <div>
+        <h3>📅 Visitas por Día</h3>
+        <div id="visitasPorDia"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- Panel de Estadísticas (NUEVO) -->
+<div id="panelEstadisticas" class="admin-panel hidden">
+    <div class="admin-panel-header">
+        <h3>📊 Estadísticas del Sitio</h3>
+        <button onclick="cerrarPanelEstadisticas()" class="btn-close">×</button>
+    </div>
+    <div id="contenidoEstadisticas" class="admin-panel-content"></div>
+</div>
+      
+    </div>
+<!-- Barra de búsqueda y filtros 
+<input type="text" id="searchInput" placeholder="🔍 Buscar esencias, beneficios..." />
+<button id="btnFiltros" type="button">🎛️ Filtros</button>
+<button id="btnComparador" type="button" style="display:none;">⚖️ (<span id="countComparador">0</span>)</button>
+
+ Panel de filtros (inicialmente oculto) -->
+<div id="panelFiltros" style="display:none;">
+    <select id="filtroTipo">
+        <option value="">Todos los tipos</option>
+        <!-- Se llena dinámicamente -->
+    </select>
+    <input type="number" id="filtroPrecioMin" placeholder="Precio mín">
+    <input type="number" id="filtroPrecioMax" placeholder="Precio máx">
+    <button type="button">Aplicar</button>
+    <button type="button">Limpiar</button>
+</div>
+
+<!-- Modal Comparador -->
+<div id="modalComparador" class="modal-carrito" style="display:none;">
+    <div class="modal-content">
+        <span class="close" onclick="cerrarComparador()">&times;</span>
+        <h2>Comparar Productos</h2>
+        <div id="comparadorGrid" class="grid-comparador"></div>
+    </div>
+</div>
+
   </header>
 
   <!-- Hero -->
@@ -42,10 +217,14 @@
 
   <!-- Main Content -->
   <main class="contenedor">
-    <div id="loader">
-      <div class="loader-spinner"></div>
-      <div>Cargando esencias...</div>
-    </div>
+    <!-- Reemplaza el loader actual por: -->
+<div id="loader">
+    <div class="loader-spinner"></div>
+    <p>Cargando esencias...</p>
+    <p style="font-size:0.8rem;color:#666;margin-top:10px;">
+        ⏳ Esto solo toma unos segundos
+    </p>
+</div>
     <div id="productos-hogar"></div>
 
     <div class="acciones-container">
@@ -82,11 +261,21 @@
     </div>
   </div>
 
+  
+
   <!-- Modal Login -->
   <div id="modalLoginRegistro" class="modal-carrito">
     <div class="modal-contenido">
       <button onclick="cerrarModalLogin()" class="modal-cerrar">×</button>
-      <h2 class="modal-titulo">Bienvenido a Esentia</h2>
+      <h2 class="modal-titulo" style="font-family: 'adelia', cursive;">Bienvenido a Esentia</h2>
+      <style>
+        @font-face {
+          font-family: 'adelia';
+          src: url('https://fonts.cdnfonts.com/s/16286/ADELIA.otf') format('opentype');
+          font-weight: normal;
+          font-style: normal;
+        }
+      </style>
       <div class="tabs-container">
         <button class="btn-tab activo" onclick="cambiarTab('login')">Iniciar sesión</button>
         <button class="btn-tab" onclick="cambiarTab('registro')">Registrarse</button>
@@ -171,8 +360,11 @@
     <h3>👁️ Visitas Recientes</h3>
     <div id="listaVisitas"></div>
   </div>
-  <button id="btnToggleVisitas" class="btn-toggle-visitas hidden" onclick="togglePanelVisitas()" title="Ver visitas">👁️</button>
-
+  <!-- ✅ NUEVO: Botón para ver visitas (solo visible para admin) -->
+<button id="btnVerVisitas" style="display:none;" onclick="togglePanelVisitas()" 
+        title="Ver visitas recientes">
+  👁️ Visitas
+</button>
   <!-- Admin Sheet -->
   <div id="adminSheetOverlay" class="admin-sheet-overlay" onclick="cerrarAdminSheet(event)">
     <div class="admin-sheet" onclick="event.stopPropagation()">
@@ -187,8 +379,10 @@
 
   <!-- Firebase -->
   <script type="module">
+
+    
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, getDoc, doc, setDoc, query, where, addDoc, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import {  getFirestore, collection, getDocs, getDoc, doc, arrayUnion, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy  } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
@@ -203,29 +397,69 @@
     const db = getFirestore(app);
     const stockCollection = collection(db, "stock");
 
-    window.db = db;
-    window.firebaseUtils = { query, where, collection, getDocs, getDoc, doc, setDoc, addDoc, serverTimestamp, orderBy };
+   window.db = db;
+   window.getDocs = getDocs;
+   window.collection = collection;
+   window.firebaseUtils = { query, where, collection, arrayUnion, getDocs, getDoc, doc, deleteDoc, setDoc, addDoc,updateDoc, serverTimestamp, orderBy };
 
     let inventario = {};
+    // 🔥 INVENTARIO GLOBAL
+    window.inventario = {};
     window.inventario = inventario;
 
-    async function cargarInventario() {
-      try {
-        const snapshot = await getDocs(stockCollection);
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          inventario[data.nombre] = data.cantidad;
-        });
-        if (typeof actualizarLealtadAlAutenticar === "function") actualizarLealtadAlAutenticar();
-        if (typeof intentarRenderizar === "function" && window.catalogoListo) intentarRenderizar();
-      } catch (error) {
-        console.error("Error cargando inventario:", error);
-      }
-    }
-
-    document.addEventListener("DOMContentLoaded", cargarInventario);
   </script>
 
-  <script src="esentia.js"></script>
+
+ <!-- 1. Cargar el núcleo (Lógica base, Firebase, Auth) -->
+<script src="esentia.js"></script>
+
+<!-- 2. Cargar el módulo de mejoras (Search, UI, Filtros) -->
+<script src="esentia-mejorado.js"></script>
+
+<!-- 3. Cargar el puente de integración (Ver paso 2) -->
+<script src="esentia-integracion.js"></script>
+
+<div id="modalFacturacion" class="modal-carrito" style="display:none;">
+  <div class="modal-contenido modal-grande">
+
+    <button onclick="cerrarModalFacturacion()" class="modal-cerrar">×</button>
+
+    <h2>🧾 Facturación</h2>
+
+    <!-- 👤 Cliente -->
+    <h3>Cliente</h3>
+    <input type="text" id="buscarClienteFact" placeholder="Buscar cliente...">
+    <div id="listaClientesFact"></div>
+
+    <!-- 🛒 Productos -->
+    <h3>Productos</h3>
+    <div id="listaProductosFact"></div>
+
+    <!-- 💸 Descuento -->
+    <h3>Descuento</h3>
+    <input type="number" id="descuentoFact" placeholder="₡0" value="0">
+
+    <!-- 💰 Totales -->
+    <div id="resumenFacturacion">
+      <p>Subtotal: ₡<span id="subtotalFact">0</span></p>
+      <p>Descuento: ₡<span id="descuentoMostrado">0</span></p>
+      <h3>Total: ₡<span id="totalFact">0</span></h3>
+    </div>
+
+    <!-- ⚙️ Método -->
+    <select id="metodoPagoFact">
+      <option>Efectivo</option>
+      <option>SINPE</option>
+      <option>Credito</option>
+    </select>
+
+    <!-- 🚀 Acción -->
+    <button onclick="confirmarFacturacion()" class="btn-submit">
+      ✅ Confirmar Factura
+    </button>
+
+  </div>
+</div>
+</div>
 </body>
 </html>

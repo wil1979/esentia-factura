@@ -1,8 +1,8 @@
 :root {
-  --primary: #6c4ba3;
-  --primary-light: #8b6bb4;
-  --primary-dark: #5a3d8a;
-  --accent: #d4af37;
+  --primary: #0e2c40;
+  --primary-light: #1a4a5a;
+  --primary-dark: #14bd8d;
+  --accent: #efb810;
   --accent-light: #e5c158;
   --bg-light: #faf9ff;
   --bg-card: rgba(255, 255, 255, 0.95);
@@ -44,7 +44,7 @@ body {
 }
 
 .header-content {
-  max-width: 1400px;
+  max-width: 1900px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
@@ -54,8 +54,8 @@ body {
 .header-left { display: flex; align-items: center; gap: 1rem; }
 
 .logo {
-  height: 50px;
-  width: 50px;
+  height: 90px;
+  width: 90px;
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid var(--accent);
@@ -123,7 +123,7 @@ body {
 .btn-login:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4); }
 
 #btnAdminVelas {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+  background: linear-gradient(135deg, #031d16 0%, #097768 100%);
   color: white;
   border: none;
   padding: 10px 18px;
@@ -132,7 +132,7 @@ body {
   font-weight: 600;
   font-size: 0.9rem;
   transition: all 0.3s;
-  box-shadow: 0 4px 15px rgba(238, 90, 90, 0.3);
+  box-shadow: 0 4px 15px rgba(34, 228, 99, 0.3);
 }
 
 #btnAdminVelas:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(238, 90, 90, 0.4); }
@@ -816,6 +816,26 @@ body {
 
 .admin-sheet-btn-secondary:hover { background: rgba(108, 75, 163, 0.2); }
 
+.admin-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.admin-tabs button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: #2c2c3e;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.admin-tab.hidden {
+  display: none;
+}
+
 /* ================================
    ESTILOS DEL HISTORIAL DE COMPRAS
    ================================ */
@@ -1104,9 +1124,570 @@ body {
   .modal-contenido { padding: 1.5rem; }
   .modal-titulo { font-size: 1.5rem; }
 }
+/* Barra de herramientas */
+.barra-herramientas {
+    display: flex; gap: 10px; padding: 10px; background: #f9f9f9;
+    justify-content: center; flex-wrap: wrap;
+}
+#searchInput {
+    padding: 8px; border: 1px solid #ddd; border-radius: 20px; width: 300px;
+}
+
+/* Panel Filtros */
+.panel-filtros {
+    background: #fff; padding: 15px; border-bottom: 1px solid #eee;
+    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+}
+
+/* Acciones rápidas en producto */
+.acciones-rapidas {
+    position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 5px;
+}
+.btn-icon {
+    background: rgba(255,255,255,0.9); border: none; border-radius: 50%;
+    width: 30px; height: 30px; cursor: pointer; font-size: 16px;
+}
+
+/* Comparador */
+.grid-comparador {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;
+    margin-top: 20px;
+}
+.card-comparacion {
+    border: 1px solid #eee; padding: 15px; border-radius: 8px; text-align: center;
+}
+
+#btnVerVisitas {
+    background: linear-gradient(135deg, #6c4ba3, #9b7ebd);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(108, 75, 163, 0.3);
+}
+
+#btnVerVisitas:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 75, 163, 0.5);
+}
+
+#panelVisitas {
+    background: transparent;
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    max-height: 400px;
+    overflow-y: auto;
+    transition: opacity 0.3s ease, transform 0.3s ease; 
+}
+
+#panelVisitas.hidden {
+    display: none;
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+}
+
+/* ============================================
+   MENÚ ADMIN DROPDOWN
+   ============================================ */
+/* ============================================
+   MENÚ ADMIN DROPDOWN (CORREGIDO)
+   ============================================ */
+.admin-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.admin-menu-content {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    min-width: 280px;
+    max-width: 320px;
+    max-height: 80vh; /* ✅ Límite de altura */
+    overflow-y: auto; /* ✅ Scroll si es muy largo */
+    z-index: 9999; /* ✅ Más alto que otros elementos */
+    animation: slideDown 0.3s ease;
+    margin-top: 8px;
+    border: 1px solid rgba(108, 75, 163, 0.1);
+}
+
+/* Scrollbar para el menú admin */
+.admin-menu-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.admin-menu-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.admin-menu-content::-webkit-scrollbar-thumb {
+    background: #6c4ba3;
+    border-radius: 3px;
+}
+
+.admin-menu-content::-webkit-scrollbar-thumb:hover {
+    background: #5a3d8a;
+}
+
+/* Asegurar que las secciones no se corten */
+.admin-menu-section {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    page-break-inside: avoid; /* ✅ Evita cortar secciones */
+}
+
+.admin-menu-section:last-child {
+    border-bottom: none;
+}
+
+/* Botones del menú */
+.admin-menu-content button {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.9rem;
+    color: #333;
+    transition: background 0.2s ease;
+    white-space: nowrap; /* ✅ Evita que el texto se rompa */
+}
+
+.admin-menu-content button:hover {
+    background: #f8f5ff;
+    color: #6c4ba3;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .admin-menu-content {
+        right: -50px; /* ✅ Ajustar posición en móviles */
+        min-width: 250px;
+        max-height: 60vh;
+    }
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.btn-close {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.btn-close:hover {
+    background: rgba(255,255,255,0.4);
+}
+
+.admin-panel-content {
+    padding: 16px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+/* Estadísticas Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #6c4ba3, #9b7ebd);
+    color: white;
+    padding: 16px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.stat-card .number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    display: block;
+}
+
+.stat-card .label {
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+.stat-card.accent {
+    background: linear-gradient(135deg, #25d366, #128c7e);
+}
+
+.stat-card.warning {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+/* ============================================
+   PANEL DE INVENTARIO ADMIN
+   ============================================ */
+#modalInventario .modal-content {
+  background: whitesmoke;
+    max-width: 900px;
+    width: 95%;
+}
+
+.inventario-stats {
+    margin-bottom: 20px;
+}
+
+.stats-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.stat-badge {
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: white;
+}
+
+.stat-total { background: linear-gradient(135deg, #6c4ba3, #9b7ebd); }
+.stat-agotado { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+.stat-bajo { background: linear-gradient(135deg, #f39c12, #e67e22); }
+.stat-normal { background: linear-gradient(135deg, #25d366, #128c7e); }
+
+.inventario-filtros {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.inventario-filtros input,
+.inventario-filtros select {
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.inventario-filtros input {
+    flex: 1;
+    min-width: 200px;
+}
+
+.inventario-grid {
+    max-height: 500px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 8px;
+}
+
+.inventario-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
+    background: whitesmoke;
+}
+
+.inventario-item:hover {
+    background: #f8f5ff;
+}
+
+.inventario-item.modificado {
+    background: #fff8e1;
+    border-left: 3px solid #f39c12;
+}
+
+.inventario-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+}
+
+.inventario-img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+.inventario-detalles {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.inventario-nombre {
+    font-weight: 600;
+    color: #333;
+}
+
+.inventario-tipo {
+    font-size: 0.8rem;
+    color: #6c4ba3;
+}
+
+.inventario-precio {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.inventario-controles {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.stock-control {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-stock {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-stock:hover {
+    background: #6c4ba3;
+    color: white;
+    border-color: #6c4ba3;
+}
+
+.stock-input {
+    width: 70px;
+    padding: 8px;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.stock-input.stock-agotado {
+    border-color: #e74c3c;
+    background: #ffeaea;
+    color: #c0392b;
+}
+
+.stock-input.stock-bajo {
+    border-color: #f39c12;
+    background: #fff8e1;
+    color: #d68910;
+}
+
+.stock-input.stock-normal {
+    border-color: #25d366;
+    background: #e8f8f0;
+    color: #128c7e;
+}
+
+.stock-estado {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.stock-estado.stock-agotado {
+    background: #ffeaea;
+    color: #c0392b;
+}
+
+.stock-estado.stock-bajo {
+    background: #fff8e1;
+    color: #d68910;
+}
+
+.stock-estado.stock-normal {
+    background: #e8f8f0;
+    color: #128c7e;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    margin-top: 20px;
+}
+
+.btn-secondary {
+    background: #95a5a6;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.btn-secondary:hover {
+    background: #7f8c8d;
+}
+/* ============================================
+   SKELETON LOADER (Para carga rápida visual)
+   ============================================ */
+.skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    padding: 2rem;
+}
+
+.skeleton-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(108, 75, 163, 0.08);
+    animation: pulse 1.5s infinite;
+}
+
+.skeleton-img {
+    height: 220px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+}
+
+.skeleton-text {
+    height: 20px;
+    margin: 1rem;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    border-radius: 4px;
+}
+
+.skeleton-text.short {
+    width: 60%;
+    height: 15px;
+    margin: 0 1rem 1rem;
+}
+
+@keyframes pulse {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+/* Animaciones Toast */
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
 /* Scrollbar general */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: rgba(108, 75, 163, 0.05); }
 ::-webkit-scrollbar-thumb { background: var(--primary-light); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+.dashboard-container {
+  background: #1e1e2f;
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-cards {
+  display: flex;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.card {
+  flex: 1;
+  background: #2c2c3e;
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+#listaPromos {
+  margin-top: 20px;
+}
+
+.promo-card {
+  background: #2c2c3e;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.promo-activa { border-left: 5px solid #2ecc71; }
+.promo-expirada { border-left: 5px solid #e74c3c; }
+
+.cliente-item {
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 5px;
+  background: rgba(0,0,0,0.05);
+}
+
+.cliente-item.activo {
+  background: #6c4ba3;
+  color: white;
+  transform: scale(1.02);
+}
