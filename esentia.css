@@ -319,21 +319,47 @@ body {
 .stock-bajo { background: rgba(240, 173, 78, 0.1); color: #f0ad4e; }
 .stock-agotado { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
 
+/* 🔥 Reemplaza tu .btn-agregar actual por esta versión */
 .btn-agregar {
-  width: 100%;
-  padding: 12px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+    width: 100%;
+    padding: 14px 12px; /* ↑ Área táctil mínima recomendada (44px) */
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    /* ✅ Optimizaciones táctiles */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    position: relative;
+    z-index: 1;
+}
+
+/* ✅ Hover SOLO en dispositivos con mouse (evita el "sticky hover" en móvil) */
+@media (hover: hover) {
+    .btn-agregar:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(108, 75, 163, 0.3);
+    }
+}
+
+.btn-agregar:active:not(:disabled) {
+    transform: scale(0.98);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.btn-agregar:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 .btn-agregar:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(108, 75, 163, 0.3); }
@@ -1322,14 +1348,6 @@ body {
     margin-bottom: 20px;
 }
 
-.stat-card {
-    background: linear-gradient(135deg, #6c4ba3, #9b7ebd);
-    color: white;
-    padding: 16px;
-    border-radius: 10px;
-    text-align: center;
-}
-
 .stat-card .number {
     font-size: 1.8rem;
     font-weight: 700;
@@ -1791,4 +1809,24 @@ body {
         opacity: 1;
         transform: translateY(0);
     }
+}
+/* ✅ Añade esto al final de tu CSS para forzar renderizado correcto en móvil */
+@media (max-width: 768px) {
+    .producto-card { 
+        will-change: auto; 
+        transform: none !important; /* Evita que el :hover desplace el layout en móvil */
+    }
+    .modal-carrito {
+        align-items: flex-end; /* Modal se ancla abajo en móvil, más fácil de tap */
+        padding: 0;
+    }
+    .modal-carrito .modal-contenido {
+        border-radius: 24px 24px 0 0;
+        max-height: 85vh;
+        animation: slideUp 0.3s ease;
+    }
+}
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
 }
