@@ -1830,3 +1830,20 @@ body {
     from { transform: translateY(100%); }
     to { transform: translateY(0); }
 }
+/* 🔥 Solución definitiva para botón táctil */
+@media (max-width: 768px) {
+    .btn-agregar {
+        touch-action: manipulation; /* Elimina delay de 300ms y zoom */
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+    }
+    /* Solo aplicar hover si el dispositivo tiene mouse real */
+    @media (hover: hover) {
+        .btn-agregar:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+    }
+    .btn-agregar:active:not(:disabled) {
+        transform: scale(0.98); /* Efecto visual al tocar */
+    }
+}

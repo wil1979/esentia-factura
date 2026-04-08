@@ -649,7 +649,7 @@ function mostrarSugerencias(termino) {
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             z-index: 1000;
             max-height: 200px;
-            overflow-y: auto;
+            overflow-y: presentacion;
         `;
         searchInput.parentElement.style.position = 'relative';
         searchInput.parentElement.appendChild(box);
@@ -683,25 +683,25 @@ document.addEventListener('click', (e) => {
         sugerenciasBox.style.display = 'none';
     }
 });
+
+
 function crearCardProducto(p) {
     const precioFinal = p.precioOferta || p.precio || 3000;
     const precioOriginal = p.precioOriginal;
     const stock = window.inventario[normalizarNombre(p.nombre)] ?? 0;
-    
     const card = document.createElement("div");
     card.className = p.precioOferta ? "producto-card oferta" : "producto-card";
     card.dataset.nombre = p.nombre;
-    
+
     let badges = "";
     if (p.esNuevo) badges += `<span class="badge badge-nuevo">Nuevo</span>`;
     badges += `<span class="badge badge-tipo">${p.tipo}</span>`;
     if (p.precioOferta) badges += `<span class="badge badge-oferta">Oferta</span>`;
-    
-    // Badge de stock bajo (visible para admin)
+
     if (stock > 0 && stock <= 5 && localStorage.getItem("adminEsentia") === "1") {
         badges += `<span class="badge" style="background:#e74c3c;color:white;">⚠️ ${stock}</span>`;
     }
-    
+
     let precioHTML = "";
     if (p.precioOferta && precioOriginal) {
         precioHTML = `<span class="precio-original">₡${precioOriginal.toLocaleString()}</span>
@@ -709,27 +709,21 @@ function crearCardProducto(p) {
     } else {
         precioHTML = `<span class="precio-normal">₡${precioFinal.toLocaleString()}</span>`;
     }
-    
-    // Indicador de stock (solo visual, no bloquea porque ya filtramos)
+
     let stockIndicator = "";
     if (stock <= 5) {
         stockIndicator = `<div class="stock-label stock-bajo">⚠️ Últimas ${stock} unidades</div>`;
     } else if (stock <= 10) {
         stockIndicator = `<div class="stock-label" style="background:rgba(240,173,78,0.1);color:#f0ad4e;">
             📦 Stock: ${stock}
-        </div>`;
+         </div>`;
     }
-    
-    const nombreEsc = p.nombre.replace(/'/g, "\\'");
-    const infoEsc = (p.info || " ").replace(/`/g, "\\`");
-    const benefEsc = (p.beneficios || " ").replace(/`/g, "\\`");
-    const usoEsc = (p.usoRecomendado || " ").replace(/`/g, "\\`");
-    
+
+    // 🔥 SIN onclick en línea (Evita errores con comillas y tildes)
     card.innerHTML = `
         <div class="producto-imagen-container">
             <div class="badges-container">${badges}</div>
-            <img src="${p.imagen}" alt="${p.nombre}" loading="lazy" 
-                 onclick="mostrarInfoProducto('${nombreEsc}', ${precioFinal}, '${p.imagen}', \`${infoEsc}\`, \`${benefEsc}\`, \`${usoEsc}\`)">
+            <img src="${p.imagen}" alt="${p.nombre}" loading="lazy" class="img-prod-clickeable">
         </div>
         <div class="producto-info">
             <h3 class="producto-nombre">${p.nombre}</h3>
@@ -738,13 +732,19 @@ function crearCardProducto(p) {
                 : ""}
             <div class="producto-precio-container">${precioHTML}</div>
             ${stockIndicator}
-            <button class="btn-agregar" 
-                    onclick="mostrarInfoProducto('${nombreEsc}', ${precioFinal}, '${p.imagen}', \`${infoEsc}\`, \`${benefEsc}\`, \`${usoEsc}\`)">
-                Ver detalles →
-            </button>
+            <button class="btn-agregar">Ver detalles →</button>
         </div>
     `;
+
+    // 🔥 Asignar eventos de forma segura
+    const abrirModal = () => mostrarInfoProducto(p, precioFinal);
     
+    card.querySelector(".img-prod-clickeable").addEventListener("click", abrirModal);
+    card.querySelector(".btn-agregar").addEventListener("click", (e) => {
+        e.stopPropagation(); // Evita doble trigger
+        abrirModal();
+    });
+
     return card;
 }
 
@@ -771,45 +771,47 @@ function capitalizar(str) {
 // MODAL PRODUCTO
 // ================================
 
-function mostrarInfoProducto(nombre, precio, imagen, info, beneficios, uso) {
-  document.getElementById("modalProductoNombre").textContent = nombre;
-  document.getElementById("modalProductoImagen").src = imagen;
-  document.getElementById("modalProductoInfo").textContent = info || "";
-  document.getElementById("modalProductoUso").innerHTML = 
-    `<strong>✨ Beneficios:</strong> ${beneficios || "No especificado"}<br><br><strong>🏠 Uso recomendado:</strong> ${uso || "No especificado"}`;
-  document.getElementById("modalProductoPrecio").textContent = `₡${precio.toLocaleString()}`;
+function mostrarInfoProducto(producto, precio) {
+    if (!producto) return;
+    
+    productoSeleccionado = producto; // ✅ Referencia directa, no busca por nombre
+    
+    document.getElementById("modalProductoNombre").textContent = producto.nombre;
+    document.getElementById("modalProductoImagen").src = producto.imagen;
+    document.getElementById("modalProductoInfo").textContent = producto.info || "";
+    document.getElementById("modalProductoUso").innerHTML =
+     `<strong>✨ Beneficios:</strong> ${producto.beneficios || "No especificado"}<br><br>
+      <strong>🏠 Uso recomendado:</strong> ${producto.usoRecomendado || "No especificado"}`;
+      
+    document.getElementById("modalProductoPrecio").textContent = `₡${precio.toLocaleString()}`;
+    
+    const selector = document.getElementById("selectorVariante");
+    selector.innerHTML = "";
+    
+    if (producto.variantes && producto.variantes.length > 0) {
+        const select = document.createElement("select");
+        select.className = "selector-variante";
+        select.id = "varianteSeleccionada";
+        const nombres = ["Auto", "Hogar / Oficina 30 ml", "Hogar / Oficina 120 ml"];
 
-  const p = productos.find(x => x.nombre === nombre);
-  productoSeleccionado = { ...p };
+        producto.variantes.forEach((v, i) => {
+          const opt = document.createElement("option");
+          opt.value = JSON.stringify({ nombre: nombres[i] || "Presentación", precio: v.precio });
+          opt.textContent = `${nombres[i] || "Presentación"} – ₡${v.precio.toLocaleString()}`;
+          if (v.precio === 3000) opt.selected = true;
+          select.appendChild(opt);
+        });
 
-  const selector = document.getElementById("selectorVariante");
-  selector.innerHTML = "";
+        select.onchange = () => {
+          const v = JSON.parse(select.value);
+          document.getElementById("modalProductoPrecio").textContent = `₡${v.precio.toLocaleString()}`;
+        };
 
-  if (p.variantes && p.variantes.length > 0) {
-    const select = document.createElement("select");
-    select.className = "selector-variante";
-    select.id = "varianteSeleccionada";
-
-    const nombres = ["Auto", "Hogar / Oficina 30 ml", "Hogar / Oficina 120 ml"];
-
-    p.variantes.forEach((v, i) => {
-      const opt = document.createElement("option");
-      opt.value = JSON.stringify({ nombre: nombres[i] || "Presentación", precio: v.precio });
-      opt.textContent = `${nombres[i] || "Presentación"} – ₡${v.precio.toLocaleString()}`;
-      if (v.precio === 3000) opt.selected = true;
-      select.appendChild(opt);
-    });
-
-    select.onchange = () => {
-      const v = JSON.parse(select.value);
-      document.getElementById("modalProductoPrecio").textContent = `₡${v.precio.toLocaleString()}`;
-    };
-
-    selector.appendChild(select);
-    setTimeout(() => select.dispatchEvent(new Event("change")), 0);
-  }
-
-  document.getElementById("modalProducto").style.display = "flex";
+        selector.appendChild(select);
+        setTimeout(() => select.dispatchEvent(new Event("change")), 0);
+    }
+    
+    document.getElementById("modalProducto").style.display = "flex";
 }
 
 function cerrarModalProducto() {
