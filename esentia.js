@@ -910,77 +910,69 @@ function eliminarDelCarrito(index) {
 }
 
 async function aplicarCodigoPremio() {
+    const input = document.getElementById("codigoPremio");
+    if (!input) {
+        console.error("❌ Input codigoPremio no existe");
+        return;
+    }
+    const codigo = input.value.trim().toUpperCase();
+    if (!codigo) {
+        mostrarToast("Ingresa un código", "#e74c3c");
+        return;
+    }
+    console.log("🎁 Código ingresado:", codigo);
 
-  const input = document.getElementById("codigoPremio");
-  if (!input) {
-    console.error("❌ Input codigoPremio no existe");
-    return;
-  }
+    // ✅ Usar el ID real del cliente o null
+    const clienteId = clienteAutenticado?.id || null;
+    let promo = null;
 
-  const codigo = input.value.trim().toUpperCase();
+    // 🔥 1. Intentar Firebase
+    try {
+        if (typeof validarPromo === "function") {
+            const resultado = await validarPromo(codigo, clienteId);
+            if (!resultado.valido) {
+                mostrarToast(resultado.mensaje || "Código inválido", "#e74c3c");
+                return;
+            }
+            // ✅ ASIGNAR EL OBJETO PROMO DEVUELTO POR FIREBASE
+            promo = resultado.promo;
+        } else {
+            console.warn("⚠️ validarPromo no existe");
+        }
+    } catch (e) {
+        console.warn("❌ Error Firebase:", e);
+    }
 
-  if (!codigo) {
-    mostrarToast("Ingresa un código", "#e74c3c");
-    return;
-  }
+    // 🔥 2. Códigos locales (fallback)
+    if (!promo) {
+        const codigos = {
+            "ESENTIA10": { tipo: "porcentaje", valor: 10 },
+            "NAVIDAD": { tipo: "monto", valor: 1500 },
+            "PREMIO1": { tipo: "monto", valor: 1000 }
+        };
+        promo = codigos[codigo];
+    }
 
-  console.log("🎁 Código ingresado:", codigo);
+    // ❌ Si no hay promo válida
+    if (!promo) {
+        mostrarToast("Código inválido", "#e74c3c");
+        return;
+    }
 
-  let promo = null;
-
-  // 🔥 1. Intentar Firebase
-  try {
-    if (typeof validarPromo === "function") {
-      const resultado = await validarPromo(codigo, "cliente123");
-
-      if (!resultado.valido) {
-  mostrarToast(resultado.mensaje || "Código inválido", "#e74c3c");
-  return;
-}
+    // 🔥 3. Calcular descuento
+    let total = carrito.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
+    if (promo.tipo === "porcentaje") {
+        descuentoAplicado = Math.round(total * (promo.valor / 100));
     } else {
-      console.warn("⚠️ validarPromo no existe");
+        descuentoAplicado = promo.valor;
     }
-  } catch (e) {
-    console.warn("❌ Error Firebase:", e);
-  }
+    
+    // ✅ Guardar ID de la promo para luego descontar usos
+    codigoAplicado = promo.id || codigo;
 
-  // 🔥 2. Códigos locales (fallback)
-  if (!promo) {
-    const codigos = {
-      "ESENTIA10": { tipo: "porcentaje", valor: 10 },
-      "NAVIDAD": { tipo: "monto", valor: 1500 },
-      "PREMIO1": { tipo: "monto", valor: 1000 }
-    };
-
-    promo = codigos[codigo];
-
-    if (promo) {
-      console.log("✅ Promo local:", promo);
-    }
-  }
-
-  // ❌ Si no hay promo
-  if (!promo) {
-    mostrarToast("Código inválido", "#e74c3c");
-    return;
-  }
-
-  // 🔥 3. Calcular total
-  let total = carrito.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
-
-  if (promo.tipo === "porcentaje") {
-    descuentoAplicado = Math.round(total * (promo.valor / 100));
-  } else {
-    descuentoAplicado = promo.valor;
-  }
-
-  codigoAplicado = codigo;
-
-  console.log("💰 Descuento aplicado:", descuentoAplicado);
-
-  renderCarrito();
-
-  mostrarToast(`🎁 Descuento aplicado -₡${descuentoAplicado.toLocaleString()}`, "#2ecc71");
+    console.log("💰 Descuento aplicado:", descuentoAplicado, "Promo:", promo);
+    renderCarrito();
+    mostrarToast(`🎁 Descuento aplicado -₡${descuentoAplicado.toLocaleString()}`, "#2ecc71");
 }
 
 async function validarUsoCliente(clienteId, promoId, limite) {
@@ -1000,21 +992,6 @@ async function validarUsoCliente(clienteId, promoId, limite) {
   const data = snap.docs[0].data();
 
   return data.vecesUsado < limite;
-}
-
-async function usarPromo(id, clienteId) {
-
-  const { doc, updateDoc } = window.firebaseUtils;
-
-  const ref = doc(window.db, "promociones", id);
-
-  try {
-    await updateDoc(ref, {
-      usosActuales: (window.increment ? window.increment(1) : 1)
-    });
-  } catch (error) {
-    console.error("Error registrando uso:", error);
-  }
 }
 
 async function validarPromo(codigo, clienteId) {
@@ -1037,7 +1014,7 @@ async function validarPromo(codigo, clienteId) {
     const data = docSnap.data();
 
     // 🔥 1. Activa
-    if (data.activa === false) {
+    if (data.activo === false) {
       return { valido: false, mensaje: "Código desactivado" };
     }
 
@@ -1749,21 +1726,22 @@ if (promo.fechaExpiracion) {
 }
 
 async function usarPromo(promoId, clienteId) {
-  const { doc, updateDoc, arrayUnion, increment } = window.firebaseUtils;
+  if (!promoId) return;
+    const { doc, updateDoc, increment, arrayUnion } = window.firebaseUtils;
+    try {
+        const ref = doc(window.db, "promociones", promoId);
+        const updates = { usosActuales: increment(1) };
+        if (clienteId) {
+            updates.clientesUsados = arrayUnion(clienteId);
+        }
+        await updateDoc(ref, updates);
+        console.log("✅ Uso de promo registrado");
+    } catch (error) {
+        console.error("❌ Error registrando uso de promo:", error);
+    }
+  }
 
-  await updateDoc(doc(window.db, "promociones", promoId), {
-    usosActuales: increment(1),
-    clientesUsados: arrayUnion(clienteId)
-  });
 
-  if (ahora > expira) {
-  await updateDoc(doc(window.db, "promociones", promo.id), {
-    activo: false
-  });
-
-  return { valido: false, mensaje: "Código expirado" };
-}
-}
 //PROMOS GENERADOR DE COIGOS FINAL
 window.crearNotificacion = async function () {
   const titulo = prompt("Título");
@@ -2074,6 +2052,7 @@ window.facturarDesdeCatalogoPRO = async function () {
   await descontarInventario(carritoLocal);
   await actualizarLealtad(clienteSeleccionado.id);
   enviarFacturaCliente(clienteSeleccionado, compra);
+  usarPromo(promoId, clienteId)
 
   carrito = [];
   renderCarrito();
@@ -2348,7 +2327,7 @@ window.generarCodigoPromoAuto = async function () {
       tipo: "porcentaje", // puedes cambiar a "fijo"
       valor: 10,
       activo: true,
-      usosMax: 2,
+      usosMax: 1,
       usosActuales: 0,
       fechaCreacion: ahora.toISOString(),
       fechaExpiracion: expiracion.toISOString(),
