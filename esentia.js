@@ -792,7 +792,7 @@ function mostrarInfoProducto(producto, precio) {
         const select = document.createElement("select");
         select.className = "selector-variante";
         select.id = "varianteSeleccionada";
-        const nombres = ["Auto", "Hogar / Oficina 30 ml", "Hogar / Oficina 120 ml"];
+        const nombres = ["Precio", "Hogar / Oficina 30 ml", "Hogar / Oficina 120 ml"];
 
         producto.variantes.forEach((v, i) => {
           const opt = document.createElement("option");
