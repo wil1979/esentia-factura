@@ -684,70 +684,147 @@ document.addEventListener('click', (e) => {
     }
 });
 
-
 function crearCardProducto(p) {
-    const precioFinal = p.precioOferta || p.precio || 3000;
+    // 🔥 1. SAFEGUARDS: Evita el crash por undefined
+    const nombre = p.nombre || "Producto sin nombre";
+    const precioBase = p.precioOferta || p.precio || 3000;
     const precioOriginal = p.precioOriginal;
-    const stock = window.inventario[normalizarNombre(p.nombre)] ?? 0;
+    const stock = window.inventario[normalizarNombre(nombre)] ?? 0;
+
     const card = document.createElement("div");
     card.className = p.precioOferta ? "producto-card oferta" : "producto-card";
-    card.dataset.nombre = p.nombre;
+    card.dataset.nombre = nombre;
 
+    // Badges
     let badges = "";
     if (p.esNuevo) badges += `<span class="badge badge-nuevo">Nuevo</span>`;
-    badges += `<span class="badge badge-tipo">${p.tipo}</span>`;
+    badges += `<span class="badge badge-tipo">${p.tipo || "General"}</span>`;
     if (p.precioOferta) badges += `<span class="badge badge-oferta">Oferta</span>`;
-
     if (stock > 0 && stock <= 5 && localStorage.getItem("adminEsentia") === "1") {
         badges += `<span class="badge" style="background:#e74c3c;color:white;">⚠️ ${stock}</span>`;
     }
 
+    // Precio
     let precioHTML = "";
     if (p.precioOferta && precioOriginal) {
         precioHTML = `<span class="precio-original">₡${precioOriginal.toLocaleString()}</span>
-                      <span class="precio-oferta">₡${precioFinal.toLocaleString()}</span>`;
+                      <span class="precio-oferta">₡${precioBase.toLocaleString()}</span>`;
     } else {
-        precioHTML = `<span class="precio-normal">₡${precioFinal.toLocaleString()}</span>`;
+        precioHTML = `<span class="precio-normal">₡${precioBase.toLocaleString()}</span>`;
     }
 
+    // Stock indicator
     let stockIndicator = "";
-    if (stock <= 5) {
-        stockIndicator = `<div class="stock-label stock-bajo">⚠️ Últimas ${stock} unidades</div>`;
-    } else if (stock <= 10) {
-        stockIndicator = `<div class="stock-label" style="background:rgba(240,173,78,0.1);color:#f0ad4e;">
-            📦 Stock: ${stock}
-         </div>`;
-    }
+    if (stock <= 5) stockIndicator = `<div class="stock-label stock-bajo">⚠️ Últimas ${stock} unidades</div>`;
+    else if (stock <= 10) stockIndicator = `<div class="stock-label" style="background:rgba(240,173,78,0.1);color:#f0ad4e;">📦 Stock: ${stock}</div>`;
 
-    // 🔥 SIN onclick en línea (Evita errores con comillas y tildes)
+    // 🔥 2. VARIANTES DINÁMICAS (Soporta 1, 2, 3, 4... o más)
+    let variantesHTML = "";
+    const variantes = p.variantes && Array.isArray(p.variantes) && p.variantes.length > 0 
+        ? p.variantes 
+        : [{ nombre: "Única", precio: precioBase }];
+
+    variantes.forEach((v) => {
+        const vNombre = v.nombre || "Estándar";
+        const vPrecio = v.precio || 0;
+        // Escapar comillas para data attributes
+        const vNombreSafe = vNombre.replace(/"/g, "&quot;");
+        
+        variantesHTML += `
+            <button class="btn-variante" 
+                    data-precio="${vPrecio}" 
+                    data-nombre="${vNombreSafe}"
+                    title="${vNombre} - ₡${vPrecio.toLocaleString()}">
+                ${vNombre}<br><small>₡${vPrecio.toLocaleString()}</small>
+            </button>
+        `;
+    });
+
+    // ID seguro para enlace externo
+    const productId = p.id || nombre.replace(/\s+/g, '-').toLowerCase().substring(0, 12);
+
     card.innerHTML = `
         <div class="producto-imagen-container">
             <div class="badges-container">${badges}</div>
-            <img src="${p.imagen}" alt="${p.nombre}" loading="lazy" class="img-prod-clickeable">
+            <img src="${p.imagen || ''}" alt="${nombre}" loading="lazy" class="img-prod-clickeable">
         </div>
         <div class="producto-info">
-            <h3 class="producto-nombre">${p.nombre}</h3>
-            ${p.calificacion ? 
-                `<div class="producto-calificacion">${"★".repeat(Math.floor(p.calificacion))}</div>` 
-                : ""}
+            <h3 class="producto-nombre">${nombre}</h3>
+            ${p.calificacion ? `<div class="producto-calificacion">${"★".repeat(Math.floor(p.calificacion))}</div>` : ""}
             <div class="producto-precio-container">${precioHTML}</div>
             ${stockIndicator}
-            <button class="btn-agregar">Ver detalles →</button>
+            
+            <!-- Contenedor de variantes (se adapta a N items) -->
+            <div class="variantes-container">${variantesHTML}</div>
+            
+            <!-- Botones de acción -->
+            <div class="producto-acciones">
+               
+                <button class="btn-externo" title="Ver en catálogo" data-id="${productId}">🔗</button>
+                <button class="btn-ver-carrito" title="Ir al carrito">🛒</button>
+            </div>
         </div>
     `;
+// <button class="btn-detalle" title="Ver detalles">👁️</button>
+    // 🔥 3. EVENTOS BINDEADOS (Sin onclick inline = sin crashes por comillas)
+    setTimeout(() => {
+        const abrirDetalle = () => mostrarInfoProducto(
+            nombre, precioBase, p.imagen || "", 
+            p.info || "", p.beneficios || "", p.usoRecomendado || ""
+        );
 
-    // 🔥 Asignar eventos de forma segura
-    const abrirModal = () => mostrarInfoProducto(p, precioFinal);
-    
-    card.querySelector(".img-prod-clickeable").addEventListener("click", abrirModal);
-    card.querySelector(".btn-agregar").addEventListener("click", (e) => {
-        e.stopPropagation(); // Evita doble trigger
-        abrirModal();
-    });
+        // Imagen y botón Detalle
+        const img = card.querySelector(".img-prod-clickeable");
+        if (img) img.addEventListener("click", (e) => { e.stopPropagation(); abrirDetalle(); });
+        
+        const btnDet = card.querySelector(".btn-detalle");
+        if (btnDet) btnDet.addEventListener("click", (e) => { e.stopPropagation(); abrirDetalle(); });
+
+        // Botones de variantes -> Agregar directo al carrito
+        card.querySelectorAll(".btn-variante").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                agregarVarianteAlCarrito(p, btn.dataset.nombre, parseInt(btn.dataset.precio, 10));
+            });
+        });
+
+        // Enlace externo
+        const btnExt = card.querySelector(".btn-externo");
+        if (btnExt) {
+            btnExt.addEventListener("click", (e) => {
+                e.stopPropagation();
+                window.open(`https://wil1979.github.io/esentia-factura/producto.html?id=${btnExt.dataset.id}`, "_blank");
+            });
+        }
+
+        // Abrir carrito
+        const btnCart = card.querySelector(".btn-ver-carrito");
+        if (btnCart) btnCart.addEventListener("click", (e) => { e.stopPropagation(); abrirModalCarrito(); });
+    }, 0);
 
     return card;
 }
 
+function agregarVarianteAlCarrito(producto, varianteNombre, variantePrecio) {
+    carrito.push({
+        id: Date.now() + Math.random(),
+        nombre: producto.nombre || "Producto",
+        imagen: producto.imagen || "",
+        variante: varianteNombre,
+        precio: variantePrecio,
+        cantidad: 1
+    });
+    guardarCarrito();
+    
+    // Feedback visual
+    mostrarToast(`✓ ${producto.nombre} (${varianteNombre}) agregado`, "#25d366");
+    
+    const btnFlotante = document.getElementById("botonCarrito");
+    if (btnFlotante) {
+        btnFlotante.style.transform = "scale(1.2)";
+        setTimeout(() => btnFlotante.style.transform = "", 300);
+    }
+}
 
 function getIconoTipo(tipo) {
   const iconos = {
@@ -822,35 +899,46 @@ function cerrarModalProducto() {
 // CARRITO
 // ================================
 
-function agregarAlCarritoDesdeModal() {
-  if (!productoSeleccionado) return;
+function agregarRapidoAlCarrito(producto) {
+    const variante = { nombre: "Hogar / Oficina 30 ml", precio: 3000 };
+    carrito.push({
+        id: Date.now(),
+        nombre: producto.nombre,
+        imagen: producto.imagen,
+        variante: variante.nombre,
+        precio: variante.precio,
+        cantidad: 1
+    });
+    guardarCarrito();
+    mostrarToast(`⚡ ${producto.nombre} (30ml) agregado`, "#25d366");
+    
+    // Efecto visual en botón flotante
+    const btnFlotante = document.getElementById("botonCarrito");
+    if (btnFlotante) {
+        btnFlotante.style.transform = "scale(1.2)";
+        setTimeout(() => btnFlotante.style.transform = "", 300);
+    }
+}
 
-  const selectVar = document.getElementById("varianteSeleccionada");
-  let variante = { nombre: "Hogar / Oficina 30 ml", precio: 3000 };
-
-  if (selectVar && selectVar.value) {
-    try {
-      variante = JSON.parse(selectVar.value);
-    } catch (e) {}
-  }
-
-  if (productoSeleccionado.variantes?.length > 0 && (!selectVar || !selectVar.value)) {
-    mostrarToast("Selecciona una presentación", "#e74c3c");
-    return;
-  }
-
-  carrito.push({
-    id: Date.now(),
-    nombre: productoSeleccionado.nombre,
-    imagen: productoSeleccionado.imagen,
-    variante: variante.nombre,
-    precio: variante.precio,
-    cantidad: 1
-  });
-
-  guardarCarrito();
-  cerrarModalProducto();
-  mostrarToast("✓ Producto agregado");
+function agregarRapidoAlCarrito(producto) {
+    const variante = { nombre: "Hogar / Oficina 30 ml", precio: 3000 };
+    carrito.push({
+        id: Date.now(),
+        nombre: producto.nombre,
+        imagen: producto.imagen,
+        variante: variante.nombre,
+        precio: variante.precio,
+        cantidad: 1
+    });
+    guardarCarrito();
+    mostrarToast(`⚡ ${producto.nombre} (30ml) agregado`, "#25d366");
+    
+    // Efecto visual en el botón flotante
+    const btnFlotante = document.getElementById("botonCarrito");
+    if (btnFlotante) {
+        btnFlotante.style.transform = "scale(1.2)";
+        setTimeout(() => btnFlotante.style.transform = "", 300);
+    }
 }
 
 function guardarCarrito() {

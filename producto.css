@@ -1,0 +1,857 @@
+/* ============================================
+   ESENTIA - ESTILOS PRINCIPALES
+   producto.html - Stylesheet
+   ============================================ */
+
+/* === VARIABLES Y RESET === */
+:root {
+    --color-oro: #d4af37;
+    --color-oro-claro: #f5e6a1;
+    --color-oro-oscuro: #caa84a;
+    --color-fondo: linear-gradient(145deg, #fdfdfd, #e8e6e6);
+    --color-card: #ffffff;
+    --color-texto: #333333;
+    --color-texto-secundario: #666666;
+    --color-oscuro: #000000;
+    --color-oscuro-card: linear-gradient(145deg, #0c0c0c, #1a1a1a);
+    --sombra-suave: 0 10px 25px rgba(0,0,0,0.12);
+    --sombra-fuerte: 0 25px 80px rgba(0,0,0,0.4);
+    --radio-borde: 20px;
+    --transicion: all 0.3s ease;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Poppins", sans-serif;
+    margin: 0;
+    padding: 0;
+    background: var(--color-fondo);
+    color: var(--color-texto);
+    line-height: 1.6;
+}
+
+/* === ANIMACIONES === */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+@keyframes pulse-live {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-5px); }
+}
+
+/* === HEADER === */
+.header-esentia {
+    width: 100%;
+    background: var(--color-oscuro);
+    padding: 18px 0;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+@font-face {
+    font-family: "Adelia";
+    src: url("./fonts/Adelia.ttf") format("truetype");
+    font-weight: 400;
+    font-display: swap;
+}
+
+.header-esentia h1 {
+    font-family: "Adelia", cursive;
+    font-size: 2.8rem;
+    margin: 0;
+    background: linear-gradient(90deg, var(--color-oro), var(--color-oro-claro), var(--color-oro-oscuro));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 2px;
+    text-shadow: 0 0 12px rgba(255, 215, 0, 0.25);
+}
+
+/* === CONTENEDOR PRINCIPAL === */
+.contenedor {
+    max-width: 680px;
+    margin: auto;
+    padding: 20px;
+    text-align: center;
+    animation: fadeIn 0.7s ease-out;
+}
+
+.card {
+    background: var(--color-card);
+    border-radius: var(--radio-borde);
+    padding: 25px;
+    box-shadow: var(--sombra-suave);
+    animation: fadeIn 0.6s ease-out;
+    margin-bottom: 35px;
+}
+
+/* === SKELETON LOADING === */
+.skeleton-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+}
+
+.skeleton {
+    background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 8px;
+}
+
+.skeleton-image {
+    width: 220px;
+    height: 220px;
+    border-radius: 12px;
+}
+
+.skeleton-text {
+    height: 20px;
+    width: 100%;
+    max-width: 400px;
+}
+
+/* === IMAGEN DE PRODUCTO === */
+.imagen-producto {
+    width: 220px;
+    height: 220px;
+    object-fit: contain;
+    border-radius: 12px;
+    transition: var(--transicion);
+    cursor: zoom-in;
+    margin-bottom: 15px;
+}
+
+.imagen-producto:hover {
+    transform: scale(1.28);
+    box-shadow: 0 18px 40px rgba(0,0,0,0.25);
+}
+
+/* === TÍTULOS Y PRECIOS === */
+h1 {
+    font-size: 1.8rem;
+    margin: 10px 0 5px;
+    background: linear-gradient(90deg, #c8a76a, #e7d09a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+.estrellas {
+    font-size: 1.3rem;
+    color: #f3c400;
+    margin-bottom: 10px;
+}
+
+.precio-oferta {
+    font-size: 1.6rem;
+    color: #222;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.precio-original {
+    text-decoration: line-through;
+    color: #999;
+    font-size: 1rem;
+    margin-bottom: 10px;
+}
+
+.descripcion {
+    margin: 15px 0;
+    line-height: 1.5;
+    color: #555;
+}
+
+/* === SECCIONES DE INFORMACIÓN === */
+.seccion {
+    text-align: left;
+    margin-top: 25px;
+    padding: 15px;
+    background: rgba(212, 175, 55, 0.05);
+    border-radius: 12px;
+    border-left: 3px solid var(--color-oro);
+}
+
+.titulo-seccion {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 8px;
+    background: linear-gradient(90deg, #c8a76a, #e7d09a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.seccion ul {
+    padding-left: 20px;
+    margin: 0;
+}
+
+.seccion li {
+    margin-bottom: 5px;
+    color: #555;
+}
+
+/* === VARIANTES SELECCIONABLES === */
+.variantes-container {
+    margin: 20px 0;
+    text-align: left;
+}
+
+.variantes-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    background: linear-gradient(90deg, #c8a76a, #e7d09a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.variantes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.variante-card {
+    position: relative;
+    background: linear-gradient(145deg, #1a1a1a, #252525);
+    border: 2px solid rgba(212, 175, 55, 0.3);
+    border-radius: 14px;
+    padding: 14px 12px;
+    cursor: pointer;
+    transition: var(--transicion);
+    text-align: center;
+}
+
+.variante-card:hover {
+    border-color: var(--color-oro);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(212, 175, 55, 0.2);
+}
+
+.variante-card.selected {
+    border-color: var(--color-oro);
+    background: linear-gradient(145deg, #2a2515, #3a3018);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.4);
+}
+
+.variante-card.selected::after {
+    content: "✓";
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, var(--color-oro), var(--color-oro-claro));
+    border-radius: 50%;
+    color: #000;
+    font-size: 0.85rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+}
+
+.variante-nombre {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #f5eec2;
+    margin-bottom: 4px;
+}
+
+.variante-precio {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--color-oro);
+}
+
+.variante-stock {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 4px;
+}
+
+.variante-card.sin-stock {
+    opacity: 0.6;
+    cursor: not-allowed;
+    border-color: #444;
+}
+
+.variante-card.sin-stock:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.variante-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* === PRECIO DINÁMICO === */
+.precio-dinamico {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 15px 0;
+    padding: 12px;
+    background: rgba(212, 175, 55, 0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.precio-actual {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+.precio-variante {
+    font-size: 0.9rem;
+    color: var(--color-oro);
+    font-weight: 600;
+}
+
+/* === BOTÓN WHATSAPP === */
+.btn-wsp {
+    width: 100%;
+    background: #25D366;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin: 20px 0;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: var(--transicion);
+}
+
+.btn-wsp:hover {
+    transform: scale(1.04);
+    background: #1ebc57;
+}
+
+/* === BOTÓN FLOTANTE VOLVER === */
+.btn-volver {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    background: #6c4ba3;
+    color: white;
+    padding: 14px;
+    border-radius: 50%;
+    font-size: 1.6rem;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: var(--transicion);
+    z-index: 90;
+}
+
+.btn-volver:hover {
+    transform: scale(1.1);
+    background: #5a3a8a;
+}
+
+/* === QR Y COMPARTIR === */
+.qr-contenedor {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+.qr-contenedor p {
+    margin-bottom: 10px;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.qr-contenedor img {
+    max-width: 150px;
+    margin-top: 10px;
+    border-radius: 8px;
+}
+
+/* === BANNER FACEBOOK === */
+.banner-facebook-elegante {
+    margin-top: 20px;
+    padding: 22px;
+    border-radius: 20px;
+    background: var(--color-oscuro-card);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.banner-facebook-elegante::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-oro), var(--color-oro-claro), var(--color-oro-oscuro));
+}
+
+.banner-facebook-elegante h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    background: linear-gradient(90deg, var(--color-oro), var(--color-oro-claro));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.banner-facebook-elegante p {
+    margin: 10px 0 18px;
+    font-size: 0.95rem;
+    color: #ddd;
+}
+
+.btn-facebook-elegante {
+    display: inline-block;
+    padding: 12px 22px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #000;
+    background: linear-gradient(90deg, var(--color-oro), var(--color-oro-claro), var(--color-oro-oscuro));
+    box-shadow: 0 6px 18px rgba(212,175,55,0.35);
+    transition: var(--transicion);
+}
+
+.btn-facebook-elegante:hover {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 10px 25px rgba(212,175,55,0.5);
+}
+
+/* === BANNER URGENCIA === */
+.banner-urgencia {
+    background: linear-gradient(145deg, #0a0a0a 0%, #1a1a1a 100%);
+    border-radius: 28px;
+    padding: 25px;
+    margin: 30px 0;
+    border: 2px solid rgba(212,175,55,0.2);
+    box-shadow: var(--sombra-fuerte);
+}
+
+.urgencia-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.live-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,71,87,0.1);
+    color: #ff4757;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: #ff4757;
+    border-radius: 50%;
+    animation: pulse-live 2s infinite;
+}
+
+.urgencia-header h3 {
+    color: var(--color-oro);
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 800;
+}
+
+/* === PRODUCTO DESTACADO === */
+.producto-destacado {
+    background: linear-gradient(135deg, rgba(212,175,55,0.1), rgba(107,75,163,0.1));
+    border-radius: 20px;
+    padding: 20px;
+    display: flex;
+    gap: 20px;
+    cursor: pointer;
+    transition: var(--transicion);
+    margin-bottom: 20px;
+    border: 1px solid rgba(212,175,55,0.1);
+}
+
+.producto-destacado:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(212,175,55,0.15);
+}
+
+.imagen-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.imagen-wrapper img {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 16px;
+    border: 3px solid rgba(212,175,55,0.3);
+}
+
+.sold-tag {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--color-oro), var(--color-oro-claro));
+    color: #000;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    white-space: nowrap;
+    box-shadow: 0 4px 15px rgba(212,175,55,0.4);
+    animation: bounce 2s infinite;
+}
+
+.info-destacada {
+    flex: 1;
+    text-align: left;
+}
+
+.tags {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.tag-bestseller {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    color: #000;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.tag-limited {
+    background: rgba(255,71,87,0.2);
+    color: #ff4757;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.info-destacada h4 {
+    color: #fff;
+    margin: 0 0 8px 0;
+    font-size: 1.3rem;
+}
+
+.info-destacada p {
+    color: #888;
+    margin: 0 0 15px 0;
+    font-size: 0.95rem;
+}
+
+.precio-destacado {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.precio-big {
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+.precio-old {
+    color: #666;
+    text-decoration: line-through;
+    font-size: 1.1rem;
+}
+
+.descuento {
+    background: #ff4757;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.contador-urgencia {
+    background: rgba(0,0,0,0.3);
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.contador-urgencia span {
+    color: #888;
+    font-size: 0.85rem;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.tiempo {
+    color: #ff4757;
+    font-size: 1.8rem;
+    font-weight: 800;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 3px;
+}
+
+.btn-comprar-ahora {
+    width: 100%;
+    background: linear-gradient(135deg, var(--color-oro), var(--color-oro-claro));
+    color: #000;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: var(--transicion);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-comprar-ahora:hover {
+    transform: scale(1.02);
+    box-shadow: 0 10px 30px rgba(212,175,55,0.4);
+}
+
+/* === MINI LISTA === */
+.mini-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mini-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(255,255,255,0.03);
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: var(--transicion);
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.mini-item:hover {
+    background: rgba(212,175,55,0.1);
+    transform: translateX(5px);
+}
+
+.mini-item .num {
+    width: 30px;
+    height: 30px;
+    background: rgba(212,175,55,0.2);
+    color: var(--color-oro);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.mini-item img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.mini-item > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.mini-nombre {
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.mini-precio {
+    color: var(--color-oro);
+    font-weight: 700;
+}
+
+.mini-flecha {
+    color: var(--color-oro);
+    font-size: 1.2rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.mini-item:hover .mini-flecha {
+    opacity: 1;
+}
+
+/* === LIGHTBOX === */
+.lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 5000;
+}
+
+.lightbox-overlay.active {
+    display: flex;
+}
+
+.lightbox-img {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 16px;
+    box-shadow: 0 0 25px rgba(255,255,255,0.15);
+}
+
+.lightbox-close {
+    position: fixed;
+    top: 20px;
+    right: 25px;
+    font-size: 2.5rem;
+    color: white;
+    cursor: pointer;
+    z-index: 6000;
+    transition: var(--transicion);
+}
+
+.lightbox-close:hover {
+    color: var(--color-oro);
+    transform: scale(1.2);
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 480px) {
+    .header-esentia h1 {
+        font-size: 2.2rem;
+    }
+    
+    .imagen-producto {
+        width: 180px;
+        height: 180px;
+    }
+    
+    .producto-destacado {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .imagen-wrapper {
+        margin: 0 auto;
+    }
+    
+    .info-destacada {
+        text-align: center;
+    }
+    
+    .tags {
+        justify-content: center;
+    }
+    
+    .precio-destacado {
+        justify-content: center;
+    }
+    
+    .variantes-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .btn-volver {
+        bottom: 15px;
+        right: 15px;
+        padding: 12px;
+        font-size: 1.4rem;
+    }
+}
+
+/* === UTILIDADES === */
+img[src=""], img:not([src]) {
+    opacity: 0;
+}
+
+img[src="https://via.placeholder.com/140x140/1a1a1a/d4af37?text=Esentia"] {
+    opacity: 1;
+}
+
+/* Toast notification */
+.toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #333;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    z-index: 1000;
+    transition: transform 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+.toast.success {
+    background: #25D366;
+}
+
+.toast.error {
+    background: #ff4757;
+}
