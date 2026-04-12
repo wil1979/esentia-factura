@@ -898,6 +898,30 @@ function cerrarModalProducto() {
 // ================================
 // CARRITO
 // ================================
+function agregarAlCarrito() {
+    if (!productoSeleccionado) {
+        mostrarToast("Selecciona un producto primero", "#e74c3c");
+        return;
+    }
+
+    const itemCarrito = {
+        id: String(productoSeleccionado.id),
+        idProducto: productoSeleccionado.id,
+        nombre: productoSeleccionado.nombre,
+        variante: null,
+        precio: productoSeleccionado.precioOferta || productoSeleccionado.precioOriginal,
+        cantidad: 1,
+        imagen: productoSeleccionado.imagen,
+        origen: 'catalogo'
+    };
+
+    if (agregarAlCarrito(itemCarrito)) {
+        mostrarToast("✅ ¡Agregado al carrito!", "#28a745");
+    } else {
+        mostrarToast("❌ Error al agregar al carrito", "#e74c3c");
+    }
+}
+
 
 function agregarRapidoAlCarrito(producto) {
     const variante = { nombre: "Hogar / Oficina 30 ml", precio: 3000 };
@@ -2759,7 +2783,23 @@ document.addEventListener("DOMContentLoaded", () => {
     cargarInventario(); // 👈 CLAVE
     verificarSesion();
 
-
+       
+    
+    // 🔔 Verificar si viene de agregar producto al carrito
+    if (new URLSearchParams(window.location.search).get('added') === 'true') {
+        // Pequeño delay para asegurar que el toast esté disponible
+        setTimeout(() => {
+            mostrarToast("✅ Producto agregado correctamente", "#25d366");
+            // Limpiar la URL sin recargar la página
+            history.replaceState(null, '', window.location.pathname);
+        }, 300);
+    }
+    
+    // 1. Cargar productos primero (para tener la lista)
+    cargarProductos().then(() => {
+        // 2. Luego cargar inventario (para saber el stock real)
+        cargarInventarioGuardado();
+    });
     
     // 1. Cargar productos primero (para tener la lista)
     cargarProductos().then(() => {

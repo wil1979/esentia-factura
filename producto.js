@@ -207,19 +207,17 @@ function seleccionarVariante(elemento, productId) {
 
 // === AGREGAR AL CARRITO ===
 
+// === AGREGAR AL CARRITO CON REDIRECCIÓN ===
+
 function agregarAlCarritoConVariante(productId) {
     const btn = document.getElementById('btn-agregar');
     if (!btn) return;
     
-    // Feedback visual inmediato
     btn.disabled = true;
     btn.innerHTML = '⏳ Agregando...';
     
     fetch(CATALOGO_URL)
-        .then(r => {
-            if (!r.ok) throw new Error('Error al cargar catálogo');
-            return r.json();
-        })
+        .then(r => r.json())
         .then(data => {
             const lista = aplanarProductos(data);
             const producto = lista.find(p => String(p.id) === String(productId));
@@ -231,7 +229,6 @@ function agregarAlCarritoConVariante(productId) {
                 return;
             }
 
-            // Obtener variante seleccionada
             let varianteNombre = producto.nombre;
             let variantePrecio = producto.precioOferta ?? producto.precioOriginal;
             let varianteId = producto.id;
@@ -245,46 +242,35 @@ function agregarAlCarritoConVariante(productId) {
                 }
             }
 
-            // Agregar al carrito
-            let carrito = JSON.parse(localStorage.getItem("carrito") || "[]");
-            const idCarrito = String(varianteId);
-            
-            let existente = carrito.find(i => String(i.id) === idCarrito);
-            
-            if (existente) {
-                existente.cantidad += 1;
-            } else {
-                carrito.push({
-                    id: idCarrito,
-                    idProducto: producto.id,
-                    nombre: producto.nombre,
-                    variante: varianteNombre !== producto.nombre ? varianteNombre : null,
-                    precio: variantePrecio,
-                    cantidad: 1,
-                    imagen: producto.imagen,
-                    fecha: new Date().toISOString()
-                });
-            }
+            // ✅ USAR FUNCIÓN COMPARTIDA
+            const itemCarrito = {
+                id: String(varianteId),
+                idProducto: producto.id,
+                nombre: producto.nombre,
+                variante: varianteNombre !== producto.nombre ? varianteNombre : null,
+                precio: variantePrecio,
+                cantidad: 1,
+                imagen: producto.imagen,
+                origen: 'producto'
+            };
 
-            localStorage.setItem("carrito", JSON.stringify(carrito));
-            
-            // Feedback exitoso
-            showToast("✅ ¡Agregado al carrito!", "success");
-            
-            setTimeout(() => {
-                btn.disabled = false;
-                btn.innerHTML = '🛒 Agregar al carrito';
-                // Redirigir opcional
-                // window.location.href = "catalogo.html?added=1";
-            }, 1500);
+            if (agregarAlCarrito(itemCarrito)) {
+                showToast("✅ ¡Agregado al carrito!", "success");
+                
+                // 🔁 REDIRECCIÓN AL CATÁLOGO PARA VERIFICAR
+                setTimeout(() => {
+                    window.location.href = "https://wil1979.github.io/esentia-factura/catalogo.html?added=true";
+                }, 1200); // Pequeño delay para que el usuario vea el toast
+            }
         })
         .catch(err => {
-            console.error("Error al agregar:", err);
-            showToast("❌ Error al agregar al carrito", "error");
+            console.error("Error:", err);
+            showToast("❌ Error al agregar", "error");
             btn.disabled = false;
             btn.innerHTML = '🛒 Agregar al carrito';
         });
 }
+
 
 // Compatibilidad con función antigua
 function agregarAlCarrito(nombreProductoCodificado) {
