@@ -774,8 +774,8 @@ function crearCardProducto(p) {
         );
 
         // Imagen y botón Detalle
-        const img = card.querySelector(".img-prod-clickeable");
-        if (img) img.addEventListener("click", (e) => { e.stopPropagation(); abrirDetalle(); });
+        //const img = card.querySelector(".img-prod-clickeable");
+        //if (img) img.addEventListener("click", (e) => { e.stopPropagation(); abrirDetalle(); });
         
         const btnDet = card.querySelector(".btn-detalle");
         if (btnDet) btnDet.addEventListener("click", (e) => { e.stopPropagation(); abrirDetalle(); });
