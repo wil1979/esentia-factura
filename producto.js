@@ -147,9 +147,7 @@ function renderProducto(p) {
 
         ${variantesHtml}
 
-        <button class="btn-wsp" id="btn-agregar" onclick="agregarAlCarritoConVariante('${p.id || 'sin-id'}')">
-            🛒 Agregar al carrito
-        </button>
+       
 
         <div class="qr-contenedor">
             <p>Compartir este producto:</p>
@@ -169,7 +167,9 @@ function renderProducto(p) {
         <div id="bannerUrgenciaContainer"></div>
     `;
     
-    // Renderizar banner de urgencia si está disponible
+    /* Renderizar banner de urgencia si está disponible <button class="btn-wsp" id="btn-agregar" onclick="agregarAlCarritoConVariante('${p.id || 'sin-id'}')">
+            🛒 Agregar al carrito
+        </button>*/
     if (typeof window.renderizarBannerUrgencia === 'function') {
         window.renderizarBannerUrgencia();
     }
