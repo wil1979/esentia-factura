@@ -114,9 +114,7 @@ export const ProductCard = {
           </div>
 
           <div class="producto-acciones">
-            <button class="btn-detalle" data-action="detail" title="Ver detalles">👁️</button>
-            <button class="btn-externo" data-action="external" title="Ver en catálogo">🔗</button>
-            <button class="btn-agregar" data-action="add" title="Agregar al carrito">🛒</button>
+            <<button class="btn-agregar" data-action="add" title="Agregar al carrito">🛒</button>
           </div>
         </div>
       </div>
