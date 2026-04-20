@@ -94,16 +94,17 @@ export const ProductCard = {
           <div class="producto-precio-container">${priceHtml}</div>
           ${stockHtml}
           <div class="variantes-container">${variantsHtml}</div>
-          <div class="producto-acciones">
-            <button class="btn-detalle" data-action="detail" title="Ver detalles">👁️</button>
-            <button class="btn-externo" data-action="external" title="Ver en catálogo">🔗</button>
+          <div class="producto-acciones">            
             <button class="btn-agregar" data-action="add" title="Agregar al carrito">🛒</button>
           </div>
         </div>
       </div>
     `;
   },
-
+/*
+<button class="btn-detalle" data-action="detail" title="Ver detalles">👁️</button>
+            <button class="btn-externo" data-action="external" title="Ver en catálogo">🔗</button>
+            */
   renderGrid(productos, container) {
     if (productos.length === 0) {
       container.innerHTML = `
