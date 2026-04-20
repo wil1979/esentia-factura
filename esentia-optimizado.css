@@ -1779,4 +1779,246 @@ BUSCADOR DE PRODUCTOS (COMPRAS PROVEEDORES)
   content: '★';
   font-size: 1.2rem;
 }
+
+/* ============================================
+MÓDULO DE COBROS Y ABONOS
+============================================ */
+.deudores-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; max-height: 60vh; overflow-y: auto; }
+.deudor-card { background: white; padding: 1rem; border-radius: 12px; border-left: 5px solid var(--danger, #e74c3c); box-shadow: var(--shadow-soft); }
+.deudor-card h3 { margin: 0 0 0.5rem; color: var(--text-dark); }
+.deudor-card p { margin: 0 0 1rem; font-size: 0.85rem; color: var(--text-muted); }
+.deudor-card button { width: 100%; padding: 8px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; }
+
+.factura-pendiente { background: #fff; border: 1px solid #eee; border-radius: 8px; margin-bottom: 1rem; padding: 1rem; }
+.fp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.fp-saldo { font-weight: 700; color: var(--danger, #e74c3c); font-size: 1.1rem; }
+.fp-items { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+.fp-items small { background: #f8f9fa; padding: 2px 6px; border-radius: 4px; }
+.btn-abonar { width: 100%; padding: 10px; background: var(--success, #27ae60); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.btn-abonar:hover { background: #219150; }
+/* Mejoras para módulo de cobros */
+.deudor-info { 
+  font-size: 0.85rem; 
+  color: var(--text-muted); 
+  margin: 0.5rem 0;
+}
+
+.cliente-info-box {
+  background: linear-gradient(135deg, rgba(108,75,163,0.1) 0%, rgba(108,75,163,0.05) 100%);
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid var(--primary);
+}
+
+.cliente-info-box p {
+  margin: 0.3rem 0;
+  font-size: 0.95rem;
+}
+
+.fp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.fp-fecha {
+  font-weight: 600;
+  color: var(--primary);
+  margin-right: 1rem;
+}
+
+.fp-metodo {
+  background: rgba(108,75,163,0.1);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.fp-details {
+  margin-bottom: 0.5rem;
+  color: var(--text-muted);
+}
+
+.fp-saldo {
+  font-weight: 700;
+  color: var(--danger, #e74c3c);
+  font-size: 1.1rem;
+}
+
+.btn-abonar {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.btn-abonar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.35);
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+  .fp-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .deudor-card {
+    padding: 1rem;
+  }
+}
+
+/* ============================================
+COBROS: TABS + HISTORIAL + ACCIONES
+============================================ */
+.cobros-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid #eee; padding-bottom: 0.5rem; }
+.tab-btn { flex: 1; padding: 10px; background: transparent; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-weight: 600; color: var(--text-muted); transition: all 0.2s; }
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: rgba(108,75,163,0.05); border-radius: 8px 8px 0 0; }
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+.historial-cliente-box { background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; box-shadow: var(--shadow-soft); }
+.historial-facturas { margin-top: 0.5rem; }
+.hist-factura { border: 1px solid #eee; border-radius: 8px; padding: 0.8rem; margin-bottom: 0.8rem; background: #fafafa; }
+.hist-factura.anulada { opacity: 0.6; background: #fff0f0; border-color: #ffcccc; }
+.hf-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+.hf-body { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.5rem; }
+.hf-items small, .hf-abonos small { display: block; color: var(--text-muted); font-size: 0.8rem; }
+.hf-montos { display: flex; gap: 1rem; font-weight: 600; font-size: 0.9rem; }
+.hf-saldo { color: #e74c3c; }
+.badge-completado { background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; }
+.badge-parcial { background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; }
+.badge-pendiente { background: #cce5ff; color: #004085; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; }
+.badge-anulada { background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; }
+
+.hf-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; border-top: 1px dashed #ddd; padding-top: 0.5rem; }
+.btn-sm { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+.btn-warn { background: #ffc107; color: #333; }
+.btn-danger { background: #dc3545; color: white; }
+.text-muted { color: #6c757d; font-style: italic; }
+
+@media (max-width: 600px) {
+  .cobros-tabs { flex-direction: column; }
+  .hf-montos { flex-direction: column; gap: 0.2rem; }
+}
+/* ============================================
+HISTORIAL GENERAL - ESTILOS NUEVOS
+============================================ */
+.historial-cliente-box { background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; box-shadow: var(--shadow-soft); }
+.historial-cliente-box.con-deuda { border-left: 5px solid #e74c3c; }
+.hc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.hc-header h3 { margin: 0; font-size: 1.1rem; }
+.hc-info { color: var(--text-muted); font-size: 0.85rem; margin: 0.3rem 0; }
+.hc-stats { font-size: 0.9rem; margin-bottom: 0.8rem; }
+.hist-factura.pagada { background: #f8fff8; border-color: #c3e6cb; opacity: 0.9; }
+.text-success { color: #27ae60; font-weight: 600; }
+.btn-sm { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-right: 0.5rem; }
+.badge-completado { background: #d4edda; color: #155724; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+.badge-pendiente { background: #f8d7da; color: #721c24; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+
+@media (max-width: 600px) {
+  .hc-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+}
+
+/* ============================================
+COBROS: ESTADOS VISUALES CLAROS
+============================================ */
+.hc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
+.hc-header h3 { margin: 0; font-size: 1.1rem; }
+
+.badge-deuda { background: #fff3cd; color: #856404; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+.badge-pagado { background: #d4edda; color: #155724; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+
+.hist-factura { border: 1px solid #eee; border-radius: 8px; padding: 0.8rem; margin-bottom: 0.8rem; background: #fafafa; transition: all 0.2s; }
+.hist-factura.anulada { opacity: 0.6; background: #fff5f5; border-left: 4px solid #dc3545; }
+.hist-factura.pagada { background: #f0fff4; border-left: 4px solid #28a745; }
+
+.badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.badge-pendiente { background: #cce5ff; color: #004085; }
+.badge-parcial { background: #fff3cd; color: #856404; }
+.badge-completado { background: #d4edda; color: #155724; }
+.badge-anulada { background: #f8d7da; color: #721c24; }
+
+.hf-saldo { color: #e74c3c; font-weight: 700; }
+.hf-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; border-top: 1px dashed #ddd; padding-top: 0.5rem; }
+.btn-sm { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: opacity 0.2s; }
+.btn-sm:hover { opacity: 0.8; }
+.btn-warn { background: #ffc107; color: #333; }
+.btn-danger { background: #dc3545; color: white; }
+.text-muted { color: #6c757d; font-style: italic; }
+
+@media (max-width: 600px) {
+  .hc-header { flex-direction: column; align-items: flex-start; gap: 0.3rem; }
+  .hf-montos { flex-direction: column; gap: 0.2rem; }
+}
+/* ============================================
+BOTONES DE RECORDATORIO WHATSAPP
+============================================ */
+.deudor-actions { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
+.deudor-actions button { flex: 1; padding: 8px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.2s; }
+.deudor-actions button:first-child { background: var(--primary); color: white; border: none; }
+.btn-whatsapp-reminder { 
+  background: #25d366; color: white; border: none; padding: 8px 12px; 
+  border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; 
+}
+.btn-whatsapp-reminder:hover { background: #128c7e; transform: translateY(-1px); }
+.btn-whatsapp-reminder.full-width { width: 100%; margin-top: 1rem; padding: 12px; font-size: 0.95rem; }
+
+@media (max-width: 600px) {
+  .deudor-actions { flex-direction: column; }
+}
+/* ============================================
+LOG DE RECORDATORIOS
+============================================ */
+.historial-recordatorios {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 2px dashed #eee;
+}
+.historial-recordatorios h4 {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin-bottom: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.log-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  border-left: 3px solid #25d366; /* Verde WhatsApp */
+  font-size: 0.85rem;
+}
+.log-date {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.log-info {
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+/*Estadísticas*/
+.stats-container { max-height: 65vh; overflow-y: auto; }
+.stats-summary { display:flex; justify-content:space-between; background:#f8f6ff; padding:1rem; border-radius:12px; margin-bottom:1rem; font-weight:600; }
+.stat-day { background:white; border:1px solid #eee; border-radius:10px; padding:0.8rem; margin-bottom:0.8rem; }
+.stat-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; border-bottom:1px dashed #ddd; padding-bottom:0.4rem; }
+.stat-items { display:flex; flex-wrap:wrap; gap:0.5rem; }
+.stat-items small { background:#f0f4f8; padding:2px 6px; border-radius:6px; font-size:0.8rem; }
 }

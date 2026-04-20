@@ -8,46 +8,54 @@ const CartManager = {
     Store.on('cart:updated', () => this.updateUI());
   },
 
-  // ✅ CORREGIDO: Evitar doble descuento
   add(product, variant = null) {
-  const stock = Store.get('inventario')[product.nombre] || 0;
-  const inCart = Store.get('carrito').find(i => String(i.id) === String(product.id) && i.variante === (variant?.nombre || '30ml'));
-  
-  if (inCart && inCart.cantidad >= stock) {
-    Store.emit('toast', { message: 'Stock insuficiente', type: 'warning' });
-    return false;
-  }
+    const stock = Store.get('inventario')[product.nombre] || 0;
+    // Verificamos si el mismo producto con la MISMA variante está en el carrito
+    //const inCart = Store.get('carrito').find(i => 
+     // String(i.id) === String(product.id) && 
+     // i.variante === (variant?.nombre || '30ml')
+     // ✅ Después:
+    const varianteActual = variant?.nombre || '30ml';
+    const inCart = Store.get('carrito').find(i => 
+    String(i.id) === String(product.id) && i.variante === varianteActual
+);
+    
 
-  // ✅ El precio YA viene calculado desde product-card.js
-  // NO recalcular descuento aquí para evitar duplicación
-  const precioFinal = variant?.precio || product.precio;
-  const precioBase = variant?.precioOriginal || product.precio;
-  const descuentoPromo = variant?.descuentoPromo || product.descuentoPromo || 0;
-  
-  // Calcular descuento solo para mostrar (ya está aplicado en precioFinal)
-  const descuentoAplicado = descuentoPromo > 0 ? (precioBase - precioFinal) : 0;
+    if (inCart && inCart.cantidad >= stock) {
+      Store.emit('toast', { message: 'Stock insuficiente', type: 'warning' });
+      return false;
+    }
 
-  Store.addToCart({
-    id: product.id,
-    nombre: product.nombre,
-    imagen: product.imagen,
-    precio: precioFinal,           // ✅ Precio final (ya con descuento si aplica)
-    precioOriginal: precioBase,    // ✅ Precio base (sin descuento)
-    descuentoAplicado: descuentoAplicado,
-    descuentoPorcentaje: descuentoPromo,
-    variante: variant?.nombre || '30ml',
-    cantidad: 1,
-    tienePromo: descuentoPromo > 0  // ✅ Flag para saber si ya tiene descuento
-  });
+    // ✅ Usamos el precio que viene calculado desde la tarjeta (variant.precio)
+    // Si no viene variante, usamos el precio base del producto
+    const precioFinal = variant?.precio || product.precio;
+    const precioBase = variant?.precioOriginal || product.precio;
+    
+    // Calculamos descuento solo para mostrarlo en el objeto (no afecta el precioFinal)
+    const descuentoAplicado = Math.max(0, precioBase - precioFinal);
+    const descuentoPorcentaje = product.descuentoPromo || 0;
 
-  Store.emit('toast', { 
-    message: descuentoAplicado > 0 
-      ? `✓ Agregado (-${descuentoPromo}% promo)` 
-      : '✓ Agregado al carrito', 
-    type: 'success' 
-  });
-  return true;
-},
+    Store.addToCart({
+      id: product.id,
+      nombre: product.nombre,
+      imagen: product.imagen,
+      precio: precioFinal,         // Precio final (con descuento si aplica)
+      precioOriginal: precioBase,  // Precio original
+      descuentoAplicado: descuentoAplicado,
+      descuentoPorcentaje: descuentoPorcentaje,
+      variante: variant?.nombre || '30ml',
+      cantidad: 1,
+      tienePromo: product.descuentoPromo > 0
+    });
+
+    Store.emit('toast', {
+      message: descuentoAplicado > 0 
+        ? `✓ Agregado (-${product.descuentoPromo}% promo)` 
+        : '✓ Agregado al carrito',
+      type: 'success'
+    });
+    return true;
+  },
 
   remove(id) {
     Store.removeFromCart(id);
@@ -55,7 +63,10 @@ const CartManager = {
   },
 
   updateQuantity(id, quantity) {
-    if (quantity < 1) { this.remove(id); return; }
+    if (quantity < 1) {
+      this.remove(id);
+      return;
+    }
     const item = Store.get('carrito').find(i => String(i.id) === String(id));
     if (item) {
       item.cantidad = quantity;
@@ -64,19 +75,16 @@ const CartManager = {
     }
   },
 
-  clear() { Store.clearCart(); },
-  
-  getTotal() { 
-    return Store.get('carrito').reduce((sum, item) => sum + (item.precio * item.cantidad), 0); 
-  },
-  
-  getCount() { 
-    return Store.get('carrito').reduce((sum, item) => sum + item.cantidad, 0); 
+  clear() {
+    Store.clearCart();
   },
 
-  // ✅ Verificar si hay productos con promo
-  hasPromoProducts() {
-    return Store.get('carrito').some(item => item.tienePromo === true);
+  getTotal() {
+    return Store.get('carrito').reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+  },
+
+  getCount() {
+    return Store.get('carrito').reduce((sum, item) => sum + item.cantidad, 0);
   },
 
   updateUI() {
@@ -93,14 +101,17 @@ const CartManager = {
   async checkout(promoCode = null) {
     const cliente = Store.get('cliente');
     if (!cliente) { Store.emit('auth:required'); return false; }
+    
     const items = Store.get('carrito');
     if (items.length === 0) return false;
 
     let total = this.getTotal();
     let discount = 0;
 
-    // ✅ NO aplicar código promo si hay productos con descuento
-    if (promoCode && !this.hasPromoProducts()) {
+    // Validar promo si no hay productos con descuento especial
+    const hasPromoItems = items.some(i => i.tienePromo);
+
+    if (promoCode && !hasPromoItems) {
       const validation = await DB.validatePromo(promoCode, cliente.id);
       if (validation.valid) {
         const promo = validation.promo;
@@ -110,8 +121,8 @@ const CartManager = {
         total -= discount;
         await DB.usePromo(validation.promo.id, cliente.id);
       }
-    } else if (this.hasPromoProducts()) {
-      Store.emit('toast', { message: '⚠️ No se pueden combinar descuentos', type: 'warning' });
+    } else if (promoCode && hasPromoItems) {
+      Store.emit('toast', { message: '⚠️ No se pueden combinar promociones especiales con códigos', type: 'warning' });
     }
 
     const invoiceData = {
@@ -128,7 +139,10 @@ const CartManager = {
 
     await DB.addInvoice(cliente.id, invoiceData);
     this.showReceiptModal(invoiceData, cliente, promoCode);
-    window.open(`https://wa.me/50672952454?text=${encodeURIComponent(this.generateWhatsAppMessage(items, total, discount, cliente, promoCode))}`, '_blank');
+    
+    const message = this.generateWhatsAppMessage(items, total, discount, cliente, promoCode);
+    window.open(`https://wa.me/50672952454?text=${encodeURIComponent(message)}`, '_blank');
+
     this.clear();
     return true;
   },
@@ -136,7 +150,9 @@ const CartManager = {
   showReceiptModal(invoice, cliente, promoCode) {
     const modal = document.createElement('div');
     modal.className = 'modal show';
-    modal.id = 'modalFactura';
+    modal.id = 'modalFactura'; // ✅ Corregido: eliminado espacio
+    
+    // ✅ Template literal limpio y unificado
     modal.innerHTML = `
       <div class="modal-content modal-grande factura-modal">
         <button class="modal-close" onclick="document.getElementById('modalFactura').remove()">✕</button>
@@ -156,25 +172,32 @@ const CartManager = {
         </div>
         <div class="factura-totals">
           ${invoice.descuento > 0 ? `<div class="factura-row discount">Descuento (${promoCode}): -₡${invoice.descuento.toLocaleString()}</div>` : ''}
-          <div class="factura-row total"><span>Total:</span><span>₡${invoice.total.toLocaleString()}</span></div>
+          <div class="factura-row total">
+            <span>Total:</span>
+            <span>₡${invoice.total.toLocaleString()}</span>
+          </div>
         </div>
         <div class="pagos-section">
           <h3>💳 Opciones de Pago Disponibles</h3>
           <div class="pago-grid">
             <div class="pago-card" onclick="navigator.clipboard.writeText('72952454'); UI.toast('📋 SINPE copiado', 'success')">
-              <div class="pago-icon">📱</div><div class="pago-info"><strong>SINPE Móvil</strong><small>Toca para copiar</small></div>
+              <div class="pago-icon">📱</div>
+              <div class="pago-info"><strong>SINPE Móvil</strong><small>Toca para copiar</small></div>
             </div>
             <div class="pago-card" onclick="navigator.clipboard.writeText('CR76015114620010283743'); UI.toast('📋 IBAN copiado', 'success')">
-              <div class="pago-icon">🏦</div><div class="pago-info"><strong>Transferencia</strong><small>Toca para copiar IBAN</small></div>
+              <div class="pago-icon">🏦</div>
+              <div class="pago-info"><strong>Transferencia</strong><small>Toca para copiar IBAN</small></div>
             </div>
             <div class="pago-card" onclick="UI.toast('📝 Pago contra entrega disponible', 'info')">
-              <div class="pago-icon">🤝</div><div class="pago-info"><strong>Efectivo</strong><small>Contra entrega</small></div>
+              <div class="pago-icon">🤝</div>
+              <div class="pago-info"><strong>Efectivo</strong><small>Contra entrega</small></div>
             </div>
           </div>
         </div>
         <button onclick="document.getElementById('modalFactura').remove()" class="btn-checkout">✅ Entendido, enviaré comprobante</button>
       </div>
     `;
+    
     document.body.appendChild(modal);
     modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
   },
@@ -189,5 +212,4 @@ const CartManager = {
     return msg;
   }
 };
-
 export default CartManager;

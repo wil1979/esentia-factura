@@ -1,5 +1,5 @@
 // modules/admin.js
-import { getDocs, collection, addDoc, query, where, serverTimestamp, increment, deleteDoc, doc, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { getDocs, collection, addDoc, query, where, serverTimestamp, increment, deleteDoc, doc, updateDoc, getDoc, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { Store } from './core.js';
 import { DB } from './firebase.js';
 import ProductManager from './products.js';
@@ -14,51 +14,64 @@ const AdminManager = {
 
   // ============ ESTADÍSTICAS ============
   async showStats() {
-    if (!this.isAdmin()) return;
-    
-    const modal = document.createElement('div');
-    modal.className = 'modal admin-modal';
-    modal.id = 'modalStats';
+  if (!this.isAdmin()) return;
+  if (document.getElementById('modalStats')) document.getElementById('modalStats').remove();
 
-    const stats = await this.calculateStats();
-
-    const topClientesHTML = stats.topClientes?.length
-      ? stats.topClientes.map(c => `
-          <div class="top-item">
-            <span>${c.nombre || 'Sin nombre'}</span>
-            <span>${c.compras || 0} compras</span>
-          </div>
-        `).join('')
-      : '<p class="no-data">Sin datos de clientes</p>';
-
-    modal.innerHTML = `
-      <div class="modal-content modal-grande">
-        <button class="modal-close" onclick="document.getElementById('modalStats').remove(); UI.modal('modalStats','close')">✕</button>
-        <h2>📊 Estadísticas del Sitio</h2>
-        
-        <div class="stats-grid">
-          <div class="stat-card primary"><span class="stat-number">${stats.totalVisitas || 0}</span><span class="stat-label">Visitas Totales</span></div>
-          <div class="stat-card success"><span class="stat-number">${stats.totalClientes || 0}</span><span class="stat-label">Clientes Registrados</span></div>
-          <div class="stat-card info"><span class="stat-number">${stats.totalProductos || 0}</span><span class="stat-label">Productos Activos</span></div>
-          <div class="stat-card warning"><span class="stat-number">${stats.productosAgotados || 0}</span><span class="stat-label">Productos Agotados</span></div>
-        </div>
-
-        <div class="stats-section">
-          <h3>🏆 Top Clientes</h3>
-          <div class="top-list">${topClientesHTML}</div>
-        </div>
-
-        <div class="stats-section">
-          <h3>📈 Ventas por Día</h3>
-          <div class="chart-container" id="ventasChart">${this.renderSimpleChart(stats.ventasPorDia || {})}</div>
-        </div>
+  const modal = document.createElement('div');
+  modal.className = 'modal show'; modal.id = 'modalStats';
+  modal.innerHTML = `
+    <div class="modal-content modal-grande">
+      <button class="modal-close" onclick="UI.modal('modalStats','close')">✕</button>
+      <h2>📊 Estadísticas de Ventas</h2>
+      <div id="statsContent" class="stats-container">
+        <div class="loading-state">🔄 Calculando ventas...</div>
       </div>
-    `;
+    </div>
+  `;
+  document.body.appendChild(modal);
 
-    document.body.appendChild(modal);
-    UI.modal('modalStats', 'open');
-  },
+  try {
+    const snap = await getDocs(collection(DB.db, "facturas"));
+    const ventas = [];
+    snap.forEach(doc => {
+      const data = doc.data();
+      const compras = Array.isArray(data.compras) ? data.compras : [];
+      compras.forEach(c => ventas.push({ ...c, clienteId: doc.id }));
+    });
 
+    if (ventas.length === 0) {
+      document.getElementById('statsContent').innerHTML = '<p class="no-data">Sin ventas registradas</p>';
+      return;
+    }
+
+    // Agrupar por día
+    const porDia = {};
+    ventas.forEach(v => {
+      const fecha = new Date(v.fecha).toLocaleDateString('es-CR');
+      if (!porDia[fecha]) porDia[fecha] = { total: 0, count: 0, items: [] };
+      porDia[fecha].total += (Number(v.total) || 0);
+      porDia[fecha].count += 1;
+      (v.productos || []).forEach(p => {
+        porDia[fecha].items.push({ nombre: p.nombre, cantidad: p.cantidad, total: p.total || (p.precio * p.cantidad) });
+      });
+    });
+
+    const dias = Object.entries(porDia).sort((a, b) => new Date(b[0].split('/').reverse().join('-')) - new Date(a[0].split('/').reverse().join('-'))).slice(0, 7);
+
+    let html = `<div class="stats-summary"><span>📅 Últimos 7 días</span><span>💰 Total: ₡${dias.reduce((s,d)=>s+d[1].total,0).toLocaleString()}</span></div>`;
+    html += dias.map(([fecha, data]) => `
+      <div class="stat-day">
+        <div class="stat-header"><strong>${fecha}</strong><span>${data.count} ventas</span><strong>₡${data.total.toLocaleString()}</strong></div>
+        <div class="stat-items">${data.items.slice(0,3).map(i=>`<small>• ${i.nombre} (x${i.cantidad})</small>`).join('')} ${data.items.length>3?'...':''}</div>
+      </div>
+    `).join('');
+
+    document.getElementById('statsContent').innerHTML = html;
+  } catch (e) {
+    console.error(e);
+    document.getElementById('statsContent').innerHTML = '<p style="color:#e74c3c">Error al cargar estadísticas</p>';
+  }
+},
   async calculateStats() {
     try {
       const visitasSnap = await getDocs(collection(DB.db, "registroVisitas"));
@@ -310,7 +323,166 @@ exportInventory() {
   a.click();
   UI.toast('📥 CSV descargado', 'success');
 },
+
+
 // ============ PROMOCIONES ============
+async managePromos() {
+  if (!this.isAdmin()) return;
+  if (document.getElementById('modalPromos')) {
+    document.getElementById('modalPromos').remove();
+  }
+  
+  const modal = document.createElement('div');
+  modal.className = 'modal admin-modal';
+  modal.id = 'modalPromos';
+  modal.innerHTML = `
+    <div class="modal-content modal-grande">
+      <button class="modal-close" onclick="document.getElementById('modalPromos').remove(); UI.modal('modalPromos','close')">✕</button>
+      <h2>🎁 Códigos Promocionales</h2>
+      <div class="promo-toolbar">
+        <button id="btnCreatePromo" class="btn-primary">+ Crear Código</button>
+        <button id="btnAutoPromo">⚡ Generar Auto</button>
+        <button id="btnRefreshPromos">🔄 Actualizar</button>
+      </div>
+      <div id="promoListContainer" style="margin-top:1rem;">Cargando...</div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  UI.modal('modalPromos', 'open');
+
+  await this._loadAndRenderPromos();
+
+  document.getElementById('btnCreatePromo')?.addEventListener('click', () => this._createPromoUI());
+  document.getElementById('btnAutoPromo')?.addEventListener('click', () => this.generateAutoPromo());
+  document.getElementById('btnRefreshPromos')?.addEventListener('click', () => this._loadAndRenderPromos());
+},
+
+async _loadAndRenderPromos() {
+  const container = document.getElementById('promoListContainer');
+  if (!container) return;
+  container.innerHTML = '<p style="text-align:center;color:#6b7280;">Cargando promociones...</p>';
+  
+  try {
+    const promos = await this.loadPromos();
+    if (!promos.length) {
+      container.innerHTML = '<p class="empty-state">No hay promociones activas</p>';
+      return;
+    }
+    container.innerHTML = promos.map(p => this._renderPromoRow(p)).join('');
+    
+    // Attach dynamic listeners
+    document.querySelectorAll('.btn-edit-promo').forEach(btn => btn.addEventListener('click', (e) => this.editPromo(e.target.dataset.id)));
+    document.querySelectorAll('.btn-delete-promo').forEach(btn => btn.addEventListener('click', (e) => this.deletePromo(e.target.dataset.id)));
+    document.querySelectorAll('.btn-users-promo').forEach(btn => btn.addEventListener('click', (e) => this._showPromoUsers(e.target.dataset.id, e.target.dataset.code)));
+    
+  } catch (error) {
+    console.error(error);
+    container.innerHTML = '<p style="color:#e74c3c;">Error al cargar</p>';
+  }
+},
+
+_renderPromoRow(promo) {
+  const expirada = promo.fechaExpiracion && new Date(promo.fechaExpiracion) < new Date();
+  const agotada = promo.usosMax && promo.usosActuales >= promo.usosMax;
+  const status = expirada ? 'expirada' : agotada ? 'agotada' : 'activa';
+  const usosDisplay = promo.clientesUsados?.length ? `${promo.clientesUsados.length} usuario(s)` : `${promo.usosActuales || 0}/${promo.usosMax || '∞'}`;
+  
+  return `
+    <div class="promo-row ${status}">
+      <div class="promo-code">${promo.codigo}</div>
+      <div class="promo-details">
+        <span>${promo.tipo === 'porcentaje' ? promo.valor + '%' : '₡' + (promo.valor || 0)}</span>
+        <span>Usos: ${usosDisplay}</span>
+      </div>
+      <div class="promo-actions">
+        ${promo.clientesUsados?.length ? `<button class="btn-users-promo" data-id="${promo.id}" data-code="${promo.codigo}" title="Ver quién usó">👥</button>` : ''}
+        <button class="btn-edit-promo" data-id="${promo.id}">✏️</button>
+        <button class="btn-delete-promo" data-id="${promo.id}">🗑️</button>
+      </div>
+    </div>
+  `;
+},
+
+async _showPromoUsers(promoId, code) {
+  try {
+    const snap = await getDoc(doc(DB.db, "promociones", promoId));
+    if (!snap.exists() || !snap.data().clientesUsados?.length) {
+      UI.toast('No hay registros de uso', 'info');
+      return;
+    }
+    const userIds = snap.data().clientesUsados;
+    const clients = [];
+    for (const uid of userIds) {
+      const cSnap = await getDoc(doc(DB.db, "clientesBD", uid));
+      if (cSnap.exists()) clients.push(cSnap.data().nombre || uid.slice(0,6));
+    }
+    alert(`👥 Usuarios que usaron ${code}:\n\n${clients.join('\n') || 'Anónimos'}`);
+  } catch (e) { UI.toast('Error al cargar usuarios', 'error'); }
+},
+
+async loadPromos() {
+  try {
+    const snap = await DB.getPromos();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion));
+  } catch { return []; }
+},
+
+async deletePromo(id) {
+  if (!confirm('¿Eliminar este código permanentemente?')) return;
+  try {
+    await deleteDoc(doc(DB.db, "promociones", id));
+    UI.toast('✓ Eliminado', 'success');
+    this._loadAndRenderPromos();
+  } catch (e) { UI.toast('Error', 'error'); }
+},
+
+async editPromo(id) {
+  try {
+    const snap = await getDoc(doc(DB.db, "promociones", id));
+    if (!snap.exists()) return;
+    const current = snap.data();
+    const nuevoCodigo = prompt('Editar código:', current.codigo);
+    if (nuevoCodigo === null) return;
+    await updateDoc(doc(DB.db, "promociones", id), { codigo: nuevoCodigo.toUpperCase().trim(), fechaActualizacion: serverTimestamp() });
+    UI.toast('✓ Actualizado', 'success');
+    this._loadAndRenderPromos();
+  } catch (e) { UI.toast('Error', 'error'); }
+},
+
+async _createPromoUI() {
+  const codigo = prompt('Código (ej: ESENTIA10):'); 
+  if (!codigo?.trim()) return;
+  const tipo = prompt('Tipo (porcentaje/fijo):', 'porcentaje') || 'porcentaje';
+  const valor = parseInt(prompt('Valor:', '10')) || 10;
+  const usosMax = prompt('Usos máximos (vacío = ∞):') ? parseInt(prompt('Usos máximos:')) : null;
+  const dias = parseInt(prompt('Válido por (días):', '30')) || 30;
+  
+  try {
+    await addDoc(collection(DB.db, "promociones"), {
+      codigo: codigo.toUpperCase().trim(), tipo, valor, usosMax: isNaN(usosMax) ? null : usosMax,
+      usosActuales: 0, clientesUsados: [],
+      fechaCreacion: new Date().toISOString(),
+      fechaExpiracion: new Date(Date.now() + dias * 86400000).toISOString(), 
+      activo: true
+    });
+    UI.toast('✓ Creado', 'success');
+    this._loadAndRenderPromos(); // ✅ Refresca SIN cerrar ni recrear modal
+  } catch (e) { UI.toast('Error al crear', 'error'); }
+},
+
+async generateAutoPromo() {
+  const codigo = 'ESENTIA' + Math.floor(Math.random() * 10000);
+  try {
+    await addDoc(collection(DB.db, "promociones"), {
+      codigo, tipo: 'porcentaje', valor: 10, usosMax: 1, usosActuales: 0, clientesUsados: [],
+      fechaCreacion: new Date().toISOString(), fechaExpiracion: new Date(Date.now() + 86400000).toISOString(),
+      activo: true, autoGenerado: true
+    });
+    navigator.clipboard?.writeText(codigo);
+    UI.toast(`🎁 ${codigo} copiado al portapapeles`, 'success');
+    this._loadAndRenderPromos();
+  } catch (e) { UI.toast('Error', 'error'); }
+},
 
   // ============ NOTIFICACIONES ============
   async sendNotification() {

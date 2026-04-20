@@ -9,6 +9,7 @@ import { ProductCard } from './components/product-card.js';
 import LoyaltyManager from './modules/loyalty.js';
 import AdminManager from './modules/admin.js';
 import { ComprasManager } from './modules/compras-proveedor.js'; // ✅ AGREGAR
+import { CobrosManager } from './modules/cobros.js';
 
 window.UI = UI;
 window.Store = Store;
@@ -19,6 +20,7 @@ window.ComprasManager = ComprasManager; // ✅ AGREGAR
 window.AuthManager = AuthManager;
 window.CartManager = CartManager;
 window.ProductManager = ProductManager;
+window.CobrosManager = CobrosManager;
 
 
 const App = {
@@ -183,16 +185,25 @@ const App = {
       UI.modal('modalCarrito', 'close');
     });
 
-    // 🕯️ MENÚ ADMIN - EVENT DELEGATION ACTUALIZADO
+// 🕯️ MENÚ ADMIN - EVENT DELEGATION (CORREGIDO Y ROBUSTO)
 const btnAdmin = document.getElementById('btnToggleAdmin');
 const adminMenu = document.getElementById('adminMenu');
 
 if (btnAdmin && adminMenu) {
-  btnAdmin.addEventListener('click', (e) => { e.stopPropagation(); adminMenu.classList.toggle('show'); });
+  // Toggle menú
+  btnAdmin.addEventListener('click', (e) => { 
+    e.stopPropagation(); 
+    adminMenu.classList.toggle('show'); 
+  });
+  
+  // Cerrar al hacer clic fuera
   document.addEventListener('click', (e) => {
-    if (!btnAdmin.contains(e.target) && !adminMenu.contains(e.target)) adminMenu.classList.remove('show');
+    if (!btnAdmin.contains(e.target) && !adminMenu.contains(e.target)) {
+      adminMenu.classList.remove('show');
+    }
   });
 
+  // ✅ Manejo de clicks en botones del menú
   adminMenu.addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-admin-action]');
     if (!btn) return;
@@ -207,18 +218,27 @@ if (btnAdmin && adminMenu) {
       promos:   { manager: 'AdminManager',    method: 'managePromos' },
       invoice:  { manager: 'AdminManager',    method: 'quickInvoice' },
       notify:   { manager: 'AdminManager',    method: 'sendNotification' },
-      compras:  { manager: 'ComprasManager',  method: 'mostrarGestionProveedores' } // ✅ NUEVO
+      compras:  { manager: 'ComprasManager',  method: 'mostrarGestionProveedores' },
+      cobros:   { manager: 'CobrosManager',   method: 'mostrarPanelCobros' } // ✅ NUEVO
     };
 
     const route = routeMap[action];
-    if (!route) return;
+    if (!route) {
+      console.warn(`⚠️ Acción no mapeada: ${action}`);
+      return;
+    }
     
-    const target = window[route.manager];
-    if (target && typeof target[route.method] === 'function') {
-      target[route.method]();
-      adminMenu.classList.remove('show');
+    // ✅ Acceso dinámico al manager vía window[nombre]
+    const targetManager = window[route.manager];
+    
+    if (targetManager && typeof targetManager[route.method] === 'function') {
+      // ✅ Ejecutar método asíncrono de forma segura
+      Promise.resolve(targetManager[route.method]())
+        .catch(err => console.error(`Error en ${route.manager}.${route.method}:`, err));
+      
+      adminMenu.classList.remove('show'); // Cerrar menú tras ejecutar
     } else {
-      console.warn(`⚠️ Ruta no encontrada: ${route.manager}.${route.method}`);
+      console.warn(`⚠️ ${route.manager}.${route.method} no está disponible`);
     }
   });
 }
@@ -453,6 +473,8 @@ async checkFirstPurchaseDiscount(clientId) {
     if (!result.success) msg.textContent = result.message;
   },
 
+  
+
   async handleRegister(e) {
     e.preventDefault();
     const cedula = document.getElementById('regCedula').value.trim();
@@ -519,6 +541,56 @@ async checkFirstPurchaseDiscount(clientId) {
   },
 };
 
+// 🔍 DEBUG: Validar que todos los managers estén expuestos
+async function debugAdminRoutes() {
+  const routeMap = { /* ... tu routeMap ... */ };
+  console.group('🔍 Admin Routes Debug');
+  Object.entries(routeMap).forEach(([action, { manager, method }]) => {
+    const ok = window[manager]?.[method] ? '✅' : '❌';
+    console.log(`${ok} ${action} → ${manager}.${method}`);
+  });
+  console.groupEnd();
+}
+// Ejecutar en consola: debugAdminRoutes()
+
+// 🔍 DIAGNÓSTICO: Buscar documentos con 'compras' no-array
+async function diagnosticarFacturas() {
+  const snap = await getDocs(collection(db, "facturas"));
+  console.group('🔍 Diagnóstico de colección facturas');
+  
+  let corruptos = 0;
+  snap.forEach(doc => {
+    const data = doc.data();
+    if (!Array.isArray(data.compras)) {
+      console.warn(`❌ ${doc.id}: compras =`, data.compras, typeof data.compras);
+      corruptos++;
+    }
+  });
+  console.log(`Total documentos corruptos: ${corruptos}`);
+  console.groupEnd();
+}
+// 🔧 REPARACIÓN: Convertir 'compras' a array si no lo es
+async function repararFacturasCorruptas() {
+  const snap = await getDocs(collection(db, "facturas"));
+  let reparados = 0;
+  
+  for (const doc of snap.docs) {
+    const data = doc.data();
+    if (!Array.isArray(data.compras)) {
+      // Si es null/undefined, inicializar como array vacío
+      // Si es un objeto único, convertirlo a array
+      const comprasFix = data.compras && typeof data.compras === 'object' 
+        ? [data.compras] 
+        : [];
+      
+      await updateDoc(doc.ref, { compras: comprasFix });
+      console.log(`✅ Reparado: ${doc.id}`);
+      reparados++;
+    }
+  }
+  console.log(`🎉 Reparados: ${reparados} documentos`);
+}
+// ⚠️ Ejecutar con precaución: await repararFacturasCorruptas()
 
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => App.init());

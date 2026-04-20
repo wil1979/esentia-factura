@@ -8,102 +8,89 @@ const LoyaltyManager = {
     PREMIO_DEFAULT: 'Esencia de 30ml gratis'
   },
 
-  async init() {
-    const cliente = Store.get('cliente');
-    if (!cliente) return;
+  // modules/loyalty.js (Reemplaza SOLO estos métodos)
 
-    // Cargar datos de lealtad desde Firebase
-    await this.loadLoyaltyData(cliente.id);
-    
-    // Renderizar tarjeta
+async init() {
+  const cliente = Store.get('cliente');
+  if (!cliente?.id) {
+    this.data = { sellos: 0, objetivo: this.CONFIG?.SELLOS_OBJETIVO || 6, premiosPendientes: 0 };
     this.renderCard();
-  },
+    return;
+  }
+  await this.loadLoyaltyData(cliente.id);
+  this.renderCard();
+},
 
-    async loadLoyaltyData(clienteId) {
-    try {
-      const snap = await DB.getInvoices(clienteId);
-      if (!snap.exists()) {
-        this.data = { sellos: 0, objetivo: this.CONFIG.SELLOS_OBJETIVO, premiosPendientes: 0, historial: [] };
-        return;
-      }
-      const facturas = snap.data();
-      
-      // ✅ CORRECCIÓN: Validar estrictamente que 'compras' sea un array antes de filtrar
-      const compras = Array.isArray(facturas.compras) ? facturas.compras : [];
-      
-      const sellos = compras.filter(c => c.estado !== 'cancelado').length;
-      const premiosGanados = Math.floor(sellos / this.CONFIG.SELLOS_OBJETIVO);
-      const sellosActuales = sellos % this.CONFIG.SELLOS_OBJETIVO;
-      const premiosReclamados = facturas.lealtad?.premiosReclamados || 0;
-      
-      this.data = {
-        sellos: sellosActuales,
-        objetivo: this.CONFIG.SELLOS_OBJETIVO,
-        premiosPendientes: premiosGanados - premiosReclamados,
-        premiosReclamados: premiosReclamados,
-        totalCompras: compras.length,
-        historial: compras.slice(-10)
-      };
+async loadLoyaltyData(clienteId) {
+  try {
+    // ✅ Inicialización segura por defecto
+    this.data = {
+      sellos: 0,
+      objetivo: this.CONFIG?.SELLOS_OBJETIVO || 6,
+      premiosPendientes: 0,
+      premiosReclamados: 0,
+      totalGastado: 0,
+      historial: []
+    };
+
+    const snap = await DB.getInvoices(clienteId);
+    if (!snap.exists()) {
       Store.set('loyalty', this.data);
-    } catch (error) {
-      console.error('Error cargando lealtad:', error);
+      return;
     }
-  },
 
-  renderCard() {
-    const container = document.getElementById('loyaltyContainer');
-    if (!container) return;
+    const facturas = snap.data();
+    // ✅ CORRECCIÓN CRÍTICA: Validar estrictamente que sea array
+    const compras = Array.isArray(facturas.compras) ? facturas.compras : [];
 
-    const { sellos, objetivo, premiosPendientes } = this.data;
-    const progreso = (sellos / objetivo) * 100;
+    const MONTO_POR_SELLO = 4000;
+    // ✅ Sumar totales de forma segura (evita NaN si total es undefined)
+    const totalGastado = compras.reduce((acc, c) => acc + (Number(c.total) || 0), 0);
 
-    container.innerHTML = `
-      <div class="tarjeta-lealtad" id="tarjetaLealtad">
-        <div class="tarjeta-header">
-          <h3>💳 Mi Lealtad</h3>
-          <button onclick="LoyaltyManager.toggleCard()">×</button>
-        </div>
-        
-        <div class="cliente-info">
-          <p>Cliente: <strong>${Store.get('cliente').nombre}</strong></p>
-          <p>Sellos: <strong>${sellos}</strong> / <strong>${objetivo}</strong></p>
-        </div>
+    const sellosTotales = Math.floor(totalGastado / MONTO_POR_SELLO);
+    const premiosReclamados = facturas.lealtad?.premiosReclamados || 0;
 
-        <div class="sellos-grid">
-          ${Array(objetivo).fill(0).map((_, i) => `
-            <div class="sello ${i < sellos ? 'activo' : ''}">
-              ${i < sellos ? '★' : '☆'}
-            </div>
-          `).join('')}
-        </div>
+    this.data = {
+      sellos: sellosTotales % this.data.objetivo,
+      objetivo: this.data.objetivo,
+      premiosPendientes: Math.max(0, Math.floor(sellosTotales / this.data.objetivo) - premiosReclamados),
+      premiosReclamados,
+      totalGastado,
+      historial: compras.slice(-5) // Últimas 5 compras para historial
+    };
 
-        <div class="progreso-bar">
-          <div class="progreso-fill" style="width: ${progreso}%"></div>
-        </div>
+    Store.set('loyalty', this.data);
+  } catch (error) {
+    console.error('Error cargando lealtad:', error);
+    // Fallback final para que la UI nunca se rompa
+    this.data = { sellos: 0, objetivo: 6, premiosPendientes: 0 };
+    Store.set('loyalty', this.data);
+  }
+},
 
-        ${premiosPendientes > 0 ? `
-          <div class="premio-notificacion">
-            🎉 ¡Tienes ${premiosPendientes} premio${premiosPendientes > 1 ? 's' : ''} por reclamar!
-            <button onclick="LoyaltyManager.reclamarPremio()" class="btn-reclamar">
-              Reclamar ahora
-            </button>
-          </div>
-        ` : `
-          <p class="progreso-texto">
-            ${sellos === objetivo ? '¡Completado! Reclama tu premio' : 
-              `Faltan ${objetivo - sellos} sello${objetivo - sellos !== 1 ? 's' : ''} para tu regalo`}
-          </p>
-        `}
+renderCard() {
+  const container = document.getElementById('loyaltyCard');
+  if (!container) return;
+
+  // ✅ Destructuring seguro con fallback
+  const { sellos = 0, objetivo = 6, premiosPendientes = 0, totalGastado = 0 } = this.data || {};
+  const progreso = Math.min((sellos / objetivo) * 100, 100);
+
+  container.innerHTML = `
+    <div class="loyalty-card">
+      <div class="loyalty-header">
+        <h3>🎁 Programa de Lealtad</h3>
+        ${premiosPendientes > 0 ? `<span class="badge-premio">🏆 ${premiosPendientes} premio(s) pendiente(s)</span>` : ''}
       </div>
-
-      <!-- Miniatura flotante cuando está cerrada -->
-      <div class="caja-regalo-flotante" id="cajaRegalo" 
-           onclick="LoyaltyManager.toggleCard()" 
-           style="display: none;">
-        🎁
-        ${premiosPendientes > 0 ? `<span class="badge-premio">${premiosPendientes}</span>` : ''}
+      <div class="loyalty-progress">
+        <div class="progress-bar" style="width: ${progreso}%"></div>
+        <span class="progress-text">${sellos} / ${objetivo} sellos</span>
       </div>
-    `;
+      <p class="loyalty-info">Total gastado: <strong>₡${Number(totalGastado).toLocaleString()}</strong></p>
+      <p class="loyalty-tip">1 sello por cada ₡4,000 en compras</p>
+    </div>
+  `;
+
 
     // Restaurar estado de visualización
     const isOpen = localStorage.getItem('loyaltyCardOpen') !== 'false';
