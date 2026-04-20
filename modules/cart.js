@@ -9,53 +9,52 @@ const CartManager = {
   },
 
   add(product, variant = null) {
-    const stock = Store.get('inventario')[product.nombre] || 0;
-    // Verificamos si el mismo producto con la MISMA variante está en el carrito
-    //const inCart = Store.get('carrito').find(i => 
-     // String(i.id) === String(product.id) && 
-     // i.variante === (variant?.nombre || '30ml')
-     // ✅ Después:
-    const varianteActual = variant?.nombre || '30ml';
-    const inCart = Store.get('carrito').find(i => 
-    String(i.id) === String(product.id) && i.variante === varianteActual
-);
-    
+  const stock = Store.get('inventario')[product.nombre] || 0;
+  const inCart = Store.get('carrito').find(i => String(i.id) === String(product.id) && i.variante === (variant?.nombre || '30ml'));
+  if (inCart && inCart.cantidad >= stock) {
+    Store.emit('toast', { message: 'Stock insuficiente', type: 'warning' });
+    return false;
+  }
 
-    if (inCart && inCart.cantidad >= stock) {
-      Store.emit('toast', { message: 'Stock insuficiente', type: 'warning' });
-      return false;
-    }
+  const precioBase = variant?.precio || product.precio;
+  let precioFinal = precioBase;
+  let descuentoAplicado = 0;
+  if (product.descuentoPromo > 0) {
+    descuentoAplicado = Math.round(precioBase * product.descuentoPromo / 100);
+    precioFinal = precioBase - descuentoAplicado;
+  }
 
-    // ✅ Usamos el precio que viene calculado desde la tarjeta (variant.precio)
-    // Si no viene variante, usamos el precio base del producto
-    const precioFinal = variant?.precio || product.precio;
-    const precioBase = variant?.precioOriginal || product.precio;
-    
-    // Calculamos descuento solo para mostrarlo en el objeto (no afecta el precioFinal)
-    const descuentoAplicado = Math.max(0, precioBase - precioFinal);
-    const descuentoPorcentaje = product.descuentoPromo || 0;
+  // ✅ COMBINAR NOMBRE + AROMA SI APLICA
+  const nombreFinal = variant?.aroma 
+    ? `${product.nombre} & ${variant.aroma}` 
+    : product.nombre;
+  
+  const varianteDisplay = variant?.aroma 
+    ? `${variant.nombre} (${variant.aroma})` 
+    : (variant?.nombre || '30ml');
 
-    Store.addToCart({
-      id: product.id,
-      nombre: product.nombre,
-      imagen: product.imagen,
-      precio: precioFinal,         // Precio final (con descuento si aplica)
-      precioOriginal: precioBase,  // Precio original
-      descuentoAplicado: descuentoAplicado,
-      descuentoPorcentaje: descuentoPorcentaje,
-      variante: variant?.nombre || '30ml',
-      cantidad: 1,
-      tienePromo: product.descuentoPromo > 0
-    });
+  Store.addToCart({
+    id: product.id,
+    nombre: nombreFinal,         // ✅ "Difusor Calavera 8 ml & Pera"
+    imagen: product.imagen,
+    precio: precioFinal,
+    precioOriginal: precioBase,
+    descuentoAplicado,
+    descuentoPorcentaje: product.descuentoPromo || 0,
+    variante: varianteDisplay,   // ✅ "8 ml (Pera)"
+    aroma: variant?.aroma || null,
+    cantidad: 1,
+    tienePromo: product.descuentoPromo > 0
+  });
 
-    Store.emit('toast', {
-      message: descuentoAplicado > 0 
-        ? `✓ Agregado (-${product.descuentoPromo}% promo)` 
-        : '✓ Agregado al carrito',
-      type: 'success'
-    });
-    return true;
-  },
+  Store.emit('toast', { 
+    message: descuentoAplicado > 0 
+      ? `✓ Agregado (-${product.descuentoPromo}% promo)` 
+      : '✓ Agregado al carrito', 
+    type: 'success' 
+  });
+  return true;
+},
 
   remove(id) {
     Store.removeFromCart(id);
@@ -85,6 +84,12 @@ const CartManager = {
 
   getCount() {
     return Store.get('carrito').reduce((sum, item) => sum + item.cantidad, 0);
+  },
+    
+  // ✅ VERIFICAR SI HAY PRODUCTOS CON DESCUENTO PROMO
+  hasPromoProducts() {
+    const cart = Store.get('carrito') || [];
+    return cart.some(item => item.tienePromo === true);
   },
 
   updateUI() {

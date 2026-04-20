@@ -3,6 +3,12 @@ import { Store, Utils } from './core.js';
 import { DB } from './firebase.js';
 
 const ProductManager = {
+
+  // ✅ AROMAS DISPONIBLES PARA DIFUSORES
+  AROMAS_DIFUSORES: [
+    "Pera", "Manzana Verde", "Coco", "Vainilla", "Lavanda", 
+    "Melon&Vainilla", "Kiwi", "Carro Nuevo", "Manzana&Canela", "Limón", "Menta", "Fresa"
+  ],
   // ✅ CLAVES NORMALIZADAS (sin espacios, acentos ni caracteres especiales)
   PROMO_ESPECIAL: {
     "freshkiwienergiafrutal": 35,

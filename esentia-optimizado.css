@@ -426,15 +426,15 @@ body {
 }
 
 .producto-card img {
-  width: 150%;
-  height: 150%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   padding: 1rem;
   transition: transform 0.3s ease;
 }
 
 .producto-card:hover img {
-  transform: scale(2.08);
+  transform: scale(1.3);
 }
 
 .badges-container {
@@ -2425,5 +2425,72 @@ TOQUE FINAL - BOTONES TÁCTILES
     min-height: 44px !important;
     font-size: 16px !important; /* Evita zoom en iOS */
   }
+}
+/* ============================================
+ANIMACIONES DE VARIANTES Y CARRITO
+============================================ */
+.btn-variante {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Variante activa: color primario + escala */
+.btn-variante.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary-dark);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(108, 75, 163, 0.35);
+}
+
+/* Efecto Radar/Pulso en botón de carrito al seleccionar variante */
+@keyframes cartRadar {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.8); }
+  40% { transform: scale(1.15); box-shadow: 0 0 0 12px rgba(37, 211, 102, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+
+.btn-agregar.radar-pulse {
+  animation: cartRadar 0.7s ease-out;
+  background: #25d366 !important; /* Verde WhatsApp para llamar atención */
+  color: white !important;
+}
+/* ============================================
+SELECTOR DE AROMAS PARA DIFUSORES
+============================================ */
+.aroma-modal .modal-content { 
+  max-width: 500px; 
+  text-align: center; 
+  padding: 1.5rem;
+}
+.aroma-modal h3 { margin-bottom: 0.3rem; color: var(--primary); }
+.aromas-grid { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); 
+  gap: 0.8rem; 
+  margin-top: 1rem; 
+}
+.btn-aroma { 
+  padding: 12px; 
+  background: #f8f6ff; 
+  border: 2px solid #e0d4f5; 
+  border-radius: 12px; 
+  cursor: pointer; 
+  font-weight: 600; 
+  transition: all 0.2s; 
+}
+.btn-aroma:hover { 
+  background: var(--primary); 
+  color: white; 
+  border-color: var(--primary); 
+  transform: translateY(-2px); 
+  box-shadow: 0 4px 12px rgba(108,75,163,0.3); 
+}
+
+@media (max-width: 480px) { 
+  .aromas-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; } 
+  .btn-aroma { padding: 10px 5px; font-size: 0.85rem; } 
 }
 }

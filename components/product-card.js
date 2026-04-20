@@ -10,43 +10,48 @@ export const ProductCard = {
 
     if (product.esNuevo) badges.push('<span class="badge badge-nuevo">Nuevo</span>');
 
-    // Badge de promoción
+    // Lógica de badges de precio
     if (product.descuentoPromo > 0) {
       badges.push(`<span class="badge badge-oferta">-${product.descuentoPromo}% PROMO</span>`);
     } else if (product.precioOriginal) {
       badges.push('<span class="badge badge-oferta">Oferta</span>');
     }
-
     badges.push(`<span class="badge badge-tipo">${product.tipo}</span>`);
 
-    // ✅ Lógica de precios y variantes
-    // Si hay descuento, priorizamos mostrar solo la variante de 30ml si existe
-    const tieneDescuento = product.descuentoPromo > 0;
-    let variantesAMostrar = product.variantes || [];
+    // ==========================================
+    // 📦 LÓGICA DE VARIANTES Y PRECIOS
+    // ==========================================
+    let variantesVisibles = product.variantes || [];
 
-    if (tieneDescuento) {
-      // Filtramos para mostrar solo 30ml si hay descuento
-      variantesAMostrar = variantesAMostrar.filter(v => v.nombre.includes('30'));
-      // Si no hay 30ml, mostramos todas (fallback)
-      if (variantesAMostrar.length === 0) variantesAMostrar = product.variantes;
+    // 1. Si hay descuento, ocultar variantes que NO sean 30ml
+    if (product.descuentoPromo > 0) {
+      const filtradas = variantesVisibles.filter(v => v.nombre.includes('30'));
+      if (filtradas.length > 0) variantesVisibles = filtradas;
     }
 
-    const primeraVariante = variantesAMostrar[0];
-    const precioBase = primeraVariante?.precio || product.precio;
+    // 2. Determinar variante activa por defecto (Prioridad a 30ml)
+    const defaultIdx = variantesVisibles.findIndex(v => v.nombre.includes('30'));
+    const activeIdx = defaultIdx !== -1 ? defaultIdx : 0;
     
-    // Calcular precio con descuento si aplica
-    const precioFinal = tieneDescuento && primeraVariante
-      ? (primeraVariante.precioDescuento || Math.round(precioBase * (1 - product.descuentoPromo / 100)))
-      : precioBase;
+    // Mapear al índice real en el array original para referencia futura
+    const activeVariant = variantesVisibles[activeIdx];
+    const activeOrigIndex = product.variantes.indexOf(activeVariant);
 
+    // 3. Calcular precio inicial basado en la variante activa
+    let precioBase = activeVariant?.precio || product.precio;
+    let precioFinal = precioBase;
+
+    if (product.descuentoPromo > 0) {
+      precioFinal = activeVariant?.precioDescuento || Math.round(precioBase * (1 - product.descuentoPromo / 100));
+    }
+
+    // HTML del precio
     let priceHtml = '';
-    if (tieneDescuento) {
+    if (product.descuentoPromo > 0) {
       priceHtml = `
         <span class="precio-original">₡${precioBase.toLocaleString()}</span>
         <span class="precio-oferta">₡${precioFinal.toLocaleString()}</span>
-        <small style="display:block;color:#27ae60;font-size:0.8rem;margin-top:2px;">
-          Con ${product.descuentoPromo}% OFF
-        </small>
+        <small style="display:block;color:#27ae60;font-size:0.8rem;margin-top:2px;">Con ${product.descuentoPromo}% OFF</small>
       `;
     } else if (product.precioOriginal) {
       priceHtml = `
@@ -61,29 +66,35 @@ export const ProductCard = {
       ? `<div class="stock-label stock-bajo">⚠️ Últimas ${stock} unidades</div>` 
       : '';
 
-    // Renderizar botones de variantes
-    const variantsHtml = variantesAMostrar.map((v, i) => {
-      const isActive = i === 0 ? 'active' : '';
-      const precioVariante = tieneDescuento 
+    // ==========================================
+    // 🎨 RENDERIZAR BOTONES DE VARIANTES
+    // ==========================================
+    const variantsHtml = variantesVisibles.map(v => {
+      const origIdx = product.variantes.indexOf(v);
+      const isActive = origIdx === activeOrigIndex ? 'active' : '';
+      
+      // Precio a mostrar en el botón
+      const precioMostrar = product.descuentoPromo > 0
         ? (v.precioDescuento || Math.round(v.precio * (1 - product.descuentoPromo / 100)))
         : v.precio;
       
-      // Guardamos el índice real en el array original para referencia
-      const originalIndex = product.variantes.indexOf(v);
+      const tieneDescuento = product.descuentoPromo > 0 && v.precioDescuento;
 
       return `
         <button class="btn-variante ${isActive}" 
-                data-variant="${originalIndex}" 
-                data-price="${precioVariante}"
+                data-variant="${origIdx}" 
+                data-price="${precioMostrar}" 
+                data-price-original="${v.precio}" 
                 data-variant-name="${v.nombre}">
           ${v.nombre} <br> 
-          <small>₡${precioVariante.toLocaleString()}</small>
+          <small>₡${precioMostrar.toLocaleString()}</small>
+          ${tieneDescuento ? `<small style="color:#e74c3c;text-decoration:line-through;font-size:0.65rem;">₡${v.precio.toLocaleString()}</small>` : ''}
         </button>
       `;
     }).join('');
 
     return `
-      <div class="producto-card ${tieneDescuento || product.precioOriginal ? 'oferta' : ''}" data-id="${product.id}">
+      <div class="producto-card ${product.descuentoPromo > 0 || product.precioOriginal ? 'oferta' : ''}" data-id="${product.id}">
         <div class="producto-imagen-container">
           <div class="badges-container">${badges.join('')}</div>
           <img src="${product.imagen}" alt="${product.nombre}" loading="lazy">
@@ -91,20 +102,27 @@ export const ProductCard = {
         <div class="producto-info">
           <h3 class="producto-nombre">${product.nombre}</h3>
           ${product.calificacion ? `<div class="producto-calificacion">${'★'.repeat(Math.floor(product.calificacion))}</div>` : ''}
-          <div class="producto-precio-container">${priceHtml}</div>
+          
+          <div class="producto-precio-container">
+            ${priceHtml}
+          </div>
+          
           ${stockHtml}
-          <div class="variantes-container">${variantsHtml}</div>
-          <div class="producto-acciones">            
+          
+          <div class="variantes-container">
+            ${variantsHtml}
+          </div>
+
+          <div class="producto-acciones">
+            <button class="btn-detalle" data-action="detail" title="Ver detalles">👁️</button>
+            <button class="btn-externo" data-action="external" title="Ver en catálogo">🔗</button>
             <button class="btn-agregar" data-action="add" title="Agregar al carrito">🛒</button>
           </div>
         </div>
       </div>
     `;
   },
-/*
-<button class="btn-detalle" data-action="detail" title="Ver detalles">👁️</button>
-            <button class="btn-externo" data-action="external" title="Ver en catálogo">🔗</button>
-            */
+
   renderGrid(productos, container) {
     if (productos.length === 0) {
       container.innerHTML = `
@@ -112,7 +130,8 @@ export const ProductCard = {
           <div class="empty-icon">📦</div>
           <h3>No hay productos disponibles</h3>
           <p>Intenta con otros filtros de búsqueda</p>
-        </div>`;
+        </div>
+      `;
       return;
     }
 
@@ -139,27 +158,48 @@ export const ProductCard = {
 
   attachEvents(container) {
     container.addEventListener('click', (e) => {
-      // 1. Selección de variantes
+      // ==========================================
+      // 🎯 EVENTO: SELECCIÓN DE VARIANTE
+      // ==========================================
       const variantBtn = e.target.closest('.btn-variante');
       if (variantBtn) {
+        const card = variantBtn.closest('.producto-card');
         const parent = variantBtn.closest('.variantes-container');
+        
+        // 1. Cambiar clase visual activa
         parent.querySelectorAll('.btn-variante').forEach(b => b.classList.remove('active'));
         variantBtn.classList.add('active');
-        
-        // Actualizar precio visible en la tarjeta
-        const card = variantBtn.closest('.producto-card');
+
+        // 2. Actualizar precio visible en la tarjeta
         const precioContainer = card.querySelector('.producto-precio-container');
         const nuevoPrecio = parseInt(variantBtn.dataset.price);
-        
-        // Actualización visual inmediata
+        const precioOriginal = variantBtn.dataset.priceOriginal;
+        const esOferta = card.classList.contains('oferta');
+
         if (precioContainer) {
-             const precioEl = precioContainer.querySelector('.precio-oferta') || precioContainer.querySelector('.precio-normal');
-             if(precioEl) precioEl.textContent = `₡${nuevoPrecio.toLocaleString()}`;
+          if (esOferta && precioOriginal) {
+            precioContainer.innerHTML = `
+              <span class="precio-original">₡${parseInt(precioOriginal).toLocaleString()}</span>
+              <span class="precio-oferta">₡${nuevoPrecio.toLocaleString()}</span>
+            `;
+          } else {
+            precioContainer.innerHTML = `<span class="precio-normal">₡${nuevoPrecio.toLocaleString()}</span>`;
+          }
+        }
+
+        // 3. ACTIVAR ANIMACIÓN RADAR EN BOTÓN DE CARRITO 🛒
+        const cartBtn = card.querySelector('.btn-agregar');
+        if (cartBtn) {
+          cartBtn.classList.remove('radar-pulse');
+          void cartBtn.offsetWidth; // Forzar reflow para reiniciar la animación CSS
+          cartBtn.classList.add('radar-pulse');
         }
         return;
       }
 
-      // 2. Botones de acción
+      // ==========================================
+      // 🛒 EVENTO: AGREGAR AL CARRITO
+      // ==========================================
       const btn = e.target.closest('button[data-action]');
       const card = e.target.closest('.producto-card');
       if (!btn || !card) return;
@@ -171,29 +211,28 @@ export const ProductCard = {
         const product = ProductManager.getProduct(productId);
         if (!product) return;
 
+        // Obtener datos de la variante ACTIVA
         const activeVariant = card.querySelector('.btn-variante.active');
-        
-        // Recuperar datos de la variante
         const variantIndex = activeVariant ? parseInt(activeVariant.dataset.variant) : 0;
-        const variantData = product.variantes[variantIndex]; // Usamos el índice real
+        const variantData = product.variantes[variantIndex]; // Datos reales del objeto
         
-        // Calculamos el precio final basado en la variante seleccionada
-        let precioFinal = variantData ? variantData.precio : product.precio;
-        if (product.descuentoPromo > 0) {
-            precioFinal = Math.round(precioFinal * (1 - product.descuentoPromo / 100));
-        }
+        // Usar precio del dataset (ya calculado con descuento si aplica)
+        const precioFinal = parseInt(activeVariant?.dataset.price) || product.precio;
+        const precioBase = parseInt(activeVariant?.dataset.priceOriginal) || product.precio;
 
         Store.emit('cart:add', {
           product,
           variant: {
-            nombre: variantData ? variantData.nombre : '30ml',
+            nombre: variantData?.nombre || '30ml',
             precio: precioFinal,
-            precioOriginal: variantData ? variantData.precio : product.precio
+            precioOriginal: precioBase
           }
         });
-      } else if (action === 'detail') {
+      } 
+      else if (action === 'detail') {
         Store.emit('product:detail', productId);
-      } else if (action === 'external') {
+      } 
+      else if (action === 'external') {
         window.open(`https://wil1979.github.io/esentia-factura/producto.html?id=${productId}`, '_blank');
       }
     });

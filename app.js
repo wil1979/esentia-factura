@@ -272,11 +272,11 @@ if (btnAdmin && adminMenu) {
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.modal.show').forEach(m => UI.modal(m.id, 'close')); });
   },
 
-   renderCartModal() {
+ renderCartModal() {
   const lista = document.getElementById('listaCarrito');
   if (!lista) return;
-  const items = Store.get('carrito');
-  
+
+  const items = Store.get('carrito') || [];
   if (items.length === 0) {
     lista.innerHTML = '<li class="empty-cart">Tu carrito está vacío 🛒</li>';
   } else {
@@ -294,39 +294,58 @@ if (btnAdmin && adminMenu) {
     `).join('');
   }
 
-  const total = CartManager.getTotal();
-  const totalEl = document.getElementById('totalModal');
-  if (totalEl) totalEl.textContent = `Total: ₡${total.toLocaleString()}`;
-  
-  // ✅ Ocultar input de promo si hay productos con descuento
-  const promoSection = document.querySelector('.promo-section');
-  const promoMessage = document.getElementById('promoMessage');
-  if (promoSection && CartManager.hasPromoProducts()) {
-    promoSection.style.display = 'none';
-    if (promoMessage) {
-      promoMessage.textContent = '⚠️ No se pueden combinar descuentos adicionales';
-      promoMessage.style.color = '#f39c12';
-      promoMessage.style.display = 'block';
-    }
-  } else if (promoSection) {
-    promoSection.style.display = 'flex';
-    if (promoMessage) {
-      promoMessage.textContent = '';
-      promoMessage.style.display = 'none';
+  // ✅ CORRECCIÓN: Definir todas las variables antes de usarlas
+  const subtotal = CartManager.getTotal();
+  const total = subtotal;
+  const discount = 0; // ✅ Definido explícitamente para evitar ReferenceError
+
+  // Actualizar subtotal con validación segura
+  const subEl = document.getElementById('subtotalModal');
+  if (subEl) subEl.textContent = `₡${subtotal.toLocaleString()}`;
+
+  // Actualizar total con validación segura
+  const totEl = document.getElementById('totalModal');
+  if (totEl) {
+    const span = totEl.querySelector('span:last-child') || totEl;
+    if (span) span.textContent = `₡${total.toLocaleString()}`;
+  }
+
+  // Lógica segura para la fila de descuento (si existiera en tu HTML)
+  const discountRow = document.getElementById('discountRow');
+  if (discountRow) {
+    if (discount > 0) {
+      discountRow.style.display = 'flex';
+      const discEl = document.getElementById('discountModal');
+      if (discEl) discEl.textContent = `-₡${discount.toLocaleString()}`;
+    } else {
+      discountRow.style.display = 'none';
     }
   }
 
+  // Ocultar input de promo si hay productos con descuento
+  const promoSection = document.querySelector('.promo-section');
+  const promoMessage = document.getElementById('promoMessage');
+  if (promoSection) {
+    if (typeof CartManager.hasPromoProducts === 'function' && CartManager.hasPromoProducts()) {
+      promoSection.style.display = 'none';
+      if (promoMessage) {
+        promoMessage.textContent = '⚠️ No se pueden combinar descuentos adicionales';
+        promoMessage.style.color = '#f39c12';
+        promoMessage.style.display = 'block';
+      }
+    } else {
+      promoSection.style.display = 'flex';
+      if (promoMessage) {
+        promoMessage.textContent = '';
+        promoMessage.style.display = 'none';
+      }
+    }
+  }
 
     document.getElementById('subtotalModal').textContent = `₡${subtotal.toLocaleString()}`;
     document.getElementById('totalModal').querySelector('span:last-child').textContent = `₡${total.toLocaleString()}`;
     
-    const discountRow = document.getElementById('discountRow');
-    if (discount > 0) {
-      discountRow.style.display = 'flex';
-      document.getElementById('discountModal').textContent = `-₡${discount.toLocaleString()}`;
-    } else {
-      discountRow.style.display = 'none';
-    }
+   
   },
 
  // Dentro del objeto App en app.js

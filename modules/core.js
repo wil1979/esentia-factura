@@ -1,6 +1,6 @@
 // modules/core.js
 /**
- * ESENTIA CORE v4.0
+ * ESENTIA CORE v5.3
  * Single Source of Truth - State Management
  */
 export const Store = (() => {
