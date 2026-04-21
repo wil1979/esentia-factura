@@ -1906,6 +1906,7 @@ COBROS: TABS + HISTORIAL + ACCIONES
 .hf-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; border-top: 1px dashed #ddd; padding-top: 0.5rem; }
 .btn-sm { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
 .btn-warn { background: #ffc107; color: #333; }
+.btn-edit { background: #3498db; color: white; }
 .btn-danger { background: #dc3545; color: white; }
 .text-muted { color: #6c757d; font-style: italic; }
 
@@ -2458,39 +2459,164 @@ ANIMACIONES DE VARIANTES Y CARRITO
   color: white !important;
 }
 /* ============================================
-SELECTOR DE AROMAS PARA DIFUSORES
+SELECTOR DE AROMAS PARA DIFUSORES - MEJORADO
 ============================================ */
-.aroma-modal .modal-content { 
-  max-width: 500px; 
-  text-align: center; 
-  padding: 1.5rem;
-}
-.aroma-modal h3 { margin-bottom: 0.3rem; color: var(--primary); }
-.aromas-grid { 
-  display: grid; 
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); 
-  gap: 0.8rem; 
-  margin-top: 1rem; 
-}
-.btn-aroma { 
-  padding: 12px; 
-  background: #f8f6ff; 
-  border: 2px solid #e0d4f5; 
-  border-radius: 12px; 
-  cursor: pointer; 
-  font-weight: 600; 
-  transition: all 0.2s; 
-}
-.btn-aroma:hover { 
-  background: var(--primary); 
-  color: white; 
-  border-color: var(--primary); 
-  transform: translateY(-2px); 
-  box-shadow: 0 4px 12px rgba(108,75,163,0.3); 
+.aroma-modal .modal-content {
+  max-width: 520px;
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(145deg, #faf8ff 0%, #f0e6ff 100%);
+  border-radius: 20px;
 }
 
-@media (max-width: 480px) { 
-  .aromas-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; } 
-  .btn-aroma { padding: 10px 5px; font-size: 0.85rem; } 
+.aroma-modal h3 {
+  margin-bottom: 0.3rem;
+  color: var(--primary, #6c4ba3);
+  font-size: 1.4rem;
+  font-family: 'Playfair Display', serif;
+}
+
+.aroma-modal .subtitle {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 1.2rem;
+  font-style: italic;
+}
+
+.aromas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.8rem;
+  margin-top: 1rem;
+  padding: 0.5rem;
+}
+
+.btn-aroma {
+  position: relative;
+  padding: 14px 8px;
+  background: white;
+  border: 2px solid #e8e0f5;
+  border-radius: 16px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--primary, #6c4ba3);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(108, 75, 163, 0.08);
+  overflow: hidden;
+}
+
+.btn-aroma::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(108, 75, 163, 0.05) 0%, rgba(200, 170, 255, 0.1) 100%);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.btn-aroma:hover {
+  transform: translateY(-3px);
+  border-color: var(--primary, #6c4ba3);
+  box-shadow: 0 6px 20px rgba(108, 75, 163, 0.2);
+  color: var(--primary-dark, #4a2d7a);
+}
+
+.btn-aroma:hover::before {
+  opacity: 1;
+}
+
+.btn-aroma .aroma-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  transition: transform 0.25s;
+}
+
+.btn-aroma:hover .aroma-icon {
+  transform: scale(1.2) rotate(-5deg);
+}
+
+.btn-aroma:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+/* ============================================
+COLORES ESPECÍFICOS POR AROMA (OPCIONAL)
+============================================ */
+.btn-aroma[data-aroma="Pera"] { border-left: 4px solid #8bc34a; }
+.btn-aroma[data-aroma="Manzana Verde"] { border-left: 4px solid #66bb6a; }
+.btn-aroma[data-aroma="Coco"] { border-left: 4px solid #d7ccc8; }
+.btn-aroma[data-aroma="Vainilla"] { border-left: 4px solid #ffe082; }
+.btn-aroma[data-aroma="Lavanda"] { border-left: 4px solid #b39ddb; }
+.btn-aroma[data-aroma="Rosas"] { border-left: 4px solid #f48fb1; }
+.btn-aroma[data-aroma="Jazmín"] { border-left: 4px solid #fff9c4; }
+.btn-aroma[data-aroma="Sándalo"] { border-left: 4px solid #a1887f; }
+.btn-aroma[data-aroma="Canela"] { border-left: 4px solid #ff8a65; }
+.btn-aroma[data-aroma="Limón"] { border-left: 4px solid #fff176; }
+.btn-aroma[data-aroma="Menta"] { border-left: 4px solid #80cbc4; }
+.btn-aroma[data-aroma="Fresa"] { border-left: 4px solid #ef5350; }
+
+/* ============================================
+MÓVIL
+============================================ */
+@media (max-width: 480px) {
+  .aroma-modal .modal-content {
+    padding: 1.2rem;
+    border-radius: 16px;
+  }
+  
+  .aromas-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  
+  .btn-aroma {
+    padding: 12px 6px;
+    font-size: 0.78rem;
+    border-radius: 12px;
+  }
+  
+  .btn-aroma .aroma-icon {
+    font-size: 1.3rem;
+  }
+}
+/* ============================================
+V5.0: EDITOR DE FACTURAS & LOYALTY
+============================================ */
+.editor-modal .editor-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin: 1rem 0; }
+.editor-items { max-height: 300px; overflow-y: auto; }
+.editor-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; padding: 0.5rem; background: #f8f9fa; border-radius: 8px; }
+.editor-row input { padding: 6px; border: 1px solid #ddd; border-radius: 6px; }
+.editor-totals label { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-weight: 500; }
+.editor-totals input, .editor-totals select { width: 120px; padding: 6px; border: 1px solid #ddd; border-radius: 6px; text-align: right; }
+
+.loyalty-search { position: relative; margin-bottom: 1rem; }
+.loyalty-search input { width: 100%; padding: 10px; border: 2px solid #e0d4f5; border-radius: 10px; }
+.search-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #eee; border-radius: 8px; max-height: 150px; overflow-y: auto; z-index: 100; }
+.search-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+.search-item:hover { background: #f8f6ff; }
+
+.loyalty-stats { display: flex; gap: 1rem; margin: 1rem 0; }
+.stat-box { flex: 1; background: linear-gradient(135deg, #f8f6ff, #e8e0f5); padding: 1rem; border-radius: 12px; text-align: center; }
+.stat-box strong { font-size: 1.8rem; color: var(--primary); display: block; }
+
+.loyalty-adjust { display: flex; gap: 0.5rem; margin: 1rem 0; flex-wrap: wrap; }
+.loyalty-adjust input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+.history-list { max-height: 200px; overflow-y: auto; }
+.hist-item { display: flex; justify-content: space-between; padding: 8px; background: #fafafa; border-radius: 6px; margin-bottom: 4px; font-size: 0.9rem; }
+.hist-item.pos { border-left: 3px solid #27ae60; }
+.hist-item.neg { border-left: 3px solid #e74c3c; }
+
+@media (max-width: 768px) {
+  .editor-grid { grid-template-columns: 1fr; }
+  .editor-row { grid-template-columns: 1fr 1fr; }
+  .loyalty-adjust { flex-direction: column; }
 }
 }

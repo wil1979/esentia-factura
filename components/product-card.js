@@ -114,7 +114,7 @@ export const ProductCard = {
           </div>
 
           <div class="producto-acciones">
-            <<button class="btn-agregar" data-action="add" title="Agregar al carrito">🛒</button>
+                       <button class="btn-agregar" data-action="add" title="Agregar al carrito">🛒</button>
           </div>
         </div>
       </div>
@@ -206,25 +206,31 @@ export const ProductCard = {
       const productId = card.dataset.id;
 
       if (action === 'add') {
-        const product = ProductManager.getProduct(productId);
-        if (!product) return;
+  const product = ProductManager.getProduct(productId);
+  if (!product) return;
 
-        // Obtener datos de la variante ACTIVA
-        const activeVariant = card.querySelector('.btn-variante.active');
-        const variantIndex = activeVariant ? parseInt(activeVariant.dataset.variant) : 0;
-        const variantData = product.variantes[variantIndex]; // Datos reales del objeto
-        
-        // Usar precio del dataset (ya calculado con descuento si aplica)
-        const precioFinal = parseInt(activeVariant?.dataset.price) || product.precio;
-        const precioBase = parseInt(activeVariant?.dataset.priceOriginal) || product.precio;
+  const activeVariant = card.querySelector('.btn-variante.active');
+  const variantIndex = activeVariant ? parseInt(activeVariant.dataset.variant) : 0;
+  const variantData = product.variantes[variantIndex];
+  
+  const precioFinal = parseInt(activeVariant?.dataset.price) || product.precio;
+  const precioBase = parseInt(activeVariant?.dataset.priceOriginal) || product.precio;
 
-        Store.emit('cart:add', {
-          product,
-          variant: {
-            nombre: variantData?.nombre || '30ml',
-            precio: precioFinal,
-            precioOriginal: precioBase
-          }
+  // ✅ DETECTAR SI ES DIFUSOR Y MOSTRAR SELECTOR
+  if (product.tipo === 'Difusores') {
+    this.mostrarSelectorAroma(product, variantData, precioFinal, precioBase);
+    return; // Detenemos aquí para no agregarlo al carrito todavía
+  }
+
+  // Si no es difusor, agregar directo
+  Store.emit('cart:add', {
+    product,
+    variant: {
+      nombre: variantData?.nombre || '30ml',
+      precio: precioFinal,
+      precioOriginal: precioBase
+    }
+
         });
       } 
       else if (action === 'detail') {
@@ -234,8 +240,59 @@ export const ProductCard = {
         window.open(`https://wil1979.github.io/esentia-factura/producto.html?id=${productId}`, '_blank');
       }
     });
+
+    
   },
 
+  // ✅ AGREGA ESTE MÉTODO
+mostrarSelectorAroma(product, variant, precioFinal, precioBase) {
+  const modal = document.createElement('div');
+  modal.className = 'modal show';
+  modal.id = 'modalSelectorAroma';
+  
+  // ✅ Iconos para cada aroma
+  const iconosAroma = {
+    "Pera": "🍐", "Manzana Verde": "🍏", "Coco": "🥥", 
+    "Vainilla": "🍦", "Lavanda": "💜", "Rosas": "🌹", 
+    "Jazmín": "🌼", "Sándalo": "🪵", "Canela": "🫚", 
+    "Limón": "🍋", "Menta": "🌿", "Fresa": "🍓"
+  };
+  
+  const aromas = ProductManager.AROMAS_DIFUSORES || [];
+  
+  modal.innerHTML = `
+    <div class="modal-content aroma-modal">
+      <button class="modal-close" onclick="document.getElementById('modalSelectorAroma').remove()">✕</button>
+      <h3>🌸 Selecciona el Aroma</h3>
+      <p class="subtitle">${product.nombre} — ${variant.nombre}</p>
+      <div class="aromas-grid">
+        ${aromas.map(a => `
+          <button class="btn-aroma" data-aroma="${a}">
+            <span class="aroma-icon">${iconosAroma[a] || '✨'}</span>
+            <span>${a}</span>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+  modal.querySelectorAll('.btn-aroma').forEach(btn => {
+    btn.addEventListener('click', () => {
+      Store.emit('cart:add', {
+        product,
+        variant: {
+          nombre: variant.nombre,
+          precio: precioFinal,
+          precioOriginal: precioBase,
+          aroma: btn.dataset.aroma
+        }
+      });
+      modal.remove();
+    });
+  });
+},
   getIconoTipo(tipo) {
     const iconos = {
       'Aromaterapia': '🌿',

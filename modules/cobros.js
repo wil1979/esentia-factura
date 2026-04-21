@@ -216,6 +216,7 @@ export const CobrosManager = {
                     ${!esAnulada && !esPagada ? `
                       <button onclick="CobrosManager.revertirAbono('${c.id}', ${idx})" class="btn-sm btn-warn">↩️ Revertir</button>
                       <button onclick="CobrosManager.anularFactura('${c.id}', ${idx})" class="btn-sm btn-danger">🚫 Anular</button>
+                      <button onclick="FacturaEditor.abrirEditor('${c.id}', ${idx})" class="btn-sm btn-edit">✏️ Editar</button>
                     ` : '<small class="text-muted">Sin acciones disponibles</small>'}
                   </div>
                 </div>

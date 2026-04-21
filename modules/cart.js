@@ -8,44 +8,49 @@ const CartManager = {
     Store.on('cart:updated', () => this.updateUI());
   },
 
-  add(product, variant = null) {
-  const stock = Store.get('inventario')[product.nombre] || 0;
-  const inCart = Store.get('carrito').find(i => String(i.id) === String(product.id) && i.variante === (variant?.nombre || '30ml'));
-  if (inCart && inCart.cantidad >= stock) {
-    Store.emit('toast', { message: 'Stock insuficiente', type: 'warning' });
-    return false;
-  }
+    add(product, variant = null) {
+    const stock = Store.get('inventario')[product.nombre] || 0;
+    
+    // ✅ CORRECCIÓN: Comparar ID + Variante para evitar duplicados del MISMO tamaño
+    const varianteActual = variant?.nombre || '30ml';
+    const inCart = Store.get('carrito').find(i => 
+      String(i.id) === String(product.id) && 
+      i.variante === varianteActual
+    );
 
-  const precioBase = variant?.precio || product.precio;
-  let precioFinal = precioBase;
-  let descuentoAplicado = 0;
-  if (product.descuentoPromo > 0) {
-    descuentoAplicado = Math.round(precioBase * product.descuentoPromo / 100);
-    precioFinal = precioBase - descuentoAplicado;
-  }
+    if (inCart && inCart.cantidad >= stock) {
+      Store.emit('toast', { message: 'Stock insuficiente', type: 'warning' });
+      return false;
+    }
 
-  // ✅ COMBINAR NOMBRE + AROMA SI APLICA
-  const nombreFinal = variant?.aroma 
-    ? `${product.nombre} & ${variant.aroma}` 
-    : product.nombre;
-  
-  const varianteDisplay = variant?.aroma 
-    ? `${variant.nombre} (${variant.aroma})` 
-    : (variant?.nombre || '30ml');
+    // ✅ AQUÍ ESTÁ LA CLAVE:
+    // La tarjeta YA envió el precio final calculado. No volvemos a restar.
+    const precioFinal = variant?.precio || product.precio;
+    const precioOriginal = variant?.precioOriginal || product.precio;
 
-  Store.addToCart({
-    id: product.id,
-    nombre: nombreFinal,         // ✅ "Difusor Calavera 8 ml & Pera"
-    imagen: product.imagen,
-    precio: precioFinal,
-    precioOriginal: precioBase,
-    descuentoAplicado,
-    descuentoPorcentaje: product.descuentoPromo || 0,
-    variante: varianteDisplay,   // ✅ "8 ml (Pera)"
-    aroma: variant?.aroma || null,
-    cantidad: 1,
-    tienePromo: product.descuentoPromo > 0
-  });
+    // Solo calculamos el ahorro para mostrarlo en el carrito, no para cobrar
+    const ahorro = precioOriginal - precioFinal;
+
+    Store.addToCart({
+      id: product.id,
+      nombre: product.nombre,
+      imagen: product.imagen,
+      precio: precioFinal,       // ✅ Usamos el precio que llegó (ya descontado)
+      precioOriginal: precioOriginal, // Para referencia visual
+      descuentoAplicado: ahorro > 0 ? ahorro : 0,
+      descuentoPorcentaje: product.descuentoPromo || 0,
+      variante: varianteActual,
+      cantidad: 1,
+      tienePromo: product.descuentoPromo > 0 // ✅ FLAG IMPORTANTE: Bloquea códigos extra
+    });
+
+    Store.emit('toast', { 
+      message: ahorro > 0 
+        ? `✓ Agregado (-${product.descuentoPromo}% promo)` 
+        : '✓ Agregado al carrito', 
+      type: 'success' 
+    });
+    return true;  
 
   Store.emit('toast', { 
     message: descuentoAplicado > 0 
@@ -53,6 +58,8 @@ const CartManager = {
       : '✓ Agregado al carrito', 
     type: 'success' 
   });
+
+
   return true;
 },
 
@@ -101,6 +108,12 @@ const CartManager = {
       btn.style.transform = count > 0 ? 'scale(1.1)' : 'scale(1)';
       setTimeout(() => btn.style.transform = 'scale(1)', 200);
     }
+  },
+
+    // ✅ NUEVO: Verificar si hay productos con descuento especial
+   hasPromoProducts() {
+    const items = Store.get('carrito') || [];
+    return items.some(item => item.tienePromo === true);
   },
 
   async checkout(promoCode = null) {

@@ -10,6 +10,8 @@ import LoyaltyManager from './modules/loyalty.js';
 import AdminManager from './modules/admin.js';
 import { ComprasManager } from './modules/compras-proveedor.js'; // ✅ AGREGAR
 import { CobrosManager } from './modules/cobros.js';
+import { FacturaEditor } from './modules/factura-editor.js';
+import { LoyaltyControl } from './modules/loyalty-control.js';
 
 window.UI = UI;
 window.Store = Store;
@@ -21,6 +23,8 @@ window.AuthManager = AuthManager;
 window.CartManager = CartManager;
 window.ProductManager = ProductManager;
 window.CobrosManager = CobrosManager;
+window.FacturaEditor = FacturaEditor;
+window.LoyaltyControl = LoyaltyControl;
 
 
 const App = {
@@ -29,7 +33,7 @@ const App = {
   // ... resto del código ..
 
   async init() {
-    console.log('🌸 Esentia v4.0 - Iniciando...');
+    console.log('🌸 Esentia v6.0 - Iniciando...');
     await Store.init();
     const hasSession = AuthManager.checkSession();
     CartManager.init();
@@ -47,24 +51,38 @@ const App = {
     console.log('✅ Esentia lista');
   },
 
-  renderHeader() {
-    const cliente = Store.get('cliente');
-    const isAdmin = Store.get('isAdmin');
-    const userPanel = document.getElementById('panelUsuario');
-    const loginBtn = document.getElementById('btnLogin');
-    const adminMenu = document.getElementById('adminDropdownContainer');
+  // En app.js, reemplaza renderHeader() por esto:
+renderHeader() {
+  const cliente = Store.get('cliente');
+  const isAdmin = Store.get('isAdmin');
+  
+  const userPanel = document.getElementById('panelUsuario');
+  const loginBtn = document.getElementById('btnLogin');
+  const adminMenu = document.getElementById('adminDropdownContainer');
+  
+  // ✅ IDs posibles del botón de lealtad (ajusta según tu HTML)
+  const loyaltyContainer = document.getElementById('loyaltyContainer');
+  const btnLealtad = document.getElementById('btnLealtad');
+
+  if (cliente) {
+    userPanel && (userPanel.style.display = 'flex');
+    document.getElementById('nombreUsuario').textContent = cliente.nombre;
+    loginBtn && (loginBtn.style.display = 'none');
+    adminMenu && (adminMenu.style.display = isAdmin ? 'inline-block' : 'none');
     
-    if (cliente) {
-      userPanel && (userPanel.style.display = 'flex');
-      document.getElementById('nombreUsuario').textContent = cliente.nombre;
-      loginBtn && (loginBtn.style.display = 'none');
-      adminMenu && (adminMenu.style.display = isAdmin ? 'inline-block' : 'none');
-    } else {
-      userPanel && (userPanel.style.display = 'none');
-      loginBtn && (loginBtn.style.display = 'inline-block');
-      adminMenu && (adminMenu.style.display = 'none');
-    }
-  },
+    // ✅ MOSTRAR lealtad al iniciar sesión
+    loyaltyContainer && (loyaltyContainer.style.display = 'block');
+    btnLealtad && (btnLealtad.style.display = 'inline-block');
+  } else {
+    userPanel && (userPanel.style.display = 'none');
+    loginBtn && (loginBtn.style.display = 'inline-block');
+    adminMenu && (adminMenu.style.display = 'none');
+    
+    // ✅ OCULTAR lealtad al cerrar sesión
+    loyaltyContainer && (loyaltyContainer.style.display = 'none');
+    btnLealtad && (btnLealtad.style.display = 'none');
+  }
+},
 
   renderProducts() {
     const container = document.getElementById('productos-container');
@@ -139,39 +157,46 @@ const App = {
 
         // ✅ APLICAR DESCUENTO
     document.getElementById('btnApplyPromo')?.addEventListener('click', async () => {
-      const btn = document.getElementById('btnApplyPromo');
-      const input = document.getElementById('promoCodeInput');
-      const msg = document.getElementById('promoMessage');
-      const code = input.value.trim().toUpperCase();
+  const btn = document.getElementById('btnApplyPromo');
+  const input = document.getElementById('promoCodeInput');
+  const msg = document.getElementById('promoMessage');
+  const code = input.value.trim().toUpperCase();
 
-      if (!code) { msg.textContent = 'Ingresa un código'; msg.style.color = '#e74c3c'; return; }
-      
-      btn.disabled = true; btn.textContent = 'Verificando...';
-      msg.textContent = '';
+  // ✅ VALIDACIÓN: Bloquear si hay productos con descuento
+  if (typeof CartManager.hasPromoProducts === 'function' && CartManager.hasPromoProducts()) {
+    msg.textContent = '⚠️ No se pueden combinar códigos con ofertas';
+    msg.style.color = '#f39c12';
+    return;
+  }
 
-      const cliente = Store.get('cliente');
-      if (!cliente) { UI.modal('modalLogin', 'open'); btn.disabled = false; btn.textContent = 'Aplicar'; return; }
+  if (!code) { msg.textContent = 'Ingresa un código'; msg.style.color = '#e74c3c'; return; }
+  
+  btn.disabled = true; btn.textContent = 'Verificando...';
+  msg.textContent = '';
 
-      const validation = await DB.validatePromo(code, cliente.id);
-      
-      if (validation.valid) {
-        const subtotal = CartManager.getTotal();
-        const discount = validation.promo.tipo === 'porcentaje' 
-          ? Math.round(subtotal * validation.promo.valor / 100) 
-          : validation.promo.valor;
-        
-        this.appliedPromo = { id: validation.promo.id, code, discount };
-        msg.textContent = `✅ ${validation.promo.codigo} aplicado (-₡${discount.toLocaleString()})`;
-        msg.style.color = '#25d366';
-        this.renderCartModal();
-      } else {
-        this.appliedPromo = null;
-        msg.textContent = validation.message || 'Código inválido';
-        msg.style.color = '#e74c3c';
-        this.renderCartModal();
-      }
-      btn.disabled = false; btn.textContent = 'Aplicar';
-    });
+  const cliente = Store.get('cliente');
+  if (!cliente) { UI.modal('modalLogin', 'open'); btn.disabled = false; btn.textContent = 'Aplicar'; return; }
+
+  const validation = await DB.validatePromo(code, cliente.id);
+  
+  if (validation.valid) {
+    const subtotal = CartManager.getTotal();
+    const discount = validation.promo.tipo === 'porcentaje' 
+      ? Math.round(subtotal * validation.promo.valor / 100) 
+      : validation.promo.valor;
+    
+    this.appliedPromo = { id: validation.promo.id, code, discount };
+    msg.textContent = `✅ ${validation.promo.codigo} aplicado (-₡${discount.toLocaleString()})`;
+    msg.style.color = '#25d366';
+    this.renderCartModal();
+  } else {
+    this.appliedPromo = null;
+    msg.textContent = validation.message || 'Código inválido';
+    msg.style.color = '#e74c3c';
+    this.renderCartModal();
+  }
+  btn.disabled = false; btn.textContent = 'Aplicar';
+});
 
     // ✅ FINALIZAR COMPRA (Pasa el código aplicado al checkout)
     document.getElementById('btnCheckout')?.addEventListener('click', async () => {
@@ -219,7 +244,9 @@ if (btnAdmin && adminMenu) {
       invoice:  { manager: 'AdminManager',    method: 'quickInvoice' },
       notify:   { manager: 'AdminManager',    method: 'sendNotification' },
       compras:  { manager: 'ComprasManager',  method: 'mostrarGestionProveedores' },
-      cobros:   { manager: 'CobrosManager',   method: 'mostrarPanelCobros' } // ✅ NUEVO
+      cobros:   { manager: 'CobrosManager',   method: 'mostrarPanelCobros' }, // ✅ NUEVO
+      editFactura: { manager: 'FacturaEditor', method: 'abrirEditor' }, // Se llamará dinámicamente desde cobros
+      loyaltyAdmin: { manager: 'LoyaltyControl', method: 'mostrarPanelPuntos' }
     };
 
     const route = routeMap[action];
@@ -294,23 +321,36 @@ if (btnAdmin && adminMenu) {
     `).join('');
   }
 
-  // ✅ CORRECCIÓN: Definir todas las variables antes de usarlas
-  const subtotal = CartManager.getTotal();
-  const total = subtotal;
-  const discount = 0; // ✅ Definido explícitamente para evitar ReferenceError
+  // ==========================================
+  // ✅ LIMPIAR PROMO SI HAY PRODUCTOS CON DESCUENTO
+  // ==========================================
+  if (typeof CartManager.hasPromoProducts === 'function' && CartManager.hasPromoProducts()) {
+    if (this.appliedPromo) {
+      this.appliedPromo = null; //  Limpiar descuento de la memoria
+      const msg = document.getElementById('promoMessage');
+      if (msg) {
+        msg.textContent = '⚠️ Código removido: No se pueden combinar con ofertas';
+        msg.style.color = '#f39c12';
+        msg.style.display = 'block';
+      }
+    }
+  }
 
-  // Actualizar subtotal con validación segura
+  const subtotal = CartManager.getTotal();
+  const discount = this.appliedPromo ? this.appliedPromo.discount : 0;
+  const total = subtotal - discount;
+
+  // Actualizar UI de totales
   const subEl = document.getElementById('subtotalModal');
   if (subEl) subEl.textContent = `₡${subtotal.toLocaleString()}`;
 
-  // Actualizar total con validación segura
   const totEl = document.getElementById('totalModal');
   if (totEl) {
     const span = totEl.querySelector('span:last-child') || totEl;
     if (span) span.textContent = `₡${total.toLocaleString()}`;
   }
 
-  // Lógica segura para la fila de descuento (si existiera en tu HTML)
+  // Fila de descuento visual
   const discountRow = document.getElementById('discountRow');
   if (discountRow) {
     if (discount > 0) {
@@ -322,20 +362,15 @@ if (btnAdmin && adminMenu) {
     }
   }
 
-  // Ocultar input de promo si hay productos con descuento
+  // Mostrar/ocultar input de promo
   const promoSection = document.querySelector('.promo-section');
   const promoMessage = document.getElementById('promoMessage');
   if (promoSection) {
-    if (typeof CartManager.hasPromoProducts === 'function' && CartManager.hasPromoProducts()) {
+    if (CartManager.hasPromoProducts()) {
       promoSection.style.display = 'none';
-      if (promoMessage) {
-        promoMessage.textContent = '⚠️ No se pueden combinar descuentos adicionales';
-        promoMessage.style.color = '#f39c12';
-        promoMessage.style.display = 'block';
-      }
     } else {
       promoSection.style.display = 'flex';
-      if (promoMessage) {
+      if (promoMessage && promoMessage.style.display === 'block') {
         promoMessage.textContent = '';
         promoMessage.style.display = 'none';
       }
@@ -356,21 +391,24 @@ async showHistorial() {
   
   UI.modal('modalHistorial', 'open');
   const container = document.getElementById('historialContent');
-  container.innerHTML = '<div style="text-align:center;padding:2rem;"><div class="loader-spinner" style="margin:0 auto 1rem;"></div><p>Cargando...</p></div>';
-
+  container.innerHTML = '<p style="text-align:center; padding:2rem;">🔄 Cargando historial...</p>';
+  
   try {
     const snap = await DB.getInvoices(cliente.id);
     const data = snap.exists() ? snap.data() : null;
-    const compras = data?.compras || [];
+    
+    // ✅ CORRECCIÓN CRÍTICA: Validar estrictamente que sea array antes de usar .sort()
+    const rawCompras = data?.compras;
+    const compras = Array.isArray(rawCompras) ? rawCompras : [];
 
     if (compras.length === 0) {
       container.innerHTML = `<div class="empty-state"><div class="empty-icon">🛍️</div><h3>Sin compras aún</h3><p>Tu historial aparecerá aquí cuando realices tu primera compra.</p></div>`;
       return;
     }
 
-    // Ordenar: más reciente primero
+    // ✅ Ahora sí es seguro llamar a .sort()
     compras.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-    this._historialCache = compras; // Guardar referencia para el detalle
+    this._historialCache = compras;
 
     container.innerHTML = compras.map((c, index) => {
       const total = c.total || c.monto || 0;
@@ -395,14 +433,12 @@ async showHistorial() {
         </div>`;
     }).join('');
 
-    // ✅ Delegación de eventos para los botones "Ver Detalle"
     container.querySelectorAll('.btn-ver-detalle').forEach(btn => {
       btn.addEventListener('click', (e) => this.showInvoiceDetail(e.target.dataset.index));
     });
-
   } catch (e) {
     console.error('Error historial:', e);
-    container.innerHTML = '<p style="color:#e74c3c;text-align:center;padding:2rem;">Error al cargar el historial.</p>';
+    container.innerHTML = '<p style="color:#e74c3c; text-align:center;">Error al cargar el historial.</p>';
   }
 },
 
