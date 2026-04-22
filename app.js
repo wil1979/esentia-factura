@@ -12,6 +12,8 @@ import { ComprasManager } from './modules/compras-proveedor.js'; // ✅ AGREGAR
 import { CobrosManager } from './modules/cobros.js';
 import { FacturaEditor } from './modules/factura-editor.js';
 import { LoyaltyControl } from './modules/loyalty-control.js';
+import PedidosManager from './modules/pedidos.js'; // ✅ Agregar esta línea
+import UserManager from './modules/user-management.js'; // ✅ AGREGAR ESTA LÍNEA
 
 window.UI = UI;
 window.Store = Store;
@@ -25,6 +27,8 @@ window.ProductManager = ProductManager;
 window.CobrosManager = CobrosManager;
 window.FacturaEditor = FacturaEditor;
 window.LoyaltyControl = LoyaltyControl;
+window.PedidosManager = PedidosManager; // ✅ Agregar esta línea
+window.UserManager = UserManager; // ✅ AGREGAR
 
 
 const App = {
@@ -32,27 +36,35 @@ const App = {
   appliedPromo: null, // ✅ NUEVO: Guarda el descuento aplicado temporalmente
   // ... resto del código ..
 
-  async init() {
-    console.log('🌸 Esentia v6.0 - Iniciando...');
-    await Store.init();
-    const hasSession = AuthManager.checkSession();
-    CartManager.init();
-    await ProductManager.load();
+async init() {
+  console.log('🌸 Esentia v6.0 - Iniciando...');
+  await Store.init();
+  
+  // ✅ NUEVO: Sincronizar permisos de admin antes de renderizar nada
+  if (window.UserManager) {
+    await UserManager.syncAdminRights();
+  }
 
-    this.renderHeader();
-    this.renderProducts();
-    this.attachGlobalEvents();
+  const hasSession = AuthManager.checkSession();
+  CartManager.init();
+  await ProductManager.load();
+  this.renderHeader(); // Ahora renderHeader() verá si el nuevo usuario es admin
+  this.renderProducts();
+  this.attachGlobalEvents();
 
-    if (hasSession) {
-      await LoyaltyManager.init();
-    } else {
-      setTimeout(() => UI.modal('modalLogin', 'open'), 800);
+  if (hasSession) {
+    await LoyaltyManager.init();
+    if (Store.get('isAdmin')) {
+      // Solo verificar pedidos si realmente es admin
+      PedidosManager.verificarNotificacionPedidos();
     }
-    console.log('✅ Esentia lista');
-  },
+  } else {
+    setTimeout(() => UI.modal('modalLogin', 'open'), 800);
+  }
+  console.log('✅ Esentia lista');
+},
 
-  // En app.js, reemplaza renderHeader() por esto:
-// En app.js -> renderHeader()
+
 renderHeader() {
   const cliente = Store.get('cliente');
   const isAdmin = Store.get('isAdmin');
@@ -241,18 +253,20 @@ if (btnAdmin && adminMenu) {
     const action = btn.dataset.adminAction;
     
     // ✅ RUTEO DINÁMICO: acción -> { manager, method }
-    const routeMap = {
-      stats:    { manager: 'AdminManager',    method: 'showStats' },
-      inventory:{ manager: 'AdminManager',    method: 'manageInventory' },
-      visits:   { manager: 'AdminManager',    method: 'showVisits' },
-      promos:   { manager: 'AdminManager',    method: 'managePromos' },
-      invoice:  { manager: 'AdminManager',    method: 'quickInvoice' },
-      notify:   { manager: 'AdminManager',    method: 'sendNotification' },
-      compras:  { manager: 'ComprasManager',  method: 'mostrarGestionProveedores' },
-      cobros:   { manager: 'CobrosManager',   method: 'mostrarPanelCobros' }, // ✅ NUEVO
-      editFactura: { manager: 'FacturaEditor', method: 'abrirEditor' }, // Se llamará dinámicamente desde cobros
-      loyaltyAdmin: { manager: 'LoyaltyControl', method: 'mostrarPanelPuntos' }
-    };
+   const routeMap = {
+  stats:     { manager: 'AdminManager',    method: 'showStats' },
+  inventory: { manager: 'AdminManager',    method: 'manageInventory' },
+  visits:    { manager: 'AdminManager',    method: 'showVisits' },
+  promos:    { manager: 'AdminManager',    method: 'managePromos' },
+  invoice:   { manager: 'AdminManager',    method: 'quickInvoice' },
+  notify:    { manager: 'AdminManager',    method: 'sendNotification' },
+  compras:   { manager: 'ComprasManager',  method: 'mostrarGestionProveedores' },
+  cobros:    { manager: 'CobrosManager',   method: 'mostrarPanelCobros' },
+  pedidos:   { manager: 'PedidosManager',  method: 'mostrarPanel' },
+  loyaltyAdmin: { manager: 'LoyaltyControl', method: 'mostrarPanelPuntos' },
+  editFactura: { manager: 'FacturaEditor', method: 'abrirEditor' },
+  userAdmin: { manager: 'UserManager', method: 'mostrarPanel' } // ✅ NUEVO
+};
 
     const route = routeMap[action];
     if (!route) {
@@ -313,25 +327,20 @@ if (btnAdmin && adminMenu) {
     lista.innerHTML = '<li class="empty-cart">Tu carrito está vacío 🛒</li>';
   } else {
     lista.innerHTML = items.map(item => `
+
       <li class="item-carrito">
         <div class="item-info">
           <strong>${item.nombre}</strong>
           <span>${item.variante} × ${item.cantidad}</span>
-        </div>
+        </div>       
+
+
         <div class="item-actions">
           <span class="item-price">₡${(item.precio * item.cantidad).toLocaleString()}</span>
           <button onclick="CartManager.remove('${item.id}')" class="btn-remove">🗑️</button>          
         </div>            
         </li>
-        <div class="canal-envio-selector" style="margin:1rem 0; padding:1rem; background:#f8f6ff; border-radius:12px;">
-        <label style="font-weight:600; display:block; margin-bottom:0.5rem;">📤 Enviar pedido por:</label>
-        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-        <label class="canal-opt"><input type="radio" name="canalEnvio" value="whatsapp" checked> 📱 WhatsApp</label>
-        <label class="canal-opt"><input type="radio" name="canalEnvio" value="email"> 📧 Correo</label>
-        <label class="canal-opt"><input type="radio" name="canalEnvio" value="sms"> 💬 SMS</label>
-        </div>
-        <small id="canalNota" style="color:#666; margin-top:0.5rem; display:block;">Se abrirá tu app predeterminada con el pedido listo.</small>
-        </div>    
+          
       
       
       `).join('');

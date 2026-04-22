@@ -14,7 +14,7 @@ ESENTIA v4.0 - CSS COMPLETO
   --shadow-soft: 0 2px 8px rgba(108, 75, 163, 0.06);
   --shadow-medium: 0 4px 16px rgba(108, 75, 163, 0.08);
   --shadow-strong: 0 8px 24px rgba(108, 75, 163, 0.1);
-  --glass: rgba(255, 255, 255, 0.35);
+  --glass: rgba(255, 255, 255, 0.85);
   --glass-border: rgba(255, 255, 255, 0.5);
 }
 
@@ -1329,7 +1329,7 @@ CARRITO MEJORADO
   color: white;
   border: none;
   border-radius: 12px;
-  font-size: 1.1rem;
+  font-size: 2.11rem;
   font-weight: 700;
   cursor: pointer;
   margin-top: 1rem;
@@ -2733,6 +2733,60 @@ MODO MÓVIL OPTIMIZADO (1 COLUMNA)
     height: 55px;
   }
 }
+/* ESTILOS PEDIDOS */
+.pedidos-grid { display: grid; gap: 1rem; max-height: 70vh; overflow-y: auto; padding: 0.5rem; }
+.pedido-card { background: white; border: 1px solid #eee; border-radius: 12px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.pedido-header { display: flex; justify-content: space-between; font-size: 0.85rem; color: #666; margin-bottom: 0.5rem; border-bottom: 1px dashed #ddd; padding-bottom: 0.5rem; }
+.pedido-items { list-style: none; padding: 0; margin: 0.5rem 0; font-size: 0.9rem; }
+.pedido-items li { padding: 4px 0; border-bottom: 1px solid #f9f9f9; }
+.pedido-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+.pedido-actions button { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; }
+.btn-aprobar { background: #27ae60; }
+.btn-cancelar { background: #e74c3c; }
+
+@media (max-width: 600px) {
+  .pedido-actions { flex-direction: column; }
+}
+/* BANNER DE PEDIDOS PENDIENTES */
+.banner-pedidos {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+  background: linear-gradient(90deg, #ff9800, #f57c00);
+  color: white; padding: 0.8rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transform: translateY(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.banner-pedidos.show { transform: translateY(0); }
+.banner-content { 
+  display: flex; align-items: center; justify-content: space-between; 
+  max-width: 1200px; margin: 0 auto; gap: 1rem; padding: 0 1rem;
+}
+.banner-icon { font-size: 1.4rem; }
+.banner-text { flex: 1; font-size: 0.95rem; font-weight: 500; }
+.btn-ver-pedidos { 
+  background: white; color: #f57c00; border: none; padding: 6px 14px; 
+  border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; 
+  transition: background 0.2s; 
+}
+.btn-ver-pedidos:hover { background: #f0f0f0; }
+.btn-cerrar-banner { 
+  background: transparent; border: none; color: white; 
+  font-size: 1.3rem; cursor: pointer; padding: 0 4px; opacity: 0.8; 
+}
+.btn-cerrar-banner:hover { opacity: 1; }
+
+@media (max-width: 600px) {
+  .banner-content { flex-direction: column; text-align: center; gap: 0.5rem; }
+  .btn-ver-pedidos { width: 100%; }
+}
+/* GESTIÓN DE USUARIOS ADMIN */
+.admin-add-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+.admin-add-row input { flex: 1; padding: 10px; border: 2px solid #e0d4f5; border-radius: 8px; }
+.admin-list { max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; }
+.admin-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8f9fa; border-radius: 8px; border-left: 3px solid var(--primary); }
+.admin-cedula { font-weight: 600; font-family: monospace; }
+.btn-remove-admin { background: transparent; border: none; color: #e74c3c; cursor: pointer; font-size: 1.2rem; padding: 4px; transition: transform 0.2s; }
+.btn-remove-admin:hover { transform: scale(1.2); }
+.admin-note { display: block; margin-top: 1rem; color: #888; font-size: 0.85rem; text-align: center; }
+
 
 
 

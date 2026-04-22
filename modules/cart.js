@@ -143,18 +143,20 @@ async checkout(promoCode = null, metodoEnvio = 'whatsapp') {
     Store.emit('toast', { message: '⚠️ No se pueden combinar promociones especiales con códigos', type: 'warning' });
   }
 
-  const invoiceData = {
-    fecha: new Date().toISOString(),
-    productos: items,
-    total,
-    descuento: discount,
-    metodoPago: metodoEnvio === 'whatsapp' ? 'WhatsApp' : (metodoEnvio === 'email' ? 'Correo' : 'SMS'),
-    tipoPago: 'credito',
-    monto: total,
-    pagado: 0,
-    saldo: total,
-    canalEnvio: metodoEnvio // ✅ NUEVO: Guarda cómo se envió
-  };
+  // ✅ CAMBIO CLAVE: La factura inicia como 'pendiente' y 'en_proceso'
+    const invoiceData = {
+      fecha: new Date().toISOString(),
+      productos: items,
+      total,
+      descuento: discount,
+      metodoPago: 'WhatsApp',
+      tipoPago: 'credito', // Se confirma tras el pago
+      monto: total,
+      pagado: 0,
+      saldo: total,
+      estado: 'pendiente', // 🔴 IMPORTANTE: Para que aparezca en tu panel
+      canalEnvio: 'whatsapp'
+    };
 
   await DB.addInvoice(cliente.id, invoiceData);
   this.showReceiptModal(invoiceData, cliente, promoCode);

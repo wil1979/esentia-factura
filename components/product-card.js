@@ -10,26 +10,31 @@ export const ProductCard = {
 
     if (product.esNuevo) badges.push('<span class="badge badge-nuevo">NUEVO</span>');
     if (product.descuentoPromo > 0) {
-      badges.push(`<span class="badge badge-oferta">-${product.descuentoPromo}%</span>`);
+      badges.push(`<span class="badge badge-oferta">-${product.descuentoPromo}% PROMO</span>`);
     } else if (product.precioOriginal) {
       badges.push('<span class="badge badge-oferta">Oferta</span>');
     }
     badges.push(`<span class="badge badge-tipo">${product.tipo}</span>`);
 
-    // Lógica de variantes
+    // ✅ 1. DETERMINAR VARIANTE ACTIVA POR DEFECTO (Prioriza 30ml)
+    // Filtramos variantes visibles (ocultamos 8/120 en promos si es necesario)
     let variantesVisibles = product.variantes || [];
-    // Si hay descuento, priorizamos 30ml (o la primera disponible)
     if (product.descuentoPromo > 0) {
-      const filtradas = variantesVisibles.filter(v => v.nombre.includes('30'));
-      if (filtradas.length > 0) variantesVisibles = filtradas;
+      const solo30 = variantesVisibles.filter(v => v.nombre.includes('30'));
+      if (solo30.length > 0) variantesVisibles = solo30;
     }
 
-    const activeIdx = 0;
+    // Buscamos si hay 30ml para activarlo por defecto
+    const idx30 = variantesVisibles.findIndex(v => v.nombre.includes('30'));
+    const activeIdx = idx30 !== -1 ? idx30 : 0;
     const activeVariant = variantesVisibles[activeIdx];
+
+    // Calcular precio inicial
     let precioBase = activeVariant?.precio || product.precio;
-    let precioFinal = product.descuentoPromo > 0 
-      ? (activeVariant?.precioDescuento || Math.round(precioBase * (1 - product.descuentoPromo / 100)))
-      : precioBase;
+    let precioFinal = precioBase;
+    if (product.descuentoPromo > 0) {
+      precioFinal = activeVariant?.precioDescuento || Math.round(precioBase * (1 - product.descuentoPromo / 100));
+    }
 
     let priceHtml = '';
     if (product.descuentoPromo > 0) {
@@ -42,16 +47,23 @@ export const ProductCard = {
 
     const stockHtml = isLowStock ? `<div class="stock-label stock-bajo">⚠️ Últimas ${stock}</div>` : '';
 
-    const variantsHtml = variantesVisibles.map(v => {
-      const precioBtn = product.descuentoPromo > 0 
+    // ✅ 2. RENDERIZAR BOTONES DE VARIANTES
+    const variantsHtml = variantesVisibles.map((v, i) => {
+      const isActive = i === activeIdx ? 'active' : '';
+      // Si no hay índice original (porque filtramos), usamos i como fallback, pero idealmente usamos el índice real
+      const realIdx = product.variantes.indexOf(v); 
+      
+      const precioBtn = product.descuentoPromo > 0
         ? (v.precioDescuento || Math.round(v.precio * (1 - product.descuentoPromo / 100)))
         : v.precio;
+      
       return `
-        <button class="btn-variante" 
-                data-variant="${product.variantes.indexOf(v)}" 
+        <button class="btn-variante ${isActive}" 
+                data-variant="${realIdx}" 
                 data-price="${precioBtn}" 
-                data-original="${v.precio}">
-          ${v.nombre}<br><small>₡${precioBtn.toLocaleString()}</small>
+                data-price-original="${v.precio}" 
+                data-variant-name="${v.nombre}">
+          ${v.nombre} <br> <small>₡${precioBtn.toLocaleString()}</small>
         </button>
       `;
     }).join('');
@@ -64,13 +76,18 @@ export const ProductCard = {
         </div>
         <div class="producto-info">
           <h3 class="producto-nombre">${product.nombre}</h3>
+          ${product.calificacion ? `<div class="producto-calificacion">${'★'.repeat(Math.floor(product.calificacion))}</div>` : ''}
+          
           <div class="producto-precio-container">${priceHtml}</div>
+          
           ${stockHtml}
+          
           <div class="variantes-container">${variantsHtml}</div>
+
           <div class="producto-acciones">
-            <button class="btn-detalle" data-action="detail">👁️</button>
-            <button class="btn-externo" data-action="external">🔗</button>
-            <button class="btn-agregar" data-action="add">🛒</button>
+            <button class="btn-detalle" data-action="detail" title="Ver detalles">👁️</button>
+            <button class="btn-externo" data-action="external" title="Ver en catálogo">🔗</button>
+            <button class="btn-agregar" data-action="add" title="Agregar al carrito">🛒</button>
           </div>
         </div>
       </div>
@@ -79,47 +96,90 @@ export const ProductCard = {
 
   renderGrid(productos, container) {
     if (productos.length === 0) {
-      container.innerHTML = '<div class="empty-state"><h3>Sin productos</h3></div>';
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">📦</div><h3>Sin productos</h3></div>`;
       return;
     }
-    // Render simple (sin agrupar por tipo para evitar errores de HTML en móvil)
-    let html = '<div class="productos-grid">';
-    productos.forEach(p => html += this.render(p));
-    html += '</div>';
-    container.innerHTML = html;
+    const porTipo = {};
+    productos.forEach(p => {
+      if (!porTipo[p.tipo]) porTipo[p.tipo] = [];
+      porTipo[p.tipo].push(p);
+    });
+
+    container.innerHTML = Object.entries(porTipo).map(([tipo, items]) => `
+      <div class="seccion-tipo">
+        <h2 class="titulo-tipo">${this.getIconoTipo(tipo)} ${tipo} <span class="contador-productos">${items.length}</span></h2>
+        <div class="productos-grid">${items.map(p => this.render(p)).join('')}</div>
+      </div>
+    `).join('');
+
     this.attachEvents(container);
   },
 
   attachEvents(container) {
     container.addEventListener('click', (e) => {
+      // ✅ EVENTO: CAMBIO DE VARIANTE
       const variantBtn = e.target.closest('.btn-variante');
       if (variantBtn) {
+        const card = variantBtn.closest('.producto-card');
         const parent = variantBtn.closest('.variantes-container');
+        
+        // Actualizar clase visual
         parent.querySelectorAll('.btn-variante').forEach(b => b.classList.remove('active'));
         variantBtn.classList.add('active');
-        // Actualizar precio visual
-        const card = variantBtn.closest('.producto-card');
-        const precioDisplay = card.querySelector('.precio-oferta') || card.querySelector('.precio-normal');
-        if(precioDisplay) precioDisplay.textContent = `₡${parseInt(variantBtn.dataset.price).toLocaleString()}`;
+
+        // Actualizar precio visible en la tarjeta
+        const precioContainer = card.querySelector('.producto-precio-container');
+        const nuevoPrecio = parseInt(variantBtn.dataset.price);
+        const precioOriginal = variantBtn.dataset.priceOriginal;
+        const esOferta = card.classList.contains('oferta');
+
+        if (precioContainer) {
+          if (esOferta && precioOriginal) {
+            precioContainer.innerHTML = `<span class="precio-original">₡${parseInt(precioOriginal).toLocaleString()}</span><span class="precio-oferta">₡${nuevoPrecio.toLocaleString()}</span>`;
+          } else {
+            precioContainer.innerHTML = `<span class="precio-normal">₡${nuevoPrecio.toLocaleString()}</span>`;
+          }
+        }
+
+        // Activar animación radar
+        const cartBtn = card.querySelector('.btn-agregar');
+        if (cartBtn) {
+          cartBtn.classList.remove('radar-pulse');
+          void cartBtn.offsetWidth; 
+          cartBtn.classList.add('radar-pulse');
+        }
         return;
       }
 
+      // ✅ EVENTO: AGREGAR AL CARRITO
       const btn = e.target.closest('button[data-action]');
       if (!btn) return;
       const card = btn.closest('.producto-card');
-      const productId = card.dataset.id;
+      if (!card) return;
+
       const action = btn.dataset.action;
+      const productId = card.dataset.id;
 
       if (action === 'add') {
         const product = ProductManager.getProduct(productId);
-        const activeVariant = card.querySelector('.btn-variante.active');
-        const variantIndex = activeVariant ? parseInt(activeVariant.dataset.variant) : 0;
-        const variantData = product.variantes[variantIndex];
-        const precio = parseInt(activeVariant?.dataset.price) || product.precio;
+        if (!product) return;
 
+        // Obtener datos de la variante ACTIVA (marcada con clase .active)
+        const activeVariantBtn = card.querySelector('.btn-variante.active');
+        const variantIndex = activeVariantBtn ? parseInt(activeVariantBtn.dataset.variant) : 0;
+        const variantData = product.variantes[variantIndex];
+        
+        const precioFinal = parseInt(activeVariantBtn?.dataset.price) || product.precio;
+        const precioBase = parseInt(activeVariantBtn?.dataset.priceOriginal) || product.precio;
+
+        // Emitir evento al carrito con la variante correcta
         Store.emit('cart:add', {
           product,
-          variant: { nombre: variantData?.nombre || '30ml', precio, original: variantData?.precio }
+          variant: {
+            nombre: variantData?.nombre || '30ml', // ✅ Nombre real de la variante (ej: "8 ml")
+            precio: precioFinal,
+            precioOriginal: precioBase
+          }
         });
       } else if (action === 'detail') {
         Store.emit('product:detail', productId);
@@ -127,5 +187,10 @@ export const ProductCard = {
         window.open(`https://wil1979.github.io/esentia-factura/producto.html?id=${productId}`, '_blank');
       }
     });
+  },
+
+  getIconoTipo(tipo) {
+    const iconos = { 'Aromaterapia': '🌿', 'Difusores': '💨', 'Velas': '🕯️', 'Aceites': '💧', 'Perfumes': '🌸', 'Ambientadores': '🏠', 'Regalos': '🎁', 'Limpieza': '🧼' };
+    return iconos[tipo] || '✨';
   }
 };

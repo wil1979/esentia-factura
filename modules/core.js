@@ -41,16 +41,20 @@ export const Store = (() => {
       return value;
     },
 
-    addToCart: (item) => {
-      const exists = state.carrito.find(i => String(i.id) === String(item.id));
-      if (exists) {
-        exists.cantidad += item.cantidad || 1;
-      } else {
-        state.carrito.push({ ...item, cantidad: item.cantidad || 1 });
-      }
-      Store.emit('cart:updated', state.carrito);
-      Store.persist('cart');
-    },
+      addToCart: (item) => {
+    // ✅ CORRECCIÓN CRÍTICA: Buscar por ID + Variante para permitir líneas separadas
+    const exists = state.carrito.find(i =>
+      String(i.id) === String(item.id) && i.variante === item.variante
+    );
+
+    if (exists) {
+      exists.cantidad += item.cantidad || 1;
+    } else {
+      state.carrito.push({ ...item, cantidad: item.cantidad || 1 });
+    }
+    Store.emit('cart:updated', state.carrito);
+    Store.persist('cart');
+  },
 
     // ✅ CORREGIDO: Comparación segura de tipos (String vs Number)
     removeFromCart: (id) => {
@@ -90,16 +94,20 @@ export const Store = (() => {
       } catch (e) { console.warn('Restore error:', e); }
     },
 
-    init: async () => {
-      if (state.initialized) return;
-      Store.restore('cliente');
-      Store.restore('carrito');
-      state.isAdmin = state.cliente?.cedula === '110350666';
-      state.initialized = true;
-      Store.emit('store:initialized');
-    }
+init: async () => {
+  if (state.initialized) return;
+ Store.restore('cliente');
+Store.restore('carrito');
+
+// ✅ CAMBIO: Quitar la validación fija y dejarla en false inicialmente
+state.isAdmin = false; 
+
+state.initialized = true;
+Store.emit('store:initialized');
+}
   };
 })();
+
 
 export const Utils = {
   debounce: (fn, ms) => {
