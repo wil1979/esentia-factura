@@ -46,7 +46,72 @@ const App = {
   appliedPromo: null, // ✅ NUEVO: Guarda el descuento aplicado temporalmente
   // ... resto del código ..
 
-async init() {
+// ✅ FUNCIÓN NUEVA: Integra y normaliza los JSON locales
+async integrarJSONsLocales() {
+  console.log('📦 Integrando catálogos locales (Limpieza y Velas)...');
+  const productosActuales = Store.get('productos') || [];
+  let nuevosProductos = [];
+
+  try {
+    // 1. Cargar Limpieza
+    const resLimpieza = await fetch('./data/productos_limpieza_completo.json');
+    if (resLimpieza.ok) {
+      const dataLimpieza = await resLimpieza.json();
+      
+      const productosLimpieza = dataLimpieza.map(p => ({
+        id: p.id,
+        nombre: p.nombre,
+        tipo: 'Limpieza',
+        precio: p.precioPublico || p.precio,
+        categoria: p.categoria || 'General',
+        // Transformar 'aromas' en 'variantes'
+        variantes: (p.aromas && p.aromas.length > 0) 
+          ? p.aromas.map(a => ({ nombre: a, precio: p.precioPublico })) 
+          : [{ nombre: 'Única', precio: p.precioPublico }],
+        stock: 0, // Inicia en 0 hasta que hagas compra
+        activo: p.disponible !== false,
+        imagen: p.imagen || 'images/default.png',
+        precioCompra: p.precioCompra || 0 // Importante para Compras
+      }));
+      nuevosProductos = [...nuevosProductos, ...productosLimpieza];
+    }
+
+    // 2. Cargar Velas
+    const resVelas = await fetch('./data/catalogo-velas.json');
+    if (resVelas.ok) {
+      // Asumiendo que es un array de objetos
+      const dataVelasRaw = await resVelas.json();
+      const dataVelas = Array.isArray(dataVelasRaw) ? dataVelasRaw : [dataVelasRaw];
+
+      const productosVelas = dataVelas.map(p => ({
+        id: p.id,
+        nombre: p.nombre,
+        tipo: 'Velas',
+        precio: p.precio || p.precioPublico,
+        categoria: (p.tipo ? p.tipo.split('|')[0] : 'Decoración'), // Toma la primera categoría
+        variantes: p.variantes || [{ nombre: 'Única', precio: p.precio }],
+        stock: p.stock || 0,
+        activo: p.disponible !== false,
+        imagen: p.imagen,
+        precioCompra: p.precioCompra || 0
+      }));
+      nuevosProductos = [...nuevosProductos, ...productosVelas];
+    }
+
+    // 3. Fusionar con el Store global
+    // Evitamos duplicados si ya existen por ID
+    const idsExistentes = new Set(productosActuales.map(p => p.id));
+    const productosUnicos = nuevosProductos.filter(p => !idsExistentes.has(p.id));
+    
+    Store.set('productos', [...productosActuales, ...productosUnicos]);
+    console.log(`✅ Integrados ${productosUnicos.length} productos locales.`);
+
+  } catch (error) {
+    console.warn('⚠️ No se pudieron cargar algunos JSON locales:', error);
+  }
+ },
+
+ async init() {
   console.log('🌸 Esentia v6.0 - Iniciando...');
   await Store.init();
   await ClientesManager.init(); 
@@ -73,10 +138,10 @@ async init() {
     setTimeout(() => UI.modal('modalLogin', 'open'), 800);
   }
   console.log('✅ Esentia lista');
-},
+ },
 
 
-renderHeader() {
+ renderHeader() {
   const cliente = Store.get('cliente');
   const isAdmin = Store.get('isAdmin');
   const userPanel = document.getElementById('panelUsuario');
@@ -104,7 +169,7 @@ renderHeader() {
     
     if (loyaltyContainer) loyaltyContainer.style.display = 'none';
   }
-},
+ },
   renderProducts() {
     const container = document.getElementById('productos-container');
     const loader = document.getElementById('loader');
@@ -683,68 +748,6 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 else App.init();
 
 // ✅ FUNCIÓN NUEVA: Integra y normaliza los JSON locales
-async function integrarJSONsLocales() {
-  console.log('📦 Integrando catálogos locales (Limpieza y Velas)...');
-  const productosActuales = Store.get('productos') || [];
-  let nuevosProductos = [];
 
-  try {
-    // 1. Cargar Limpieza
-    const resLimpieza = await fetch('./data/productos_limpieza_completo.json');
-    if (resLimpieza.ok) {
-      const dataLimpieza = await resLimpieza.json();
-      
-      const productosLimpieza = dataLimpieza.map(p => ({
-        id: p.id,
-        nombre: p.nombre,
-        tipo: 'Limpieza',
-        precio: p.precioPublico || p.precio,
-        categoria: p.categoria || 'General',
-        // Transformar 'aromas' en 'variantes'
-        variantes: (p.aromas && p.aromas.length > 0) 
-          ? p.aromas.map(a => ({ nombre: a, precio: p.precioPublico })) 
-          : [{ nombre: 'Única', precio: p.precioPublico }],
-        stock: 0, // Inicia en 0 hasta que hagas compra
-        activo: p.disponible !== false,
-        imagen: p.imagen || 'images/default.png',
-        precioCompra: p.precioCompra || 0 // Importante para Compras
-      }));
-      nuevosProductos = [...nuevosProductos, ...productosLimpieza];
-    }
-
-    // 2. Cargar Velas
-    const resVelas = await fetch('./data/catalogo-velas.json');
-    if (resVelas.ok) {
-      // Asumiendo que es un array de objetos
-      const dataVelasRaw = await resVelas.json();
-      const dataVelas = Array.isArray(dataVelasRaw) ? dataVelasRaw : [dataVelasRaw];
-
-      const productosVelas = dataVelas.map(p => ({
-        id: p.id,
-        nombre: p.nombre,
-        tipo: 'Velas',
-        precio: p.precio || p.precioPublico,
-        categoria: (p.tipo ? p.tipo.split('|')[0] : 'Decoración'), // Toma la primera categoría
-        variantes: p.variantes || [{ nombre: 'Única', precio: p.precio }],
-        stock: p.stock || 0,
-        activo: p.disponible !== false,
-        imagen: p.imagen,
-        precioCompra: p.precioCompra || 0
-      }));
-      nuevosProductos = [...nuevosProductos, ...productosVelas];
-    }
-
-    // 3. Fusionar con el Store global
-    // Evitamos duplicados si ya existen por ID
-    const idsExistentes = new Set(productosActuales.map(p => p.id));
-    const productosUnicos = nuevosProductos.filter(p => !idsExistentes.has(p.id));
-    
-    Store.set('productos', [...productosActuales, ...productosUnicos]);
-    console.log(`✅ Integrados ${productosUnicos.length} productos locales.`);
-
-  } catch (error) {
-    console.warn('⚠️ No se pudieron cargar algunos JSON locales:', error);
-  }
-}
 
 window.App = App;
