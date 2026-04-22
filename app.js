@@ -67,7 +67,6 @@ async init() {
   console.log('✅ Esentia lista');
 },
 
-
 renderHeader() {
   const cliente = Store.get('cliente');
   const isAdmin = Store.get('isAdmin');
