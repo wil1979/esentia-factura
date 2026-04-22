@@ -67,35 +67,43 @@ async init() {
   console.log('✅ Esentia lista');
 },
 
+// 🔹 Reemplaza tu función renderHeader por esta:
 renderHeader() {
   const cliente = Store.get('cliente');
   const isAdmin = Store.get('isAdmin');
+  
+  // Elementos del DOM
   const userPanel = document.getElementById('panelUsuario');
   const loginBtn = document.getElementById('btnLogin');
-  const adminMenu = document.getElementById('adminDropdownContainer');
-  const loyaltyContainer = document.getElementById('loyaltyContainer'); 
+  const btnAdmin = document.getElementById('btnToggleAdmin'); // Botón Vela
+  const loyaltyContainer = document.getElementById('loyaltyContainer');
 
   if (cliente) {
     userPanel && (userPanel.style.display = 'flex');
     document.getElementById('nombreUsuario').textContent = cliente.nombre;
     loginBtn && (loginBtn.style.display = 'none');
-    adminMenu && (adminMenu.style.display = isAdmin ? 'inline-block' : 'none');
     
-    // ✅ FORZAR RENDER DE LEALTAD
+    // ✅ Mostrar botón admin si tiene permisos
+    if (btnAdmin) {
+      btnAdmin.style.display = isAdmin ? 'inline-block' : 'none';
+    }
+
     if (loyaltyContainer) {
       loyaltyContainer.style.display = 'block';
-      if (window.LoyaltyManager) {
-        window.LoyaltyManager.renderCard(); // 👈 ESTO ES LO QUE FALTABA
-      }
+      if (window.LoyaltyManager) window.LoyaltyManager.renderCard();
     }
   } else {
     userPanel && (userPanel.style.display = 'none');
     loginBtn && (loginBtn.style.display = 'inline-block');
-    adminMenu && (adminMenu.style.display = 'none');
-    
-    if (loyaltyContainer) loyaltyContainer.style.display = 'none';
+    if (btnAdmin) btnAdmin.style.display = 'none';
+    if (loyaltyContainer) {
+      loyaltyContainer.style.display = 'none';
+      loyaltyContainer.innerHTML = '';
+    }
   }
 },
+
+
   renderProducts() {
     const container = document.getElementById('productos-container');
     const loader = document.getElementById('loader');
@@ -228,69 +236,57 @@ document.getElementById('btnCheckout')?.addEventListener('click', async () => {
   UI.modal('modalCarrito', 'close');
 });
 
-// 🕯️ MENÚ ADMIN - EVENT DELEGATION (CORREGIDO Y ROBUSTO)
+// 🕯️ MENÚ ADMIN - CONTROL UNIFICADO
 const btnAdmin = document.getElementById('btnToggleAdmin');
 const adminMenu = document.getElementById('adminMenu');
 
 if (btnAdmin && adminMenu) {
-  // Toggle menú
-  btnAdmin.addEventListener('click', (e) => { 
-    e.stopPropagation(); 
-    adminMenu.classList.toggle('show'); 
+  // 1. Abrir/Cerrar Menú
+  btnAdmin.addEventListener('click', (e) => {
+    e.stopPropagation();
+    adminMenu.classList.toggle('show'); // Esto activa el CSS .show
   });
-  
-  // Cerrar al hacer clic fuera
+
+  // 2. Cerrar al hacer clic fuera
   document.addEventListener('click', (e) => {
-    if (!btnAdmin.contains(e.target) && !adminMenu.contains(e.target)) {
+    if (!adminMenu.contains(e.target) && e.target !== btnAdmin) {
       adminMenu.classList.remove('show');
     }
   });
 
-  // ✅ Manejo de clicks en botones del menú
+  // 3. Ejecutar acciones del menú
   adminMenu.addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-admin-action]');
     if (!btn) return;
-
-    const action = btn.dataset.adminAction;
     
-    // ✅ RUTEO DINÁMICO: acción -> { manager, method }
-   const routeMap = {
-  stats:     { manager: 'AdminManager',    method: 'showStats' },
-  inventory: { manager: 'AdminManager',    method: 'manageInventory' },
-  visits:    { manager: 'AdminManager',    method: 'showVisits' },
-  promos:    { manager: 'AdminManager',    method: 'managePromos' },
-  invoice:   { manager: 'AdminManager',    method: 'quickInvoice' },
-  notify:    { manager: 'AdminManager',    method: 'sendNotification' },
-  compras:   { manager: 'ComprasManager',  method: 'mostrarGestionProveedores' },
-  cobros:    { manager: 'CobrosManager',   method: 'mostrarPanelCobros' },
-  pedidos:   { manager: 'PedidosManager',  method: 'mostrarPanel' },
-  loyaltyAdmin: { manager: 'LoyaltyControl', method: 'mostrarPanelPuntos' },
-  editFactura: { manager: 'FacturaEditor', method: 'abrirEditor' },
-  userAdmin: { manager: 'UserManager', method: 'mostrarPanel' }, // ✅ NUEVO
-  clientesAdmin: { manager: 'ClientesManager', method: 'mostrarPanelGestion' } // ✅ NUEVO
-};
+    const action = btn.dataset.adminAction;
+    const routeMap = {
+      stats:     { manager: 'AdminManager',    method: 'showStats' },
+      inventory: { manager: 'AdminManager',    method: 'manageInventory' },
+      visits:    { manager: 'AdminManager',    method: 'showVisits' },
+      promos:    { manager: 'AdminManager',    method: 'managePromos' },
+      invoice:   { manager: 'AdminManager',    method: 'quickInvoice' },
+      notify:    { manager: 'AdminManager',    method: 'sendNotification' },
+      compras:   { manager: 'ComprasManager',  method: 'mostrarGestionProveedores' },
+      cobros:    { manager: 'CobrosManager',   method: 'mostrarPanelCobros' },
+      pedidos:   { manager: 'PedidosManager',  method: 'mostrarPanel' },
+      loyaltyAdmin: { manager: 'LoyaltyControl', method: 'mostrarPanelPuntos' },
+      editFactura: { manager: 'FacturaEditor', method: 'abrirEditor' },
+      userAdmin: { manager: 'UserManager', method: 'mostrarPanel' },
+      clientesAdmin: { manager: 'ClientesManager', method: 'mostrarPanelGestion' }
+    };
 
     const route = routeMap[action];
-    if (!route) {
-      console.warn(`⚠️ Acción no mapeada: ${action}`);
-      return;
-    }
-    
-    // ✅ Acceso dinámico al manager vía window[nombre]
+    if (!route) return console.warn(`⚠️ Acción no mapeada: ${action}`);
+
     const targetManager = window[route.manager];
-    
     if (targetManager && typeof targetManager[route.method] === 'function') {
-      // ✅ Ejecutar método asíncrono de forma segura
       Promise.resolve(targetManager[route.method]())
         .catch(err => console.error(`Error en ${route.manager}.${route.method}:`, err));
-      
-      adminMenu.classList.remove('show'); // Cerrar menú tras ejecutar
-    } else {
-      console.warn(`⚠️ ${route.manager}.${route.method} no está disponible`);
+      adminMenu.classList.remove('show'); // Cierra el menú al ejecutar
     }
   });
 }
-    
 
     // Login/Registro Forms
     document.getElementById('formLogin')?.addEventListener('submit', this.handleLogin.bind(this));

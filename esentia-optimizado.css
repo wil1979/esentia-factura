@@ -2922,4 +2922,194 @@ MODO MÓVIL OPTIMIZADO (1 COLUMNA)
   #loyaltyContainer { bottom: 85px; right: 15px; }
   .loyalty-widget.expanded { width: 170px; }
 }
+/* 📱 FORZAR VISIBILIDAD ADMIN EN MÓVIL */
+@media (max-width: 768px) {
+  #btnToggleAdmin {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px !important;
+    font-size: 0.85rem !important;
+    margin-left: 8px !important;
+    background: rgba(255,255,255,0.15) !important;
+    border: 1px solid rgba(255,255,255,0.3) !important;
+    border-radius: 6px !important;
+    color: white !important;
+    white-space: nowrap !important;
+    z-index: 100 !important;
+  }
+
+  /* Menú desplegable adaptado a móvil */
+  #adminMenu {
+    position: fixed !important;
+    top: 60px !important;
+    right: 10px !important;
+    left: 10px !important;
+    width: auto !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+    background: white !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2) !important;
+    border-radius: 12px !important;
+    z-index: 9999 !important;
+    display: none !important; /* Controlado por JS */
+  }
+
+  #adminMenu.show {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 12px !important;
+    gap: 6px !important;
+  }
+
+  #adminMenu button {
+    width: 100% !important;
+    text-align: left !important;
+    padding: 12px !important;
+    font-size: 0.95rem !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+  }
+}
+/* BOTÓN ADMIN FLOTANTE */
+.btn-admin-flotante {
+  position: fixed;
+  bottom: 25px;       /* Encima de la barra de navegación inferior */
+  left: 20px;         /* Esquina inferior IZQUIERDA (para no tapar el carrito) */
+  z-index: 9998;      /* Muy alto para asegurar que se vea */
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2c3e50, #000000);
+  color: white;
+  border: 2px solid rgba(255,255,255,0.3);
+  font-size: 1.5rem;
+  display: none;      /* Oculto por defecto, se activa con JS */
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.btn-admin-flotante:active {
+  transform: scale(0.9);
+}
+
+/* Menú Admin Flotante */
+#adminMenu {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 90% !important;
+  max-width: 400px !important;
+  max-height: 80vh !important;
+  overflow-y: auto !important;
+  z-index: 9999 !important;
+  background: white !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+  display: none !important; /* Controlado por JS */
+  padding: 20px !important;
+}
+
+#adminMenu.show {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+#adminMenu button {
+  width: 100% !important;
+  padding: 15px !important;
+  text-align: left !important;
+  background: #f8f9fa !important;
+  border: 1px solid #eee !important;
+  border-radius: 10px !important;
+  font-size: 1rem !important;
+}
+/* 🕯️ BOTÓN ADMIN UNIFICADO */
+#btnAdminGlobal {
+  display: none; /* Se activa con JS */
+  background: linear-gradient(135deg, #2c3e50, #111);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, opacity 0.2s;
+  z-index: 100;
+}
+#btnAdminGlobal:active { transform: scale(0.95); }
+
+/* PC: Botón normal en el header */
+@media (min-width: 769px) {
+  #btnAdminGlobal.visible {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px;
+    margin-left: 12px;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+}
+
+/* Móvil: Botón flotante esquina inferior izquierda */
+@media (max-width: 768px) {
+  #btnAdminGlobal.visible {
+    display: flex;
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 1.3rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+}
+
+/* 🔒 FORZAR VISIBILIDAD DEL MENÚ ADMIN */
+#adminMenu {
+  display: none !important; /* Oculto por defecto */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  z-index: 9999;
+  padding: 16px;
+}
+
+/* ✅ Cuando se agrega la clase 'show', aparece sí o sí */
+#adminMenu.show {
+  display: flex !important;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Estilo de los botones dentro del menú */
+#adminMenu button {
+  width: 100%;
+  padding: 14px;
+  text-align: left;
+  background: #f8f9fa;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+/* Botón flotante del admin (si usas esa versión) */
+#btnToggleAdmin {
+  display: none; /* Se activa con JS */
+  cursor: pointer;
+}
 }

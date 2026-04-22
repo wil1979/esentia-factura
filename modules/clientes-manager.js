@@ -20,44 +20,77 @@ export const ClientesManager = {
   },
 
   // 🔍 Búsqueda por cédula (Hacienda API + Fallback local)
-  async buscarPorCedula(cedula) {
-    if (!cedula || cedula.length < 9) return null;
-    try {
-      // Intento 1: API Identifik (CORS-friendly)
-      let res = await fetch(`https://api.identifik.io/CR/1/${cedula}`);
-      if (!res.ok) throw new Error('Fallo en Identifik');
-      let data = await res.json();
-      
-      if (data.nombre) return this._normalizarDatos({
-        cedula,
-        nombre: data.nombre,
-        direccion: data.direccion || '',
-        tipo: 'Físico'
-      });
+  // ✅ 1. Búsqueda optimizada: BD primero → API → JSON
+async buscarPorCedula(cedula) {
+  if (!cedula || cedula.length < 9) return null;
+  const resDiv = document.getElementById('clientesResultados');
+  resDiv.innerHTML = '<p style="color:#888">🔍 Verificando en BD y APIs...</p>';
 
-      // Intento 2: API Oficial Hacienda (puede tener CORS)
-      res = await fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedula}`);
-      if (res.ok) {
-        data = await res.json();
-        return this._normalizarDatos({
-          cedula,
-          nombre: data.nombre || data.nombreCompleto || '',
-          direccion: data.direccion || '',
-          tipo: 'Físico'
-        });
-      }
-      throw new Error('Sin respuesta de Hacienda');
-    } catch (e) {
-      console.warn('🌐 API Hacienda/Proxy no disponible, usando fallback local');
-      // Fallback: personal.json o Firestore
-      const local = this._personalCache?.find(p => String(p.cedula) === String(cedula));
-      if (local) return this._normalizarDatos(local);
-      
-      // Intentar Firestore directo
-      const snap = await getDoc(doc(DB.db, "clientesBD", cedula));
-      return snap.exists() ? this._normalizarDatos(snap.data()) : null;
+  try {
+    // 🔹 PASO 1: Verificar si ya existe en Firestore
+    const snap = await getDoc(doc(DB.db, "clientesBD", cedula));
+    if (snap.exists()) {
+      const data = snap.data();
+      resDiv.innerHTML = `<div class="result-item success">✅ Cliente registrado en BD. Listo para editar.</div>`;
+      return { ...data, _origen: 'bd' }; // Bandera para UI
     }
-  },
+
+    // 🔹 PASO 2: Si no está en BD, consultar API externa
+    try {
+      let res = await fetch(`https://api.identifik.io/CR/1/${cedula}`);
+      if (res.ok) {
+        const apiData = await res.json();
+        if (apiData.nombre) {
+          resDiv.innerHTML = `<div class="result-item info">ℹ️ Nuevo cliente. Datos obtenidos de API.</div>`;
+          return this._normalizarDatos({ ...apiData, cedula, _origen: 'api' });
+        }
+      }
+    } catch (e) { /* Silenciar errores de red/API */ }
+
+    // 🔹 PASO 3: Fallback a personal.json (solo nombre/cedula)
+    const local = this._personalCache?.find(p => String(p.cedula) === String(cedula));
+    if (local) {
+      resDiv.innerHTML = `<div class="result-item info">ℹ️ Nuevo cliente. Datos obtenidos de archivo local.</div>`;
+      return { ...local, cedula, _origen: 'json' };
+    }
+
+    // 🔹 PASO 4: No encontrado en ningún lado
+    resDiv.innerHTML = `<div class="result-item warn">⚠️ No encontrado. Puedes registrarlo manualmente.</div>`;
+    return { cedula, _origen: 'nuevo' };
+
+  } catch (e) {
+    console.error(e);
+    resDiv.innerHTML = `<div class="result-item error">❌ Error de conexión</div>`;
+    return null;
+  }
+},
+
+// ✅ 2. Llenado inteligente del formulario según origen
+_llenarFormulario(data) {
+  const form = document.getElementById('formCliente');
+  const isEdicion = data._origen === 'bd';
+  
+  document.getElementById('formCedula').value = data.cedula || '';
+  document.getElementById('formNombre').value = data.nombre || '';
+  document.getElementById('formTelefono').value = data.telefono || '';
+  document.getElementById('formEmail').value = data.email || '';
+  document.getElementById('formDireccion').value = data.direccion || '';
+
+  // Bloquear cédula solo si es edición de BD existente
+  document.getElementById('formCedula').toggleAttribute('readonly', isEdicion);
+  
+  // Cambiar título y botones según modo
+  const titulo = document.querySelector('#modalClientes h3');
+  const btnEliminar = document.getElementById('btnEliminarCliente');
+  const btnGuardar = form.querySelector('button[type="submit"]');
+  
+  if (titulo) titulo.textContent = isEdicion ? '✏️ Editar Cliente Registrado' : '📝 Registrar Nuevo Cliente';
+  if (btnEliminar) btnEliminar.style.display = isEdicion ? 'inline-block' : 'none';
+  if (btnGuardar) btnGuardar.textContent = isEdicion ? '💾 Actualizar Cliente' : '💾 Guardar Cliente';
+  
+  // Auto-cambiar a pestaña de formulario
+  document.querySelector('[data-tab="registrar"]')?.click();
+},
 
   // 🔍 Búsqueda por nombre en personal.json
   async buscarPorNombre(query) {
