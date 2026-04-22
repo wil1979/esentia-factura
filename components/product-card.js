@@ -3,6 +3,10 @@ import { Store, Utils } from '../modules/core.js';
 import ProductManager from '../modules/products.js';
 
 export const ProductCard = {
+  
+  /**
+   * Renderiza una tarjeta de producto individual
+   */
   render(product, options = {}) {
     const stock = ProductManager.getStock(product.nombre);
     const isLowStock = stock > 0 && stock <= 5;
@@ -17,14 +21,15 @@ export const ProductCard = {
     badges.push(`<span class="badge badge-tipo">${product.tipo}</span>`);
 
     // ✅ 1. DETERMINAR VARIANTE ACTIVA POR DEFECTO (Prioriza 30ml)
-    // Filtramos variantes visibles (ocultamos 8/120 en promos si es necesario)
     let variantesVisibles = product.variantes || [];
+    
+    // Si es promoción, mostrar solo 30ml para simplificar
     if (product.descuentoPromo > 0) {
       const solo30 = variantesVisibles.filter(v => v.nombre.includes('30'));
       if (solo30.length > 0) variantesVisibles = solo30;
     }
 
-    // Buscamos si hay 30ml para activarlo por defecto
+    // Buscar índice de 30ml
     const idx30 = variantesVisibles.findIndex(v => v.nombre.includes('30'));
     const activeIdx = idx30 !== -1 ? idx30 : 0;
     const activeVariant = variantesVisibles[activeIdx];
@@ -50,7 +55,7 @@ export const ProductCard = {
     // ✅ 2. RENDERIZAR BOTONES DE VARIANTES
     const variantsHtml = variantesVisibles.map((v, i) => {
       const isActive = i === activeIdx ? 'active' : '';
-      // Si no hay índice original (porque filtramos), usamos i como fallback, pero idealmente usamos el índice real
+      // Usamos el índice real del array original de variantes para guardar el correcto
       const realIdx = product.variantes.indexOf(v); 
       
       const precioBtn = product.descuentoPromo > 0
@@ -85,8 +90,6 @@ export const ProductCard = {
           <div class="variantes-container">${variantsHtml}</div>
 
           <div class="producto-acciones">
-            <button class="btn-detalle" data-action="detail" title="Ver detalles">👁️</button>
-            <button class="btn-externo" data-action="external" title="Ver en catálogo">🔗</button>
             <button class="btn-agregar" data-action="add" title="Agregar al carrito">🛒</button>
           </div>
         </div>
@@ -94,6 +97,81 @@ export const ProductCard = {
     `;
   },
 
+  /**
+   * Modal de Selección de Aromas (Difusores)
+   */
+  mostrarSelectorAroma(product, variant, precioFinal, precioBase) {
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.id = 'modalSelectorAroma';
+    
+    const aromas = ProductManager.AROMAS_DIFUSORES || [];
+    const iconos = {
+      "Pera": "🍐", "Manzana Verde": "🍏", "Coco": "🥥", "Vainilla": "🍦",
+      "Lavanda": "💜", "Rosas": "🌹", "Jazmín": "🌼", "Sándalo": "🪵",
+      "Canela": "🫚", "Limón": "🍋", "Menta": "🌿", "Fresa": "🍓"
+    };
+
+    modal.innerHTML = `
+      <div class="modal-content aroma-modal">
+        <button class="modal-close" onclick="UI.modal('modalSelectorAroma','close')">✕</button>
+        <h3>🌸 Selecciona el Aroma</h3>
+        <p class="subtitle">${product.nombre} — ${variant.nombre}</p>
+        
+        <div class="aromas-grid">
+          ${aromas.map(a => `
+            <button class="btn-aroma" data-aroma="${a}">
+              <span class="aroma-icon">${iconos[a] || '✨'}</span>
+              <span>${a}</span>
+            </button>
+          `).join('')}
+        </div>
+
+        <div class="custom-aroma-box">
+          <label>🖊️ ¿No encuentras el aroma? Escríbelo aquí:</label>
+          <div class="custom-input-row">
+            <input type="text" id="customAromaInput" placeholder="Ej: Durazno, Chocolate...">
+            <button id="btnConfirmCustomAroma" class="btn-primary">✅ Usar</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) UI.modal('modalSelectorAroma','close'); });
+
+    // Click en botones predefinidos
+    modal.querySelectorAll('.btn-aroma').forEach(btn => {
+      btn.addEventListener('click', () => this._agregarConAroma(product, variant, precioFinal, precioBase, btn.dataset.aroma));
+    });
+
+    // Click en botón personalizado
+    document.getElementById('btnConfirmCustomAroma').onclick = () => {
+      const custom = document.getElementById('customAromaInput').value.trim();
+      if (!custom) return UI.toast('Escribe un aroma válido', 'warning');
+      this._agregarConAroma(product, variant, precioFinal, precioBase, custom);
+    };
+  },
+
+  /**
+   * Lógica central para agregar al carrito con aroma
+   */
+  _agregarConAroma(product, variant, precioFinal, precioBase, aroma) {
+    Store.emit('cart:add', {
+      product,
+      variant: { 
+        nombre: variant.nombre, 
+        precio: precioFinal, 
+        precioOriginal: precioBase, 
+        aroma: aroma.toUpperCase() // Normalizar a mayúsculas
+      }
+    });
+    UI.modal('modalSelectorAroma', 'close');
+  },
+
+  /**
+   * Renderiza la grilla completa de productos
+   */
   renderGrid(productos, container) {
     if (productos.length === 0) {
       container.innerHTML = `<div class="empty-state"><div class="empty-icon">📦</div><h3>Sin productos</h3></div>`;
@@ -115,6 +193,9 @@ export const ProductCard = {
     this.attachEvents(container);
   },
 
+  /**
+   * Maneja los eventos de clic en las tarjetas
+   */
   attachEvents(container) {
     container.addEventListener('click', (e) => {
       // ✅ EVENTO: CAMBIO DE VARIANTE
@@ -164,7 +245,7 @@ export const ProductCard = {
         const product = ProductManager.getProduct(productId);
         if (!product) return;
 
-        // Obtener datos de la variante ACTIVA (marcada con clase .active)
+        // Obtener datos de la variante ACTIVA
         const activeVariantBtn = card.querySelector('.btn-variante.active');
         const variantIndex = activeVariantBtn ? parseInt(activeVariantBtn.dataset.variant) : 0;
         const variantData = product.variantes[variantIndex];
@@ -172,19 +253,21 @@ export const ProductCard = {
         const precioFinal = parseInt(activeVariantBtn?.dataset.price) || product.precio;
         const precioBase = parseInt(activeVariantBtn?.dataset.priceOriginal) || product.precio;
 
-        // Emitir evento al carrito con la variante correcta
+        // Si es Difusor, abrir selector de aroma
+        if (product.tipo === 'Difusores' || product.tipo === 'Difusor') {
+          this.mostrarSelectorAroma(product, variantData, precioFinal, precioBase);
+          return;
+        }
+
+        // Agregar directo (no difusores)
         Store.emit('cart:add', {
           product,
-          variant: {
-            nombre: variantData?.nombre || '30ml', // ✅ Nombre real de la variante (ej: "8 ml")
-            precio: precioFinal,
-            precioOriginal: precioBase
+          variant: { 
+            nombre: variantData?.nombre || '30ml', 
+            precio: precioFinal, 
+            precioOriginal: precioBase 
           }
         });
-      } else if (action === 'detail') {
-        Store.emit('product:detail', productId);
-      } else if (action === 'external') {
-        window.open(`https://wil1979.github.io/esentia-factura/producto.html?id=${productId}`, '_blank');
       }
     });
   },
