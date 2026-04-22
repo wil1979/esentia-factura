@@ -52,17 +52,14 @@ const App = {
   },
 
   // En app.js, reemplaza renderHeader() por esto:
+// En app.js -> renderHeader()
 renderHeader() {
   const cliente = Store.get('cliente');
   const isAdmin = Store.get('isAdmin');
-  
   const userPanel = document.getElementById('panelUsuario');
   const loginBtn = document.getElementById('btnLogin');
   const adminMenu = document.getElementById('adminDropdownContainer');
-  
-  // ✅ IDs posibles del botón de lealtad (ajusta según tu HTML)
-  const loyaltyContainer = document.getElementById('loyaltyContainer');
-  const btnLealtad = document.getElementById('btnLealtad');
+  const loyaltyContainer = document.getElementById('loyaltyContainer'); 
 
   if (cliente) {
     userPanel && (userPanel.style.display = 'flex');
@@ -70,17 +67,19 @@ renderHeader() {
     loginBtn && (loginBtn.style.display = 'none');
     adminMenu && (adminMenu.style.display = isAdmin ? 'inline-block' : 'none');
     
-    // ✅ MOSTRAR lealtad al iniciar sesión
-    loyaltyContainer && (loyaltyContainer.style.display = 'block');
-    btnLealtad && (btnLealtad.style.display = 'inline-block');
+    // ✅ FORZAR RENDER DE LEALTAD
+    if (loyaltyContainer) {
+      loyaltyContainer.style.display = 'block';
+      if (window.LoyaltyManager) {
+        window.LoyaltyManager.renderCard(); // 👈 ESTO ES LO QUE FALTABA
+      }
+    }
   } else {
     userPanel && (userPanel.style.display = 'none');
     loginBtn && (loginBtn.style.display = 'inline-block');
     adminMenu && (adminMenu.style.display = 'none');
     
-    // ✅ OCULTAR lealtad al cerrar sesión
-    loyaltyContainer && (loyaltyContainer.style.display = 'none');
-    btnLealtad && (btnLealtad.style.display = 'none');
+    if (loyaltyContainer) loyaltyContainer.style.display = 'none';
   }
 },
 
@@ -198,17 +197,23 @@ renderHeader() {
   btn.disabled = false; btn.textContent = 'Aplicar';
 });
 
+
+
     // ✅ FINALIZAR COMPRA (Pasa el código aplicado al checkout)
-    document.getElementById('btnCheckout')?.addEventListener('click', async () => {
-      const btn = document.getElementById('btnCheckout');
-      btn.disabled = true; btn.textContent = 'Procesando...';
-      
-      await CartManager.checkout(this.appliedPromo?.code);
-      this.appliedPromo = null; // Limpiar promo tras compra exitosa
-      
-      btn.disabled = false; btn.textContent = '✅ Finalizar por WhatsApp';
-      UI.modal('modalCarrito', 'close');
-    });
+    // En attachGlobalEvents(), reemplaza el listener de btnCheckout por:
+document.getElementById('btnCheckout')?.addEventListener('click', async () => {
+  const btn = document.getElementById('btnCheckout');
+  btn.disabled = true; btn.textContent = 'Procesando...';
+  
+  // ✅ Leer canal seleccionado
+  const canalSeleccionado = document.querySelector('input[name="canalEnvio"]:checked')?.value || 'whatsapp';
+  
+  await CartManager.checkout(this.appliedPromo?.code, canalSeleccionado);
+  this.appliedPromo = null;
+  
+  btn.disabled = false; btn.textContent = '✅ Finalizar Pedido';
+  UI.modal('modalCarrito', 'close');
+});
 
 // 🕯️ MENÚ ADMIN - EVENT DELEGATION (CORREGIDO Y ROBUSTO)
 const btnAdmin = document.getElementById('btnToggleAdmin');
@@ -315,26 +320,23 @@ if (btnAdmin && adminMenu) {
         </div>
         <div class="item-actions">
           <span class="item-price">₡${(item.precio * item.cantidad).toLocaleString()}</span>
-          <button onclick="CartManager.remove('${item.id}')" class="btn-remove">🗑️</button>
+          <button onclick="CartManager.remove('${item.id}')" class="btn-remove">🗑️</button>          
+        </div>            
+        </li>
+        <div class="canal-envio-selector" style="margin:1rem 0; padding:1rem; background:#f8f6ff; border-radius:12px;">
+        <label style="font-weight:600; display:block; margin-bottom:0.5rem;">📤 Enviar pedido por:</label>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <label class="canal-opt"><input type="radio" name="canalEnvio" value="whatsapp" checked> 📱 WhatsApp</label>
+        <label class="canal-opt"><input type="radio" name="canalEnvio" value="email"> 📧 Correo</label>
+        <label class="canal-opt"><input type="radio" name="canalEnvio" value="sms"> 💬 SMS</label>
         </div>
-      </li>
-    `).join('');
+        <small id="canalNota" style="color:#666; margin-top:0.5rem; display:block;">Se abrirá tu app predeterminada con el pedido listo.</small>
+        </div>    
+      
+      
+      `).join('');
   }
 
-  // ==========================================
-  // ✅ LIMPIAR PROMO SI HAY PRODUCTOS CON DESCUENTO
-  // ==========================================
-  if (typeof CartManager.hasPromoProducts === 'function' && CartManager.hasPromoProducts()) {
-    if (this.appliedPromo) {
-      this.appliedPromo = null; //  Limpiar descuento de la memoria
-      const msg = document.getElementById('promoMessage');
-      if (msg) {
-        msg.textContent = '⚠️ Código removido: No se pueden combinar con ofertas';
-        msg.style.color = '#f39c12';
-        msg.style.display = 'block';
-      }
-    }
-  }
 
   const subtotal = CartManager.getTotal();
   const discount = this.appliedPromo ? this.appliedPromo.discount : 0;
@@ -385,10 +387,9 @@ if (btnAdmin && adminMenu) {
 
  // Dentro del objeto App en app.js
 
-async showHistorial() {
+ async showHistorial() {
   const cliente = Store.get('cliente');
   if (!cliente) { UI.modal('modalLogin', 'open'); return; }
-  
   UI.modal('modalHistorial', 'open');
   const container = document.getElementById('historialContent');
   container.innerHTML = '<p style="text-align:center; padding:2rem;">🔄 Cargando historial...</p>';
@@ -397,16 +398,15 @@ async showHistorial() {
     const snap = await DB.getInvoices(cliente.id);
     const data = snap.exists() ? snap.data() : null;
     
-    // ✅ CORRECCIÓN CRÍTICA: Validar estrictamente que sea array antes de usar .sort()
-    const rawCompras = data?.compras;
-    const compras = Array.isArray(rawCompras) ? rawCompras : [];
+    // ✅ CORRECCIÓN CRÍTICA: Validar que sea array antes de usar .sort()
+    const compras = Array.isArray(data?.compras) ? data.compras : [];
 
     if (compras.length === 0) {
       container.innerHTML = `<div class="empty-state"><div class="empty-icon">🛍️</div><h3>Sin compras aún</h3><p>Tu historial aparecerá aquí cuando realices tu primera compra.</p></div>`;
       return;
     }
 
-    // ✅ Ahora sí es seguro llamar a .sort()
+    // ✅ Ahora sí es seguro ordenar
     compras.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     this._historialCache = compras;
 
@@ -440,9 +440,9 @@ async showHistorial() {
     console.error('Error historial:', e);
     container.innerHTML = '<p style="color:#e74c3c; text-align:center;">Error al cargar el historial.</p>';
   }
-},
+ },
 
-showInvoiceDetail(index) {
+ showInvoiceDetail(index) {
   const compra = this._historialCache?.[index];
   if (!compra) return;
   

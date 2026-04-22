@@ -116,54 +116,79 @@ const CartManager = {
     return items.some(item => item.tienePromo === true);
   },
 
-  async checkout(promoCode = null) {
-    const cliente = Store.get('cliente');
-    if (!cliente) { Store.emit('auth:required'); return false; }
-    
-    const items = Store.get('carrito');
-    if (items.length === 0) return false;
+  // modules/cart.js (Reemplaza checkout() y generateWhatsAppMessage)
 
-    let total = this.getTotal();
-    let discount = 0;
+async checkout(promoCode = null, metodoEnvio = 'whatsapp') {
+  const cliente = Store.get('cliente');
+  if (!cliente) { Store.emit('auth:required'); return false; }
+  
+  const items = Store.get('carrito');
+  if (items.length === 0) return false;
 
-    // Validar promo si no hay productos con descuento especial
-    const hasPromoItems = items.some(i => i.tienePromo);
+  let total = this.getTotal();
+  let discount = 0;
+  const hasPromoItems = items.some(i => i.tienePromo);
 
-    if (promoCode && !hasPromoItems) {
-      const validation = await DB.validatePromo(promoCode, cliente.id);
-      if (validation.valid) {
-        const promo = validation.promo;
-        discount = promo.tipo === 'porcentaje' 
-          ? Math.round(total * promo.valor / 100)
-          : promo.valor;
-        total -= discount;
-        await DB.usePromo(validation.promo.id, cliente.id);
-      }
-    } else if (promoCode && hasPromoItems) {
-      Store.emit('toast', { message: '⚠️ No se pueden combinar promociones especiales con códigos', type: 'warning' });
+  if (promoCode && !hasPromoItems) {
+    const validation = await DB.validatePromo(promoCode, cliente.id);
+    if (validation.valid) {
+      const promo = validation.promo;
+      discount = promo.tipo === 'porcentaje' 
+        ? Math.round(total * promo.valor / 100)
+        : promo.valor;
+      total -= discount;
+      await DB.usePromo(validation.promo.id, cliente.id);
     }
+  } else if (promoCode && hasPromoItems) {
+    Store.emit('toast', { message: '⚠️ No se pueden combinar promociones especiales con códigos', type: 'warning' });
+  }
 
-    const invoiceData = {
-      fecha: new Date().toISOString(),
-      productos: items,
-      total,
-      descuento: discount,
-      metodoPago: 'WhatsApp',
-      tipoPago: 'credito',
-      monto: total,
-      pagado: 0,
-      saldo: total
-    };
+  const invoiceData = {
+    fecha: new Date().toISOString(),
+    productos: items,
+    total,
+    descuento: discount,
+    metodoPago: metodoEnvio === 'whatsapp' ? 'WhatsApp' : (metodoEnvio === 'email' ? 'Correo' : 'SMS'),
+    tipoPago: 'credito',
+    monto: total,
+    pagado: 0,
+    saldo: total,
+    canalEnvio: metodoEnvio // ✅ NUEVO: Guarda cómo se envió
+  };
 
-    await DB.addInvoice(cliente.id, invoiceData);
-    this.showReceiptModal(invoiceData, cliente, promoCode);
-    
-    const message = this.generateWhatsAppMessage(items, total, discount, cliente, promoCode);
-    window.open(`https://wa.me/50672952454?text=${encodeURIComponent(message)}`, '_blank');
+  await DB.addInvoice(cliente.id, invoiceData);
+  this.showReceiptModal(invoiceData, cliente, promoCode);
+  
+  // ✅ Generar enlace según canal elegido
+  const mensaje = this.generateOrderMessage(items, total, discount, cliente, promoCode);
+  let enlace = '';
 
-    this.clear();
-    return true;
-  },
+  switch (metodoEnvio) {
+    case 'email':
+      enlace = `mailto:${cliente.email || 'eweesentia@gmail.com'}?subject=🛒 Nuevo Pedido Esentia - ${cliente.nombre}&body=${encodeURIComponent(mensaje)}`;
+      break;
+    case 'sms':
+      enlace = `sms:${cliente.telefono || ''}?body=${encodeURIComponent(mensaje)}`;
+      break;
+    default: // whatsapp
+      enlace = `https://wa.me/50672952454?text=${encodeURIComponent(mensaje)}`;
+  }
+
+  window.open(enlace, '_blank');
+  this.clear();
+  return true;
+},
+
+// ✅ Mensaje genérico optimizado para WA, Email y SMS
+generateOrderMessage(items, total, discount, cliente, promoCode) {
+  let msg = ` *PEDIDO ESENTIA*\n👤 ${cliente.nombre}\n📱 ${cliente.telefono || 'Sin tel'}\n📧 ${cliente.email || 'Sin correo'}\n\n`;
+  items.forEach(item => {
+    msg += `• ${item.nombre} (${item.variante}) × ${item.cantidad} – ₡${(item.precio * item.cantidad).toLocaleString()}\n`;
+  });
+  if (discount > 0) msg += `\n🎁 Promo: ${promoCode} (-₡${discount.toLocaleString()})`;
+  msg += `\n\n💰 *TOTAL: ₡${total.toLocaleString()}*\n💳 Método: Crédito/Transferencia\n📦 Por favor confirmar disponibilidad y datos de pago.`;
+  return msg;
+},
 
   showReceiptModal(invoice, cliente, promoCode) {
     const modal = document.createElement('div');
@@ -220,7 +245,7 @@ const CartManager = {
     modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
   },
 
-  generateWhatsAppMessage(items, total, discount, cliente, promoCode) {
+  /*generateWhatsAppMessage(items, total, discount, cliente, promoCode) {
     let msg = `Hola Wilber 👋\n\nQuiero confirmar mi pedido:\n\n`;
     items.forEach(item => {
       msg += `• ${item.nombre} (${item.variante}) × ${item.cantidad} – ₡${(item.precio * item.cantidad).toLocaleString()}\n`;
@@ -228,6 +253,6 @@ const CartManager = {
     if (discount > 0) msg += `\n🎁 Promo: ${promoCode}\nDescuento: -₡${discount.toLocaleString()}`;
     msg += `\n\n*💰 Total: ₡${total.toLocaleString()}*\n👤 Cliente: ${cliente.nombre}\n📱 Tel: ${cliente.telefono || 'No registrado'}`;
     return msg;
-  }
+  }*/
 };
 export default CartManager;
