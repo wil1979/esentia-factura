@@ -1,5 +1,5 @@
 // modules/pedidos.js
-import { getDocs, collection, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { getDocs, collection, doc, updateDoc, getDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { DB } from './firebase.js';
 import { Store, Utils } from './core.js';
 import { UI } from '../components/ui.js';
@@ -93,9 +93,11 @@ export const PedidosManager = {
     }
   },
 
-  async aprobarPedido(idFactura, index) {
-    if (!confirm('¿Confirmar despacho? Se descontará el stock automáticamente.')) return;
+    async aprobarPedido(idFactura, index) {
+    if (!confirm('¿Confirmar despacho? Se descontará el stock y se sumarán los puntos de lealtad.')) return;
+    
     try {
+      // 1. Obtener la factura
       const snap = await getDocs(collection(DB.db, "facturas"));
       const docSnap = snap.docs.find(d => d.id === idFactura);
       if (!docSnap) throw new Error("Factura no encontrada");
@@ -104,14 +106,39 @@ export const PedidosManager = {
       const compra = compras[index];
       const inventario = Store.get('inventario') || {};
 
-      // Descontar stock local
+      // 2. Descontar Stock
       for (const prod of compra.productos) {
         const key = Utils.normalizeText(prod.nombre);
         const stockActual = inventario[key] || 0;
         inventario[key] = Math.max(0, stockActual - prod.cantidad);
       }
 
-      // Cambiar estado a 'despachado'
+      // 3. 🏆 CALCULAR Y SUMAR PUNTOS DE LEALTAD AUTOMÁTICOS
+      // Regla: 1 punto por cada 4000 colones gastados
+      const puntosGanados = Math.floor((compra.total || 0) / 4000);
+      
+      if (puntosGanados > 0) {
+        try {
+          const clienteRef = doc(DB.db, "clientesBD", idFactura); // idFactura es igual al ID del cliente
+          const clienteSnap = await getDoc(clienteRef);
+          const puntosActuales = clienteSnap.exists() ? (clienteSnap.data().puntosLealtad || 0) : 0;
+          
+          await updateDoc(clienteRef, {
+            puntosLealtad: puntosActuales + puntosGanados,
+            historialPuntos: arrayUnion({ // Asegúrate de importar arrayUnion si no está
+              cantidad: puntosGanados,
+              fecha: new Date().toISOString(),
+              motivo: 'Compra #' + (index + 1),
+              autor: 'sistema'
+            })
+          });
+          UI.toast(`🏆 ¡Cliente ganó ${puntosGanados} puntos de lealtad!`, 'success');
+        } catch (err) {
+          console.warn("⚠️ No se pudieron sumar puntos:", err);
+        }
+      }
+
+      // 4. Actualizar estado a 'despachado'
       const comprasActualizadas = [...compras];
       comprasActualizadas[index] = { ...compra, estado: 'despachado' };
 
@@ -121,9 +148,10 @@ export const PedidosManager = {
       Store.set('inventario', inventario);
       Store.persist('inventario');
 
-      UI.toast('✅ Pedido despachado y stock actualizado', 'success');
+      UI.toast('✅ Pedido despachado, stock actualizado y puntos sumados', 'success');
       this.cargarPedidos();
       Store.emit('inventory:updated');
+      
     } catch (e) {
       console.error(e);
       UI.toast('❌ Error al procesar pedido', 'error');

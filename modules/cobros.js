@@ -1,7 +1,7 @@
 // modules/cobros.js
 import { getDocs, collection, updateDoc, doc, getDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { DB } from './firebase.js';
-import { Store } from './core.js';
+import { Store, Utils } from './core.js'; // ✅ Agregar Utils
 import { UI } from '../components/ui.js';
 
 export const CobrosManager = {
@@ -55,6 +55,58 @@ export const CobrosManager = {
       this.todosLosClientes = [];
     }
   },
+
+    // Agrega esto en CobrosManager
+  async sincronizarVentaPagada(clienteId, facturaIndex) {
+  try {
+    const snap = await getDocs(collection(DB.db, "facturas"));
+    const docSnap = snap.docs.find(d => d.id === clienteId);
+    const compra = docSnap.data().compras[facturaIndex];
+
+    // Si ya está despachado/completado, no hacer nada
+    if (compra.estado === 'despachado' || compra.estado === 'completado') return;
+
+    const inventario = Store.get('inventario') || {};
+    
+    // 📉 Descontar Stock
+    for (const prod of compra.productos) {
+      const key = Utils.normalizeText(prod.nombre);
+      inventario[key] = Math.max(0, (inventario[key] || 0) - prod.cantidad);
+    }
+
+    // 🏆 Sumar Puntos de Lealtad (1 pt por cada ₡4,000)
+    const puntos = Math.floor(compra.total / 4000);
+    if (puntos > 0) {
+      try {
+        const clienteRef = doc(DB.db, "clientesBD", clienteId);
+        const clienteSnap = await getDoc(clienteRef);
+        const puntosActuales = clienteSnap.exists() ? (clienteSnap.data().puntosLealtad || 0) : 0;
+        
+        await updateDoc(clienteRef, {
+          puntosLealtad: puntosActuales + puntos,
+          historialPuntos: arrayUnion({
+            cantidad: puntos,
+            fecha: new Date().toISOString(),
+            motivo: `Compra #${facturaIndex + 1} pagada`,
+            autor: 'sistema'
+          })
+        });
+      } catch (e) { console.warn("⚠️ No se sumaron puntos:", e); }
+    }
+
+    // 📝 Actualizar Estado y Guardar
+    const compras = docSnap.data().compras;
+    compras[facturaIndex].estado = 'completado'; // O 'despachado'
+    compras[facturaIndex].fechaCompletado = new Date().toISOString();
+    
+    await updateDoc(doc(DB.db, "facturas", clienteId), { compras });
+    Store.set('inventario', inventario);
+    Store.persist('inventario');
+    Store.emit('inventory:updated');
+    
+    console.log(`✅ Sincronización OK: Stock actualizado y ${puntos} puntos sumados.`);
+  } catch(e) { console.error(e); }
+},
 
   async mostrarPanelCobros() {
     const modal = document.createElement('div');
@@ -324,40 +376,50 @@ export const CobrosManager = {
   },
 
   async procesarAbono(index) {
-    const monto = Number(document.getElementById('montoAbono').value) || 0;
-    const metodo = document.getElementById('metodoAbono').value;
-    const nota = document.getElementById('notaAbono').value;
-    const btn = document.querySelector('#formAbono button');
-    if (monto <= 0) return UI.toast('Monto inválido', 'warning');
+  const monto = Number(document.getElementById('montoAbono').value) || 0;
+  const metodo = document.getElementById('metodoAbono').value;
+  const nota = document.getElementById('notaAbono').value;
+  const btn = document.querySelector('#formAbono button');
+  if (monto <= 0) return UI.toast('Monto inválido', 'warning');
+  
+  btn.disabled = true; btn.textContent = 'Procesando...';
+  try {
+    const snap = await getDoc(doc(DB.db, "facturas", this.clienteSeleccionado));
+    const data = snap.data();
+    const compras = data.compras || [];
+    const fact = compras[index];
     
-    btn.disabled = true; btn.textContent = 'Procesando...';
-    try {
-      const snap = await getDoc(doc(DB.db, "facturas", this.clienteSeleccionado));
-      const data = snap.data();
-      const compras = data.compras || [];
-      const fact = compras[index];
-      
-      const nuevoPagado = (Number(fact.pagado) || 0) + monto;
-      const nuevoSaldo = Math.max(0, (Number(fact.total) || 0) - nuevoPagado);
-      const estado = nuevoSaldo <= 0 ? 'completado' : 'parcial';
-      const abonoData = { fecha: new Date().toISOString(), monto, metodo, nota: nota || '' };
+    const nuevoPagado = (Number(fact.pagado) || 0) + monto;
+    const nuevoSaldo = Math.max(0, (Number(fact.total) || 0) - nuevoPagado);
+    const estado = nuevoSaldo <= 0 ? 'completado' : 'parcial';
+    const abonoData = { fecha: new Date().toISOString(), monto, metodo, nota: nota || '' };
 
-      await updateDoc(doc(DB.db, "facturas", this.clienteSeleccionado), {
-        [`compras.${index}.pagado`]: nuevoPagado,
-        [`compras.${index}.saldo`]: nuevoSaldo,
-        [`compras.${index}.estado`]: estado,
-        abonos: [...(data.abonos || []), abonoData]
-      });
+    await updateDoc(doc(DB.db, "facturas", this.clienteSeleccionado), {
+      [`compras.${index}.pagado`]: nuevoPagado,
+      [`compras.${index}.saldo`]: nuevoSaldo,
+      [`compras.${index}.estado`]: estado,
+      abonos: [...(data.abonos || []), abonoData]
+    });
 
+    // ✅ LLAMADA: Si quedó pagada, sincronizar inventario y puntos
+    if (nuevoSaldo <= 0) {
+      await this.sincronizarVentaPagada(this.clienteSeleccionado, index);
+      UI.toast('✅ Pago registrado. Stock y puntos actualizados.', 'success');
+    } else {
       UI.toast('✅ Abono registrado', 'success');
-      UI.modal('modalAbono', 'close');
-      UI.modal('modalDetalleDeuda', 'close');
-      await this.cargarBaseCobros();
-      this.renderListaDeudores();
-      this.renderListaHistorial();
-    } catch(err) { console.error(err); UI.toast('❌ Error', 'error'); }
-    finally { btn.disabled = false; btn.textContent = '✅ Confirmar'; }
-  },
+    }
+
+    UI.modal('modalAbono', 'close');
+    UI.modal('modalDetalleDeuda', 'close');
+    await this.cargarBaseCobros();
+    this.renderListaDeudores();
+    this.renderListaHistorial();
+  } catch(err) { 
+    console.error(err); 
+    UI.toast('❌ Error al procesar pago', 'error'); 
+  }
+  finally { btn.disabled = false; btn.textContent = '✅ Confirmar'; }
+},
 
   async revertirAbono(clienteId, facturaIdx) {
     if (!confirm('⚠️ ¿Revertir el ÚLTIMO abono? Restaurará el saldo.')) return;
@@ -405,35 +467,64 @@ export const CobrosManager = {
     // ==========================================
   // 📱 RECORDATORIO DE DEUDA POR WHATSAPP
   // ==========================================
-  enviarRecordatorioDeuda(clienteId) {
-    const clienteInfo = this.clientesCache.find(c => c.id === clienteId) || {};
-    const clienteData = this.todosLosClientes.find(c => c.id === clienteId);
+  // En CobrosManager (reemplaza enviarRecordatorioDeuda)
+enviarRecordatorioDeuda(clienteId, tipoForzado = 'auto') {
+  const clienteInfo = this.clientesCache.find(c => c.id === clienteId) || {};
+  const clienteData = this.todosLosClientes.find(c => c.id === clienteId);
+  let rawPhone = clienteInfo.telefono || '';
+  let cleanPhone = rawPhone.replace(/\D/g, '');
+  if (cleanPhone.length === 8) cleanPhone = '506' + cleanPhone;
+  if (cleanPhone.length < 10) return UI.toast('⚠️ Teléfono inválido o faltante', 'warning');
+
+  const deudas = clienteData?.deudas || [];
+  if (deudas.length === 0) return UI.toast('✅ No tiene deudas pendientes', 'info');
+
+  const hoy = new Date();
+  let maxDiasAtraso = 0;
+  let detalleFacturas = '';
+  let totalDeuda = 0;
+
+  // Construir detalle y calcular atraso máximo
+  deudas.forEach(f => {
+    const dias = Math.floor((hoy - new Date(f.fecha)) / (1000 * 60 * 60 * 24));
+    if (dias > maxDiasAtraso) maxDiasAtraso = dias;
+    totalDeuda += Number(f.saldo) || 0;
     
-    let rawPhone = clienteInfo.telefono || '';
-    let cleanPhone = rawPhone.replace(/\D/g, '');
-    
-    // ✅ Formato CR: 8 dígitos → agregar 506
-    if (cleanPhone.length === 8) cleanPhone = '506' + cleanPhone;
-    if (cleanPhone.length < 10) return UI.toast('⚠️ Teléfono inválido o faltante', 'warning');
+    const productos = (f.productos || []).map(p => `• ${p.nombre} (${p.variante || 'Única'}) x${p.cantidad}`).join('\n');
+    detalleFacturas += `\n📅 ${new Date(f.fecha).toLocaleDateString()} | Saldo: ₡${(Number(f.saldo)||0).toLocaleString()}\n${productos}`;
+  });
 
-    const totalDeuda = clienteData?.totalDeuda || 0;
-    if (totalDeuda <= 0) return UI.toast('✅ No tiene deudas pendientes', 'info');
+  // Seleccionar plantilla automáticamente o forzada
+  const plantilla = tipoForzado === 'auto' ? (maxDiasAtraso > 15 ? 'strong' : 'friendly') : tipoForzado;
 
-    // ✅ Plantilla profesional
-    const mensaje = `Hola ${clienteInfo.nombre || 'cliente'} 👋,\n\n` +
-      `Le recordamos amablemente que cuenta con un saldo pendiente de *₡${totalDeuda.toLocaleString()}* en su cuenta.\n\n` +
-      `💳 *Métodos de pago disponibles:*\n` +
-      `• 📱 SINPE Móvil: 72952454\n` +
-      `• 🏦 Transferencia: CR76015114620010283743\n` +      
-      `Por favor, envíe su comprobante para actualizar su estado. ¡Gracias por su preferencia! 🌸`;
-      
-    // ✅ REGISTRO DEL LOG ANTES DE ABRIR WHATSAPP
-    this.registrarLogRecordatorio(clienteId, totalDeuda, cleanPhone);
+  let mensaje = '';
+  if (plantilla === 'friendly') {
+    mensaje = `Hola ${clienteInfo.nombre || 'cliente'} 👋,\n\nEsperamos que esté muy bien. Le escribimos para recordarle amablemente que cuenta con un saldo pendiente de *₡${totalDeuda.toLocaleString()}*.\n\n📋 *Detalle de su cuenta:*${detalleFacturas}\n\n💳 *Métodos de pago:*\n• 📱 SINPE Móvil: 72952454\n• 🏦 Transferencia: CR76015114620010283743\n\nQuedamos atentos a su comprobante. ¡Gracias por preferirnos! 🌸`;
+  } else {
+    mensaje = `Estimado/a ${clienteInfo.nombre || 'cliente'},\n\nLe informamos que su cuenta presenta un saldo vencido de *₡${totalDeuda.toLocaleString()}* con *${maxDiasAtraso} días de atraso*.\n\n📋 *Detalle pendiente:*${detalleFacturas}\n\n⚠️ *Importante:* Para evitar la suspensión de su cuenta le solicitamos regularizar su pago a la brevedad.\n💳 *Datos de pago:*\n• SINPE: 72952454\n• IBAN: CR76015114620010283743\n\nAgradecemos su pronta gestión.`;
+  }
 
-    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensaje)}`;
-    window.open(waUrl, '_blank');
-    UI.toast('📱 Abriendo WhatsApp con recordatorio...', 'success');
-  },
+  this.registrarLogRecordatorio(clienteId, totalDeuda, cleanPhone, plantilla);
+  window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensaje)}`, '_blank');
+  UI.toast(`📱 Recordatorio ${plantilla === 'strong' ? '⚠️ URGENTE' : '🌸 AMIGABLE'} abierto`, 'success');
+},
+
+// Actualiza también esta función para aceptar el tipo de plantilla en el log
+async registrarLogRecordatorio(clienteId, monto, telefono, tipo = 'amigable') {
+  try {
+    const logEntry = {
+      fecha: new Date().toISOString(),
+      monto,
+      telefono,
+      tipo,
+      estado: 'Enviado a WhatsApp'
+    };
+    await updateDoc(doc(DB.db, "facturas", clienteId), {
+      recordatorios: arrayUnion(logEntry)
+    });
+  } catch (e) { console.error('Error guardando log:', e); }
+},
+
     async registrarLogRecordatorio(clienteId, monto, telefono) {
     try {
       const logEntry = {

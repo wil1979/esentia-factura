@@ -12,47 +12,60 @@ export default {
   },
 
   // ✅ VERSIÓN BLINDADA: Evita el error "Cannot read properties of null"
-  renderCard() {
-    // 1. Buscar el contenedor
-    const container = document.getElementById('loyaltyContainer');
-    
-    // 2. Si no existe, salir sin error
-    if (!container) {
-      console.warn('⚠️ #loyaltyContainer no encontrado en el HTML');
-      return;
-    }
+  // En modules/loyalty.js -> reemplaza renderCard() por:
+renderCard() {
+  const container = document.getElementById('loyaltyContainer');
+  if (!container) return;
+  
+  const cliente = Store.get('cliente');
+  if (!cliente) {
+    container.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
 
-    const cliente = Store.get('cliente');
-    
-    // 3. Si no hay cliente, ocultar y limpiar
-    if (!cliente) {
-      container.style.display = 'none';
-      container.innerHTML = '';
-      return;
-    }
+  container.style.display = 'block';
+  const puntos = cliente.puntosLealtad || 0;
+  const objetivo = 6; // Puntos para recompensa
+  const progreso = Math.min(((puntos % objetivo) / objetivo) * 100, 100);
+  const faltan = objetivo - (puntos % objetivo);
 
-    // 4. Mostrar contenedor (aquí es donde ocurría el error antes)
-    container.style.display = 'block';
-
-    // 5. Calcular puntos y progreso
-    const puntos = cliente.puntosLealtad || 0;
-    const sellos = Math.floor(puntos / this.CONFIG.SELLOS_OBJETIVO);
-    const progreso = Math.min(((puntos % this.CONFIG.SELLOS_OBJETIVO) / this.CONFIG.SELLOS_OBJETIVO) * 100, 100);
-
-    // 6. Inyectar HTML
-    container.innerHTML = `
-      <div class="loyalty-card-mini" style="cursor:pointer;">
-        <div class="loyalty-icon">🎁</div>
-        <div class="loyalty-info">
-          <strong>Tu Lealtad</strong>
-          <small>${puntos} puntos acumulados</small>
-        </div>
-        <div class="loyalty-progress-bar" style="width:100%; height:6px; background:#eee; border-radius:3px; margin-top:5px;">
-          <div class="loyalty-progress-fill" style="width: ${progreso}%; height:100%; background:var(--primary); border-radius:3px;"></div>
-        </div>
+  // Render compacto por defecto
+  container.innerHTML = `
+    <div class="loyalty-widget" id="loyaltyWidget">
+      <div class="loyalty-minimized">
+        <span>🎁</span>
+        <span>${puntos} pts</span>
+        <span class="loyalty-toggle">▼</span>
       </div>
-    `;
-  },
+      <div class="loyalty-expanded-content">
+        <div class="loyalty-progress-bar">
+          <div class="loyalty-progress-fill" style="width: ${progreso}%"></div>
+        </div>
+        <small style="color:#666; display:block; margin-top:4px;">
+          ${faltan > 0 ? `Faltan ${faltan} pts para tu recompensa` : '🎉 ¡Tienes una recompensa lista!'}
+        </small>
+      </div>
+    </div>
+  `;
+
+  // Lógica de toggle al hacer clic
+  const widget = document.getElementById('loyaltyWidget');
+  widget.addEventListener('click', (e) => {
+    if (e.target.closest('.loyalty-expanded-content')) return;
+    widget.classList.toggle('expanded');
+    const content = widget.querySelector('.loyalty-expanded-content');
+    const toggle = widget.querySelector('.loyalty-toggle');
+    
+    if (widget.classList.contains('expanded')) {
+      content.style.display = 'block';
+      toggle.textContent = '▲';
+    } else {
+      content.style.display = 'none';
+      toggle.textContent = '▼';
+    }
+  });
+},
   
   // Método para sumar puntos (usado por admin o tras compra)
   addStamp(clienteId) {

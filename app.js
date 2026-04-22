@@ -14,6 +14,7 @@ import { FacturaEditor } from './modules/factura-editor.js';
 import { LoyaltyControl } from './modules/loyalty-control.js';
 import PedidosManager from './modules/pedidos.js'; // ✅ Agregar esta línea
 import UserManager from './modules/user-management.js'; // ✅ AGREGAR ESTA LÍNEA
+import ClientesManager from './modules/clientes-manager.js'; // ✅ NUEVO
 
 window.UI = UI;
 window.Store = Store;
@@ -29,6 +30,7 @@ window.FacturaEditor = FacturaEditor;
 window.LoyaltyControl = LoyaltyControl;
 window.PedidosManager = PedidosManager; // ✅ Agregar esta línea
 window.UserManager = UserManager; // ✅ AGREGAR
+window.ClientesManager = ClientesManager; // ✅ NUEVO
 
 
 const App = {
@@ -39,6 +41,7 @@ const App = {
 async init() {
   console.log('🌸 Esentia v6.0 - Iniciando...');
   await Store.init();
+  await ClientesManager.init(); // ✅ Carga personal.json al arrancar
   
   // ✅ NUEVO: Sincronizar permisos de admin antes de renderizar nada
   if (window.UserManager) {
@@ -94,7 +97,6 @@ renderHeader() {
     if (loyaltyContainer) loyaltyContainer.style.display = 'none';
   }
 },
-
   renderProducts() {
     const container = document.getElementById('productos-container');
     const loader = document.getElementById('loader');
@@ -265,7 +267,8 @@ if (btnAdmin && adminMenu) {
   pedidos:   { manager: 'PedidosManager',  method: 'mostrarPanel' },
   loyaltyAdmin: { manager: 'LoyaltyControl', method: 'mostrarPanelPuntos' },
   editFactura: { manager: 'FacturaEditor', method: 'abrirEditor' },
-  userAdmin: { manager: 'UserManager', method: 'mostrarPanel' } // ✅ NUEVO
+  userAdmin: { manager: 'UserManager', method: 'mostrarPanel' }, // ✅ NUEVO
+  clientesAdmin: { manager: 'ClientesManager', method: 'mostrarPanelGestion' } // ✅ NUEVO
 };
 
     const route = routeMap[action];
@@ -297,6 +300,7 @@ if (btnAdmin && adminMenu) {
 
     // Store Events
     Store.on('auth:success', async ({ cliente }) => {
+       if (window.UserManager) await UserManager.syncAdminRights();
      this.renderHeader();
      UI.modal('modalLogin', 'close');
      UI.toast('¡Bienvenido!', 'success');
@@ -307,7 +311,10 @@ if (btnAdmin && adminMenu) {
     await this.checkFirstPurchaseDiscount(cliente.id);
   }
 });
-    Store.on('auth:logout', () => { this.renderHeader(); document.getElementById('loyaltyContainer').style.display = 'none'; });
+    Store.on('auth:logout', () => { 
+  this.renderHeader(); // Esto ya oculta loyaltyContainer gracias al cambio de arriba
+  UI.toast('Sesión cerrada', 'info');
+});
     Store.on('cart:updated', () => { CartManager.updateUI(); this.renderCartModal(); });
     Store.on('inventory:updated', () => this.renderProducts());
     // 👁️ DETALLE DE PRODUCTO

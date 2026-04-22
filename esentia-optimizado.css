@@ -2787,7 +2787,139 @@ MODO MÓVIL OPTIMIZADO (1 COLUMNA)
 .btn-remove-admin:hover { transform: scale(1.2); }
 .admin-note { display: block; margin-top: 1rem; color: #888; font-size: 0.85rem; text-align: center; }
 
+/* GESTIÓN DE CLIENTES */
+.clientes-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 2px solid #eee; }
+.tab-btn { padding: 10px 16px; background: transparent; border: none; cursor: pointer; font-weight: 600; color: #666; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.clientes-search-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+.clientes-search-row input { flex: 1; padding: 10px; border: 2px solid #e0d4f5; border-radius: 8px; }
+.clientes-list { max-height: 180px; overflow-y: auto; }
+.result-item { padding: 8px; background: #f8f9fa; border-radius: 6px; margin-bottom: 4px; font-size: 0.9rem; }
+.result-item.success { border-left: 3px solid #27ae60; }
+.result-item.error { border-left: 3px solid #e74c3c; }
+.result-item.clickable { cursor: pointer; transition: background 0.2s; }
+.result-item.clickable:hover { background: #f0e6ff; }
 
+.clientes-form .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+.clientes-form .form-group.full-width { grid-column: 1 / -1; }
+.clientes-form label { display: block; margin-bottom: 0.3rem; font-weight: 500; font-size: 0.9rem; }
+.clientes-form input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+.clientes-form .form-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+.btn-danger { background: #e74c3c; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; }
 
+@media (max-width: 600px) {
+  .clientes-form .form-grid { grid-template-columns: 1fr; }
+  .clientes-form .form-actions { flex-direction: column; }
+}
+.custom-aroma-box { margin-top: 1.2rem; padding-top: 1rem; border-top: 1px dashed #ddd; }
+.custom-aroma-box label { font-size: 0.9rem; color: #555; display: block; margin-bottom: 0.5rem; }
+.custom-input-row { display: flex; gap: 0.5rem; }
+.custom-input-row input { flex: 1; padding: 10px; border: 2px solid #e0d4f5; border-radius: 8px; text-transform: uppercase; }
+.custom-input-row button { padding: 10px 16px; white-space: nowrap; }
 
+/* Botón Admin */
+#btnToggleAdmin {
+  display: none; /* Oculto por defecto hasta que JS lo active */
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.3);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+/* Menú desplegable Admin */
+#adminMenu {
+  display: none; /* Oculto por defecto */
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-radius: 8px;
+  padding: 10px;
+  min-width: 200px;
+  z-index: 1000;
+}
+
+#adminMenu.show {
+  display: block !important; /* Clase para mostrarlo al hacer clic */
+}
+/* 🎁 WIDGET FLOTANTE DE LEALTAD */
+#loyaltyContainer {
+  position: fixed;
+  bottom: 90px;       /* Encima del botón de carrito */
+  right: 20px;
+  z-index: 990;
+  pointer-events: auto;
+}
+
+.loyalty-widget {
+  background: white;
+  border-radius: 50px;
+  padding: 8px 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 90px;
+  border: 1px solid #f0f0f0;
+}
+
+.loyalty-minimized {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.loyalty-toggle {
+  font-size: 0.65rem;
+  color: #888;
+  margin-left: 4px;
+}
+
+.loyalty-expanded-content {
+  width: 100%;
+  text-align: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #ddd;
+  display: none; /* Oculto por defecto */
+}
+
+.loyalty-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #eee;
+  border-radius: 3px;
+  margin: 6px 0;
+  overflow: hidden;
+}
+
+.loyalty-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  transition: width 0.6s ease;
+}
+
+/* Estado expandido */
+.loyalty-widget.expanded {
+  border-radius: 14px;
+  padding: 12px;
+  width: 200px;
+  background: #faf8ff;
+}
+
+@media (max-width: 600px) {
+  #loyaltyContainer { bottom: 85px; right: 15px; }
+  .loyalty-widget.expanded { width: 170px; }
+}
 }

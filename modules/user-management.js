@@ -11,16 +11,24 @@ export const UserManager = {
   async syncAdminRights() {
     try {
       const snap = await getDoc(doc(DB.db, "config", "permisos"));
-      this._allowedCedulas = snap.exists() ? (snap.data().admins || []) : ['110350666'];
+      
+      // 🔥 CORRECCIÓN: Forzamos que TODOS los elementos de la lista sean TEXTO (String)
+      // Esto soluciona el error si en Firebase está guardado como número o texto.
+      const rawData = snap.exists() ? (snap.data().admins || []) : ['110350666'];
+      this._allowedCedulas = rawData.map(c => String(c));
       
       const cliente = Store.get('cliente');
-      const isAdmin = cliente ? this._allowedCedulas.includes(cliente.cedula) : false;
+      // 🔥 CORRECCIÓN: Convertimos la cédula del cliente a TEXTO para comparar
+      const isAdmin = cliente ? this._allowedCedulas.includes(String(cliente.cedula)) : false;
       
       Store.set('isAdmin', isAdmin);
       Store.set('allowedAdmins', this._allowedCedulas);
+      
+      // Debug para ver qué está pasando en consola
+      console.log("🔒 Estado Admin:", isAdmin, "| Cédula Cliente:", cliente?.cedula, "| Lista:", this._allowedCedulas);
     } catch (e) {
       console.warn("⚠️ No se pudo cargar config de admins:", e);
-      Store.set('isAdmin', Store.get('cliente')?.cedula === '110350666');
+      Store.set('isAdmin', false);
     }
   },
 
@@ -60,29 +68,36 @@ export const UserManager = {
 
   async agregarAdmin() {
     const input = document.getElementById('newAdminCedula');
-    const cedula = input.value.trim();
+    // 🔥 CORRECCIÓN: Aseguramos guardar siempre como TEXTO
+    const cedula = String(input.value.trim());
+    
     if (!cedula) return UI.toast('Ingresa una cédula', 'warning');
     if (this._allowedCedulas.includes(cedula)) return UI.toast('Ya es administrador', 'info');
 
     try {
       await setDoc(doc(DB.db, "config", "permisos"), {
-        admins: arrayUnion(cedula)
+        admins: arrayUnion(cedula) // Guardamos el string limpio
       }, { merge: true });
+      
       UI.toast('✅ Admin agregado correctamente', 'success');
       this.mostrarPanel();
     } catch (e) { console.error(e); UI.toast('❌ Error al guardar', 'error'); }
   },
 
   async eliminarAdmin(cedula) {
-    if (cedula === Store.get('cliente')?.cedula) {
+    // Eliminar como string
+    const cedulaStr = String(cedula);
+    
+    if (cedulaStr === Store.get('cliente')?.cedula) { // Comparación segura
       return UI.toast('⚠️ No puedes eliminarte a ti mismo', 'warning');
     }
-    if (!confirm(`¿Eliminar a ${cedula} de la lista de admins?`)) return;
+    if (!confirm(`¿Eliminar a ${cedulaStr} de la lista de admins?`)) return;
 
     try {
       await setDoc(doc(DB.db, "config", "permisos"), {
-        admins: arrayRemove(cedula)
+        admins: arrayRemove(cedulaStr)
       }, { merge: true });
+      
       UI.toast('🗑️ Admin eliminado', 'success');
       this.mostrarPanel();
     } catch (e) { console.error(e); UI.toast('❌ Error al eliminar', 'error'); }
