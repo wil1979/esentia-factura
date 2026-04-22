@@ -466,47 +466,131 @@ export const CobrosManager = {
   },
     // ==========================================
   // 📱 RECORDATORIO DE DEUDA POR WHATSAPP
-  // ==========================================
-  // En CobrosManager (reemplaza enviarRecordatorioDeuda)
-enviarRecordatorioDeuda(clienteId, tipoForzado = 'auto') {
+
+async enviarRecordatorioDeuda(clienteId, tipo = 'auto') {
   const clienteInfo = this.clientesCache.find(c => c.id === clienteId) || {};
   const clienteData = this.todosLosClientes.find(c => c.id === clienteId);
   let rawPhone = clienteInfo.telefono || '';
   let cleanPhone = rawPhone.replace(/\D/g, '');
   if (cleanPhone.length === 8) cleanPhone = '506' + cleanPhone;
-  if (cleanPhone.length < 10) return UI.toast('⚠️ Teléfono inválido o faltante', 'warning');
+  if (cleanPhone.length < 10) return UI.toast('⚠️ Teléfono inválido', 'warning');
 
   const deudas = clienteData?.deudas || [];
-  if (deudas.length === 0) return UI.toast('✅ No tiene deudas pendientes', 'info');
+  if (deudas.length === 0) return UI.toast('✅ No tiene deudas', 'info');
 
   const hoy = new Date();
   let maxDiasAtraso = 0;
   let detalleFacturas = '';
   let totalDeuda = 0;
 
-  // Construir detalle y calcular atraso máximo
   deudas.forEach(f => {
     const dias = Math.floor((hoy - new Date(f.fecha)) / (1000 * 60 * 60 * 24));
     if (dias > maxDiasAtraso) maxDiasAtraso = dias;
     totalDeuda += Number(f.saldo) || 0;
-    
-    const productos = (f.productos || []).map(p => `• ${p.nombre} (${p.variante || 'Única'}) x${p.cantidad}`).join('\n');
-    detalleFacturas += `\n📅 ${new Date(f.fecha).toLocaleDateString()} | Saldo: ₡${(Number(f.saldo)||0).toLocaleString()}\n${productos}`;
+    detalleFacturas += `\n📅 ${new Date(f.fecha).toLocaleDateString()} | Saldo: ₡${(Number(f.saldo)||0).toLocaleString()}`;
   });
 
-  // Seleccionar plantilla automáticamente o forzada
-  const plantilla = tipoForzado === 'auto' ? (maxDiasAtraso > 15 ? 'strong' : 'friendly') : tipoForzado;
+  // Determinar plantilla
+  const plantilla = tipo === 'auto' ? (maxDiasAtraso > 15 ? 'strong' : 'friendly') : tipo;
 
+  // Crear modal con opciones
+  const modal = document.createElement('div');
+  modal.className = 'modal show';
+  modal.id = 'modalRecordatorio';
+  modal.innerHTML = `
+    <div class="modal-content modal-grande recordatorio-modal">
+      <button class="modal-close" onclick="UI.modal('modalRecordatorio','close')">✕</button>
+      <h2>📱 Enviar Recordatorio</h2>
+      
+      <div class="recordatorio-info">
+        <p><strong>Cliente:</strong> ${clienteInfo.nombre || clienteId}</p>
+        <p><strong>Teléfono:</strong> ${clienteInfo.telefono}</p>
+        <p><strong>Total Pendiente:</strong> <span style="color:#e74c3c;font-weight:bold">₡${totalDeuda.toLocaleString()}</span></p>
+      </div>
+
+      <!-- QR para SINPE -->
+      <div class="qr-section">
+        <h3>📲 Código QR SINPE</h3>
+        <div class="qr-container">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=SINPE%20Móvil%0AMonto:%20₡${totalDeuda}%0ATel:%2072952454" alt="QR SINPE">
+        </div>
+        <small>El cliente puede escanear para ver datos de pago</small>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="recordatorio-actions">
+        <button class="btn-whatsapp" onclick="CobrosManager.enviarWA('${clienteId}', '${plantilla}')">
+          💬 WhatsApp ${plantilla === 'strong' ? '⚠️' : '🌸'}
+        </button>
+        
+        <button class="btn-sms" onclick="CobrosManager.enviarSMS('${cleanPhone}', ${totalDeuda})">
+          📩 SMS (PASE)
+        </button>
+        
+        <button class="btn-copy" onclick="CobrosManager.copiarDatos(${totalDeuda})">
+          📋 Copiar Datos
+        </button>
+      </div>
+
+      <div class="pago-info">
+        <h4>💳 Datos de Pago:</h4>
+        <p><strong>SINPE Móvil:</strong> 72952454</p>
+        <p><strong>IBAN BN:</strong> CR76015114620010283743</p>
+        <p><small>✅ Para BN/BCR: SMS "PASE ${Math.round(totalDeuda)} 72952454" al 72952454</small></p>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  this.registrarLogRecordatorio(clienteId, totalDeuda, cleanPhone, plantilla);
+},
+
+// Enviar WhatsApp
+enviarWA(clienteId, plantilla) {
+  const clienteInfo = this.clientesCache.find(c => c.id === clienteId) || {};
+  const clienteData = this.todosLosClientes.find(c => c.id === clienteId);
+  let rawPhone = clienteInfo.telefono || '';
+  let cleanPhone = rawPhone.replace(/\D/g, '');
+  if (cleanPhone.length === 8) cleanPhone = '506' + cleanPhone;
+  
+  const totalDeuda = clienteData?.totalDeuda || 0;
+  
   let mensaje = '';
   if (plantilla === 'friendly') {
-    mensaje = `Hola ${clienteInfo.nombre || 'cliente'} 👋,\n\nEsperamos que esté muy bien. Le escribimos para recordarle amablemente que cuenta con un saldo pendiente de *₡${totalDeuda.toLocaleString()}*.\n\n📋 *Detalle de su cuenta:*${detalleFacturas}\n\n💳 *Métodos de pago:*\n• 📱 SINPE Móvil: 72952454\n• 🏦 Transferencia: CR76015114620010283743\n\nQuedamos atentos a su comprobante. ¡Gracias por preferirnos! 🌸`;
+    mensaje = `Hola ${clienteInfo.nombre || 'cliente'} 👋,\n\n` +
+      `Esperamos que esté muy bien. Le recordamos amablemente su saldo pendiente de *₡${totalDeuda.toLocaleString()}*.\n\n` +
+      `💳 *Métodos de pago:*\n` +
+      `• 📱 SINPE: 72952454\n` +
+      `• 🏦 IBAN: CR76015114620010283743\n` +
+      `📲 *Opción rápida BN/BCR:*\nEnvíe SMS "PASE ${Math.round(totalDeuda)} 72952454"\n\n` +
+      `¡Gracias por su preferencia! 🌸`;
   } else {
-    mensaje = `Estimado/a ${clienteInfo.nombre || 'cliente'},\n\nLe informamos que su cuenta presenta un saldo vencido de *₡${totalDeuda.toLocaleString()}* con *${maxDiasAtraso} días de atraso*.\n\n📋 *Detalle pendiente:*${detalleFacturas}\n\n⚠️ *Importante:* Para evitar la suspensión de su cuenta le solicitamos regularizar su pago a la brevedad.\n💳 *Datos de pago:*\n• SINPE: 72952454\n• IBAN: CR76015114620010283743\n\nAgradecemos su pronta gestión.`;
+    mensaje = `Estimado/a ${clienteInfo.nombre || 'cliente'},\n\n` +
+      `Le informamos que su cuenta presenta un saldo vencido de *₡${totalDeuda.toLocaleString()}*.\n\n` +
+      `💳 *Regularice su pago:*\n` +
+      `• SINPE: 72952454\n` +
+      `• SMS: "PASE ${Math.round(totalDeuda)} 72952454"\n\n` +
+      `⚠️ Evite cargos adicionales.`;
   }
-
-  this.registrarLogRecordatorio(clienteId, totalDeuda, cleanPhone, plantilla);
+  
   window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensaje)}`, '_blank');
-  UI.toast(`📱 Recordatorio ${plantilla === 'strong' ? '⚠️ URGENTE' : '🌸 AMIGABLE'} abierto`, 'success');
+  UI.modal('modalRecordatorio', 'close');
+  UI.toast('📱 WhatsApp abierto', 'success');
+},
+
+// Enviar SMS con formato PASE
+enviarSMS(phone, monto) {
+  const mensaje = `PASE ${Math.round(monto)} 72952454`;
+  // En Costa Rica, los SMS a números cortos funcionan así
+  window.open(`sms:${phone}?body=${encodeURIComponent(mensaje)}`, '_blank');
+  UI.toast('📩 SMS listo para enviar', 'success');
+},
+
+// Copiar datos al portapapeles
+async copiarDatos(monto) {
+  const texto = `SINPE: 72952454\nMonto: ₡${monto.toLocaleString()}\nIBAN: CR76015114620010283743\n\nOpción BN/BCR: SMS "PASE ${Math.round(monto)} 72952454"`;
+  await navigator.clipboard.writeText(texto);
+  UI.toast('📋 Datos copiados', 'success');
 },
 
 // Actualiza también esta función para aceptar el tipo de plantilla en el log

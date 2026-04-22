@@ -15,6 +15,10 @@ import { LoyaltyControl } from './modules/loyalty-control.js';
 import PedidosManager from './modules/pedidos.js'; // ✅ Agregar esta línea
 import UserManager from './modules/user-management.js'; // ✅ AGREGAR ESTA LÍNEA
 import ClientesManager from './modules/clientes-manager.js'; // ✅ NUEVO
+import DashboardManager from './modules/dashboard.js'; // ✅ AGREGAR
+import FacturacionRapidaV2  from './modules/facturacion-rapida-v2.js'; // ✅ NUEVO
+import StockAlertsManager from './modules/stock-alerts.js'; // ✅ NUEVO
+import BackupManager from './modules/backup-manager.js';    // ✅ NUEVO
 
 window.UI = UI;
 window.Store = Store;
@@ -31,6 +35,10 @@ window.LoyaltyControl = LoyaltyControl;
 window.PedidosManager = PedidosManager; // ✅ Agregar esta línea
 window.UserManager = UserManager; // ✅ AGREGAR
 window.ClientesManager = ClientesManager; // ✅ NUEVO
+window.DashboardManager = DashboardManager; // ✅ AGREGAR
+window.FacturacionRapidaV2 = FacturacionRapidaV2; // ✅ NUEVO
+window.StockAlertsManager = StockAlertsManager; // ✅ NUEVO
+window.BackupManager = BackupManager;           // ✅ NUEVO
 
 
 const App = {
@@ -41,24 +49,24 @@ const App = {
 async init() {
   console.log('🌸 Esentia v6.0 - Iniciando...');
   await Store.init();
-  await ClientesManager.init(); // ✅ Carga personal.json al arrancar
+  await ClientesManager.init(); 
+  if (window.UserManager) await UserManager.syncAdminRights();
   
-  // ✅ NUEVO: Sincronizar permisos de admin antes de renderizar nada
-  if (window.UserManager) {
-    await UserManager.syncAdminRights();
-  }
-
   const hasSession = AuthManager.checkSession();
   CartManager.init();
+  
   await ProductManager.load();
-  this.renderHeader(); // Ahora renderHeader() verá si el nuevo usuario es admin
+  
+  // ✅ NUEVO: Inyectar los JSON locales de Limpieza y Velas
+  await integrarJSONsLocales(); 
+
+  this.renderHeader(); 
   this.renderProducts();
   this.attachGlobalEvents();
 
   if (hasSession) {
     await LoyaltyManager.init();
     if (Store.get('isAdmin')) {
-      // Solo verificar pedidos si realmente es admin
       PedidosManager.verificarNotificacionPedidos();
     }
   } else {
@@ -67,43 +75,36 @@ async init() {
   console.log('✅ Esentia lista');
 },
 
-// 🔹 Reemplaza tu función renderHeader por esta:
+
 renderHeader() {
   const cliente = Store.get('cliente');
   const isAdmin = Store.get('isAdmin');
-  
-  // Elementos del DOM
   const userPanel = document.getElementById('panelUsuario');
   const loginBtn = document.getElementById('btnLogin');
-  const btnAdmin = document.getElementById('btnToggleAdmin'); // Botón Vela
-  const loyaltyContainer = document.getElementById('loyaltyContainer');
+  const adminMenu = document.getElementById('adminDropdownContainer');
+  const loyaltyContainer = document.getElementById('loyaltyContainer'); 
 
   if (cliente) {
     userPanel && (userPanel.style.display = 'flex');
     document.getElementById('nombreUsuario').textContent = cliente.nombre;
     loginBtn && (loginBtn.style.display = 'none');
+    adminMenu && (adminMenu.style.display = isAdmin ? 'inline-block' : 'none');
     
-    // ✅ Mostrar botón admin si tiene permisos
-    if (btnAdmin) {
-      btnAdmin.style.display = isAdmin ? 'inline-block' : 'none';
-    }
-
+    // ✅ FORZAR RENDER DE LEALTAD
     if (loyaltyContainer) {
       loyaltyContainer.style.display = 'block';
-      if (window.LoyaltyManager) window.LoyaltyManager.renderCard();
+      if (window.LoyaltyManager) {
+        window.LoyaltyManager.renderCard(); // 👈 ESTO ES LO QUE FALTABA
+      }
     }
   } else {
     userPanel && (userPanel.style.display = 'none');
     loginBtn && (loginBtn.style.display = 'inline-block');
-    if (btnAdmin) btnAdmin.style.display = 'none';
-    if (loyaltyContainer) {
-      loyaltyContainer.style.display = 'none';
-      loyaltyContainer.innerHTML = '';
-    }
+    adminMenu && (adminMenu.style.display = 'none');
+    
+    if (loyaltyContainer) loyaltyContainer.style.display = 'none';
   }
 },
-
-
   renderProducts() {
     const container = document.getElementById('productos-container');
     const loader = document.getElementById('loader');
@@ -236,57 +237,74 @@ document.getElementById('btnCheckout')?.addEventListener('click', async () => {
   UI.modal('modalCarrito', 'close');
 });
 
-// 🕯️ MENÚ ADMIN - CONTROL UNIFICADO
+// 🕯️ MENÚ ADMIN - EVENT DELEGATION (CORREGIDO Y ROBUSTO)
 const btnAdmin = document.getElementById('btnToggleAdmin');
 const adminMenu = document.getElementById('adminMenu');
 
 if (btnAdmin && adminMenu) {
-  // 1. Abrir/Cerrar Menú
-  btnAdmin.addEventListener('click', (e) => {
-    e.stopPropagation();
-    adminMenu.classList.toggle('show'); // Esto activa el CSS .show
+  // Toggle menú
+  btnAdmin.addEventListener('click', (e) => { 
+    e.stopPropagation(); 
+    adminMenu.classList.toggle('show'); 
   });
-
-  // 2. Cerrar al hacer clic fuera
+  
+  // Cerrar al hacer clic fuera
   document.addEventListener('click', (e) => {
-    if (!adminMenu.contains(e.target) && e.target !== btnAdmin) {
+    if (!btnAdmin.contains(e.target) && !adminMenu.contains(e.target)) {
       adminMenu.classList.remove('show');
     }
   });
 
-  // 3. Ejecutar acciones del menú
+  // ✅ Manejo de clicks en botones del menú
   adminMenu.addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-admin-action]');
     if (!btn) return;
-    
+
     const action = btn.dataset.adminAction;
-    const routeMap = {
-      stats:     { manager: 'AdminManager',    method: 'showStats' },
-      inventory: { manager: 'AdminManager',    method: 'manageInventory' },
-      visits:    { manager: 'AdminManager',    method: 'showVisits' },
-      promos:    { manager: 'AdminManager',    method: 'managePromos' },
-      invoice:   { manager: 'AdminManager',    method: 'quickInvoice' },
-      notify:    { manager: 'AdminManager',    method: 'sendNotification' },
-      compras:   { manager: 'ComprasManager',  method: 'mostrarGestionProveedores' },
-      cobros:    { manager: 'CobrosManager',   method: 'mostrarPanelCobros' },
-      pedidos:   { manager: 'PedidosManager',  method: 'mostrarPanel' },
-      loyaltyAdmin: { manager: 'LoyaltyControl', method: 'mostrarPanelPuntos' },
-      editFactura: { manager: 'FacturaEditor', method: 'abrirEditor' },
-      userAdmin: { manager: 'UserManager', method: 'mostrarPanel' },
-      clientesAdmin: { manager: 'ClientesManager', method: 'mostrarPanelGestion' }
-    };
+    
+    // ✅ RUTEO DINÁMICO: acción -> { manager, method }
+   const routeMap = {
+  stats:     { manager: 'AdminManager',    method: 'showStats' },
+  inventory: { manager: 'AdminManager',    method: 'manageInventory' },
+  visits:    { manager: 'AdminManager',    method: 'showVisits' },
+  promos:    { manager: 'AdminManager',    method: 'managePromos' },
+  invoice:   { manager: 'AdminManager',    method: 'quickInvoice' },
+  notify:    { manager: 'AdminManager',    method: 'sendNotification' },
+  compras:   { manager: 'ComprasManager',  method: 'mostrarGestionProveedores' },
+  cobros:    { manager: 'CobrosManager',   method: 'mostrarPanelCobros' },
+  pedidos:   { manager: 'PedidosManager',  method: 'mostrarPanel' },
+  loyaltyAdmin: { manager: 'LoyaltyControl', method: 'mostrarPanelPuntos' },
+  editFactura: { manager: 'FacturaEditor', method: 'abrirEditor' },
+  userAdmin: { manager: 'UserManager', method: 'mostrarPanel' }, // ✅ NUEVO
+  clientesAdmin: { manager: 'ClientesManager', method: 'mostrarPanelGestion' }, // ✅ NUEVO
+  dashboard: { manager: 'DashboardManager', method: 'mostrarDashboard' }, // ✅ NUEVO
+  facturacion: { manager: 'FacturacionRapidaV2', method: 'mostrarPanel' }, // ✅ NUEVO
+  stockAlert: { manager: 'StockAlertsManager', method: 'mostrarAlertas' }, // ✅ NUEVO
+  backup: { manager: 'BackupManager', method: 'generarRespaldo' }          // ✅ NUEVO
+  
+};
 
     const route = routeMap[action];
-    if (!route) return console.warn(`⚠️ Acción no mapeada: ${action}`);
-
+    if (!route) {
+      console.warn(`⚠️ Acción no mapeada: ${action}`);
+      return;
+    }
+    
+    // ✅ Acceso dinámico al manager vía window[nombre]
     const targetManager = window[route.manager];
+    
     if (targetManager && typeof targetManager[route.method] === 'function') {
+      // ✅ Ejecutar método asíncrono de forma segura
       Promise.resolve(targetManager[route.method]())
         .catch(err => console.error(`Error en ${route.manager}.${route.method}:`, err));
-      adminMenu.classList.remove('show'); // Cierra el menú al ejecutar
+      
+      adminMenu.classList.remove('show'); // Cerrar menú tras ejecutar
+    } else {
+      console.warn(`⚠️ ${route.manager}.${route.method} no está disponible`);
     }
   });
 }
+    
 
     // Login/Registro Forms
     document.getElementById('formLogin')?.addEventListener('submit', this.handleLogin.bind(this));
@@ -395,6 +413,8 @@ if (btnAdmin && adminMenu) {
     
    
   },
+
+  
 
  // Dentro del objeto App en app.js
 
@@ -661,5 +681,70 @@ async function repararFacturasCorruptas() {
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => App.init());
 else App.init();
+
+// ✅ FUNCIÓN NUEVA: Integra y normaliza los JSON locales
+async function integrarJSONsLocales() {
+  console.log('📦 Integrando catálogos locales (Limpieza y Velas)...');
+  const productosActuales = Store.get('productos') || [];
+  let nuevosProductos = [];
+
+  try {
+    // 1. Cargar Limpieza
+    const resLimpieza = await fetch('./data/productos_limpieza_completo.json');
+    if (resLimpieza.ok) {
+      const dataLimpieza = await resLimpieza.json();
+      
+      const productosLimpieza = dataLimpieza.map(p => ({
+        id: p.id,
+        nombre: p.nombre,
+        tipo: 'Limpieza',
+        precio: p.precioPublico || p.precio,
+        categoria: p.categoria || 'General',
+        // Transformar 'aromas' en 'variantes'
+        variantes: (p.aromas && p.aromas.length > 0) 
+          ? p.aromas.map(a => ({ nombre: a, precio: p.precioPublico })) 
+          : [{ nombre: 'Única', precio: p.precioPublico }],
+        stock: 0, // Inicia en 0 hasta que hagas compra
+        activo: p.disponible !== false,
+        imagen: p.imagen || 'images/default.png',
+        precioCompra: p.precioCompra || 0 // Importante para Compras
+      }));
+      nuevosProductos = [...nuevosProductos, ...productosLimpieza];
+    }
+
+    // 2. Cargar Velas
+    const resVelas = await fetch('./data/catalogo-velas.json');
+    if (resVelas.ok) {
+      // Asumiendo que es un array de objetos
+      const dataVelasRaw = await resVelas.json();
+      const dataVelas = Array.isArray(dataVelasRaw) ? dataVelasRaw : [dataVelasRaw];
+
+      const productosVelas = dataVelas.map(p => ({
+        id: p.id,
+        nombre: p.nombre,
+        tipo: 'Velas',
+        precio: p.precio || p.precioPublico,
+        categoria: (p.tipo ? p.tipo.split('|')[0] : 'Decoración'), // Toma la primera categoría
+        variantes: p.variantes || [{ nombre: 'Única', precio: p.precio }],
+        stock: p.stock || 0,
+        activo: p.disponible !== false,
+        imagen: p.imagen,
+        precioCompra: p.precioCompra || 0
+      }));
+      nuevosProductos = [...nuevosProductos, ...productosVelas];
+    }
+
+    // 3. Fusionar con el Store global
+    // Evitamos duplicados si ya existen por ID
+    const idsExistentes = new Set(productosActuales.map(p => p.id));
+    const productosUnicos = nuevosProductos.filter(p => !idsExistentes.has(p.id));
+    
+    Store.set('productos', [...productosActuales, ...productosUnicos]);
+    console.log(`✅ Integrados ${productosUnicos.length} productos locales.`);
+
+  } catch (error) {
+    console.warn('⚠️ No se pudieron cargar algunos JSON locales:', error);
+  }
+}
 
 window.App = App;
