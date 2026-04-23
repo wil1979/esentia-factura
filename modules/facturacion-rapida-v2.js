@@ -14,37 +14,72 @@ export const FacturacionRapidaV2 = {
     await this.cargarProductosLocales();
   },
 
-  async cargarProductosLocales() {
-    try {
-      const archivos = [
-        './data/productos_esentia.json',
-        './data/productos_limpieza_completo.json',
-        './data/catalogo-velas.json'
-      ];
+  // ✅ 1. CARGA BLINDADA (Limpia espacios y normaliza al cargar)
+async cargarProductosLocales() {
+  try {
+    const archivos = [
+      './data/productos_esentia.json',
+      './data/productos_limpieza_completo.json',
+      './data/catalogo-velas.json'
+    ];
+    this.productosCache = [];
 
-      this.productosCache = [];
-      
-      for (const archivo of archivos) {
-        try {
-          const res = await fetch(archivo);
-          if (res.ok) {
-            const productos = await res.json();
-            const activos = productos.filter(p => p.activo !== false);
-            this.productosCache = [...this.productosCache, ...activos];
-            console.log(`✅ Cargado: ${archivo} (${activos.length} productos activos)`);
-          }
-        } catch (e) {
-          console.warn(`⚠️ No se pudo cargar ${archivo}:`, e);
+    // Helper para limpiar objetos sucios de JSON
+    const limpiar = (obj) => {
+      const limpio = {};
+      Object.keys(obj).forEach(k => {
+        const key = k.trim();
+        const val = typeof obj[k] === 'string' ? obj[k].trim() : obj[k];
+        limpio[key] = val;
+      });
+      return limpio;
+    };
+
+    for (const archivo of archivos) {
+      try {
+        const res = await fetch(archivo);
+        if (res.ok) {
+          let data = await res.json();
+          const lista = Array.isArray(data) ? data : [data];
+          const limpios = lista.map(limpiar).filter(p => p.id && p.nombre);
+          this.productosCache = [...this.productosCache, ...limpios];
         }
-      }
-
-      if (this.productosCache.length === 0) {
-        console.log('🔄 Sin productos locales, cargando desde Firebase...');
-        await this.cargarProductosFirebase();
-      }
-    } catch (e) {
-      console.error('❌ Error cargando productos:', e);
+      } catch (e) { console.warn(`⚠️ Falló ${archivo}:`, e); }
     }
+
+    console.log(`📦 ${this.productosCache.length} productos listos.`);
+  } catch (e) { console.error('❌ Error cargando catálogos:', e); }
+},
+
+// ✅ 2. BÚSQUEDA INTELIGENTE (Parcial, sin acentos, tolerante a mayúsculas)
+renderProductos() {
+    const busqueda = document.getElementById('frBuscarProducto').value.toLowerCase();
+    const tipoFiltro = document.getElementById('frFiltroTipo').value;
+    const catFiltro = document.getElementById('frFiltroCategoria').value;
+
+    let filtrados = this.productosCache.filter(p => {
+      const coincideBusqueda = !busqueda || p.nombre.toLowerCase().includes(busqueda);
+      const coincideTipo = !tipoFiltro || p.tipo === tipoFiltro;
+      const coincideCat = !catFiltro || p.categoria === catFiltro;
+      const tieneStock = p.stock > 0;
+      return coincideBusqueda && coincideTipo && coincideCat && tieneStock;
+    });
+
+    const container = document.getElementById('frListaProductos');
+    if (filtrados.length === 0) {
+      container.innerHTML = '<p class="no-data">No se encontraron productos</p>';
+      return;
+    }
+
+    container.innerHTML = filtrados.map(p => `
+      <div class="fr-producto-card" onclick="FacturacionRapidaV2.agregarAlCarrito('${p.id}')">
+        <div class="fr-prod-nombre">${p.nombre}</div>
+        <div class="fr-prod-tipo">${p.tipo} • ${p.categoria}</div>
+        <div class="fr-prod-precio">₡${p.precio.toLocaleString()}</div>
+        <div class="fr-prod-stock">Stock: ${p.stock}</div>
+        ${p.variantes?.length > 1 ? `<small class="fr-prod-variantes">${p.variantes.length} opciones</small>` : ''}
+      </div>
+    `).join('');
   },
 
   async cargarProductosFirebase() {
@@ -189,35 +224,7 @@ export const FacturacionRapidaV2 = {
     container.innerHTML = `<strong>✅ ${this.clienteTemporal.nombre}</strong><br><small> ${this.clienteTemporal.cedula} | 📱 ${this.clienteTemporal.telefono || 'N/A'}</small>`;
   },
 
-  renderProductos() {
-    const busqueda = document.getElementById('frBuscarProducto').value.toLowerCase();
-    const tipoFiltro = document.getElementById('frFiltroTipo').value;
-    const catFiltro = document.getElementById('frFiltroCategoria').value;
-
-    let filtrados = this.productosCache.filter(p => {
-      const coincideBusqueda = !busqueda || p.nombre.toLowerCase().includes(busqueda);
-      const coincideTipo = !tipoFiltro || p.tipo === tipoFiltro;
-      const coincideCat = !catFiltro || p.categoria === catFiltro;
-      const tieneStock = p.stock > 0;
-      return coincideBusqueda && coincideTipo && coincideCat && tieneStock;
-    });
-
-    const container = document.getElementById('frListaProductos');
-    if (filtrados.length === 0) {
-      container.innerHTML = '<p class="no-data">No se encontraron productos</p>';
-      return;
-    }
-
-    container.innerHTML = filtrados.map(p => `
-      <div class="fr-producto-card" onclick="FacturacionRapidaV2.agregarAlCarrito('${p.id}')">
-        <div class="fr-prod-nombre">${p.nombre}</div>
-        <div class="fr-prod-tipo">${p.tipo} • ${p.categoria}</div>
-        <div class="fr-prod-precio">₡${p.precio.toLocaleString()}</div>
-        <div class="fr-prod-stock">Stock: ${p.stock}</div>
-        ${p.variantes?.length > 1 ? `<small class="fr-prod-variantes">${p.variantes.length} opciones</small>` : ''}
-      </div>
-    `).join('');
-  },
+  
 
   agregarAlCarrito(productId) {
     const producto = this.productosCache.find(p => p.id === productId);
