@@ -14,6 +14,7 @@ export const FacturacionRapidaV2 = {
     await this.cargarProductosLocales();
   },
 
+  // ✅ CARGA ROBUSTA CON LIMPIEZA DE JSON SUCIO
   async cargarProductosLocales() {
     try {
       const archivos = [
@@ -24,7 +25,6 @@ export const FacturacionRapidaV2 = {
 
       this.productosCache = [];
       
-      // Helper para limpiar objetos sucios de JSON
       const limpiar = (obj) => {
         const limpio = {};
         Object.keys(obj).forEach(k => {
@@ -43,56 +43,38 @@ export const FacturacionRapidaV2 = {
             const lista = Array.isArray(data) ? data : [data];
             const limpios = lista.map(limpiar).filter(p => p.id && p.nombre);
             this.productosCache = [...this.productosCache, ...limpios];
+            console.log(`✅ ${archivo}: ${limpios.length} productos cargados`);
+          } else {
+            console.warn(`⚠️ ${archivo} no encontrado (404)`);
           }
         } catch (e) { console.warn(`⚠️ Falló ${archivo}:`, e); }
       }
 
-      if (this.productosCache.length === 0) {
-        console.log('🔄 Sin productos locales, cargando desde Firebase...');
-        await this.cargarProductosFirebase();
-      }
-      
-      console.log(`📦 ${this.productosCache.length} productos listos.`);
+      console.log(`📦 Total en caché: ${this.productosCache.length} productos`);
     } catch (e) {
-      console.error('❌ Error cargando catálogos:', e);
-      UI.toast('Error cargando catálogo', 'error');
-    }
-  },
-
-  async cargarProductosFirebase() {
-    try {
-      const snap = await getDocs(collection(DB.db, "productos"));
-      this.productosCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    } catch (e) {
-      console.warn('⚠️ Firebase no disponible');
+      console.error('❌ Error crítico cargando catálogos:', e);
     }
   },
 
   async mostrarPanel() {
     if (!Store.get('isAdmin')) { UI.toast('Acceso denegado', 'warning'); return; }
     
-    // ✅ IMPORTAR CARRITO PERSONAL (Mapeo seguro de estructura)
+    // 1. Importar carrito personal si existe
     this.carritoFactura = [];
     const personalCart = Store.get('carrito') || [];
-    
     if (personalCart.length > 0) {
-      const quiereImportar = confirm(`🛒 Tienes ${personalCart.length} productos en tu carrito.\n¿Deseas pasarlos a esta factura?`);
-      
-      if (quiereImportar) {
-        this.carritoFactura = personalCart.map(item => ({
-          id: item.id,
-          nombre: item.nombre,
-          variante: typeof item.variante === 'object' ? item.variante.nombre : (item.variante || 'Única'),
-          precio: item.precio,
-          cantidad: item.cantidad,
-          subtotal: item.precio * item.cantidad,
-          tipo: item.tipo || 'General',
-          categoria: item.categoria || 'General'
+      const quiere = confirm(`🛒 Tienes ${personalCart.length} productos en tu carrito.\n¿Pasarlos a esta factura?`);
+      if (quiere) {
+        this.carritoFactura = personalCart.map(i => ({
+          id: i.id, nombre: i.nombre, variante: i.variante?.nombre || 'Única',
+          precio: i.precio, cantidad: i.cantidad, subtotal: i.precio * i.cantidad,
+          tipo: i.tipo || 'General', categoria: i.categoria || 'General'
         }));
-        UI.toast('📦 Productos importados. Tu carrito personal se mantiene.', 'info');
+        UI.toast('📦 Productos importados', 'info');
       }
     }
 
+    // 2. Crear modal
     const modal = document.createElement('div');
     modal.className = 'modal show';
     modal.id = 'modalFacturacionRapida';
@@ -113,44 +95,28 @@ export const FacturacionRapidaV2 = {
             </div>
 
             <div class="productos-section">
-              <h3>📦 Productos</h3>
+              <h3>📦 Productos (${this.productosCache.length})</h3>
               <div class="fr-filtros">
                 <input type="text" id="frBuscarProducto" placeholder="🔍 Buscar producto...">
-                <select id="frFiltroTipo">
-                  <option value="">Todos</option>
-                  <option value="Difusores">Difusores</option>
-                  <option value="Aceites">Aceites</option>
-                  <option value="Velas">Velas</option>
-                  <option value="Limpieza">Limpieza</option>
-                </select>
-                <select id="frFiltroCategoria">
-                  <option value="">Todas</option>
-                  <option value="aromaterapia">Aromaterapia</option>
-                  <option value="Detergentes">Detergentes</option>
-                  <option value="hogar">Hogar</option>
-                  <option value="higiene">Higiene</option>
-                </select>
+                <select id="frFiltroTipo"><option value="">Todos</option></select>
+                <select id="frFiltroCategoria"><option value="">Todas</option></select>
               </div>
               <div id="frListaProductos" class="fr-productos-grid">
-                <div class="loading-state">Cargando productos...</div>
+                <div class="loading-state">Cargando catálogo...</div>
               </div>
             </div>
           </div>
 
           <div class="facturacion-right">
             <h3>🛒 Factura Actual</h3>
-            <div id="frCarrito" class="fr-carrito">
-              <p class="empty-carrito">Sin productos agregados</p>
-            </div>
-            
+            <div id="frCarrito" class="fr-carrito"><p class="empty-carrito">Sin productos</p></div>
             <div class="fr-totales">
               <div class="fr-row"><span>Subtotal:</span><span id="frSubtotal">₡0</span></div>
               <div class="fr-row"><span>Descuento:</span><input type="number" id="frDescuento" value="0" min="0" class="fr-input"></div>
               <div class="fr-row total"><span>Total:</span><span id="frTotal">₡0</span></div>
             </div>
-
             <div class="fr-actions">
-              <button id="frGuardarFactura" class="btn-primary btn-large" disabled>💾 Guardar Factura</button>
+              <button id="frGuardarFactura" class="btn-primary btn-large" disabled>💾 Guardar</button>
               <button id="frLimpiar" class="btn-secondary">🗑️ Limpiar</button>
             </div>
           </div>
@@ -159,42 +125,55 @@ export const FacturacionRapidaV2 = {
     `;
     
     document.body.appendChild(modal);
+    
+    // 3. Attach events DESPUÉS de que el modal está en el DOM
     this.attachEvents();
+    this.llenarFiltros();
     this.renderProductos();
-    this.renderCarrito(); // ✅ Renderiza inmediatamente lo importado
+    this.renderCarrito();
   },
 
   attachEvents() {
-    document.getElementById('frBuscarCliente').addEventListener('input', 
-      this.debounce(() => this.buscarCliente(), 300));
-    document.getElementById('frNuevoCliente').onclick = () => this.nuevoCliente();
-    document.getElementById('frBuscarProducto').addEventListener('input', () => this.renderProductos());
-    document.getElementById('frFiltroTipo').onchange = () => this.renderProductos();
-    document.getElementById('frFiltroCategoria').onchange = () => this.renderProductos();
-    document.getElementById('frDescuento').oninput = () => this.calcularTotales();
-    document.getElementById('frLimpiar').onclick = () => this.limpiarFactura();
-    document.getElementById('frGuardarFactura').onclick = () => this.guardarFactura();
+    console.log('🔌 AttachEvents ejecutado');
+    document.getElementById('frBuscarCliente')?.addEventListener('input', this.debounce(() => this.buscarCliente(), 300));
+    document.getElementById('frNuevoCliente')?.addEventListener('click', () => this.nuevoCliente());
+    document.getElementById('frBuscarProducto')?.addEventListener('input', () => this.renderProductos());
+    document.getElementById('frFiltroTipo')?.addEventListener('change', () => this.renderProductos());
+    document.getElementById('frFiltroCategoria')?.addEventListener('change', () => this.renderProductos());
+    document.getElementById('frDescuento')?.addEventListener('input', () => this.calcularTotales());
+    document.getElementById('frLimpiar')?.addEventListener('click', () => this.limpiarFactura());
+    document.getElementById('frGuardarFactura')?.addEventListener('click', () => this.guardarFactura());
+  },
+
+  llenarFiltros() {
+    const tipos = [...new Set(this.productosCache.map(p => p.tipo).filter(Boolean))].sort();
+    const cats = [...new Set(this.productosCache.map(p => p.categoria).filter(Boolean))].sort();
+    
+    const selTipo = document.getElementById('frFiltroTipo');
+    const selCat = document.getElementById('frFiltroCategoria');
+    
+    tipos.forEach(t => selTipo.innerHTML += `<option value="${t}">${t}</option>`);
+    cats.forEach(c => selCat.innerHTML += `<option value="${c}">${c}</option>`);
   },
 
   async buscarCliente() {
-    const query = document.getElementById('frBuscarCliente').value.trim();
-    if (query.length < 3) return;
+    const q = document.getElementById('frBuscarCliente').value.trim();
+    if (q.length < 3) return;
     try {
       const snap = await getDocs(collection(DB.db, "clientesBD"));
-      const clienteEncontrado = snap.docs.find(d => 
-        d.id === query || d.data().nombre?.toLowerCase().includes(query.toLowerCase())
-      );
-      if (clienteEncontrado) {
-        this.clienteTemporal = { id: clienteEncontrado.id, ...clienteEncontrado.data() };
+      const found = snap.docs.find(d => d.id === q || d.data().nombre?.toLowerCase().includes(q.toLowerCase()));
+      if (found) {
+        this.clienteTemporal = { id: found.id, ...found.data() };
         this.mostrarClienteInfo();
       }
-    } catch (e) { console.warn('Error buscando cliente:', e); }
+    } catch(e) { console.warn('Error buscando cliente:', e); }
   },
 
   nuevoCliente() {
-    const cedula = prompt('Ingrese cédula del cliente:');
+    console.log('🆕 Botón +Nuevo clickeado');
+    const cedula = prompt('Cédula del nuevo cliente:');
     if (!cedula) return;
-    const nombre = prompt('Ingrese nombre del cliente:');
+    const nombre = prompt('Nombre completo:');
     if (!nombre) return;
     this.clienteTemporal = {
       id: cedula, cedula, nombre,
@@ -205,174 +184,138 @@ export const FacturacionRapidaV2 = {
   },
 
   mostrarClienteInfo() {
-    const container = document.getElementById('frClienteInfo');
-    container.classList.remove('hidden');
-    container.innerHTML = `<strong>✅ ${this.clienteTemporal.nombre}</strong><br><small> ${this.clienteTemporal.cedula} | 📱 ${this.clienteTemporal.telefono || 'N/A'}</small>`;
+    const el = document.getElementById('frClienteInfo');
+    if (!el) return;
+    el.classList.remove('hidden');
+    el.innerHTML = `<strong>✅ ${this.clienteTemporal.nombre}</strong><br><small>${this.clienteTemporal.cedula} | 📱 ${this.clienteTemporal.telefono||'N/A'}</small>`;
   },
 
-  // ✅ BÚSQUEDA INTELIGENTE (Parcial, sin acentos, tolerante a mayúsculas)
   renderProductos() {
-    const busqueda = document.getElementById('frBuscarProducto').value
-      .toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    
-    const tipoFiltro = document.getElementById('frFiltroTipo').value;
-    const catFiltro = document.getElementById('frFiltroCategoria').value;
+    const busqueda = (document.getElementById('frBuscarProducto')?.value || '').toLowerCase().trim();
+    const tipo = document.getElementById('frFiltroTipo')?.value || '';
+    const cat = document.getElementById('frFiltroCategoria')?.value || '';
+    const container = document.getElementById('frListaProductos');
+
+    console.log(`🔍 Filtro: "${busqueda}", Tipo: "${tipo}", Cat: "${cat}", Cache: ${this.productosCache.length}`);
 
     let filtrados = this.productosCache.filter(p => {
-      const nombreLimpio = (p.nombre || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const tipoLimpio = (p.tipo || '').toLowerCase();
-      const catLimpio = (p.categoria || '').toLowerCase();
-
-      const coincideTexto = !busqueda || nombreLimpio.includes(busqueda) || (p.id || '').includes(busqueda);
-      const coincideTipo = !tipoFiltro || tipoLimpio.includes(tipoFiltro.toLowerCase());
-      const coincideCat = !catFiltro || catLimpio.includes(catFiltro.toLowerCase());
-      const tieneStock = (p.stock || 0) > 0;
-
-      return coincideTexto && coincideTipo && coincideCat && tieneStock;
+      const n = (p.nombre||'').toLowerCase();
+      const coincideTxt = !busqueda || n.includes(busqueda) || (p.id||'').includes(busqueda);
+      const coincideTipo = !tipo || p.tipo === tipo;
+      const coincideCat = !cat || p.categoria === cat;
+      return coincideTxt && coincideTipo && coincideCat && (p.stock||0) > 0;
     });
 
-    const container = document.getElementById('frListaProductos');
     if (filtrados.length === 0) {
-      container.innerHTML = busqueda ? '<p class="no-data">No hay coincidencias</p>' : '<p class="no-data">Cargando productos...</p>';
+      container.innerHTML = busqueda ? '<p class="no-data">Sin coincidencias</p>' : '<p class="no-data">Cargando o sin stock...</p>';
       return;
     }
 
     container.innerHTML = filtrados.map(p => `
       <div class="fr-producto-card" onclick="FacturacionRapidaV2.agregarAlCarrito('${p.id}')">
         <div class="fr-prod-nombre">${p.nombre}</div>
-        <div class="fr-prod-tipo">${p.tipo} • ${p.categoria || 'General'}</div>
-        <div class="fr-prod-precio">₡${(p.precio || 0).toLocaleString()}</div>
-        <div class="fr-prod-stock">Stock: ${p.stock || 0}</div>
-        ${p.variantes?.length > 1 ? `<small class="fr-prod-variantes">${p.variantes.length} opciones</small>` : ''}
+        <div class="fr-prod-tipo">${p.tipo} • ${p.categoria||'General'}</div>
+        <div class="fr-prod-precio">₡${(p.precio||0).toLocaleString()}</div>
+        <div class="fr-prod-stock">Stock: ${p.stock||0}</div>
+        ${p.variantes?.length>1 ? `<small class="fr-prod-variantes">${p.variantes.length} opciones</small>` : ''}
       </div>
     `).join('');
   },
 
-  agregarAlCarrito(productId) {
-    const producto = this.productosCache.find(p => p.id === productId);
-    if (!producto) return;
-
-    if (producto.variantes && producto.variantes.length > 1) {
-      const opciones = producto.variantes.map((v, i) => `${i + 1}. ${v.nombre} - ₡${v.precio.toLocaleString()}`).join('\n');
-      const seleccion = prompt(`Seleccione variante:\n${opciones}`);
-      if (!seleccion) return;
-      const idx = parseInt(seleccion) - 1;
-      if (idx >= 0 && idx < producto.variantes.length) {
-        this.agregarItem(producto, producto.variantes[idx]);
-      }
+  agregarAlCarrito(pid) {
+    const prod = this.productosCache.find(p => p.id === pid);
+    if (!prod) return;
+    if (prod.variantes?.length > 1) {
+      const opts = prod.variantes.map((v,i)=>`${i+1}. ${v.nombre} - ₡${v.precio}`).join('\n');
+      const sel = prompt(`Variante para ${prod.nombre}:\n${opts}`);
+      const idx = parseInt(sel)-1;
+      if (idx>=0 && idx<prod.variantes.length) this.agregarItem(prod, prod.variantes[idx]);
     } else {
-      const variante = producto.variantes?.[0] || { nombre: 'Única', precio: producto.precio };
-      this.agregarItem(producto, variante);
+      this.agregarItem(prod, prod.variantes?.[0] || {nombre:'Única', precio:prod.precio});
     }
   },
 
-  agregarItem(producto, variante) {
-    const cantidad = parseInt(prompt(`Cantidad para ${producto.nombre}:`, '1')) || 1;
-    if (cantidad > producto.stock) {
-      UI.toast(`Stock insuficiente. Disponible: ${producto.stock}`, 'warning');
-      return;
-    }
-    const existing = this.carritoFactura.find(i => i.id === producto.id && i.variante === variante.nombre);
-    if (existing) {
-      existing.cantidad += cantidad;
-    } else {
-      this.carritoFactura.push({
-        id: producto.id, nombre: producto.nombre, variante: variante.nombre,
-        precio: variante.precio, cantidad, subtotal: variante.precio * cantidad,
-        categoria: producto.categoria, tipo: producto.tipo
-      });
-    }
+  agregarItem(prod, varData) {
+    const cant = parseInt(prompt(`Cantidad para ${prod.nombre}:`, '1')) || 1;
+    if (cant > (prod.stock||0)) return UI.toast(`Stock insuficiente (${prod.stock})`, 'warning');
+    
+    const ex = this.carritoFactura.find(i => i.id===prod.id && i.variante===varData.nombre);
+    if (ex) ex.cantidad += cant;
+    else this.carritoFactura.push({ id:prod.id, nombre:prod.nombre, variante:varData.nombre, precio:varData.precio, cantidad:cant, subtotal:varData.precio*cant, tipo:prod.tipo, categoria:prod.categoria });
     this.renderCarrito();
   },
 
   renderCarrito() {
-    const container = document.getElementById('frCarrito');
+    const cont = document.getElementById('frCarrito');
+    const btnGuardar = document.getElementById('frGuardarFactura');
     if (this.carritoFactura.length === 0) {
-      container.innerHTML = '<p class="empty-carrito">Sin productos agregados</p>';
-      document.getElementById('frGuardarFactura').disabled = true;
+      cont.innerHTML = '<p class="empty-carrito">Sin productos</p>';
+      if (btnGuardar) btnGuardar.disabled = true;
     } else {
-      container.innerHTML = this.carritoFactura.map((item, idx) => `
+      cont.innerHTML = this.carritoFactura.map((it,i) => `
         <div class="fr-carrito-item">
-          <div class="fr-item-info">
-            <strong>${item.nombre}</strong>
-            <small>${item.variante} × ${item.cantidad}</small>
-          </div>
-          <div class="fr-item-actions">
-            <span>₡${item.subtotal.toLocaleString()}</span>
-            <button onclick="FacturacionRapidaV2.eliminarDelCarrito(${idx})" class="btn-sm btn-danger">🗑️</button>
-          </div>
-        </div>
-      `).join('');
-      document.getElementById('frGuardarFactura').disabled = false;
+          <div class="fr-item-info"><strong>${it.nombre}</strong><small>${it.variante} × ${it.cantidad}</small></div>
+          <div class="fr-item-actions"><span>₡${it.subtotal.toLocaleString()}</span><button onclick="FacturacionRapidaV2.eliminarDelCarrito(${i})" class="btn-sm btn-danger">🗑️</button></div>
+        </div>`).join('');
+      if (btnGuardar) btnGuardar.disabled = false;
     }
     this.calcularTotales();
   },
 
-  eliminarDelCarrito(idx) { this.carritoFactura.splice(idx, 1); this.renderCarrito(); },
+  eliminarDelCarrito(i) { this.carritoFactura.splice(i,1); this.renderCarrito(); },
 
   calcularTotales() {
-    const subtotal = this.carritoFactura.reduce((sum, i) => sum + i.subtotal, 0);
-    const descuento = parseInt(document.getElementById('frDescuento').value) || 0;
-    const total = Math.max(0, subtotal - descuento);
-    document.getElementById('frSubtotal').textContent = `₡${subtotal.toLocaleString()}`;
-    document.getElementById('frTotal').textContent = `₡${total.toLocaleString()}`;
-    return { subtotal, descuento, total };
+    const sub = this.carritoFactura.reduce((s,i)=>s+i.subtotal,0);
+    const desc = parseInt(document.getElementById('frDescuento')?.value) || 0;
+    const tot = Math.max(0, sub-desc);
+    const elSub = document.getElementById('frSubtotal');
+    const elTot = document.getElementById('frTotal');
+    if (elSub) elSub.textContent = `₡${sub.toLocaleString()}`;
+    if (elTot) elTot.textContent = `₡${tot.toLocaleString()}`;
+    return {sub, desc, tot};
   },
 
   async guardarFactura() {
-    if (!this.clienteTemporal) return UI.toast('❌ Debe seleccionar un cliente', 'warning');
-    if (this.carritoFactura.length === 0) return UI.toast('❌ No hay productos', 'warning');
-
-    const { subtotal, descuento, total } = this.calcularTotales();
-    const facturaData = {
-      fecha: new Date().toISOString(),
-      clienteId: this.clienteTemporal.id,
-      clienteNombre: this.clienteTemporal.nombre,
-      productos: this.carritoFactura,
-      subtotal, descuento, total,
-      estado: 'completado', metodoPago: 'contado',
-      tipoFactura: 'rapida', creadaPor: Store.get('cliente')?.nombre || 'admin'
-    };
-
+    if (!this.clienteTemporal) return UI.toast('Selecciona un cliente', 'warning');
+    if (this.carritoFactura.length === 0) return UI.toast('Agrega productos', 'warning');
+    const {sub, desc, tot} = this.calcularTotales();
     try {
-      await addDoc(collection(DB.db, "facturas_rapidas"), facturaData);
-      for (const item of this.carritoFactura) {
-        const prod = this.productosCache.find(p => p.id === item.id);
-        if (prod) prod.stock -= item.cantidad;
-      }
+      await addDoc(collection(DB.db, "facturas_rapidas"), {
+        fecha: new Date().toISOString(), clienteId: this.clienteTemporal.id, clienteNombre: this.clienteTemporal.nombre,
+        productos: this.carritoFactura, subtotal:sub, descuento:desc, total:tot,
+        estado:'completado', metodoPago:'contado', tipoFactura:'rapida', creadoPor: Store.get('cliente')?.nombre||'admin'
+      });
+      // Actualizar stock local
+      this.carritoFactura.forEach(it => {
+        const p = this.productosCache.find(x=>x.id===it.id);
+        if (p) p.stock = Math.max(0, (p.stock||0)-it.cantidad);
+      });
       UI.toast('✅ Factura guardada', 'success');
       this.limpiarFactura();
-      if (confirm('¿Enviar factura por WhatsApp?')) this.enviarWhatsApp(facturaData);
-    } catch (e) {
-      console.error(e);
-      UI.toast('❌ Error al guardar', 'error');
-    }
+      if (confirm('¿Enviar por WhatsApp?')) this.enviarWhatsApp({clienteNombre:this.clienteTemporal.nombre, productos:this.carritoFactura, total:tot, fecha:new Date().toISOString()});
+    } catch(e) { console.error(e); UI.toast('❌ Error al guardar', 'error'); }
   },
 
-  enviarWhatsApp(factura) {
-    let mensaje = `🧾 *FACTURA ESENTIA*\n👤 ${factura.clienteNombre}\n📅 ${new Date(factura.fecha).toLocaleDateString()}\n\n*Productos:*\n`;
-    factura.productos.forEach(p => { mensaje += `• ${p.nombre} (${p.variante}) x${p.cantidad} - ₡${p.subtotal.toLocaleString()}\n`; });
-    mensaje += `\n💰 *Total: ₡${factura.total.toLocaleString()}*\n\n¡Gracias! 🌸`;
-    const telefono = this.clienteTemporal.telefono?.replace(/\D/g, '') || '';
-    if (telefono.length >= 8) {
-      const cleanPhone = telefono.length === 8 ? '506' + telefono : telefono;
-      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensaje)}`, '_blank');
-    }
+  enviarWhatsApp(f) {
+    let txt = `🧾 *FACTURA ESENTIA*\n👤 ${f.clienteNombre}\n📅 ${new Date(f.fecha).toLocaleDateString()}\n\n*Productos:*\n`;
+    f.productos.forEach(p=>{ txt+=`• ${p.nombre} (${p.variante}) x${p.cantidad} - ₡${p.subtotal.toLocaleString()}\n`; });
+    txt+=`\n💰 *Total: ₡${f.total.toLocaleString()}*\n\n¡Gracias! 🌸`;
+    const tel = this.clienteTemporal.telefono?.replace(/\D/g,'')||'';
+    if (tel.length>=8) window.open(`https://wa.me/${tel.length===8?'506'+tel:tel}?text=${encodeURIComponent(txt)}`);
   },
 
   limpiarFactura() {
-    this.carritoFactura = [];
-    this.clienteTemporal = null;
-    document.getElementById('frBuscarCliente').value = '';
-    document.getElementById('frClienteInfo').classList.add('hidden');
-    document.getElementById('frDescuento').value = 0;
+    this.carritoFactura = []; this.clienteTemporal = null;
+    const inp = document.getElementById('frBuscarCliente');
+    const info = document.getElementById('frClienteInfo');
+    const desc = document.getElementById('frDescuento');
+    if (inp) inp.value='';
+    if (info) info.classList.add('hidden');
+    if (desc) desc.value=0;
     this.renderCarrito();
   },
 
-  debounce(fn, ms) {
-    let timeout;
-    return (...args) => { clearTimeout(timeout); timeout = setTimeout(() => fn(...args), ms); };
-  }
+  debounce(fn, ms) { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
 };
 
 export default FacturacionRapidaV2;
