@@ -3396,9 +3396,47 @@ MODO MÓVIL OPTIMIZADO (1 COLUMNA)
     }
 
     /* Cuando se activa la clase 'show' (vía JS), se muestra */
-    #adminMenu.show {
-        display: flex !important;
-    }
+   @media (max-width: 768px) {
+  #adminMenu {
+    position: fixed !important;
+    /* ✅ Anclado arriba con margen seguro (respeta notch/status bar) */
+    top: calc(env(safe-area-inset-top, 0px) + 15px) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important; /* Solo centrado horizontal */
+    
+    width: 94% !important;
+    max-height: 75vh !important; /* Deja espacio libre abajo para el pulgar */
+    overflow-y: auto !important; /* Scroll interno si hay muchos botones */
+    
+    background: white !important;
+    border-radius: 14px !important;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.25) !important;
+    padding: 12px !important;
+    z-index: 9999 !important;
+    
+    /* Oculto por defecto, controlado por JS */
+    display: none !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  /* Cuando se activa vía JS */
+  #adminMenu.show {
+    display: flex !important;
+  }
+
+  /* Botones internos optimizados para dedo */
+  #adminMenu button {
+    width: 100% !important;
+    text-align: left !important;
+    padding: 14px !important;
+    font-size: 1rem !important;
+    border-radius: 10px !important;
+    background: #f8f9fa !important;
+    border: 1px solid #eee !important;
+    min-height: 44px !important; /* Estándar táctil iOS/Android */
+  }
+
 
     /* Estilo de botones dentro del menú en móvil */
     #adminMenu button {
