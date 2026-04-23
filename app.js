@@ -19,6 +19,7 @@ import DashboardManager from './modules/dashboard.js'; // ✅ AGREGAR
 import FacturacionRapidaV2  from './modules/facturacion-rapida-v2.js'; // ✅ NUEVO
 import StockAlertsManager from './modules/stock-alerts.js'; // ✅ NUEVO
 import BackupManager from './modules/backup-manager.js';    // ✅ NUEVO
+import ProformasManager from './modules/proformas-compras.js'; // ✅ NUEVO
 
 window.UI = UI;
 window.Store = Store;
@@ -39,6 +40,7 @@ window.DashboardManager = DashboardManager; // ✅ AGREGAR
 window.FacturacionRapidaV2 = FacturacionRapidaV2; // ✅ NUEVO
 window.StockAlertsManager = StockAlertsManager; // ✅ NUEVO
 window.BackupManager = BackupManager;           // ✅ NUEVO
+window.ProformasManager = ProformasManager; // ✅ NUEVO
 
 
 const App = {
@@ -366,7 +368,8 @@ if (btnAdmin && adminMenu) {
   dashboard: { manager: 'DashboardManager', method: 'mostrarDashboard' }, // ✅ NUEVO
   facturacion: { manager: 'FacturacionRapidaV2', method: 'mostrarPanel' }, // ✅ NUEVO
   stockAlert: { manager: 'StockAlertsManager', method: 'mostrarAlertas' }, // ✅ NUEVO
-  backup: { manager: 'BackupManager', method: 'generarRespaldo' }          // ✅ NUEVO
+  backup: { manager: 'BackupManager', method: 'generarRespaldo' } ,         // ✅ NUEVO
+  proformas: { manager: 'ProformasManager', method: 'mostrarPanel' } // ✅ NUEVO
   
 };
 

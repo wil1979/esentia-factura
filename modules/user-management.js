@@ -24,12 +24,12 @@ export const UserManager = {
       Store.set('isAdmin', isAdmin);
       Store.set('allowedAdmins', this._allowedCedulas);
       
-      // Debug para ver qué está pasando en consola
-      console.log("🔒 Estado Admin:", isAdmin, "| Cédula Cliente:", cliente?.cedula, "| Lista:", this._allowedCedulas);
-    } catch (e) {
+      /* Debug para ver qué está pasando en consola
+      console.log("🔒 Estado Admin:", isAdmin, "| Cédula Cliente:", cliente?.cedula, "| Lista:", this._allowedCedulas);*/
+     } catch (e) {
       console.warn("⚠️ No se pudo cargar config de admins:", e);
       Store.set('isAdmin', false);
-    }
+     }
   },
 
   // 🖥️ Panel de Gestión
