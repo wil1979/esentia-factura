@@ -1,7 +1,7 @@
 // modules/facturacion-rapida-v2.js
 import { collection, addDoc, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { DB } from './firebase.js';
-import { Store } from './core.js';
+import { Store, Utils } from './core.js';
 import { UI } from '../components/ui.js';
 
 export const FacturacionRapidaV2 = {
@@ -14,72 +14,49 @@ export const FacturacionRapidaV2 = {
     await this.cargarProductosLocales();
   },
 
-  // ✅ 1. CARGA BLINDADA (Limpia espacios y normaliza al cargar)
-async cargarProductosLocales() {
-  try {
-    const archivos = [
-      './data/productos_esentia.json',
-      './data/productos_limpieza_completo.json',
-      './data/catalogo-velas.json'
-    ];
-    this.productosCache = [];
+  async cargarProductosLocales() {
+    try {
+      const archivos = [
+        './data/productos_esentia.json',
+        './data/productos_limpieza_completo.json',
+        './data/catalogo-velas.json'
+      ];
 
-    // Helper para limpiar objetos sucios de JSON
-    const limpiar = (obj) => {
-      const limpio = {};
-      Object.keys(obj).forEach(k => {
-        const key = k.trim();
-        const val = typeof obj[k] === 'string' ? obj[k].trim() : obj[k];
-        limpio[key] = val;
-      });
-      return limpio;
-    };
+      this.productosCache = [];
+      
+      // Helper para limpiar objetos sucios de JSON
+      const limpiar = (obj) => {
+        const limpio = {};
+        Object.keys(obj).forEach(k => {
+          const key = k.trim();
+          const val = typeof obj[k] === 'string' ? obj[k].trim() : obj[k];
+          limpio[key] = val;
+        });
+        return limpio;
+      };
 
-    for (const archivo of archivos) {
-      try {
-        const res = await fetch(archivo);
-        if (res.ok) {
-          let data = await res.json();
-          const lista = Array.isArray(data) ? data : [data];
-          const limpios = lista.map(limpiar).filter(p => p.id && p.nombre);
-          this.productosCache = [...this.productosCache, ...limpios];
-        }
-      } catch (e) { console.warn(`⚠️ Falló ${archivo}:`, e); }
+      for (const archivo of archivos) {
+        try {
+          const res = await fetch(archivo);
+          if (res.ok) {
+            let data = await res.json();
+            const lista = Array.isArray(data) ? data : [data];
+            const limpios = lista.map(limpiar).filter(p => p.id && p.nombre);
+            this.productosCache = [...this.productosCache, ...limpios];
+          }
+        } catch (e) { console.warn(`⚠️ Falló ${archivo}:`, e); }
+      }
+
+      if (this.productosCache.length === 0) {
+        console.log('🔄 Sin productos locales, cargando desde Firebase...');
+        await this.cargarProductosFirebase();
+      }
+      
+      console.log(`📦 ${this.productosCache.length} productos listos.`);
+    } catch (e) {
+      console.error('❌ Error cargando catálogos:', e);
+      UI.toast('Error cargando catálogo', 'error');
     }
-
-    console.log(`📦 ${this.productosCache.length} productos listos.`);
-  } catch (e) { console.error('❌ Error cargando catálogos:', e); }
-},
-
-// ✅ 2. BÚSQUEDA INTELIGENTE (Parcial, sin acentos, tolerante a mayúsculas)
-renderProductos() {
-    const busqueda = document.getElementById('frBuscarProducto').value.toLowerCase();
-    const tipoFiltro = document.getElementById('frFiltroTipo').value;
-    const catFiltro = document.getElementById('frFiltroCategoria').value;
-
-    let filtrados = this.productosCache.filter(p => {
-      const coincideBusqueda = !busqueda || p.nombre.toLowerCase().includes(busqueda);
-      const coincideTipo = !tipoFiltro || p.tipo === tipoFiltro;
-      const coincideCat = !catFiltro || p.categoria === catFiltro;
-      const tieneStock = p.stock > 0;
-      return coincideBusqueda && coincideTipo && coincideCat && tieneStock;
-    });
-
-    const container = document.getElementById('frListaProductos');
-    if (filtrados.length === 0) {
-      container.innerHTML = '<p class="no-data">No se encontraron productos</p>';
-      return;
-    }
-
-    container.innerHTML = filtrados.map(p => `
-      <div class="fr-producto-card" onclick="FacturacionRapidaV2.agregarAlCarrito('${p.id}')">
-        <div class="fr-prod-nombre">${p.nombre}</div>
-        <div class="fr-prod-tipo">${p.tipo} • ${p.categoria}</div>
-        <div class="fr-prod-precio">₡${p.precio.toLocaleString()}</div>
-        <div class="fr-prod-stock">Stock: ${p.stock}</div>
-        ${p.variantes?.length > 1 ? `<small class="fr-prod-variantes">${p.variantes.length} opciones</small>` : ''}
-      </div>
-    `).join('');
   },
 
   async cargarProductosFirebase() {
@@ -94,18 +71,26 @@ renderProductos() {
   async mostrarPanel() {
     if (!Store.get('isAdmin')) { UI.toast('Acceso denegado', 'warning'); return; }
     
-    // 🔄 NUEVO: Verificar si hay carrito personal para importar
+    // ✅ IMPORTAR CARRITO PERSONAL (Mapeo seguro de estructura)
+    this.carritoFactura = [];
     const personalCart = Store.get('carrito') || [];
+    
     if (personalCart.length > 0) {
-      if (confirm(`🛒 Tienes ${personalCart.length} productos en tu carrito personal.\n\n¿Deseas importarlos a la factura de este cliente?`)) {
-        this.carritoFactura = [...personalCart];
-        Store.clearCart(); // Limpiar personal para evitar duplicados
-        UI.toast('📦 Productos importados al carrito de factura', 'success');
-      } else {
-        this.carritoFactura = []; // Si dice que no, iniciar limpio
+      const quiereImportar = confirm(`🛒 Tienes ${personalCart.length} productos en tu carrito.\n¿Deseas pasarlos a esta factura?`);
+      
+      if (quiereImportar) {
+        this.carritoFactura = personalCart.map(item => ({
+          id: item.id,
+          nombre: item.nombre,
+          variante: typeof item.variante === 'object' ? item.variante.nombre : (item.variante || 'Única'),
+          precio: item.precio,
+          cantidad: item.cantidad,
+          subtotal: item.precio * item.cantidad,
+          tipo: item.tipo || 'General',
+          categoria: item.categoria || 'General'
+        }));
+        UI.toast('📦 Productos importados. Tu carrito personal se mantiene.', 'info');
       }
-    } else {
-      this.carritoFactura = [];
     }
 
     const modal = document.createElement('div');
@@ -141,6 +126,7 @@ renderProductos() {
                 <select id="frFiltroCategoria">
                   <option value="">Todas</option>
                   <option value="aromaterapia">Aromaterapia</option>
+                  <option value="Detergentes">Detergentes</option>
                   <option value="hogar">Hogar</option>
                   <option value="higiene">Higiene</option>
                 </select>
@@ -175,7 +161,7 @@ renderProductos() {
     document.body.appendChild(modal);
     this.attachEvents();
     this.renderProductos();
-    this.renderCarrito(); // Renderizar si importamos carrito
+    this.renderCarrito(); // ✅ Renderiza inmediatamente lo importado
   },
 
   attachEvents() {
@@ -224,7 +210,43 @@ renderProductos() {
     container.innerHTML = `<strong>✅ ${this.clienteTemporal.nombre}</strong><br><small> ${this.clienteTemporal.cedula} | 📱 ${this.clienteTemporal.telefono || 'N/A'}</small>`;
   },
 
-  
+  // ✅ BÚSQUEDA INTELIGENTE (Parcial, sin acentos, tolerante a mayúsculas)
+  renderProductos() {
+    const busqueda = document.getElementById('frBuscarProducto').value
+      .toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    
+    const tipoFiltro = document.getElementById('frFiltroTipo').value;
+    const catFiltro = document.getElementById('frFiltroCategoria').value;
+
+    let filtrados = this.productosCache.filter(p => {
+      const nombreLimpio = (p.nombre || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const tipoLimpio = (p.tipo || '').toLowerCase();
+      const catLimpio = (p.categoria || '').toLowerCase();
+
+      const coincideTexto = !busqueda || nombreLimpio.includes(busqueda) || (p.id || '').includes(busqueda);
+      const coincideTipo = !tipoFiltro || tipoLimpio.includes(tipoFiltro.toLowerCase());
+      const coincideCat = !catFiltro || catLimpio.includes(catFiltro.toLowerCase());
+      const tieneStock = (p.stock || 0) > 0;
+
+      return coincideTexto && coincideTipo && coincideCat && tieneStock;
+    });
+
+    const container = document.getElementById('frListaProductos');
+    if (filtrados.length === 0) {
+      container.innerHTML = busqueda ? '<p class="no-data">No hay coincidencias</p>' : '<p class="no-data">Cargando productos...</p>';
+      return;
+    }
+
+    container.innerHTML = filtrados.map(p => `
+      <div class="fr-producto-card" onclick="FacturacionRapidaV2.agregarAlCarrito('${p.id}')">
+        <div class="fr-prod-nombre">${p.nombre}</div>
+        <div class="fr-prod-tipo">${p.tipo} • ${p.categoria || 'General'}</div>
+        <div class="fr-prod-precio">₡${(p.precio || 0).toLocaleString()}</div>
+        <div class="fr-prod-stock">Stock: ${p.stock || 0}</div>
+        ${p.variantes?.length > 1 ? `<small class="fr-prod-variantes">${p.variantes.length} opciones</small>` : ''}
+      </div>
+    `).join('');
+  },
 
   agregarAlCarrito(productId) {
     const producto = this.productosCache.find(p => p.id === productId);
@@ -314,7 +336,6 @@ renderProductos() {
 
     try {
       await addDoc(collection(DB.db, "facturas_rapidas"), facturaData);
-      // Actualizar stock local
       for (const item of this.carritoFactura) {
         const prod = this.productosCache.find(p => p.id === item.id);
         if (prod) prod.stock -= item.cantidad;
