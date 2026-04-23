@@ -8,17 +8,45 @@ export const ProformasManager = {
   proveedores: [],
 
   async init() {
-    console.log('📋 Iniciando módulo de Proformas...');
+    console.log('📋 Cargando proveedores para proformas...');
     try {
-      // Intentamos cargar de Firestore
       const snap = await getDocs(collection(DB.db, "proveedores"));
-      this.proveedores = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       
-      if (this.proveedores.length === 0) {
-        console.warn('⚠️ Colección "proveedores" vacía o no encontrada. Se activará modo manual.');
-      } else {
-        console.log(`✅ ${this.proveedores.length} proveedores cargados.`);
-      }
+      // ✅ Función que limpia campos con comillas escapadas o formato extraño
+      const clean = (val) => {
+        if (typeof val === 'string') {
+          return val.replace(/^"|"$/g, '').replace(/^'|'$/g, '').trim();
+        }
+        return val;
+      };
+
+      this.proveedores = snap.docs.map(docSnap => {
+        const raw = docSnap.data();
+        
+        // Buscar nombre en cualquier variante de clave
+        const nombre = clean(
+          raw.nombre || raw.Nombre || raw.NOMBRE || 
+          raw['nombre '] || raw[' Nombre'] || 
+          Object.values(raw).find(v => typeof v === 'string' && v.includes('Almacen')) ||
+          docSnap.id
+        );
+
+        return {
+          id: docSnap.id,
+          nombre: nombre || 'Proveedor sin nombre',
+          telefono: clean(raw.telefono || raw.Telefono || raw['telefono '] || ''),
+          sitioWeb: clean(raw.sitioWeb || raw.SitioWeb || ''),
+          notas: clean(raw.notas || raw.Notas || ''),
+          ...Object.keys(raw).reduce((acc, key) => {
+            const cleanKey = key.trim();
+            acc[cleanKey] = clean(raw[key]);
+            return acc;
+          }, {})
+        };
+      }).filter(p => p.nombre && p.nombre !== 'Proveedor sin nombre');
+
+      console.log(`✅ ${this.proveedores.length} proveedores cargados.`, 
+        this.proveedores.map(p => p.nombre));
     } catch (e) {
       console.error('❌ Error cargando proveedores:', e);
       this.proveedores = [];
@@ -27,17 +55,16 @@ export const ProformasManager = {
 
   async mostrarPanel() {
     if (!Store.get('isAdmin')) { UI.toast('Acceso denegado', 'warning'); return; }
-    
     const modal = document.createElement('div');
     modal.className = 'modal show';
     modal.id = 'modalProformas';
     modal.innerHTML = `
       <div class="modal-content modal-xl proformas-modal">
         <button class="modal-close" onclick="UI.modal('modalProformas','close')">✕</button>
-        <h2>📄 Proformas de Compra</h2>
+        <h2>📄 Proformas de Compra (Reabastecimiento)</h2>
         <button class="btn-primary" onclick="ProformasManager.crearNueva()">➕ Nueva Proforma</button>
         <div id="listaProformas" class="proformas-list">
-          <div class="loading-state">Cargando...</div>
+          <div class="loading-state">Cargando historial...</div>
         </div>
       </div>
     `;
@@ -60,7 +87,7 @@ export const ProformasManager = {
       container.innerHTML = proformas.map(p => `
         <div class="proforma-card ${p.estado}">
           <div class="pf-header">
-            <span><strong>${p.proveedorNombre || 'Sin nombre'}</strong></span>
+            <span><strong>🏢 ${p.proveedorNombre || 'Sin nombre'}</strong></span>
             <span class="badge ${this._getEstadoClass(p.estado)}">${(p.estado||'PENDIENTE').toUpperCase()}</span>
           </div>
           <div class="pf-body">
@@ -70,8 +97,9 @@ export const ProformasManager = {
           </div>
           <div class="pf-actions">
             ${p.estado === 'pendiente' ? `<button onclick="ProformasManager.enviar('${p.id}')">📤 Enviar</button>` : ''}
-            ${p.estado === 'enviada' ? `<button onclick="ProformasManager.marcar('${p.id}','aprobada')">✅ Aprobada</button>` : ''}
-            ${p.estado === 'aprobada' ? `<button onclick="ProformasManager.recibir('${p.id}')">📥 Recibir</button>` : ''}
+            ${p.estado === 'enviada' ? `<button onclick="ProformasManager.marcar('${p.id}','aprobada')">✅ Aprobada</button>
+                                        <button onclick="ProformasManager.marcar('${p.id}','rechazada')">❌ Rechazada</button>` : ''}
+            ${p.estado === 'aprobada' ? `<button onclick="ProformasManager.recibir('${p.id}')">📥 Recibir Stock</button>` : ''}
             <button onclick="ProformasManager.exportar('${p.id}')">📋 Copiar</button>
           </div>
         </div>
@@ -107,7 +135,7 @@ export const ProformasManager = {
     // Productos desde el Store local (JSONs)
     const todosProductos = Store.get('productos') || [];
     const prodOptions = todosProductos.filter(p => p.activo !== false)
-      .map(p => `<option value="${p.id}" data-precio="${p.precioCompra}">${p.nombre} (₡${p.precioCompra})</option>`).join('');
+      .map(p => `<option value="${p.id}" data-precio="${p.precio}">${p.nombre} (₡${p.precio})</option>`).join('');
 
     const modal = document.createElement('div');
     modal.className = 'modal show';
@@ -115,30 +143,40 @@ export const ProformasManager = {
     modal.innerHTML = `
       <div class="modal-content modal-grande">
         <button class="modal-close" onclick="UI.modal('modalNuevaProforma','close')">✕</button>
-        <h2>📝 Nueva Proforma</h2>
+        <h2>📝 Nueva Proforma de Compra</h2>
         
         <div style="margin-bottom:15px;">
           ${proveedorHTML}
         </div>
 
         <label>Productos (Inventario Local):</label>
+        <div class="pf-item-row" style="display:grid; grid-template-columns: 2fr 1fr 1fr 40px; gap:5px; margin-bottom:5px; font-weight:bold; font-size:0.8rem;">
+          <span>Producto</span><span>Cant.</span><span>Precio</span><span></span>
+        </div>
+        
         <div id="pfItems" class="pf-items-container">
           <div class="pf-item-row" style="display:grid; grid-template-columns: 2fr 1fr 1fr 40px; gap:5px;">
             <select class="pf-prod-select" onchange="ProformasManager.actualizarPrecio(this)">${prodOptions}</select>
             <input type="number" class="pf-cant" value="10" min="1">
             <input type="number" class="pf-precio" value="0">
-            <button onclick="this.parentElement.remove()">❌</button>
+            <button class="btn-remove" onclick="this.parentElement.remove()">❌</button>
           </div>
         </div>
 
-        <button class="btn-secondary" style="margin:10px 0; width:100%" onclick="ProformasManager.agregarFila()">➕ Agregar producto</button>
+        <button class="btn-secondary" style="margin-top:5px; width:100%" onclick="ProformasManager.agregarFila()">➕ Agregar otro producto</button>
         
-        <textarea id="pfNotas" placeholder="Notas..." style="width:100%; padding:8px; margin-bottom:10px;"></textarea>
+        <textarea id="pfNotas" placeholder="Notas: Ej. Entregar antes del lunes..." style="width:100%; margin-top:10px; height:60px; padding:8px;"></textarea>
         
-        <button class="btn-primary" style="width:100%" onclick="ProformasManager.guardarProforma()">💾 Guardar</button>
+        <button class="btn-primary" style="margin-top:10px; width:100%" onclick="ProformasManager.guardarProforma()">💾 Guardar Proforma</button>
       </div>
     `;
     document.body.appendChild(modal);
+    
+    // Inicializar precio del primer producto
+    setTimeout(() => {
+      const select = document.querySelector('.pf-prod-select');
+      if (select) this.actualizarPrecio(select);
+    }, 100);
   },
 
   actualizarPrecio(selectElement) {
@@ -166,7 +204,6 @@ export const ProformasManager = {
   },
 
   async guardarProforma() {
-    // Obtener nombre del proveedor (prioridad al manual)
     const manualInput = document.getElementById('pfProveedorManual');
     const selectInput = document.getElementById('pfProveedor');
     const proveedorNombre = (manualInput?.value?.trim()) || (selectInput?.value) || 'Proveedor Desconocido';
@@ -189,7 +226,7 @@ export const ProformasManager = {
       }
     });
 
-    if (items.length === 0) return UI.toast('⚠️ Agrega al menos un producto', 'warning');
+    if (items.length === 0) return UI.toast('⚠️ Agrega al menos un producto con cantidad y precio', 'warning');
 
     try {
       await addDoc(collection(DB.db, "proformas"), {
@@ -218,7 +255,6 @@ export const ProformasManager = {
       const inventario = Store.get('inventario') || {};
 
       for (const item of data.items) {
-        // Intentar encontrar el producto en el store para usar su ID
         const productoStore = Store.get('productos')?.find(p => p.nombre === item.producto);
         const nombreLimpio = productoStore ? Utils.normalizeText(productoStore.nombre) : Utils.normalizeText(item.producto);
         inventario[nombreLimpio] = (inventario[nombreLimpio] || 0) + item.cantidad;
