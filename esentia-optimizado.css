@@ -3343,4 +3343,70 @@ MODO MÓVIL OPTIMIZADO (1 COLUMNA)
 .alert-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 60vh; overflow-y: auto; }
 .alert-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107; }
 .stock-badge { font-weight: bold; color: #d32f2f; background: #fff; padding: 2px 8px; border-radius: 12px; }
+/* =========================================
+   CORRECCIONES CRÍTICAS MÓVIL (Responsive)
+   ========================================= */
+@media (max-width: 768px) {
+    
+    /* 1. REORGANIZAR HEADER: Logo/Nombre arriba, Botones abajo */
+    #panelUsuario {
+        display: flex;
+        flex-wrap: wrap; /* Permite que los elementos bajen */
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+        padding: 10px !important;
+    }
+
+    /* Forzamos que el nombre ocupe todo el ancho, empujando botones a la línea de abajo */
+    #panelUsuario > h4, 
+    #panelUsuario > div > h4,
+    #panelUsuario > strong,
+    #nombreUsuario {
+        width: 100% !important;
+        margin: 0 0 5px 0 !important;
+        text-align: left !important;
+        font-size: 1rem !important;
+    }
+
+    /* Alineamos los botones en fila debajo del nombre */
+    #panelUsuario button {
+        margin: 0 !important;
+        padding: 8px 12px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* 2. ARREGLAR MENÚ ADMIN: Centrado y Desplazable */
+    #adminMenu {
+        position: fixed !important; /* Fijo en la pantalla, no en el header */
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important; /* Centrado perfecto */
+        width: 90% !important; /* Ocupa el 90% del ancho */
+        max-height: 85vh !important; /* Altura máxima del 85% de la pantalla */
+        overflow-y: auto !important; /* Permite scroll si hay muchos botones */
+        background: white !important;
+        border-radius: 16px !important;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.4) !important;
+        z-index: 9999 !important;
+        padding: 15px !important;
+        display: none !important; /* Oculto por defecto */
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    /* Cuando se activa la clase 'show' (vía JS), se muestra */
+    #adminMenu.show {
+        display: flex !important;
+    }
+
+    /* Estilo de botones dentro del menú en móvil */
+    #adminMenu button {
+        width: 100% !important;
+        text-align: left !important;
+        padding: 12px !important;
+        font-size: 1rem !important;
+        border-radius: 8px !important;
+    }
+}
 }
