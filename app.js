@@ -47,16 +47,30 @@ const App = {
   // ... resto del código ..
 
 // ✅ FUNCIÓN NUEVA: Integra y normaliza los JSON locales
+// ✅ FUNCIÓN MEJORADA: Integra y normaliza los JSON locales
 async integrarJSONsLocales() {
   console.log('📦 Integrando catálogos locales (Limpieza y Velas)...');
   const productosActuales = Store.get('productos') || [];
   let nuevosProductos = [];
 
   try {
+    // 🛠️ FUNCION AUXILIAR: Limpia claves con espacios (ej: "id " -> "id")
+    const limpiarObj = (obj) => {
+      const nuevo = {};
+      Object.keys(obj).forEach(k => {
+        // Si el valor es string, también le quitamos espacios extra
+        const val = typeof obj[k] === 'string' ? obj[k].trim() : obj[k];
+        nuevo[k.trim()] = val; 
+      });
+      return nuevo;
+    };
+
     // 1. Cargar Limpieza
     const resLimpieza = await fetch('./data/productos_limpieza_completo.json');
     if (resLimpieza.ok) {
-      const dataLimpieza = await resLimpieza.json();
+      let dataLimpieza = await resLimpieza.json();
+      // Aplicamos limpieza a cada producto del JSON
+      dataLimpieza = dataLimpieza.map(limpiarObj);
       
       const productosLimpieza = dataLimpieza.map(p => ({
         id: p.id,
@@ -79,9 +93,12 @@ async integrarJSONsLocales() {
     // 2. Cargar Velas
     const resVelas = await fetch('./data/catalogo-velas.json');
     if (resVelas.ok) {
-      // Asumiendo que es un array de objetos
-      const dataVelasRaw = await resVelas.json();
-      const dataVelas = Array.isArray(dataVelasRaw) ? dataVelasRaw : [dataVelasRaw];
+      let dataVelasRaw = await resVelas.json();
+      // Convertir a array si es un solo objeto
+      let dataVelas = Array.isArray(dataVelasRaw) ? dataVelasRaw : [dataVelasRaw];
+      
+      // Aplicamos limpieza
+      dataVelas = dataVelas.map(limpiarObj);
 
       const productosVelas = dataVelas.map(p => ({
         id: p.id,
@@ -99,9 +116,9 @@ async integrarJSONsLocales() {
     }
 
     // 3. Fusionar con el Store global
-    // Evitamos duplicados si ya existen por ID
     const idsExistentes = new Set(productosActuales.map(p => p.id));
-    const productosUnicos = nuevosProductos.filter(p => !idsExistentes.has(p.id));
+    // Filtramos para asegurar que tengan ID y no estén duplicados
+    const productosUnicos = nuevosProductos.filter(p => p.id && !idsExistentes.has(p.id));
     
     Store.set('productos', [...productosActuales, ...productosUnicos]);
     console.log(`✅ Integrados ${productosUnicos.length} productos locales.`);
@@ -109,23 +126,22 @@ async integrarJSONsLocales() {
   } catch (error) {
     console.warn('⚠️ No se pudieron cargar algunos JSON locales:', error);
   }
- },
+},
 
  async init() {
   console.log('🌸 Esentia v6.0 - Iniciando...');
   await Store.init();
-  await ClientesManager.init(); 
+  await ClientesManager.init();
   if (window.UserManager) await UserManager.syncAdminRights();
   
   const hasSession = AuthManager.checkSession();
   CartManager.init();
-  
   await ProductManager.load();
   
-  // ✅ NUEVO: Inyectar los JSON locales de Limpieza y Velas
-  await integrarJSONsLocales(); 
+  // ✅ CORREGIDO: Usa 'this.' para llamar al método del objeto App
+  await this.integrarJSONsLocales(); 
 
-  this.renderHeader(); 
+  this.renderHeader();
   this.renderProducts();
   this.attachGlobalEvents();
 
@@ -138,8 +154,13 @@ async integrarJSONsLocales() {
     setTimeout(() => UI.modal('modalLogin', 'open'), 800);
   }
   console.log('✅ Esentia lista');
- },
-
+  // En app.js -> dentro de async init()
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(() => console.log('✅ Service Worker registrado'))
+    .catch(err => console.warn('⚠️ Error registrando Service Worker:', err));
+}
+},
 
  renderHeader() {
   const cliente = Store.get('cliente');
