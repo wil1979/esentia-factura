@@ -292,47 +292,76 @@ export const FacturacionRapidaV2 = {
   },
 
   async guardarFactura() {
-    if (!this.clienteTemporal) return UI.toast('⚠️ Debe seleccionar un cliente', 'warning');
-    if (this.carritoFactura.length === 0) return UI.toast('❌ No hay productos', 'warning');
+  if (!this.clienteTemporal) return UI.toast('⚠️ Debe seleccionar un cliente', 'warning');
+  if (this.carritoFactura.length === 0) return UI.toast('❌ No hay productos', 'warning');
 
-    const { subtotal, descuento, total } = this.calcularTotales();
+  const { subtotal, descuento, total } = this.calcularTotales();
+  
+  // ✅ NUEVO: Seleccionar método de pago
+  const metodoPago = document.getElementById('frMetodoPago')?.value || 'contado';
+  const estadoFactura = metodoPago === 'credito' ? 'pendiente' : 'completado';
+  
+  const facturaData = {
+    fecha: new Date().toISOString(),
+    clienteId: this.clienteTemporal.id || this.clienteTemporal.cedula,
+    clienteNombre: this.clienteTemporal.nombre,
+    clienteTelefono: this.clienteTemporal.telefono,
+    productos: this.carritoFactura,
+    subtotal,
+    descuento,
+    total,
+    estado: estadoFactura,
+    metodoPago, // ✅ NUEVO: contado | credito
+    tipoFactura: 'rapida', // ✅ Se guarda en colección separada
+    creadaPor: Store.get('cliente')?.nombre || 'admin',
+    // Si es crédito, agregar fecha de vencimiento
+    fechaVencimiento: metodoPago === 'credito' ? new Date(Date.now() + 15*24*60*60*1000).toISOString() : null
+  };
+
+  try {
+    // ✅ GUARDAR EN COLECCIÓN SEPARADA
+    await addDoc(collection(DB.db, "facturas_rapidas"), facturaData);
     
-    // Accesos seguros
-    const nombreCliente = this.clienteTemporal.nombre || 'Cliente';
-    const idCliente = this.clienteTemporal.id || this.clienteTemporal.cedula || 'temp';
-    const telefonoCliente = this.clienteTemporal.telefono || '';
-
-    const facturaData = {
-      fecha: new Date().toISOString(),
-      clienteId: idCliente,
-      clienteNombre: nombreCliente,
-      productos: this.carritoFactura,
-      subtotal, descuento, total,
-      estado: 'completado', metodoPago: 'contado',
-      tipoFactura: 'rapida', creadaPor: Store.get('cliente')?.nombre || 'admin'
-    };
-
-    try {
-      await addDoc(collection(DB.db, "facturas_rapidas"), facturaData);
-      
-      // Actualizar stock local
-      for (const item of this.carritoFactura) {
-        const prod = this.productosCache.find(p => p.id === item.id);
-        if (prod) prod.stock -= item.cantidad;
-      }
-      
-      UI.toast('✅ Factura guardada', 'success');
-      
-      if (telefonoCliente && confirm('¿Enviar factura por WhatsApp?')) {
-        this.enviarWhatsApp({ ...facturaData, telefono: telefonoCliente });
-      }
-      
-      this.limpiarFactura();
-    } catch (e) {
-      console.error(e);
-      UI.toast('❌ Error al guardar', 'error');
+    // ✅ ACTUALIZAR STOCK
+    for (const item of this.carritoFactura) {
+      const prod = this.productosCache.find(p => p.id === item.id);
+      if (prod) prod.stock -= item.cantidad;
     }
-  },
+    
+    // ✅ ACTUALIZAR SALDO DEL CLIENTE (si es crédito)
+    if (metodoPago === 'credito') {
+      await this.actualizarSaldoCliente(this.clienteTemporal.id, total);
+    }
+    
+    UI.toast(`✅ Factura guardada (${metodoPago.toUpperCase()})`, 'success');
+    
+    if (this.clienteTemporal.telefono && confirm('¿Enviar factura por WhatsApp?')) {
+      this.enviarWhatsApp({ ...facturaData, telefono: this.clienteTemporal.telefono });
+    }
+    
+    this.limpiarFactura();
+  } catch (e) {
+    console.error(e);
+    UI.toast('❌ Error al guardar', 'error');
+  }
+},
+
+// ✅ NUEVA FUNCIÓN: Actualizar saldo del cliente
+async actualizarSaldoCliente(clienteId, monto) {
+  try {
+    const clienteRef = doc(DB.db, "clientesBD", clienteId);
+    const clienteSnap = await getDoc(clienteRef);
+    if (clienteSnap.exists()) {
+      const saldoActual = clienteSnap.data().saldoPendiente || 0;
+      await updateDoc(clienteRef, {
+        saldoPendiente: saldoActual + monto,
+        ultimoCredito: new Date().toISOString()
+      });
+    }
+  } catch (e) {
+    console.warn('No se pudo actualizar saldo del cliente:', e);
+  }
+}
 
   enviarWhatsApp(factura) {
     const telefono = factura.telefono?.replace(/\D/g, '') || '';
