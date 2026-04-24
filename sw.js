@@ -1,39 +1,42 @@
-// sw.js - Versión Robusta
-const CACHE_NAME = 'esentia-app-v2'; // Cambié versión para forzar actualización
-const ASSETS = [
+const CACHE_NAME = 'esentia-app-v2';
+const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/esentia-optimizado.css',
   '/app.js',
   '/manifest.json'
-  // ❌ QUITA AQUÍ cualquier archivo que no exista, como '/images/logo.png'
+  // ❌ REMUEVE '/images/logo.png' si no existe
 ];
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      // Cacheamos uno por uno para que si uno falla, no detenga a los demás
-      return Promise.all(
-        ASSETS.map((url) => 
-          fetch(url)
-            .then((response) => {
-              if (response.ok) {
-                return cache.put(url, response);
-              }
-              // Si falla uno, lo logueamos pero no rompemos la promesa
-              console.warn(`⚠️ No se pudo cachear: ${url}`);
-            })
-            .catch((err) => console.warn(`Error cachear ${url}:`, err))
-        )
-      );
-    })
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        // Cachea archivos individualmente para que uno fallido no rompa todo
+        return Promise.all(
+          ASSETS_TO_CACHE.map(url => 
+            fetch(url)
+              .then(response => {
+                if (response.ok) {
+                  return cache.put(url, response);
+                }
+                console.warn(`⚠️ No se pudo cachear ${url}: ${response.status}`);
+              })
+              .catch(err => console.warn(`⚠️ Error cachear ${url}:`, err))
+          )
+        );
+      })
+      .then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener('activate', event => {
+  event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
+    caches.match(event.request)
+      .then(response => response || fetch(event.request))
   );
 });

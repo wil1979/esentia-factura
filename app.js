@@ -48,87 +48,94 @@ const App = {
   appliedPromo: null, // ✅ NUEVO: Guarda el descuento aplicado temporalmente
   // ... resto del código ..
 
-// ✅ FUNCIÓN NUEVA: Integra y normaliza los JSON locales
+/* ✅ FUNCIÓN NUEVA: Integra y normaliza los JSON locales
 // ✅ FUNCIÓN MEJORADA: Integra y normaliza los JSON locales
 async integrarJSONsLocales() {
   console.log('📦 Integrando catálogos locales (Limpieza y Velas)...');
   const productosActuales = Store.get('productos') || [];
   let nuevosProductos = [];
-
+  
   try {
-    // 🛠️ FUNCION AUXILIAR: Limpia claves con espacios (ej: "id " -> "id")
-    const limpiarObj = (obj) => {
-      const nuevo = {};
+    // Función para limpiar claves con espacios
+    const limpiarClaves = (obj) => {
+      if (!obj) return null;
+      const limpio = {};
       Object.keys(obj).forEach(k => {
-        // Si el valor es string, también le quitamos espacios extra
+        const key = k.trim();
         const val = typeof obj[k] === 'string' ? obj[k].trim() : obj[k];
-        nuevo[k.trim()] = val; 
+        limpio[key] = val;
       });
-      return nuevo;
+      return limpio;
     };
 
     // 1. Cargar Limpieza
-    const resLimpieza = await fetch('./data/productos_limpieza_completo.json');
-    if (resLimpieza.ok) {
-      let dataLimpieza = await resLimpieza.json();
-      // Aplicamos limpieza a cada producto del JSON
-      dataLimpieza = dataLimpieza.map(limpiarObj);
-      
-      const productosLimpieza = dataLimpieza.map(p => ({
-        id: p.id,
-        nombre: p.nombre,
-        tipo: 'Limpieza',
-        precio: p.precioPublico || p.precio,
-        categoria: p.categoria || 'General',
-        // Transformar 'aromas' en 'variantes'
-        variantes: (p.aromas && p.aromas.length > 0) 
-          ? p.aromas.map(a => ({ nombre: a, precio: p.precioPublico })) 
-          : [{ nombre: 'Única', precio: p.precioPublico }],
-        stock: 0, // Inicia en 0 hasta que hagas compra
-        activo: p.disponible !== false,
-        imagen: p.imagen || 'images/default.png',
-        precioCompra: p.precioCompra || 0 // Importante para Compras
-      }));
-      nuevosProductos = [...nuevosProductos, ...productosLimpieza];
+    try {
+      const resLimpieza = await fetch('./data/productos_limpieza_completo.json');
+      if (resLimpieza.ok) {
+        const dataLimpieza = await resLimpieza.json();
+        const productosLimpieza = dataLimpieza.map(p => {
+          const pLimpio = limpiarClaves(p);
+          return {
+            id: pLimpio.id || `limp_${Date.now()}_${Math.random()}`,
+            nombre: pLimpio.nombre,
+            tipo: 'Limpieza',
+            precio: pLimpio.precioPublico || pLimpio.precio,
+            categoria: pLimpio.categoria || 'General',
+            variantes: (pLimpio.aromas && pLimpio.aromas.length > 0) 
+              ? pLimpio.aromas.map(a => ({ nombre: a.trim(), precio: pLimpio.precioPublico })) 
+              : [{ nombre: 'Única', precio: pLimpio.precioPublico }],
+            stock: 0,
+            activo: pLimpio.disponible !== false,
+            imagen: pLimpio.imagen || 'images/default.png',
+            precioCompra: pLimpio.precioCompra || 0
+          };
+        });
+        nuevosProductos = [...nuevosProductos, ...productosLimpieza];
+        console.log(`✅ Limpieza: ${productosLimpieza.length} productos`);
+      }
+    } catch (e) {
+      console.warn('⚠️ No se pudo cargar limpieza:', e);
     }
 
     // 2. Cargar Velas
-    const resVelas = await fetch('./data/catalogo-velas.json');
-    if (resVelas.ok) {
-      let dataVelasRaw = await resVelas.json();
-      // Convertir a array si es un solo objeto
-      let dataVelas = Array.isArray(dataVelasRaw) ? dataVelasRaw : [dataVelasRaw];
-      
-      // Aplicamos limpieza
-      dataVelas = dataVelas.map(limpiarObj);
-
-      const productosVelas = dataVelas.map(p => ({
-        id: p.id,
-        nombre: p.nombre,
-        tipo: 'Velas',
-        precio: p.precio || p.precioPublico,
-        categoria: (p.tipo ? p.tipo.split('|')[0] : 'Decoración'), // Toma la primera categoría
-        variantes: p.variantes || [{ nombre: 'Única', precio: p.precio }],
-        stock: p.stock || 0,
-        activo: p.disponible !== false,
-        imagen: p.imagen,
-        precioCompra: p.precioCompra || 0
-      }));
-      nuevosProductos = [...nuevosProductos, ...productosVelas];
+    try {
+      const resVelas = await fetch('./data/catalogo-velas.json');
+      if (resVelas.ok) {
+        const dataVelasRaw = await resVelas.json(); // ✅ CORREGIDO: era "awa it"
+        const dataVelas = Array.isArray(dataVelasRaw) ? dataVelasRaw : [dataVelasRaw];
+        
+        const productosVelas = dataVelas.map(p => {
+          const pLimpio = limpiarClaves(p);
+          return {
+            id: pLimpio.id || `vela_${Date.now()}_${Math.random()}`,
+            nombre: pLimpio.nombre,
+            tipo: 'Velas',
+            precio: pLimpio.precio || pLimpio.precioPublico,
+            categoria: (pLimpio.tipo ? pLimpio.tipo.split('|')[0] : 'Decoración'),
+            variantes: pLimpio.variantes || [{ nombre: 'Única', precio: pLimpio.precio }],
+            stock: pLimpio.stock || 0,
+            activo: pLimpio.disponible !== false,
+            imagen: pLimpio.imagen,
+            precioCompra: pLimpio.precioCompra || 0
+          };
+        });
+        nuevosProductos = [...nuevosProductos, ...productosVelas];
+        console.log(`✅ Velas: ${productosVelas.length} productos`);
+      }
+    } catch (e) {
+      console.warn('⚠️ No se pudo cargar velas:', e);
     }
 
-    // 3. Fusionar con el Store global
+    // 3. Fusionar evitando duplicados
     const idsExistentes = new Set(productosActuales.map(p => p.id));
-    // Filtramos para asegurar que tengan ID y no estén duplicados
-    const productosUnicos = nuevosProductos.filter(p => p.id && !idsExistentes.has(p.id));
+    const productosUnicos = nuevosProductos.filter(p => !idsExistentes.has(p.id));
     
     Store.set('productos', [...productosActuales, ...productosUnicos]);
-    console.log(`✅ Integrados ${productosUnicos.length} productos locales.`);
-
+    console.log(`✅ Total integrados: ${productosUnicos.length} productos locales`);
   } catch (error) {
-    console.warn('⚠️ No se pudieron cargar algunos JSON locales:', error);
+    console.error('❌ Error crítico en integrarJSONsLocales:', error);
   }
-},
+},*/
 
  async init() {
   console.log('🌸 Esentia v6.0 - Iniciando...');
@@ -140,13 +147,13 @@ async integrarJSONsLocales() {
   CartManager.init();
   await ProductManager.load();
   
-  // ✅ CORREGIDO: Usa 'this.' para llamar al método del objeto App
-  await this.integrarJSONsLocales(); 
-
+  // ✅ CORREGIDO: Usar 'this.' para llamar al método del objeto App
+  //await this.integrarJSONsLocales(); 
+  
   this.renderHeader();
   this.renderProducts();
   this.attachGlobalEvents();
-
+  
   if (hasSession) {
     await LoyaltyManager.init();
     if (Store.get('isAdmin')) {
@@ -156,12 +163,6 @@ async integrarJSONsLocales() {
     setTimeout(() => UI.modal('modalLogin', 'open'), 800);
   }
   console.log('✅ Esentia lista');
-  // En app.js -> dentro de async init()
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-    .then(() => console.log('✅ Service Worker registrado'))
-    .catch(err => console.warn('⚠️ Error registrando Service Worker:', err));
-}
 },
 
  renderHeader() {
