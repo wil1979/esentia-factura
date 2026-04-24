@@ -1,5 +1,5 @@
 // modules/facturacion-rapida-v2.js
-import { collection, addDoc, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { collection, addDoc, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { DB } from './firebase.js';
 import { Store, Utils } from './core.js';
 import { UI } from '../components/ui.js';
@@ -14,17 +14,21 @@ export const FacturacionRapidaV2 = {
     // No cargamos nada aquí, esperamos a que products.js llene el Store
   },
 
-  // ✅ LECTURA DIRECTA DEL STORE GLOBAL (Sin cargar JSONs locales)
+  // ✅ LECTURA DIRECTA DEL STORE GLOBAL (Unificado con products.js)
   prepararProductos() {
     const productosGlobales = Store.get('productos') || [];
     this.productosCache = productosGlobales;
     console.log(`🧾 Facturación lista con ${this.productosCache.length} productos globales.`);
+    
+    // Actualizar contador visual si existe
+    const contadorEl = document.getElementById('contadorProductos');
+    if (contadorEl) contadorEl.textContent = this.productosCache.length;
   },
 
   async mostrarPanel() {
     if (!Store.get('isAdmin')) { UI.toast('Acceso denegado', 'warning'); return; }
     
-    // 1. Cargar productos del Store global
+    // 1. Cargar productos del Store global (unificados)
     this.prepararProductos();
 
     // 2. Importar carrito personal si existe
@@ -47,7 +51,7 @@ export const FacturacionRapidaV2 = {
       }
     }
 
-    // 3. Renderizar Modal
+    // 3. Renderizar Modal con NUEVOS elementos (Recargar + Método Pago)
     const modal = document.createElement('div');
     modal.className = 'modal show';
     modal.id = 'modalFacturacionRapida';
@@ -68,7 +72,9 @@ export const FacturacionRapidaV2 = {
             </div>
 
             <div class="productos-section">
-              <h3>📦 Productos (${this.productosCache.length})</h3>
+              <h3>📦 Productos (<span id="contadorProductos">${this.productosCache.length}</span>)</h3>
+              
+              <!-- ✅ BOTÓN DE RECARGA -->
               <button id="btnRecargarProductos" class="btn-secondary" style="margin-bottom: 10px; width: 100%;">🔄 Recargar Catálogo</button>
               
               <div class="fr-filtros">
@@ -89,16 +95,18 @@ export const FacturacionRapidaV2 = {
             <div class="fr-totales">
               <div class="fr-row"><span>Subtotal:</span><span id="frSubtotal">₡0</span></div>
               <div class="fr-row"><span>Descuento:</span><input type="number" id="frDescuento" value="0" min="0" class="fr-input"></div>
+              
+              <!-- ✅ SELECTOR MÉTODO DE PAGO -->
+              <div class="fr-row" style="flex-direction:column; align-items:flex-start; margin-top:10px;">
+                <label style="font-size:0.9rem;"><strong>Método de Pago:</strong></label>
+                <select id="frMetodoPago" style="width:100%; padding:8px; border-radius:6px; border:1px solid #ddd;">
+                  <option value="contado">💵 Contado</option>
+                  <option value="credito">💳 Crédito (15 días)</option>
+                </select>
+              </div>
+
               <div class="fr-row total"><span>Total:</span><span id="frTotal">₡0</span></div>
             </div>
-            
-            <div class="fr-metodo-pago">
-  <label><strong>Método de Pago:</strong></label>
-  <select id="frMetodoPago" style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #ddd;">
-    <option value="contado">💵 Contado</option>
-    <option value="credito">💳 Crédito (15 días)</option>
-  </select>
-</div>
 
             <div class="fr-actions">
               <button id="frGuardarFactura" class="btn-primary btn-large" disabled>💾 Guardar Factura</button>
@@ -124,11 +132,12 @@ export const FacturacionRapidaV2 = {
     document.getElementById('frFiltroTipo')?.addEventListener('change', () => this.renderProductos());
     document.getElementById('frFiltroCategoria')?.addEventListener('change', () => this.renderProductos());
     
+    // ✅ EVENTO RECARGAR CATÁLOGO
     document.getElementById('btnRecargarProductos')?.addEventListener('click', () => {
       this.prepararProductos();
       this.llenarFiltros();
       this.renderProductos();
-      UI.toast('🔄 Catálogo recargado', 'info');
+      UI.toast('🔄 Catálogo recargado desde Store', 'info');
     });
 
     document.getElementById('frDescuento')?.addEventListener('input', () => this.calcularTotales());
@@ -230,16 +239,20 @@ export const FacturacionRapidaV2 = {
     const producto = this.productosCache.find(p => p.id === productId);
     if (!producto) return;
 
-    if (producto.variantes && producto.variantes.length > 1) {
-      const opciones = producto.variantes.map((v, i) => `${i + 1}. ${v.nombre} - ₡${v.precio}`).join('\n');
+    // Manejo robusto de variantes (funciona para Esencias y Limpieza normalizada)
+    const variantes = producto.variantes || [];
+    
+    if (variantes.length > 1) {
+      const opciones = variantes.map((v, i) => `${i + 1}. ${v.nombre} - ₡${v.precio}`).join('\n');
       const seleccion = prompt(`Seleccione variante para ${producto.nombre}:\n${opciones}`);
       if (!seleccion) return;
       const idx = parseInt(seleccion) - 1;
-      if (idx >= 0 && idx < producto.variantes.length) {
-        this.agregarItem(producto, producto.variantes[idx]);
+      if (idx >= 0 && idx < variantes.length) {
+        this.agregarItem(producto, variantes[idx]);
       }
     } else {
-      const variante = producto.variantes?.[0] || { nombre: 'Única', precio: producto.precio };
+      // Si no tiene variantes o es una sola, usa la única disponible o crea una genérica
+      const variante = variantes[0] || { nombre: 'Única', precio: producto.precio };
       this.agregarItem(producto, variante);
     }
   },
@@ -300,76 +313,83 @@ export const FacturacionRapidaV2 = {
   },
 
   async guardarFactura() {
-  if (!this.clienteTemporal) return UI.toast('⚠️ Debe seleccionar un cliente', 'warning');
-  if (this.carritoFactura.length === 0) return UI.toast('❌ No hay productos', 'warning');
+    if (!this.clienteTemporal) return UI.toast('⚠️ Debe seleccionar un cliente', 'warning');
+    if (this.carritoFactura.length === 0) return UI.toast('❌ No hay productos', 'warning');
 
-  const { subtotal, descuento, total } = this.calcularTotales();
-  
-  // ✅ NUEVO: Seleccionar método de pago
-  const metodoPago = document.getElementById('frMetodoPago')?.value || 'contado';
-  const estadoFactura = metodoPago === 'credito' ? 'pendiente' : 'completado';
-  
-  const facturaData = {
-    fecha: new Date().toISOString(),
-    clienteId: this.clienteTemporal.id || this.clienteTemporal.cedula,
-    clienteNombre: this.clienteTemporal.nombre,
-    clienteTelefono: this.clienteTemporal.telefono,
-    productos: this.carritoFactura,
-    subtotal,
-    descuento,
-    total,
-    estado: estadoFactura,
-    metodoPago, // ✅ NUEVO: contado | credito
-    tipoFactura: 'rapida', // ✅ Se guarda en colección separada
-    creadaPor: Store.get('cliente')?.nombre || 'admin',
-    // Si es crédito, agregar fecha de vencimiento
-    fechaVencimiento: metodoPago === 'credito' ? new Date(Date.now() + 15*24*60*60*1000).toISOString() : null
-  };
+    const { subtotal, descuento, total } = this.calcularTotales();
+    
+    // ✅ OBTENER MÉTODO DE PAGO
+    const metodoPago = document.getElementById('frMetodoPago')?.value || 'contado';
+    const estadoFactura = metodoPago === 'credito' ? 'pendiente' : 'completado';
+    
+    // Accesos seguros
+    const nombreCliente = this.clienteTemporal.nombre || 'Cliente';
+    const idCliente = this.clienteTemporal.id || this.clienteTemporal.cedula || 'temp';
+    const telefonoCliente = this.clienteTemporal.telefono || '';
 
-  try {
-    // ✅ GUARDAR EN COLECCIÓN SEPARADA
-    await addDoc(collection(DB.db, "facturas_rapidas"), facturaData);
-    
-    // ✅ ACTUALIZAR STOCK
-    for (const item of this.carritoFactura) {
-      const prod = this.productosCache.find(p => p.id === item.id);
-      if (prod) prod.stock -= item.cantidad;
-    }
-    
-    // ✅ ACTUALIZAR SALDO DEL CLIENTE (si es crédito)
-    if (metodoPago === 'credito') {
-      await this.actualizarSaldoCliente(this.clienteTemporal.id, total);
-    }
-    
-    UI.toast(`✅ Factura guardada (${metodoPago.toUpperCase()})`, 'success');
-    
-    if (this.clienteTemporal.telefono && confirm('¿Enviar factura por WhatsApp?')) {
-      this.enviarWhatsApp({ ...facturaData, telefono: this.clienteTemporal.telefono });
-    }
-    
-    this.limpiarFactura();
-  } catch (e) {
-    console.error(e);
-    UI.toast('❌ Error al guardar', 'error');
-  }
-},
+    const facturaData = {
+      fecha: new Date().toISOString(),
+      clienteId: idCliente,
+      clienteNombre: nombreCliente,
+      clienteTelefono: telefonoCliente,
+      productos: this.carritoFactura,
+      subtotal, descuento, total,
+      estado: estadoFactura,
+      metodoPago, // ✅ GUARDAMOS EL MÉTODO
+      tipoFactura: 'rapida', 
+      creadaPor: Store.get('cliente')?.nombre || 'admin',
+      // Si es crédito, fecha de vencimiento estimada (15 días)
+      fechaVencimiento: metodoPago === 'credito' ? new Date(Date.now() + 15*24*60*60*1000).toISOString() : null
+    };
 
-// ✅ NUEVA FUNCIÓN: Actualizar saldo del cliente
-async actualizarSaldoCliente(clienteId, monto) {
-  try {
-    const clienteRef = doc(DB.db, "clientesBD", clienteId);
-    const clienteSnap = await getDoc(clienteRef);
-    if (clienteSnap.exists()) {
-      const saldoActual = clienteSnap.data().saldoPendiente || 0;
+    try {
+      // ✅ GUARDAR EN COLECCIÓN SEPARADA
+      await addDoc(collection(DB.db, "facturas_rapidas"), facturaData);
+      
+      // ✅ ACTUALIZAR STOCK LOCAL
+      for (const item of this.carritoFactura) {
+        const prod = this.productosCache.find(p => p.id === item.id);
+        if (prod) prod.stock -= item.cantidad;
+      }
+      
+      // ✅ SI ES CRÉDITO, ACTUALIZAR SALDO DEL CLIENTE
+      if (metodoPago === 'credito') {
+        await this.actualizarSaldoCliente(idCliente, total);
+      }
+      
+      UI.toast(`✅ Factura guardada (${metodoPago.toUpperCase()})`, 'success');
+      
+      if (telefonoCliente && confirm('¿Enviar factura por WhatsApp?')) {
+        this.enviarWhatsApp({ ...facturaData, telefono: telefonoCliente });
+      }
+      
+      this.limpiarFactura();
+    } catch (e) {
+      console.error(e);
+      UI.toast('❌ Error al guardar', 'error');
+    }
+  },
+
+  // ✅ NUEVA FUNCIÓN: Actualizar saldo pendiente del cliente
+  async actualizarSaldoCliente(clienteId, monto) {
+    try {
+      const clienteRef = doc(DB.db, "clientesBD", clienteId);
+      const clienteSnap = await getDoc(clienteRef);
+      
+      let saldoActual = 0;
+      if (clienteSnap.exists()) {
+        saldoActual = clienteSnap.data().saldoPendiente || 0;
+      }
+      
       await updateDoc(clienteRef, {
         saldoPendiente: saldoActual + monto,
         ultimoCredito: new Date().toISOString()
       });
+      console.log(`💳 Saldo de ${clienteId} actualizado: ₡${(saldoActual + monto).toLocaleString()}`);
+    } catch (e) {
+      console.warn('No se pudo actualizar saldo del cliente:', e);
     }
-  } catch (e) {
-    console.warn('No se pudo actualizar saldo del cliente:', e);
-  }
-}
+  },
 
   enviarWhatsApp(factura) {
     const telefono = factura.telefono?.replace(/\D/g, '') || '';
@@ -381,7 +401,8 @@ async actualizarSaldoCliente(clienteId, monto) {
 
     let mensaje = `🧾 *FACTURA ESENTIA*\n👤 ${factura.clienteNombre}\n📅 ${new Date(factura.fecha).toLocaleDateString()}\n\n*Productos:*\n`;
     factura.productos.forEach(p => { mensaje += `• ${p.nombre} (${p.variante}) x${p.cantidad} - ₡${p.subtotal.toLocaleString()}\n`; });
-    mensaje += `\n💰 *Total: ₡${factura.total.toLocaleString()}*\n\n¡Gracias! 🌸`;
+    mensaje += `\n💰 *Total: ₡${factura.total.toLocaleString()}*\n`;
+    mensaje += `💳 Método: ${factura.metodoPago?.toUpperCase() || 'CONTADO'}\n\n¡Gracias! 🌸`;
     
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensaje)}`, '_blank');
   },
@@ -392,6 +413,7 @@ async actualizarSaldoCliente(clienteId, monto) {
     document.getElementById('frBuscarCliente').value = '';
     document.getElementById('frClienteInfo').classList.add('hidden');
     document.getElementById('frDescuento').value = 0;
+    document.getElementById('frMetodoPago').value = 'contado'; // Resetear a contado
     this.renderCarrito();
   },
 
