@@ -91,6 +91,14 @@ export const FacturacionRapidaV2 = {
               <div class="fr-row"><span>Descuento:</span><input type="number" id="frDescuento" value="0" min="0" class="fr-input"></div>
               <div class="fr-row total"><span>Total:</span><span id="frTotal">₡0</span></div>
             </div>
+            
+            <div class="fr-metodo-pago">
+  <label><strong>Método de Pago:</strong></label>
+  <select id="frMetodoPago" style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #ddd;">
+    <option value="contado">💵 Contado</option>
+    <option value="credito">💳 Crédito (15 días)</option>
+  </select>
+</div>
 
             <div class="fr-actions">
               <button id="frGuardarFactura" class="btn-primary btn-large" disabled>💾 Guardar Factura</button>
