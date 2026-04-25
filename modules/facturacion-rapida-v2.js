@@ -143,6 +143,10 @@ export const FacturacionRapidaV2 = {
     document.getElementById('frDescuento')?.addEventListener('input', () => this.calcularTotales());
     document.getElementById('frLimpiar')?.addEventListener('click', () => this.limpiarFactura());
     document.getElementById('frGuardarFactura')?.addEventListener('click', () => this.guardarFactura());
+
+    // Debug: Verificar si hay productos
+   console.log('📦 Productos en caché:', this.productosCache.length);
+   console.log('📋 Primer producto:', this.productosCache[0]);
   },
 
   llenarFiltros() {
@@ -196,85 +200,124 @@ export const FacturacionRapidaV2 = {
     container.innerHTML = `<strong>✅ ${this.clienteTemporal.nombre}</strong><br><small>${this.clienteTemporal.cedula} | 📱 ${this.clienteTemporal.telefono || 'N/A'}</small>`;
   },
 
-  renderProductos() {
-    const busqueda = (document.getElementById('frBuscarProducto')?.value || '').toLowerCase().trim();
-    const tipoFiltro = document.getElementById('frFiltroTipo')?.value || '';
-    const catFiltro = document.getElementById('frFiltroCategoria')?.value || '';
-    const container = document.getElementById('frListaProductos');
+ renderProductos() {
+  const busqueda = (document.getElementById('frBuscarProducto')?.value || '').toLowerCase().trim();
+  const tipoFiltro = document.getElementById('frFiltroTipo')?.value || '';
+  const catFiltro = document.getElementById('frFiltroCategoria')?.value || '';
+  const container = document.getElementById('frListaProductos');
 
-    if (this.productosCache.length === 0) {
-      container.innerHTML = '<p style="color:red; text-align:center;">⚠️ No hay productos cargados en el sistema.</p>';
-      return;
-    }
+  if (this.productosCache.length === 0) {
+    container.innerHTML = '<p style="color:red; text-align:center;">⚠️ No hay productos cargados.</p>';
+    return;
+  }
 
-    const filtrados = this.productosCache.filter(p => {
-      const nombre = (p.nombre || '').toLowerCase();
-      const categoria = (p.categoria || '').toLowerCase();
-      const tipo = (p.tipo || '').toLowerCase();
-      
-      const coincideTexto = !busqueda || nombre.includes(busqueda) || categoria.includes(busqueda);
-      const coincideTipo = !tipoFiltro || tipo === tipoFiltro.toLowerCase();
-      const coincideCat = !catFiltro || categoria === catFiltro.toLowerCase();
-      
-      return coincideTexto && coincideTipo && coincideCat;
-    });
-
-    if (filtrados.length === 0) {
-      container.innerHTML = '<p class="no-data">No se encontraron productos.</p>';
-      return;
-    }
-
-    container.innerHTML = filtrados.map(p => `
-      <div class="fr-producto-card" onclick="FacturacionRapidaV2.agregarAlCarrito('${p.id}')">
-        <div class="fr-prod-nombre">${p.nombre}</div>
-        <div class="fr-prod-tipo">${p.tipo} • ${p.categoria || 'General'}</div>
-        <div class="fr-prod-precio">₡${(p.precio || 0).toLocaleString()}</div>
-        <div class="fr-prod-stock">Stock: ${p.stock || 0}</div>
-        ${p.variantes?.length > 1 ? `<small class="fr-prod-variantes">${p.variantes.length} opciones</small>` : ''}
-      </div>
-    `).join('');
-  },
-
-  agregarAlCarrito(productId) {
-    const producto = this.productosCache.find(p => p.id === productId);
-    if (!producto) return;
-
-    // Manejo robusto de variantes (funciona para Esencias y Limpieza normalizada)
-    const variantes = producto.variantes || [];
+  const filtrados = this.productosCache.filter(p => {
+    const nombre = (p.nombre || '').toLowerCase();
+    const categoria = (p.categoria || '').toLowerCase();
+    const tipo = (p.tipo || '').toLowerCase();
     
-    if (variantes.length > 1) {
-      const opciones = variantes.map((v, i) => `${i + 1}. ${v.nombre} - ₡${v.precio}`).join('\n');
-      const seleccion = prompt(`Seleccione variante para ${producto.nombre}:\n${opciones}`);
-      if (!seleccion) return;
-      const idx = parseInt(seleccion) - 1;
-      if (idx >= 0 && idx < variantes.length) {
-        this.agregarItem(producto, variantes[idx]);
-      }
-    } else {
-      // Si no tiene variantes o es una sola, usa la única disponible o crea una genérica
-      const variante = variantes[0] || { nombre: 'Única', precio: producto.precio };
-      this.agregarItem(producto, variante);
+    const coincideTexto = !busqueda || nombre.includes(busqueda) || categoria.includes(busqueda);
+    const coincideTipo = !tipoFiltro || tipo === tipoFiltro.toLowerCase();
+    const coincideCat = !catFiltro || categoria === catFiltro.toLowerCase();
+    
+    return coincideTexto && coincideTipo && coincideCat;
+  });
+
+  if (filtrados.length === 0) {
+    container.innerHTML = '<p class="no-data">No se encontraron productos.</p>';
+    return;
+  }
+
+  // ✅ CORRECCIÓN: Usar dataset en lugar de onclick inline
+  container.innerHTML = filtrados.map(p => `
+    <div class="fr-producto-card" data-product-id="${p.id}">
+      <div class="fr-prod-nombre">${p.nombre}</div>
+      <div class="fr-prod-tipo">${p.tipo} • ${p.categoria || 'General'}</div>
+      <div class="fr-prod-precio">₡${(p.precio || 0).toLocaleString()}</div>
+      <div class="fr-prod-stock">Stock: ${p.stock || 0}</div>
+      ${p.variantes?.length > 1 ? `<small class="fr-prod-variantes">${p.variantes.length} opciones</small>` : ''}
+    </div>
+  `).join('');
+
+  // ✅ Agregar event listeners a las tarjetas
+  container.querySelectorAll('.fr-producto-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      const productId = card.dataset.productId;
+      this.agregarAlCarrito(productId);
+    });
+  });
+},
+
+ agregarAlCarrito(productId) {
+  console.log('🛒 Agregando producto:', productId); // Debug
+  console.log('🔍 Buscando producto ID:', productId);
+  console.log('📦 Productos en caché:', this.productosCache.length);
+  console.log('📋 IDs disponibles:', this.productosCache.map(p => p.id).slice(0, 10)); // Primeros 10
+  
+  const producto = this.productosCache.find(p => {
+    const match = String(p.id) === String(productId);
+    if (match) console.log('✅ Producto encontrado:', p);
+    return match;
+  });
+  
+  if (!producto) {
+    console.error('❌ Producto NO encontrado. ID buscado:', productId);
+    UI.toast('Producto no encontrado: ' + productId, 'error');
+    return;
+  }
+  
+  
+
+  // Manejo robusto de variantes
+  const variantes = producto.variantes || [];
+  
+  if (variantes.length > 1) {
+    const opciones = variantes.map((v, i) => `${i + 1}. ${v.nombre} - ₡${v.precio}`).join('\n');
+    const seleccion = prompt(`Seleccione variante para ${producto.nombre}:\n${opciones}`);
+    
+    if (!seleccion) return;
+    
+    const idx = parseInt(seleccion) - 1;
+    if (idx >= 0 && idx < variantes.length) {
+      this.agregarItem(producto, variantes[idx]);
     }
-  },
+  } else {
+    // Si no tiene variantes o es una sola
+    const variante = variantes[0] || { nombre: 'Única', precio: producto.precio };
+    this.agregarItem(producto, variante);
+  }
+},
 
   agregarItem(producto, variante) {
-    const cantidad = parseInt(prompt(`Cantidad para ${producto.nombre}:`, '1')) || 1;
-    if (cantidad > (producto.stock || 0)) {
-      UI.toast(`Stock insuficiente. Disponible: ${producto.stock}`, 'warning');
-      return;
-    }
-    const existing = this.carritoFactura.find(i => i.id === producto.id && i.variante === variante.nombre);
-    if (existing) {
-      existing.cantidad += cantidad;
-    } else {
-      this.carritoFactura.push({
-        id: producto.id, nombre: producto.nombre, variante: variante.nombre,
-        precio: variante.precio, cantidad, subtotal: variante.precio * cantidad,
-        categoria: producto.categoria, tipo: producto.tipo
-      });
-    }
-    this.renderCarrito();
-  },
+  const cantidad = parseInt(prompt(`Cantidad para ${producto.nombre}:`, '1')) || 1;
+  
+  // ✅ ELIMINADA VALIDACIÓN ESTRICTA: Permitir agregar sin importar el stock
+  // Solo mostramos advertencia si el stock es bajo o no existe
+  const stockDisponible = producto.stock || 0;
+  if (stockDisponible === 0) {
+    console.warn(`⚠️ Producto ${producto.nombre} no tiene stock registrado`);
+  } else if (cantidad > stockDisponible) {
+    UI.toast(`⚠️ Stock bajo: ${stockDisponible} disponibles`, 'warning');
+  }
+
+  const existing = this.carritoFactura.find(i => i.id === producto.id && i.variante === variante.nombre);
+  if (existing) {
+    existing.cantidad += cantidad;
+  } else {
+    this.carritoFactura.push({
+      id: producto.id, 
+      nombre: producto.nombre, 
+      variante: variante.nombre,
+      precio: variante.precio, 
+      cantidad, 
+      subtotal: variante.precio * cantidad,
+      categoria: producto.categoria, 
+      tipo: producto.tipo
+    });
+  }
+  
+  this.renderCarrito();
+},
 
   renderCarrito() {
     const container = document.getElementById('frCarrito');

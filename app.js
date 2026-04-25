@@ -20,6 +20,9 @@ import FacturacionRapidaV2  from './modules/facturacion-rapida-v2.js'; // ✅ NU
 import StockAlertsManager from './modules/stock-alerts.js'; // ✅ NUEVO
 import BackupManager from './modules/backup-manager.js';    // ✅ NUEVO
 import ProformasManager from './modules/proformas-compras.js'; // ✅ NUEVO
+import HistorialComprasManager from './modules/historial-compras.js';
+import ImpresionManager from './modules/impresion.js';
+
 
 window.UI = UI;
 window.Store = Store;
@@ -41,6 +44,8 @@ window.FacturacionRapidaV2 = FacturacionRapidaV2; // ✅ NUEVO
 window.StockAlertsManager = StockAlertsManager; // ✅ NUEVO
 window.BackupManager = BackupManager;           // ✅ NUEVO
 window.ProformasManager = ProformasManager; // ✅ NUEVO
+window.HistorialComprasManager = HistorialComprasManager;
+window.ImpresionManager = ImpresionManager;
 
 
 const App = {
@@ -48,8 +53,6 @@ const App = {
   appliedPromo: null, // ✅ NUEVO: Guarda el descuento aplicado temporalmente
   // ... resto del código ..
 
-/* ✅ FUNCIÓN NUEVA: Integra y normaliza los JSON locales
-// ✅ FUNCIÓN MEJORADA: Integra y normaliza los JSON locales
 async integrarJSONsLocales() {
   console.log('📦 Integrando catálogos locales (Limpieza y Velas)...');
   const productosActuales = Store.get('productos') || [];
@@ -58,7 +61,6 @@ async integrarJSONsLocales() {
   try {
     // Función para limpiar claves con espacios
     const limpiarClaves = (obj) => {
-      if (!obj) return null;
       const limpio = {};
       Object.keys(obj).forEach(k => {
         const key = k.trim();
@@ -76,13 +78,13 @@ async integrarJSONsLocales() {
         const productosLimpieza = dataLimpieza.map(p => {
           const pLimpio = limpiarClaves(p);
           return {
-            id: pLimpio.id || `limp_${Date.now()}_${Math.random()}`,
+            id: pLimpio.id,
             nombre: pLimpio.nombre,
             tipo: 'Limpieza',
             precio: pLimpio.precioPublico || pLimpio.precio,
             categoria: pLimpio.categoria || 'General',
             variantes: (pLimpio.aromas && pLimpio.aromas.length > 0) 
-              ? pLimpio.aromas.map(a => ({ nombre: a.trim(), precio: pLimpio.precioPublico })) 
+              ? pLimpio.aromas.map(a => ({ nombre: a, precio: pLimpio.precioPublico })) 
               : [{ nombre: 'Única', precio: pLimpio.precioPublico }],
             stock: 0,
             activo: pLimpio.disponible !== false,
@@ -94,20 +96,20 @@ async integrarJSONsLocales() {
         console.log(`✅ Limpieza: ${productosLimpieza.length} productos`);
       }
     } catch (e) {
-      console.warn('⚠️ No se pudo cargar limpieza:', e);
+      console.warn('⚠️ Error cargando limpieza:', e);
     }
 
     // 2. Cargar Velas
     try {
       const resVelas = await fetch('./data/catalogo-velas.json');
       if (resVelas.ok) {
-        const dataVelasRaw = await resVelas.json(); // ✅ CORREGIDO: era "awa it"
+        const dataVelasRaw = await resVelas.json();
         const dataVelas = Array.isArray(dataVelasRaw) ? dataVelasRaw : [dataVelasRaw];
         
         const productosVelas = dataVelas.map(p => {
           const pLimpio = limpiarClaves(p);
           return {
-            id: pLimpio.id || `vela_${Date.now()}_${Math.random()}`,
+            id: pLimpio.id,
             nombre: pLimpio.nombre,
             tipo: 'Velas',
             precio: pLimpio.precio || pLimpio.precioPublico,
@@ -123,7 +125,7 @@ async integrarJSONsLocales() {
         console.log(`✅ Velas: ${productosVelas.length} productos`);
       }
     } catch (e) {
-      console.warn('⚠️ No se pudo cargar velas:', e);
+      console.warn('⚠️ Error cargando velas:', e);
     }
 
     // 3. Fusionar evitando duplicados
@@ -133,12 +135,13 @@ async integrarJSONsLocales() {
     Store.set('productos', [...productosActuales, ...productosUnicos]);
     console.log(`✅ Total integrados: ${productosUnicos.length} productos locales`);
   } catch (error) {
-    console.error('❌ Error crítico en integrarJSONsLocales:', error);
+    console.error('❌ Error en integrarJSONsLocales:', error);
   }
-},*/
+},
+
 
  async init() {
-  console.log('🌸 Esentia v6.0 - Iniciando...');
+  console.log('🌸 Esentia v6.2 - Iniciando...');
   await Store.init();
   await ClientesManager.init();
   if (window.UserManager) await UserManager.syncAdminRights();
@@ -147,8 +150,8 @@ async integrarJSONsLocales() {
   CartManager.init();
   await ProductManager.load();
   
-  // ✅ CORREGIDO: Usar 'this.' para llamar al método del objeto App
-  //await this.integrarJSONsLocales(); 
+  // ✅ CORREGIDO: Usar 'this.'
+  await this.integrarJSONsLocales(); 
   
   this.renderHeader();
   this.renderProducts();
@@ -370,7 +373,9 @@ if (btnAdmin && adminMenu) {
   facturacion: { manager: 'FacturacionRapidaV2', method: 'mostrarPanel' }, // ✅ NUEVO
   stockAlert: { manager: 'StockAlertsManager', method: 'mostrarAlertas' }, // ✅ NUEVO
   backup: { manager: 'BackupManager', method: 'generarRespaldo' } ,         // ✅ NUEVO
-  proformas: { manager: 'ProformasManager', method: 'mostrarPanel' } // ✅ NUEVO
+  proformas: { manager: 'ProformasManager', method: 'mostrarPanel' }, // ✅ NUEVO
+  historialCompras: { manager: 'HistorialComprasManager', method: 'mostrarPanel' },
+  impresion: { manager: 'ImpresionManager', method: 'mostrarMenu' }
   
 };
 
