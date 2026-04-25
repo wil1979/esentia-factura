@@ -207,45 +207,98 @@ export const FacturacionRapidaV2 = {
   const container = document.getElementById('frListaProductos');
 
   if (this.productosCache.length === 0) {
-    container.innerHTML = '<p style="color:red; text-align:center;">⚠️ No hay productos cargados.</p>';
+    container.innerHTML = '<p class="fr-sin-resultados">⚠️ No hay productos cargados</p>';
     return;
   }
 
-  const filtrados = this.productosCache.filter(p => {
-    const nombre = (p.nombre || '').toLowerCase();
-    const categoria = (p.categoria || '').toLowerCase();
-    const tipo = (p.tipo || '').toLowerCase();
+  // ✅ Solo mostrar productos si hay búsqueda O filtros activos
+  const hayBusqueda = busqueda.length > 0;
+  const hayFiltros = tipoFiltro !== '' || catFiltro !== '';
+
+  if (!hayBusqueda && !hayFiltros) {
+    // Mostrar mensaje inicial amigable
+    container.innerHTML = `
+      <div class="fr-buscar-inicial">
+        <div class="buscar-icon">🔍</div>
+        <h3>Busca productos</h3>
+        <p>Escribe un nombre, categoría o usa los filtros para ver el catálogo</p>
+        <div class="sugerencias">
+          <small>Sugerencias:</small>
+          <button onclick="document.getElementById('frBuscarProducto').value='detergente'; FacturacionRapidaV2.renderProductos()">Detergente</button>
+          <button onclick="document.getElementById('frBuscarProducto').value='vela'; FacturacionRapidaV2.renderProductos()">Vela</button>
+          <button onclick="document.getElementById('frBuscarProducto').value='difusor'; FacturacionRapidaV2.renderProductos()">Difusor</button>
+        </div>
+      </div>
+    `;
     
-    const coincideTexto = !busqueda || nombre.includes(busqueda) || categoria.includes(busqueda);
+    // Actualizar contador
+    const contadorEl = document.getElementById('contadorProductos');
+    if (contadorEl) {
+      contadorEl.textContent = `${this.productosCache.length} disponibles`;
+    }
+    return;
+  }
+
+  // Filtrar productos
+  let filtrados = this.productosCache.filter(p => {
+    const nombre = String(p.nombre || '').toLowerCase();
+    const categoria = String(p.categoria || '').toLowerCase();
+    const tipo = String(p.tipo || '').toLowerCase();
+    const id = String(p.id || '').toLowerCase();
+    
+    const coincideTexto = !busqueda || 
+      nombre.includes(busqueda) || 
+      categoria.includes(busqueda) ||
+      id.includes(busqueda);
+      
     const coincideTipo = !tipoFiltro || tipo === tipoFiltro.toLowerCase();
     const coincideCat = !catFiltro || categoria === catFiltro.toLowerCase();
     
     return coincideTexto && coincideTipo && coincideCat;
   });
 
+  // Limitar resultados
+  if (filtrados.length > 100) {
+    filtrados = filtrados.slice(0, 100);
+  }
+
   if (filtrados.length === 0) {
-    container.innerHTML = '<p class="no-data">No se encontraron productos.</p>';
+    container.innerHTML = `
+      <div class="fr-sin-resultados">
+        🔍 No se encontraron productos<br>
+        <small>Intenta con otra búsqueda o filtro</small>
+      </div>
+    `;
+    
+    const contadorEl = document.getElementById('contadorProductos');
+    if (contadorEl) contadorEl.textContent = '0 resultados';
     return;
   }
 
-  // ✅ CORRECCIÓN: Usar dataset en lugar de onclick inline
+  // Renderizar productos compactos
   container.innerHTML = filtrados.map(p => `
     <div class="fr-producto-card" data-product-id="${p.id}">
-      <div class="fr-prod-nombre">${p.nombre}</div>
-      <div class="fr-prod-tipo">${p.tipo} • ${p.categoria || 'General'}</div>
+      <div class="fr-prod-nombre" title="${p.nombre || ''}">${p.nombre || 'Producto'}</div>
+      <div class="fr-prod-tipo">${p.tipo || 'General'} • ${p.categoria || 'General'}</div>
       <div class="fr-prod-precio">₡${(p.precio || 0).toLocaleString()}</div>
-      <div class="fr-prod-stock">Stock: ${p.stock || 0}</div>
-      ${p.variantes?.length > 1 ? `<small class="fr-prod-variantes">${p.variantes.length} opciones</small>` : ''}
+      ${p.stock !== undefined ? `<div class="fr-prod-stock">Stock: ${p.stock}</div>` : ''}
+      ${p.variantes?.length > 1 ? `<span class="fr-prod-variantes">${p.variantes.length} opc.</span>` : ''}
     </div>
   `).join('');
 
-  // ✅ Agregar event listeners a las tarjetas
+  // Agregar event listeners
   container.querySelectorAll('.fr-producto-card').forEach(card => {
     card.addEventListener('click', (e) => {
       const productId = card.dataset.productId;
       this.agregarAlCarrito(productId);
     });
   });
+
+  // Actualizar contador
+  const contadorEl = document.getElementById('contadorProductos');
+  if (contadorEl) {
+    contadorEl.textContent = `${filtrados.length} encontrados`;
+  }
 },
 
  agregarAlCarrito(productId) {
