@@ -72,21 +72,31 @@ export const FacturacionRapidaV2 = {
             </div>
 
             <div class="productos-section">
-              <h3>📦 Productos (<span id="contadorProductos">${this.productosCache.length}</span>)</h3>
-              
-              <!-- ✅ BOTÓN DE RECARGA -->
-              <button id="btnRecargarProductos" class="btn-secondary" style="margin-bottom: 10px; width: 100%;">🔄 Recargar Catálogo</button>
-              
-              <div class="fr-filtros">
-                <input type="text" id="frBuscarProducto" placeholder="🔍 Buscar producto...">
-                <select id="frFiltroTipo"><option value="">Todos</option></select>
-                <select id="frFiltroCategoria"><option value="">Todas</option></select>
-              </div>
-              <div id="frListaProductos" class="fr-productos-grid">
-                <div class="loading-state">Cargando catálogo...</div>
-              </div>
-            </div>
-          </div>
+  <h3>📦 Productos (<span id="contadorProductos">0</span>)</h3>
+  
+  <button id="btnRecargarProductos" class="btn-secondary" style="margin: 5px 0; width: 100%; font-size: 0.85rem;">
+    🔄 Recargar Catálogo
+  </button>
+  
+  <!-- Buscador Principal -->
+  <div class="fr-buscador-container">
+    <input type="text" id="frBuscarProducto" placeholder="🔍 Buscar por nombre, categoría o ID..." autocomplete="off">
+  </div>
+  
+  <!-- Filtros Compactos -->
+  <div class="fr-filtros-compactos">
+    <select id="frFiltroTipo">
+      <option value="">Todos los tipos</option>
+    </select>
+    <select id="frFiltroCategoria">
+      <option value="">Todas las categorías</option>
+    </select>
+  </div>
+  
+  <div id="frListaProductos" class="fr-productos-grid">
+    <div class="loading-state">Cargando productos...</div>
+  </div>
+</div>
 
           <div class="facturacion-right">
             <h3>🛒 Factura Actual</h3>
@@ -164,6 +174,17 @@ export const FacturacionRapidaV2 = {
         selCat.innerHTML = '<option value="">Todas</option>';
         cats.forEach(c => selCat.innerHTML += `<option value="${c}">${c}</option>`);
     }
+
+    // Búsqueda en tiempo real con debounce
+ const buscarInput = document.getElementById('frBuscarProducto');
+ if (buscarInput) {
+  buscarInput.addEventListener('input', this.debounce(() => {
+    this.renderProductos();
+  }, 300));
+  
+  // Foco automático al abrir
+  setTimeout(() => buscarInput.focus(), 100);
+ }
   },
 
   async buscarCliente() {
@@ -200,7 +221,7 @@ export const FacturacionRapidaV2 = {
     container.innerHTML = `<strong>✅ ${this.clienteTemporal.nombre}</strong><br><small>${this.clienteTemporal.cedula} | 📱 ${this.clienteTemporal.telefono || 'N/A'}</small>`;
   },
 
- renderProductos() {
+renderProductos() {
   const busqueda = (document.getElementById('frBuscarProducto')?.value || '').toLowerCase().trim();
   const tipoFiltro = document.getElementById('frFiltroTipo')?.value || '';
   const catFiltro = document.getElementById('frFiltroCategoria')?.value || '';
@@ -298,46 +319,6 @@ export const FacturacionRapidaV2 = {
   const contadorEl = document.getElementById('contadorProductos');
   if (contadorEl) {
     contadorEl.textContent = `${filtrados.length} encontrados`;
-  }
-},
-
- agregarAlCarrito(productId) {
-  console.log('🛒 Agregando producto:', productId); // Debug
-  console.log('🔍 Buscando producto ID:', productId);
-  console.log('📦 Productos en caché:', this.productosCache.length);
-  console.log('📋 IDs disponibles:', this.productosCache.map(p => p.id).slice(0, 10)); // Primeros 10
-  
-  const producto = this.productosCache.find(p => {
-    const match = String(p.id) === String(productId);
-    if (match) console.log('✅ Producto encontrado:', p);
-    return match;
-  });
-  
-  if (!producto) {
-    console.error('❌ Producto NO encontrado. ID buscado:', productId);
-    UI.toast('Producto no encontrado: ' + productId, 'error');
-    return;
-  }
-  
-  
-
-  // Manejo robusto de variantes
-  const variantes = producto.variantes || [];
-  
-  if (variantes.length > 1) {
-    const opciones = variantes.map((v, i) => `${i + 1}. ${v.nombre} - ₡${v.precio}`).join('\n');
-    const seleccion = prompt(`Seleccione variante para ${producto.nombre}:\n${opciones}`);
-    
-    if (!seleccion) return;
-    
-    const idx = parseInt(seleccion) - 1;
-    if (idx >= 0 && idx < variantes.length) {
-      this.agregarItem(producto, variantes[idx]);
-    }
-  } else {
-    // Si no tiene variantes o es una sola
-    const variante = variantes[0] || { nombre: 'Única', precio: producto.precio };
-    this.agregarItem(producto, variante);
   }
 },
 

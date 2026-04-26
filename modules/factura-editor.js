@@ -1,129 +1,101 @@
 // modules/factura-editor.js
-import { getDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { DB } from './firebase.js';
 import { UI } from '../components/ui.js';
 
 export const FacturaEditor = {
-  clienteId: null,
-  facturaIndex: null,
-  facturaActual: null,
-
-  async abrirEditor(clienteId, index) {
-    this.clienteId = clienteId;
-    this.facturaIndex = index;
-
-    try {
-      const snap = await getDoc(doc(DB.db, "facturas", clienteId));
-      if (!snap.exists()) return UI.toast('Factura no encontrada', 'error');
-      
-      const data = snap.data();
-      this.facturaActual = data.compras?.[index];
-      if (!this.facturaActual) return UI.toast('Índice de factura inválido', 'error');
-
-      this.renderModal();
-    } catch (e) { console.error(e); UI.toast('Error al cargar factura', 'error'); }
-  },
-
-  renderModal() {
-    const f = this.facturaActual;
+  async abrirEditor() {
     const modal = document.createElement('div');
-    modal.className = 'modal show'; modal.id = 'modalEditorFactura';
+    modal.className = 'modal show';
+    modal.id = 'modalFacturaEditor';
     modal.innerHTML = `
-      <div class="modal-content modal-grande editor-modal">
-        <button class="modal-close" onclick="UI.modal('modalEditorFactura','close')">✕</button>
-        <h2>📝 Editar Factura #${this.facturaIndex + 1}</h2>
-        <div class="editor-grid">
-          <div class="editor-items">
-            <h4>Productos</h4>
-            <div id="editorItemList">
-              ${f.productos.map((p, i) => `
-                <div class="editor-row" data-idx="${i}">
-                  <input type="text" value="${p.nombre}" class="ed-nombre" readonly>
-                  <input type="number" value="${p.cantidad}" min="1" class="ed-cant" data-idx="${i}">
-                  <input type="number" value="${p.precio}" min="0" class="ed-precio" data-idx="${i}">
-                  <span class="ed-subtotal">₡${(p.precio * p.cantidad).toLocaleString()}</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-          <div class="editor-totals">
-            <h4>Totales</h4>
-            <label>Subtotal: <input type="number" id="edSubtotal" value="${f.total + (f.descuento||0)}" readonly></label>
-            <label>Descuento Manual: <input type="number" id="edDescuento" value="${f.descuento||0}" min="0"></label>
-            <label>Total: <input type="number" id="edTotal" value="${f.total}" readonly></label>
-            <label>Estado: 
-              <select id="edEstado">
-                <option value="pendiente" ${f.estado==='pendiente'?'selected':''}>⏳ Pendiente</option>
-                <option value="parcial" ${f.estado==='parcial'?'selected':''}>🔄 Parcial</option>
-                <option value="completado" ${f.estado==='completado'?'selected':''}>✅ Completado</option>
-                <option value="anulado" ${f.estado==='anulado'?'selected':''}>🚫 Anulado</option>
-              </select>
-            </label>
-          </div>
-        </div>
-        <div class="editor-actions">
-          <button id="btnGuardarFactura" class="btn-primary">💾 Guardar Cambios</button>
-          <button onclick="UI.modal('modalEditorFactura','close')" class="btn-secondary">Cancelar</button>
+      <div class="modal-content modal-xl">
+        <button class="modal-close" onclick="UI.modal('modalFacturaEditor','close')">✕</button>
+        <h2>📝 Editor de Facturas</h2>
+        <input type="text" id="buscarFactura" placeholder="🔍 Buscar por ID o cliente..." style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px;">
+        <div id="facturasLista" class="facturas-lista">
+          <div class="loading-state">🔄 Cargando facturas...</div>
         </div>
       </div>
     `;
     document.body.appendChild(modal);
-    this.attachEditorEvents();
+    await this.cargarFacturas();
+    
+    document.getElementById('buscarFactura').addEventListener('input', (e) => this.filtrarFacturas(e.target.value));
   },
 
-  attachEditorEvents() {
-    const recalc = () => {
-      let sub = 0;
-      document.querySelectorAll('.editor-row').forEach(row => {
-        const c = parseInt(row.querySelector('.ed-cant').value) || 1;
-        const p = parseFloat(row.querySelector('.ed-precio').value) || 0;
-        row.querySelector('.ed-subtotal').textContent = `₡${(c*p).toLocaleString()}`;
-        sub += c * p;
-      });
-      document.getElementById('edSubtotal').value = sub;
-      const desc = parseInt(document.getElementById('edDescuento').value) || 0;
-      document.getElementById('edTotal').value = Math.max(0, sub - desc);
-    };
+  async cargarFacturas() {
+    const container = document.getElementById('facturasLista');
+    try {
+      const snap = await getDocs(collection(DB.db, "facturas_rapidas"));
+      const facturas = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
-    document.getElementById('editorItemList').addEventListener('input', recalc);
-    document.getElementById('edDescuento').addEventListener('input', recalc);
+      this._facturasCache = facturas;
+      this.renderFacturas(facturas);
+    } catch (e) {
+      console.error(e);
+      container.innerHTML = '<p style="color:red">❌ Error al cargar</p>';
+    }
+  },
 
-    document.getElementById('btnGuardarFactura').onclick = async () => {
-      const btn = document.getElementById('btnGuardarFactura');
-      btn.disabled = true; btn.textContent = 'Guardando...';
-      
-      try {
-        const nuevosProductos = [];
-        let nuevoSubtotal = 0;
-        document.querySelectorAll('.editor-row').forEach(row => {
-          const idx = row.dataset.idx;
-          const old = this.facturaActual.productos[idx];
-          const cant = parseInt(row.querySelector('.ed-cant').value) || 1;
-          const precio = parseFloat(row.querySelector('.ed-precio').value) || 0;
-          nuevosProductos.push({ ...old, cantidad: cant, precio, total: cant * precio });
-          nuevoSubtotal += cant * precio;
-        });
+  renderFacturas(facturas) {
+    const container = document.getElementById('facturasLista');
+    
+    if (facturas.length === 0) {
+      container.innerHTML = '<p class="no-data">No se encontraron facturas</p>';
+      return;
+    }
 
-        const descuento = parseInt(document.getElementById('edDescuento').value) || 0;
-        const total = Math.max(0, nuevoSubtotal - descuento);
-        const estado = document.getElementById('edEstado').value;
-        const saldo = estado === 'anulado' ? 0 : Math.max(0, total - (this.facturaActual.pagado || 0));
+    container.innerHTML = facturas.map(f => `
+      <div class="factura-item" data-id="${f.id}">
+        <div class="factura-header" onclick="FacturaEditor.toggleDetalle('${f.id}')">
+          <div class="factura-info">
+            <strong>📄 ${f.id.slice(-8)}</strong>
+            <span>${f.clienteNombre}</span>
+            <small>${new Date(f.fecha).toLocaleDateString()}</small>
+          </div>
+          <div class="factura-actions">
+            <span class="badge ${f.estado === 'completado' ? 'badge-success' : 'badge-warning'}">${f.estado}</span>
+            <span>₡${f.total.toLocaleString()}</span>
+            <button class="btn-edit" onclick="event.stopPropagation(); FacturaEditor.editar('${f.id}')">✏️</button>
+          </div>
+        </div>
+        <div class="factura-detalle" id="detalle-${f.id}" style="display: none;">
+          <div class="productos-mini">
+            <strong>Productos (${f.productos?.length || 0}):</strong>
+            <ul>
+              ${(f.productos || []).map(p => `
+                <li>${p.cantidad}x ${p.nombre} (${p.variante}) - ₡${p.subtotal.toLocaleString()}</li>
+              `).join('')}
+            </ul>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  },
 
-        await updateDoc(doc(DB.db, "facturas", this.clienteId), {
-          [`compras.${this.facturaIndex}.productos`]: nuevosProductos,
-          [`compras.${this.facturaIndex}.descuento`]: descuento,
-          [`compras.${this.facturaIndex}.total`]: total,
-          [`compras.${this.facturaIndex}.estado`]: estado,
-          [`compras.${this.facturaIndex}.saldo`]: saldo,
-          [`compras.${this.facturaIndex}.editadoPorAdmin`]: new Date().toISOString()
-        });
+  toggleDetalle(facturaId) {
+    const detalle = document.getElementById(`detalle-${facturaId}`);
+    detalle.style.display = detalle.style.display === 'none' ? 'block' : 'none';
+  },
 
-        UI.toast('✅ Factura actualizada', 'success');
-        UI.modal('modalEditorFactura', 'close');
-        // Refrescar módulo de cobros si está abierto
-        if (window.CobrosManager) CobrosManager.cargarBaseCobros();
-      } catch (e) { console.error(e); UI.toast('❌ Error al guardar', 'error'); }
-      finally { btn.disabled = false; btn.textContent = '💾 Guardar Cambios'; }
-    };
+  filtrarFacturas(query) {
+    if (!query.trim()) {
+      this.renderFacturas(this._facturasCache);
+      return;
+    }
+    
+    const filtradas = this._facturasCache.filter(f => 
+      f.id.includes(query) || 
+      f.clienteNombre?.toLowerCase().includes(query.toLowerCase())
+    );
+    this.renderFacturas(filtradas);
+  },
+
+  async editar(facturaId) {
+    UI.toast('Función de edición en desarrollo', 'info');
   }
 };
+
+export default FacturaEditor;

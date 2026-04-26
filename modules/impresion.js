@@ -1,12 +1,58 @@
 // modules/impresion.js
+import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { DB } from './firebase.js';
+import { UI } from '../components/ui.js';
+
 export const ImpresionManager = {
-  imprimirFactura(factura) {
+  async mostrarMenu() {
+    const opciones = prompt(
+      'Seleccione opción:\n1. Imprimir Factura\n2. Imprimir Recordatorio de Pago\n3. Exportar Datos',
+      '1'
+    );
+    
+    switch(opciones) {
+      case '1':
+        await this.imprimirFactura();
+        break;
+      case '2':
+        await this.imprimirRecordatorio();
+        break;
+      case '3':
+        this.exportarDatos();
+        break;
+      default:
+        UI.toast('Opción cancelada', 'info');
+    }
+  },
+
+  async imprimirFactura() {
+    const facturaId = prompt('Ingrese ID de factura:');
+    if (!facturaId) return;
+    
+    try {
+      // Buscar en facturas_rapidas primero
+      const snap = await getDocs(collection(DB.db, "facturas_rapidas"));
+      const factura = snap.docs.find(d => d.id.includes(facturaId))?.data();
+      
+      if (!factura) {
+        UI.toast('Factura no encontrada', 'error');
+        return;
+      }
+
+      this.generarPDFFactura(factura);
+    } catch (e) {
+      console.error(e);
+      UI.toast('Error al buscar factura', 'error');
+    }
+  },
+
+  generarPDFFactura(factura) {
     const ventana = window.open('', '_blank');
     const html = `
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Factura ${factura.id || 'N/A'}</title>
+        <title>Factura ${factura.id?.slice(-6) || 'N/A'}</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
           .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
@@ -63,46 +109,28 @@ export const ImpresionManager = {
     ventana.document.close();
   },
 
-  imprimirRecordatorio(cliente, deuda) {
-    const ventana = window.open('', '_blank');
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Recordatorio de Pago</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; border: 2px solid #e74c3c; }
-          .alert { background: #ffebee; padding: 20px; text-align: center; border-radius: 8px; margin-bottom: 20px; }
-          .cliente { margin: 20px 0; }
-          .deuda { font-size: 2em; color: #e74c3c; text-align: center; margin: 20px 0; }
-          .datos-pago { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0; }
-          @media print { .no-print { display: none; } }
-        </style>
-      </head>
-      <body>
-        <div class="alert">
-          <h2>⚠️ RECORDATORIO DE PAGO</h2>
-        </div>
-        <div class="cliente">
-          <strong>Cliente:</strong> ${cliente.nombre}<br>
-          <strong>Cédula:</strong> ${cliente.cedula}<br>
-          <strong>Teléfono:</strong> ${cliente.telefono}
-        </div>
-        <div class="deuda">
-          <strong>Monto Pendiente: ₡${deuda.toLocaleString()}</strong>
-        </div>
-        <div class="datos-pago">
-          <h3>Datos de Pago:</h3>
-          <p><strong>SINPE Móvil:</strong> 72952454</p>
-          <p><strong>IBAN BN:</strong> CR76015114620010283743</p>
-          <p><strong>Opción BN/BCR:</strong> SMS "PASE ${Math.round(deuda)} 72952454"</p>
-        </div>
-        <button class="no-print" onclick="window.print()" style="margin-top: 20px; padding: 10px 20px; cursor: pointer;">🖨️ Imprimir</button>
-      </body>
-      </html>
-    `;
-    ventana.document.write(html);
-    ventana.document.close();
+  async imprimirRecordatorio() {
+    const clienteId = prompt('Ingrese cédula del cliente:');
+    if (!clienteId) return;
+    
+    UI.toast('Función en desarrollo', 'info');
+  },
+
+  exportarDatos() {
+    const datos = {
+      fecha: new Date().toISOString(),
+      productos: JSON.parse(localStorage.getItem('esentia_productos') || '[]'),
+      inventario: JSON.parse(localStorage.getItem('esentia_inventario') || '{}')
+    };
+    
+    const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `esentia_backup_${Date.now()}.json`;
+    a.click();
+    
+    UI.toast('📥 Datos exportados', 'success');
   }
 };
 
