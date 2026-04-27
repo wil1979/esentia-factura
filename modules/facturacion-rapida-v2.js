@@ -1,4 +1,4 @@
- // modules/facturacion-rapida-v2.js
+// modules/facturacion-rapida-v2.js
 import { collection, addDoc, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { DB } from './firebase.js';
 import { Store, Utils } from './core.js';
@@ -26,6 +26,7 @@ export const FacturacionRapidaV2 = {
 
     this.prepararProductos();
 
+    // Importar carrito personal si existe
     this.carritoFactura = [];
     const personalCart = Store.get('carrito') || [];
     if (personalCart.length > 0) {
@@ -48,12 +49,16 @@ export const FacturacionRapidaV2 = {
     const modal = document.createElement('div');
     modal.className = 'modal show';
     modal.id = 'modalFacturacionRapida';
+    
+    // ✅ HTML OPTIMIZADO: Sin filtros innecesarios, solo búsqueda limpia
     modal.innerHTML = `
       <div class="modal-content modal-xl facturacion-modal">
         <button class="modal-close" onclick="UI.modal('modalFacturacionRapida','close')">✕</button>
         <h2>🧾 Facturación Rápida v2.0</h2>
+        
         <div class="facturacion-layout">
           <div class="facturacion-left">
+            <!-- Sección Cliente -->
             <div class="cliente-section">
               <h3>👤 Cliente</h3>
               <div class="cliente-search">
@@ -62,25 +67,38 @@ export const FacturacionRapidaV2 = {
               </div>
               <div id="frClienteInfo" class="cliente-info hidden"></div>
             </div>
+
+            <!-- Sección Productos: Solo Búsqueda -->
             <div class="productos-section">
-              <h3>📦 Productos (<span id="contadorProductos">0</span>)</h3>
-              <button id="btnRecargarProductos" class="btn-secondary" style="margin: 5px 0; width: 100%;">🔄 Recargar Catálogo</button>
-              <div class="fr-filtros">
-                <input type="text" id="frBuscarProducto" placeholder="🔍 Buscar producto...">
-                <select id="frFiltroTipo"><option value="">Todos</option></select>
-                <select id="frFiltroCategoria"><option value="">Todas</option></select>
+              <h3>📦 Catálogo (<span id="contadorProductos">${this.productosCache.length}</span>)</h3>
+              
+              <button id="btnRecargarProductos" class="btn-secondary" style="margin: 5px 0; width: 100%; font-size: 0.8rem;">
+                🔄 Actualizar Catálogo
+              </button>
+
+              <div class="fr-buscador-principal">
+                <input type="text" id="frBuscarProducto" placeholder="🔍 Escribe para buscar (ej: detergente, vela, difusor)...">
               </div>
+              
               <div id="frListaProductos" class="fr-productos-grid">
-                <div class="loading-state">Cargando catálogo...</div>
+                <!-- Estado inicial vacío -->
+                <div class="fr-empty-state">
+                  <span class="empty-icon">📦</span>
+                  <p>Escribe arriba para buscar productos</p>
+                </div>
               </div>
             </div>
           </div>
+
+          <!-- Panel Derecho: Carrito -->
           <div class="facturacion-right">
             <h3>🛒 Factura Actual</h3>
             <div id="frCarrito" class="fr-carrito"><p class="empty-carrito">Sin productos agregados</p></div>
+            
             <div class="fr-totales">
               <div class="fr-row"><span>Subtotal:</span><span id="frSubtotal">₡0</span></div>
               <div class="fr-row"><span>Descuento:</span><input type="number" id="frDescuento" value="0" min="0" class="fr-input"></div>
+              
               <div class="fr-row" style="flex-direction:column; align-items:flex-start; margin-top:10px;">
                 <label style="font-size:0.9rem;"><strong>Método de Pago:</strong></label>
                 <select id="frMetodoPago" style="width:100%; padding:8px; border-radius:6px; border:1px solid #ddd;">
@@ -88,10 +106,12 @@ export const FacturacionRapidaV2 = {
                   <option value="credito">💳 Crédito (15 días)</option>
                 </select>
               </div>
+
               <div class="fr-row total"><span>Total:</span><span id="frTotal">₡0</span></div>
             </div>
+
             <div class="fr-actions">
-              <button id="frGuardarFactura" class="btn-primary btn-large" disabled>💾 Guardar Factura</button>
+              <button id="frGuardarFactura" class="btn-primary btn-large" disabled>💾 Guardar</button>
               <button id="frLimpiar" class="btn-secondary">🗑️ Limpiar</button>
             </div>
           </div>
@@ -100,48 +120,30 @@ export const FacturacionRapidaV2 = {
     `;
 
     document.body.appendChild(modal);
-    this.llenarFiltros();
     this.attachEvents();
     this.renderProductos();
     this.renderCarrito();
+    
+    // Foco automático en el buscador
+    setTimeout(() => document.getElementById('frBuscarProducto')?.focus(), 300);
   },
 
   attachEvents() {
     document.getElementById('frBuscarCliente')?.addEventListener('input', this.debounce(() => this.buscarCliente(), 300));
     document.getElementById('frNuevoCliente')?.addEventListener('click', () => this.nuevoCliente());
+    
+    // ✅ Búsqueda en tiempo real para productos
     document.getElementById('frBuscarProducto')?.addEventListener('input', () => this.renderProductos());
-    document.getElementById('frFiltroTipo')?.addEventListener('change', () => this.renderProductos());
-    document.getElementById('frFiltroCategoria')?.addEventListener('change', () => this.renderProductos());
 
     document.getElementById('btnRecargarProductos')?.addEventListener('click', () => {
       this.prepararProductos();
-      this.llenarFiltros();
       this.renderProductos();
-      UI.toast('🔄 Catálogo recargado desde Store', 'info');
+      UI.toast('🔄 Catálogo actualizado', 'info');
     });
 
     document.getElementById('frDescuento')?.addEventListener('input', () => this.calcularTotales());
     document.getElementById('frLimpiar')?.addEventListener('click', () => this.limpiarFactura());
     document.getElementById('frGuardarFactura')?.addEventListener('click', () => this.guardarFactura());
-  },
-
-  llenarFiltros() {
-    const tipos = [...new Set(this.productosCache.map(p => p.tipo).filter(Boolean))].sort();
-    const cats = [...new Set(this.productosCache.map(p => p.categoria).filter(Boolean))].sort();
-    const selTipo = document.getElementById('frFiltroTipo');
-    const selCat = document.getElementById('frFiltroCategoria');
-
-    if(selTipo) {
-      selTipo.innerHTML = '<option value="">Todos</option>';
-      tipos.forEach(t => selTipo.innerHTML += `<option value="${t}">${t}</option>`);
-    }
-    if(selCat) {
-      selCat.innerHTML = '<option value="">Todas</option>';
-      cats.forEach(c => selCat.innerHTML += `<option value="${c}">${c}</option>`);
-    }
-
-    const buscarInput = document.getElementById('frBuscarProducto');
-    if (buscarInput) setTimeout(() => buscarInput.focus(), 100);
   },
 
   async buscarCliente() {
@@ -178,46 +180,57 @@ export const FacturacionRapidaV2 = {
     container.innerHTML = `<strong>✅ ${this.clienteTemporal.nombre}</strong><br><small>${this.clienteTemporal.cedula} | 📱 ${this.clienteTemporal.telefono || 'N/A'}</small>`;
   },
 
+  // ✅ LÓGICA DE RENDERIZADO CON ESTADO VACÍO
   renderProductos() {
     const busqueda = (document.getElementById('frBuscarProducto')?.value || '').toLowerCase().trim();
-    const tipoFiltro = document.getElementById('frFiltroTipo')?.value || '';
-    const catFiltro = document.getElementById('frFiltroCategoria')?.value || '';
     const container = document.getElementById('frListaProductos');
 
     if (this.productosCache.length === 0) {
-      container.innerHTML = '<p class="fr-sin-resultados">⚠️ No hay productos cargados</p>';
+      container.innerHTML = '<p class="fr-sin-resultados">⚠️ Cargando catálogo...</p>';
       return;
     }
 
+    // Si no hay búsqueda, mostramos mensaje limpio y NO renderizamos lista
+    if (!busqueda) {
+      container.innerHTML = `
+        <div class="fr-empty-state">
+          <span class="empty-icon">🔍</span>
+          <p>Escribe para buscar productos</p>
+        </div>
+      `;
+      const contadorEl = document.getElementById('contadorProductos');
+      if (contadorEl) contadorEl.textContent = `${this.productosCache.length} disponibles`;
+      return;
+    }
+
+    // Filtrado inteligente
     let filtrados = this.productosCache.filter(p => {
       const nombre = String(p.nombre || '').toLowerCase();
       const categoria = String(p.categoria || '').toLowerCase();
-      const tipo = String(p.tipo || '').toLowerCase();
       const id = String(p.id || '').toLowerCase();
-
-      const coincideTexto = !busqueda || nombre.includes(busqueda) || categoria.includes(busqueda) || id.includes(busqueda);
-      const coincideTipo = !tipoFiltro || tipo === tipoFiltro.toLowerCase();
-      const coincideCat = !catFiltro || categoria === catFiltro.toLowerCase();
-
-      return coincideTexto && coincideTipo && coincideCat;
+      // Buscamos en nombre, categoría o ID
+      return nombre.includes(busqueda) || categoria.includes(busqueda) || id.includes(busqueda);
     });
 
+    // Limitar resultados para rendimiento (máx 50)
+    if (filtrados.length > 50) filtrados = filtrados.slice(0, 50);
+
     if (filtrados.length === 0) {
-      container.innerHTML = '<div class="fr-sin-resultados">🔍 No se encontraron productos<br><small>Intenta con otra búsqueda o filtro</small></div>';
+      container.innerHTML = `<div class="fr-sin-resultados"> 🔍 No se encontraron productos<br> <small>Intenta otra palabra</small> </div>`;
       return;
     }
 
+    // Renderizado Compacto
     container.innerHTML = filtrados.map(p => `
       <div class="fr-producto-card" data-product-id="${p.id}">
-        <div class="fr-prod-nombre" title="${p.nombre || ''}">${p.nombre || 'Producto'}</div>
-        <div class="fr-prod-tipo">${p.tipo || 'General'} • ${p.categoria || 'General'}</div>
+        <div class="fr-prod-nombre" title="${p.nombre}">${p.nombre}</div>
+        <div class="fr-prod-tipo">${p.categoria || 'General'}</div>
         <div class="fr-prod-precio">₡${(p.precio || 0).toLocaleString()}</div>
-        ${p.stock !== undefined ? `<div class="fr-prod-stock">Stock: ${p.stock}</div>` : ''}
-        ${p.variantes?.length > 1 ? `<span class="fr-prod-variantes">${p.variantes.length} opc.</span>` : ''}
+        ${p.variantes?.length > 1 ? `<span class="fr-prod-variantes">${p.variantes.length} opciones</span>` : ''}
       </div>
     `).join('');
 
-    // ✅ CORRECCIÓN CRÍTICA: Usar nombre explícito del módulo para evitar pérdida de contexto
+    // Eventos Click
     container.querySelectorAll('.fr-producto-card').forEach(card => {
       card.addEventListener('click', () => {
         const productId = card.dataset.productId;
@@ -230,14 +243,8 @@ export const FacturacionRapidaV2 = {
   },
 
   agregarAlCarrito(productId) {
-    console.log('🛒 Agregando producto:', productId);
     const producto = this.productosCache.find(p => String(p.id) === String(productId));
-
-    if (!producto) {
-      console.error('❌ Producto NO encontrado. ID:', productId);
-      UI.toast('Producto no encontrado: ' + productId, 'error');
-      return;
-    }
+    if (!producto) return UI.toast('Producto no encontrado', 'error');
 
     const variantes = producto.variantes || [];
     if (variantes.length > 1) {
@@ -257,10 +264,8 @@ export const FacturacionRapidaV2 = {
   agregarItem(producto, variante) {
     const cantidad = parseInt(prompt(`Cantidad para ${producto.nombre}:`, '1')) || 1;
     const stockDisponible = producto.stock || 0;
-    if (stockDisponible === 0) {
-      console.warn(`⚠️ Producto ${producto.nombre} no tiene stock registrado`);
-    } else if (cantidad > stockDisponible) {
-      UI.toast(`⚠️ Stock bajo: ${stockDisponible} disponibles`, 'warning');
+    if (stockDisponible > 0 && cantidad > stockDisponible) {
+      UI.toast(`⚠️ Stock bajo: solo hay ${stockDisponible}`, 'warning');
     }
 
     const existing = this.carritoFactura.find(i => i.id === producto.id && i.variante === variante.nombre);
@@ -268,14 +273,9 @@ export const FacturacionRapidaV2 = {
       existing.cantidad += cantidad;
     } else {
       this.carritoFactura.push({
-        id: producto.id,
-        nombre: producto.nombre,
-        variante: variante.nombre,
-        precio: variante.precio,
-        cantidad,
-        subtotal: variante.precio * cantidad,
-        categoria: producto.categoria,
-        tipo: producto.tipo
+        id: producto.id, nombre: producto.nombre, variante: variante.nombre,
+        precio: variante.precio, cantidad, subtotal: variante.precio * cantidad,
+        categoria: producto.categoria, tipo: producto.tipo
       });
     }
     this.renderCarrito();
@@ -292,8 +292,8 @@ export const FacturacionRapidaV2 = {
       container.innerHTML = this.carritoFactura.map((item, idx) => `
         <div class="fr-carrito-item">
           <div class="fr-item-info">
-            <strong>${item.nombre || 'Producto'}</strong>
-            <small>${item.variante || 'Única'} × ${Number(item.cantidad)||1}</small>
+            <strong>${item.nombre}</strong>
+            <small>${item.variante} × ${Number(item.cantidad)||1}</small>
           </div>
           <div class="fr-item-actions">
             <span>₡${(Number(item.subtotal) || 0).toLocaleString()}</span>
@@ -321,22 +321,18 @@ export const FacturacionRapidaV2 = {
   },
 
   async guardarFactura() {
-    if (!this.clienteTemporal) return UI.toast('⚠️ Debe seleccionar un cliente', 'warning');
-    if (this.carritoFactura.length === 0) return UI.toast('❌ No hay productos', 'warning');
+    if (!this.clienteTemporal) return UI.toast('⚠️ Seleccione un cliente', 'warning');
+    if (this.carritoFactura.length === 0) return UI.toast('❌ Agregue productos', 'warning');
 
     const { subtotal, descuento, total } = this.calcularTotales();
     const metodoPago = document.getElementById('frMetodoPago')?.value || 'contado';
     const estadoFactura = metodoPago === 'credito' ? 'pendiente' : 'completado';
 
-    const nombreCliente = this.clienteTemporal.nombre || 'Cliente';
-    const idCliente = this.clienteTemporal.id || this.clienteTemporal.cedula || 'temp';
-    const telefonoCliente = this.clienteTemporal.telefono || '';
-
     const facturaData = {
       fecha: new Date().toISOString(),
-      clienteId: idCliente,
-      clienteNombre: nombreCliente,
-      clienteTelefono: telefonoCliente,
+      clienteId: this.clienteTemporal.id || this.clienteTemporal.cedula || 'temp',
+      clienteNombre: this.clienteTemporal.nombre || 'Cliente',
+      clienteTelefono: this.clienteTemporal.telefono || '',
       productos: this.carritoFactura,
       subtotal, descuento, total,
       estado: estadoFactura,
@@ -347,24 +343,24 @@ export const FacturacionRapidaV2 = {
     };
 
     try {
-      // ✅ CAMBIO SOLICITADO: Colección facturas_rapidas
       await addDoc(collection(DB.db, "facturas_rapidas"), facturaData);
-
+      
+      // Actualizar stock local
       for (const item of this.carritoFactura) {
         const prod = this.productosCache.find(p => p.id === item.id);
-        if (prod) prod.stock -= item.cantidad;
+        if (prod) prod.stock = Math.max(0, (prod.stock || 0) - item.cantidad);
       }
 
       if (metodoPago === 'credito') {
-        await this.actualizarSaldoCliente(idCliente, total);
+        await this.actualizarSaldoCliente(facturaData.clienteId, total);
       }
 
       UI.toast(`✅ Factura guardada (${metodoPago.toUpperCase()})`, 'success');
-
-      if (telefonoCliente && confirm('¿Enviar factura por WhatsApp?')) {
-        this.enviarWhatsApp({ ...facturaData, telefono: telefonoCliente });
+      
+      if (facturaData.clienteTelefono && confirm('¿Enviar por WhatsApp?')) {
+        this.enviarWhatsApp({ ...facturaData, telefono: facturaData.clienteTelefono });
       }
-
+      
       this.limpiarFactura();
     } catch (e) {
       console.error(e);
@@ -377,30 +373,24 @@ export const FacturacionRapidaV2 = {
       const clienteRef = doc(DB.db, "clientesBD", clienteId);
       const clienteSnap = await getDoc(clienteRef);
       let saldoActual = 0;
-      if (clienteSnap.exists()) {
-        saldoActual = clienteSnap.data().saldoPendiente || 0;
-      }
+      if (clienteSnap.exists()) saldoActual = clienteSnap.data().saldoPendiente || 0;
+      
       await updateDoc(clienteRef, {
         saldoPendiente: saldoActual + monto,
         ultimoCredito: new Date().toISOString()
       });
-      console.log(`💳 Saldo de ${clienteId} actualizado: ₡${(saldoActual + monto).toLocaleString()}`);
-    } catch (e) {
-      console.warn('No se pudo actualizar saldo del cliente:', e);
-    }
+    } catch (e) { console.warn('No se actualizó saldo:', e); }
   },
 
   enviarWhatsApp(factura) {
     const telefono = factura.telefono?.replace(/\D/g, '') || '';
-    if (!telefono || telefono.length < 8) {
-      UI.toast('⚠️ No hay teléfono válido para enviar', 'warning');
-      return;
-    }
+    if (!telefono || telefono.length < 8) return UI.toast('⚠️ Teléfono inválido', 'warning');
+    
     const cleanPhone = telefono.length === 8 ? '506' + telefono : telefono;
     let mensaje = `🧾 *FACTURA ESENTIA*\n👤 ${factura.clienteNombre}\n📅 ${new Date(factura.fecha).toLocaleDateString()}\n\n*Productos:*\n`;
     factura.productos.forEach(p => { mensaje += `• ${p.nombre} (${p.variante}) x${p.cantidad} - ₡${p.subtotal.toLocaleString()}\n`; });
-    mensaje += `\n💰 *Total: ₡${factura.total.toLocaleString()}*\n`;
-    mensaje += `💳 Método: ${factura.metodoPago?.toUpperCase() || 'CONTADO'}\n\n¡Gracias! 🌸`;
+    mensaje += `\n💰 *Total: ₡${factura.total.toLocaleString()}*\n💳 Método: ${factura.metodoPago?.toUpperCase()}\n\n¡Gracias! 🌸`;
+    
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensaje)}`, '_blank');
   },
 
