@@ -31,7 +31,7 @@ const AdminManager = {
   document.body.appendChild(modal);
 
   try {
-    const snap = await getDocs(collection(DB.db, "facturas"));
+    const snap = await getDocs(collection(DB.db, "facturas_rapidas"));
     const ventas = [];
     snap.forEach(doc => {
       const data = doc.data();

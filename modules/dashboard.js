@@ -28,7 +28,7 @@ export const DashboardManager = {
     const container = document.getElementById('dashboardContent');
     try {
       // Cargar facturas y clientes
-      const facturasSnap = await getDocs(collection(DB.db, "facturas"));
+      const facturasSnap = await getDocs(collection(DB.db, "facturas_rapidas"));
       const clientesSnap = await getDocs(collection(DB.db, "clientesBD"));
       
       let totalVentas = 0;

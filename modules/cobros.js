@@ -28,7 +28,7 @@ export const CobrosManager = {
   async cargarBaseCobros() {
     try {
       this.todosLosClientes = [];
-      const snap = await getDocs(collection(DB.db, "facturas"));
+      const snap = await getDocs(collection(DB.db, "facturas_rapidas"));
       
       snap.forEach(docSnap => {
         if (!docSnap.exists()) return;
@@ -59,7 +59,7 @@ export const CobrosManager = {
     // Agrega esto en CobrosManager
   async sincronizarVentaPagada(clienteId, facturaIndex) {
   try {
-    const snap = await getDocs(collection(DB.db, "facturas"));
+    const snap = await getDocs(collection(DB.db, "facturas_rapidas"));
     const docSnap = snap.docs.find(d => d.id === clienteId);
     const compra = docSnap.data().compras[facturaIndex];
 
@@ -99,7 +99,7 @@ export const CobrosManager = {
     compras[facturaIndex].estado = 'completado'; // O 'despachado'
     compras[facturaIndex].fechaCompletado = new Date().toISOString();
     
-    await updateDoc(doc(DB.db, "facturas", clienteId), { compras });
+    await updateDoc(doc(DB.db, "facturas_rapidas", clienteId), { compras });
     Store.set('inventario', inventario);
     Store.persist('inventario');
     Store.emit('inventory:updated');
@@ -293,7 +293,7 @@ export const CobrosManager = {
 
     const clienteInfo = this.clientesCache.find(c => c.id === clienteId) || {};
     try {
-      const snap = await getDoc(doc(DB.db, "facturas", clienteId));
+      const snap = await getDoc(doc(DB.db, "facturas_rapidas", clienteId));
       if (!snap.exists()) return UI.toast('Cliente no encontrado', 'error');
       
       const data = snap.data();
@@ -380,11 +380,14 @@ export const CobrosManager = {
   const metodo = document.getElementById('metodoAbono').value;
   const nota = document.getElementById('notaAbono').value;
   const btn = document.querySelector('#formAbono button');
+  
   if (monto <= 0) return UI.toast('Monto inválido', 'warning');
   
-  btn.disabled = true; btn.textContent = 'Procesando...';
+  btn.disabled = true; 
+  btn.textContent = 'Procesando...';
+  
   try {
-    const snap = await getDoc(doc(DB.db, "facturas", this.clienteSeleccionado));
+    const snap = await getDoc(doc(DB.db, "facturas_rapidas", this.clienteSeleccionado));
     const data = snap.data();
     const compras = data.compras || [];
     const fact = compras[index];
@@ -392,16 +395,25 @@ export const CobrosManager = {
     const nuevoPagado = (Number(fact.pagado) || 0) + monto;
     const nuevoSaldo = Math.max(0, (Number(fact.total) || 0) - nuevoPagado);
     const estado = nuevoSaldo <= 0 ? 'completado' : 'parcial';
-    const abonoData = { fecha: new Date().toISOString(), monto, metodo, nota: nota || '' };
+    
+    const abonoData = { 
+      fecha: new Date().toISOString(), 
+      monto, 
+      metodo, 
+      nota: nota || '',
+      autor: Store.get('cliente')?.nombre || 'admin'
+    };
 
-    await updateDoc(doc(DB.db, "facturas", this.clienteSeleccionado), {
+    // ✅ CORRECCIÓN: Usar arrayUnion para agregar sin sobrescribir
+    await updateDoc(doc(DB.db, "facturas_rapidas", this.clienteSeleccionado), {
       [`compras.${index}.pagado`]: nuevoPagado,
       [`compras.${index}.saldo`]: nuevoSaldo,
       [`compras.${index}.estado`]: estado,
-      abonos: [...(data.abonos || []), abonoData]
+      [`compras.${index}.fechaCompletado`]: nuevoSaldo <= 0 ? new Date().toISOString() : null,
+      abonos: arrayUnion(abonoData)  // ✅ Esto agrega sin borrar los anteriores
     });
 
-    // ✅ LLAMADA: Si quedó pagada, sincronizar inventario y puntos
+    // Si quedó pagada, sincronizar inventario y puntos
     if (nuevoSaldo <= 0) {
       await this.sincronizarVentaPagada(this.clienteSeleccionado, index);
       UI.toast('✅ Pago registrado. Stock y puntos actualizados.', 'success');
@@ -411,20 +423,25 @@ export const CobrosManager = {
 
     UI.modal('modalAbono', 'close');
     UI.modal('modalDetalleDeuda', 'close');
+    
+    // ✅ Recargar datos
     await this.cargarBaseCobros();
     this.renderListaDeudores();
     this.renderListaHistorial();
-  } catch(err) { 
-    console.error(err); 
-    UI.toast('❌ Error al procesar pago', 'error'); 
+    
+  } catch(err) {
+    console.error('Error en procesarAbono:', err);
+    UI.toast('❌ Error al procesar pago: ' + err.message, 'error');
+  } finally { 
+    btn.disabled = false; 
+    btn.textContent = '✅ Confirmar'; 
   }
-  finally { btn.disabled = false; btn.textContent = '✅ Confirmar'; }
 },
 
   async revertirAbono(clienteId, facturaIdx) {
     if (!confirm('⚠️ ¿Revertir el ÚLTIMO abono? Restaurará el saldo.')) return;
     try {
-      const snap = await getDoc(doc(DB.db, "facturas", clienteId));
+      const snap = await getDoc(doc(DB.db, "facturas_rapidas", clienteId));
       const data = snap.data();
       const compras = data.compras || [];
       const fact = compras[facturaIdx];
@@ -436,7 +453,7 @@ export const CobrosManager = {
       const nuevoSaldo = (Number(fact.total)||0) - nuevoPagado;
       const abonosActualizados = abonos.slice(0, -1);
 
-      await updateDoc(doc(DB.db, "facturas", clienteId), {
+      await updateDoc(doc(DB.db, "facturas_rapidas", clienteId), {
         [`compras.${facturaIdx}.pagado`]: nuevoPagado,
         [`compras.${facturaIdx}.saldo`]: nuevoSaldo,
         [`compras.${facturaIdx}.estado`]: nuevoSaldo <= 0 ? 'completado' : 'parcial',
@@ -453,7 +470,7 @@ export const CobrosManager = {
   async anularFactura(clienteId, facturaIdx) {
     if (!confirm('🚫 ¿Anular esta factura? Se marcará como anulada y el saldo irá a 0.')) return;
     try {
-      await updateDoc(doc(DB.db, "facturas", clienteId), {
+      await updateDoc(doc(DB.db, "facturas_rapidas", clienteId), {
         [`compras.${facturaIdx}.estado`]: 'anulada',
         [`compras.${facturaIdx}.saldo`]: 0,
         [`compras.${facturaIdx}.notaAnulacion`]: `Anulada el ${new Date().toLocaleString()}`
@@ -603,7 +620,7 @@ async registrarLogRecordatorio(clienteId, monto, telefono, tipo = 'amigable') {
       tipo,
       estado: 'Enviado a WhatsApp'
     };
-    await updateDoc(doc(DB.db, "facturas", clienteId), {
+    await updateDoc(doc(DB.db, "facturas_rapidas", clienteId), {
       recordatorios: arrayUnion(logEntry)
     });
   } catch (e) { console.error('Error guardando log:', e); }
@@ -618,7 +635,7 @@ async registrarLogRecordatorio(clienteId, monto, telefono, tipo = 'amigable') {
         estado: 'Enviado a WhatsApp'
       };
       // Guarda en el array 'recordatorios' del documento del cliente
-      await updateDoc(doc(DB.db, "facturas", clienteId), {
+      await updateDoc(doc(DB.db, "facturas_rapidas", clienteId), {
         recordatorios: arrayUnion(logEntry)
       });
       console.log('✅ Log de recordatorio guardado');

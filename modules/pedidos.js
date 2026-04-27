@@ -39,7 +39,7 @@ export const PedidosManager = {
       });
 
       // 2️⃣ Cargar facturas y filtrar pendientes
-      const facturasSnap = await getDocs(collection(DB.db, "facturas"));
+      const facturasSnap = await getDocs(collection(DB.db, "facturas_rapidas"));
       const pedidos = [];
 
       facturasSnap.forEach(docSnap => {
@@ -98,7 +98,7 @@ export const PedidosManager = {
     
     try {
       // 1. Obtener la factura
-      const snap = await getDocs(collection(DB.db, "facturas"));
+      const snap = await getDocs(collection(DB.db, "facturas_rapidas"));
       const docSnap = snap.docs.find(d => d.id === idFactura);
       if (!docSnap) throw new Error("Factura no encontrada");
 
@@ -142,7 +142,7 @@ export const PedidosManager = {
       const comprasActualizadas = [...compras];
       comprasActualizadas[index] = { ...compra, estado: 'despachado' };
 
-      await updateDoc(doc(DB.db, "facturas", idFactura), { compras: comprasActualizadas });
+      await updateDoc(doc(DB.db, "facturas_rapidas", idFactura), { compras: comprasActualizadas });
 
       // Sync local y UI
       Store.set('inventario', inventario);
@@ -163,7 +163,7 @@ export const PedidosManager = {
     if (sessionStorage.getItem('banner_pedidos_cerrado')) return; // Si ya lo cerró en esta sesión, no mostrar
 
     try {
-      const facturasSnap = await getDocs(collection(DB.db, "facturas"));
+      const facturasSnap = await getDocs(collection(DB.db, "facturas_rapidas"));
       let hayPendientes = false;
       
       for (const docSnap of facturasSnap.docs) {
@@ -202,14 +202,14 @@ export const PedidosManager = {
   async cancelarPedido(idFactura, index) {
     if (!confirm('¿Cancelar este pedido? El stock NO se tocará.')) return;
     try {
-      const snap = await getDocs(collection(DB.db, "facturas"));
+      const snap = await getDocs(collection(DB.db, "facturas_rapidas"));
       const docSnap = snap.docs.find(d => d.id === idFactura);
       const compras = docSnap.data().compras || [];
 
       const comprasActualizadas = [...compras];
       comprasActualizadas[index] = { ...compras[index], estado: 'anulado' };
 
-      await updateDoc(doc(DB.db, "facturas", idFactura), { compras: comprasActualizadas });
+      await updateDoc(doc(DB.db, "facturas_rapidas", idFactura), { compras: comprasActualizadas });
       UI.toast('🚫 Pedido cancelado', 'info');
       this.cargarPedidos();
     } catch (e) {
