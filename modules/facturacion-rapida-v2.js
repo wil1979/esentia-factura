@@ -6,11 +6,25 @@ import { UI } from '../components/ui.js';
 
 export const FacturacionRapidaV2 = {
   productosCache: [],
+  clientesCache: [],
   clienteTemporal: null,
   carritoFactura: [],
 
   async init() {
     console.log('🧾 Facturación Rápida v2.0 - Iniciando...');
+    await this.cargarClientes();
+  },
+
+  async cargarClientes() {
+    try {
+      const snap = await getDocs(collection(DB.db, "clientesBD"));
+      this.clientesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+      console.log(`✅ ${this.clientesCache.length} clientes cargados`);
+    } catch (e) {
+      console.warn('⚠️ Error cargando clientes:', e);
+      this.clientesCache = [];
+    }
   },
 
   prepararProductos() {
@@ -25,8 +39,8 @@ export const FacturacionRapidaV2 = {
     if (!Store.get('isAdmin')) { UI.toast('Acceso denegado', 'warning'); return; }
 
     this.prepararProductos();
+    await this.cargarClientes();
 
-    // Importar carrito personal si existe
     this.carritoFactura = [];
     const personalCart = Store.get('carrito') || [];
     if (personalCart.length > 0) {
@@ -49,8 +63,6 @@ export const FacturacionRapidaV2 = {
     const modal = document.createElement('div');
     modal.className = 'modal show';
     modal.id = 'modalFacturacionRapida';
-    
-    // ✅ HTML OPTIMIZADO: Sin filtros innecesarios, solo búsqueda limpia
     modal.innerHTML = `
       <div class="modal-content modal-xl facturacion-modal">
         <button class="modal-close" onclick="UI.modal('modalFacturacionRapida','close')">✕</button>
@@ -58,17 +70,18 @@ export const FacturacionRapidaV2 = {
         
         <div class="facturacion-layout">
           <div class="facturacion-left">
-            <!-- Sección Cliente -->
+            <!-- Sección Cliente MEJORADA -->
             <div class="cliente-section">
               <h3>👤 Cliente</h3>
               <div class="cliente-search">
-                <input type="text" id="frBuscarCliente" placeholder="🔍 Cédula o nombre...">
+                <input type="text" id="frBuscarCliente" placeholder="🔍 Buscar cliente..." readonly onclick="FacturacionRapidaV2.mostrarModalClientes()">
+                <button id="btnSeleccionarCliente" class="btn-primary" onclick="FacturacionRapidaV2.mostrarModalClientes()">👥 Seleccionar</button>
                 <button id="frNuevoCliente" class="btn-secondary">➕ Nuevo</button>
               </div>
               <div id="frClienteInfo" class="cliente-info hidden"></div>
             </div>
 
-            <!-- Sección Productos: Solo Búsqueda -->
+            <!-- Sección Productos -->
             <div class="productos-section">
               <h3>📦 Catálogo (<span id="contadorProductos">${this.productosCache.length}</span>)</h3>
               
@@ -81,7 +94,6 @@ export const FacturacionRapidaV2 = {
               </div>
               
               <div id="frListaProductos" class="fr-productos-grid">
-                <!-- Estado inicial vacío -->
                 <div class="fr-empty-state">
                   <span class="empty-icon">📦</span>
                   <p>Escribe arriba para buscar productos</p>
@@ -124,15 +136,85 @@ export const FacturacionRapidaV2 = {
     this.renderProductos();
     this.renderCarrito();
     
-    // Foco automático en el buscador
     setTimeout(() => document.getElementById('frBuscarProducto')?.focus(), 300);
   },
 
-  attachEvents() {
-    document.getElementById('frBuscarCliente')?.addEventListener('input', this.debounce(() => this.buscarCliente(), 300));
-    document.getElementById('frNuevoCliente')?.addEventListener('click', () => this.nuevoCliente());
+  // ✅ NUEVO: MODAL DE SELECCIÓN DE CLIENTES
+  async mostrarModalClientes() {
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.id = 'modalSeleccionCliente';
+    modal.innerHTML = `
+      <div class="modal-content modal-grande">
+        <button class="modal-close" onclick="UI.modal('modalSeleccionCliente','close')">✕</button>
+        <h2>👥 Seleccionar Cliente</h2>
+        
+        <div class="cliente-buscador">
+          <input type="text" id="buscarClienteModal" placeholder="🔍 Buscar por nombre, cédula o teléfono..." autofocus>
+        </div>
+
+        <div id="listaClientesModal" class="clientes-lista">
+          <div class="loading-state">🔄 Cargando clientes...</div>
+        </div>
+      </div>
+    `;
     
-    // ✅ Búsqueda en tiempo real para productos
+    document.body.appendChild(modal);
+    this.renderListaClientes(this.clientesCache);
+    
+    // Búsqueda en tiempo real
+    document.getElementById('buscarClienteModal').addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase().trim();
+      const filtrados = this.clientesCache.filter(c => 
+        (c.nombre && c.nombre.toLowerCase().includes(query)) ||
+        (c.cedula && c.cedula.includes(query)) ||
+        (c.telefono && c.telefono.includes(query))
+      );
+      this.renderListaClientes(filtrados);
+    });
+
+    // Foco automático
+    setTimeout(() => document.getElementById('buscarClienteModal')?.focus(), 100);
+  },
+
+  renderListaClientes(clientes) {
+    const container = document.getElementById('listaClientesModal');
+    
+    if (clientes.length === 0) {
+      container.innerHTML = '<p class="no-data">No se encontraron clientes</p>';
+      return;
+    }
+
+    container.innerHTML = clientes.map(c => `
+      <div class="cliente-item" onclick="FacturacionRapidaV2.seleccionarCliente('${c.id}')">
+        <div class="cliente-item-info">
+          <strong>👤 ${c.nombre || 'Sin nombre'}</strong>
+          <small>🆔 ${c.cedula || 'N/A'} | 📱 ${c.telefono || 'N/A'}</small>
+        </div>
+        <button class="btn-select-cliente">Seleccionar</button>
+      </div>
+    `).join('');
+  },
+
+  seleccionarCliente(clienteId) {
+    const cliente = this.clientesCache.find(c => c.id === clienteId);
+    if (!cliente) return;
+
+    this.clienteTemporal = {
+      id: cliente.id,
+      cedula: cliente.cedula,
+      nombre: cliente.nombre,
+      telefono: cliente.telefono,
+      email: cliente.email
+    };
+
+    this.mostrarClienteInfo();
+    UI.modal('modalSeleccionCliente', 'close');
+    UI.toast(`✅ Cliente seleccionado: ${cliente.nombre}`, 'success');
+  },
+
+  attachEvents() {
+    document.getElementById('frNuevoCliente')?.addEventListener('click', () => this.nuevoCliente());
     document.getElementById('frBuscarProducto')?.addEventListener('input', () => this.renderProductos());
 
     document.getElementById('btnRecargarProductos')?.addEventListener('click', () => {
@@ -147,18 +229,7 @@ export const FacturacionRapidaV2 = {
   },
 
   async buscarCliente() {
-    const query = document.getElementById('frBuscarCliente')?.value.trim();
-    if (!query || query.length < 3) return;
-    try {
-      const snap = await getDocs(collection(DB.db, "clientesBD"));
-      const clienteEncontrado = snap.docs.find(d =>
-        d.id === query || (d.data().nombre && d.data().nombre.toLowerCase().includes(query.toLowerCase()))
-      );
-      if (clienteEncontrado) {
-        this.clienteTemporal = { id: clienteEncontrado.id, ...clienteEncontrado.data() };
-        this.mostrarClienteInfo();
-      }
-    } catch (e) { console.warn('Error buscando cliente:', e); }
+    // Esta función ahora se usa desde el modal
   },
 
   nuevoCliente() {
@@ -166,21 +237,55 @@ export const FacturacionRapidaV2 = {
     if (!cedula) return;
     const nombre = prompt('Ingrese nombre del cliente:');
     if (!nombre) return;
-    this.clienteTemporal = {
-      id: cedula, cedula, nombre,
+    
+    const clienteData = {
+      id: cedula,
+      cedula: cedula,
+      nombre: nombre,
       telefono: prompt('Teléfono (opcional):') || '',
-      email: prompt('Email (opcional):') || ''
+      email: prompt('Email (opcional):') || '',
+      fechaRegistro: new Date().toISOString()
     };
-    this.mostrarClienteInfo();
+
+    // Guardar en Firebase
+    import('https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js')
+      .then(async ({ doc, setDoc }) => {
+        try {
+          await setDoc(doc(DB.db, "clientesBD", cedula), clienteData);
+          this.clientesCache.push(clienteData);
+          this.clienteTemporal = clienteData;
+          this.mostrarClienteInfo();
+          UI.toast('✅ Cliente creado exitosamente', 'success');
+        } catch (e) {
+          console.error(e);
+          UI.toast('❌ Error al crear cliente', 'error');
+        }
+      });
   },
 
   mostrarClienteInfo() {
     const container = document.getElementById('frClienteInfo');
+    if (!container || !this.clienteTemporal) return;
+    
     container.classList.remove('hidden');
-    container.innerHTML = `<strong>✅ ${this.clienteTemporal.nombre}</strong><br><small>${this.clienteTemporal.cedula} | 📱 ${this.clienteTemporal.telefono || 'N/A'}</small>`;
+    container.innerHTML = `
+      <div class="cliente-seleccionado">
+        <strong>✅ ${this.clienteTemporal.nombre}</strong><br>
+        <small>🆔 ${this.clienteTemporal.cedula} | 📱 ${this.clienteTemporal.telefono || 'N/A'}</small>
+        <button class="btn-cambiar-cliente" onclick="FacturacionRapidaV2.limpiarCliente()">🔄 Cambiar</button>
+      </div>
+    `;
   },
 
-  // ✅ LÓGICA DE RENDERIZADO CON ESTADO VACÍO
+  limpiarCliente() {
+    this.clienteTemporal = null;
+    const container = document.getElementById('frClienteInfo');
+    if (container) {
+      container.classList.add('hidden');
+      container.innerHTML = '';
+    }
+  },
+
   renderProductos() {
     const busqueda = (document.getElementById('frBuscarProducto')?.value || '').toLowerCase().trim();
     const container = document.getElementById('frListaProductos');
@@ -190,7 +295,6 @@ export const FacturacionRapidaV2 = {
       return;
     }
 
-    // Si no hay búsqueda, mostramos mensaje limpio y NO renderizamos lista
     if (!busqueda) {
       container.innerHTML = `
         <div class="fr-empty-state">
@@ -203,34 +307,29 @@ export const FacturacionRapidaV2 = {
       return;
     }
 
-    // Filtrado inteligente
     let filtrados = this.productosCache.filter(p => {
       const nombre = String(p.nombre || '').toLowerCase();
       const categoria = String(p.categoria || '').toLowerCase();
       const id = String(p.id || '').toLowerCase();
-      // Buscamos en nombre, categoría o ID
       return nombre.includes(busqueda) || categoria.includes(busqueda) || id.includes(busqueda);
     });
 
-    // Limitar resultados para rendimiento (máx 50)
     if (filtrados.length > 50) filtrados = filtrados.slice(0, 50);
 
     if (filtrados.length === 0) {
-      container.innerHTML = `<div class="fr-sin-resultados"> 🔍 No se encontraron productos<br> <small>Intenta otra palabra</small> </div>`;
+      container.innerHTML = `<div class="fr-sin-resultados">🔍 No se encontraron productos<br><small>Intenta otra palabra</small></div>`;
       return;
     }
 
-    // Renderizado Compacto
     container.innerHTML = filtrados.map(p => `
       <div class="fr-producto-card" data-product-id="${p.id}">
         <div class="fr-prod-nombre" title="${p.nombre}">${p.nombre}</div>
         <div class="fr-prod-tipo">${p.categoria || 'General'}</div>
         <div class="fr-prod-precio">₡${(p.precio || 0).toLocaleString()}</div>
-        ${p.variantes?.length > 1 ? `<span class="fr-prod-variantes">${p.variantes.length} opciones</span>` : ''}
+        ${p.variantes?.length > 1 ? `<span class="fr-prod-variantes">${p.variantes.length} opc.</span>` : ''}
       </div>
     `).join('');
 
-    // Eventos Click
     container.querySelectorAll('.fr-producto-card').forEach(card => {
       card.addEventListener('click', () => {
         const productId = card.dataset.productId;
@@ -273,9 +372,14 @@ export const FacturacionRapidaV2 = {
       existing.cantidad += cantidad;
     } else {
       this.carritoFactura.push({
-        id: producto.id, nombre: producto.nombre, variante: variante.nombre,
-        precio: variante.precio, cantidad, subtotal: variante.precio * cantidad,
-        categoria: producto.categoria, tipo: producto.tipo
+        id: producto.id,
+        nombre: producto.nombre,
+        variante: variante.nombre,
+        precio: variante.precio,
+        cantidad,
+        subtotal: variante.precio * cantidad,
+        categoria: producto.categoria,
+        tipo: producto.tipo
       });
     }
     this.renderCarrito();
@@ -292,8 +396,8 @@ export const FacturacionRapidaV2 = {
       container.innerHTML = this.carritoFactura.map((item, idx) => `
         <div class="fr-carrito-item">
           <div class="fr-item-info">
-            <strong>${item.nombre}</strong>
-            <small>${item.variante} × ${Number(item.cantidad)||1}</small>
+            <strong>${item.nombre || 'Producto'}</strong>
+            <small>${item.variante || 'Única'} × ${Number(item.cantidad)||1}</small>
           </div>
           <div class="fr-item-actions">
             <span>₡${(Number(item.subtotal) || 0).toLocaleString()}</span>
@@ -325,46 +429,75 @@ export const FacturacionRapidaV2 = {
     if (this.carritoFactura.length === 0) return UI.toast('❌ Agregue productos', 'warning');
 
     const { subtotal, descuento, total } = this.calcularTotales();
+    const subtotalNum = Number(subtotal) || 0;
+    const descuentoNum = Number(descuento) || 0;
+    const totalNum = Number(total) || 0;
+
     const metodoPago = document.getElementById('frMetodoPago')?.value || 'contado';
     const estadoFactura = metodoPago === 'credito' ? 'pendiente' : 'completado';
 
+    const idCliente = String(this.clienteTemporal.id || this.clienteTemporal.cedula || 'temp').trim();
+    const nombreCliente = String(this.clienteTemporal.nombre || 'Cliente').trim();
+    const telefonoCliente = String(this.clienteTemporal.telefono || '').trim();
+
+    const productosSanitizados = this.carritoFactura.map(item => ({
+      id: String(item.id || ''),
+      nombre: String(item.nombre || 'Producto'),
+      variante: String(item.variante || 'Única'),
+      precio: Number(item.precio) || 0,
+      cantidad: Number(item.cantidad) || 1,
+      subtotal: Number(item.subtotal) || 0,
+      categoria: String(item.categoria || 'General'),
+      tipo: String(item.tipo || 'General')
+    }));
+
     const facturaData = {
       fecha: new Date().toISOString(),
-      clienteId: this.clienteTemporal.id || this.clienteTemporal.cedula || 'temp',
-      clienteNombre: this.clienteTemporal.nombre || 'Cliente',
-      clienteTelefono: this.clienteTemporal.telefono || '',
-      productos: this.carritoFactura,
-      subtotal, descuento, total,
+      clienteId: idCliente,
+      clienteNombre: nombreCliente,
+      clienteTelefono: telefonoCliente,
+      productos: productosSanitizados,
+      subtotal: subtotalNum,
+      descuento: descuentoNum,
+      total: totalNum,
       estado: estadoFactura,
       metodoPago,
       tipoFactura: 'rapida',
-      creadaPor: Store.get('cliente')?.nombre || 'admin',
-      fechaVencimiento: metodoPago === 'credito' ? new Date(Date.now() + 15*24*60*60*1000).toISOString() : null
+      creadaPor: String(Store.get('cliente')?.nombre || 'admin'),
+      fechaVencimiento: metodoPago === 'credito' 
+        ? new Date(Date.now() + 15*24*60*60*1000).toISOString() 
+        : null
     };
+
+    console.log('🔍 Datos a guardar:', facturaData);
+    const camposInvalidos = Object.entries(facturaData).filter(([k, v]) => v === undefined);
+    if (camposInvalidos.length > 0) {
+      console.error('❌ Campos undefined:', camposInvalidos);
+      return UI.toast('⚠️ Error interno: datos inválidos', 'error');
+    }
 
     try {
       await addDoc(collection(DB.db, "facturas_rapidas"), facturaData);
       
-      // Actualizar stock local
       for (const item of this.carritoFactura) {
         const prod = this.productosCache.find(p => p.id === item.id);
         if (prod) prod.stock = Math.max(0, (prod.stock || 0) - item.cantidad);
       }
 
       if (metodoPago === 'credito') {
-        await this.actualizarSaldoCliente(facturaData.clienteId, total);
+        await this.actualizarSaldoCliente(idCliente, totalNum);
       }
 
       UI.toast(`✅ Factura guardada (${metodoPago.toUpperCase()})`, 'success');
       
-      if (facturaData.clienteTelefono && confirm('¿Enviar por WhatsApp?')) {
-        this.enviarWhatsApp({ ...facturaData, telefono: facturaData.clienteTelefono });
+      if (telefonoCliente && confirm('¿Enviar por WhatsApp?')) {
+        this.enviarWhatsApp({ ...facturaData, telefono: telefonoCliente });
       }
       
       this.limpiarFactura();
     } catch (e) {
-      console.error(e);
-      UI.toast('❌ Error al guardar', 'error');
+      console.error('❌ Error al guardar:', e);
+      UI.toast('❌ Error: ' + e.message, 'error');
     }
   },
 
@@ -379,14 +512,15 @@ export const FacturacionRapidaV2 = {
         saldoPendiente: saldoActual + monto,
         ultimoCredito: new Date().toISOString()
       });
+      console.log(`💳 Saldo de ${clienteId} actualizado: ₡${(saldoActual + monto).toLocaleString()}`);
     } catch (e) { console.warn('No se actualizó saldo:', e); }
   },
 
   enviarWhatsApp(factura) {
     const telefono = factura.telefono?.replace(/\D/g, '') || '';
     if (!telefono || telefono.length < 8) return UI.toast('⚠️ Teléfono inválido', 'warning');
-    
     const cleanPhone = telefono.length === 8 ? '506' + telefono : telefono;
+    
     let mensaje = `🧾 *FACTURA ESENTIA*\n👤 ${factura.clienteNombre}\n📅 ${new Date(factura.fecha).toLocaleDateString()}\n\n*Productos:*\n`;
     factura.productos.forEach(p => { mensaje += `• ${p.nombre} (${p.variante}) x${p.cantidad} - ₡${p.subtotal.toLocaleString()}\n`; });
     mensaje += `\n💰 *Total: ₡${factura.total.toLocaleString()}*\n💳 Método: ${factura.metodoPago?.toUpperCase()}\n\n¡Gracias! 🌸`;
@@ -398,7 +532,11 @@ export const FacturacionRapidaV2 = {
     this.carritoFactura = [];
     this.clienteTemporal = null;
     document.getElementById('frBuscarCliente').value = '';
-    document.getElementById('frClienteInfo').classList.add('hidden');
+    const clienteInfo = document.getElementById('frClienteInfo');
+    if (clienteInfo) {
+      clienteInfo.classList.add('hidden');
+      clienteInfo.innerHTML = '';
+    }
     document.getElementById('frDescuento').value = 0;
     document.getElementById('frMetodoPago').value = 'contado';
     this.renderCarrito();
