@@ -135,7 +135,7 @@ export const ImpresionManager = {
         <div class="info-grid">
           <div>
             <strong>Cliente:</strong> ${factura.clienteNombre}<br>
-            <strong>Cédula:</strong> ${factura.clienteId}
+            <!--<strong>Cédula:</strong> ${factura.clienteId}-->
           </div>
           <div style="text-align:right">
             <strong>Teléfono:</strong> ${factura.clienteTelefono || 'N/A'}<br>
@@ -167,7 +167,7 @@ export const ImpresionManager = {
 
         <div class="footer">
           <p>¡Gracias por su compra! 🌸</p>
-          <p>Tel: 25525503 | WhatsApp: 72952454</p>
+          <p>Tel: 64551490 | WhatsApp: 72952454</p>
         </div>
 
         <button onclick="window.print()" style="margin-top: 20px; padding: 10px 20px; background: #667eea; color: white; border: none; cursor: pointer; border-radius: 5px;">🖨️ IMPRIMIR</button>

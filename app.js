@@ -23,6 +23,7 @@ import ProformasManager from './modules/proformas-compras.js';
 import HistorialComprasManager from './modules/historial-compras.js';
 import ImpresionManager from './modules/impresion.js';
 import DiagnosticoFacturas from './modules/diagnostico-facturas.js';
+import ReportesManager from './modules/reportes.js';
 
 // ✅ Exponer al window global
 window.UI = UI;
@@ -48,6 +49,7 @@ window.ProformasManager = ProformasManager;
 window.HistorialComprasManager = HistorialComprasManager;
 window.ImpresionManager = ImpresionManager;
 window.DiagnosticoFacturas = DiagnosticoFacturas;
+window.ReportesManager = ReportesManager;
 
 const App = {
   currentTab: 'login',
@@ -364,7 +366,8 @@ const App = {
           proformas: { manager: 'ProformasManager', method: 'mostrarPanel' },
           historialCompras: { manager: 'HistorialComprasManager', method: 'mostrarPanel' },
           impresion: { manager: 'ImpresionManager', method: 'mostrarPanel' }, // ✅ CORREGIDO a mostrarPanel
-          diagnostico: { manager: 'DiagnosticoFacturas', method: 'mostrarPanel' }
+          diagnostico: { manager: 'DiagnosticoFacturas', method: 'mostrarPanel' },
+          reportes: { manager: 'ReportesManager', method: 'mostrarPanel' }
         };
 
         const route = routeMap[action];

@@ -39,7 +39,7 @@ export const FacturacionRapidaV2 = {
     if (!Store.get('isAdmin')) { UI.toast('Acceso denegado', 'warning'); return; }
 
     this.prepararProductos();
-    await this.cargarClientes();
+    await this.cargarClientes(); // ✅ Recargar clientes cada vez que se abre
 
     this.carritoFactura = [];
     const personalCart = Store.get('carrito') || [];
@@ -125,6 +125,8 @@ export const FacturacionRapidaV2 = {
             <div class="fr-actions">
               <button id="frGuardarFactura" class="btn-primary btn-large" disabled>💾 Guardar</button>
               <button id="frLimpiar" class="btn-secondary">🗑️ Limpiar</button>
+              <!-- ✅ NUEVO: Botón para Nueva Factura -->
+              <button id="frNuevaFactura" class="btn-success" style="display:none;">🔄 Nueva Factura</button>
             </div>
           </div>
         </div>
@@ -139,14 +141,18 @@ export const FacturacionRapidaV2 = {
     setTimeout(() => document.getElementById('frBuscarProducto')?.focus(), 300);
   },
 
-  // ✅ NUEVO: MODAL DE SELECCIÓN DE CLIENTES
+  // ✅ MODAL DE SELECCIÓN DE CLIENTES
   async mostrarModalClientes() {
+    // ✅ Cerrar modal de facturación temporalmente para evitar superposición
+    const modalFactura = document.getElementById('modalFacturacionRapida');
+    if (modalFactura) modalFactura.style.display = 'none';
+
     const modal = document.createElement('div');
     modal.className = 'modal show';
     modal.id = 'modalSeleccionCliente';
     modal.innerHTML = `
       <div class="modal-content modal-grande">
-        <button class="modal-close" onclick="UI.modal('modalSeleccionCliente','close')">✕</button>
+        <button class="modal-close" onclick="FacturacionRapidaV2.cerrarModalClientes()">✕</button>
         <h2>👥 Seleccionar Cliente</h2>
         
         <div class="cliente-buscador">
@@ -160,6 +166,9 @@ export const FacturacionRapidaV2 = {
     `;
     
     document.body.appendChild(modal);
+    
+    // ✅ Recargar clientes frescos al abrir el modal
+    await this.cargarClientes();
     this.renderListaClientes(this.clientesCache);
     
     // Búsqueda en tiempo real
@@ -175,6 +184,13 @@ export const FacturacionRapidaV2 = {
 
     // Foco automático
     setTimeout(() => document.getElementById('buscarClienteModal')?.focus(), 100);
+  },
+
+  // ✅ Función para cerrar modal de clientes y volver a facturación
+  cerrarModalClientes() {
+    UI.modal('modalSeleccionCliente', 'close');
+    const modalFactura = document.getElementById('modalFacturacionRapida');
+    if (modalFactura) modalFactura.style.display = 'flex';
   },
 
   renderListaClientes(clientes) {
@@ -209,7 +225,7 @@ export const FacturacionRapidaV2 = {
     };
 
     this.mostrarClienteInfo();
-    UI.modal('modalSeleccionCliente', 'close');
+    this.cerrarModalClientes(); // ✅ Volver al modal de facturación
     UI.toast(`✅ Cliente seleccionado: ${cliente.nombre}`, 'success');
   },
 
@@ -226,6 +242,11 @@ export const FacturacionRapidaV2 = {
     document.getElementById('frDescuento')?.addEventListener('input', () => this.calcularTotales());
     document.getElementById('frLimpiar')?.addEventListener('click', () => this.limpiarFactura());
     document.getElementById('frGuardarFactura')?.addEventListener('click', () => this.guardarFactura());
+    
+    // ✅ NUEVO: Botón para Nueva Factura (mantiene modal abierto)
+    document.getElementById('frNuevaFactura')?.addEventListener('click', () => {
+      this.prepararNuevaFactura();
+    });
   },
 
   async buscarCliente() {
@@ -247,7 +268,6 @@ export const FacturacionRapidaV2 = {
       fechaRegistro: new Date().toISOString()
     };
 
-    // Guardar en Firebase
     import('https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js')
       .then(async ({ doc, setDoc }) => {
         try {
@@ -388,10 +408,12 @@ export const FacturacionRapidaV2 = {
   renderCarrito() {
     const container = document.getElementById('frCarrito');
     const btnGuardar = document.getElementById('frGuardarFactura');
+    const btnNueva = document.getElementById('frNuevaFactura');
 
     if (this.carritoFactura.length === 0) {
       container.innerHTML = '<p class="empty-carrito">Sin productos agregados</p>';
       if (btnGuardar) btnGuardar.disabled = true;
+      if (btnNueva) btnNueva.style.display = 'none';
     } else {
       container.innerHTML = this.carritoFactura.map((item, idx) => `
         <div class="fr-carrito-item">
@@ -406,6 +428,7 @@ export const FacturacionRapidaV2 = {
         </div>
       `).join('');
       if (btnGuardar) btnGuardar.disabled = false;
+      if (btnNueva) btnNueva.style.display = 'inline-block';
     }
     this.calcularTotales();
   },
@@ -422,6 +445,34 @@ export const FacturacionRapidaV2 = {
     document.getElementById('frSubtotal').textContent = `₡${subtotal.toLocaleString()}`;
     document.getElementById('frTotal').textContent = `₡${total.toLocaleString()}`;
     return { subtotal, descuento, total };
+  },
+
+  // ✅ FUNCIÓN NUEVA: Preparar para nueva factura (mantiene modal abierto)
+  prepararNuevaFactura() {
+    this.carritoFactura = [];
+    this.clienteTemporal = null;
+    
+    // Limpiar UI
+    document.getElementById('frBuscarCliente').value = '';
+    document.getElementById('frClienteInfo').classList.add('hidden');
+    document.getElementById('frClienteInfo').innerHTML = '';
+    document.getElementById('frDescuento').value = 0;
+    document.getElementById('frMetodoPago').value = 'contado';
+    
+    // Resetear botones
+    const btnGuardar = document.getElementById('frGuardarFactura');
+    const btnNueva = document.getElementById('frNuevaFactura');
+    if (btnGuardar) {
+      btnGuardar.disabled = true;
+      btnGuardar.style.display = 'inline-block';
+    }
+    if (btnNueva) btnNueva.style.display = 'none';
+    
+    this.renderCarrito();
+    UI.toast('🔄 Lista para nueva factura', 'info');
+    
+    // Foco en búsqueda de cliente
+    setTimeout(() => document.getElementById('frBuscarCliente')?.focus(), 100);
   },
 
   async guardarFactura() {
@@ -494,7 +545,9 @@ export const FacturacionRapidaV2 = {
         this.enviarWhatsApp({ ...facturaData, telefono: telefonoCliente });
       }
       
-      this.limpiarFactura();
+      // ✅ CAMBIO: En lugar de limpiarFactura(), usar prepararNuevaFactura()
+      this.prepararNuevaFactura();
+      
     } catch (e) {
       console.error('❌ Error al guardar:', e);
       UI.toast('❌ Error: ' + e.message, 'error');
@@ -532,11 +585,8 @@ export const FacturacionRapidaV2 = {
     this.carritoFactura = [];
     this.clienteTemporal = null;
     document.getElementById('frBuscarCliente').value = '';
-    const clienteInfo = document.getElementById('frClienteInfo');
-    if (clienteInfo) {
-      clienteInfo.classList.add('hidden');
-      clienteInfo.innerHTML = '';
-    }
+    document.getElementById('frClienteInfo').classList.add('hidden');
+    document.getElementById('frClienteInfo').innerHTML = '';
     document.getElementById('frDescuento').value = 0;
     document.getElementById('frMetodoPago').value = 'contado';
     this.renderCarrito();
