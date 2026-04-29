@@ -42,8 +42,10 @@ export const ImpresionManager = {
     const container = document.getElementById('listaFacturasImpresion');
     try {
       const snap = await getDocs(collection(DB.db, "facturas_rapidas"));
+      
       this.facturasCache = snap.docs.map(d => ({ id: d.id, ...d.data() }))
         .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
       this.renderizarLista(this.facturasCache);
     } catch (e) {
       console.error(e);
@@ -53,6 +55,7 @@ export const ImpresionManager = {
 
   renderizarLista(facturas) {
     const container = document.getElementById('listaFacturasImpresion');
+    
     if (facturas.length === 0) {
       container.innerHTML = '<p class="no-data">No se encontraron facturas</p>';
       return;
@@ -85,7 +88,6 @@ export const ImpresionManager = {
     this.renderizarLista(filtradas);
   },
 
-  // ✅ VER QR EN MODAL
   async verQR(facturaId) {
     let factura = this.facturasCache.find(f => f.id === facturaId);
     if (!factura) {
@@ -114,7 +116,6 @@ export const ImpresionManager = {
 
   // ✅ IMPRIMIR ESTILO TICKET + QR
   async imprimir(facturaId) {
-    // 1. Buscar factura (caché -> Firebase si no está)
     let factura = this.facturasCache.find(f => f.id === facturaId);
     if (!factura) {
       try {
@@ -124,10 +125,10 @@ export const ImpresionManager = {
     }
     if (!factura) return UI.toast('Factura no encontrada', 'error');
 
-    const ventana = window.open('', '_blank', 'width=400,height=700');
+    const ventana = window.open('', '_blank', 'width=400,height=750');
     const facturaURL = `${this.BASE_URL}/ver-factura.html?id=${factura.id}`;
     const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(facturaURL)}`;
-
+    
     const html = `
     <!DOCTYPE html>
     <html lang="es">
@@ -182,8 +183,8 @@ export const ImpresionManager = {
       </div>
       <div class="line"></div>
       <div class="info">
-        <p><strong>Cliente:</strong> ${factura.clienteNombre}</p>
-        <p><strong>Cédula:</strong> ${factura.clienteId}</p>
+        <p><strong>Cliente:</strong> ${factura.clienteNombre || 'Cliente'}</p>
+        <p><strong>Teléfono:</strong> ${factura.clienteTelefono || 'N/A'}</p>
         <p><strong>Método:</strong> ${factura.metodoPago || 'Contado'}</p>
       </div>
       <div class="line"></div>
