@@ -24,6 +24,7 @@ import HistorialComprasManager from './modules/historial-compras.js';
 import ImpresionManager from './modules/impresion.js';
 import DiagnosticoFacturas from './modules/diagnostico-facturas.js';
 import ReportesManager from './modules/reportes.js';
+import InventoryManager from './modules/inventory-manager.js';
 
 // ✅ Exponer al window global
 window.UI = UI;
@@ -50,6 +51,7 @@ window.HistorialComprasManager = HistorialComprasManager;
 window.ImpresionManager = ImpresionManager;
 window.DiagnosticoFacturas = DiagnosticoFacturas;
 window.ReportesManager = ReportesManager;
+window.InventoryManager = InventoryManager;
 
 const App = {
   currentTab: 'login',
@@ -367,7 +369,8 @@ const App = {
           historialCompras: { manager: 'HistorialComprasManager', method: 'mostrarPanel' },
           impresion: { manager: 'ImpresionManager', method: 'mostrarPanel' }, // ✅ CORREGIDO a mostrarPanel
           diagnostico: { manager: 'DiagnosticoFacturas', method: 'mostrarPanel' },
-          reportes: { manager: 'ReportesManager', method: 'mostrarPanel' }
+          reportes: { manager: 'ReportesManager', method: 'mostrarPanel' },
+          inventario: { manager: 'InventoryManager', method: 'mostrarPanel' }
         };
 
         const route = routeMap[action];

@@ -62,6 +62,17 @@ export const InventoryService = {
    * @param {NodeList} rows - Elementos DOM con clase .inventory-row.modified
    * @returns {Promise<Array<{success: boolean, nombre: string, error?: string}>>}
    */
+
+  // Agregar al final de InventoryService en inventory-service.js
+async saveMultipleObj(items) {
+  const results = [];
+  for (const item of items) {
+    if (!item.nombre || isNaN(item.cantidad)) continue;
+    const result = await this.saveOne(item.nombre, item.cantidad);
+    results.push({ ...result, cantidad: item.cantidad });
+  }
+  return results;
+},
   async saveMultiple(rows) {
     const results = [];
     for (const row of rows) {
@@ -81,4 +92,5 @@ export const InventoryService = {
   clearCache() {
     this._docMap = null;
   }
+  
 };

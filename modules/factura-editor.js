@@ -26,11 +26,11 @@ export const FacturaEditor = {
       </div>
     `;
     document.body.appendChild(modal);
-    
+
     // Event Listeners
     document.getElementById('btnRecargarEditor').addEventListener('click', () => this.cargarFacturas());
     document.getElementById('buscarFactura').addEventListener('input', (e) => this.filtrarFacturas(e.target.value));
-    
+
     await this.cargarFacturas();
   },
 
@@ -53,7 +53,6 @@ export const FacturaEditor = {
 
   renderFacturas(facturas) {
     const container = document.getElementById('facturasLista');
-    
     if (facturas.length === 0) {
       container.innerHTML = '<p class="no-data">No se encontraron facturas</p>';
       return;
@@ -80,7 +79,10 @@ export const FacturaEditor = {
           <!-- Acciones Rápidas -->
           <div class="factura-actions-bar">
             <button onclick="event.stopPropagation(); FacturaEditor.editar('${f.id}')">✏️ Editar</button>
+            
+            <!-- ✅ UNIFICADO: Delega al módulo ImpresionManager -->
             <button onclick="event.stopPropagation(); FacturaEditor.imprimir('${f.id}')">🖨️ Imprimir</button>
+            
             <button class="btn-danger" onclick="event.stopPropagation(); FacturaEditor.eliminar('${f.id}')">🗑️</button>
           </div>
 
@@ -114,7 +116,6 @@ export const FacturaEditor = {
     this.renderFacturas(filtradas);
   },
 
-  // ✅ NUEVA: Modal de Edición
   async editar(facturaId) {
     const factura = this._facturasCache.find(f => f.id === facturaId);
     if (!factura) return;
@@ -184,14 +185,13 @@ export const FacturaEditor = {
       
       UI.toast('✅ Factura actualizada', 'success');
       UI.modal('modalEditarFactura', 'close');
-      this.cargarFacturas(); // Recargar lista
+      this.cargarFacturas(); 
     } catch (e) {
       console.error(e);
       UI.toast('❌ Error al guardar', 'error');
     }
   },
 
-  // ✅ NUEVA: Eliminar Factura
   async eliminar(facturaId) {
     if (!confirm('⚠️ ¿Estás seguro de eliminar esta factura? Esta acción no se puede deshacer.')) return;
     
@@ -205,58 +205,15 @@ export const FacturaEditor = {
     }
   },
 
-  // ✅ NUEVA: Imprimir Factura
+  // ✅ IMPRESIÓN UNIFICADA: Delega al módulo ImpresionManager
   imprimir(facturaId) {
-    const factura = this._facturasCache.find(f => f.id === facturaId);
-    if (!factura) return;
-
-    const ventana = window.open('', '_blank');
-    const html = `
-      <html>
-      <head>
-        <title>Factura ${facturaId.slice(-6)}</title>
-        <style>
-          body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
-          .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          th { background-color: #f4f4f4; }
-          .total { text-align: right; font-size: 1.2em; font-weight: bold; margin-top: 20px; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div>
-            <h1>Factura #${facturaId.slice(-6).toUpperCase()}</h1>
-            <p>Fecha: ${new Date(factura.fecha).toLocaleString()}</p>
-          </div>
-          <div style="text-align:right">
-            <h3>${factura.clienteNombre}</h3>
-            <p>Tel: ${factura.clienteTelefono || 'N/A'}</p>
-          </div>
-        </div>
-        <table>
-          <thead><tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr></thead>
-          <tbody>
-            ${(factura.productos || []).map(p => `
-              <tr>
-                <td>${p.nombre} (${p.variante})</td>
-                <td>${p.cantidad}</td>
-                <td>₡${p.precio.toLocaleString()}</td>
-                <td>₡${p.subtotal.toLocaleString()}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        <div class="total">
-          Total: ₡${factura.total.toLocaleString()}
-        </div>
-        <script>window.print();</script>
-      </body>
-      </html>
-    `;
-    ventana.document.write(html);
-    ventana.document.close();
+    if (window.ImpresionManager && typeof window.ImpresionManager.imprimir === 'function') {
+      // Llama al motor estandarizado (Ticket Térmico + QR)
+      window.ImpresionManager.imprimir(facturaId);
+    } else {
+      console.error("Módulo ImpresionManager no disponible");
+      UI.toast('⚠️ Módulo de impresión no cargado', 'error');
+    }
   }
 };
 
