@@ -1,4 +1,4 @@
-<!-- ver-factura.html - Visualización Online de Facturas -->
+<!-- ver-factura.html - Visualización Online de Facturas con Banner Facebook -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -27,6 +27,7 @@
     .total { font-size: 18px; font-weight: bold; text-align: right; margin-top: 15px; color: #667eea; }
     .loading { text-align: center; padding: 40px; }
     .error { color: #e74c3c; text-align: center; padding: 20px; }
+    
     .btn-print {
       display: block;
       width: 100%;
@@ -40,7 +41,44 @@
       margin-top: 20px;
     }
     .btn-print:hover { background: #5568d3; }
-    @media print { .btn-print { display: none; } }
+
+    /* ✅ ESTILOS DEL BANNER FACEBOOK */
+    .facebook-banner {
+      margin-top: 25px;
+      background: linear-gradient(135deg, #f0f2f5 0%, #e4e8eb 100%);
+      border: 1px solid #d8dadc;
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .facebook-banner a {
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: #1877F2;
+      font-weight: bold;
+      font-size: 16px;
+      transition: transform 0.2s;
+    }
+    .facebook-banner a:hover {
+      transform: scale(1.02);
+      color: #145dbf;
+    }
+    .facebook-banner img {
+      width: 32px;
+      height: 32px;
+    }
+    .facebook-banner small {
+      display: block;
+      margin-top: 5px;
+      color: #666;
+      font-size: 12px;
+    }
+
+    @media print { .btn-print, .facebook-banner { display: none; } }
   </style>
 </head>
 <body>
@@ -48,6 +86,17 @@
     <div id="contenido">
       <div class="loading">🔄 Cargando factura...</div>
     </div>
+
+    <!-- ✅ BANNER FACEBOOK (Se oculta al imprimir) -->
+    <div class="facebook-banner">
+      <a href="https://www.facebook.com/profile.php?id=61579078480913" target="_blank">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="Facebook Logo">
+        <span>¡Síguenos en Facebook para más ofertas! 🌸</span>
+      </a>
+      <small>Encuentra nuevos aromas y descuentos exclusivos</small>
+    </div>
+
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
   </div>
 
   <script type="module">
@@ -63,10 +112,10 @@
   messagingSenderId: "888658236080",
   appId: "1:888658236080:web:506e5e2085b5a452dba175"
 };
-    const app = initializeApp(config);
-    const db = getFirestore(app);
-    
-    // Obtener ID de URL
+
+const app = initializeApp(config);
+const db = getFirestore(app);
+
     const params = new URLSearchParams(window.location.search);
     const facturaId = params.get('id');
 
@@ -119,8 +168,6 @@
             ${f.descuento > 0 ? `<div style="font-size: 14px; color: #e74c3c;">Descuento: -₡${f.descuento.toLocaleString()}</div>` : ''}
             TOTAL: ₡${(f.total || 0).toLocaleString()}
           </div>
-          
-          <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
         `;
       } catch (e) {
         console.error(e);
