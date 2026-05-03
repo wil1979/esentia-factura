@@ -18,14 +18,14 @@ const ProductManager = {
 
   // ✅ CLAVES NORMALIZADAS PARA PROMOCIONES (sin espacios)
   PROMO_ESPECIAL: {
-    "freshkiwienergiafrutal": 35,
-    "strawberryjoy": 35,
+   // "freshkiwienergiafrutal": 35,
+   // "strawberryjoy": 35,
     "nightcaress": 45,
     "crystalembrace": 45,
-    "puremagnolia": 35,
-    "melonvanilladelight": 35,
-    "freshbreatheeucalipto": 35,
-    "freshmint": 35,
+   // "puremagnolia": 35,
+   // "melonvanilladelight": 35,
+   // "freshbreatheeucalipto": 35,
+    //"freshmint": 35,
   },
 
   // 🔧 FUNCIÓN DE LIMPIEZA UNIVERSAL (Maneja claves sucias como "id ", "nombre ", etc.)
