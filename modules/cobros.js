@@ -410,7 +410,7 @@ export const CobrosManager = {
     if (tipo === 'amable') {
       mensaje = `Hola ${clienteData.nombre} 👋,\n\nEsperamos que esté muy bien. Le recordamos amablemente que tiene un saldo pendiente de *₡${deuda}*.\n\n💳 *Métodos de pago:*\n• SINPE: 72952454\n• IBAN: CR76015114620010283743\n\n¡Gracias por su preferencia! 🌸`;
     } else {
-      mensaje = `Estimado/a ${clienteData.nombre},\n\nLe informamos que su cuenta presenta un saldo vencido de *₡${deuda}* con más de 15 días de atraso.\n\n💳 *Regularice su pago para evitar cargos adicionales:*\n• SINPE: 72952454\n• SMS: "PASE ${Math.round(clienteData.totalDeuda)} 72952454"\n\n⚠️ Agradecemos su pronta gestión.`;
+      mensaje = `Estimado/a ${clienteData.nombre},\n\nLe informamos que su cuenta presenta un saldo vencido de *₡${deuda}* con más de 15 días de atraso.\n\n💳 *Regularice su pago para evitar suspencion de su Credito:*\n• SINPE: 72952454\n• SMS: "PASE ${Math.round(clienteData.totalDeuda)} 72952454"\n\n⚠️ Agradecemos su pronta gestión.`;
     }
 
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensaje)}`, '_blank');

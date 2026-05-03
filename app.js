@@ -14,7 +14,6 @@ import { FacturaEditor } from './modules/factura-editor.js';
 import { LoyaltyControl } from './modules/loyalty-control.js';
 import PedidosManager from './modules/pedidos.js';
 import UserManager from './modules/user-management.js';
-import ClientesManager from './modules/clientes-manager.js';
 import DashboardManager from './modules/dashboard.js';
 import FacturacionRapidaV2 from './modules/facturacion-rapida-v2.js';
 import StockAlertsManager from './modules/stock-alerts.js';
@@ -25,6 +24,9 @@ import ImpresionManager from './modules/impresion.js';
 import DiagnosticoFacturas from './modules/diagnostico-facturas.js';
 import ReportesManager from './modules/reportes.js';
 import InventoryManager from './modules/inventory-manager.js';
+import ClientesManager from './modules/clientes-manager.js';
+import { ClientesEditor } from './modules/clientes-editor.js';
+import { ClientesBusqueda } from './modules/clientes-busqueda.js';
 
 // ✅ Exponer al window global
 window.UI = UI;
@@ -52,7 +54,8 @@ window.ImpresionManager = ImpresionManager;
 window.DiagnosticoFacturas = DiagnosticoFacturas;
 window.ReportesManager = ReportesManager;
 window.InventoryManager = InventoryManager;
-
+window.ClientesEditor = ClientesEditor;
+window.ClientesBusqueda = ClientesBusqueda;
 const App = {
   currentTab: 'login',
   appliedPromo: null,
@@ -370,7 +373,8 @@ const App = {
           impresion: { manager: 'ImpresionManager', method: 'mostrarPanel' }, // ✅ CORREGIDO a mostrarPanel
           diagnostico: { manager: 'DiagnosticoFacturas', method: 'mostrarPanel' },
           reportes: { manager: 'ReportesManager', method: 'mostrarPanel' },
-          inventario: { manager: 'InventoryManager', method: 'mostrarPanel' }
+          inventario: { manager: 'InventoryManager', method: 'mostrarPanel' },
+         
         };
 
         const route = routeMap[action];
