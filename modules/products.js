@@ -5,9 +5,9 @@ import { DB } from './firebase.js';
 const ProductManager = {
   // ✅ URLs REMOTAS DE TUS CATÁLOGOS
   URLS: {
-    ESENCIAS: "https://wil1979.github.io/esentia-factura/productos_esentia.json",
-    LIMPIEZA: "https://wil1979.github.io/esentia-factura/productos_limpieza_completo.json",
-    VELAS:    "https://wil1979.github.io/esentia-factura/catalogo-velas.json"
+    ESENCIAS: "https://wil1979.github.io/esentia-factura/data/productos_esentia.json",
+    LIMPIEZA: "https://wil1979.github.io/esentia-factura/data/productos_limpieza_completo.json",
+    VELAS:    "https://wil1979.github.io/esentia-factura/data/catalogo-velas.json"
   },
 
   // ✅ AROMAS DISPONIBLES PARA DIFUSORES
