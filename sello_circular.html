@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Esentia — Generador de Etiquetas Circulares (QR + PDF + ZIP)</title>
+<title>Esentia — Generador de Etiquetas Circulares (QR + PDF + ZIP) - Versión 300 DPI DTF</title>
 <link rel="preload" as="font" href="./fonts/Adelia.ttf" type="font/ttf" crossorigin>
 <!-- Librerías -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -44,7 +44,7 @@
     border-radius:10px;
     box-shadow:0 8px 24px rgba(0,0,0,0.06);
   }
-  .controls{ width:360px; }
+  .controls{ width:380px; }
   .preview{ flex:1; min-width:520px; }
   label{
     display:block;
@@ -67,9 +67,22 @@
     color:#fff;
     border:none;
     cursor:pointer;
+    transition: background 0.2s;
+  }
+  button:hover{
+    background:#333;
   }
   button.secondary{
     background:#666;
+  }
+  button.secondary:hover{
+    background:#888;
+  }
+  button.success{
+    background:#2a8f4a;
+  }
+  button.success:hover{
+    background:#1f6835;
   }
   .row{
     display:flex;
@@ -80,6 +93,22 @@
     font-size:13px;
     color:#666;
     margin-top:8px;
+  }
+  .info-box{
+    background:#e8f4f8;
+    border-left:4px solid #0288d1;
+    padding:10px;
+    margin:10px 0;
+    border-radius:4px;
+    font-size:13px;
+  }
+  .warning-box{
+    background:#fff3e0;
+    border-left:4px solid #f57c00;
+    padding:10px;
+    margin:10px 0;
+    border-radius:4px;
+    font-size:13px;
   }
   #canvasPreview{
     border:1px solid #eee;
@@ -92,14 +121,46 @@
     width:100%;
     margin-top:8px;
   }
+  .dpi-indicator{
+    background:#f0f0f0;
+    padding:8px;
+    border-radius:4px;
+    margin:8px 0;
+    font-size:13px;
+    font-weight:bold;
+  }
+  .dpi-indicator.ok{
+    background:#d4edda;
+    color:#155724;
+  }
+  .dpi-indicator.warning{
+    background:#fff3cd;
+    color:#856404;
+  }
+  .batch-section{
+    background:#f9f9f9;
+    padding:12px;
+    border-radius:8px;
+    margin:12px 0;
+    border:1px solid #eee;
+  }
+  .section-title{
+    font-weight:bold;
+    margin-bottom:8px;
+    color:#333;
+  }
 </style>
 </head>
 <body>
-<header>Esentia — Generador de Etiquetas Circulares (QR + PDF + ZIP)</header>
+<header>Esentia — Generador de Etiquetas Circulares (QR + PDF + ZIP) - v2.0 300 DPI DTF</header>
 
 <div class="container">
   <div class="panel controls">
     <h3>Opciones</h3>
+
+    <div class="info-box">
+      <strong>✓ Versión 300 DPI:</strong> Optimizada para impresión DTF de alta calidad
+    </div>
 
     <label>Buscar producto (nombre parcial):</label>
     <div class="row">
@@ -107,7 +168,6 @@
       <button id="btnFind" style="flex:0 0 120px;">Buscar</button>
     </div>
     
-
     <label>Selecciona un producto:</label>
     <select id="productSelect">
       <option value="">Cargando productos...</option>
@@ -119,8 +179,26 @@
       <button id="btnDownloadPNGTransparent" class="secondary">PNG transparente</button>
     </div>
 
-    <label style="margin-top:8px;">Seleccionar varios (IDs internos separados por coma) — opcional:</label>
-    <input id="multiIds" placeholder="ej: freshapple, sweetcherry,...">
+    <hr style="margin: 16px 0;">
+
+    <!-- NUEVA SECCIÓN: GENERACIÓN DE MÚLTIPLES IMÁGENES -->
+    <div class="batch-section">
+      <div class="section-title">📋 Generar Múltiples Imágenes</div>
+      
+      <label>Cantidad de copias del producto actual:</label>
+      <input id="copiesPerProduct" type="number" value="1" min="1" max="1000">
+      
+      <label style="margin-top:8px;">Seleccionar varios (IDs internos separados por coma):</label>
+      <input id="multiIds" placeholder="ej: freshapple, sweetcherry,...">
+      
+      <label style="margin-top:8px;">Cantidad de copias por producto:</label>
+      <input id="copiesPerProductBatch" type="number" value="1" min="1" max="1000">
+
+      <div class="row" style="margin-top:8px;">
+        <button id="btnGenerateBatchSingle" class="success">Generar Lote (Actual)</button>
+        <button id="btnGenerateBatchMulti" class="success">Generar Lote (Múltiples)</button>
+      </div>
+    </div>
 
     <hr style="margin: 16px 0;">
 
@@ -215,13 +293,15 @@
 
     <hr>
 
-    <!-- Tamaño / QR / opciones -->
-    <h3>Tamaño y QR</h3>
-    <label>Tamaño etiqueta (inches):</label>
-    <div class="row">
-      <input id="labelInches" value="1.75">
-      <input id="dpi" value="300">
+    <!-- Tamaño / QR / opciones - OPTIMIZADO PARA 300 DPI -->
+    <h3>Tamaño y QR (300 DPI DTF)</h3>
+    
+    <div class="dpi-indicator ok">
+      ✓ DPI: 300 (Óptimo para DTF)
     </div>
+
+    <label>Tamaño etiqueta (inches):</label>
+    <input id="labelInches" value="1.75">
 
     <label>Sangrado / bleed (mm):</label>
     <input id="bleedMm" value="2">
@@ -231,9 +311,6 @@
 
     <label>QR base URL (producto.html?id=...):</label>
     <input id="qrBase" value="https://wil1979.github.io/esentia-factura/producto.html">
-
-    <label>Batch: cuántas por producto (ej. 100):</label>
-    <input id="batchCount" value="100">
 
     <label style="margin-top:10px;">
       <input type="checkbox" id="showCropMarks" >
@@ -253,16 +330,11 @@
     <div class="row" style="margin-top:8px;">
       <button id="btnExportPDF" class="secondary">Exportar PDF (marcas de corte)</button>
       <button id="btnExportPDFAll" class="secondary">PDF catálogo (1 por fragancia)</button>
-      <button id="btnExportAllPNGs" class="secondary">PNGs de todos los productos (ZIP)</button>
+      <button id="btnExportAllPNGs" class="secondary">PNGs de todos (ZIP)</button>
     </div>
 
     <div class="row" style="margin-top:8px;">
       <button id="btnExportPDFRollo" class="secondary">PDF rollo continuo</button>
-    </div>
-
-    <div class="row" style="margin-top:8px;">
-      <button id="btnDownloadPNG">PNG actual</button>
-      <button id="btnDownloadPNGTransparent" class="secondary">PNG transparente</button>
     </div>
 
     <div class="row" style="margin-top:8px;">
@@ -281,7 +353,13 @@
       <button id="btnDownloadPDFSingle" class="secondary">Descargar PDF actual</button>
     </div>
 
-    <div class="small" style="margin-top:8px;">Preview muestra la primera etiqueta generada.</div>
+    <div class="small" style="margin-top:8px;">
+      <strong>Información de resolución:</strong><br>
+      • DPI: 300 (Óptimo para DTF)<br>
+      • Tamaño base: 1.75" = 525 px @ 300 DPI<br>
+      • Con bleed: 2mm = 24 px<br>
+      • Resolución final: 573×573 px @ 300 DPI
+    </div>
   </div>
 </div>
 
@@ -292,8 +370,12 @@
 const baseUrl = "https://wil1979.github.io/esentia-factura/";
 const jsonUrl = baseUrl + "productos_esentia.json";
 
+// CONSTANTE 300 DPI - NO MODIFICAR
+const DPI_DTF = 300;
+
 let productos = [];
 let selectedIds = [];
+let currentProductId = null;
 
 const canvas  = document.getElementById('canvasPreview');
 const ctx     = canvas.getContext('2d');
@@ -329,175 +411,166 @@ function mmToPt(mm){
   return mm / 25.4 * 72;
 }
 
+function getSettings(){
+  return {
+    topText: document.getElementById('topText').value,
+    topSize: parseFloat(document.getElementById('topSize').value),
+    topColor: document.getElementById('topColor').value,
+    topFont: document.getElementById('topFont').value,
+    topOffsetX: parseFloat(document.getElementById('topOffsetX').value),
+    topOffsetY: parseFloat(document.getElementById('topOffsetY').value),
+    leftSize: parseFloat(document.getElementById('leftSize').value),
+    leftColor: document.getElementById('leftColor').value,
+    leftFont: document.getElementById('leftFont').value,
+    leftSpacing: parseFloat(document.getElementById('leftSpacing').value),
+    leftOffset: parseFloat(document.getElementById('leftOffset').value),
+    rightSize: parseFloat(document.getElementById('rightSize').value),
+    rightColor: document.getElementById('rightColor').value,
+    rightFont: document.getElementById('rightFont').value,
+    rightSpacing: parseFloat(document.getElementById('rightSpacing').value),
+    rightOffset: parseFloat(document.getElementById('rightOffset').value),
+    bottomText: document.getElementById('bottomText').value,
+    bottomSize: parseFloat(document.getElementById('bottomSize').value),
+    bottomColor: document.getElementById('bottomColor').value,
+    bottomFont: document.getElementById('bottomFont').value,
+    bottomOffsetX: parseFloat(document.getElementById('bottomOffsetX').value),
+    bottomOffsetY: parseFloat(document.getElementById('bottomOffsetY').value),
+    showCropMarks: document.getElementById('showCropMarks').checked,
+    transparentBg: document.getElementById('transparentBg').checked
+  };
+}
+
 /* -------------------------
   Cargar JSON de productos
---------------------------*/
-/* -------------------------
-Cargar JSON de productos (ACTUALIZADO para categorías)
 --------------------------*/
 fetch(jsonUrl)
 .then(r => r.json())
 .then(data => {
-    // Detectar si es estructura por categorías o array plano
     if (Array.isArray(data)) {
-        // Estructura antigua (array plano)
         productos = data.map(p => ({
             ...p,
             id: Number(p.id)
         }));
     } else {
-        // Estructura nueva por categorías/tipos
         productos = [];
         Object.keys(data).forEach(categoria => {
-            const items = Array.isArray(data[categoria]) ? data[categoria] : [];
-            items.forEach(p => {
-                productos.push({
+            const items = data[categoria];
+            if (Array.isArray(items)) {
+                productos = productos.concat(items.map(p => ({
                     ...p,
                     id: Number(p.id),
-                    categoria: categoria  // Guardar la categoría para referencia
-                });
-            });
+                    categoria
+                })));
+            }
         });
     }
-    llenarListaProductos();
-    status.innerText = `Productos cargados: ${productos.length}`;
+    
+    const select = document.getElementById('productSelect');
+    select.innerHTML = '<option value="">-- Selecciona un producto --</option>';
+    productos.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.nombre || `Producto ${p.id}`;
+        select.appendChild(opt);
+    });
+    
+    console.log(`Cargados ${productos.length} productos`);
+    status.innerText = `✓ ${productos.length} productos cargados`;
 })
 .catch(e => {
-    console.error("No se cargó JSON", e);
-    status.innerText = "Error cargando productos_esentia.json";
+    console.error("Error cargando JSON:", e);
+    status.innerText = "Error cargando productos";
 });
 
-function llenarListaProductos(){
-  const select = document.getElementById('productSelect');
-  select.innerHTML = "";
-  const opt = document.createElement('option');
-  opt.value = "";
-  opt.textContent = "Seleccione un producto...";
-  opt.disabled = true;
-  opt.selected = true;
-  select.appendChild(opt);
-
-  const ordenados = [...productos].sort((a,b) => (a.nombre || '').localeCompare(b.nombre || ''));
-  for(const p of ordenados){
-    const o = document.createElement('option');
-    o.value = p.id;
-    o.textContent = p.nombre;
-    select.appendChild(o);
-  }
-}
-
-async function autoPreview() {
-  if (!selectedIds.length) return;
-  await previewById(selectedIds[0]);
-}
-
 /* -------------------------
-  Ajustes
+  Búsqueda de productos
 --------------------------*/
-function getSettings(){
-  return {
-    // Nuevo texto superior (fijo)
-    topText:       document.getElementById('topText').value || "ESENTIA",
-    topSize:       parseFloat(document.getElementById('topSize').value) || 32,
-    topColor:      document.getElementById('topColor').value || "#cbbf7a",
-    topFont:       "Adelia", // siempre Adelia
-    topOffsetX:    parseFloat(document.getElementById('topOffsetX').value) || 0,
-    topOffsetY:    parseFloat(document.getElementById('topOffsetY').value) || -100,
-
-    // Texto circular izquierda
-    leftSize:     parseFloat(document.getElementById('leftSize').value) || 20,
-    leftColor:    document.getElementById('leftColor').value || "#cc4a2c",
-    leftFont:     document.getElementById('leftFont').value || "Playfair Display",
-    leftSpacing:  parseFloat(document.getElementById('leftSpacing').value) || 2,
-    leftOffset:   parseFloat(document.getElementById('leftOffset').value) || 15,
-
-    // Texto circular derecha
-    rightSize:     parseFloat(document.getElementById('rightSize').value) || 20,
-    rightColor:    document.getElementById('rightColor').value || "#2a8f4a",
-    rightFont:     document.getElementById('rightFont').value || "Playfair Display",
-    rightSpacing:  parseFloat(document.getElementById('rightSpacing').value) || 2,
-    rightOffset:   parseFloat(document.getElementById('rightOffset').value) || 15,
-
-    // Texto inferior
-    bottomText:    document.getElementById('bottomText').value || "INFORMACIÓN",
-    bottomSize:    parseFloat(document.getElementById('bottomSize').value) || 18,
-    bottomColor:   document.getElementById('bottomColor').value || "#444444",
-    bottomFont:    document.getElementById('bottomFont').value || "Playfair Display",
-    bottomOffsetX: parseFloat(document.getElementById('bottomOffsetX').value) || 0,
-    bottomOffsetY: parseFloat(document.getElementById('bottomOffsetY').value) || 0,
-
-    // Opciones generales
-    transparentBg: document.getElementById('transparentBg').checked,
-    showCropMarks: document.getElementById('showCropMarks').checked
-  };
-}
+document.getElementById('btnFind').addEventListener('click', () => {
+  const search = document.getElementById('productSearch').value.toLowerCase().trim();
+  if(!search){
+    alert("Escribe algo para buscar");
+    return;
+  }
+  
+  const filtered = productos.filter(p => 
+    (p.nombre || '').toLowerCase().includes(search)
+  );
+  
+  const select = document.getElementById('productSelect');
+  select.innerHTML = '';
+  
+  if(filtered.length === 0){
+    select.innerHTML = '<option>No se encontraron resultados</option>';
+    return;
+  }
+  
+  filtered.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.nombre || `Producto ${p.id}`;
+    select.appendChild(opt);
+  });
+  
+  status.innerText = `${filtered.length} producto(s) encontrado(s)`;
+});
 
 /* -------------------------
-  SVG Template
+  Seleccionar producto
+--------------------------*/
+document.getElementById('btnSelectProduct').addEventListener('click', async () => {
+  const id = document.getElementById('productSelect').value;
+  if(!id){
+    alert("Selecciona un producto");
+    return;
+  }
+  
+  currentProductId = id;
+  await previewById(id);
+});
+
+/* -------------------------
+  SVG Template (OPTIMIZADO PARA 300 DPI)
 --------------------------*/
 function svgTemplate({
-  w,
-  h,
-  prodName,
-  sloganDerecha,
-  textoInferior,
-  qrHref,
-  prodImageHref,
-  settings,
-  cropPx
+  w, h, prodName, sloganDerecha, textoInferior,
+  qrHref, prodImageHref, settings, cropPx
 }) {
-  function esc(s){
-    return (s || "")
-      .toString()
-      .replace(/&/g,"&amp;")
-      .replace(/</g,"&lt;")
-      .replace(/>/g,"&gt;");
-  }
-
   const cx = w / 2;
   const cy = h / 2;
+  const circleR = (w - cropPx * 2) / 2 - 20;
 
-  const circleR = Math.min(w, h) / 2 - cropPx;
-  const baseR   = circleR - 6;
+  const esc = (s) => String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 
-  const rProduct = Math.max(10, baseR - settings.leftOffset);
-  const rSlogan  = Math.max(10, baseR - settings.rightOffset);
-
-  const productPath =
-    `M ${cx - rProduct} ${cy} a ${rProduct},${rProduct} 0 1,1 ${rProduct*2},0 a ${rProduct},${rProduct} 0 1,1 -${rProduct*2},0`;
-
-  const sloganPath =
-    `M ${cx - rSlogan} ${cy} a ${rSlogan},${rSlogan} 0 1,1 ${rSlogan*2},0 a ${rSlogan},${rSlogan} 0 1,1 -${rSlogan*2},0`;
+  const bgRect = !settings.transparentBg
+    ? `<rect width="${w}" height="${h}" fill="#ffffff"/>`
+    : '';
 
   const productImageBlock = prodImageHref
-    ? `
-  <g clip-path="url(#productClip)">
-    <image href="${prodImageHref}"
-           x="${cx - circleR * 0.5}"
-           y="${cy - circleR * 0.5}"
-           width="${circleR}"
-           height="${circleR}" />
-  </g>`
-    : "";
+    ? `<image href="${prodImageHref}"
+             x="${cx - circleR * 0.35}"
+             y="${cy - circleR * 0.35}"
+             width="${circleR * 0.7}"
+             height="${circleR * 0.7}"
+             clip-path="url(#circleMask)"/>`
+    : '';
 
-  const bgRect = settings.transparentBg
-    ? `<rect width="100%" height="100%" fill="none"/>`
-    : `<rect width="100%" height="100%" fill="#ffffff"/>`;
+  const productPath = `M ${cx - circleR},${cy} A ${circleR},${circleR} 0 0,1 ${cx + circleR},${cy}`;
+  const sloganPath = `M ${cx + circleR},${cy} A ${circleR},${circleR} 0 0,1 ${cx - circleR},${cy}`;
 
-  return `<?xml version="1.0" encoding="utf-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
   <defs>
-    <linearGradient id="goldStroke" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%"   stop-color="#8a6b2f"/>
-      <stop offset="35%"  stop-color="#f3d37a"/>
-      <stop offset="70%"  stop-color="#b88933"/>
-      <stop offset="100%" stop-color="#fff2c1"/>
+    <linearGradient id="goldStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#cbbf7a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a89f5a;stop-opacity:1" />
     </linearGradient>
-
-    <clipPath id="productClip">
-      <circle cx="${cx}" cy="${cy}" r="${circleR * 0.5}" />
+    <clipPath id="circleMask">
+      <circle cx="${cx}" cy="${cy}" r="${circleR * 0.35}"/>
     </clipPath>
-
     <path id="productPath" d="${productPath}" />
     <path id="sloganPath" d="${sloganPath}" />
   </defs>
@@ -507,7 +580,6 @@ function svgTemplate({
   <circle cx="${cx}" cy="${cy}" r="${circleR}"
           fill="none" stroke="url(#goldStroke)" stroke-width="1"/>
 
-  <!-- Texto superior fijo -->
   <text
         x="${cx + (settings.topOffsetX || 0)}"
         y="${cy + (settings.topOffsetY || 0)}"
@@ -591,18 +663,19 @@ async function urlToDataURL(url){
 }
 
 /* -------------------------
-  Generar UNA etiqueta
+  Generar UNA etiqueta (OPTIMIZADO 300 DPI)
 --------------------------*/
 async function generateOneCanvas({
   prodName,
   prodImageUrl,
   labelInches,
-  dpi,
   bleedMm,
   cropMm,
   qrUrl,
   settings
 }) {
+  // FUERZA 300 DPI
+  const dpi = DPI_DTF;
   const basePx  = Math.round(labelInches * dpi);
   const bleedPx = mmToPx(bleedMm, dpi);
   const cropPx  = mmToPx(cropMm, dpi);
@@ -696,7 +769,6 @@ async function previewById(id){
   }
 
   const labelInches = parseFloat(document.getElementById('labelInches').value) || 1.75;
-  const dpi         = parseInt(document.getElementById('dpi').value) || 300;
   const bleedMm     = parseFloat(document.getElementById('bleedMm').value) || 2;
   const cropMm      = parseFloat(document.getElementById('cropMm').value) || 3;
   const qrBase      = document.getElementById('qrBase').value.trim();
@@ -713,7 +785,6 @@ async function previewById(id){
     prodName: prod.nombre,
     prodImageUrl: prod.imagen,
     labelInches,
-    dpi,
     bleedMm,
     cropMm,
     qrUrl: qrUrlImage,
@@ -726,49 +797,110 @@ async function previewById(id){
   const dh = canvasLabel.height * scale;
   ctx.drawImage(canvasLabel, (canvas.width - dw)/2, (canvas.height - dh)/2, dw, dh);
 
-  status.innerText = "Preview: " + prod.nombre;
-  status.innerText = `Generando QR para: ${targetUrl}`;
+  status.innerText = `✓ Preview: ${prod.nombre} (${canvasLabel.width}×${canvasLabel.height}px @ 300 DPI)`;
 }
 
 /* -------------------------
-  Batch ZIP
+  NUEVA FUNCIÓN: Generar múltiples imágenes del mismo producto
 --------------------------*/
-async function generateBatchAndZip(ids, countPerProduct){
-  if(!ids || !ids.length){
-    alert("No hay productos seleccionados.");
+async function generateMultipleCopies(productId, copies) {
+  if (!productId) {
+    alert("Selecciona un producto primero");
+    return;
+  }
+
+  if (copies < 1 || copies > 1000) {
+    alert("Cantidad debe estar entre 1 y 1000");
+    return;
+  }
+
+  const prod = productos.find(p => p.id === Number(productId));
+  if (!prod) {
+    alert("Producto no encontrado");
     return;
   }
 
   const zip = new JSZip();
-
   const labelInches = parseFloat(document.getElementById('labelInches').value) || 1.75;
-  const dpi         = parseInt(document.getElementById('dpi').value) || 300;
-  const bleedMm     = parseFloat(document.getElementById('bleedMm').value) || 2;
-  const cropMm      = parseFloat(document.getElementById('cropMm').value) || 3;
-  const qrBase      = document.getElementById('qrBase').value.trim();
-
+  const bleedMm = parseFloat(document.getElementById('bleedMm').value) || 2;
+  const cropMm = parseFloat(document.getElementById('cropMm').value) || 3;
+  const qrBase = document.getElementById('qrBase').value.trim();
   const baseSettings = getSettings();
 
-  const total = ids.length * countPerProduct;
-  let done = 0;
+  progress.style.display = "block";
+  progress.max = copies;
+  progress.value = 0;
+
+  const targetUrl = qrBase + "?id=" + encodeURIComponent(prod.id);
+  const qrUrlImage = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=" + encodeURIComponent(targetUrl);
+
+  for (let i = 1; i <= copies; i++) {
+    const canvasLabel = await generateOneCanvas({
+      prodName: prod.nombre,
+      prodImageUrl: prod.imagen,
+      labelInches,
+      bleedMm,
+      cropMm,
+      qrUrl: qrUrlImage,
+      settings: baseSettings
+    });
+
+    const blob = await new Promise(res => canvasLabel.toBlob(res, "image/png"));
+    const filename = `${prod.id}_copia_${String(i).padStart(3, '0')}.png`;
+    zip.file(filename, blob);
+
+    progress.value = i;
+    status.innerText = `Generando ${i}/${copies} copias de ${prod.nombre}...`;
+    await new Promise(r => setTimeout(r, 10));
+  }
+
+  status.innerText = "Empaquetando ZIP...";
+  const content = await zip.generateAsync({ type: "blob" });
+  saveAs(content, `${prod.id}_${copies}copias_${Date.now()}.zip`);
+  progress.style.display = "none";
+  status.innerText = `✓ ${copies} copias generadas y descargadas (300 DPI)`;
+}
+
+/* -------------------------
+  NUEVA FUNCIÓN: Generar múltiples productos con múltiples copias
+--------------------------*/
+async function generateMultipleProductsWithCopies(ids, copiesPerProduct) {
+  if (!ids || !ids.length) {
+    alert("Selecciona al menos un producto");
+    return;
+  }
+
+  if (copiesPerProduct < 1 || copiesPerProduct > 1000) {
+    alert("Cantidad de copias debe estar entre 1 y 1000");
+    return;
+  }
+
+  const zip = new JSZip();
+  const labelInches = parseFloat(document.getElementById('labelInches').value) || 1.75;
+  const bleedMm = parseFloat(document.getElementById('bleedMm').value) || 2;
+  const cropMm = parseFloat(document.getElementById('cropMm').value) || 3;
+  const qrBase = document.getElementById('qrBase').value.trim();
+  const baseSettings = getSettings();
+
+  const total = ids.length * copiesPerProduct;
   progress.style.display = "block";
   progress.max = total;
   progress.value = 0;
 
-  for(const id of ids){
-    const prod = productos.find(p => p.id === id);
-    if(!prod) continue;
-    const baseName = prod.id;
+  let done = 0;
 
-    for(let i=1; i<=countPerProduct; i++){
-      const targetUrl = qrBase + "?id=" + encodeURIComponent(prod.id);
-      const qrUrlImage = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=" + encodeURIComponent(targetUrl);
+  for (const id of ids) {
+    const prod = productos.find(p => p.id === Number(id));
+    if (!prod) continue;
 
+    const targetUrl = qrBase + "?id=" + encodeURIComponent(prod.id);
+    const qrUrlImage = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=" + encodeURIComponent(targetUrl);
+
+    for (let i = 1; i <= copiesPerProduct; i++) {
       const canvasLabel = await generateOneCanvas({
         prodName: prod.nombre,
         prodImageUrl: prod.imagen,
         labelInches,
-        dpi,
         bleedMm,
         cropMm,
         qrUrl: qrUrlImage,
@@ -776,108 +908,85 @@ async function generateBatchAndZip(ids, countPerProduct){
       });
 
       const blob = await new Promise(res => canvasLabel.toBlob(res, "image/png"));
-      const filename = `${baseName}_${String(i).padStart(3,'0')}.png`;
+      const filename = `${prod.id}_copia_${String(i).padStart(3, '0')}.png`;
       zip.file(filename, blob);
 
       done++;
       progress.value = done;
-      status.innerText = `Generando ${done}/${total} (${filename})`;
+      status.innerText = `Generando ${done}/${total}: ${prod.nombre} (copia ${i}/${copiesPerProduct})...`;
       await new Promise(r => setTimeout(r, 10));
     }
   }
 
   status.innerText = "Empaquetando ZIP...";
-  const content = await zip.generateAsync({type:"blob"});
-  saveAs(content, `esentia_labels_${Date.now()}.zip`);
+  const content = await zip.generateAsync({ type: "blob" });
+  saveAs(content, `lote_${ids.length}productos_${copiesPerProduct}copias_${Date.now()}.zip`);
   progress.style.display = "none";
-  status.innerText = "ZIP generado.";
-  status.innerText = `Generando QR para: ${targetUrl}`;
+  status.innerText = `✓ ${total} imágenes generadas (${ids.length} productos × ${copiesPerProduct} copias @ 300 DPI)`;
 }
 
 /* -------------------------
-  Exportar PDF (por IDs)
+  Event Listeners para nuevas funciones
 --------------------------*/
-async function exportPDFs(ids){
-  if(!ids || !ids.length){
-    alert("No hay productos seleccionados.");
+document.getElementById('btnGenerateBatchSingle').addEventListener('click', async () => {
+  if (!currentProductId) {
+    alert("Selecciona un producto primero");
+    return;
+  }
+  const copies = parseInt(document.getElementById('copiesPerProduct').value) || 1;
+  await generateMultipleCopies(currentProductId, copies);
+});
+
+document.getElementById('btnGenerateBatchMulti').addEventListener('click', async () => {
+  const multi = (document.getElementById('multiIds').value || '').trim();
+  if (!multi) {
+    alert("Ingresa IDs de productos separados por coma");
+    return;
+  }
+  
+  selectedIds = multi.split(',').map(s => sanitizeId(s.trim())).filter(Boolean);
+  if (!selectedIds.length) {
+    alert("No se encontraron IDs válidos");
     return;
   }
 
-  const labelInches = parseFloat(document.getElementById('labelInches').value) || 1.75;
-  const dpi         = parseInt(document.getElementById('dpi').value) || 300;
-  const bleedMm     = parseFloat(document.getElementById('bleedMm').value) || 2;
-  const cropMm      = parseFloat(document.getElementById('cropMm').value) || 3;
-  const qrBase      = document.getElementById('qrBase').value.trim();
-
-  const { jsPDF } = window.jspdf;
-  const labelPoints = labelInches * 72 + (bleedMm/25.4*72)*2;
-  const pageW = labelPoints;
-  const pageH = labelPoints;
-
-  const pdf = new jsPDF({ unit: 'pt', format: [pageW, pageH] });
-
-  const baseSettings = getSettings();
-  let first = true;
-
-  for(const id of ids){
-    const prod = productos.find(p => p.id === id);
-    if(!prod) continue;
-
-    const targetUrl = qrBase + "?id=" + encodeURIComponent(prod.id);
-    const qrUrlImage = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=" + encodeURIComponent(targetUrl);
-
-    const pdfSettings = { ...baseSettings, transparentBg: false };
-
-    const canvasLabel = await generateOneCanvas({
-      prodName: prod.nombre,
-      prodImageUrl: prod.imagen,
-      labelInches,
-      dpi,
-      bleedMm,
-      cropMm,
-      qrUrl: qrUrlImage,
-      settings: pdfSettings
-    });
-
-    const imgData = canvasLabel.toDataURL("image/png");
-
-    if(!first) pdf.addPage([pageW, pageH]);
-    first = false;
-
-    pdf.addImage(imgData, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
-    status.innerText = `Añadido ${prod.nombre} al PDF...`;
-  }
-
-  pdf.save(`esentia_labels_${Date.now()}.pdf`);
-  status.innerText = "PDF exportado.";
-  status.innerText = `Generando QR para: ${targetUrl}`;
-}
+  const copies = parseInt(document.getElementById('copiesPerProductBatch').value) || 1;
+  await generateMultipleProductsWithCopies(selectedIds, copies);
+});
 
 /* -------------------------
-  PDF 4×4
+  Event Listeners originales (mantener compatibilidad)
 --------------------------*/
-async function exportPDFGrid4x4(id){
-  const prod = productos.find(p => p.id === id);
-  if(!prod){
-    alert("Producto no encontrado.");
+document.getElementById('btnGenerate').addEventListener('click', async () => {
+  if (!currentProductId) {
+    alert("Selecciona un producto primero");
+    return;
+  }
+  await previewById(currentProductId);
+});
+
+document.getElementById('btnSelectProduct').addEventListener('click', async () => {
+  const id = document.getElementById('productSelect').value;
+  if (!id) {
+    alert("Selecciona un producto");
+    return;
+  }
+  currentProductId = id;
+  await previewById(id);
+});
+
+document.getElementById('btnDownloadPNG').addEventListener('click', async () => {
+  if (!currentProductId) {
+    alert("Genera un preview primero");
     return;
   }
 
+  const prod = productos.find(p => p.id === Number(currentProductId));
   const labelInches = parseFloat(document.getElementById('labelInches').value) || 1.75;
-  const dpi         = parseInt(document.getElementById('dpi').value) || 300;
-  const bleedMm     = parseFloat(document.getElementById('bleedMm').value) || 2;
-  const cropMm      = parseFloat(document.getElementById('cropMm').value) || 3;
-  const qrBase      = document.getElementById('qrBase').value.trim();
-
-  const { jsPDF } = window.jspdf;
-  const labelPoints = labelInches * 72 + (bleedMm/25.4*72)*2;
-  const pageW = labelPoints * 4;
-  const pageH = labelPoints * 4;
-
-  const pdf = new jsPDF({ unit: 'pt', format: [pageW, pageH] });
-
-  const baseSettings = getSettings();
-  const pdfSettings = { ...baseSettings, transparentBg: false };
+  const bleedMm = parseFloat(document.getElementById('bleedMm').value) || 2;
+  const cropMm = parseFloat(document.getElementById('cropMm').value) || 3;
+  const qrBase = document.getElementById('qrBase').value.trim();
+  const settings = getSettings();
 
   const targetUrl = qrBase + "?id=" + encodeURIComponent(prod.id);
   const qrUrlImage = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=" + encodeURIComponent(targetUrl);
@@ -886,312 +995,6 @@ async function exportPDFGrid4x4(id){
     prodName: prod.nombre,
     prodImageUrl: prod.imagen,
     labelInches,
-    dpi,
-    bleedMm,
-    cropMm,
-    qrUrl: qrUrlImage,
-    settings: pdfSettings
-  });
-
-  const imgData = canvasLabel.toDataURL("image/png");
-
-  for(let row=0; row<4; row++){
-    for(let col=0; col<4; col++){
-      const x = col * labelPoints;
-      const y = row * labelPoints;
-      pdf.addImage(imgData, "PNG", x, y, labelPoints, labelPoints, undefined, "FAST");
-    }
-  }
-
-  pdf.save(`esentia_${id}_4x4_${Date.now()}.pdf`);
-  status.innerText = "PDF 4×4 exportado.";
-  status.innerText = `Generando QR para: ${targetUrl}`;
-}
-
-/* -------------------------
-  PDF Catálogo (todas)
---------------------------*/
-async function exportPDF_AllSingleLabels() {
-  if (!productos || !productos.length) {
-    alert('No hay productos cargados.');
-    return;
-  }
-
-  const labelInches = parseFloat(document.getElementById('labelInches').value) || 1.75;
-  const dpi         = parseInt(document.getElementById('dpi').value) || 300;
-  const bleedMm     = parseFloat(document.getElementById('bleedMm').value) || 2;
-  const cropMm      = parseFloat(document.getElementById('cropMm').value) || 3;
-  const qrBase      = document.getElementById('qrBase').value;
-
-  const { jsPDF } = window.jspdf;
-
-  const labelPt   = labelInches * 72 + mmToPt(bleedMm) * 2;
-  const pdf       = new jsPDF({
-    unit: 'pt',
-    format: [labelPt, labelPt]
-  });
-
-  const ordenados = [...productos].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
-
-  let first = true;
-  for (const prod of ordenados) {
-    const displayName = prod.nombre;
-    const settings = getSettings();
-
-    const targetUrl = qrBase + "?id=" + encodeURIComponent(prod.id);
-
-    const qrUrlImage = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' +
-                       encodeURIComponent(targetUrl);
-
-    const canvasLabel = await generateOneCanvas({
-      prodName: displayName,
-      prodImageUrl: prod.imagen,
-      labelInches,
-      dpi,
-      bleedMm,
-      cropMm,
-      qrUrl: qrUrlImage,
-      settings
-    });
-
-    const imgData = canvasLabel.toDataURL('image/png');
-
-    if (!first) {
-      pdf.addPage([labelPt, labelPt]);
-    }
-    pdf.addImage(imgData, 'PNG', 0, 0, labelPt, labelPt, undefined, 'FAST');
-
-    first = false;
-    status.innerText = 'Añadiendo al catálogo: ' + displayName;
-  }
-
-  pdf.save('esentia_catalogo_' + Date.now() + '.pdf');
-  status.innerText = 'PDF catálogo exportado.';
-  status.innerText = `Generando QR para: ${targetUrl}`;
-}
-
-/* -------------------------
-  PDF Rollo continuo (1 por fila, gap 3mm)
---------------------------*/
-async function exportPDF_RolloContinuous() {
-  const multi = (document.getElementById('multiIds').value || '').trim();
-  if (multi) {
-    selectedIds = multi.split(',').map(s => sanitizeId(s.trim())).filter(Boolean);
-  }
-
-  if (!selectedIds.length) {
-    alert('Selecciona al menos un producto (lista o campo "Seleccionar varios").');
-    return;
-  }
-
-  const labelInches = parseFloat(document.getElementById('labelInches').value) || 1.75;
-  const dpi         = parseInt(document.getElementById('dpi').value) || 300;
-  const bleedMm     = parseFloat(document.getElementById('bleedMm').value) || 2;
-  const cropMm      = parseFloat(document.getElementById('cropMm').value) || 3;
-  const qrBase      = document.getElementById('qrBase').value;
-  const batchCount  = parseInt(document.getElementById('batchCount').value) || 1;
-
-  const { jsPDF } = window.jspdf;
-
-  const labelPt = labelInches * 72 + mmToPt(bleedMm) * 2;
-  const gapPt   = mmToPt(3); // 3mm de separación
-
-  const totalLabels = selectedIds.length * batchCount;
-
-  const pageW = labelPt;  // 1 por fila
-  const pageH = totalLabels * labelPt + (totalLabels - 1) * gapPt;
-
-  const pdf = new jsPDF({
-    unit: 'pt',
-    format: [pageW, pageH]
-  });
-
-  let y = 0;
-  let index = 0;
-
-  for (const id of selectedIds) {
-    const prod = productos.find(p => p.id === id);
-    if (!prod) {
-      console.warn('Producto no encontrado para ID en rollo:', id);
-      continue;
-    }
-
-    const displayName = prod.nombre;
-    const settings = getSettings();
-    const targetUrl = qrBase + "?id=" + encodeURIComponent(prod.id);
-
-    const qrUrlImage = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' +
-                       encodeURIComponent(targetUrl);
-
-    for (let i = 0; i < batchCount; i++) {
-      const canvasLabel = await generateOneCanvas({
-        prodName: displayName,
-        prodImageUrl: prod.imagen,
-        labelInches,
-        dpi,
-        bleedMm,
-        cropMm,
-        qrUrl: qrUrlImage,
-        settings
-      });
-
-      const imgData = canvasLabel.toDataURL('image/png');
-
-      pdf.addImage(imgData, 'PNG', 0, y, labelPt, labelPt, undefined, 'FAST');
-
-      y += labelPt + gapPt;
-      index++;
-      status.innerText = `Rollo: etiqueta ${index}/${totalLabels}`;
-    }
-  }
-
-  pdf.save('esentia_rollo_' + Date.now() + '.pdf');
-  status.innerText = 'PDF rollo continuo exportado.';
-  status.innerText = `Generando QR para: ${targetUrl}`;
-}
-
-/* -------------------------
-  Exportar PNG de todos los productos (ZIP)
---------------------------*/
-async function exportAllPNGsAsZIP() {
-  if (!productos || !productos.length) {
-    alert('No hay productos cargados.');
-    return;
-  }
-
-  const zip = new JSZip();
-  const total = productos.length;
-  let done = 0;
-
-  progress.style.display = "block";
-  progress.max = total;
-  progress.value = 0;
-
-  const labelInches = parseFloat(document.getElementById('labelInches').value) || 1.75;
-  const dpi         = parseInt(document.getElementById('dpi').value) || 300;
-  const bleedMm     = parseFloat(document.getElementById('bleedMm').value) || 2;
-  const cropMm      = parseFloat(document.getElementById('cropMm').value) || 3;
-  const qrBase      = document.getElementById('qrBase').value.trim();
-  const baseSettings = getSettings();
-
-  // Ordenar productos alfabéticamente (opcional)
-  const ordenados = [...productos].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
-
-  for (const prod of ordenados) {
-    const id = prod.id;
-    if (!id) continue;
-
-    const targetUrl  = qrBase + "?id=" + encodeURIComponent(prod.id);
-    const qrUrlImage = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=" + encodeURIComponent(targetUrl);
-
-    try {
-      const canvasLabel = await generateOneCanvas({
-        prodName: prod.nombre,
-        prodImageUrl: prod.imagen,
-        labelInches,
-        dpi,
-        bleedMm,
-        cropMm,
-        qrUrl: qrUrlImage,
-        settings: baseSettings
-      });
-
-      const blob = await new Promise(res => canvasLabel.toBlob(res, "image/png"));
-      const filename = `${id}.png`;
-      zip.file(filename, blob);
-    } catch (e) {
-      console.error("Error generando PNG para:", prod.nombre, e);
-      status.innerText = `Error en: ${prod.nombre}`;
-    }
-
-    done++;
-    progress.value = done;
-    status.innerText = `PNG generado: ${done}/${total} — ${prod.nombre}`;
-    await new Promise(r => setTimeout(r, 5)); // ligera pausa para UI
-    status.innerText = `Generando QR para: ${targetUrl}`;
-  }
-
-  status.innerText = "Empaquetando ZIP de PNGs...";
-  const content = await zip.generateAsync({ type: "blob" });
-  saveAs(content, `esentia_todos_productos_${Date.now()}.zip`);
-  progress.style.display = "none";
-  status.innerText = "ZIP de PNGs generado.";
-  status.innerText = `Generando QR para: ${targetUrl}`;
-}
-
-/* -------------------------
-  Handlers UI
---------------------------*/
-document.getElementById('btnFind').addEventListener('click', ()=>{
-  const q = (document.getElementById('productSearch').value || '').trim().toLowerCase();
-  if(!q){
-    alert("Escribe algo para buscar.");
-    return;
-  }
-  const found = productos.find(p =>
-    (p.nombre || '').toLowerCase().includes(q) ||
-    (p.nombreOriginal || '').toLowerCase().includes(q)
-  );
-  if(!found){
-    alert("Producto no encontrado en JSON.");
-    return;
-  }
-  selectedIds = [found.id];
-  alert("Producto seleccionado: " + found.nombre + " → id interno: " + found.id);
-  previewById(found.id);
-});
-
-document.getElementById('btnSelectProduct').addEventListener('click', ()=>{
-  const sel = document.getElementById('productSelect');
-  const id = sel.value;
-  if(!id){
-    alert("Selecciona un producto de la lista.");
-    return;
-  }
-  selectedIds = [id];
-  previewById(id);
-  
-});
-
-document.getElementById('btnGenerate').addEventListener('click', ()=>{
-  const multi = (document.getElementById('multiIds').value || '').trim();
-  if(multi){
-    selectedIds = multi
-      .split(',')
-      .map(s => sanitizeId(s.trim()))
-      .filter(Boolean);
-  }
-  if(!selectedIds.length){
-    alert("No hay productos seleccionados (usa búsqueda, lista o campo múltiple).");
-    return;
-  }
-  previewById(selectedIds[0]);
-});
-
-document.getElementById('btnDownloadPNG').addEventListener('click', async ()=>{
-  if(!selectedIds.length){
-    alert("Selecciona un producto primero para descargar PNG.");
-    return;
-  }
-  const id = selectedIds[0];
-  const prod = productos.find(p => p.id === id);
-  if(!prod) return;
-
-  const labelInches = parseFloat(document.getElementById('labelInches').value) || 1.75;
-  const dpi         = parseInt(document.getElementById('dpi').value) || 300;
-  const bleedMm     = parseFloat(document.getElementById('bleedMm').value) || 2;
-  const cropMm      = parseFloat(document.getElementById('cropMm').value) || 3;
-  const qrBase      = document.getElementById('qrBase').value.trim();
-  const settings    = getSettings();
-
-  const targetUrl = qrBase + "?id=" + encodeURIComponent(prod.id);
-  const qrUrlImage = "https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=" + encodeURIComponent(targetUrl);
-
-  const canvasLabel = await generateOneCanvas({
-    prodName: prod.nombre,
-    prodImageUrl: prod.imagen,
-    labelInches,
-    dpi,
     bleedMm,
     cropMm,
     qrUrl: qrUrlImage,
@@ -1199,39 +1002,31 @@ document.getElementById('btnDownloadPNG').addEventListener('click', async ()=>{
   });
 
   canvasLabel.toBlob(blob => {
-    saveAs(blob, `esentia_${id}.png`);
+    saveAs(blob, `${prod.id}_300dpi.png`);
+    status.innerText = `✓ PNG descargado: ${canvasLabel.width}×${canvasLabel.height}px @ 300 DPI`;
   }, "image/png");
 });
 
-document.getElementById('btnExportAllPNGs').addEventListener('click', async () => {
-  await exportAllPNGsAsZIP();
-});
-
-document.getElementById('btnDownloadPNGTransparent').addEventListener('click', async ()=>{
-  if(!selectedIds.length){
-    alert("Selecciona un producto primero para descargar PNG transparente.");
+document.getElementById('btnDownloadPNGTransparent').addEventListener('click', async () => {
+  if (!currentProductId) {
+    alert("Genera un preview primero");
     return;
   }
-  const id = selectedIds[0];
-  const prod = productos.find(p => p.id === id);
-  if(!prod) return;
 
+  const prod = productos.find(p => p.id === Number(currentProductId));
   const labelInches = parseFloat(document.getElementById('labelInches').value) || 1.75;
-  const dpi         = parseInt(document.getElementById('dpi').value) || 300;
-  const bleedMm     = parseFloat(document.getElementById('bleedMm').value) || 2;
-  const cropMm      = parseFloat(document.getElementById('cropMm').value) || 3;
-  const qrBase      = document.getElementById('qrBase').value.trim();
-  const baseSettings = getSettings();
-  const settings = { ...baseSettings, transparentBg: true };
+  const bleedMm = parseFloat(document.getElementById('bleedMm').value) || 2;
+  const cropMm = parseFloat(document.getElementById('cropMm').value) || 3;
+  const qrBase = document.getElementById('qrBase').value.trim();
+  const settings = { ...getSettings(), transparentBg: true };
 
   const targetUrl = qrBase + "?id=" + encodeURIComponent(prod.id);
-  const qrUrlImage = "https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=" + encodeURIComponent(targetUrl);
+  const qrUrlImage = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=" + encodeURIComponent(targetUrl);
 
   const canvasLabel = await generateOneCanvas({
     prodName: prod.nombre,
     prodImageUrl: prod.imagen,
     labelInches,
-    dpi,
     bleedMm,
     cropMm,
     qrUrl: qrUrlImage,
@@ -1239,103 +1034,9 @@ document.getElementById('btnDownloadPNGTransparent').addEventListener('click', a
   });
 
   canvasLabel.toBlob(blob => {
-    saveAs(blob, `esentia_${id}_transparent.png`);
+    saveAs(blob, `${prod.id}_300dpi_transparente.png`);
+    status.innerText = `✓ PNG transparente descargado: ${canvasLabel.width}×${canvasLabel.height}px @ 300 DPI`;
   }, "image/png");
-});
-
-document.getElementById('btnDownloadPDFSingle').addEventListener('click', async ()=>{
-  if(!selectedIds.length){
-    alert("Selecciona un producto primero.");
-    return;
-  }
-  await exportPDFs([selectedIds[0]]);
-});
-
-document.getElementById('btnDownloadZIP').addEventListener('click', async ()=>{
-  const multi = (document.getElementById('multiIds').value || '').trim();
-  if(multi){
-    selectedIds = multi
-      .split(',')
-      .map(s => sanitizeId(s.trim()))
-      .filter(Boolean);
-  }
-  if(!selectedIds.length){
-    alert("Selecciona IDs primero (buscar, lista o campo múltiple).");
-    return;
-  }
-  const count = parseInt(document.getElementById('batchCount').value) || 1;
-  await generateBatchAndZip(selectedIds, count);
-});
-
-document.getElementById('btnExportPDFAll').addEventListener('click', async () => {
-  await exportPDF_AllSingleLabels();
-});
-
-document.getElementById('btnExportPDF').addEventListener('click', async ()=>{
-  const multi = (document.getElementById('multiIds').value || '').trim();
-  if(multi){
-    selectedIds = multi
-      .split(',')
-      .map(s => sanitizeId(s.trim()))
-      .filter(Boolean);
-  }
-  if(!selectedIds.length){
-    alert("Selecciona IDs primero.");
-    return;
-  }
-  await exportPDFs(selectedIds);
-});
-
-document.getElementById('productSelect').addEventListener('change', (e) => {
-  if (e.target.value) {
-    selectedIds = [e.target.value];
-    autoPreview();
-  }
-});
-
-document.getElementById('btnExportPDFGrid').addEventListener('click', async ()=>{
-  if(!selectedIds.length){
-    alert("Selecciona un producto primero.");
-    return;
-  }
-  await exportPDFGrid4x4(selectedIds[0]);
-});
-
-document.getElementById('btnExportPDFRollo').addEventListener('click', async ()=>{
-  await exportPDF_RolloContinuous();
-});
-
-// Debug
-window._debug = {
-  get productos(){ return productos; },
-  sanitizeId,
-  svgTemplate,
-  generateOneCanvas,
-  getSettings
-};
-
-
-// Campos que disparan preview en tiempo real
-const livePreviewFields = [
-  'topText', 'topSize', 'topColor', 'topOffsetX', 'topOffsetY',
-  'leftSize', 'leftColor', 'leftFont', 'leftSpacing', 'leftOffset',
-  'rightSize', 'rightColor', 'rightFont', 'rightSpacing', 'rightOffset',
-  'bottomText', 'bottomSize', 'bottomColor', 'bottomFont', 'bottomOffsetX', 'bottomOffsetY',
-  'labelInches', 'dpi', 'bleedMm', 'cropMm', 'qrBase',
-  'transparentBg', 'showCropMarks'
-];
-
-const debouncedPreview = debounce(autoPreview, 300);
-
-livePreviewFields.forEach(id => {
-  const el = document.getElementById(id);
-  if (el) {
-    if (el.type === 'checkbox') {
-      el.addEventListener('change', debouncedPreview);
-    } else {
-      el.addEventListener('input', debouncedPreview);
-    }
-  }
 });
 
 </script>

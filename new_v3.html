@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Generador de Etiquetas - Esentia</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+<style>
+* { box-sizing: border-box; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; gap: 15px; transition: all 0.3s ease; min-height: 100vh; margin: 0; }
+body.modo-oscuro { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #e0e0e0; }
+.formulario { flex: 1; background: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); max-width: 420px; height: fit-content; overflow-y: auto; max-height: 95vh; transition: all 0.3s ease; backdrop-filter: blur(10px); }
+body.modo-oscuro .formulario { background: rgba(45, 45, 45, 0.95); color: #e0e0e0; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); }
+.btn-seccion { width: 100%; padding: 12px; margin-bottom: 10px; border: none; border-radius: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 14px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease; font-weight: 500; }
+.btn-seccion:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+body.modo-oscuro .btn-seccion { background: linear-gradient(135deg, #4a6fa5 0%, #3a5a8a 100%); }
+body.modo-oscuro .btn-seccion:hover { box-shadow: 0 4px 12px rgba(74, 111, 165, 0.4); }
+.contador-etiquetas { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-left: 4px solid #2196f3; padding: 12px; margin: 15px 0; border-radius: 8px; font-size: 14px; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+body.modo-oscuro .contador-etiquetas { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: #a2d2ff; border-left-color: #3498db; }
+.etiqueta-container { flex: 2; display: grid; gap: 0; background: white; padding: 0; margin: 0; justify-content: center; transition: all 0.3s ease; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+body.modo-oscuro .etiqueta-container { background: #222; }
+.etiqueta { position: relative; width: var(--etiqueta-width, 8cm); height: var(--etiqueta-height, 4cm); background-image: var(--fondo-imagen, none); background-size: cover; background-position: center; background-repeat: no-repeat; box-sizing: border-box; overflow: hidden; cursor: pointer; border: none; box-shadow: none; transition: all 0.2s ease; }
+.etiqueta:hover { transform: scale(1.02); z-index: 10; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+.etiqueta-content { position: relative; width: 100%; height: 100%; }
+.fondo-etiqueta { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; filter: blur(var(--blur-fondo, 0px)) brightness(var(--brillo-fondo, 1)); transform: scale(1.05); }
+.fondo-overlay { position: absolute; width: 100%; height: 100%; background: rgba(0,0,0,var(--overlay-fondo, 0)); z-index: 2; }
+.download-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; backdrop-filter: blur(2px); }
+.etiqueta:hover .download-overlay { opacity: 1; }
+.producto-imagen { position: absolute; width: var(--img-width, 60px); height: var(--img-height, 60px); top: var(--img-top, 50%); left: var(--img-left, 50%); transform: translate(-50%, -50%) rotate(var(--img-rotacion, 0deg)); object-fit: contain; border-radius: 4px; z-index: 2; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+.nombre-producto { position: absolute; font-size: var(--nombre-font-size, 8px); color: var(--nombre-color, #000); top: var(--nombre-top, 70%); left: var(--nombre-left, 50%); transform: translate(-50%, -50%) rotate(var(--nombre-rotacion, 0deg)); text-align: center; font-weight: bold; z-index: 3; white-space: nowrap; max-width: 80%; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(255,255,255,0.8); }
+.instrucciones { position: absolute; top: var(--instrucciones-top, 10%); left: var(--instrucciones-left, 5%); width: var(--instrucciones-width, 30%); font-size: var(--instrucciones-font-size, 6px); color: var(--instrucciones-color, #fff); line-height: 1.2; text-align: left; padding: 5px; background: rgba(252, 250, 250, 0.5); border-radius: 4px; transform: rotate(var(--instrucciones-rotacion, 0deg)); z-index: 2; word-wrap: break-word; backdrop-filter: blur(2px); }
+.texto-adicional-1, .texto-adicional-2, .texto-adicional-3 { position: absolute; text-align: center; z-index: 3; white-space: nowrap; max-width: 80%; overflow: hidden; text-overflow: ellipsis; }
+.texto-adicional-1 { font-size: var(--texto1-font-size, 6px); color: var(--texto1-color, #000); top: var(--texto1-top, 90%); left: var(--texto1-left, 50%); transform: translate(-50%, -50%) rotate(var(--texto1-rotacion, 0deg)); background: linear-gradient(to bottom, #ffd700, #daa520, #b8860b); padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+.texto-adicional-2 { font-size: var(--texto2-font-size, 6px); color: var(--texto2-color, #000); top: var(--texto2-top, 90%); left: var(--texto2-left, 50%); transform: translate(-50%, -50%) rotate(var(--texto2-rotacion, 0deg)); }
+.texto-adicional-3 { font-size: var(--texto3-font-size, 6px); color: var(--texto3-color, #000); top: var(--texto3-top, 5%); left: var(--texto3-left, 50%); transform: translate(-50%, -50%) rotate(var(--texto3-rotacion, 0deg)); }
+
+/* === CÓDIGOS QR Y BARRAS === */
+.codigo-qr { position: absolute; background: #ffffff; padding: 4px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); z-index: 10; box-sizing: border-box; }
+.codigo-qr.qr-facebook { width: var(--qr-fb-size, 45px); height: var(--qr-fb-size, 45px); top: var(--qr-fb-top, 10%); left: var(--qr-fb-left, 10%); transform: translate(-50%, -50%) rotate(var(--qr-fb-rotacion, 0deg)); }
+.codigo-qr.qr-dinamico { width: var(--qr-din-size, 45px); height: var(--qr-din-size, 45px); top: var(--qr-din-top, 10%); left: var(--qr-din-left, 90%); transform: translate(-50%, -50%) rotate(var(--qr-din-rotacion, 0deg)); }
+.codigo-barras { position: absolute; background: #ffffff; padding: 5px 8px; border-radius: 4px; z-index: 10; display: block; width: var(--barcode-width, 110px); height: var(--barcode-height, 45px); top: var(--barcode-top, 92%); left: var(--barcode-left, 50%); transform: translate(-50%, -50%) rotate(var(--barcode-rotacion, 0deg)); box-sizing: border-box; }
+.codigo-barras svg { width: 100%; height: 100%; display: block; }
+
+/* === IMÁGENES EXTRA DINÁMICAS === */
+.imagen-extra-dinamica { position: absolute; object-fit: contain; z-index: 4; border-radius: 2px; }
+
+/* === MARCAS DE CORTE === */
+.marcas-corte { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; display: none; }
+.mc { position: absolute; width: 8mm; height: 8mm; border-color: #000; border-style: solid; }
+.mc-tl { top: -1mm; left: -1mm; border-width: 0.2pt 0 0 0.2pt; }
+.mc-tr { top: -1mm; right: -1mm; border-width: 0.2pt 0.2pt 0 0; }
+.mc-bl { bottom: -1mm; left: -1mm; border-width: 0 0 0.2pt 0.2pt; }
+.mc-br { bottom: -1mm; right: -1mm; border-width: 0 0.2pt 0.2pt 0; }
+@media print { .marcas-corte { display: block !important; } }
+@media screen { .marcas-corte { display: none !important; } }
+
+.checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; max-height: 250px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 8px; background: #fafafa; }
+body.modo-oscuro .checkbox-group { background: #3c3c3c; border-color: #555; }
+.checkbox-item { display: flex; align-items: center; font-size: 13px; padding: 4px; border-radius: 4px; transition: background 0.2s; }
+.checkbox-item:hover { background: rgba(102, 126, 234, 0.1); }
+.checkbox-item input { margin-right: 8px; width: 16px; height: 16px; cursor: pointer; }
+.checkbox-item label { color: #333; cursor: pointer; flex: 1; }
+body.modo-oscuro .checkbox-item label { color: #e0e0e0; }
+#btnModoOscuro { background: linear-gradient(135deg, #333 0%, #555 100%); color: white; border: none; padding: 12px; font-size: 14px; width: 100%; margin-top: 10px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; }
+body.modo-oscuro #btnModoOscuro { background: linear-gradient(135deg, #ffcc00 0%, #ffaa00 100%); color: #222; font-weight: bold; }
+
+/* === MODALES FLOTANTES === */
+.modal { display: none; position: fixed; top: 20px; right: 20px; width: 380px; max-height: calc(100vh - 40px); overflow-y: auto; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(15px); border-radius: 16px; box-shadow: 0 15px 50px rgba(0,0,0,0.25); z-index: 1000; border: 1px solid rgba(0,0,0,0.08); }
+body.modo-oscuro .modal { background: rgba(35, 35, 35, 0.98); color: #e0e0e0; border-color: rgba(255,255,255,0.1); }
+.modal-content { background: transparent; padding: 20px; width: 100%; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; position: sticky; top: 0; background: inherit; padding-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); }
+body.modo-oscuro .modal-header { border-bottom-color: rgba(255,255,255,0.1); }
+.btn-cerrar-modal { background: none; border: none; font-size: 28px; cursor: pointer; color: #888; line-height: 1; padding: 0 5px; }
+.btn-cerrar-modal:hover { color: #333; }
+body.modo-oscuro .btn-cerrar-modal:hover { color: #fff; }
+.modal-body label { display: block; margin-top: 10px; font-weight: bold; font-size: 12px; }
+.modal-body input, .modal-body select { width: 100%; padding: 6px; margin-top: 3px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+.modal-footer { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+.btn-modal { padding: 8px 16px; border-radius: 4px; cursor: pointer; border: none; }
+.btn-cancelar { background: #ccc; }
+.btn-guardar { background: #4caf50; color: white; }
+@media (max-width: 900px) { .modal { top: 10px; right: 10px; left: 10px; width: auto; max-height: 85vh; } }
+
+/* Print */
+@media print { @page { margin: 0; size: var(--hoja-ancho-cm, 21.6cm) var(--hoja-alto-cm, 27.9cm); } body { background: white !important; margin: 0 !important; padding: 0 !important; display: block !important; } body > *:not(.etiqueta-container) { display: none !important; } .etiqueta-container { position: absolute !important; top: 0 !important; left: 0 !important; width: var(--hoja-ancho-cm, 21.6cm) !important; height: var(--hoja-alto-cm, 27.9cm) !important; padding: 0 !important; margin: 0 !important; background: white !important; display: grid !important; gap: 0 !important; box-shadow: none !important; border-radius: 0 !important; image-rendering: auto; } .etiqueta { page-break-inside: avoid !important; break-inside: avoid !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; margin: 0 !important; border: none !important; box-shadow: none !important; transform: none !important; } .download-overlay { display: none !important; } }
+
+#toastContainer { position: fixed; bottom: 20px; right: 20px; z-index: 2000; }
+.toast { background: #333; color: white; padding: 12px 24px; border-radius: 8px; margin-top: 10px; opacity: 0; transform: translateY(20px); transition: all 0.3s ease; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { background: #4caf50; } .toast.error { background: #f44336; } .toast.warning { background: #ff9800; }
+#loadingOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; }
+#loadingOverlay.active { display: flex; }
+.spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>
+<base target="_blank">
+</head>
+<body>
+<div id="loadingOverlay"><div class="spinner"></div><p>Procesando...</p></div>
+<div id="toastContainer"></div>
+
+<div class="formulario">
+    <h2 style="margin-top:0; color:#764ba2;">🏷️ Esentia Labels</h2>
+    <button type="button" class="btn-seccion" onclick="abrirModal('modalTamanoHoja')">📄 Tamaño de Hoja <span>▼</span></button>
+    <button type="button" class="btn-seccion" onclick="abrirModal('modalConfiguracion')">⚙️ Configuración Básica <span>▼</span></button>
+    <div style="margin-bottom: 15px;">
+        <label style="font-weight: bold; display: block; margin-bottom: 5px;">Seleccionar Productos:</label>
+        <input type="text" id="filtroProductos" placeholder="Buscar producto..." style="width:100%; padding:8px; margin-bottom:8px; border:1px solid #ddd; border-radius:4px;" oninput="filtrarProductos()">
+        <div style="display: flex; gap: 5px; margin-bottom: 8px;"><button onclick="seleccionarTodos(true)" style="flex:1; font-size:11px; padding:5px;">Todos</button><button onclick="seleccionarTodos(false)" style="flex:1; font-size:11px; padding:5px;">Ninguno</button></div>
+        <div id="checkboxContainer" class="checkbox-group"></div>
+    </div>
+    <div class="contador-etiquetas" id="contadorEtiquetas">📊 <span id="etiquetasGeneradas">0</span> etiquetas generadas de <span id="etiquetasMaximas">0</span> posibles</div>
+    <button type="button" class="btn-seccion" onclick="abrirModal('modalInstrucciones')">📝 Editar Instrucciones <span>▼</span></button>
+    <button type="button" class="btn-seccion" onclick="abrirModal('modalEstilosProducto')">🎨 Estilos de Producto <span>▼</span></button>
+    <button type="button" class="btn-seccion" onclick="abrirModal('modalTextosAdicionales')">✍️ Textos adicionales <span>▼</span></button>
+    <button type="button" class="btn-seccion" onclick="abrirModal('modalImagenesExtras')">🖼️ Imágenes Extra (Opcionales) <span>▼</span></button>
+    <button type="button" class="btn-seccion" onclick="abrirModal('modalElementosAdicionales')">🔲 Códigos QR y Barras <span>▼</span></button>
+    <button type="button" class="btn-seccion" onclick="abrirModal('modalFondo')">🎨 Fondo de etiqueta <span>▼</span></button>
+    <div style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <button onclick="generarEtiquetas()" style="grid-column: span 2; padding:12px; background:#4caf50; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">🔄 Generar Etiquetas</button>
+        <button onclick="window.print()" style="grid-column: span 2; padding:12px; background:#2196f3; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">🖨️ Imprimir etiquetas</button>
+        <button type="button" onclick="descargarTodasComoImagen()" style="grid-column: span 2; padding:10px;">💾 Descargar Todas (ZIP)</button>
+        <button onclick="generarPDF()" style="grid-column: span 2; padding:10px;">📄 Descargar PDF</button>
+        <button type="button" onclick="exportarConfiguracion()" style="padding:10px;">📤 Exportar</button>
+        <button type="button" onclick="document.getElementById('inputImportar').click()" style="padding:10px;">📥 Importar</button>
+        <input type="file" id="inputImportar" accept=".json" style="display:none;" onchange="importarConfiguracion(event)">
+        <button type="button" onclick="alternarModoOscuro()" id="btnModoOscuro" style="grid-column: span 2;">🌑 Modo Oscuro</button>
+    </div>
+    <div style="margin-top: 15px; font-size: 12px;">
+        <label>Desenfoque fondo (px):</label><input type="range" id="blurFondo" min="0" max="10" step="0.5" value="0" oninput="actualizarEstilos()">
+        <label>Brillo fondo:</label><input type="range" id="brilloFondo" min="0.5" max="1.5" step="0.1" value="1" oninput="actualizarEstilos()">
+        <label>Oscurecer fondo:</label><input type="range" id="overlayFondo" min="0" max="0.7" step="0.05" value="0" oninput="actualizarEstilos()">
+    </div>
+</div>
+
+<div class="etiqueta-container" id="etiquetas"></div>
+
+<!-- MODALES -->
+<div id="modalTamanoHoja" class="modal"><div class="modal-content"><div class="modal-header"><h3>Tamaño de hoja</h3><button class="btn-cerrar-modal" onclick="cerrarModal('modalTamanoHoja')">&times;</button></div><div class="modal-body"><label>Tamaño:</label><select id="tamanoHoja" onchange="actualizarTamanoHoja()"><option value="carta">Carta (8.5x11")</option><option value="13x19">13x19" (33x48 cm)</option><option value="a4">A4 (21x29.7 cm)</option><option value="personalizado">Personalizado</option></select><div id="camposPersonalizados" style="display:none; margin-top:10px;"><label>Ancho (cm):</label><input type="number" id="anchoHojaCm" value="33" step="0.1"><label>Alto (cm):</label><input type="number" id="altoHojaCm" value="48" step="0.1"></div></div><div class="modal-footer"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modalTamanoHoja')">Cerrar</button></div></div></div>
+
+<div id="modalConfiguracion" class="modal"><div class="modal-content"><div class="modal-header"><h3>Configuración básica</h3><button class="btn-cerrar-modal" onclick="cerrarModal('modalConfiguracion')">&times;</button></div><div class="modal-body"><label>Ancho Etiqueta (cm):</label><input type="number" id="anchoCm" value="8" step="0.1"><label>Alto Etiqueta (cm):</label><input type="number" id="altoCm" value="4" step="0.1"><label>Lista manual:</label><input id="productosManual" placeholder="Ej: vainilla:3, limon:1"></div><div class="modal-footer"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modalConfiguracion')">Cerrar</button></div></div></div>
+
+<div id="modalInstrucciones" class="modal"><div class="modal-content"><div class="modal-header"><h3>Editar Instrucciones</h3><button class="btn-cerrar-modal" onclick="cerrarModal('modalInstrucciones')">&times;</button></div><div class="modal-body"><div id="editorInstrucciones" contenteditable="true" style="border:1px solid #ccc; padding:10px; min-height:150px; border-radius:4px; background:#fff; color:#000;"></div><label>Tamaño:</label><input type="number" id="instruccionesFontSize" value="6"><label>Color:</label><input type="color" id="instruccionesColor" value="#ffffff"><label>Top/Left %:</label><input type="number" id="instruccionesTop" value="10"><input type="number" id="instruccionesLeft" value="5"><label>Rotación (grados):</label><input type="number" id="instruccionesRotacion" value="0" step="5"></div><div class="modal-footer"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modalInstrucciones')">Cancelar</button><button class="btn-modal btn-guardar" onclick="guardarInstrucciones()">Guardar</button></div></div></div>
+
+<div id="modalEstilosProducto" class="modal"><div class="modal-content"><div class="modal-header"><h3>Estilos de Producto</h3><button class="btn-cerrar-modal" onclick="cerrarModal('modalEstilosProducto')">&times;</button></div><div class="modal-body"><h4>Imagen</h4><label>Ancho/Alto:</label><input type="number" id="imgWidth" value="60"><input type="number" id="imgHeight" value="60"><label>Top/Left %:</label><input type="number" id="imgTop" value="50"><input type="number" id="imgLeft" value="50"><label>Rotación (grados):</label><input type="number" id="imgRotacion" value="0" step="5"><hr><h4>Nombre</h4><label>Tamaño:</label><input type="number" id="nombreFontSize" value="12"><label>Color:</label><input type="color" id="nombreColor" value="#000000"><label>Top/Left %:</label><input type="number" id="nombreTop" value="75"><input type="number" id="nombreLeft" value="50"><label>Rotación (grados):</label><input type="number" id="nombreRotacion" value="0" step="5"></div><div class="modal-footer"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modalEstilosProducto')">Cerrar</button></div></div></div>
+
+<div id="modalTextosAdicionales" class="modal"><div class="modal-content"><div class="modal-header"><h3>Textos Adicionales</h3><button class="btn-cerrar-modal" onclick="cerrarModal('modalTextosAdicionales')">&times;</button></div><div class="modal-body"><h4>Texto 1</h4><input type="text" id="texto1" placeholder="Ej: 100% Natural"><label>Tamaño/Color:</label><input type="number" id="texto1FontSize" value="6"><input type="color" id="texto1Color" value="#000000"><label>Top/Left %:</label><input type="number" id="texto1Top" value="90"><input type="number" id="texto1Left" value="50"><label>Rotación (grados):</label><input type="number" id="texto1Rotacion" value="0" step="5"><hr><h4>Texto 2</h4><input type="text" id="texto2" placeholder="Ej: Aroma Intenso"><label>Tamaño/Color:</label><input type="number" id="texto2FontSize" value="6"><input type="color" id="texto2Color" value="#000000"><label>Top/Left %:</label><input type="number" id="texto2Top" value="92"><input type="number" id="texto2Left" value="50"><label>Rotación (grados):</label><input type="number" id="texto2Rotacion" value="0" step="5"><hr><h4>Texto 3</h4><input type="text" id="texto3" placeholder="Ej: Lote 042"><label>Tamaño/Color:</label><input type="number" id="texto3FontSize" value="6"><input type="color" id="texto3Color" value="#000000"><label>Top/Left %:</label><input type="number" id="texto3Top" value="5"><input type="number" id="texto3Left" value="50"><label>Rotación (grados):</label><input type="number" id="texto3Rotacion" value="0" step="5"></div><div class="modal-footer"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modalTextosAdicionales')">Cerrar</button></div></div></div>
+
+<!-- MODAL IMÁGENES EXTRA DINÁMICAS -->
+<div id="modalImagenesExtras" class="modal">
+    <div class="modal-content">
+        <div class="modal-header"><h3>🖼️ Imágenes Extra Opcionales</h3><button class="btn-cerrar-modal" onclick="cerrarModal('modalImagenesExtras')">&times;</button></div>
+        <div class="modal-body">
+            <div id="contenedorImagenesExtras" style="max-height: 350px; overflow-y: auto; padding-right: 5px;"></div>
+            <button onclick="agregarSlotImagenExtra()" style="margin-top:10px; width:100%; padding:10px; background:linear-gradient(135deg, #667eea, #764ba2); color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:500;">➕ Agregar Imagen</button>
+            <small style="display:block; margin-top:8px; color:#666; text-align:center;">Máx. 5 imágenes por etiqueta. Se guardan en memoria durante la sesión.</small>
+        </div>
+        <div class="modal-footer"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modalImagenesExtras')">Cerrar</button></div>
+    </div>
+</div>
+
+<div id="modalElementosAdicionales" class="modal">
+    <div class="modal-content">
+        <div class="modal-header"><h3>🔲 Códigos QR y Barras</h3><button class="btn-cerrar-modal" onclick="cerrarModal('modalElementosAdicionales')">&times;</button></div>
+        <div class="modal-body">
+            <div style="margin-bottom:15px; padding:10px; border:1px solid #ddd; border-radius:8px;"><h4 style="margin:0 0 8px 0;">📘 QR Facebook</h4><label><input type="checkbox" id="mostrarQRFacebook" onchange="generarEtiquetasDebounce()"> Mostrar</label><div id="configQRFacebook" style="display:none; margin-top:8px;"><label>URL:</label><input type="text" id="qrFacebookContent" value="https://www.facebook.com/profile.php?id=61579078480913"><label>Tamaño/Top/Left:</label><input type="number" id="qrFacebookSize" value="50"><input type="number" id="qrFacebookTop" value="10"><input type="number" id="qrFacebookLeft" value="10"><label>Rotación (grados):</label><input type="number" id="qrFacebookRotacion" value="0" step="5"></div></div>
+            <div style="margin-bottom:15px; padding:10px; border:1px solid #ddd; border-radius:8px;"><h4 style="margin:0 0 8px 0;">🔗 QR Dinámico</h4><label><input type="checkbox" id="mostrarQRDinamico" onchange="generarEtiquetasDebounce()"> Mostrar</label><div id="configQRDinamico" style="display:none; margin-top:8px;"><label>Tamaño/Top/Left:</label><input type="number" id="qrDinamicoSize" value="50"><input type="number" id="qrDinamicoTop" value="10"><input type="number" id="qrDinamicoLeft" value="90"><label>Rotación (grados):</label><input type="number" id="qrDinamicoRotacion" value="0" step="5"></div></div>
+            <div style="padding:10px; border:1px solid #ddd; border-radius:8px;"><h4 style="margin:0 0 8px 0;">📊 Código de Barras</h4><label><input type="checkbox" id="mostrarCodigoBarras" checked onchange="generarEtiquetasDebounce()"> Mostrar</label><div id="configCodigoBarras" style="display:none; margin-top:8px;"><label>Ancho/Alto/Top/Left:</label><input type="number" id="barcodeWidth" value="110"><input type="number" id="barcodeHeight" value="45"><input type="number" id="barcodeTop" value="92"><input type="number" id="barcodeLeft" value="50"><label>Rotación (grados):</label><input type="number" id="barcodeRotacion" value="0" step="5"></div></div>
+        </div>
+        <div class="modal-footer"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modalElementosAdicionales')">Cerrar</button></div>
+    </div>
+</div>
+
+<div id="modalFondo" class="modal"><div class="modal-content"><div class="modal-header"><h3>Fondo de etiqueta</h3><button class="btn-cerrar-modal" onclick="cerrarModal('modalFondo')">&times;</button></div><div class="modal-body"><label>Tipo:</label><select id="fondoTipo" onchange="cambiarTipoFondo()"><option value="ninguno">Ninguno</option><option value="subir">Subir imagen</option></select><input type="file" id="fondoImagen" accept="image/*" style="display:none;" onchange="previsualizarFondo(event)"></div><div class="modal-footer"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modalFondo')">Cerrar</button></div></div></div>
+
+<script>
+let productosDisponibles = [];
+let fondoActualUrl = null;
+let instruccionesHtml = `<span style="color: red; font-weight: bold;">Indicaciones de uso:</span><br><br>- Utilice 5-10 gotas en difusor eléctrico.<br>- Evite contacto con ojos y mucosas.<br>- Mantener fuera del alcance de niños.<br><br><span style="color: red; font-weight: bold;">Advertencias:</span><br>✖ No es de uso tópico ni consumible.`;
+const tamanosHoja = { carta: { w: 21.6, h: 27.9 }, "13x19": { w: 33, h: 48 }, a4: { w: 21, h: 29.7 }, personalizado: { w: 33, h: 48 } };
+
+// Array dinámico para imágenes extra
+let imagenesExtras = [];
+
+function showToast(msg, type='success', dur=3000) { const c = document.getElementById('toastContainer'), t = document.createElement('div'); t.className = `toast ${type}`; t.textContent = msg; c.appendChild(t); setTimeout(()=>t.classList.add('show'), 10); setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(), 300); }, dur); }
+function setLoading(s) { document.getElementById('loadingOverlay').classList.toggle('active', s); }
+function aplanarProductos(data) { if(Array.isArray(data)) return data.map(p=>({...p, id: p.id || crypto.randomUUID()})); let f = []; for(let k in data) if(Array.isArray(data[k])) f = f.concat(data[k]); return f.map(p=>({...p, id: p.id || crypto.randomUUID()})); }
+
+async function cargarProductos() { setLoading(true); try { let d; try { const r = await fetch('https://wil1979.github.io/esentia-factura/productos_esentia.json'); if(!r.ok) throw new Error(); d = await r.json(); } catch(e) { const r = await fetch('productos_esentia.json'); d = await r.json(); } productosDisponibles = aplanarProductos(d); renderizarCheckboxes(); generarEtiquetas(); } catch(err) { document.getElementById("etiquetas").innerHTML = `<p style='color:red;'>⚠️ ${err.message}</p>`; showToast('Error cargando productos', 'error'); } finally { setLoading(false); } }
+
+function renderizarCheckboxes() { const c = document.getElementById("checkboxContainer"); c.innerHTML = ''; productosDisponibles.forEach((p, i) => { const div = document.createElement("div"); div.className = "checkbox-item"; div.innerHTML = `<input type="checkbox" id="prod_${i}" data-index="${i}"><label for="prod_${i}" style="flex:1; margin:0;">${p.nombre}</label><input type="number" id="cant_${i}" data-qty-index="${i}" min="1" value="1" style="width:45px; text-align:center;" onchange="generarEtiquetasDebounce()">`; c.appendChild(div); div.querySelector('input[type="checkbox"]').addEventListener('change', generarEtiquetasDebounce); }); }
+function filtrarProductos() { const f = document.getElementById('filtroProductos').value.toLowerCase(); document.querySelectorAll('.checkbox-item').forEach(el => el.style.display = el.textContent.toLowerCase().includes(f) ? 'flex' : 'none'); }
+function seleccionarTodos(chk) { document.querySelectorAll('.checkbox-item input[type="checkbox"]').forEach(c => c.checked = chk); generarEtiquetas(); showToast(chk ? 'Todos seleccionados' : 'Selección limpiada'); }
+
+function abrirModal(id) { const m = document.getElementById(id); m.style.display = 'block'; if(id==='modalInstrucciones') document.getElementById('editorInstrucciones').innerHTML = instruccionesHtml; if(id==='modalImagenesExtras') renderizarImagenesExtras(); }
+function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+window.onclick = e => { if(e.target.classList.contains('modal')) e.target.style.display='none'; };
+document.addEventListener('keydown', e => { if(e.key==='Escape') document.querySelectorAll('.modal').forEach(m => m.style.display='none'); });
+
+function actualizarTamanoHoja() { const t = document.getElementById("tamanoHoja").value; document.getElementById("camposPersonalizados").style.display = t==="personalizado" ? "block" : "none"; const w = t==="personalizado" ? (parseFloat(document.getElementById('anchoHojaCm').value)||21.6) : tamanosHoja[t].w; const h = t==="personalizado" ? (parseFloat(document.getElementById('altoHojaCm').value)||27.9) : tamanosHoja[t].h; document.documentElement.style.setProperty('--hoja-ancho-cm', `${w}cm`); document.documentElement.style.setProperty('--hoja-alto-cm', `${h}cm`); generarEtiquetas(); }
+
+function actualizarEstilos() { 
+    const v = id => document.getElementById(id)?.value; 
+    document.documentElement.style.setProperty('--etiqueta-width', v('anchoCm')+'cm'); 
+    document.documentElement.style.setProperty('--etiqueta-height', v('altoCm')+'cm'); 
+    document.documentElement.style.setProperty('--img-width', v('imgWidth')+'px'); 
+    document.documentElement.style.setProperty('--img-height', v('imgHeight')+'px'); 
+    document.documentElement.style.setProperty('--img-top', v('imgTop')+'%'); 
+    document.documentElement.style.setProperty('--img-left', v('imgLeft')+'%'); 
+    document.documentElement.style.setProperty('--img-rotacion', (v('imgRotacion')||0)+'deg'); 
+    document.documentElement.style.setProperty('--nombre-font-size', v('nombreFontSize')+'px'); 
+    document.documentElement.style.setProperty('--nombre-color', v('nombreColor')); 
+    document.documentElement.style.setProperty('--nombre-top', v('nombreTop')+'%'); 
+    document.documentElement.style.setProperty('--nombre-left', v('nombreLeft')+'%'); 
+    document.documentElement.style.setProperty('--nombre-rotacion', (v('nombreRotacion')||0)+'deg'); 
+    document.documentElement.style.setProperty('--instrucciones-font-size', v('instruccionesFontSize')+'px'); 
+    document.documentElement.style.setProperty('--instrucciones-color', v('instruccionesColor')); 
+    document.documentElement.style.setProperty('--instrucciones-top', v('instruccionesTop')+'%'); 
+    document.documentElement.style.setProperty('--instrucciones-left', v('instruccionesLeft')+'%'); 
+    document.documentElement.style.setProperty('--instrucciones-rotacion', (v('instruccionesRotacion')||0)+'deg'); 
+    document.documentElement.style.setProperty('--texto1-font-size', (v('texto1FontSize')||6)+'px'); 
+    document.documentElement.style.setProperty('--texto1-color', v('texto1Color')||'#000'); 
+    document.documentElement.style.setProperty('--texto1-top', (v('texto1Top')||90)+'%'); 
+    document.documentElement.style.setProperty('--texto1-left', (v('texto1Left')||50)+'%'); 
+    document.documentElement.style.setProperty('--texto1-rotacion', (v('texto1Rotacion')||0)+'deg'); 
+    document.documentElement.style.setProperty('--texto2-font-size', (v('texto2FontSize')||6)+'px'); 
+    document.documentElement.style.setProperty('--texto2-color', v('texto2Color')||'#000'); 
+    document.documentElement.style.setProperty('--texto2-top', (v('texto2Top')||92)+'%'); 
+    document.documentElement.style.setProperty('--texto2-left', (v('texto2Left')||50)+'%'); 
+    document.documentElement.style.setProperty('--texto2-rotacion', (v('texto2Rotacion')||0)+'deg'); 
+    document.documentElement.style.setProperty('--texto3-font-size', (v('texto3FontSize')||6)+'px'); 
+    document.documentElement.style.setProperty('--texto3-color', v('texto3Color')||'#000'); 
+    document.documentElement.style.setProperty('--texto3-top', (v('texto3Top')||5)+'%'); 
+    document.documentElement.style.setProperty('--texto3-left', (v('texto3Left')||50)+'%'); 
+    document.documentElement.style.setProperty('--texto3-rotacion', (v('texto3Rotacion')||0)+'deg'); 
+    document.documentElement.style.setProperty('--qr-fb-size', (v('qrFacebookSize')||50)+'px'); 
+    document.documentElement.style.setProperty('--qr-fb-top', (v('qrFacebookTop')||10)+'%'); 
+    document.documentElement.style.setProperty('--qr-fb-left', (v('qrFacebookLeft')||10)+'%'); 
+    document.documentElement.style.setProperty('--qr-fb-rotacion', (v('qrFacebookRotacion')||0)+'deg'); 
+    document.documentElement.style.setProperty('--qr-din-size', (v('qrDinamicoSize')||50)+'px'); 
+    document.documentElement.style.setProperty('--qr-din-top', (v('qrDinamicoTop')||10)+'%'); 
+    document.documentElement.style.setProperty('--qr-din-left', (v('qrDinamicoLeft')||90)+'%'); 
+    document.documentElement.style.setProperty('--qr-din-rotacion', (v('qrDinamicoRotacion')||0)+'deg'); 
+    document.documentElement.style.setProperty('--barcode-width', (v('barcodeWidth')||110)+'px'); 
+    document.documentElement.style.setProperty('--barcode-height', (v('barcodeHeight')||45)+'px'); 
+    document.documentElement.style.setProperty('--barcode-top', (v('barcodeTop')||92)+'%'); 
+    document.documentElement.style.setProperty('--barcode-left', (v('barcodeLeft')||50)+'%'); 
+    document.documentElement.style.setProperty('--barcode-rotacion', (v('barcodeRotacion')||0)+'deg'); 
+    document.documentElement.style.setProperty('--blur-fondo', (v('blurFondo')||0)+'px'); 
+    document.documentElement.style.setProperty('--brillo-fondo', v('brilloFondo')||1); 
+    document.documentElement.style.setProperty('--overlay-fondo', v('overlayFondo')||0); 
+    guardarConfiguracion(); 
+}
+
+// QR ALTA CALIDAD
+function generarQRCanvas(texto, size = 100) { const scale = 4; const dim = size * scale; const margin = 12 * scale; const qr = qrcode(0, 'H'); qr.addData(texto); qr.make(); const cvs = document.createElement('canvas'); cvs.width = dim + margin*2; cvs.height = dim + margin*2; const ctx = cvs.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,cvs.width,cvs.height); const cnt = qr.getModuleCount(), ms = dim/cnt; ctx.fillStyle = '#000000'; for(let r=0;r<cnt;r++) for(let c=0;c<cnt;c++) if(qr.isDark(r,c)) ctx.fillRect(margin+c*ms, margin+r*ms, ms, ms); return cvs.toDataURL('image/png'); }
+
+// SISTEMA DE IMÁGENES EXTRA DINÁMICAS
+function renderizarImagenesExtras() { const cont = document.getElementById('contenedorImagenesExtras'); cont.innerHTML = ''; if(imagenesExtras.length === 0) { cont.innerHTML = '<p style="text-align:center; color:#888; font-size:13px; padding:20px 0;">No hay imágenes extra agregadas.</p>'; return; } imagenesExtras.forEach((img, idx) => { const div = document.createElement('div'); div.style.cssText = 'margin-bottom:15px; padding:10px; border:1px solid #e0e0e0; border-radius:8px; background:#fafafa;'; div.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;"><strong style="font-size:13px;">🖼️ Imagen ${idx + 1}</strong><button onclick="eliminarImagenExtra(${idx})" style="background:#ff4444; color:white; border:none; border-radius:4px; padding:2px 8px; cursor:pointer; font-size:12px;">✕</button></div><input type="file" accept="image/*" onchange="cargarArchivoImagenExtra(${idx}, event)" style="margin-bottom:5px; font-size:11px;">${img.url ? `<img src="${img.url}" style="display:block; max-width:60px; max-height:60px; border-radius:4px; margin-bottom:8px; border:1px solid #ddd;">` : ''}<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:12px;"><label>Ancho:</label><input type="number" value="${img.w}" onchange="actualizarConfigImgExtra(${idx},'w',this.value)"><label>Alto:</label><input type="number" value="${img.h}" onchange="actualizarConfigImgExtra(${idx},'h',this.value)"><label>Top %:</label><input type="number" value="${img.top}" onchange="actualizarConfigImgExtra(${idx},'top',this.value)"><label>Left %:</label><input type="number" value="${img.left}" onchange="actualizarConfigImgExtra(${idx},'left',this.value)"><label>Rotación:</label><input type="number" value="${img.rot}" onchange="actualizarConfigImgExtra(${idx},'rot',this.value)"></div>`; cont.appendChild(div); }); }
+
+function agregarSlotImagenExtra() { if(imagenesExtras.length >= 5) return showToast('Máximo 5 imágenes permitidas', 'warning'); imagenesExtras.push({ url: null, w: 40, h: 40, top: 15, left: 15, rot: 0 }); renderizarImagenesExtras(); generarEtiquetasDebounce(); }
+function eliminarImagenExtra(idx) { imagenesExtras.splice(idx, 1); renderizarImagenesExtras(); generarEtiquetasDebounce(); }
+function cargarArchivoImagenExtra(idx, e) { const file = e.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = ev => { imagenesExtras[idx].url = ev.target.result; renderizarImagenesExtras(); generarEtiquetasDebounce(); }; reader.readAsDataURL(file); }
+function actualizarConfigImgExtra(idx, prop, val) { imagenesExtras[idx][prop] = parseFloat(val) || 0; generarEtiquetasDebounce(); }
+
+function generarEtiquetas() { 
+    actualizarEstilos(); 
+    const wCm = parseFloat(document.getElementById('anchoCm').value); 
+    const hCm = parseFloat(document.getElementById('altoCm').value); 
+    const tH = document.getElementById("tamanoHoja").value; 
+    const sW = tH==="personalizado" ? (parseFloat(document.getElementById('anchoHojaCm').value)||21.6) : tamanosHoja[tH].w; 
+    const sH = tH==="personalizado" ? (parseFloat(document.getElementById('altoHojaCm').value)||27.9) : tamanosHoja[tH].h; 
+    const cols = Math.floor(sW/wCm), rows = Math.floor(sH/hCm), max = cols*rows; 
+    if(cols<=0||rows<=0) { document.getElementById("etiquetas").innerHTML="<p style='color:red;'>⚠️ Etiqueta muy grande</p>"; return; } 
+    const cont = document.getElementById("etiquetas"); 
+    cont.style.gridTemplateColumns = `repeat(${cols}, ${wCm}cm)`; 
+    cont.style.gridTemplateRows = `repeat(${rows}, ${hCm}cm)`; 
+    cont.style.width = `${sW}cm`; 
+    cont.style.height = `${sH}cm`;
+
+    const sel = []; 
+    document.querySelectorAll('.checkbox-item input[type="checkbox"]:checked').forEach(cb => { 
+        const idx = parseInt(cb.dataset.index); 
+        const prod = productosDisponibles[idx]; 
+        if(prod) { 
+            const qty = parseInt(document.getElementById(`cant_${idx}`).value)||1; 
+            sel.push({...prod, cantidad: qty}); 
+        } 
+    });
+
+    let lista = sel; 
+    const man = document.getElementById("productosManual").value; 
+    if(man.trim()) { 
+        lista = man.split(',').map(s=>{ 
+            let [n, c] = s.trim().split(':'); 
+            c = parseInt(c)||1; 
+            const f = productosDisponibles.find(p=>p.nombre.toLowerCase().includes((n||s).toLowerCase())); 
+            return f ? {...f, cantidad:c} : {nombre:n||s, imagen:'', cantidad:c}; 
+        }); 
+    } 
+    if(lista.length===0) { 
+        cont.innerHTML="<p style='color:orange; padding:20px;'>⚠️ Selecciona productos</p>"; 
+        document.getElementById('etiquetasGeneradas').textContent="0"; 
+        return; 
+    }
+
+    const todas = []; 
+    lista.forEach(p => { 
+        for(let i=0;i<(p.cantidad||1);i++) todas.push({...p}); 
+    }); 
+    const mostrar = todas.slice(0, max); 
+    document.getElementById('etiquetasGeneradas').textContent = mostrar.length; 
+    document.getElementById('etiquetasMaximas').textContent = max; 
+    cont.innerHTML = "";
+
+    mostrar.forEach(prod => { 
+        const et = document.createElement("div"); 
+        et.className = "etiqueta"; 
+        let extra = ''; 
+        const t1 = document.getElementById("texto1")?.value; 
+        if(t1) extra += `<div class="texto-adicional-1">${t1}</div>`; 
+        const t2 = document.getElementById("texto2")?.value; 
+        if(t2) extra += `<div class="texto-adicional-2">${t2}</div>`; 
+        const t3 = document.getElementById("texto3")?.value; 
+        if(t3) extra += `<div class="texto-adicional-3">${t3}</div>`; 
+        if(document.getElementById('mostrarQRFacebook')?.checked) extra += `<div class="codigo-qr qr-facebook"></div>`; 
+        if(document.getElementById('mostrarQRDinamico')?.checked && prod.id) extra += `<div class="codigo-qr qr-dinamico"></div>`; 
+        if(document.getElementById('mostrarCodigoBarras')?.checked && prod.id) extra += `<div class="codigo-barras"></div>`;
+
+        // Renderizar imágenes extra dinámicas
+        if(imagenesExtras.length > 0) { 
+            imagenesExtras.forEach(img => { 
+                if(img.url) { 
+                    extra += `<img class="imagen-extra-dinamica" src="${img.url}" style="position:absolute; width:${img.w}px; height:${img.h}px; top:${img.top}%; left:${img.left}%; transform:translate(-50%,-50%) rotate(${img.rot}deg); object-fit:contain; z-index:4; border-radius:2px;" crossorigin="anonymous">`; 
+                } 
+            }); 
+        }
+
+        et.innerHTML = `<div class="etiqueta-content">${fondoActualUrl ? `<img class="fondo-etiqueta" src="${fondoActualUrl}" crossorigin="anonymous">` : ''}<div class="fondo-overlay"></div><img class="producto-imagen" src="${prod.imagen}" alt="${prod.nombre}" onerror="this.style.display='none'" crossorigin="anonymous"><div class="nombre-producto">${prod.nombre}</div>${instruccionesHtml ? `<div class="instrucciones">${instruccionesHtml}</div>` : ''}${extra}<div class="marcas-corte"><div class="mc mc-tl"></div><div class="mc mc-tr"></div><div class="mc mc-bl"></div><div class="mc mc-br"></div></div></div><div class="download-overlay">🔽 Click para descargar</div>`; 
+        et.onclick = () => descargarEtiquetaIndividual(et, prod.nombre); 
+        cont.appendChild(et);
+
+        const qrFb = et.querySelector('.qr-facebook'); 
+        if(qrFb) { 
+            const sz = parseInt(document.getElementById('qrFacebookSize').value)||50; 
+            const cnt = document.getElementById('qrFacebookContent').value || "https://www.facebook.com/profile.php?id=61579078480913"; 
+            qrFb.innerHTML = `<img src="${generarQRCanvas(cnt, sz)}" style="width:100%;height:100%;object-fit:contain;">`; 
+        } 
+        const qrDin = et.querySelector('.qr-dinamico'); 
+        if(qrDin && prod.id) { 
+            const sz = parseInt(document.getElementById('qrDinamicoSize').value)||50; 
+            const cnt = `https://wil1979.github.io/esentia-factura/producto.html?id=${prod.id}`; 
+            qrDin.innerHTML = `<img src="${generarQRCanvas(cnt, sz)}" style="width:100%;height:100%;object-fit:contain;">`; 
+        } 
+        const bEl = et.querySelector('.codigo-barras'); 
+        if(bEl && prod.id && window.JsBarcode) { 
+            bEl.innerHTML = ''; 
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); 
+            bEl.appendChild(svg); 
+            requestAnimationFrame(() => { 
+                try { 
+                    JsBarcode(svg, prod.id.toString(), { format:"CODE128", width:1.5, height:38, displayValue:false, background:"#ffffff", margin:0 }); 
+                } catch(e) { 
+                    bEl.innerHTML = `<small style="color:red;background:#fff;padding:2px;">ID: ${prod.id}</small>`; 
+                } 
+            }); 
+        } 
+    }); 
+}
+
+function descargarEtiquetaIndividual(el, nombre) { setLoading(true); html2canvas(el.querySelector('.etiqueta-content'), { scale:3, useCORS:true }).then(cvs => { const a = document.createElement('a'); a.download = `etiqueta-${nombre.replace(/\s+/g,'_')}.png`; a.href = cvs.toDataURL(); a.click(); showToast('Descargada'); }).finally(()=>setLoading(false)); }
+function cambiarTipoFondo() { if(document.getElementById('fondoTipo').value==='subir') document.getElementById('fondoImagen').click(); else { fondoActualUrl=null; generarEtiquetas(); } }
+function previsualizarFondo(e) { const f=e.target.files[0]; if(f){const r=new FileReader();r.onload=ev=>{fondoActualUrl=ev.target.result; generarEtiquetas();};r.readAsDataURL(f);} }
+function guardarInstrucciones() { instruccionesHtml = document.getElementById('editorInstrucciones').innerHTML; cerrarModal('modalInstrucciones'); generarEtiquetas(); }
+function alternarModoOscuro() { document.body.classList.toggle('modo-oscuro'); const d=document.body.classList.contains('modo-oscuro'); document.getElementById('btnModoOscuro').textContent=d?'☀️ Modo Claro':'🌑 Modo Oscuro'; localStorage.setItem('modoOscuro',d); }
+
+function guardarConfiguracion() { 
+    const c = {}; 
+    // Guardar todos los inputs y selects
+    document.querySelectorAll('.formulario input, .modal-body input, .modal-body select').forEach(el => { 
+        if(el.id) c[el.id] = el.type === 'checkbox' ? el.checked : el.value; 
+    }); 
+    // Guardar estado de checkboxes de productos
+    const seleccionados = []; 
+    document.querySelectorAll('.checkbox-item input[type="checkbox"]').forEach(cb => { 
+        if(cb.checked) seleccionados.push({ index: cb.dataset.index, cantidad: document.getElementById(`cant_${cb.dataset.index}`)?.value || 1 }); 
+    }); 
+    c.productosSeleccionados = seleccionados; 
+    c.instruccionesHtml = instruccionesHtml; 
+    c.imagenesExtrasConfig = imagenesExtras.map(i => ({ ...i, url: null })); // No guardamos URLs base64 en localStorage (muy grandes)
+    c.fondoActualUrl = fondoActualUrl; // Guardamos el fondo
+    c.tamanoHoja = document.getElementById('tamanoHoja').value;
+    c.modoOscuro = document.body.classList.contains('modo-oscuro');
+    localStorage.setItem('configEtiqueta', JSON.stringify(c)); 
+}
+
+async function descargarTodasComoImagen() { const items = document.querySelectorAll('.etiqueta-content'); if(!items.length) return; setLoading(true); const zip = new JSZip(); await Promise.all(Array.from(items).map((el,i)=>html2canvas(el,{scale:2,useCORS:true}).then(cvs=>new Promise(res=>cvs.toBlob(blob=>{zip.file(`etiqueta_${i+1}.png`,blob);res();}))))); const blob = await zip.generateAsync({type:"blob"}); saveAs(blob, "etiquetas.zip"); setLoading(false); }
+async function generarPDF() { const cont = document.getElementById('etiquetas'); if(!cont.children.length) return; setLoading(true); try { const cvs = await html2canvas(cont, {scale:3,useCORS:true,backgroundColor:"#fff"}); const img = cvs.toDataURL('image/png'); const { jsPDF } = window.jspdf; const w = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hoja-ancho-cm')); const h = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hoja-alto-cm')); const pdf = new jsPDF({orientation:w>h?'l':'p', unit:'cm', format:[w,h]}); pdf.addImage(img,'PNG',0,0,w,h); pdf.save('etiquetas.pdf'); } catch(e) { console.error(e); } setLoading(false); }
+function exportarConfiguracion() { const d = localStorage.getItem('configEtiqueta'); if(!d) return showToast('No hay configuración guardada', 'warning'); const b = new Blob([d], {type:'application/json'}); saveAs(b, 'config.json'); showToast('Configuración exportada'); }
+function importarConfiguracion(e) { const f = e.target.files[0]; if(f){const r = new FileReader();r.onload = ev => { try { const c = JSON.parse(ev.target.result); aplicarConfiguracion(c); showToast('Configuración importada'); } catch(err) { showToast('Error al importar', 'error'); } }; r.readAsText(f);} }
+
+function aplicarConfiguracion(c) {
+    // Restaurar valores de inputs
+    Object.keys(c).forEach(k => { 
+        const el = document.getElementById(k); 
+        if(el) { 
+            if(el.type === 'checkbox') el.checked = c[k]; 
+            else el.value = c[k]; 
+        } 
+    }); 
+    // Restaurar selección de productos
+    if(c.productosSeleccionados) { 
+        c.productosSeleccionados.forEach(s => { 
+            const cb = document.querySelector(`input[data-index="${s.index}"]`); 
+            if(cb) { 
+                cb.checked = true; 
+                const cant = document.getElementById(`cant_${s.index}`); 
+                if(cant) cant.value = s.cantidad; 
+            } 
+        }); 
+    } 
+    // Restaurar instrucciones
+    if(c.instruccionesHtml) instruccionesHtml = c.instruccionesHtml; 
+    // Restaurar imágenes extra (sin URLs, solo config)
+    if(c.imagenesExtrasConfig) { 
+        imagenesExtras = c.imagenesExtrasConfig.map(i => ({ ...i, url: null })); 
+    } 
+    // Restaurar fondo
+    if(c.fondoActualUrl) fondoActualUrl = c.fondoActualUrl;
+    // Restaurar tamaño de hoja
+    if(c.tamanoHoja) document.getElementById('tamanoHoja').value = c.tamanoHoja;
+    // Restaurar modo oscuro
+    if(c.modoOscuro && !document.body.classList.contains('modo-oscuro')) alternarModoOscuro();
+    else if(!c.modoOscuro && document.body.classList.contains('modo-oscuro')) alternarModoOscuro();
+    
+    // Actualizar visibilidad de config según checkboxes
+    ['mostrarQRFacebook','mostrarQRDinamico','mostrarCodigoBarras'].forEach(id => { 
+        const cb = document.getElementById(id); 
+        const box = cb.id.replace('mostrar','config'); 
+        if(cb && document.getElementById(box)) { 
+            document.getElementById(box).style.display = cb.checked ? 'block' : 'none'; 
+        } 
+    }); 
+    
+    actualizarTamanoHoja();
+    generarEtiquetas(); 
+}
+
+let debounceTimer; 
+function generarEtiquetasDebounce() { 
+    clearTimeout(debounceTimer); 
+    debounceTimer = setTimeout(() => { 
+        generarEtiquetas(); 
+    }, 300); 
+}
+
+// Configurar listeners automáticos para TODOS los inputs de los modales
+function configurarListenersEnVivo() {
+    // Todos los inputs numéricos, de texto, color y select dentro de modales
+    document.querySelectorAll('.modal-body input, .modal-body select').forEach(input => {
+        // Usar 'input' para rangos y textos, 'change' para checkboxes y selects
+        const evento = input.type === 'checkbox' ? 'change' : 'input';
+        input.addEventListener(evento, () => {
+            // Guardar config y regenerar con debounce
+            generarEtiquetasDebounce();
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => { 
+    cargarProductos(); 
+    
+    // Configurar listeners en vivo para todos los controles
+    configurarListenersEnVivo();
+    
+    // Restaurar configuración guardada
+    const saved = localStorage.getItem('configEtiqueta');
+    if(saved) {
+        try {
+            aplicarConfiguracion(JSON.parse(saved));
+            showToast('Configuración anterior restaurada', 'success');
+        } catch(e) {
+            console.error('Error restaurando config:', e);
+        }
+    }
+    
+    if(localStorage.getItem('modoOscuro')==='true' && !document.body.classList.contains('modo-oscuro')) alternarModoOscuro(); 
+    
+    actualizarTamanoHoja(); 
+    
+    ['mostrarQRFacebook','mostrarQRDinamico','mostrarCodigoBarras'].forEach(id => { 
+        const cb = document.getElementById(id); 
+        const box = cb.id.replace('mostrar','config'); 
+        if(cb) { 
+            cb.addEventListener('change', e => { 
+                document.getElementById(box).style.display = e.target.checked ? 'block' : 'none'; 
+                generarEtiquetasDebounce();
+            }); 
+            cb.dispatchEvent(new Event('change')); 
+        } 
+    }); 
+});
+</script>
+</body>
+</html>

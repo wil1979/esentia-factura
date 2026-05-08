@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Generador de Etiquetas Esentia</title>
+  <link rel="stylesheet" href="etiqvaritas.css" />
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -10,299 +11,312 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
-    :root {
-      --ancho-etiqueta: 2cm;
-      --alto-etiqueta: 4cm;
-      --tamano-fuente: 8px;
-      --tamano-nombre: 7px;
-      --ancho-logo: 65px;
-      --page-size: letter;
-      --border-radius: 2px;
-      --diametro-etiqueta: 2cm;
-      --color-texto: #000000;
-      --color-fondo: #ffffff;
-      --color-borde: #dddddd;
-    }
+    
 
-    @page {
-      size: letter;
-      margin: 0.5cm;
-    }
 
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Open Sans', sans-serif;
-      background: #fff;
-    }
-
-    .hoja {
-      width: fit-content;
-      height: fit-content;
-      display: grid;
-      gap: 2mm;
-      box-sizing: border-box;
-      padding: 1.5cm;
-      background: #f9f9f9;
-    }
-
-    .etiqueta {
-      box-sizing: border-box;
-      padding: 2ch;
-      border: 0.5px solid var(--color-borde);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      overflow: hidden;
-      width: var(--ancho-etiqueta);
-      height: var(--alto-etiqueta);
-      font-size: var(--tamano-fuente);
-      border-radius: var(--border-radius);
-      background: var(--color-fondo);
-      text-align: center;
-      color: var(--color-texto);
-    }
-
-    .etiqueta.redonda {
-      width: var(--diametro-etiqueta);
-      height: var(--diametro-etiqueta);
-      border-radius: 50%;
-    }
-
-    .logo {
-      width: var(--ancho-logo);
-      height: auto;
-      margin: 0 auto;
-    }
-
-    .nombre-producto {
-      font-size: var(--tamano-nombre);
-      font-weight: bold;
-      margin: 2px 0;
-      line-height: 1.2;
-      color: var(--color-texto);
-    }
-
-    .precio {
-      font-weight: bold;
-      margin-top: 1px;
-      font-size: calc(var(--tamano-fuente) + 0.5px);
-      color: var(--color-texto);
-    }
-
-    .imagen-producto {
-      max-width: 74%;
-      max-height: 1.5cm;
-      object-fit: contain;
-    }
-
-    .etiqueta.redonda .imagen-producto {
-      border-radius: 50%;
-    }
-
-    /* Modo impresión ligero */
-    .modo-ligero .imagen-contenedor {
-      display: none !important;
-    }
-    .modo-ligero .logo {
-      display: none !important;
-    }
-    .modo-ligero .etiqueta::before {
-      content: "🌿";
-      font-size: 16px;
-      display: block;
-      margin-bottom: 4px;
-      color: var(--color-texto);
-    }
-
-    .config-modal {
-      position: fixed;
-      top: 0;
-      right: 0;
-      width: 320px;
-      height: 100vh;
-      background: white;
-      padding: 20px;
-      border-left: 1px solid #ccc;
-      box-shadow: -5px 0 15px rgba(0,0,0,0.1);
-      z-index: 1500;
-      overflow-y: auto;
-      transform: translateX(0);
-      transition: transform 0.3s ease;
-    }
-
-    .config-modal.hidden {
-      transform: translateX(100%);
-    }
-
-    .config-group {
-      margin-bottom: 12px;
-    }
-
-    .config-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-size: 12px;
-      font-weight: bold;
-    }
-
-    .config-group input,
-    .config-group select {
-      width: 100%;
-      padding: 5px;
-      font-size: 12px;
-    }
-
-    .productos-lista {
-      max-height: 150px;
-      overflow-y: auto;
-      border: 1px solid #eee;
-      padding: 8px;
-      margin-top: 8px;
-    }
-
-    .productos-lista label {
-      display: block;
-      font-weight: normal;
-      font-size: 12px;
-    }
-
-    #btnAbrirConfig {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 2000;
-      background: #6a5acd;
-      color: white;
-      border: none;
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      font-size: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-      cursor: pointer;
-    }
-
-    @media print {
-      .hoja {
-        gap: 5mm;
-        padding: 1.5cm;
-        background: none;
-      }
-      .etiqueta {
-        break-inside: avoid;
-      }
-      .config-modal,
-      #btnAbrirConfig {
-        display: none !important;
-      }
-      * {
-        animation: none !important;
-        transition: none !important;
-        box-shadow: none !important;
-      }
-    }
   </style>
 </head>
 <body>
 
+  
 <div class="config-modal" id="configModal">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-    <h3 style="margin: 0;">Configuración de Etiquetas</h3>
-    <button onclick="toggleConfig()" style="padding: 3px 8px; font-size: 12px;">Cerrar</button>
+  <!-- HEADER -->
+  <div class="config-header">
+    <h3>⚙️ Configuración de Etiquetas</h3>
+    <button onclick="toggleConfig()">✕ Cerrar</button>
   </div>
+  
+  <!-- BODY -->
+  <div class="config-body">
+    
+    <!-- SECCIÓN 1: HOJA Y FORMATO -->
+    <div class="config-section">
+      <div class="config-section-header" onclick="toggleSection(this)">
+        <span>📄 Hoja y Formato</span>
+        <span class="icon">▼</span>
+      </div>
+      <div class="config-section-content">
+        <div class="config-grid">
+          <div class="config-group">
+            <label>Tamaño de hoja:</label>
+            <select id="tamanoHoja" onchange="actualizarHoja()">
+              <option value="letter">Letter</option>
+              <option value="a4">A4</option>
+              <option value="legal">Legal</option>
+              <option value="tabloid">Tabloide</option>
+              <option value="custom">Personalizado</option>
+            </select>
+          </div>
+          <div class="config-group">
+            <label>Forma de etiqueta:</label>
+            <select id="formaEtiqueta" onchange="generarEtiquetas()">
+              <option value="redondeada">Esquinas redondeadas</option>
+              <option value="rectangular">Rectangular</option>
+              <option value="redonda">Redonda (círculo)</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="config-group full-width" id="hojaPersonalizada" style="display:none;">
+          <div class="config-grid">
+            <div class="config-group">
+              <label>Ancho hoja (cm):</label>
+              <input type="number" id="anchoHoja" value="28" step="0.1" oninput="actualizarHoja()">
+            </div>
+            <div class="config-group">
+              <label>Alto hoja (cm):</label>
+              <input type="number" id="altoHoja" value="100" step="0.1" oninput="actualizarHoja()">
+            </div>
+          </div>
+        </div>
+        
+        <div class="config-grid">
+          <div class="config-group">
+            <label>Ancho etiqueta (cm):</label>
+            <input type="number" id="anchoEtiqueta" step="1" value="2" oninput="generarEtiquetas()">
+          </div>
+          <div class="config-group">
+            <label>Alto etiqueta (cm):</label>
+            <input type="number" id="altoEtiqueta" step="0.1" value="4" oninput="generarEtiquetas()">
+          </div>
+        </div>
 
-  <div class="config-group">
-    <label>Fuente de productos:</label>
-    <select id="fuenteProductos" onchange="cambiarFuente()">
-      <option value="manual">Manual (lista personalizada)</option>
-      <option value="firebase">Desde inventario (Firestore)</option>
-    </select>
-  </div>
-
-  <div id="seccionManual" class="config-group">
-    <label>Productos (separados por comas):</label>
-    <input type="text" id="listaProductos" 
-      value="lavanda,menta,pino,cipres,navidad,magnolia,manzanaverde" 
-      oninput="generarEtiquetas()">
-  </div>
-
-  <div id="seccionFirebase" class="config-group" style="display:none;">
-    <label>Productos en stock (con nombre original):</label>
-    <div class="productos-lista" id="listaCheckboxes">
-      <em>Cargando catálogo...</em>
+        <div class="config-group full-width" style="margin-top:10px;">
+  <label style="display:flex; align-items:center; gap:8px; font-size:12px;">
+    <input type="checkbox" id="modoSinEspacios" onchange="toggleModoEspacios()">
+    <span> Sin espacios entre etiquetas (DTF)</span>
+  </label>
+</div>
+        
+        <button onclick="activarModoDTF()" 
+                style="width:100%; padding:10px; background:#111; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
+          🏭 Modo Producción DTF UV (28x100)
+        </button>
+      </div>
     </div>
-    <button type="button" onclick="cargarProductosDeFirestore()" style="margin-top:8px; font-size:11px;">↻ Recargar stock</button>
+    
+    <!-- SECCIÓN 2: PRODUCTOS -->
+    <div class="config-section">
+      <div class="config-section-header" onclick="toggleSection(this)">
+        <span>📦 Productos</span>
+        <span class="icon">▼</span>
+      </div>
+      <div class="config-section-content">
+        <div class="config-group">
+          <label>Fuente de productos:</label>
+          <select id="fuenteProductos" onchange="cambiarFuente()">
+            <option value="manual">Manual (lista personalizada)</option>
+            <option value="firebase">Desde inventario (Firestore)</option>
+          </select>
+        </div>
+        
+        <div id="seccionManual" class="config-group">
+          <label>Productos (separados por comas):</label>
+          <input type="text" id="listaProductos" 
+            value="lavanda,menta,kiwi,melonvainilla,cherry,pino,manzanaverde" 
+            oninput="generarEtiquetas()">
+        </div>
+        
+        <div id="seccionFirebase" class="config-group" style="display:none;">
+          <div class="productos-header">
+            <span style="font-size:12px; color:#666;">Selecciona productos:</span>
+            <span id="contadorSeleccionados" class="contador-badge">0 seleccionados</span>
+          </div>
+          
+          <input type="text" id="buscadorProductos" 
+                 placeholder="🔍 Buscar por nombre o ID..." 
+                 style="width:100%; padding:8px; font-size:12px; border:1px solid #ddd; border-radius:6px; margin-bottom:10px; box-sizing:border-box;"
+                 oninput="filtrarProductos()">
+          
+          <div class="productos-container" id="listaCheckboxes">
+            <em style="color:#666; font-size:12px;">Cargando catálogo...</em>
+          </div>
+          
+          <div class="botones-rapidos">
+            <button type="button" class="btn-rapido" onclick="ajustarCantidadMasiva(1)">+1 a todos</button>
+            <button type="button" class="btn-rapido" onclick="ajustarCantidadMasiva(-1)">-1 a todos</button>
+            <button type="button" class="btn-rapido primary" onclick="resetearCantidades()">↺ Usar global</button>
+            <button type="button" class="btn-rapido" onclick="cargarProductosDeFirestore()">↻ Recargar</button>
+          </div>
+        </div>
+        
+        <div class="config-grid" style="margin-top:12px;">
+          <div class="config-group">
+            <label>Cantidad global por producto:</label>
+            <input type="number" id="cantidadPorProducto" value="17" min="1" step="1" oninput="generarEtiquetas()">
+          </div>
+          <div class="config-group">
+            <label>Tamaño fuente nombre (px):</label>
+            <input type="number" id="tamanoNombre" value="11" oninput="generarEtiquetas()">
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- SECCIÓN 3: APARIENCIA -->
+    <div class="config-section">
+      <div class="config-section-header" onclick="toggleSection(this)">
+        <span>🎨 Apariencia</span>
+        <span class="icon">▼</span>
+      </div>
+      <div class="config-section-content">
+        <div class="config-grid">
+          <div class="config-group">
+            <label>Color texto:</label>
+            <input type="color" id="colorTexto" value="#c8b273" oninput="aplicarColores()" style="height:40px;">
+          </div>
+          <div class="config-group">
+            <label>Color borde:</label>
+            <input type="color" id="colorBorde" value="#dddddd" oninput="aplicarColores()" style="height:40px;">
+          </div>
+        </div>
+        
+        <div class="config-group">
+          <label>Color fondo:</label>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <input type="color" id="colorFondo" value="#ffffff" oninput="aplicarColores()" style="height:40px; flex:1;">
+            <label style="margin:0; font-weight:normal; font-size:12px;">
+              <input type="checkbox" id="fondoTransparente" onchange="aplicarColores()">
+              Transparente
+            </label>
+          </div>
+        </div>
+        
+        <div class="config-grid">
+          <div class="config-group">
+            <label>URL del logo:</label>
+            <input type="text" id="logoUrl" value="https://wil1979.github.io/esentia-factura/images/logo.png" oninput="generarEtiquetas()">
+          </div>
+          <div class="config-group">
+            <label>Ancho logo (px):</label>
+            <input type="number" id="anchoLogo" value="100" oninput="generarEtiquetas()">
+          </div>
+        </div>
+        
+        <div class="config-group">
+          <label>Tamaño imagen producto: <span id="tamanoImagenValor">74%</span></label>
+          <input type="range" id="tamanoImagen" min="30" max="100" value="74" 
+                 oninput="document.getElementById('tamanoImagenValor').textContent = this.value + '%'; generarEtiquetas()"
+                 style="width:100%;">
+        </div>
+        
+        <div class="config-group">
+          <label>Precio común (ej: ¤20 ml ¤30 ml):</label>
+          <input type="text" id="precioProducto" value="Scented Candles Elena's" oninput="generarEtiquetas()">     
+          
+          <!-- Controles de personalización del PRECIO -->
+           <div class="config-group full-width" style="
+             margin-top: 12px; 
+             padding-top: 12px; 
+             border-top: 1px solid #e0e0e0;
+             ">
+            <label style="font-size: 12px; margin-bottom: 10px; display: block; font-weight: 600;">
+           💰 Estilo del Precio:
+           </label>
+      
+          <div class="config-grid">
+            <!-- Color del precio -->
+          <div class="config-group">
+            <label>Color texto:</label>
+            <input type="color" id="precioColor" value="#dc3545" 
+            oninput="aplicarEstiloPrecio()" style="height: 40px;">
+          </div>
+    
+            <!-- Tamaño de fuente -->
+            <div class="config-group">
+          <label>Tamaño (px):</label>
+             <input type="number" id="precioTamano" value="10" min="6" max="20" 
+             oninput="aplicarEstiloPrecio()">
+    </div>
   </div>
+  
+  <div class="config-grid">
+    <!-- Peso de fuente -->
+    <div class="config-group">
+      <label>Estilo:</label>
+      <select id="precioEstilo" onchange="aplicarEstiloPrecio()">
+        <option value="normal">Normal</option>
+        <option value="bold" selected>Negrita</option>
+        <option value="italic">Cursiva</option>
+        <option value="bold italic">Negrita + Cursiva</option>
+      </select>
+    </div>
+    
+    <!-- Alineación -->
+    <div class="config-group">
+      <label>Alineación:</label>
+      <select id="precioAlineacion" onchange="aplicarEstiloPrecio()">
+        <option value="center" selected>Centrado</option>
+        <option value="left">Izquierda</option>
+        <option value="right">Derecha</option>
+      </select>
+    </div>
+  </div>
+  
+  <!-- Efectos adicionales -->
+  <div style="display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap;">
+    <label style="display: flex; align-items: center; gap: 5px; font-size: 11px;">
+      <input type="checkbox" id="precioSubrayado" onchange="aplicarEstiloPrecio()">
+      <span>Subrayado</span>
+    </label>
+    
+    <label style="display: flex; align-items: center; gap: 5px; font-size: 11px;">
+      <input type="checkbox" id="precioFondo" onchange="aplicarEstiloPrecio()">
+      <span>Fondo suave</span>
+    </label>
+  </div>
+</div>
 
-  <!-- 🔹 Nuevos controles de color -->
-  <div class="config-group">
-    <label>Color texto:</label>
-    <input type="color" id="colorTexto" value="#000000" oninput="aplicarColores()">
-  </div>
-  <div class="config-group">
-    <label>Fondo etiqueta:</label>
-    <input type="color" id="colorFondo" value="#ffffff" oninput="aplicarColores()">
-  </div>
-  <div class="config-group">
-    <label>Borde etiqueta:</label>
-    <input type="color" id="colorBorde" value="#dddddd" oninput="aplicarColores()">
-  </div>
+<button type="button" onclick="restaurarPrecioDefault()" 
+        style="margin-top: 10px; width: 100%; padding: 6px; font-size: 11px; 
+               background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">
+  ↺ Restaurar valores por defecto
+</button>
 
-  <div class="config-group">
-    <label>Tamaño texto nombre (px):</label>
-    <input type="number" id="tamanoNombre" value="7" oninput="generarEtiquetas()">
-  </div>
+        </div>
 
-  <div class="config-group">
-    <label>Cantidad por producto:</label>
-    <input type="number" id="cantidadPorProducto" value="6" min="1" step="1" oninput="generarEtiquetas()">
+        <!-- ✅ CORRECTO - Sin texto extra -->
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+  <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+    <input type="checkbox" id="mostrarLogo" checked onchange="generarEtiquetas()">
+    <span>🏷️ Logo</span>
+  </label>
+  
+  <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+    <input type="checkbox" id="mostrarNombre" checked onchange="generarEtiquetas()">
+    <span>📝 Nombre</span>
+  </label>
+  
+  <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+    <input type="checkbox" id="mostrarImagen" checked onchange="generarEtiquetas()">
+    <span>🖼️ Imagen</span>
+  </label>
+  
+  <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+    <input type="checkbox" id="mostrarPrecio" checked onchange="generarEtiquetas()">
+    <span>💰 Precio</span>
+  </label>
+</div>
+      </div>
+    </div>
+    
   </div>
-
-  <div class="config-group">
-    <label>Forma de la etiqueta:</label>
-    <select id="formaEtiqueta" onchange="generarEtiquetas()">
-      <option value="rectangular">Rectangular</option>
-      <option value="redonda">Redonda (círculo)</option>
-      <option value="redondeada">Con esquinas redondeadas</option>
-    </select>
+  
+  <!-- FOOTER -->
+  <div class="config-footer">
+    <button onclick="generarEtiquetas()" 
+            style="width:100%; padding:12px; background:linear-gradient(135deg, #6a5acd 0%, #5a4fcf 100%); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:14px;">
+      ✨ Aplicar Cambios
+    </button>
   </div>
+ </div>
 
-  <div class="config-group">
-    <label>Dimensiones etiqueta (cm):</label>
-    <input type="number" id="anchoEtiqueta" step="0.1" value="2" placeholder="Ancho" oninput="generarEtiquetas()">
-    <input type="number" id="altoEtiqueta" step="0.1" value="4" placeholder="Alto" oninput="generarEtiquetas()">
-  </div>
 
-  <div class="config-group">
-    <label>Tamaño de fuente (px):</label>
-    <input type="number" id="tamanoFuente" value="7" oninput="generarEtiquetas()">
-  </div>
 
-  <div class="config-group">
-    <label>Logo (URL):</label>
-    <input type="text" id="logoUrl" value="https://wil1979.github.io/esentia-factura/images/logo.png" oninput="generarEtiquetas()">
-  </div>
-
-  <div class="config-group">
-    <label>Ancho logo (px):</label>
-    <input type="number" id="anchoLogo" value="67" oninput="generarEtiquetas()">
-  </div>
-
-  <div class="config-group">
-    <label>Tamaño imagen producto (%):</label>
-    <input type="range" id="tamanoImagen" min="30" max="100" value="74" oninput="this.nextElementSibling.value = this.value + '%'; generarEtiquetas()">
-    <output>74%</output>
-  </div>
-
-  <div class="config-group">
-    <label>Precio común (ej: ¤20 ml ¤30 ml):</label>
-    <input type="text" id="precioProducto" value="¤20 ml ¤30 ml ¤60 ml" oninput="generarEtiquetas()">
-  </div>
-
-  <button onclick="generarEtiquetas()" style="margin-top:10px; width:100%;">Aplicar Cambios</button>
+  <!--
   <button onclick="imprimirRapido()" style="margin-top:10px; background:#28a745; color:white; width:100%;">🖨️ Imprimir Rápido</button>
   <button onclick="descargarPDF()" style="margin-top:10px; background:#dc3545; color:white; width:100%;">📥 Descargar PDF</button>
+-->
 </div>
 
 <button id="btnAbrirConfig" onclick="toggleConfig()">⚙️</button>
@@ -326,173 +340,785 @@
   let productosFirestore = [];
 
   // --- Funciones existentes (sin cambios críticos) ---
-  async function cargarCatalogo() {
-    try {
-      const response = await fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json");
-      if (!response.ok) throw new Error("HTTP error " + response.status);
-      const data = await response.json();
-      productosCatalogo = {};
+ async function cargarCatalogo() {
+  try {
+    const response = await fetch("https://wil1979.github.io/esentia-factura/productos_esentia.json");
+    if (!response.ok) throw new Error("HTTP error " + response.status);
+
+    const data = await response.json();
+
+    productosCatalogo = {};
+
+    // 🔹 Caso 1: Array directo
+    if (Array.isArray(data)) {
       data.forEach(p => {
         if (p.id != null) productosCatalogo[String(p.id)] = p;
       });
-      if (document.getElementById('fuenteProductos').value === 'firebase') {
-        cargarProductosDeFirestore();
-      }
-    } catch (error) {
-      console.error("❌ Error al cargar catálogo:", error);
-      document.getElementById('listaCheckboxes').innerHTML = `<em>Error al cargar catálogo: ${error.message}</em>`;
     }
-  }
 
-  async function cargarProductosDeFirestore() {
-    const listaDiv = document.getElementById('listaCheckboxes');
-    listaDiv.innerHTML = '<em>Cargando stock...</em>';
-    try {
-      const snapshot = await db.collection('stock').get();
-      const productosConDatos = [];
-      snapshot.forEach(doc => {
-        const stockData = doc.data();
-        const rawId = stockData.id;
-        if (rawId == null) return;
-        const cantidad = stockData.cantidad || 0;
-        if (cantidad <= 0) return;
-        const stockId = String(rawId);
-        let nombreMostrar = stockData.nombre || stockId;
-        let urlImagen = null;
-        const catalogoItem = productosCatalogo[stockId];
-        if (catalogoItem) {
-          if (catalogoItem.nombreOriginal) nombreMostrar = catalogoItem.nombreOriginal;
-          if (catalogoItem.imagen) urlImagen = catalogoItem.imagen;
+    // 🔹 Caso 2: Objeto por categorías (tu caso real)
+    else if (typeof data === "object") {
+      Object.values(data).forEach(categoria => {
+        if (Array.isArray(categoria)) {
+          categoria.forEach(p => {
+            if (p.id != null) productosCatalogo[String(p.id)] = p;
+          });
         }
-        if (!urlImagen) {
-          const nombreLimpio = nombreMostrar
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/\s+/g, '')
-            .toLowerCase();
-          urlImagen = `https://wil1979.github.io/esentia-factura/etiqueta/${nombreLimpio}.png`;
-        }
-        productosConDatos.push({ id: stockId, nombre: nombreMostrar.trim(), imagen: urlImagen });
       });
-      productosConDatos.sort((a, b) => a.nombre.localeCompare(b.nombre));
-      productosFirestore = productosConDatos;
-      listaDiv.innerHTML = productosConDatos.length === 0 
-        ? '<em>No hay productos en stock.</em>' 
-        : productosConDatos.map(p => 
-            `<label><input type="checkbox" name="producto" value="${p.nombre}" checked> ${p.nombre}</label>`
-          ).join('');
-      generarEtiquetas();
-    } catch (error) {
-      console.error("❌ Error al cargar stock:", error);
-      listaDiv.innerHTML = `<em>Error al cargar stock: ${error.message}</em>`;
     }
-  }
 
-  function cambiarFuente() {
-    const fuente = document.getElementById('fuenteProductos').value;
-    document.getElementById('seccionManual').style.display = fuente === 'manual' ? 'block' : 'none';
-    document.getElementById('seccionFirebase').style.display = fuente === 'firebase' ? 'block' : 'none';
-    if (fuente === 'firebase') {
-      if (Object.keys(productosCatalogo).length === 0) cargarCatalogo();
-      else cargarProductosDeFirestore();
-    } else generarEtiquetas();
-  }
+    console.log("✅ Catálogo cargado:", Object.keys(productosCatalogo).length, "productos");
 
-  function aplicarColores() {
-    const texto = document.getElementById('colorTexto').value;
-    const fondo = document.getElementById('colorFondo').value;
-    const borde = document.getElementById('colorBorde').value;
-    document.documentElement.style.setProperty('--color-texto', texto);
-    document.documentElement.style.setProperty('--color-fondo', fondo);
-    document.documentElement.style.setProperty('--color-borde', borde);
-  }
+    if (document.getElementById('fuenteProductos').value === 'firebase') {
+      cargarProductosDeFirestore();    
 
-  function generarEtiquetas() {
-    const config = {
-      ancho: parseFloat(document.getElementById('anchoEtiqueta').value) || 2,
-      alto: parseFloat(document.getElementById('altoEtiqueta').value) || 4,
-      fuente: parseInt(document.getElementById('tamanoFuente').value) || 7,
-      tamanoNombre: parseInt(document.getElementById('tamanoNombre').value) || 7,
-      logo: document.getElementById('logoUrl').value.trim(),
-      anchoLogo: parseInt(document.getElementById('anchoLogo').value) || 65,
-      precio: document.getElementById('precioProducto').value,
-      cantidad: parseInt(document.getElementById('cantidadPorProducto').value) || 1,
-      forma: document.getElementById('formaEtiqueta').value,
-      tamanoImagen: parseInt(document.getElementById('tamanoImagen').value) || 74
+
+    }
+
+  } catch (error) {
+    console.error("❌ Error al cargar catálogo:", error);
+    document.getElementById('listaCheckboxes').innerHTML =
+      `<em>Error al cargar catálogo: ${error.message}</em>`;
+  }
+}
+
+async function cargarProductosDeFirestore() {
+  const listaDiv = document.getElementById('listaCheckboxes');
+  listaDiv.innerHTML = '<em>Cargando stock...</em>';
+  
+  try {
+    const snapshot = await db.collection('stock').get();
+    const productosConDatos = [];
+    
+    // 🔹 Función auxiliar para limpiar valores double-stringified
+    const limpiarValor = (val) => {
+      if (typeof val === 'string' && val.startsWith('"') && val.endsWith('"')) {
+        return val.slice(1, -1); // Remover comillas externas
+      }
+      return val;
     };
-
-    if (config.forma === "redonda" && Math.abs(config.ancho - config.alto) > 0.1) {
-      alert("⚠️ Para forma redonda, se recomienda usar ancho igual a alto (ej: 2x2 cm).");
-    }
-
-    document.documentElement.style.setProperty('--ancho-etiqueta', `${config.ancho}cm`);
-    document.documentElement.style.setProperty('--alto-etiqueta', `${config.alto}cm`);
-    document.documentElement.style.setProperty('--tamano-fuente', `${config.fuente}px`);
-    document.documentElement.style.setProperty('--tamano-nombre', `${config.tamanoNombre}px`);
-    document.documentElement.style.setProperty('--ancho-logo', `${config.anchoLogo}px`);
-    document.documentElement.style.setProperty('--border-radius',
-      config.forma === "redonda" ? "50%" :
-      config.forma === "redondeada" ? "10px" : "2px"
-    );
-
-    if (config.forma === "redonda") {
-      const diametro = Math.min(config.ancho, config.alto);
-      document.documentElement.style.setProperty('--diametro-etiqueta', `${diametro}cm`);
-    }
-
-    const contenedor = document.getElementById('hojaEtiquetas');
-    contenedor.className = 'hoja';
-    contenedor.innerHTML = '';
-
-    const columnas = Math.floor(21.6 / (config.forma === "redonda" ? Math.min(config.ancho, config.alto) : config.ancho));
-    contenedor.style.gridTemplateColumns = `repeat(${columnas}, 1fr)`;
-
-    let productosConDatos = [];
-    const fuente = document.getElementById('fuenteProductos').value;
-
-    if (fuente === 'manual') {
-      const nombres = document.getElementById('listaProductos').value
-        .split(',').map(p => p.trim()).filter(p => p);
-      productosConDatos = nombres.map(nombre => {
-        const nombreLimpio = nombre
+    
+    // 🔹 Función para extraer datos del documento (adaptable a ambas estructuras)
+    const extraerDatos = (doc) => {
+      const data = doc.data();
+      
+      // Caso 1: Estructura nueva anidada con stock.fields
+      if (data.stock?.fields) {
+        const fields = data.stock.fields;
+        return {
+          id: limpiarValor(fields.id) || doc.id,
+          nombre: limpiarValor(fields.nombre) || 'Sin nombre',
+          cantidad: parseInt(limpiarValor(fields.cantidad)) || 0,
+          imagen: limpiarValor(fields.imagen) || null,
+          ...Object.fromEntries(
+            Object.entries(fields).map(([k, v]) => [k, limpiarValor(v)])
+          )
+        };
+      }
+      
+      // Caso 2: Estructura tradicional (campos directos)
+      return {
+        id: data.id || doc.id,
+        nombre: data.nombre || 'Sin nombre',
+        cantidad: parseInt(data.cantidad) || 0,
+        imagen: data.imagen || null,
+        ...data
+      };
+    };
+    
+    snapshot.forEach(doc => {
+      const stockData = extraerDatos(doc);
+      const rawId = stockData.id;
+      
+      if (rawId == null) return;
+      
+      const cantidad = stockData.cantidad || 0;
+      if (cantidad <= 0) return; // Solo productos con stock
+      
+      const stockId = String(rawId).trim();
+      let nombreMostrar = stockData.nombre || stockId;
+      let urlImagen = stockData.imagen;
+      
+      // 🔹 Intentar obtener datos del catálogo local
+      const catalogoItem = productosCatalogo[stockId];
+      if (catalogoItem) {
+        if (catalogoItem.nombre) nombreMostrar = catalogoItem.nombre;
+        if (catalogoItem.imagen) urlImagen = catalogoItem.imagen;
+      }
+      
+      // 🔹 Fallback para imagen
+      if (!urlImagen) {
+        const nombreLimpio = nombreMostrar
           .normalize('NFD')
           .replace(/[\u0300-\u036f]/g, '')
           .replace(/\s+/g, '')
           .toLowerCase();
-        return {
-          nombre: nombre,
-          imagen: `https://wil1979.github.io/esentia-factura/etiqueta/${nombreLimpio}.png`
-        };
-      });
-    } else {
-      const checks = document.querySelectorAll('#listaCheckboxes input[type="checkbox"]:checked');
-      const nombresSeleccionados = Array.from(checks).map(cb => cb.value);
-      productosConDatos = productosFirestore.filter(p => nombresSeleccionados.includes(p.nombre));
-    }
-
-    productosConDatos.forEach(producto => {
-      for (let i = 0; i < config.cantidad; i++) {
-        const etiqueta = document.createElement('div');
-        etiqueta.className = 'etiqueta';
-        if (config.forma === "redonda") etiqueta.classList.add('redonda');
-
-        const imgStyle = config.forma === "redonda"
-          ? `max-width: ${config.tamanoImagen}%; max-height: ${config.tamanoImagen}%; object-fit: contain; border-radius: 50%;`
-          : `max-width: ${config.tamanoImagen}%; max-height: 1.5cm; object-fit: contain;`;
-
-        etiqueta.innerHTML = `
-          <div><img src="${config.logo}" class="logo" alt="Logo" onerror="this.remove()"></div>
-          <div class="nombre-producto">${producto.nombre}</div>
-          <div class="imagen-contenedor" style="flex-grow:1; display:flex; align-items:center; justify-content:center;">
-            <img src="${producto.imagen}" class="imagen-producto" alt="${producto.nombre}" 
-                 onerror="this.parentElement.innerHTML='<div style=&quot;color:#888;font-size:6px;&quot;>IMG</div>'">
-          </div>
-          <div class="precio">${config.precio}</div>
-        `;
-        contenedor.appendChild(etiqueta);
+        urlImagen = `https://wil1979.github.io/esentia-factura/etiqueta/${nombreLimpio}.png`;
       }
+      
+      productosConDatos.push({ 
+        id: stockId,
+        nombre: nombreMostrar.trim(), 
+        imagen: urlImagen,
+        cantidad: cantidad
+      });
     });
+    
+    productosConDatos.sort((a, b) => a.nombre.localeCompare(b.nombre));
+    productosFirestore = productosConDatos;
+    
+    // 🔹 Resto de tu código (cantidad global, renderizado, listeners)
+    const cantidadGlobal = parseInt(document.getElementById('cantidadPorProducto').value) || 17;
+    
+    listaDiv.innerHTML = productosConDatos.length === 0 
+      ? '<em>No hay productos en stock.</em>' 
+      : productosConDatos.map(p => {
+          const cantidadProd = p.cantidadPersonalizada || cantidadGlobal;
+          let stockColor = '#28a745';
+          let stockLabel = 'disponibles';
+          if (p.cantidad < 10) {
+            stockColor = '#dc3545';
+            stockLabel = '¡poco stock!';
+          } else if (p.cantidad < 50) {
+            stockColor = '#ffc107';
+          }
+          
+          return `
+            <div class="producto-item" style="display:flex;align-items:flex-start;gap:8px;margin:6px 0;padding:6px;border:1px solid #e0e0e0;border-radius:6px;background:#fafafa;flex-wrap:wrap;">
+              <input type="checkbox" name="producto" value="${p.nombre}" id="chk_${p.id}" checked style="margin:4px 0 0 0;cursor:pointer;">
+              <div style="flex:1;min-width:150px;">
+                <label for="chk_${p.id}" style="font-size:12px;font-weight:600;cursor:pointer;color:#333;display:block;">${p.nombre}</label>
+                <div style="font-size:10px;color:#666;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+                  <span style="background:#e8f5e9;color:#2e7d32;padding:1px 6px;border-radius:3px;">📦 Stock: <strong>${p.cantidad}</strong> ${stockLabel}</span>
+                  <span style="background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:3px;">🏷️ ID: <strong>${p.id}</strong></span>
+                </div>
+                <div style="margin-top:4px;display:flex;align-items:center;gap:4px;">
+                  <span style="font-size:10px;color:#666;">Etiquetas a imprimir:</span>
+                  <input type="number" class="cantidad-individual" data-producto="${p.nombre}" data-id="${p.id}" value="${cantidadProd}" min="1" max="999" style="width:60px;padding:3px 5px;font-size:11px;text-align:center;border:1px solid #ccc;border-radius:3px;">
+                  <span style="font-size:10px;color:#666;">unds</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+    
+    // 🔹 Listeners (sin cambios)
+    document.querySelectorAll('#listaCheckboxes input[type="checkbox"]').forEach(checkbox => {
+      checkbox.addEventListener('change', () => {
+        actualizarContadorSeleccionados();
+        generarEtiquetas();
+        calcularCabidaDTF();
+        calcularProduccionGlobal();
+      });
+    });
+    
+    document.querySelectorAll('.cantidad-individual').forEach(input => {
+      input.addEventListener('change', (e) => {
+        const nombre = e.target.dataset.producto;
+        const id = e.target.dataset.id;
+        let nuevoValor = parseInt(e.target.value) || 1;
+        if (nuevoValor < 1) { nuevoValor = 1; e.target.value = 1; }
+        if (nuevoValor > 999) { nuevoValor = 999; e.target.value = 999; }
+        const producto = productosFirestore.find(p => p.id === id);
+        if (producto) producto.cantidadPersonalizada = nuevoValor;
+        generarEtiquetas();
+        calcularProduccionGlobal();
+        e.target.style.background = '#d4edda';
+        setTimeout(() => e.target.style.background = '', 300);
+      });
+      input.addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+      });
+    });
+    
+    actualizarContadorSeleccionados();
+    generarEtiquetas();
+    calcularCabidaDTF();
+    calcularProduccionGlobal();
+    
+  } catch (error) {
+    console.error("❌ Error al cargar stock:", error);
+    listaDiv.innerHTML = `<em>Error al cargar stock: ${error.message}</em>`;
   }
+}
+  function obtenerCantidadProducto(nombreProducto) {
+  // Buscar input de cantidad individual para este producto
+  const inputCustom = document.querySelector(`.cantidad-individual[data-producto="${nombreProducto}"]`);
+  
+  if (inputCustom && inputCustom.value) {
+    const val = parseInt(inputCustom.value);
+    if (!isNaN(val) && val > 0) return val;
+  }
+  
+  // Si no hay valor custom, usar el global
+  return parseInt(document.getElementById('cantidadPorProducto').value) || 1;
+}
+
+function guardarPreferenciasPrecio() {
+  const prefs = {
+    color: document.getElementById('precioColor')?.value,
+    tamano: document.getElementById('precioTamano')?.value,
+    estilo: document.getElementById('precioEstilo')?.value,
+    alineacion: document.getElementById('precioAlineacion')?.value,
+    subrayado: document.getElementById('precioSubrayado')?.checked,
+    fondo: document.getElementById('precioFondo')?.checked
+  };
+  localStorage.setItem('esentia_precio_estilo', JSON.stringify(prefs));
+}
+
+function cargarPreferenciasPrecio() {
+  const prefs = JSON.parse(localStorage.getItem('esentia_precio_estilo'));
+  if (prefs) {
+    if (document.getElementById('precioColor')) 
+      document.getElementById('precioColor').value = prefs.color || '#dc3545';
+    if (document.getElementById('precioTamano')) 
+      document.getElementById('precioTamano').value = prefs.tamano || '10';
+    if (document.getElementById('precioEstilo')) 
+      document.getElementById('precioEstilo').value = prefs.estilo || 'bold';
+    if (document.getElementById('precioAlineacion')) 
+      document.getElementById('precioAlineacion').value = prefs.alineacion || 'center';
+    if (document.getElementById('precioSubrayado')) 
+      document.getElementById('precioSubrayado').checked = prefs.subrayado || false;
+    if (document.getElementById('precioFondo')) 
+      document.getElementById('precioFondo').checked = prefs.fondo || false;
+    
+    // Aplicar estilos cargados
+    aplicarEstiloPrecio();
+  }
+}
+
+function aplicarEstiloPrecio() {
+  // Obtener valores de los controles
+  const color = document.getElementById('precioColor')?.value || '#dc3545';
+  const tamano = document.getElementById('precioTamano')?.value || '10';
+  const estilo = document.getElementById('precioEstilo')?.value || 'bold';
+  const alineacion = document.getElementById('precioAlineacion')?.value || 'center';
+  const subrayado = document.getElementById('precioSubrayado')?.checked ? 'underline' : 'none';
+  const fondo = document.getElementById('precioFondo')?.checked;
+  
+  // Aplicar a variables CSS
+  document.documentElement.style.setProperty('--precio-color', color);
+  document.documentElement.style.setProperty('--precio-tamano', `${tamano}px`);
+  document.documentElement.style.setProperty('--precio-estilo', estilo);
+  document.documentElement.style.setProperty('--precio-alineacion', alineacion);
+  document.documentElement.style.setProperty('--precio-subrayado', subrayado);
+  document.documentElement.style.setProperty('--precio-fondo', fondo ? 'rgba(221, 212, 191, 0.1)' : 'transparent');
+  
+  // Actualizar clase de fondo en etiquetas existentes
+  document.querySelectorAll('.precio').forEach(el => {
+    if (fondo) {
+      el.classList.add('con-fondo');
+    } else {
+      el.classList.remove('con-fondo');
+    }
+  });
+  
+  // Regenerar etiquetas para aplicar cambios inmediatos
+  generarEtiquetas();
+  
+  // Guardar preferencias
+  guardarPreferenciasPrecio();
+}
+
+  function cambiarFuente() {
+  const fuente = document.getElementById('fuenteProductos').value;
+  document.getElementById('seccionManual').style.display = fuente === 'manual' ? 'block' : 'none';
+  document.getElementById('seccionFirebase').style.display = fuente === 'firebase' ? 'block' : 'none';
+  
+  if (fuente === 'firebase') {
+    if (Object.keys(productosCatalogo).length === 0) cargarCatalogo();
+    else cargarProductosDeFirestore();
+  } else {
+    generarEtiquetas();
+    // Ocultar contador si no estamos en modo firebase
+    const contador = document.getElementById('contadorSeleccionados');
+    if (contador) contador.style.display = 'none';
+  }
+  
+  calcularCabidaDTF();
+}
+
+function toggleSection(header) {
+  const section = header.parentElement;
+  section.classList.toggle('collapsed');
+}
+
+  function aplicarColores() {
+  const texto = document.getElementById('colorTexto').value;
+  const fondo = document.getElementById('colorFondo').value;
+  const borde = document.getElementById('colorBorde').value;
+  const transparente = document.getElementById('fondoTransparente').checked;
+
+  document.documentElement.style.setProperty('--color-texto', texto);
+  document.documentElement.style.setProperty('--color-borde', borde);
+
+  if (transparente) {
+    document.documentElement.style.setProperty('--color-fondo', 'transparent');
+  } else {
+    document.documentElement.style.setProperty('--color-fondo', fondo);
+  }
+}
+
+
+  function actualizarHoja() {
+  const tipo = document.getElementById('tamanoHoja').value;
+  const hoja = document.getElementById('hojaEtiquetas');
+  const personalizada = document.getElementById('hojaPersonalizada');
+
+  let ancho, alto;
+
+  switch (tipo) {
+    case 'letter':
+      ancho = 21.6;
+      alto = 27.9;
+      personalizada.style.display = "none";
+      break;
+    case 'a4':
+      ancho = 21;
+      alto = 29.7;
+      personalizada.style.display = "none";
+      break;
+    case 'legal':
+      ancho = 21.6;
+      alto = 35.6;
+      personalizada.style.display = "none";
+      break;
+    case 'tabloid':
+      ancho = 27.9;
+      alto = 43.2;
+      personalizada.style.display = "none";
+      break;
+    case 'custom':
+      ancho = parseFloat(document.getElementById('anchoHoja').value) || 28;
+      alto = parseFloat(document.getElementById('altoHoja').value) || 100;
+      personalizada.style.display = "block";
+      break;
+  }
+
+  hoja.style.width = ancho + "cm";
+  hoja.style.minHeight = alto + "cm";
+}
+
+async function exportarPNGDTF() {
+
+  const hoja = document.getElementById('hojaEtiquetas');
+  const btn = document.getElementById('btnPNGFlotante');
+
+  const originalText = btn.innerHTML;
+  btn.innerHTML = "⏳ Generando PNG...";
+  btn.disabled = true;
+
+  try {
+
+    // 🔥 Escala alta para calidad profesional
+    const canvas = await html2canvas(hoja, {
+      //scale: 4, // 4x resolución
+      scale: window.devicePixelRatio * 3,
+      useCORS: true,
+      backgroundColor: null // 👈 FONDO TRANSPARENTE REAL
+    });
+
+    // Crear PNG con alpha
+    const imgData = canvas.toDataURL("image/png");
+
+    // Descargar automáticamente
+    const link = document.createElement("a");
+    link.href = imgData;
+    link.download = "etiquetas-dtf-transparente.png";
+    link.click();
+
+  } catch (error) {
+    console.error("Error al exportar PNG:", error);
+    alert("Error al generar PNG");
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+function filtrarProductos() {
+  const texto = document.getElementById('buscadorProductos').value.toLowerCase();
+  const items = document.querySelectorAll('.producto-item');
+  
+  items.forEach(item => {
+    const nombre = item.querySelector('.producto-nombre').textContent.toLowerCase();
+    const idElement = item.querySelector('.badge-id');
+    const id = idElement ? idElement.textContent.replace('ID: ', '').toLowerCase() : '';
+    
+    if (nombre.includes(texto) || id.includes(texto)) {
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+  
+  actualizarContadorSeleccionados();
+}
+
+function activarModoDTF() {
+  // Forzar tamaño hoja
+  document.getElementById('tamanoHoja').value = "custom";
+  document.getElementById('anchoHoja').value = 100;  // Horizontal
+  document.getElementById('altoHoja').value = 28;
+
+  // 🔹 Eliminar TODOS los espacios
+  const hoja = document.getElementById('hojaEtiquetas');
+  hoja.style.padding = "0";
+  hoja.style.gap = "0";
+  hoja.style.margin = "0";
+  hoja.classList.add('modo-dtf');  // ← Agregar clase
+
+  // Bordes transparentes
+  document.documentElement.style.setProperty('--color-borde', 'transparent');
+
+  actualizarHoja();
+  generarEtiquetasProduccion();
+}
+
+function ajustarCantidadMasiva(delta) {
+  document.querySelectorAll('.cantidad-individual').forEach(input => {
+    let valor = parseInt(input.value) || 1;
+    valor = Math.max(1, Math.min(999, valor + delta));
+    input.value = valor;
+  });
+  generarEtiquetas();
+  calcularProduccionGlobal();
+}
+
+function resetearCantidades() {
+  const global = document.getElementById('cantidadPorProducto').value;
+  document.querySelectorAll('.cantidad-individual').forEach(input => {
+    input.value = global;
+  });
+  generarEtiquetas();
+  calcularProduccionGlobal();
+}
+function restaurarPrecioDefault() {
+  document.getElementById('precioColor').value = '#dc3545';
+  document.getElementById('precioTamano').value = '10';
+  document.getElementById('precioEstilo').value = 'bold';
+  document.getElementById('precioAlineacion').value = 'center';
+  document.getElementById('precioSubrayado').checked = false;
+  document.getElementById('precioFondo').checked = false;
+  aplicarEstiloPrecio();
+}
+
+function generarEtiquetasProduccion() {
+  generarEtiquetas();
+  calcularCabidaDTF();
+
+  const hoja = document.getElementById('hojaEtiquetas');
+  
+  // 🔹 Forzar gap y padding a 0
+  hoja.style.gap = "0";
+  hoja.style.padding = "0";
+  hoja.style.margin = "0";
+
+  const anchoEtiqueta = parseFloat(
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--ancho-etiqueta')
+  );
+
+  const anchoHoja = 100; // cm producción horizontal
+  const columnas = Math.floor(anchoHoja / anchoEtiqueta);
+
+  // 🔹 Grid sin espacios
+  hoja.style.gridTemplateColumns = `repeat(${columnas}, ${anchoEtiqueta}cm)`;
+  hoja.style.gridTemplateRows = `repeat(auto-fill, var(--alto-etiqueta))`;
+}
+
+  // 🔹 Función auxiliar segura para obtener valores
+function getIdValue(id, defaultValue) {
+  const el = document.getElementById(id);
+  if (!el || el.value === null || el.value === undefined) {
+    return defaultValue;
+  }
+  return el.value;
+}
+
+// 🔹 Al cambiar cualquier checkbox de visibilidad
+function guardarPreferenciasVisibilidad() {
+  const prefs = {
+    mostrarLogo: document.getElementById('mostrarLogo')?.checked ?? true,
+    mostrarNombre: document.getElementById('mostrarNombre')?.checked ?? true,
+    mostrarImagen: document.getElementById('mostrarImagen')?.checked ?? true,
+    mostrarPrecio: document.getElementById('mostrarPrecio')?.checked ?? true
+  };
+  localStorage.setItem('esentia_etiqueta_visibilidad', JSON.stringify(prefs));
+}
+
+// 🔹 Cargar preferencias al iniciar
+function cargarPreferenciasVisibilidad() {
+  const prefs = JSON.parse(localStorage.getItem('esentia_etiqueta_visibilidad'));
+  if (prefs) {
+    if (document.getElementById('mostrarLogo')) 
+      document.getElementById('mostrarLogo').checked = prefs.mostrarLogo;
+    if (document.getElementById('mostrarNombre')) 
+      document.getElementById('mostrarNombre').checked = prefs.mostrarNombre;
+    if (document.getElementById('mostrarImagen')) 
+      document.getElementById('mostrarImagen').checked = prefs.mostrarImagen;
+    if (document.getElementById('mostrarPrecio')) 
+      document.getElementById('mostrarPrecio').checked = prefs.mostrarPrecio;
+  }
+}
+
+
+
+// 🔹 Función principal corregida
+function generarEtiquetas() {
+  // 🔒 Obtener valores con validación de nulidad
+  const config = {
+    ancho: parseFloat(getIdValue('anchoEtiqueta', '2')) || 2,
+    alto: parseFloat(getIdValue('altoEtiqueta', '4')) || 4,
+    fuente: parseInt(getIdValue('tamanoFuente', '8')) || 8,
+    tamanoNombre: parseInt(getIdValue('tamanoNombre', '11')) || 11,
+    logo: getIdValue('logoUrl', 'https://wil1979.github.io/esentia-factura/images/logo.png').trim(),
+    anchoLogo: parseInt(getIdValue('anchoLogo', '65')) || 65,
+    precio: getIdValue('precioProducto', ''),
+    cantidad: parseInt(getIdValue('cantidadPorProducto', '17')) || 17,
+    forma: getIdValue('formaEtiqueta', 'redondeada'),
+    tamanoImagen: parseInt(getIdValue('tamanoImagen', '74')) || 74
+  };
+
+  // Validación para etiquetas redondas
+  if (config.forma === "redonda" && Math.abs(config.ancho - config.alto) > 0.1) {
+    // Solo advertencia, no bloqueamos
+    console.warn("⚠️ Para forma redonda, se recomienda ancho igual a alto");
+  }
+
+  // 🔹 Aplicar variables CSS
+document.documentElement.style.setProperty('--ancho-etiqueta', `${config.ancho}cm`);
+document.documentElement.style.setProperty('--alto-etiqueta', `${config.alto}cm`);
+document.documentElement.style.setProperty('--tamano-fuente', `${config.fuente}px`);
+document.documentElement.style.setProperty('--tamano-nombre', `${config.tamanoNombre}px`);
+document.documentElement.style.setProperty('--ancho-logo', `${config.anchoLogo}px`);
+document.documentElement.style.setProperty('--border-radius',
+  config.forma === "redonda" ? "50%" :
+  config.forma === "redondeada" ? "10px" : "0px"  // ← 0px para DTF
+
+  );
+
+  if (config.forma === "redonda") {
+    const diametro = Math.min(config.ancho, config.alto);
+    document.documentElement.style.setProperty('--diametro-etiqueta', `${diametro}cm`);
+  }
+
+  // 🔹 Limpiar contenedor
+  const contenedor = document.getElementById('hojaEtiquetas');
+  if (!contenedor) {
+    console.error("❌ No se encontró el contenedor 'hojaEtiquetas'");
+    return;
+  }
+  
+  contenedor.className = 'hoja';
+  contenedor.innerHTML = '';
+
+  // Configurar grid
+  contenedor.style.gridTemplateColumns =
+    `repeat(auto-fill, ${config.forma === "redonda"
+      ? Math.min(config.ancho, config.alto)
+      : config.ancho}cm)`;
+
+  // 🔹 Obtener productos según fuente
+  let productosConDatos = [];
+  const fuente = getIdValue('fuenteProductos', 'manual');
+
+  if (fuente === 'manual') {
+    const listaInput = document.getElementById('listaProductos');
+    const nombres = listaInput 
+      ? listaInput.value.split(',').map(p => p.trim()).filter(p => p)
+      : [];
+      
+    productosConDatos = nombres.map(nombre => {
+      const nombreLimpio = nombre
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '')
+        .toLowerCase();
+      return {
+        nombre: nombre,
+        imagen: `https://wil1979.github.io/esentia-factura/etiqueta/${nombreLimpio}.png`
+      };
+    });
+  } else {
+    // Modo Firebase
+    const checks = document.querySelectorAll('#listaCheckboxes input[type="checkbox"]:checked');
+    const nombresSeleccionados = Array.from(checks).map(cb => cb.value);
+    productosConDatos = productosFirestore.filter(p => nombresSeleccionados.includes(p.nombre));
+  }
+
+  // 🔹 Actualizar UI
+  actualizarContadorSeleccionados();
+  actualizarHoja();
+  calcularCabidaDTF();
+  calcularProduccionGlobal();
+  guardarPreferenciasVisibilidad();
+
+  // 🔹 Generar etiquetas en el DOM
+productosConDatos.forEach(producto => {
+  const cantidadFinal = obtenerCantidadProducto(producto.nombre);
+  
+  // 🔹 Obtener estado de visibilidad de cada elemento (con fallback seguro)
+  const mostrarLogo = document.getElementById('mostrarLogo')?.checked ?? true;
+  const mostrarNombre = document.getElementById('mostrarNombre')?.checked ?? true;
+  const mostrarImagen = document.getElementById('mostrarImagen')?.checked ?? true;
+  const mostrarPrecio = document.getElementById('mostrarPrecio')?.checked ?? true;
+  
+  for (let i = 0; i < cantidadFinal; i++) {
+    const etiqueta = document.createElement('div');
+    etiqueta.className = 'etiqueta';
+    if (config.forma === "redonda") etiqueta.classList.add('redonda');
+    
+    // 🔹 Construir HTML condicionalmente
+    let contenidoHTML = '';
+    
+    // 🏷️ Logo (opcional)
+    if (mostrarLogo) {
+      contenidoHTML += `<div class="etiqueta-logo"><img src="${config.logo}" class="logo" alt="Logo" onerror="this.remove()"></div>`;
+    }
+    
+    // 📝 Nombre del producto (opcional)
+    if (mostrarNombre) {
+      contenidoHTML += `<div class="nombre-producto">${producto.nombre}</div>`;
+    }
+    
+    // 🖼️ Imagen del producto (opcional)
+    if (mostrarImagen) {
+      contenidoHTML += `
+        <div class="imagen-contenedor" style="flex-grow:1; display:flex; align-items:center; justify-content:center;">
+          <img src="${producto.imagen}" class="imagen-producto" alt="${producto.nombre}" 
+               onerror="this.parentElement.innerHTML='<div style=\\'color:#888;font-size:6px;\\'>IMG</div>'">
+        </div>
+      `;
+    }
+    
+    // 💰 Precio (opcional)
+if (mostrarPrecio && config.precio && config.precio.trim() !== '') {
+  const tieneFondo = document.getElementById('precioFondo')?.checked;
+  contenidoHTML += `<div class="precio${tieneFondo ? ' con-fondo' : ''}">${config.precio}</div>`;
+}
+    
+    // 🔹 Asignar contenido y clases dinámicas
+    etiqueta.innerHTML = contenidoHTML;
+    
+    // Clases para ajustar diseño según elementos visibles
+    if (!mostrarImagen) etiqueta.classList.add('sin-imagen');
+    const activos = [mostrarLogo, mostrarNombre, mostrarImagen, (mostrarPrecio && config.precio)].filter(Boolean).length;
+    if (activos <= 1) etiqueta.classList.add('minimalista');
+    
+    contenedor.appendChild(etiqueta);
+ 
+     
+    }
+  });
+}
+function toggleModoEspacios() {
+  const hoja = document.getElementById('hojaEtiquetas');
+  const checkbox = document.getElementById('modoSinEspacios');
+  
+  if (checkbox.checked) {
+    hoja.classList.add('modo-dtf');
+    hoja.style.gap = "0";
+    hoja.style.padding = "0";
+  } else {
+    hoja.classList.remove('modo-dtf');
+    hoja.style.gap = "1mm";
+    hoja.style.padding = "2mm";
+  }
+  
+  generarEtiquetas();
+}
+
+  function actualizarContadorSeleccionados() {
+  const checkboxes = document.querySelectorAll('#listaCheckboxes input[type="checkbox"]');
+  const seleccionados = document.querySelectorAll('#listaCheckboxes input[type="checkbox"]:checked');
+  const contador = document.getElementById('contadorSeleccionados');
+  
+  if (contador && checkboxes.length > 0) {
+    contador.textContent = `${seleccionados.length} seleccionados`;
+    // Efecto visual si está vacío
+    if (seleccionados.length === 0) {
+      contador.style.background = '#ccc';
+    } else if (seleccionados.length <= 3) {
+      contador.style.background = '#6a5acd'; // morado
+    } else {
+      contador.style.background = '#28a745'; // verde para muchos
+    }
+  }
+}
+
+ function calcularProduccionGlobal() {
+  if (!window.capacidadLaminaDTF || window.capacidadLaminaDTF === 0) return;
+
+  const etiquetasPorLamina = window.capacidadLaminaDTF;
+  const checks = document.querySelectorAll('#listaCheckboxes input[type="checkbox"]:checked');
+  
+  let totalUnidades = 0;
+  let detalles = [];
+
+  checks.forEach(checkbox => {
+    const nombre = checkbox.value;
+    const cantidad = obtenerCantidadProducto(nombre); // ← Usa cantidad individual
+    totalUnidades += cantidad;
+    detalles.push({ nombre, cantidad });
+  });
+
+  if (totalUnidades === 0) return;
+
+  const laminasNecesarias = Math.ceil(totalUnidades / etiquetasPorLamina);
+  const sobrante = (laminasNecesarias * etiquetasPorLamina) - totalUnidades;
+
+  const info = document.getElementById("infoProduccion");
+  
+  // Mostrar resumen detallado (opcional, colapsable)
+  const resumenDetalles = detalles.length <= 5 
+    ? detalles.map(d => `<small>${d.nombre}: ${d.cantidad}</small>`).join('<br>')
+    : `<small>...${detalles.length} productos seleccionados</small>`;
+
+  info.innerHTML = `
+    🧵 <strong>Producción Dinámica</strong><br>
+    📦 Total etiquetas a imprimir: <strong>${totalUnidades}</strong><br>
+    🖨️ Láminas necesarias: <strong>${laminasNecesarias}</strong><br>
+    ♻️ Sobrante estimado: ${sobrante} etiquetas<br>
+    ${resumenDetalles}
+  `;
+}
+ function calcularCabidaDTF() {
+
+  const hoja = document.getElementById('hojaEtiquetas');
+
+  const anchoHojaCM = hoja.offsetWidth / 37.795;  // px → cm
+  const altoHojaCM = hoja.offsetHeight / 37.795;
+
+  const anchoEtiqueta = parseFloat(
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--ancho-etiqueta')
+  );
+
+  const altoEtiqueta = parseFloat(
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--alto-etiqueta')
+  );
+
+  if (!anchoEtiqueta || !altoEtiqueta) return;
+
+  const columnas = Math.floor(anchoHojaCM / anchoEtiqueta);
+  const filas = Math.floor(altoHojaCM / altoEtiqueta);
+
+  const total = columnas * filas;
+
+  window.capacidadLaminaDTF = total;
+
+  const info = document.getElementById("infoProduccion");
+
+  info.innerHTML = `
+    🧵 <strong>Producción Dinámica</strong><br>
+    📏 ${columnas} columnas x ${filas} filas<br>
+    🎯 <strong>${total} etiquetas por lámina</strong>
+  `;
+}
+
+
 
   // --- NUEVAS FUNCIONES ---
   function imprimirRapido() {
@@ -503,59 +1129,68 @@
   }
 
   async function descargarPDF() {
-    const hoja = document.getElementById('hojaEtiquetas');
-    const originalClass = hoja.className;
-    
-    // Asegurar que no esté en modo ligero
-    hoja.className = 'hoja';
-    
-    // Mostrar mensaje de carga
-    const btn = document.querySelector('button[onclick="descargarPDF()"]');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '⏳ Generando...';
-    btn.disabled = true;
+  const hoja = document.getElementById('hojaEtiquetas');
+  const tipo = document.getElementById('tamanoHoja').value;
 
-    try {
-      const canvas = await html2canvas(hoja, {
-        scale: 2, // mejor calidad
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      });
+  const btn = document.querySelector('button[onclick="descargarPDF()"]');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '⏳ Generando...';
+  btn.disabled = true;
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jspdf.jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'letter'
-      });
+  let widthMM, heightMM;
 
-      const imgWidth = 210; // A4 width en mm, pero letter es ~216
-      const pageHeight = 279; // letter height
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        pdf.addPage();
-        position = heightLeft - imgHeight;
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save('etiquetas-esentia.pdf');
-    } catch (error) {
-      console.error('Error al generar PDF:', error);
-      alert('⚠️ Error al generar el PDF. Abre la consola para más detalles.');
-    } finally {
-      btn.innerHTML = originalText;
-      btn.disabled = false;
-      hoja.className = originalClass;
-    }
+  switch (tipo) {
+    case 'letter':
+      widthMM = 216;
+      heightMM = 279;
+      break;
+    case 'a4':
+      widthMM = 210;
+      heightMM = 297;
+      break;
+    case 'legal':
+      widthMM = 216;
+      heightMM = 356;
+      break;
+    case 'tabloid':
+      widthMM = 279;
+      heightMM = 432;
+      break;
+    case 'custom':
+      const anchoCM = parseFloat(document.getElementById('anchoHoja').value);
+      const altoCM = parseFloat(document.getElementById('altoHoja').value);
+      widthMM = anchoCM * 10;
+      heightMM = altoCM * 10;
+      break;
   }
+
+  try {
+    const canvas = await html2canvas(hoja, {
+      scale: 2,
+      useCORS: true,
+     backgroundColor: null
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+
+   const pdf = new jspdf.jsPDF({
+  orientation: widthMM > heightMM ? 'landscape' : 'portrait',
+  unit: 'mm',
+  format: [widthMM, heightMM]
+});
+
+pdf.addImage(imgData, 'PNG', 0, 0, widthMM, heightMM);
+    pdf.save('etiquetas-esentia.pdf');
+
+  } catch (error) {
+    console.error(error);
+    alert("Error al generar PDF");
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
 
   // --- Utilidades ---
   function toggleConfig() {
@@ -565,11 +1200,12 @@
   }
 
   window.addEventListener('load', () => {
-    const visible = localStorage.getItem('configVisible') !== 'false';
-    if (!visible) document.getElementById('configModal').classList.add('hidden');
-    cargarCatalogo();
-    aplicarColores(); // Aplicar colores iniciales
-  });
+  cargarPreferenciasVisibilidad();
+  cargarPreferenciasPrecio();  // ← Agregar esta línea
+  aplicarColores();
+  cargarCatalogo();
+  actualizarHoja();
+});
 
   document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.key.toLowerCase() === 'h') {
@@ -578,5 +1214,28 @@
     }
   });
 </script>
+<button id="btnPDFFlotante" onclick="descargarPDF()">
+  📥 Generar PDF
+</button>
+
+<button id="btnPNGFlotante" onclick="exportarPNGDTF()">
+  🧵 Exportar PNG DTF
+</button>
+
+<div id="infoProduccion" style="
+  position: fixed;
+  Left: 20px;
+  bottom: 20px;
+  background: #111;
+  color: white;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+  z-index: 4000;
+">
+  🧠 Calculando producción...
+</div>
+
 </body>
 </html>

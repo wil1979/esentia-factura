@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Generador de Etiquetas - Esentia</title>
+<!-- Librerías externas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+<style>
+* { box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    gap: 15px;
+    transition: all 0.3s ease;
+    min-height: 100vh;
+    margin: 0;
+}
+body.modo-oscuro {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #e0e0e0;
+}
+
+/* === FORMULARIO === */
+.formulario {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    max-width: 420px;
+    height: fit-content;
+    overflow-y: auto;
+    max-height: 95vh;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+body.modo-oscuro .formulario {
+    background: rgba(45, 45, 45, 0.95);
+    color: #e0e0e0;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+.btn-seccion {
+    width: 100%; padding: 12px; margin-bottom: 10px;
+    border: none; border-radius: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white; font-size: 14px; cursor: pointer;
+    text-align: left; display: flex; justify-content: space-between; align-items: center;
+    transition: all 0.3s ease; font-weight: 500;
+}
+.btn-seccion:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+body.modo-oscuro .btn-seccion { background: linear-gradient(135deg, #4a6fa5 0%, #3a5a8a 100%); }
+body.modo-oscuro .btn-seccion:hover { box-shadow: 0 4px 12px rgba(74, 111, 165, 0.4); }
+
+.contador-etiquetas {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-left: 4px solid #2196f3; padding: 12px; margin: 15px 0;
+    border-radius: 8px; font-size: 14px; font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+body.modo-oscuro .contador-etiquetas {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: #a2d2ff; border-left-color: #3498db;
+}
+
+/* === CONTENEDOR DE ETIQUETAS === */
+.etiqueta-container {
+    flex: 2; display: grid; gap: 0; background: white;
+    padding: 0; margin: 0; justify-content: center;
+    transition: all 0.3s ease; border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+body.modo-oscuro .etiqueta-container { background: #222; }
+
+.etiqueta {
+    position: relative; width: var(--etiqueta-width, 8cm); height: var(--etiqueta-height, 4cm);
+    background-image: var(--fondo-imagen, none); background-size: cover;
+    background-position: center; background-repeat: no-repeat;
+    box-sizing: border-box; overflow: hidden; cursor: pointer;
+    border: none; box-shadow: none; transition: all 0.2s ease;
+}
+.etiqueta:hover { transform: scale(1.02); z-index: 10; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+.etiqueta-content { position: relative; width: 100%; height: 100%; }
+
+.fondo-etiqueta {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    object-fit: cover; z-index: 1;
+    filter: blur(var(--blur-fondo, 0px)) brightness(var(--brillo-fondo, 1));
+    transform: scale(1.05);
+}
+.fondo-overlay { position: absolute; width: 100%; height: 100%; background: rgba(0,0,0,var(--overlay-fondo, 0)); z-index: 2; }
+.download-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6); color: white; display: flex; align-items: center;
+    justify-content: center; font-size: 12px; font-weight: bold; opacity: 0;
+    transition: opacity 0.3s ease; pointer-events: none; backdrop-filter: blur(2px);
+}
+.etiqueta:hover .download-overlay { opacity: 1; }
+
+.producto-imagen {
+    position: absolute; width: var(--img-width, 60px); height: var(--img-height, 60px);
+    top: var(--img-top, 50%); left: var(--img-left, 50%);
+    transform: translate(-50%, -50%) rotate(var(--img-rotacion, 0deg));
+    object-fit: contain; border-radius: 4px; z-index: 2;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+.nombre-producto {
+    position: absolute; font-size: var(--nombre-font-size, 8px); color: var(--nombre-color, #000);
+    top: var(--nombre-top, 70%); left: var(--nombre-left, 50%);
+    transform: translate(-50%, -50%) rotate(var(--nombre-rotacion, 0deg));
+    text-align: center; font-weight: bold; z-index: 3; white-space: nowrap;
+    max-width: 80%; overflow: hidden; text-overflow: ellipsis;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+}
+.instrucciones {
+    position: absolute; top: var(--instrucciones-top, 10%); left: var(--instrucciones-left, 5%);
+    width: var(--instrucciones-width, 30%); font-size: var(--instrucciones-font-size, 6px);
+    color: var(--instrucciones-color, #fff); line-height: 1.2; text-align: left;
+    padding: 5px; background: rgba(252, 250, 250, 0.5); border-radius: 4px;
+    transform: rotate(var(--instrucciones-rotacion, 0deg)); z-index: 2;
+    word-wrap: break-word; backdrop-filter: blur(2px);
+}
+.texto-adicional-1, .texto-adicional-2, .texto-adicional-3 {
+    position: absolute; text-align: center; z-index: 3; white-space: nowrap;
+    max-width: 80%; overflow: hidden; text-overflow: ellipsis;
+}
+.texto-adicional-1 {
+    font-size: var(--texto1-font-size, 6px); color: var(--texto1-color, #000);
+    top: var(--texto1-top, 90%); left: var(--texto1-left, 50%);
+    transform: translate(-50%, -50%) rotate(var(--texto1-rotacion, 0deg));
+    background: linear-gradient(to bottom, #ffd700, #daa520, #b8860b);
+    padding: 2px 8px; border-radius: 4px; font-weight: bold;
+}
+.texto-adicional-2 {
+    font-size: var(--texto2-font-size, 6px); color: var(--texto2-color, #000);
+    top: var(--texto2-top, 90%); left: var(--texto2-left, 50%);
+    transform: translate(-50%, -50%) rotate(var(--texto2-rotacion, 0deg));
+}
+.texto-adicional-3 {
+    font-size: var(--texto3-font-size, 6px); color: var(--texto3-color, #000);
+    top: var(--texto3-top, 5%); left: var(--texto3-left, 50%);
+    transform: translate(-50%, -50%) rotate(var(--texto3-rotacion, 0deg));
+}
+.imagen-adicional {
+    position: absolute; width: var(--img-adicional-width, 30px); height: var(--img-adicional-height, 30px);
+    top: var(--img-adicional-top, 10%); left: var(--img-adicional-left, 90%);
+    transform: translate(-50%, -50%) rotate(var(--img-adicional-rotacion, 0deg));
+    object-fit: contain; z-index: 2;
+}
+.imagen-extra-1 {
+    position: absolute; width: var(--img-extra1-width, 30px);
+    top: var(--img-extra1-top, 90%); left: var(--img-extra1-left, 90%);
+    transform: translate(-50%, -50%); z-index: 3;
+}
+
+/* === CÓDIGOS QR Y BARRAS (OPTIMIZADOS PARA IMPRESIÓN) === */
+.codigo-qr {
+    position: absolute; background: #ffffff; padding: 4px;
+    border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    z-index: 10; box-sizing: border-box;
+}
+.codigo-qr.qr-facebook {
+    width: var(--qr-fb-size, 45px); height: var(--qr-fb-size, 45px);
+    top: var(--qr-fb-top, 5%); left: var(--qr-fb-left, 5%);
+    transform: translate(-50%, -50%);
+}
+.codigo-qr.qr-dinamico {
+    width: var(--qr-din-size, 45px); height: var(--qr-din-size, 45px);
+    top: var(--qr-din-top, 5%); left: var(--qr-din-left, 95%);
+    transform: translate(-50%, -50%) rotate(var(--qr-din-rotacion, 0deg));
+}
+.codigo-barras {
+    position: absolute; background: #ffffff; padding: 5px 8px;
+    border-radius: 4px; z-index: 10; display: block;
+    width: var(--barcode-width, 110px); height: var(--barcode-height, 45px);
+    top: var(--barcode-top, 92%); left: var(--barcode-left, 50%);
+    transform: translate(-50%, -50%) rotate(var(--barcode-rotacion, 0deg));
+    box-sizing: border-box;
+}
+.codigo-barras svg { width: 100%; height: 100%; display: block; }
+
+/* === MARCAS DE CORTE === */
+.marcas-corte {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 50; display: none;
+}
+.mc { position: absolute; width: 8mm; height: 8mm; border-color: #000; border-style: solid; }
+.mc-tl { top: -1mm; left: -1mm; border-width: 0.2pt 0 0 0.2pt; }
+.mc-tr { top: -1mm; right: -1mm; border-width: 0.2pt 0.2pt 0 0; }
+.mc-bl { bottom: -1mm; left: -1mm; border-width: 0 0 0.2pt 0.2pt; }
+.mc-br { bottom: -1mm; right: -1mm; border-width: 0 0.2pt 0.2pt 0; }
+@media print { .marcas-corte { display: block !important; } }
+@media screen { .marcas-corte { display: none !important; } }
+
+/* === CHECKBOXES === */
+.checkbox-group {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;
+    max-height: 250px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;
+    border-radius: 8px; background: #fafafa;
+}
+body.modo-oscuro .checkbox-group { background: #3c3c3c; border-color: #555; }
+.checkbox-item { display: flex; align-items: center; font-size: 13px; padding: 4px; border-radius: 4px; transition: background 0.2s; }
+.checkbox-item:hover { background: rgba(102, 126, 234, 0.1); }
+.checkbox-item input { margin-right: 8px; width: 16px; height: 16px; cursor: pointer; }
+.checkbox-item label { color: #333; cursor: pointer; flex: 1; }
+body.modo-oscuro .checkbox-item label { color: #e0e0e0; }
+
+#btnModoOscuro {
+    background: linear-gradient(135deg, #333 0%, #555 100%); color: white; border: none;
+    padding: 12px; font-size: 14px; width: 100%; margin-top: 10px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;
+}
+body.modo-oscuro #btnModoOscuro { background: linear-gradient(135deg, #ffcc00 0%, #ffaa00 100%); color: #222; font-weight: bold; }
+
+/* === PANELES DE CONFIGURACIÓN FLOTANTES (DERECHA) === */
+.modal {
+    display: none; position: fixed; top: 20px; right: 20px; width: 380px;
+    max-height: calc(100vh - 40px); overflow-y: auto;
+    background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(15px);
+    border-radius: 16px; box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+    z-index: 1000; border: 1px solid rgba(0,0,0,0.08);
+}
+body.modo-oscuro .modal { background: rgba(35, 35, 35, 0.98); color: #e0e0e0; border-color: rgba(255,255,255,0.1); }
+.modal-content { background: transparent; padding: 20px; width: 100%; }
+.modal-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+    position: sticky; top: 0; background: inherit; padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+body.modo-oscuro .modal-header { border-bottom-color: rgba(255,255,255,0.1); }
+.btn-cerrar-modal { background: none; border: none; font-size: 28px; cursor: pointer; color: #888; line-height: 1; padding: 0 5px; }
+.btn-cerrar-modal:hover { color: #333; }
+body.modo-oscuro .btn-cerrar-modal:hover { color: #fff; }
+.modal-body label { display: block; margin-top: 10px; font-weight: bold; }
+.modal-body input, .modal-body select, .modal-body textarea {
+    width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;
+}
+.modal-footer { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+.btn-modal { padding: 8px 16px; border-radius: 4px; cursor: pointer; border: none; }
+.btn-cancelar { background: #ccc; }
+.btn-guardar { background: #4caf50; color: white; }
+
+@media (max-width: 900px) {
+    .modal { top: 10px; right: 10px; left: 10px; width: auto; max-height: 85vh; }
+}
+
+/* === PRINT === */
+@media print {
+    @page { margin: 0; size: var(--hoja-ancho-cm, 21.6cm) var(--hoja-alto-cm, 27.9cm); }
+    body { background: white !important; margin: 0 !important; padding: 0 !important; display: block !important; }
+    body > *:not(.etiqueta-container) { display: none !important; }
+    .etiqueta-container {
+        position: absolute !important; top: 0 !important; left: 0 !important;
+        width: var(--hoja-ancho-cm, 21.6cm) !important; height: var(--hoja-alto-cm, 27.9cm) !important;
+        padding: 0 !important; margin: 0 !important; background: white !important;
+        display: grid !important; gap: 0 !important; box-shadow: none !important;
+        border-radius: 0 !important; image-rendering: auto;
+    }
+    .etiqueta { page-break-inside: avoid !important; break-inside: avoid !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; margin: 0 !important; border: none !important; box-shadow: none !important; transform: none !important; }
+    .download-overlay { display: none !important; }
+}
+
+/* Toast y Loading */
+#toastContainer { position: fixed; bottom: 20px; right: 20px; z-index: 2000; }
+.toast { background: #333; color: white; padding: 12px 24px; border-radius: 8px; margin-top: 10px; opacity: 0; transform: translateY(20px); transition: all 0.3s ease; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { background: #4caf50; } .toast.error { background: #f44336; } .toast.warning { background: #ff9800; }
+#loadingOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; }
+#loadingOverlay.active { display: flex; }
+.spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="loadingOverlay"><div class="spinner"></div><p>Procesando...</p></div>
+<div id="toastContainer"></div>
+
+<div class="formulario">
+    <h2 style="margin-top:0; color:#764ba2;">🏷️ Esentia Labels</h2>
+    <button type="button" class="btn-seccion" onclick="abrirModal('modalTamanoHoja')">📄 Tamaño de Hoja <span>▼</span></button>
+    <button type="button" class="btn-seccion" onclick="abrirModal('modalConfiguracion')">⚙️ Configuración Básica <span>▼</span></button>
+
+    <div style="margin-bottom: 15px;">
+        <label style="font-weight: bold; display: block; margin-bottom: 5px;">Seleccionar Productos:</label>
+        <input type="text" id="filtroProductos" placeholder="Buscar producto..." style="width:100%; padding:8px; margin-bottom:8px; border:1px solid #ddd; border-radius:4px;" oninput="filtrarProductos()">
+        <div style="display: flex; gap: 5px; margin-bottom: 8px;">
+            <button onclick="seleccionarTodos(true)" style="flex:1; font-size:11px; padding:5px;">Todos</button>
+            <button onclick="seleccionarTodos(false)" style="flex:1; font-size:11px; padding:5px;">Ninguno</button>
+        </div>
+        <div id="checkboxContainer" class="checkbox-group"></div>
+    </div>
+
+    <div class="contador-etiquetas" id="contadorEtiquetas">📊 <span id="etiquetasGeneradas">0</span> etiquetas generadas de <span id="etiquetasMaximas">0</span> posibles</div>
+
+    <button type="button" class="btn-seccion" onclick="abrirModal('modalInstrucciones')">📝 Editar Instrucciones <span>▼</span></button>
+    <button type="button" class="btn-seccion" onclick="abrirModal('modalEstilosProducto')">🎨 Estilos de Producto <span>▼</span></button>
+    <button type="button" class="btn-seccion" onclick="abrirModal('modalTextosAdicionales')">✍️ Textos adicionales <span>▼</span></button>
+    <button type="button" class="btn-seccion" onclick="abrirModal('modalImagenAdicional')">🖼️ Imagen adicional <span>▼</span></button>
+    <button type="button" class="btn-seccion" onclick="abrirModal('modalElementosAdicionales')">🔲 Códigos QR y Barras <span>▼</span></button>
+    <button type="button" class="btn-seccion" onclick="abrirModal('modalFondo')">🎨 Fondo de etiqueta <span>▼</span></button>
+
+    <div style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <button onclick="generarEtiquetas()" style="grid-column: span 2; padding:12px; background:#4caf50; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">🔄 Generar Etiquetas</button>
+        <button onclick="window.print()" style="grid-column: span 2; padding:12px; background:#2196f3; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">🖨️ Imprimir etiquetas</button>
+        <button type="button" onclick="descargarTodasComoImagen()" style="grid-column: span 2; padding:10px;">💾 Descargar Todas (ZIP)</button>
+        <button onclick="generarPDF()" style="grid-column: span 2; padding:10px;">📄 Descargar PDF</button>
+        <button type="button" onclick="exportarConfiguracion()" style="padding:10px;">📤 Exportar</button>
+        <button type="button" onclick="document.getElementById('inputImportar').click()" style="padding:10px;">📥 Importar</button>
+        <input type="file" id="inputImportar" accept=".json" style="display:none;" onchange="importarConfiguracion(event)">
+        <button type="button" onclick="alternarModoOscuro()" id="btnModoOscuro" style="grid-column: span 2;">🌑 Modo Oscuro</button>
+    </div>
+    
+    <div style="margin-top: 15px; font-size: 12px;">
+        <label>Desenfoque fondo (px):</label><input type="range" id="blurFondo" min="0" max="10" step="0.5" value="0" oninput="actualizarEstilos()">
+        <label>Brillo fondo:</label><input type="range" id="brilloFondo" min="0.5" max="1.5" step="0.1" value="1" oninput="actualizarEstilos()">
+        <label>Oscurecer fondo:</label><input type="range" id="overlayFondo" min="0" max="0.7" step="0.05" value="0" oninput="actualizarEstilos()">
+    </div>
+</div>
+
+<div class="etiqueta-container" id="etiquetas"></div>
+
+<!-- ============ MODALES ============ -->
+
+<div id="modalTamanoHoja" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Tamaño de hoja</h3>
+            <button class="btn-cerrar-modal" onclick="cerrarModal('modalTamanoHoja')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <label>Tamaño de hoja:</label>
+            <select id="tamanoHoja" onchange="actualizarTamanoHoja()">
+                <option value="carta">Carta (8.5x11")</option>
+                <option value="13x19">13x19 pulgadas (33x48 cm)</option>
+                <option value="a4">A4 (21x29.7 cm)</option>
+                <option value="personalizado">Personalizado</option>
+            </select>
+            <div id="camposPersonalizados" style="display: none; margin-top: 10px;">
+                <label>Ancho hoja (cm):</label>
+                <input type="number" id="anchoHojaCm" value="33" step="0.1" oninput="generarEtiquetas()">
+                <label>Alto hoja (cm):</label>
+                <input type="number" id="altoHojaCm" value="48" step="0.1" oninput="generarEtiquetas()">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-cancelar" onclick="cerrarModal('modalTamanoHoja')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalConfiguracion" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Configuración básica</h3>
+            <button class="btn-cerrar-modal" onclick="cerrarModal('modalConfiguracion')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <label>Ancho Etiqueta (cm):</label>
+            <input type="number" id="anchoCm" value="8" step="0.1" oninput="generarEtiquetasDebounce()">
+            <label>Alto Etiqueta (cm):</label>
+            <input type="number" id="altoCm" value="4" step="0.1" oninput="generarEtiquetasDebounce()">
+            <label>Lista manual (opcional):</label>
+            <input id="productosManual" placeholder="Ej: vainilla:3, limon:1, manzana:5" oninput="generarEtiquetasDebounce()" style="font-size: 12px;">
+            <small style="color: #999; font-size: 11px; display: block; margin-top: 4px;">Formato: nombre:cantidad (separa por comas). Si no especificas cantidad, usa 1.</small>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-cancelar" onclick="cerrarModal('modalConfiguracion')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalInstrucciones" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Editar Instrucciones</h3>
+            <button class="btn-cerrar-modal" onclick="cerrarModal('modalInstrucciones')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="editorInstrucciones" contenteditable="true" style="border:1px solid #ccc; padding:10px; min-height:150px; border-radius:4px; background:#fff; color:#000;"></div>
+            <label>Tamaño fuente:</label>
+            <input type="number" id="instruccionesFontSize" value="6" oninput="actualizarEstilos()">
+            <label>Color:</label>
+            <input type="color" id="instruccionesColor" value="#ffffff" oninput="actualizarEstilos()">
+            <label>Posición Top (%):</label>
+            <input type="number" id="instruccionesTop" value="10" oninput="actualizarEstilos()">
+            <label>Posición Left (%):</label>
+            <input type="number" id="instruccionesLeft" value="5" oninput="actualizarEstilos()">
+            <label>Rotación (deg):</label>
+            <input type="number" id="instruccionesRotacion" value="0" oninput="actualizarEstilos()">
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-cancelar" onclick="cerrarModal('modalInstrucciones')">Cancelar</button>
+            <button class="btn-modal btn-guardar" onclick="guardarInstrucciones()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalEstilosProducto" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Estilos de Producto</h3>
+            <button class="btn-cerrar-modal" onclick="cerrarModal('modalEstilosProducto')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <h4>Imagen del Producto</h4>
+            <label>Ancho (px):</label><input type="number" id="imgWidth" value="60" oninput="actualizarEstilos()">
+            <label>Alto (px):</label><input type="number" id="imgHeight" value="60" oninput="actualizarEstilos()">
+            <label>Posición Top (%):</label><input type="number" id="imgTop" value="50" oninput="actualizarEstilos()">
+            <label>Posición Left (%):</label><input type="number" id="imgLeft" value="50" oninput="actualizarEstilos()">
+            <label>Rotación (deg):</label><input type="number" id="imgRotacion" value="0" oninput="actualizarEstilos()">
+            <hr>
+            <h4>Nombre del Producto</h4>
+            <label>Tamaño fuente:</label><input type="number" id="nombreFontSize" value="12" oninput="actualizarEstilos()">
+            <label>Color:</label><input type="color" id="nombreColor" value="#000000" oninput="actualizarEstilos()">
+            <label>Posición Top (%):</label><input type="number" id="nombreTop" value="75" oninput="actualizarEstilos()">
+            <label>Posición Left (%):</label><input type="number" id="nombreLeft" value="50" oninput="actualizarEstilos()">
+            <label>Rotación (deg):</label><input type="number" id="nombreRotacion" value="0" oninput="actualizarEstilos()">
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-cancelar" onclick="cerrarModal('modalEstilosProducto')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalTextosAdicionales" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Textos Adicionales</h3>
+            <button class="btn-cerrar-modal" onclick="cerrarModal('modalTextosAdicionales')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <h4>Texto 1 (Dorado)</h4>
+            <input type="text" id="texto1" placeholder="Texto 1" oninput="generarEtiquetasDebounce()">
+            <label>Tamaño:</label><input type="number" id="texto1FontSize" value="6" oninput="actualizarEstilos()">
+            <label>Color:</label><input type="color" id="texto1Color" value="#000000" oninput="actualizarEstilos()">
+            <label>Top (%):</label><input type="number" id="texto1Top" value="90" oninput="actualizarEstilos()">
+            <label>Left (%):</label><input type="number" id="texto1Left" value="50" oninput="actualizarEstilos()">
+            <hr>
+            <h4>Texto 2</h4>
+            <input type="text" id="texto2" placeholder="Texto 2" oninput="generarEtiquetasDebounce()">
+            <label>Tamaño:</label><input type="number" id="texto2FontSize" value="6" oninput="actualizarEstilos()">
+            <label>Color:</label><input type="color" id="texto2Color" value="#000000" oninput="actualizarEstilos()">
+            <label>Top (%):</label><input type="number" id="texto2Top" value="90" oninput="actualizarEstilos()">
+            <label>Left (%):</label><input type="number" id="texto2Left" value="50" oninput="actualizarEstilos()">
+            <hr>
+            <h4>Texto 3</h4>
+            <input type="text" id="texto3" placeholder="Texto 3" oninput="generarEtiquetasDebounce()">
+            <label>Tamaño:</label><input type="number" id="texto3FontSize" value="6" oninput="actualizarEstilos()">
+            <label>Color:</label><input type="color" id="texto3Color" value="#000000" oninput="actualizarEstilos()">
+            <label>Top (%):</label><input type="number" id="texto3Top" value="5" oninput="actualizarEstilos()">
+            <label>Left (%):</label><input type="number" id="texto3Left" value="50" oninput="actualizarEstilos()">
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-cancelar" onclick="cerrarModal('modalTextosAdicionales')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalImagenAdicional" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Imagen Adicional</h3>
+            <button class="btn-cerrar-modal" onclick="cerrarModal('modalImagenAdicional')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="file" id="imagenAdicionalFile" accept="image/*" onchange="cargarImagenAdicional(event)">
+            <div id="previewImagenAdicional" style="display:none; margin-top:10px;">
+                <img id="imgPreviewAdicional" style="max-width:100px; max-height:100px;">
+                <button onclick="eliminarImagenAdicional()">Eliminar</button>
+            </div>
+            <label>Ancho (px):</label><input type="number" id="imgAdicionalWidth" value="30" oninput="actualizarEstilos()">
+            <label>Alto (px):</label><input type="number" id="imgAdicionalHeight" value="30" oninput="actualizarEstilos()">
+            <label>Top (%):</label><input type="number" id="imgAdicionalTop" value="10" oninput="actualizarEstilos()">
+            <label>Left (%):</label><input type="number" id="imgAdicionalLeft" value="90" oninput="actualizarEstilos()">
+            <label>Rotación (deg):</label><input type="number" id="imgAdicionalRotacion" value="0" oninput="actualizarEstilos()">
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-cancelar" onclick="cerrarModal('modalImagenAdicional')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- === MODAL CORREGIDO: CÓDIGOS QR Y BARRAS === -->
+<div id="modalElementosAdicionales" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>🔲 Códigos QR y Barras</h3>
+            <button class="btn-cerrar-modal" onclick="cerrarModal('modalElementosAdicionales')">&times;</button>
+        </div>
+        <div class="modal-body">
+            
+            <!-- QR Facebook -->
+            <div style="margin-bottom:20px; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                <h4 style="margin:0 0 10px 0;">📘 QR para Facebook</h4>
+                <label><input type="checkbox" id="mostrarQRFacebook" onchange="generarEtiquetasDebounce()"> Mostrar este QR</label>
+                <div id="configQRFacebook" style="display:none; margin-top:10px;">
+                    <label>Contenido (URL):</label>
+                    <input type="text" id="qrFacebookContent" placeholder="https://facebook.com/..." 
+                           value="https://www.facebook.com/profile.php?id=61579078480913" 
+                           oninput="generarEtiquetasDebounce()">
+                    <label>Tamaño (px):</label><input type="number" id="qrFacebookSize" value="45" oninput="actualizarEstilos()">
+                    <label>Top (%):</label><input type="number" id="qrFacebookTop" value="5" oninput="actualizarEstilos()">
+                    <label>Left (%):</label><input type="number" id="qrFacebookLeft" value="5" oninput="actualizarEstilos()">
+                </div>
+            </div>
+
+            <!-- QR Dinámico -->
+            <div style="margin-bottom:20px; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                <h4 style="margin:0 0 10px 0;">🔗 QR Dinámico (Producto)</h4>
+                <label><input type="checkbox" id="mostrarQRDinamico" onchange="generarEtiquetasDebounce()"> Mostrar este QR</label>
+                <div id="configQRDinamico" style="display:none; margin-top:10px;">
+                    <small style="color:#666;">Genera automáticamente: https://.../producto.html?id=ID_DEL_PRODUCTO</small>
+                    <label>Tamaño (px):</label><input type="number" id="qrDinamicoSize" value="45" oninput="actualizarEstilos()">
+                    <label>Top (%):</label><input type="number" id="qrDinamicoTop" value="5" oninput="actualizarEstilos()">
+                    <label>Left (%):</label><input type="number" id="qrDinamicoLeft" value="95" oninput="actualizarEstilos()">
+                    <label>Rotación (deg):</label><input type="number" id="qrDinamicoRotacion" value="0" oninput="actualizarEstilos()">
+                </div>
+            </div>
+
+            <!-- Código de Barras -->
+            <div style="padding:10px; border:1px solid #ddd; border-radius:8px;">
+                <h4 style="margin:0 0 10px 0;">📊 Código de Barras (ID Producto)</h4>
+                <label><input type="checkbox" id="mostrarCodigoBarras" checked onchange="generarEtiquetasDebounce()"> Mostrar código de barras</label>
+                <div id="configBarcode" style="display:none; margin-top:10px;">
+                    <label>Ancho (px):</label><input type="number" id="barcodeWidth" value="100" oninput="actualizarEstilos()">
+                    <label>Alto (px):</label><input type="number" id="barcodeHeight" value="35" oninput="actualizarEstilos()">
+                    <label>Top (%):</label><input type="number" id="barcodeTop" value="92" oninput="actualizarEstilos()">
+                    <label>Left (%):</label><input type="number" id="barcodeLeft" value="50" oninput="actualizarEstilos()">
+                    <label>Rotación (deg):</label><input type="number" id="barcodeRotacion" value="0" oninput="actualizarEstilos()">
+                    <label><small>Usa el campo <strong>ID</strong> del producto desde tu JSON</small></label>
+                </div>
+            </div>
+
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-cancelar" onclick="cerrarModal('modalElementosAdicionales')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalFondo" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Fondo de etiqueta</h3>
+            <button class="btn-cerrar-modal" onclick="cerrarModal('modalFondo')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <label>Tipo de fondo:</label>
+            <select id="fondoTipo" onchange="cambiarTipoFondo()">
+                <option value="ninguno">Ninguno</option>
+                <option value="subir">Subir imagen</option>
+                <option value="predefinido">Predefinido</option>
+            </select>
+            <input type="file" id="fondoImagen" accept="image/*" style="display: none;" onchange="previsualizarFondo(event)">
+            <div id="predefinidosContainer" style="display: none; margin-top: 10px;">
+                <p>Selecciona un fondo:</p>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
+                    <button onclick="seleccionarFondoPredefinido('fondo1.jpg')">Fondo 1</button>
+                    <button onclick="seleccionarFondoPredefinido('fondo2.jpg')">Fondo 2</button>
+                    <button onclick="seleccionarFondoPredefinido('fondo3.jpg')">Fondo 3</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-cancelar" onclick="cerrarModal('modalFondo')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let productosDisponibles = [];
+let imagenAdicionalDataUrl = null, fondoActualUrl = null;
+let instruccionesHtml = `
+<span style="color: red; font-weight: bold;">Indicaciones de uso en difusor eléctrico o ambiente:</span><br>
+- Utilice 5-10 gotas en difusor eléctrico según capacidad del recipiente.<br>
+- Para uso ambiental, colocar 2-3 gotas en superficies porosas o difusores pasivos.<br>
+- Evite derramar el aceite sobre superficies pintadas o barnizadas.<br>
+- No aplicar directamente sobre piel, ropa o materiales delicados.<br>
+- Mantener fuera del alcance de niños y mascotas.<br>
+- Conservar en lugar fresco y seco, protegido de la luz solar directa.<br>
+<span style="color: red; font-weight: bold;">Advertencias:</span><br>
+✖ No son consumibles ni de uso tópico.<br>
+✖ Evitar contacto con ojos y mucosas.<br>
+✖ Suspender su uso ante reacciones alérgicas.
+`;
+
+const tamanosHoja = {
+    carta: { w: 21.6, h: 27.9, name: "letter" },
+    "13x19": { w: 33, h: 48, name: "330mm 480mm" },
+    a4: { w: 21, h: 29.7, name: "A4" },
+    personalizado: { w: 33, h: 48, name: "custom" }
+};
+
+function showToast(msg, type='success', dur=3000) {
+    const c = document.getElementById('toastContainer'), t = document.createElement('div');
+    t.className = `toast ${type}`; t.textContent = msg; c.appendChild(t);
+    setTimeout(()=>t.classList.add('show'), 10); setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(), 300); }, dur);
+}
+function setLoading(s) { document.getElementById('loadingOverlay').classList.toggle('active', s); }
+function aplanarProductos(data) {
+    if(Array.isArray(data)) return data.map(p=>({...p, id: p.id || crypto.randomUUID()}));
+    let f = []; for(let k in data) if(Array.isArray(data[k])) f = f.concat(data[k]);
+    return f.map(p=>({...p, id: p.id || crypto.randomUUID()}));
+}
+
+async function cargarProductos() {
+    setLoading(true);
+    try {
+        let d;
+        try { const r = await fetch('https://wil1979.github.io/esentia-factura/productos_esentia.json'); if(!r.ok) throw new Error(); d = await r.json(); }
+        catch(e) { const r = await fetch('productos_esentia.json'); d = await r.json(); }
+        productosDisponibles = aplanarProductos(d);
+        renderizarCheckboxes(); generarEtiquetas();
+    } catch(err) { document.getElementById("etiquetas").innerHTML = `<p style='color:red;'>⚠️ ${err.message}</p>`; showToast('Error cargando productos', 'error'); }
+    finally { setLoading(false); }
+}
+
+function renderizarCheckboxes() {
+    const c = document.getElementById("checkboxContainer"); c.innerHTML = '';
+    productosDisponibles.forEach((p, i) => {
+        const div = document.createElement("div"); div.className = "checkbox-item";
+        div.innerHTML = `<input type="checkbox" id="prod_${i}" data-index="${i}"><label for="prod_${i}" style="flex:1; margin:0;">${p.nombre}</label>
+        <input type="number" id="cant_${i}" data-qty-index="${i}" min="1" value="1" style="width:45px; text-align:center;" onchange="generarEtiquetasDebounce()">`;
+        c.appendChild(div);
+        div.querySelector('input[type="checkbox"]').addEventListener('change', generarEtiquetasDebounce);
+    });
+}
+function filtrarProductos() { const f = document.getElementById('filtroProductos').value.toLowerCase(); document.querySelectorAll('.checkbox-item').forEach(el => el.style.display = el.textContent.toLowerCase().includes(f) ? 'flex' : 'none'); }
+function seleccionarTodos(chk) { document.querySelectorAll('.checkbox-item input[type="checkbox"]').forEach(c => c.checked = chk); generarEtiquetas(); showToast(chk ? 'Todos seleccionados' : 'Selección limpiada'); }
+
+function abrirModal(id) { const m = document.getElementById(id); m.style.display = 'block'; if(id==='modalInstrucciones') document.getElementById('editorInstrucciones').innerHTML = instruccionesHtml; }
+function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+window.onclick = e => { if(e.target.classList.contains('modal')) e.target.style.display='none'; };
+document.addEventListener('keydown', e => { if(e.key==='Escape') document.querySelectorAll('.modal').forEach(m => m.style.display='none'); });
+
+function actualizarTamanoHoja() {
+    const t = document.getElementById("tamanoHoja").value;
+    document.getElementById("camposPersonalizados").style.display = t==="personalizado" ? "block" : "none";
+    const w = t==="personalizado" ? (parseFloat(document.getElementById('anchoHojaCm').value)||21.6) : tamanosHoja[t].w;
+    const h = t==="personalizado" ? (parseFloat(document.getElementById('altoHojaCm').value)||27.9) : tamanosHoja[t].h;
+    document.documentElement.style.setProperty('--hoja-ancho-cm', `${w}cm`);
+    document.documentElement.style.setProperty('--hoja-alto-cm', `${h}cm`);
+    generarEtiquetas();
+}
+
+function actualizarEstilos() {
+    const getVal = (id) => document.getElementById(id)?.value;
+    
+    document.documentElement.style.setProperty('--etiqueta-width', getVal('anchoCm') + 'cm');
+    document.documentElement.style.setProperty('--etiqueta-height', getVal('altoCm') + 'cm');
+    
+    document.documentElement.style.setProperty('--img-width', getVal('imgWidth') + 'px');
+    document.documentElement.style.setProperty('--img-height', getVal('imgHeight') + 'px');
+    document.documentElement.style.setProperty('--img-left', getVal('imgLeft') + '%');
+    document.documentElement.style.setProperty('--img-top', getVal('imgTop') + '%');
+    document.documentElement.style.setProperty('--img-rotacion', getVal('imgRotacion') + 'deg');
+    
+    document.documentElement.style.setProperty('--nombre-font-size', getVal('nombreFontSize') + 'px');
+    document.documentElement.style.setProperty('--nombre-color', getVal('nombreColor'));
+    document.documentElement.style.setProperty('--nombre-left', getVal('nombreLeft') + '%');
+    document.documentElement.style.setProperty('--nombre-top', getVal('nombreTop') + '%');
+    document.documentElement.style.setProperty('--nombre-rotacion', getVal('nombreRotacion') + 'deg');
+    
+    document.documentElement.style.setProperty('--instrucciones-font-size', getVal('instruccionesFontSize') + 'px');
+    document.documentElement.style.setProperty('--instrucciones-color', getVal('instruccionesColor'));
+    document.documentElement.style.setProperty('--instrucciones-top', getVal('instruccionesTop') + '%');
+    document.documentElement.style.setProperty('--instrucciones-left', getVal('instruccionesLeft') + '%');
+    document.documentElement.style.setProperty('--instrucciones-rotacion', getVal('instruccionesRotacion') + 'deg');
+    
+    document.documentElement.style.setProperty('--texto1-font-size', getVal('texto1FontSize') + 'px');
+    document.documentElement.style.setProperty('--texto1-color', getVal('texto1Color'));
+    document.documentElement.style.setProperty('--texto1-top', getVal('texto1Top') + '%');
+    document.documentElement.style.setProperty('--texto1-left', getVal('texto1Left') + '%');
+    
+    document.documentElement.style.setProperty('--texto2-font-size', getVal('texto2FontSize') + 'px');
+    document.documentElement.style.setProperty('--texto2-color', getVal('texto2Color'));
+    document.documentElement.style.setProperty('--texto2-top', getVal('texto2Top') + '%');
+    document.documentElement.style.setProperty('--texto2-left', getVal('texto2Left') + '%');
+    
+    document.documentElement.style.setProperty('--texto3-font-size', getVal('texto3FontSize') + 'px');
+    document.documentElement.style.setProperty('--texto3-color', getVal('texto3Color'));
+    document.documentElement.style.setProperty('--texto3-top', getVal('texto3Top') + '%');
+    document.documentElement.style.setProperty('--texto3-left', getVal('texto3Left') + '%');
+    
+    document.documentElement.style.setProperty('--img-adicional-width', getVal('imgAdicionalWidth') + 'px');
+    document.documentElement.style.setProperty('--img-adicional-height', getVal('imgAdicionalHeight') + 'px');
+    document.documentElement.style.setProperty('--img-adicional-top', getVal('imgAdicionalTop') + '%');
+    document.documentElement.style.setProperty('--img-adicional-left', getVal('imgAdicionalLeft') + '%');
+    document.documentElement.style.setProperty('--img-adicional-rotacion', getVal('imgAdicionalRotacion') + 'deg');
+    
+    // QR Facebook
+    document.documentElement.style.setProperty('--qr-fb-size', (getVal('qrFacebookSize') || 45) + 'px');
+    document.documentElement.style.setProperty('--qr-fb-top', (getVal('qrFacebookTop') || 5) + '%');
+    document.documentElement.style.setProperty('--qr-fb-left', (getVal('qrFacebookLeft') || 5) + '%');
+    
+    // QR Dinámico
+    document.documentElement.style.setProperty('--qr-din-size', (getVal('qrDinamicoSize') || 45) + 'px');
+    document.documentElement.style.setProperty('--qr-din-top', (getVal('qrDinamicoTop') || 5) + '%');
+    document.documentElement.style.setProperty('--qr-din-left', (getVal('qrDinamicoLeft') || 95) + '%');
+    document.documentElement.style.setProperty('--qr-din-rotacion', (getVal('qrDinamicoRotacion') || 0) + 'deg');
+    
+    // Código de Barras
+    document.documentElement.style.setProperty('--barcode-width', (getVal('barcodeWidth') || 100) + 'px');
+    document.documentElement.style.setProperty('--barcode-height', (getVal('barcodeHeight') || 35) + 'px');
+    document.documentElement.style.setProperty('--barcode-top', (getVal('barcodeTop') || 92) + '%');
+    document.documentElement.style.setProperty('--barcode-left', (getVal('barcodeLeft') || 50) + '%');
+    document.documentElement.style.setProperty('--barcode-rotacion', (getVal('barcodeRotacion') || 0) + 'deg');
+    
+    document.documentElement.style.setProperty('--img-extra1-width', getVal('imgExtra1Width') + 'px');
+    document.documentElement.style.setProperty('--img-extra1-top', getVal('imgExtra1Top') + '%');
+    document.documentElement.style.setProperty('--img-extra1-left', getVal('imgExtra1Left') + '%');
+    
+    document.documentElement.style.setProperty('--blur-fondo', getVal('blurFondo') + 'px');
+    document.documentElement.style.setProperty('--brillo-fondo', getVal('brilloFondo'));
+    document.documentElement.style.setProperty('--overlay-fondo', getVal('overlayFondo'));
+    
+    guardarConfiguracion();
+}
+
+
+// ✅ QR ALTA CALIDAD CON BORDE BLANCO
+function generarQRCanvas(texto, size = 100) {
+    const scale = 4;
+    const dim = size * scale;
+    const margin = 12 * scale;
+    const qr = qrcode(0, 'H');
+    qr.addData(texto); qr.make();
+    const cvs = document.createElement('canvas');
+    cvs.width = dim + margin*2; cvs.height = dim + margin*2;
+    const ctx = cvs.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,cvs.width,cvs.height);
+    const cnt = qr.getModuleCount(), ms = dim/cnt;
+    ctx.fillStyle = '#000000';
+    for(let r=0;r<cnt;r++) for(let c=0;c<cnt;c++) if(qr.isDark(r,c)) ctx.fillRect(margin+c*ms, margin+r*ms, ms, ms);
+    return cvs.toDataURL('image/png');
+}
+
+function generarEtiquetas() {
+    actualizarEstilos();
+    const wCm = parseFloat(document.getElementById('anchoCm').value);
+    const hCm = parseFloat(document.getElementById('altoCm').value);
+    const tH = document.getElementById("tamanoHoja").value;
+    const sW = tH==="personalizado" ? (parseFloat(document.getElementById('anchoHojaCm').value)||21.6) : tamanosHoja[tH].w;
+    const sH = tH==="personalizado" ? (parseFloat(document.getElementById('altoHojaCm').value)||27.9) : tamanosHoja[tH].h;
+    const cols = Math.floor(sW/wCm), rows = Math.floor(sH/hCm), max = cols*rows;
+    if(cols<=0||rows<=0) { document.getElementById("etiquetas").innerHTML="<p style='color:red;'>⚠️ Etiqueta muy grande</p>"; return; }
+    const cont = document.getElementById("etiquetas");
+    cont.style.gridTemplateColumns = `repeat(${cols}, ${wCm}cm)`;
+    cont.style.gridTemplateRows = `repeat(${rows}, ${hCm}cm)`;
+    cont.style.width = `${sW}cm`; cont.style.height = `${sH}cm`;
+
+    // ✅ SELECCIÓN CORREGIDA CON DATA-INDEX
+    const sel = [];
+    document.querySelectorAll('.checkbox-item input[type="checkbox"]:checked').forEach(cb => {
+        const idx = parseInt(cb.dataset.index);
+        const prod = productosDisponibles[idx];
+        if(prod) {
+            const qty = parseInt(document.getElementById(`cant_${idx}`).value)||1;
+            sel.push({...prod, cantidad: qty});
+        }
+    });
+
+    let lista = sel;
+    const man = document.getElementById("productosManual").value;
+    if(man.trim()) {
+        lista = man.split(',').map(s=>{
+            let [n, c] = s.trim().split(':'); c = parseInt(c)||1;
+            const f = productosDisponibles.find(p=>p.nombre.toLowerCase().includes((n||s).toLowerCase()));
+            return f ? {...f, cantidad:c} : {nombre:n||s, imagen:'', cantidad:c};
+        });
+    }
+    if(lista.length===0) { cont.innerHTML="<p style='color:orange; padding:20px;'>⚠️ Selecciona productos</p>"; document.getElementById('etiquetasGeneradas').textContent="0"; return; }
+
+    const todas = [];
+    lista.forEach(p => { for(let i=0;i<(p.cantidad||1);i++) todas.push({...p}); });
+    const mostrar = todas.slice(0, max);
+    document.getElementById('etiquetasGeneradas').textContent = mostrar.length;
+    document.getElementById('etiquetasMaximas').textContent = max;
+    cont.innerHTML = "";
+
+    mostrar.forEach(prod => {
+        const et = document.createElement("div"); et.className = "etiqueta";
+        let extra = '';
+        const t1 = document.getElementById("texto1")?.value; if(t1) extra += `<div class="texto-adicional-1">${t1}</div>`;
+        const t2 = document.getElementById("texto2")?.value; if(t2) extra += `<div class="texto-adicional-2">${t2}</div>`;
+        const t3 = document.getElementById("texto3")?.value; if(t3) extra += `<div class="texto-adicional-3">${t3}</div>`;
+        if(imagenAdicionalDataUrl) extra += `<img class="imagen-adicional" src="${imagenAdicionalDataUrl}">`;
+        if(document.getElementById('mostrarQRFacebook')?.checked) extra += `<div class="codigo-qr qr-facebook"></div>`;
+        if(document.getElementById('mostrarQRDinamico')?.checked && prod.id) extra += `<div class="codigo-qr qr-dinamico"></div>`;
+        if(document.getElementById('mostrarCodigoBarras')?.checked && prod.id) extra += `<div class="codigo-barras"></div>`;
+
+        et.innerHTML = `
+            <div class="etiqueta-content">
+                ${fondoActualUrl ? `<img class="fondo-etiqueta" src="${fondoActualUrl}" crossorigin="anonymous">` : ''}
+                <div class="fondo-overlay"></div>
+                <img class="producto-imagen" src="${prod.imagen}" alt="${prod.nombre}" onerror="this.style.display='none'" crossorigin="anonymous">
+                <div class="nombre-producto">${prod.nombre}</div>
+                ${instruccionesHtml ? `<div class="instrucciones">${instruccionesHtml}</div>` : ''}
+                ${extra}
+                <div class="marcas-corte"><div class="mc mc-tl"></div><div class="mc mc-tr"></div><div class="mc mc-bl"></div><div class="mc mc-br"></div></div>
+            </div>
+            <div class="download-overlay">🔽 Click para descargar</div>`;
+        et.onclick = () => descargarEtiquetaIndividual(et, prod.nombre);
+        cont.appendChild(et);
+
+        // ✅ GENERAR QR FACEBOOK
+        const qrFb = et.querySelector('.qr-facebook');
+        if(qrFb) {
+            const sz = parseInt(document.getElementById('qrFacebookSize').value)||50;
+            const cnt = document.getElementById('qrFacebookContent').value || "https://www.facebook.com/profile.php?id=61579078480913";
+            qrFb.innerHTML = `<img src="${generarQRCanvas(cnt, sz)}" style="width:100%;height:100%;object-fit:contain;">`;
+        }
+        // ✅ GENERAR QR DINÁMICO
+        const qrDin = et.querySelector('.qr-dinamico');
+        if(qrDin && prod.id) {
+            const sz = parseInt(document.getElementById('qrDinamicoSize').value)||50;
+            const cnt = `https://wil1979.github.io/esentia-factura/producto.html?id=${prod.id}`;
+            qrDin.innerHTML = `<img src="${generarQRCanvas(cnt, sz)}" style="width:100%;height:100%;object-fit:contain;">`;
+        }
+        // ✅ GENERAR BARRAS
+        const bEl = et.querySelector('.codigo-barras');
+        if(bEl && prod.id && window.JsBarcode) {
+            bEl.innerHTML = '';
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            bEl.appendChild(svg);
+            requestAnimationFrame(() => {
+                try {
+                    JsBarcode(svg, prod.id.toString(), { format:"CODE128", width:1.5, height:38, displayValue:false, background:"#ffffff", margin:0 });
+                } catch(e) { bEl.innerHTML = `<small style="color:red;background:#fff;padding:2px;">ID: ${prod.id}</small>`; }
+            });
+        }
+    });
+}
+
+function descargarEtiquetaIndividual(el, nombre) {
+    setLoading(true);
+    html2canvas(el.querySelector('.etiqueta-content'), { scale:3, useCORS:true }).then(cvs => {
+        const a = document.createElement('a'); a.download = `etiqueta-${nombre.replace(/\s+/g,'_')}.png`;
+        a.href = cvs.toDataURL(); a.click(); showToast('Descargada');
+    }).finally(()=>setLoading(false));
+}
+function cargarImagenAdicional(e) { const f=e.target.files[0]; if(f){const r=new FileReader();r.onload=ev=>{imagenAdicionalDataUrl=ev.target.result; document.getElementById('imgPreviewAdicional').src=imagenAdicionalDataUrl; document.getElementById('previewImagenAdicional').style.display='block'; generarEtiquetas();};r.readAsDataURL(f);} }
+function eliminarImagenAdicional() { imagenAdicionalDataUrl=null; document.getElementById('previewImagenAdicional').style.display='none'; generarEtiquetas(); }
+function cambiarTipoFondo() { if(document.getElementById('fondoTipo').value==='subir') document.getElementById('fondoImagen').click(); else { fondoActualUrl=null; generarEtiquetas(); } }
+function previsualizarFondo(e) { const f=e.target.files[0]; if(f){const r=new FileReader();r.onload=ev=>{fondoActualUrl=ev.target.result; generarEtiquetas();};r.readAsDataURL(f);} }
+function guardarInstrucciones() { instruccionesHtml = document.getElementById('editorInstrucciones').innerHTML; cerrarModal('modalInstrucciones'); generarEtiquetas(); }
+function alternarModoOscuro() { document.body.classList.toggle('modo-oscuro'); const d=document.body.classList.contains('modo-oscuro'); document.getElementById('btnModoOscuro').textContent=d?'☀️ Modo Claro':'🌑 Modo Oscuro'; localStorage.setItem('modoOscuro',d); }
+function guardarConfiguracion() { const c={}; document.querySelectorAll('.formulario input, .formulario select').forEach(el=>{if(el.id)c[el.id]=el.value;}); c.instruccionesHtml=instruccionesHtml; localStorage.setItem('configEtiqueta',JSON.stringify(c)); }
+
+async function descargarTodasComoImagen() {
+    const items = document.querySelectorAll('.etiqueta-content'); if(!items.length) return; setLoading(true);
+    const zip = new JSZip();
+    await Promise.all(Array.from(items).map((el,i)=>html2canvas(el,{scale:2,useCORS:true}).then(cvs=>new Promise(res=>cvs.toBlob(blob=>{zip.file(`etiqueta_${i+1}.png`,blob);res();})))));
+    const blob = await zip.generateAsync({type:"blob"}); saveAs(blob, "etiquetas.zip"); setLoading(false);
+}
+async function generarPDF() {
+    const cont = document.getElementById('etiquetas'); if(!cont.children.length) return; setLoading(true);
+    try {
+        const cvs = await html2canvas(cont, {scale:3,useCORS:true,backgroundColor:"#fff"});
+        const img = cvs.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const w = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hoja-ancho-cm'));
+        const h = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hoja-alto-cm'));
+        const pdf = new jsPDF({orientation:w>h?'l':'p', unit:'cm', format:[w,h]});
+        pdf.addImage(img,'PNG',0,0,w,h); pdf.save('etiquetas.pdf');
+    } catch(e) { console.error(e); } setLoading(false);
+}
+function exportarConfiguracion() { const d=localStorage.getItem('configEtiqueta'); const b=new Blob([d],{type:'application/json'}); saveAs(b,'config.json'); }
+function importarConfiguracion(e) { const f=e.target.files[0]; if(f){const r=new FileReader();r.onload=ev=>{const c=JSON.parse(ev.target.result); Object.keys(c).forEach(k=>{const el=document.getElementById(k); if(el)el.value=c[k];}); if(c.instruccionesHtml)instruccionesHtml=c.instruccionesHtml; generarEtiquetas();};r.readAsText(f);} }
+
+let debounceTimer;
+function generarEtiquetasDebounce() { clearTimeout(debounceTimer); debounceTimer = setTimeout(generarEtiquetas, 300); }
+
+// Toggles de visibilidad en modal
+document.addEventListener('DOMContentLoaded', () => {
+    cargarProductos();
+    if(localStorage.getItem('modoOscuro')==='true') alternarModoOscuro();
+    actualizarTamanoHoja();
+    ['mostrarQRFacebook','mostrarQRDinamico','mostrarCodigoBarras'].forEach(id => {
+        const cb = document.getElementById(id);
+        const box = cb.id.replace('mostrar','config');
+        if(cb) {
+            cb.addEventListener('change', e => document.getElementById(box).style.display = e.target.checked ? 'block' : 'none');
+            cb.dispatchEvent(new Event('change'));
+        }
+    });
+});
+</script>
+</body>
+</html>
