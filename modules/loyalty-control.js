@@ -9,6 +9,12 @@ export const LoyaltyControl = {
   _selectedClientId: null,
 
   async mostrarPanelPuntos() {
+    // ✅ 1. LIMPIEZA PREVENTIVA (Esto soluciona el problema)
+  const existingModal = document.getElementById('modalFacturacionRapida');
+  if (existingModal) {
+    existingModal.remove(); // Borra el modal viejo por completo
+  }
+  
     const modal = document.createElement('div');
     modal.className = 'modal show'; modal.id = 'modalLoyaltyAdmin';
     modal.innerHTML = `

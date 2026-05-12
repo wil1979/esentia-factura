@@ -11,6 +11,12 @@ export const PedidosManager = {
     if (!Store.get('isAdmin')) { UI.toast('Acceso denegado', 'warning'); return; }
     if (document.getElementById('modalPedidos')) document.getElementById('modalPedidos').remove();
 
+    // ✅ 1. LIMPIEZA PREVENTIVA (Esto soluciona el problema)
+  const existingModal = document.getElementById('modalFacturacionRapida');
+  if (existingModal) {
+    existingModal.remove(); // Borra el modal viejo por completo
+  }
+
     const modal = document.createElement('div');
     modal.className = 'modal show';
     modal.id = 'modalPedidos';

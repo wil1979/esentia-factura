@@ -27,6 +27,12 @@ async init() {
       return;
     }
 
+    // ✅ 1. LIMPIEZA PREVENTIVA (Esto soluciona el problema)
+  const existingModal = document.getElementById('modalFacturacionRapida');
+  if (existingModal) {
+    existingModal.remove(); // Borra el modal viejo por completo
+  }
+
     // eliminar modal existente
     const modalExistente = document.getElementById('modalClientes');
     if (modalExistente) modalExistente.remove();

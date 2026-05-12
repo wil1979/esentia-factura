@@ -4,7 +4,15 @@ import { DB } from './firebase.js';
 import { UI } from '../components/ui.js';
 
 export const HistorialComprasManager = {
+
   async mostrarPanel() {
+
+    // ✅ 1. LIMPIEZA PREVENTIVA (Esto soluciona el problema)
+  const existingModal = document.getElementById('modalFacturacionRapida');
+  if (existingModal) {
+    existingModal.remove(); // Borra el modal viejo por completo
+  }
+  
     const modal = document.createElement('div');
     modal.className = 'modal show';
     modal.id = 'modalHistorialCompras';

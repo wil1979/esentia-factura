@@ -38,6 +38,12 @@ export const FacturacionRapidaV2 = {
   async mostrarPanel() {
     if (!Store.get('isAdmin')) { UI.toast('Acceso denegado', 'warning'); return; }
 
+    // ✅ 1. LIMPIEZA PREVENTIVA (Esto soluciona el problema)
+  const existingModal = document.getElementById('modalFacturacionRapida');
+  if (existingModal) {
+    existingModal.remove(); // Borra el modal viejo por completo
+  }
+
     this.prepararProductos();
     await this.cargarClientes(); // ✅ Recargar clientes cada vez que se abre
 

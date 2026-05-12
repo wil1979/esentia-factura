@@ -125,6 +125,11 @@
 const app = initializeApp(config);
 const db = getFirestore(app);
 
+    const maskPhone = (tel = '') => {
+      const str = tel.toString();
+      return str.length <= 4 ? '*'.repeat(str.length) : '****' + str.slice(4);
+    };
+
     const params = new URLSearchParams(window.location.search);
     const facturaId = params.get('id');
 
@@ -156,7 +161,7 @@ const db = getFirestore(app);
           
           <div class="info">
             <div><strong>Cliente:</strong><br>${f.clienteNombre}</div>
-            <div><strong>Cédula:</strong><br>${f.clienteId}</div>
+            <div><strong>Telefono:</strong><br>${maskPhone(f.clienteTelefono)}</div>
             <div><strong>Método:</strong><br>${f.metodoPago || 'Contado'}</div>
             <div><strong>Estado:</strong><br>${f.estado === 'completado' ? '✅ Pagado' : '⏳ Pendiente'}</div>
           </div>

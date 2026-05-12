@@ -27,6 +27,7 @@ export const DB = {
   
   getClient: (cedula) => getDocs(query(collection(db, "clientesBD"), where("cedula", "==", cedula))),
   getClientByPhone: (phone) => getDocs(query(collection(db, "clientesBD"), where("telefono", "==", phone))),
+  getAllClients: () => getDocs(collection(db, "clientesBD")),
   addClient: (data) => addDoc(collection(db, "clientesBD"), { ...data, creado: serverTimestamp() }),
   
   // ✅ CORREGIDO: addInvoice asíncrono y seguro
