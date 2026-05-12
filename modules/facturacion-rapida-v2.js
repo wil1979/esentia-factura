@@ -3,6 +3,7 @@ import { collection, addDoc, getDocs, doc, updateDoc, getDoc } from "https://www
 import { DB } from './firebase.js';
 import { Store, Utils } from './core.js';
 import { UI } from '../components/ui.js';
+import { CobrosManager } from './cobros.js';
 
 export const FacturacionRapidaV2 = {
   productosCache: [],
@@ -484,6 +485,17 @@ export const FacturacionRapidaV2 = {
   async guardarFactura() {
     if (!this.clienteTemporal) return UI.toast('⚠️ Seleccione un cliente', 'warning');
     if (this.carritoFactura.length === 0) return UI.toast('❌ Agregue productos', 'warning');
+
+    // ✅ VALIDAR CRÉDITO ANTES DE GUARDAR
+if (metodoPago === 'credito') {
+  const validacion = await CobrosManager.puedeFacturarACredito(idCliente);
+  if (!validacion.ok) {
+    UI.toast(validacion.message, 'warning');
+    btn.disabled = false;
+    btn.textContent = '💾 Guardar';
+    return;
+  }
+}
 
     const { subtotal, descuento, total } = this.calcularTotales();
     const subtotalNum = Number(subtotal) || 0;
