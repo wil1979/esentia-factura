@@ -25,10 +25,12 @@ import DiagnosticoFacturas from './modules/diagnostico-facturas.js';
 import ReportesManager from './modules/reportes.js';
 import InventoryManager from './modules/inventory-manager.js';
 import ClientesManager from './modules/clientes-manager.js';
+//import { ClientesManager } from './modules/clientes-manager.js';
 import { ClientesEditor } from './modules/clientes-editor.js';
 import { ClientesBusqueda } from './modules/clientes-busqueda.js';
 
 // ✅ Exponer al window global
+// ✅ Exponer al window global (sin duplicados)
 window.UI = UI;
 window.Store = Store;
 window.Utils = Utils;
@@ -43,7 +45,7 @@ window.FacturaEditor = FacturaEditor;
 window.LoyaltyControl = LoyaltyControl;
 window.PedidosManager = PedidosManager;
 window.UserManager = UserManager;
-window.ClientesManager = ClientesManager;
+window.ClientesManager = ClientesManager; // ✅ Único
 window.DashboardManager = DashboardManager;
 window.FacturacionRapidaV2 = FacturacionRapidaV2;
 window.StockAlertsManager = StockAlertsManager;
@@ -54,8 +56,6 @@ window.ImpresionManager = ImpresionManager;
 window.DiagnosticoFacturas = DiagnosticoFacturas;
 window.ReportesManager = ReportesManager;
 window.InventoryManager = InventoryManager;
-window.ClientesEditor = ClientesEditor;
-window.ClientesBusqueda = ClientesBusqueda;
 const App = {
   currentTab: 'login',
   appliedPromo: null,
@@ -370,10 +370,10 @@ const App = {
           backup: { manager: 'BackupManager', method: 'generarRespaldo' },
           proformas: { manager: 'ProformasManager', method: 'mostrarPanel' },
           historialCompras: { manager: 'HistorialComprasManager', method: 'mostrarPanel' },
-          impresion: { manager: 'ImpresionManager', method: 'mostrarPanel' }, // ✅ CORREGIDO a mostrarPanel
+          impresion: { manager: 'ImpresionManager', method: 'mostrarPanel' }, // ✅ CORREGIDO
           diagnostico: { manager: 'DiagnosticoFacturas', method: 'mostrarPanel' },
           reportes: { manager: 'ReportesManager', method: 'mostrarPanel' },
-          inventario: { manager: 'InventoryManager', method: 'mostrarPanel' },
+          inventario: { manager: 'InventoryManager', method: 'mostrarPanel' }
          
         };
 
@@ -427,65 +427,64 @@ const App = {
   },
 
   renderCartModal() {
-    const lista = document.getElementById('listaCarrito');
-    if (!lista) return;
+  const lista = document.getElementById('listaCarrito');
+  if (!lista) return;
+  
+  const items = Store.get('carrito') || [];
+  if (items.length === 0) {
+    lista.innerHTML = '<p class="no-data">Tu carrito está vacío 🛒</p>';
+  } else {
+    lista.innerHTML = items.map(item => `
+      <li class="item-carrito">
+        <div class="item-info">
+          <strong>${item.nombre}</strong>
+          <span>${item.variante} × ${item.cantidad}</span>
+        </div>
+        <div class="item-actions">
+          <span class="item-price">₡${(item.precio * item.cantidad).toLocaleString()}</span>
+          <button onclick="CartManager.remove('${item.id}')" class="btn-remove">🗑️</button>
+        </div>
+      </li>
+    `).join('');
+  }
 
-    const items = Store.get('carrito') || [];
-    if (items.length === 0) {
-      lista.innerHTML = '<p class="no-data">Tu carrito está vacío 🛒</p>';
+  const subtotal = CartManager.getTotal();
+  const discount = this.appliedPromo ? this.appliedPromo.discount : 0;
+  const total = subtotal - discount;
+
+  // Actualizar UI de totales (una sola vez)
+  const subEl = document.getElementById('subtotalModal');
+  if (subEl) subEl.textContent = `₡${subtotal.toLocaleString()}`;
+
+  const totEl = document.getElementById('totalModal');
+  if (totEl) {
+    const span = totEl.querySelector('span:last-child') || totEl;
+    if (span) span.textContent = `₡${total.toLocaleString()}`;
+  }
+
+  // Fila de descuento visual
+  const discountRow = document.getElementById('discountRow');
+  if (discountRow) {
+    discountRow.style.display = discount > 0 ? 'flex' : 'none';
+    const discEl = document.getElementById('discountModal');
+    if (discEl && discount > 0) discEl.textContent = `-₡${discount.toLocaleString()}`;
+  }
+
+  // Mostrar/ocultar input de promo
+  const promoSection = document.querySelector('.promo-section');
+  const promoMessage = document.getElementById('promoMessage');
+  if (promoSection) {
+    if (CartManager.hasPromoProducts()) {
+      promoSection.style.display = 'none';
     } else {
-      lista.innerHTML = items.map(item => `
-        <li class="item-carrito">
-          <div class="item-info">
-            <strong>${item.nombre}</strong>
-            <span>${item.variante} × ${item.cantidad}</span>
-          </div>
-          <div class="item-actions">
-            <span class="item-price">₡${(item.precio * item.cantidad).toLocaleString()}</span>
-            <button onclick="CartManager.remove('${item.id}')" class="btn-remove">🗑️</button>
-          </div>
-        </li>
-      `).join('');
-    }
-
-    const subtotal = CartManager.getTotal();
-    const discount = this.appliedPromo ? this.appliedPromo.discount : 0;
-    const total = subtotal - discount;
-
-    const subEl = document.getElementById('subtotalModal');
-    if (subEl) subEl.textContent = `₡${subtotal.toLocaleString()}`;
-
-    const totEl = document.getElementById('totalModal');
-    if (totEl) {
-      const span = totEl.querySelector('span:last-child') || totEl;
-      if (span) span.textContent = `₡${total.toLocaleString()}`;
-    }
-
-    const discountRow = document.getElementById('discountRow');
-    if (discountRow) {
-      if (discount > 0) {
-        discountRow.style.display = 'flex';
-        const discEl = document.getElementById('discountModal');
-        if (discEl) discEl.textContent = `-₡${discount.toLocaleString()}`;
-      } else {
-        discountRow.style.display = 'none';
+      promoSection.style.display = 'flex';
+      if (promoMessage && promoMessage.style.display === 'block') {
+        promoMessage.textContent = '';
+        promoMessage.style.display = 'none';
       }
     }
-
-    const promoSection = document.querySelector('.promo-section');
-    const promoMessage = document.getElementById('promoMessage');
-    if (promoSection) {
-      if (CartManager.hasPromoProducts()) {
-        promoSection.style.display = 'none';
-      } else {
-        promoSection.style.display = 'flex';
-        if (promoMessage && promoMessage.style.display === 'block') {
-          promoMessage.textContent = '';
-          promoMessage.style.display = 'none';
-        }
-      }
-    }
-  },
+  }
+},
 
   async showHistorial() {
     const cliente = Store.get('cliente');
@@ -689,5 +688,17 @@ const App = {
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => App.init());
 else App.init();
+
+// 🔍 DEBUG: Para usar en consola del navegador
+// Ejecutar: debugAdminRoutes()
+window.debugAdminRoutes = function() {
+  const routeMap = { /* tu routeMap */ };
+  console.group('🔍 Admin Routes Debug');
+  Object.entries(routeMap).forEach(([action, { manager, method }]) => {
+    const ok = window[manager]?.[method] ? '✅' : '❌';
+    console.log(`${ok} ${action} → ${manager}.${method}`);
+  });
+  console.groupEnd();
+};
 
 window.App = App;
