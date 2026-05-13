@@ -3,7 +3,7 @@ import { collection, addDoc, getDocs, doc, updateDoc, getDoc } from "https://www
 import { DB } from './firebase.js';
 import { Store, Utils } from './core.js';
 import { UI } from '../components/ui.js';
-import { CobrosManager } from './cobros.js';
+import { CobrosManager } from './cobros.js'; // ✅ Asegúrate de tener esta importación
 
 export const FacturacionRapidaV2 = {
   productosCache: [],
@@ -39,14 +39,14 @@ export const FacturacionRapidaV2 = {
   async mostrarPanel() {
     if (!Store.get('isAdmin')) { UI.toast('Acceso denegado', 'warning'); return; }
 
-    // ✅ 1. LIMPIEZA PREVENTIVA (Esto soluciona el problema)
-  const existingModal = document.getElementById('modalFacturacionRapida');
-  if (existingModal) {
-    existingModal.remove(); // Borra el modal viejo por completo
-  }
+    // ✅ 1. LIMPIEZA PREVENTIVA
+    const existingModal = document.getElementById('modalFacturacionRapida');
+    if (existingModal) {
+      existingModal.remove();
+    }
 
     this.prepararProductos();
-    await this.cargarClientes(); // ✅ Recargar clientes cada vez que se abre
+    await this.cargarClientes();
 
     this.carritoFactura = [];
     const personalCart = Store.get('carrito') || [];
@@ -77,7 +77,6 @@ export const FacturacionRapidaV2 = {
         
         <div class="facturacion-layout">
           <div class="facturacion-left">
-            <!-- Sección Cliente MEJORADA -->
             <div class="cliente-section">
               <h3>👤 Cliente</h3>
               <div class="cliente-search">
@@ -88,7 +87,6 @@ export const FacturacionRapidaV2 = {
               <div id="frClienteInfo" class="cliente-info hidden"></div>
             </div>
 
-            <!-- Sección Productos -->
             <div class="productos-section">
               <h3>📦 Catálogo (<span id="contadorProductos">${this.productosCache.length}</span>)</h3>
               
@@ -109,7 +107,6 @@ export const FacturacionRapidaV2 = {
             </div>
           </div>
 
-          <!-- Panel Derecho: Carrito -->
           <div class="facturacion-right">
             <h3>🛒 Factura Actual</h3>
             <div id="frCarrito" class="fr-carrito"><p class="empty-carrito">Sin productos agregados</p></div>
@@ -132,7 +129,6 @@ export const FacturacionRapidaV2 = {
             <div class="fr-actions">
               <button id="frGuardarFactura" class="btn-primary btn-large" disabled>💾 Guardar</button>
               <button id="frLimpiar" class="btn-secondary">🗑️ Limpiar</button>
-              <!-- ✅ NUEVO: Botón para Nueva Factura -->
               <button id="frNuevaFactura" class="btn-success" style="display:none;">🔄 Nueva Factura</button>
             </div>
           </div>
@@ -148,9 +144,7 @@ export const FacturacionRapidaV2 = {
     setTimeout(() => document.getElementById('frBuscarProducto')?.focus(), 300);
   },
 
-  // ✅ MODAL DE SELECCIÓN DE CLIENTES
   async mostrarModalClientes() {
-    // ✅ Cerrar modal de facturación temporalmente para evitar superposición
     const modalFactura = document.getElementById('modalFacturacionRapida');
     if (modalFactura) modalFactura.style.display = 'none';
 
@@ -174,11 +168,9 @@ export const FacturacionRapidaV2 = {
     
     document.body.appendChild(modal);
     
-    // ✅ Recargar clientes frescos al abrir el modal
     await this.cargarClientes();
     this.renderListaClientes(this.clientesCache);
     
-    // Búsqueda en tiempo real
     document.getElementById('buscarClienteModal').addEventListener('input', (e) => {
       const query = e.target.value.toLowerCase().trim();
       const filtrados = this.clientesCache.filter(c => 
@@ -189,11 +181,9 @@ export const FacturacionRapidaV2 = {
       this.renderListaClientes(filtrados);
     });
 
-    // Foco automático
     setTimeout(() => document.getElementById('buscarClienteModal')?.focus(), 100);
   },
 
-  // ✅ Función para cerrar modal de clientes y volver a facturación
   cerrarModalClientes() {
     UI.modal('modalSeleccionCliente', 'close');
     const modalFactura = document.getElementById('modalFacturacionRapida');
@@ -232,7 +222,7 @@ export const FacturacionRapidaV2 = {
     };
 
     this.mostrarClienteInfo();
-    this.cerrarModalClientes(); // ✅ Volver al modal de facturación
+    this.cerrarModalClientes();
     UI.toast(`✅ Cliente seleccionado: ${cliente.nombre}`, 'success');
   },
 
@@ -249,16 +239,10 @@ export const FacturacionRapidaV2 = {
     document.getElementById('frDescuento')?.addEventListener('input', () => this.calcularTotales());
     document.getElementById('frLimpiar')?.addEventListener('click', () => this.limpiarFactura());
     document.getElementById('frGuardarFactura')?.addEventListener('click', () => this.guardarFactura());
-    
-    // ✅ NUEVO: Botón para Nueva Factura (mantiene modal abierto)
-    document.getElementById('frNuevaFactura')?.addEventListener('click', () => {
-      this.prepararNuevaFactura();
-    });
+    document.getElementById('frNuevaFactura')?.addEventListener('click', () => this.prepararNuevaFactura());
   },
 
-  async buscarCliente() {
-    // Esta función ahora se usa desde el modal
-  },
+  async buscarCliente() {},
 
   nuevoCliente() {
     const cedula = prompt('Ingrese cédula del cliente:');
@@ -454,19 +438,108 @@ export const FacturacionRapidaV2 = {
     return { subtotal, descuento, total };
   },
 
-  // ✅ FUNCIÓN NUEVA: Preparar para nueva factura (mantiene modal abierto)
+  // ✅ FUNCIÓN CORREGIDA
+async guardarFactura() {
+  if (!this.clienteTemporal) return UI.toast('⚠️ Seleccione un cliente', 'warning');
+  if (this.carritoFactura.length === 0) return UI.toast('❌ Agregue productos', 'warning');
+
+  // ✅ CALCULAR TOTALES CON VALIDACIÓN
+  const { subtotal, descuento, total } = this.calcularTotales();
+  // Validar que sean números válidos
+  const subtotalNum = Number(subtotal) || 0;
+  const descuentoNum = Number(descuento) || 0;
+  const totalNum = Number(total) || 0;
+
+  const metodoPago = document.getElementById('frMetodoPago')?.value || 'contado';
+  const estadoFactura = metodoPago === 'credito' ? 'pendiente' : 'completado';
+
+  // ✅ SANITIZAR DATOS DEL CLIENTE
+  const idCliente = String(this.clienteTemporal.id || this.clienteTemporal.cedula || 'temp').trim();
+  const nombreCliente = String(this.clienteTemporal.nombre || 'Cliente').trim();
+  const telefonoCliente = String(this.clienteTemporal.telefono || '').trim();
+
+  // ✅ SANITIZAR CARRITO (eliminar undefined)
+  const productosSanitizados = this.carritoFactura.map(item => ({
+    id: String(item.id || ''),
+    nombre: String(item.nombre || 'Producto'),
+    variante: String(item.variante || 'Única'),
+    precio: Number(item.precio) || 0,
+    cantidad: Number(item.cantidad) || 1,
+    subtotal: Number(item.subtotal) || 0,
+    categoria: String(item.categoria || 'General'),
+    tipo: String(item.tipo || 'General')
+  }));
+
+  const facturaData = {
+    fecha: new Date().toISOString(),
+    clienteId: idCliente,
+    clienteNombre: nombreCliente,
+    clienteTelefono: telefonoCliente,
+    productos: productosSanitizados,
+    subtotal: subtotalNum,
+    descuento: descuentoNum,
+    total: totalNum,
+    estado: estadoFactura,
+    metodoPago,
+    tipoFactura: 'rapida',
+    creadaPor: String(Store.get('cliente')?.nombre || 'admin'),
+    fechaVencimiento: metodoPago === 'credito' 
+      ? new Date(Date.now() + 15*24*60*60*1000).toISOString() 
+      : null
+  };
+
+  console.log('🔍 Datos a guardar:', facturaData);
+  const camposInvalidos = Object.entries(facturaData).filter(([k, v]) => v === undefined);
+  if (camposInvalidos.length > 0) {
+    console.error('❌ Campos undefined:', camposInvalidos);
+    return UI.toast('⚠️ Error interno: datos inválidos', 'error');
+  }
+
+  try {
+    // ✅ GUARDAR EN COLECCIÓN SEPARADA
+    await addDoc(collection(DB.db, "facturas_rapidas"), facturaData);
+    
+    // ✅ ACTUALIZAR STOCK LOCAL
+    for (const item of this.carritoFactura) {
+      const prod = this.productosCache.find(p => p.id === item.id);
+      if (prod) prod.stock = Math.max(0, (prod.stock || 0) - item.cantidad);
+    }
+
+    if (metodoPago === 'credito') {
+      await this.actualizarSaldoCliente(idCliente, totalNum);
+    }
+
+    // ✅ NUEVO: VACIAR EL CARRITO GLOBAL
+    // Al facturar, entendemos que los productos salen de la tienda,
+    // así que limpiamos el carrito del Store global.
+    Store.set('carrito', []); 
+    Store.emit('cart:updated'); // ✅ Esto actualiza el icono del carrito en la app principal
+
+    UI.toast(`✅ Factura guardada (${metodoPago.toUpperCase()})`, 'success');
+    
+    if (telefonoCliente && confirm('¿Enviar por WhatsApp?')) {
+      this.enviarWhatsApp({ ...facturaData, telefono: telefonoCliente });
+    }
+
+    // ✅ NUEVO: Preparar para nueva factura (resetea modal)
+    this.prepararNuevaFactura();
+    
+  } catch (e) {
+    console.error('❌ Error al guardar:', e);
+    UI.toast('❌ Error: ' + e.message, 'error');
+  }
+},
+
   prepararNuevaFactura() {
     this.carritoFactura = [];
     this.clienteTemporal = null;
     
-    // Limpiar UI
     document.getElementById('frBuscarCliente').value = '';
     document.getElementById('frClienteInfo').classList.add('hidden');
     document.getElementById('frClienteInfo').innerHTML = '';
     document.getElementById('frDescuento').value = 0;
     document.getElementById('frMetodoPago').value = 'contado';
     
-    // Resetear botones
     const btnGuardar = document.getElementById('frGuardarFactura');
     const btnNueva = document.getElementById('frNuevaFactura');
     if (btnGuardar) {
@@ -478,98 +551,7 @@ export const FacturacionRapidaV2 = {
     this.renderCarrito();
     UI.toast('🔄 Lista para nueva factura', 'info');
     
-    // Foco en búsqueda de cliente
     setTimeout(() => document.getElementById('frBuscarCliente')?.focus(), 100);
-  },
-
-  async guardarFactura() {
-    if (!this.clienteTemporal) return UI.toast('⚠️ Seleccione un cliente', 'warning');
-    if (this.carritoFactura.length === 0) return UI.toast('❌ Agregue productos', 'warning');
-
-    // ✅ VALIDAR CRÉDITO ANTES DE GUARDAR
-if (metodoPago === 'credito') {
-  const validacion = await CobrosManager.puedeFacturarACredito(idCliente);
-  if (!validacion.ok) {
-    UI.toast(validacion.message, 'warning');
-    btn.disabled = false;
-    btn.textContent = '💾 Guardar';
-    return;
-  }
-}
-
-    const { subtotal, descuento, total } = this.calcularTotales();
-    const subtotalNum = Number(subtotal) || 0;
-    const descuentoNum = Number(descuento) || 0;
-    const totalNum = Number(total) || 0;
-
-    const metodoPago = document.getElementById('frMetodoPago')?.value || 'contado';
-    const estadoFactura = metodoPago === 'credito' ? 'pendiente' : 'completado';
-
-    const idCliente = String(this.clienteTemporal.id || this.clienteTemporal.cedula || 'temp').trim();
-    const nombreCliente = String(this.clienteTemporal.nombre || 'Cliente').trim();
-    const telefonoCliente = String(this.clienteTemporal.telefono || '').trim();
-
-    const productosSanitizados = this.carritoFactura.map(item => ({
-      id: String(item.id || ''),
-      nombre: String(item.nombre || 'Producto'),
-      variante: String(item.variante || 'Única'),
-      precio: Number(item.precio) || 0,
-      cantidad: Number(item.cantidad) || 1,
-      subtotal: Number(item.subtotal) || 0,
-      categoria: String(item.categoria || 'General'),
-      tipo: String(item.tipo || 'General')
-    }));
-
-    const facturaData = {
-      fecha: new Date().toISOString(),
-      clienteId: idCliente,
-      clienteNombre: nombreCliente,
-      clienteTelefono: telefonoCliente,
-      productos: productosSanitizados,
-      subtotal: subtotalNum,
-      descuento: descuentoNum,
-      total: totalNum,
-      estado: estadoFactura,
-      metodoPago,
-      tipoFactura: 'rapida',
-      creadaPor: String(Store.get('cliente')?.nombre || 'admin'),
-      fechaVencimiento: metodoPago === 'credito' 
-        ? new Date(Date.now() + 15*24*60*60*1000).toISOString() 
-        : null
-    };
-
-    console.log('🔍 Datos a guardar:', facturaData);
-    const camposInvalidos = Object.entries(facturaData).filter(([k, v]) => v === undefined);
-    if (camposInvalidos.length > 0) {
-      console.error('❌ Campos undefined:', camposInvalidos);
-      return UI.toast('⚠️ Error interno: datos inválidos', 'error');
-    }
-
-    try {
-      await addDoc(collection(DB.db, "facturas_rapidas"), facturaData);
-      
-      for (const item of this.carritoFactura) {
-        const prod = this.productosCache.find(p => p.id === item.id);
-        if (prod) prod.stock = Math.max(0, (prod.stock || 0) - item.cantidad);
-      }
-
-      if (metodoPago === 'credito') {
-        await this.actualizarSaldoCliente(idCliente, totalNum);
-      }
-
-      UI.toast(`✅ Factura guardada (${metodoPago.toUpperCase()})`, 'success');
-      
-      if (telefonoCliente && confirm('¿Enviar por WhatsApp?')) {
-        this.enviarWhatsApp({ ...facturaData, telefono: telefonoCliente });
-      }
-      
-      // ✅ CAMBIO: En lugar de limpiarFactura(), usar prepararNuevaFactura()
-      this.prepararNuevaFactura();
-      
-    } catch (e) {
-      console.error('❌ Error al guardar:', e);
-      UI.toast('❌ Error: ' + e.message, 'error');
-    }
   },
 
   async actualizarSaldoCliente(clienteId, monto) {
