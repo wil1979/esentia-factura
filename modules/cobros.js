@@ -323,6 +323,7 @@ export const CobrosManager = {
   },
 
  // ✅ RECORDATORIO UNIFICADO CON ENLACES ONLINE
+// ✅ RECORDATORIO UNIFICADO CON ENLACES ONLINE
 async enviarRecordatorioDeuda(clienteId) {
   const clienteInfo = this.clientesCache.find(c => c.id === clienteId) || {};
   const clienteData = this.todosLosClientes.find(c => c.id === clienteId);
@@ -398,7 +399,7 @@ async enviarRecordatorioDeuda(clienteId) {
   
   // ✅ Registrar log opcional
   this.registrarLogRecordatorio?.(clienteId, totalPendiente, cleanPhone, tieneAtraso ? 'fuerte' : 'amable');
-},
+}
 
   async abrirModalAbono(clienteId) {
     const factura = this.todosLosClientes.find(f => f.id === clienteId && f.saldo > 0);
