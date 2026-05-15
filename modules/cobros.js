@@ -483,49 +483,151 @@ export const CobrosManager = {
   },
 
   // ✅ PROCESAR ABONO (actualizar factura en Firebase)
-  async procesarAbono(facturaId, saldoActual) {
-    const monto = Number(document.getElementById('montoAbono').value) || 0;
-    const metodo = document.getElementById('metodoAbono').value;
-    const nota = document.getElementById('notaAbono').value;
+  // ✅ 1. FUNCIÓN CORREGIDA: procesarAbono
+async procesarAbono(index) {
+  const monto = Number(document.getElementById('montoAbono').value) || 0;
+  const metodo = document.getElementById('metodoAbono').value;
+  const nota = document.getElementById('notaAbono').value;
+  const btn = document.querySelector('#formAbono button');
+
+  if (monto <= 0) return UI.toast('Monto inválido', 'warning');
+
+  btn.disabled = true;
+  btn.textContent = 'Procesando...';
+
+  try {
+    const snap = await getDoc(doc(DB.db, "facturas_rapidas", this.clienteSeleccionado));
+    const data = snap.data();
+    const compras = data.compras || [];
+    const fact = compras[index];
+
+    const nuevoPagado = (Number(fact.pagado) || 0) + monto;
+    const nuevoSaldo = Math.max(0, (Number(fact.total) || 0) - nuevoPagado);
+    const estado = nuevoSaldo <= 0 ? 'completado' : 'parcial';
+
+    const abonoData = {
+      fecha: new Date().toISOString(),
+      monto,
+      metodo,
+      nota: nota || '',
+      autor: Store.get('cliente')?.nombre || 'admin'
+    };
+
+    await updateDoc(doc(DB.db, "facturas_rapidas", this.clienteSeleccionado), {
+      [`compras.${index}.pagado`]: nuevoPagado,
+      [`compras.${index}.saldo`]: nuevoSaldo,
+      [`compras.${index}.estado`]: estado,
+      [`compras.${index}.fechaCompletado`]: nuevoSaldo <= 0 ? new Date().toISOString() : null,
+      abonos: arrayUnion(abonoData)
+    });
+
+    UI.toast('✅ Abono registrado', 'success');
+
+    // ✅ SOLO CERRAMOS EL MODAL DEL ABONO, NO EL DEL CLIENTE
+    UI.modal('modalAbono', 'close');
     
-    if (monto <= 0 || monto > saldoActual) {
-      return UI.toast('Monto inválido', 'warning');
+    // ❌ ELIMINADA ESTA LÍNEA: UI.modal('modalDetalleDeuda', 'close');
+
+    // Recargar datos globales
+    await this.cargarBaseCobros();
+    this.renderListaDeudores();
+    this.renderListaHistorial();
+
+    // ✅ REFRESCAR EL MODAL DETALLE PARA VER EL NUEVO SALDO SIN CERRAR
+    if (this.clienteSeleccionado) {
+      await this.verDetalleDeuda(this.clienteSeleccionado);
+    }
+
+  } catch (err) {
+    console.error('Error en procesarAbono:', err);
+    UI.toast('❌ Error al procesar pago: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✅ Confirmar';
+  }
+},
+
+// ✅ CORREGIDA: Carga correcta de datos y visualización del historial
+async verDetalleDeuda(clienteId) {
+  this.clienteSeleccionado = clienteId;
+  
+  // ✅ Evitar modales duplicados
+  const modalExistente = document.getElementById('modalDetalleDeuda');
+  if (modalExistente) modalExistente.remove();
+
+  const clienteInfo = this.clientesCache.find(c => c.id === clienteId) || {};
+
+  try {
+    // ✅ Cargar desde la colección "facturas" (donde el ID es el del cliente)
+    // para coincidir con cargarBaseCobros
+    const snap = await getDoc(doc(DB.db, "facturas", clienteId));
+    
+    if (!snap.exists()) {
+      UI.toast('Cliente no encontrado en la base', 'error');
+      return;
     }
     
-    try {
-      const factRef = doc(DB.db, "facturas_rapidas", facturaId);
-      const snap = await getDoc(factRef);
-      const data = snap.data();
-      
-      const nuevoPagado = (data.pagado || 0) + monto;
-      const nuevoSaldo = Math.max(0, (data.total || 0) - nuevoPagado);
-      const nuevoEstado = nuevoSaldo <= 0 ? 'completado' : 'parcial';
-      
-      await updateDoc(factRef, {
-        pagado: nuevoPagado,
-        saldo: nuevoSaldo,
-        estado: nuevoEstado,
-        abonos: arrayUnion({
-          fecha: new Date().toISOString(),
-          monto,
-          metodo,
-          nota: nota || ''
-        })
-      });
-      
-      UI.toast('✅ Abono registrado', 'success');
-      UI.modal('modalAbonoCobros', 'close');
-      UI.modal('modalDetalleFacturas', 'close');
-      
-      // Recargar datos
-      await this.cargarBaseCobros();
-      this.renderPendientes();
-      this.renderPagosPorTipo();
-    } catch (e) {
-      console.error(e);
-      UI.toast('❌ Error al procesar abono', 'error');
-    }
-  },
+    const data = snap.data();
+    const compras = data.compras || [];
+    // Filtrar solo las que tienen saldo pendiente
+    const deudas = compras.filter(c => (Number(c.saldo) || 0) > 0);
+    
+    // ✅ Cargar el log de recordatorios
+    const recordatorios = data.recordatorios || []; 
+
+    const modal = document.createElement('div');
+    modal.className = 'modal show'; 
+    modal.id = 'modalDetalleDeuda';
+    modal.innerHTML = `
+       <div class= "modal-content modal-grande " >
+         <button class= "modal-close " onclick= "UI.modal('modalDetalleDeuda','close') " >✕ </button >
+         <h2 >📋 Gestión de Cuenta: ${clienteInfo.nombre || 'Cliente'} </h2 >
+        
+         <div class= "cliente-info-box " >
+           <p > <strong >👤 </strong > ${clienteInfo.nombre || clienteId} </p >
+           <p > <strong >📱 </strong > ${clienteInfo.telefono || 'N/A'} </p >
+           <p > <strong >💰 </strong > Saldo Total:  <span style= "color:#e74c3c;font-weight:700 " >₡${deudas.reduce((s,d) => s + (Number(d.saldo)||0), 0).toLocaleString()} </span > </p >
+         </div >
+
+         <h3 >📄 Facturas Pendientes </h3 >
+         <div id= "facturasPendientes " >
+          ${deudas.length === 0 ? ' <p class= "no-data " >✅ Sin deudas pendientes </p >' : deudas.map((fact) => {
+            // Encontrar el índice real en el array original para poder abonar
+            const realIdx = compras.indexOf(fact);
+            return `
+               <div class= "factura-pendiente " >
+                 <div class= "fp-header " >
+                   <span >📅 ${new Date(fact.fecha).toLocaleDateString()} </span >
+                   <span class= "fp-saldo " >Saldo: ₡${Number(fact.saldo).toLocaleString()} </span >
+                 </div >
+                 <div class= "fp-items " >${fact.productos.map(p=>` <small >• ${p.nombre} (x${p.cantidad}) </small >`).join('')} </div >
+                 <button class= "btn-abonar " onclick= "CobrosManager.abrirModalAbono(${realIdx}, ${Number(fact.saldo)}) " >💸 Registrar Abono </button >
+               </div >
+            `;
+          }).join('')}
+         </div >
+
+         <!-- ✅ SECCIÓN: HISTORIAL DE NOTIFICACIONES (WHATSAPP) -->
+         <div class= "historial-recordatorios " >
+           <h4 >📱 Historial de Contactos </h4 >
+          ${recordatorios.length > 0 
+            ? recordatorios.map(r => `
+                 <div class= "log-item " >
+                   <span class= "log-date " >🗓️ ${new Date(r.fecha).toLocaleString()} </span >
+                   <span class= "log-info " >₡${r.monto.toLocaleString()} → ${r.telefono} </span >
+                   <span class= "log-tipo " style= "font-size:0.8em;color:#666 " >(${r.tipo || 'recordatorio'}) </span >
+                 </div >
+              `).join('')
+            : ' <p class= "no-data " style= "font-size:0.9em " >ℹ️ No hay notificaciones registradas. </p >'}
+         </div >
+       </div >
+    `;
+    document.body.appendChild(modal);
+  } catch(e) { 
+    console.error(e); 
+    UI.toast('Error al cargar detalles', 'error'); 
+  }
+},
 
   // ✅ ENVIAR RECORDATORIO UNIFICADO CON ENLACES
   async enviarRecordatorioDeuda(clienteId) {
