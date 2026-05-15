@@ -1,17 +1,22 @@
 // modules/factura-editor.js
-import { collection, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { collection, getDocs, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { DB } from './firebase.js';
+import { Store } from './core.js';
 import { UI } from '../components/ui.js';
 
 export const FacturaEditor = {
   _facturasCache: [],
+  _productosCache: [],
 
   async abrirEditor() {
+    // Cargar productos disponibles
+    this._productosCache = Store.get('productos') || [];
+    
     const modal = document.createElement('div');
     modal.className = 'modal show';
     modal.id = 'modalFacturaEditor';
     modal.innerHTML = `
-      <div class="modal-content modal-xl">
+      <div class="modal-content modal-xxl">
         <button class="modal-close" onclick="UI.modal('modalFacturaEditor','close')">✕</button>
         <h2>📝 Editor de Facturas</h2>
         
@@ -27,7 +32,6 @@ export const FacturaEditor = {
     `;
     document.body.appendChild(modal);
 
-    // Event Listeners
     document.getElementById('btnRecargarEditor').addEventListener('click', () => this.cargarFacturas());
     document.getElementById('buscarFactura').addEventListener('input', (e) => this.filtrarFacturas(e.target.value));
 
@@ -39,7 +43,6 @@ export const FacturaEditor = {
     container.innerHTML = '<div class="loading-state">🔄 Cargando...</div>';
     
     try {
-      // ✅ Cargar desde la colección correcta
       const snap = await getDocs(collection(DB.db, "facturas_rapidas"));
       this._facturasCache = snap.docs.map(d => ({ id: d.id, ...d.data() }))
         .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
@@ -76,17 +79,12 @@ export const FacturaEditor = {
             </div>
           </div>
           
-          <!-- Acciones Rápidas -->
           <div class="factura-actions-bar">
-            <button onclick="event.stopPropagation(); FacturaEditor.editar('${f.id}')">✏️ Editar</button>
-            
-            <!-- ✅ UNIFICADO: Delega al módulo ImpresionManager -->
+            <button onclick="event.stopPropagation(); FacturaEditor.editar('${f.id}')">✏️ Editar Completa</button>
             <button onclick="event.stopPropagation(); FacturaEditor.imprimir('${f.id}')">🖨️ Imprimir</button>
-            
             <button class="btn-danger" onclick="event.stopPropagation(); FacturaEditor.eliminar('${f.id}')">🗑️</button>
           </div>
 
-          <!-- Detalle Colapsable -->
           <div class="factura-detalle" id="detalle-${f.id}" style="display: none;">
             <ul class="productos-mini-list">
               ${(f.productos || []).map(p => `
@@ -116,76 +114,245 @@ export const FacturaEditor = {
     this.renderFacturas(filtradas);
   },
 
+  // ✅ EDICIÓN COMPLETA DE FACTURA
   async editar(facturaId) {
     const factura = this._facturasCache.find(f => f.id === facturaId);
     if (!factura) return;
 
     const modal = document.createElement('div');
     modal.className = 'modal show';
-    modal.id = 'modalEditarFactura';
+    modal.id = 'modalEditarFacturaCompleta';
     modal.innerHTML = `
-      <div class="modal-content">
-        <button class="modal-close" onclick="UI.modal('modalEditarFactura','close')">✕</button>
+      <div class="modal-content modal-xxl">
+        <button class="modal-close" onclick="UI.modal('modalEditarFacturaCompleta','close')">✕</button>
         <h2>✏️ Editar Factura #${facturaId.slice(-6)}</h2>
         
-        <form id="formEditar">
-          <div class="form-group">
-            <label>Estado:</label>
-            <select id="editEstado">
-              <option value="pendiente" ${factura.estado === 'pendiente' ? 'selected' : ''}>Pendiente</option>
-              <option value="completado" ${factura.estado === 'completado' ? 'selected' : ''}>Completado</option>
-              <option value="anulada" ${factura.estado === 'anulada' ? 'selected' : ''}>Anulada</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label>Cliente:</label>
-            <input type="text" id="editCliente" value="${factura.clienteNombre || ''}">
+        <form id="formEditarFactura">
+          <!-- DATOS DEL CLIENTE -->
+          <div class="edit-section">
+            <h3>👤 Datos del Cliente</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Cliente:</label>
+                <input type="text" id="editCliente" value="${factura.clienteNombre || ''}" required>
+              </div>
+              <div class="form-group">
+                <label>Teléfono:</label>
+                <input type="text" id="editTelefono" value="${factura.clienteTelefono || ''}">
+              </div>
+              <div class="form-group">
+                <label>Estado:</label>
+                <select id="editEstado">
+                  <option value="pendiente" ${factura.estado === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                  <option value="completado" ${factura.estado === 'completado' ? 'selected' : ''}>Completado</option>
+                  <option value="anulada" ${factura.estado === 'anulada' ? 'selected' : ''}>Anulada</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Método de Pago:</label>
+                <select id="editMetodo">
+                  <option value="contado" ${factura.metodoPago === 'contado' ? 'selected' : ''}>Contado</option>
+                  <option value="credito" ${factura.metodoPago === 'credito' ? 'selected' : ''}>Crédito</option>
+                </select>
+              </div>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>Teléfono:</label>
-            <input type="text" id="editTelefono" value="${factura.clienteTelefono || ''}">
+          <!-- PRODUCTOS -->
+          <div class="edit-section">
+            <h3>📦 Productos</h3>
+            <div id="productosEditContainer">
+              <!-- Los productos se renderizarán aquí -->
+            </div>
+            <button type="button" class="btn-secondary" onclick="FacturaEditor.agregarProductoEdit()">➕ Agregar Producto</button>
           </div>
 
-          <div class="form-group">
-            <label>Método de Pago:</label>
-            <select id="editMetodo">
-              <option value="contado" ${factura.metodoPago === 'contado' ? 'selected' : ''}>Contado</option>
-              <option value="credito" ${factura.metodoPago === 'credito' ? 'selected' : ''}>Crédito</option>
-            </select>
+          <!-- TOTALES -->
+          <div class="edit-section">
+            <h3>💰 Totales</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Subtotal:</label>
+                <input type="number" id="editSubtotal" value="${factura.subtotal || 0}" readonly>
+              </div>
+              <div class="form-group">
+                <label>Descuento:</label>
+                <input type="number" id="editDescuento" value="${factura.descuento || 0}" onchange="FacturaEditor.recalcularTotalesEdit()">
+              </div>
+              <div class="form-group">
+                <label>Total:</label>
+                <input type="number" id="editTotal" value="${factura.total || 0}" readonly>
+              </div>
+            </div>
           </div>
 
-          <button type="submit" class="btn-primary">💾 Guardar Cambios</button>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">💾 Guardar Cambios</button>
+            <button type="button" class="btn-secondary" onclick="UI.modal('modalEditarFacturaCompleta','close')">Cancelar</button>
+          </div>
         </form>
       </div>
     `;
     document.body.appendChild(modal);
 
-    document.getElementById('formEditar').onsubmit = async (e) => {
+    // Renderizar productos existentes
+    this.renderProductosEdit(factura.productos || []);
+    
+    // Event listener para formulario
+    document.getElementById('formEditarFactura').onsubmit = async (e) => {
       e.preventDefault();
-      await this.guardarEdicion(facturaId);
+      await this.guardarEdicionCompleta(facturaId);
     };
   },
 
-  async guardarEdicion(facturaId) {
-    const nuevoEstado = document.getElementById('editEstado').value;
-    const nuevoCliente = document.getElementById('editCliente').value;
-    const nuevoTelefono = document.getElementById('editTelefono').value;
-    const nuevoMetodo = document.getElementById('editMetodo').value;
+  renderProductosEdit(productos) {
+    const container = document.getElementById('productosEditContainer');
+    container.innerHTML = '';
+
+    productos.forEach((prod, index) => {
+      const div = document.createElement('div');
+      div.className = 'producto-edit-row';
+      div.innerHTML = `
+        <div class="producto-edit-info">
+          <input type="text" class="prod-nombre" value="${prod.nombre}" placeholder="Nombre del producto" readonly>
+          <input type="text" class="prod-variante" value="${prod.variante || 'Única'}" placeholder="Variante">
+        </div>
+        <div class="producto-edit-cant">
+          <label>Cant:</label>
+          <input type="number" class="prod-cantidad" value="${prod.cantidad}" min="1" onchange="FacturaEditor.recalcularProductoEdit(${index})">
+        </div>
+        <div class="producto-edit-precio">
+          <label>Precio:</label>
+          <input type="number" class="prod-precio" value="${prod.precio}" min="0" onchange="FacturaEditor.recalcularProductoEdit(${index})">
+        </div>
+        <div class="producto-edit-subtotal">
+          <label>Subtotal:</label>
+          <input type="number" class="prod-subtotal" value="${prod.subtotal}" readonly>
+        </div>
+        <button type="button" class="btn-danger btn-sm" onclick="FacturaEditor.eliminarProductoEdit(${index})">🗑️</button>
+      `;
+      container.appendChild(div);
+    });
+
+    this.recalcularTotalesEdit();
+  },
+
+  agregarProductoEdit() {
+    const container = document.getElementById('productosEditContainer');
+    const index = container.children.length;
+    
+    const div = document.createElement('div');
+    div.className = 'producto-edit-row';
+    div.innerHTML = `
+      <div class="producto-edit-info">
+        <select class="prod-select" onchange="FacturaEditor.seleccionarProductoEdit(this, ${index})">
+          <option value="">Seleccionar producto...</option>
+          ${this._productosCache.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('')}
+        </select>
+        <input type="text" class="prod-variante" placeholder="Variante" value="Única">
+      </div>
+      <div class="producto-edit-cant">
+        <label>Cant:</label>
+        <input type="number" class="prod-cantidad" value="1" min="1" onchange="FacturaEditor.recalcularProductoEdit(${index})">
+      </div>
+      <div class="producto-edit-precio">
+        <label>Precio:</label>
+        <input type="number" class="prod-precio" value="0" min="0" onchange="FacturaEditor.recalcularProductoEdit(${index})">
+      </div>
+      <div class="producto-edit-subtotal">
+        <label>Subtotal:</label>
+        <input type="number" class="prod-subtotal" value="0" readonly>
+      </div>
+      <button type="button" class="btn-danger btn-sm" onclick="FacturaEditor.eliminarProductoEdit(${index})">🗑️</button>
+    `;
+    container.appendChild(div);
+  },
+
+  seleccionarProductoEdit(select, index) {
+    const productId = select.value;
+    const producto = this._productosCache.find(p => p.id === productId);
+    if (!producto) return;
+
+    const row = select.closest('.producto-edit-row');
+    row.querySelector('.prod-nombre').value = producto.nombre;
+    row.querySelector('.prod-nombre').classList.remove('prod-select');
+    row.querySelector('.prod-nombre').classList.add('prod-nombre');
+    row.querySelector('.prod-precio').value = producto.precio || 0;
+    
+    this.recalcularProductoEdit(index);
+  },
+
+  recalcularProductoEdit(index) {
+    const container = document.getElementById('productosEditContainer');
+    const row = container.children[index];
+    const cantidad = parseFloat(row.querySelector('.prod-cantidad').value) || 0;
+    const precio = parseFloat(row.querySelector('.prod-precio').value) || 0;
+    const subtotal = cantidad * precio;
+    
+    row.querySelector('.prod-subtotal').value = subtotal.toFixed(2);
+    this.recalcularTotalesEdit();
+  },
+
+  eliminarProductoEdit(index) {
+    const container = document.getElementById('productosEditContainer');
+    container.removeChild(container.children[index]);
+    this.recalcularTotalesEdit();
+  },
+
+  recalcularTotalesEdit() {
+    const container = document.getElementById('productosEditContainer');
+    let subtotal = 0;
+    
+    Array.from(container.children).forEach(row => {
+      subtotal += parseFloat(row.querySelector('.prod-subtotal').value) || 0;
+    });
+
+    const descuento = parseFloat(document.getElementById('editDescuento').value) || 0;
+    const total = Math.max(0, subtotal - descuento);
+
+    document.getElementById('editSubtotal').value = subtotal.toFixed(2);
+    document.getElementById('editTotal').value = total.toFixed(2);
+  },
+
+  async guardarEdicionCompleta(facturaId) {
+    const productos = [];
+    const container = document.getElementById('productosEditContainer');
+    
+    Array.from(container.children).forEach(row => {
+      const nombre = row.querySelector('.prod-nombre')?.value || row.querySelector('.prod-select')?.value;
+      if (!nombre) return;
+      
+      productos.push({
+        nombre: nombre,
+        variante: row.querySelector('.prod-variante').value || 'Única',
+        cantidad: parseInt(row.querySelector('.prod-cantidad').value) || 0,
+        precio: parseFloat(row.querySelector('.prod-precio').value) || 0,
+        subtotal: parseFloat(row.querySelector('.prod-subtotal').value) || 0
+      });
+    });
+
+    if (productos.length === 0) {
+      UI.toast('⚠️ Agrega al menos un producto', 'warning');
+      return;
+    }
+
+    const facturaData = {
+      clienteNombre: document.getElementById('editCliente').value,
+      clienteTelefono: document.getElementById('editTelefono').value,
+      estado: document.getElementById('editEstado').value,
+      metodoPago: document.getElementById('editMetodo').value,
+      productos: productos,
+      subtotal: parseFloat(document.getElementById('editSubtotal').value) || 0,
+      descuento: parseFloat(document.getElementById('editDescuento').value) || 0,
+      total: parseFloat(document.getElementById('editTotal').value) || 0,
+      fechaActualizacion: new Date().toISOString()
+    };
 
     try {
-      const docRef = doc(DB.db, "facturas_rapidas", facturaId);
-      await updateDoc(docRef, {
-        estado: nuevoEstado,
-        clienteNombre: nuevoCliente,
-        clienteTelefono: nuevoTelefono,
-        metodoPago: nuevoMetodo
-      });
-      
+      await updateDoc(doc(DB.db, "facturas_rapidas", facturaId), facturaData);
       UI.toast('✅ Factura actualizada', 'success');
-      UI.modal('modalEditarFactura', 'close');
-      this.cargarFacturas(); 
+      UI.modal('modalEditarFacturaCompleta', 'close');
+      this.cargarFacturas();
     } catch (e) {
       console.error(e);
       UI.toast('❌ Error al guardar', 'error');
@@ -205,10 +372,8 @@ export const FacturaEditor = {
     }
   },
 
-  // ✅ IMPRESIÓN UNIFICADA: Delega al módulo ImpresionManager
   imprimir(facturaId) {
     if (window.ImpresionManager && typeof window.ImpresionManager.imprimir === 'function') {
-      // Llama al motor estandarizado (Ticket Térmico + QR)
       window.ImpresionManager.imprimir(facturaId);
     } else {
       console.error("Módulo ImpresionManager no disponible");
