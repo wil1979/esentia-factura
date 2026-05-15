@@ -1,71 +1,75 @@
-// modules/cobros.js - VERSIÓN CORREGIDA
+// modules/cobros.js
 import { getDocs, collection, updateDoc, doc, getDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { DB } from './firebase.js';
 import { Store, Utils } from './core.js';
 import { UI } from '../components/ui.js';
 
 export const CobrosManager = {
-  todosLosClientes: [],
-  clientesCache: [],
-  clienteSeleccionado: null,
+  facturasCache: [],      // ✅ Todas las facturas individuales
+  clientesCache: [],      // ✅ Info básica de clientes
+  BASE_URL: "https://wil1979.github.io/esentia-factura",
 
   async init() {
     console.log('💰 Módulo de Cobros cargado');
     await this.cargarClientes();
   },
 
+  // ✅ Cargar clientes para nombres/teléfonos de respaldo
   async cargarClientes() {
     try {
       const snap = await getDocs(collection(DB.db, "clientesBD"));
       this.clientesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      console.log(`✅ Clientes cargados: ${this.clientesCache.length}`);
     } catch (e) {
       console.warn('⚠️ Error cargando clientes:', e);
       this.clientesCache = [];
     }
   },
 
-  // ✅ CORREGIDO: Cargar desde facturas_rapidas
+  // ✅ CORREGIDO: Cargar desde facturas_rapidas (documentos individuales)
   async cargarBaseCobros() {
     try {
-      this.todosLosClientes = [];
-      console.log('🔄 Cargando facturas rápidas...');
+      this.facturasCache = [];
+      console.log('🔄 Cargando facturas_rapidas...');
       
       const snap = await getDocs(collection(DB.db, "facturas_rapidas"));
       const hoy = new Date();
 
       snap.forEach(docSnap => {
-        const data = docSnap.data();
-        const clienteInfo = this.clientesCache.find(c => c.id === data.clienteId) || {};
+        const f = docSnap.data();
         
-        // Calcular días de atraso
-        const fechaFactura = new Date(data.fecha);
-        const diasAtraso = data.estado === 'pendiente' 
+        // Calcular días de atraso solo si está pendiente
+        const fechaFactura = new Date(f.fecha);
+        const diasAtraso = f.estado === 'pendiente' 
           ? Math.floor((hoy - fechaFactura) / (1000 * 60 * 60 * 24)) 
           : 0;
 
-        const saldo = (data.total || 0) - (data.pagado || 0);
+        // Calcular saldo pendiente
+        const pagado = Number(f.pagado) || 0;
+        const total = Number(f.total) || 0;
+        const saldo = Math.max(0, total - pagado);
 
-        this.todosLosClientes.push({
-          id: data.clienteId,
-          nombre: data.clienteNombre || 'Cliente',
-          telefono: data.clienteTelefono || clienteInfo.telefono || '',
-          cedula: data.clienteId,
-          total: data.total || 0,
-          pagado: data.pagado || 0,
-          saldo: saldo,
-          estado: data.estado,
-          metodoPago: data.metodoPago,
-          fecha: data.fecha,
+        this.facturasCache.push({
+          id: docSnap.id,                    // ID del documento de Firebase
+          clienteId: f.clienteId,            // ID del cliente
+          clienteNombre: f.clienteNombre || 'Cliente',
+          clienteTelefono: f.clienteTelefono || '', // ✅ Teléfono directo de la factura
+          cedula: f.clienteId,               // Usamos clienteId como cédula
+          total,
+          pagado,
+          saldo,                             // ✅ Saldo calculado
+          estado: f.estado || 'pendiente',
+          metodoPago: f.metodoPago || 'contado',
+          fecha: f.fecha,
           diasAtraso,
-          creditoBloqueado: clienteInfo.creditoBloqueado || false,
-          productos: data.productos || []
+          productos: f.productos || [],
+          tipoFactura: f.tipoFactura || 'rapida'
         });
       });
 
-      console.log(`✅ Cobros: ${this.todosLosClientes.length} facturas cargadas`);
+      console.log(`✅ Cobros: ${this.facturasCache.length} facturas cargadas`);
     } catch (e) {
       console.error('❌ Error cargando cobros:', e);
+      this.facturasCache = [];
     }
   },
 
@@ -136,6 +140,7 @@ export const CobrosManager = {
     `;
 
     document.body.appendChild(modal);
+    
     await this.cargarBaseCobros();
     this.renderPendientes();
     this.renderPagosPorTipo();
@@ -144,6 +149,7 @@ export const CobrosManager = {
   },
 
   attachEvents() {
+    // Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -153,6 +159,7 @@ export const CobrosManager = {
       });
     });
 
+    // Refresh
     document.getElementById('btnRefreshCobros')?.addEventListener('click', async () => {
       await this.cargarBaseCobros();
       this.renderPendientes();
@@ -161,47 +168,70 @@ export const CobrosManager = {
       UI.toast('✅ Datos actualizados', 'success');
     });
 
+    // Búsquedas
     document.getElementById('buscarPendiente')?.addEventListener('input', (e) => this.renderPendientes(e.target.value));
     document.getElementById('buscarBloqueo')?.addEventListener('input', (e) => this.renderBloqueos(e.target.value));
   },
 
-  // ✅ CORREGIDO: Renderizar pendientes con teléfono válido
+  // ✅ RENDERIZAR PENDIENTES (agrupados por cliente)
   renderPendientes(filtro = '') {
     const container = document.getElementById('listaPendientes');
     if (!container) return;
 
     const f = filtro.toLowerCase().trim();
-    const pendientes = this.todosLosClientes.filter(c => 
-      c.saldo > 0 && c.estado !== 'anulada' &&
-      (f === '' || c.nombre.toLowerCase().includes(f) || c.cedula.includes(f))
-    ).sort((a, b) => b.diasAtraso - a.diasAtraso);
+    
+    // Filtrar facturas pendientes con saldo > 0
+    const pendientes = this.facturasCache.filter(fact => 
+      fact.saldo > 0 && fact.estado !== 'anulada' &&
+      (f === '' || fact.clienteNombre.toLowerCase().includes(f) || fact.cedula.includes(f))
+    );
 
-    console.log(`📋 Pendientes encontrados: ${pendientes.length}`);
+    // Agrupar por cliente para mostrar deuda consolidada
+    const porCliente = {};
+    pendientes.forEach(fact => {
+      if (!porCliente[fact.clienteId]) {
+        porCliente[fact.clienteId] = {
+          id: fact.clienteId,
+          nombre: fact.clienteNombre,
+          telefono: fact.clienteTelefono,
+          cedula: fact.cedula,
+          totalDeuda: 0,
+          facturas: [],
+          maxDiasAtraso: 0
+        };
+      }
+      porCliente[fact.clienteId].totalDeuda += fact.saldo;
+      porCliente[fact.clienteId].facturas.push(fact);
+      if (fact.diasAtraso > porCliente[fact.clienteId].maxDiasAtraso) {
+        porCliente[fact.clienteId].maxDiasAtraso = fact.diasAtraso;
+      }
+    });
 
-    if (pendientes.length === 0) {
+    const lista = Object.values(porCliente).sort((a, b) => b.totalDeuda - a.totalDeuda);
+
+    if (lista.length === 0) {
       container.innerHTML = '<p class="no-data">✅ No hay saldos pendientes</p>';
       return;
     }
 
-    container.innerHTML = pendientes.map(c => {
-      const badgeClass = c.diasAtraso > 15 ? 'badge-danger' : c.diasAtraso > 7 ? 'badge-warning' : 'badge-info';
-      const textoAtraso = c.diasAtraso > 15 ? `⚠️ ${c.diasAtraso} días` : `${c.diasAtraso} días`;
+    container.innerHTML = lista.map(c => {
+      const badgeClass = c.maxDiasAtraso > 15 ? 'badge-danger' : c.maxDiasAtraso > 7 ? 'badge-warning' : 'badge-info';
+      const textoAtraso = c.maxDiasAtraso > 15 ? `⚠️ ${c.maxDiasAtraso} días` : `${c.maxDiasAtraso} días`;
       const tieneTelefono = c.telefono && c.telefono.length >= 8;
       
       return `
-        <div class="pendiente-card ${c.creditoBloqueado ? 'bloqueado' : ''}">
+        <div class="pendiente-card">
           <div class="pendiente-header">
             <strong>👤 ${c.nombre}</strong>
             <span class="badge ${badgeClass}">${textoAtraso}</span>
           </div>
           <div class="pendiente-body">
-            <p>📅 ${new Date(c.fecha).toLocaleDateString()}</p>
-            <p>💰 Total: ${c.total.toLocaleString()}</p>
-            <p>💸 Saldo: <strong style="color:#e74c3c">₡${c.saldo.toLocaleString()}</strong></p>
-            ${c.creditoBloqueado ? '<p class="bloqueo-msg">🚫 Crédito bloqueado</p>' : ''}
+            <p>📱 ${c.telefono || 'N/A'} | 🆔 ${c.cedula}</p>
+            <p>🧾 Facturas pendientes: <strong>${c.facturas.length}</strong></p>
+            <p>💰 Saldo total: <strong style="color:#e74c3c">₡${c.totalDeuda.toLocaleString()}</strong></p>
           </div>
           <div class="pendiente-actions">
-            <button onclick="CobrosManager.abrirModalAbono('${c.id}')">💵 Abonar</button>
+            <button onclick="CobrosManager.verDetalleCliente('${c.id}')">👁️ Ver Facturas</button>
             <button onclick="CobrosManager.enviarRecordatorioDeuda('${c.id}')" 
                     ${!tieneTelefono ? 'disabled style="opacity:0.5"' : ''} 
                     class="btn-whatsapp-reminder">
@@ -213,16 +243,12 @@ export const CobrosManager = {
     }).join('');
   },
 
-  // ✅ CORREGIDO: Calcular pagos por tipo correctamente
+  // ✅ RENDERIZAR PAGOS POR TIPO
   renderPagosPorTipo() {
-    console.log('📊 Calculando pagos por tipo...');
-    
-    // Filtrar solo facturas pagadas/completadas
-    const pagadas = this.todosLosClientes.filter(c => 
-      c.estado === 'completado' && c.metodoPago && c.total > 0
+    // Filtrar solo facturas completadas/pagadas
+    const pagadas = this.facturasCache.filter(f => 
+      f.estado === 'completado' && f.metodoPago && f.total > 0
     );
-
-    console.log(`✅ Facturas completadas: ${pagadas.length}`);
 
     // Agrupar por método
     const resumen = {
@@ -233,7 +259,6 @@ export const CobrosManager = {
 
     pagadas.forEach(f => {
       const metodo = (f.metodoPago || '').toLowerCase();
-      
       if (metodo.includes('efectivo') || metodo === 'contado') {
         resumen.efectivo.total += f.total;
         resumen.efectivo.count++;
@@ -259,7 +284,7 @@ export const CobrosManager = {
     if (body) {
       body.innerHTML = pagadas.map(f => `
         <tr>
-          <td>${f.nombre}</td>
+          <td>${f.clienteNombre}</td>
           <td>${new Date(f.fecha).toLocaleDateString()}</td>
           <td>${f.metodoPago}</td>
           <td>₡${f.total.toLocaleString()}</td>
@@ -268,22 +293,47 @@ export const CobrosManager = {
     }
   },
 
+  // ✅ RENDERIZAR BLOQUEOS (>15 días de atraso)
   renderBloqueos(filtro = '') {
     const container = document.getElementById('listaBloqueos');
     if (!container) return;
     
     const f = filtro.toLowerCase().trim();
-    const conDeuda = this.todosLosClientes.filter(c => 
-      c.saldo > 0 && c.diasAtraso > 15 &&
-      (f === '' || c.nombre.toLowerCase().includes(f))
+    
+    // Clientes con deuda > 15 días
+    const conDeuda = this.facturasCache.filter(fact => 
+      fact.saldo > 0 && fact.diasAtraso > 15 &&
+      (f === '' || fact.clienteNombre.toLowerCase().includes(f))
     );
 
-    if (conDeuda.length === 0) {
+    // Agrupar por cliente
+    const porCliente = {};
+    conDeuda.forEach(fact => {
+      if (!porCliente[fact.clienteId]) {
+        porCliente[fact.clienteId] = {
+          id: fact.clienteId,
+          nombre: fact.clienteNombre,
+          telefono: fact.clienteTelefono,
+          deudaTotal: 0,
+          maxDias: 0,
+          facturas: []
+        };
+      }
+      porCliente[fact.clienteId].deudaTotal += fact.saldo;
+      porCliente[fact.clienteId].facturas.push(fact);
+      if (fact.diasAtraso > porCliente[fact.clienteId].maxDias) {
+        porCliente[fact.clienteId].maxDias = fact.diasAtraso;
+      }
+    });
+
+    const lista = Object.values(porCliente);
+
+    if (lista.length === 0) {
       container.innerHTML = '<p class="no-data">✅ No hay clientes con deuda >15 días</p>';
       return;
     }
 
-    container.innerHTML = conDeuda.map(c => {
+    container.innerHTML = lista.map(c => {
       const clienteBD = this.clientesCache.find(cb => cb.id === c.id);
       const yaBloqueado = clienteBD?.creditoBloqueado || false;
       
@@ -292,29 +342,34 @@ export const CobrosManager = {
           <div class="bloqueo-info">
             <strong>👤 ${c.nombre}</strong>
             <p>📱 ${c.telefono || 'N/A'}</p>
-            <p>💰 Deuda: <strong style="color:#e74c3c">₡${c.saldo.toLocaleString()}</strong></p>
-            <p>⏰ Atraso: <strong>${c.diasAtraso} días</strong></p>
+            <p>💰 Deuda: <strong style="color:#e74c3c">₡${c.deudaTotal.toLocaleString()}</strong></p>
+            <p>⏰ Atraso máximo: <strong>${c.maxDias} días</strong></p>
           </div>
           <div class="bloqueo-actions">
             ${yaBloqueado 
               ? `<button class="btn-unblock" onclick="CobrosManager.toggleCredito('${c.id}', false)">✅ Desbloquear</button>`
-              : `<button class="btn-block" onclick="CobrosManager.toggleCredito('${c.id}', true)">🚫 Bloquear</button>`
+              : `<button class="btn-block" onclick="CobrosManager.toggleCredito('${c.id}', true)">🚫 Bloquear Crédito</button>`
             }
+            <button onclick="CobrosManager.verDetalleCliente('${c.id}')">👁️ Ver Detalle</button>
           </div>
         </div>
       `;
     }).join('');
   },
 
+  // ✅ TOGGLE BLOQUEO DE CRÉDITO
   async toggleCredito(clienteId, bloquear) {
-    if (!confirm(`¿${bloquear ? 'BLOQUEAR' : 'DESBLOQUEAR'} crédito?`)) return;
+    if (!confirm(`¿${bloquear ? 'BLOQUEAR' : 'DESBLOQUEAR'} crédito para este cliente?`)) return;
     try {
       await updateDoc(doc(DB.db, "clientesBD", clienteId), {
         creditoBloqueado: bloquear,
-        fechaUltimoCambioCredito: new Date().toISOString()
+        fechaUltimoCambioCredito: new Date().toISOString(),
+        motivoCambio: bloquear ? 'Deuda >15 días' : 'Desbloqueado por admin'
       });
+      
       const cliente = this.clientesCache.find(c => c.id === clienteId);
       if (cliente) cliente.creditoBloqueado = bloquear;
+      
       UI.toast(`✅ Crédito ${bloquear ? 'bloqueado' : 'desbloqueado'}`, 'success');
       this.renderBloqueos();
     } catch (e) { 
@@ -322,88 +377,79 @@ export const CobrosManager = {
     }
   },
 
- // ✅ RECORDATORIO UNIFICADO CON ENLACES ONLINE
-// ✅ RECORDATORIO UNIFICADO CON ENLACES ONLINE
-async enviarRecordatorioDeuda(clienteId) {
-  const clienteInfo = this.clientesCache.find(c => c.id === clienteId) || {};
-  const clienteData = this.todosLosClientes.find(c => c.id === clienteId);
-  
-  if (!clienteData) return UI.toast('Cliente no encontrado', 'error');
-  
-  // ✅ Filtrar facturas pendientes reales
-  const facturasPendientes = clienteData.historial?.filter(f => 
-    (Number(f.saldo) || 0) > 0 && f.estado !== 'anulada'
-  ) || [];
-  
-  if (facturasPendientes.length === 0) {
-    return UI.toast('✅ No tiene saldos pendientes', 'info');
-  }
-
-  // ✅ Validar teléfono
-  let rawPhone = clienteInfo.telefono || clienteData.telefono || '';
-  let cleanPhone = rawPhone.replace(/\D/g, '');
-  if (cleanPhone.length === 8) cleanPhone = '506' + cleanPhone;
-  if (cleanPhone.length < 10) {
-    return UI.toast('⚠️ Teléfono inválido', 'warning');
-  }
-
-  // ✅ Calcular días y determinar si hay atraso (>15 días)
-  const hoy = new Date();
-  const BASE_URL = "https://wil1979.github.io/esentia-factura";
-  let tieneAtraso = false;
-  let totalPendiente = 0;
-
-  const detalleFacturas = facturasPendientes.map(f => {
-    const diasEmision = Math.floor((hoy - new Date(f.fecha)) / (1000 * 60 * 60 * 24));
-    if (diasEmision > 15) tieneAtraso = true;
-    totalPendiente += Number(f.saldo) || 0;
-    const verLink = `${BASE_URL}/ver-factura.html?id=${f.id}`;
-    return {
-      fecha: new Date(f.fecha).toLocaleDateString(),
-      saldo: Number(f.saldo) || 0,
-      dias: diasEmision,
-      link: verLink
-    };
-  });
-
-  // ✅ Construir mensaje AMIGABLE y UNIFICADO
-  let mensaje = `Hola ${clienteInfo.nombre || 'cliente'} 🌸\n\n`;
-  mensaje += `Gracias por confiar en Esentia. Te compartimos un resumen de tus compras pendientes:\n\n`;
-
-  detalleFacturas.forEach((item, index) => {
-    mensaje += `🧾 *Factura ${index + 1}* (${item.fecha})\n`;
-    mensaje += `Monto pendiente: ₡${item.saldo.toLocaleString()}\n`;
-    // ⚠️ Solo mencionar días si supera 15 (no es "atraso" antes de eso)
-    if (item.dias > 15) {
-      mensaje += `⚠️ *Con ${item.dias} días desde la emisión.*\n`;
+  // ✅ VALIDAR CRÉDITO ANTES DE FACTURAR
+  async puedeFacturarACredito(clienteId) {
+    try {
+      // Verificar si el cliente tiene bloqueo manual
+      const snap = await getDoc(doc(DB.db, "clientesBD", clienteId));
+      if (snap.exists() && snap.data().creditoBloqueado) {
+        return { ok: false, message: `🚫 Crédito bloqueado. Contactar administración.` };
+      }
+      
+      // Verificar deudas >15 días en facturas_rapidas
+      const hoy = new Date();
+      const facturasSnap = await getDocs(collection(DB.db, "facturas_rapidas"));
+      let tieneDeudaVencida = false;
+      
+      facturasSnap.forEach(f => {
+        const fd = f.data();
+        if (fd.clienteId === clienteId && fd.estado === 'pendiente') {
+          const dias = Math.floor((hoy - new Date(fd.fecha)) / (1000 * 60 * 60 * 24));
+          if (dias > 15) tieneDeudaVencida = true;
+        }
+      });
+      
+      if (tieneDeudaVencida) {
+        return { ok: false, message: `⚠️ Deudas >15 días. Regularizar antes de nuevo crédito.` };
+      }
+      
+      return { ok: true };
+    } catch (e) {
+      console.error('Error validando crédito:', e);
+      return { ok: true }; // Por seguridad, permitir si hay error
     }
-    mensaje += `🔗 Ver e imprimir: ${item.link}\n\n`;
-  });
+  },
 
-  mensaje += `💰 *Total pendiente: ₡${totalPendiente.toLocaleString()}*\n\n`;
-  mensaje += `💳 *Formas de pago:*\n`;
-  mensaje += `📱 SINPE Móvil: 72952454\n`;
-  mensaje += `🏦 IBAN: CR76015114620010283743\n`;
-  mensaje += `💡 Opción rápida: SMS "PASE ${Math.round(totalPendiente)} 72952454"\n\n`;
+  // ✅ VER DETALLE DE FACTURAS POR CLIENTE
+  async verDetalleCliente(clienteId) {
+    const facturas = this.facturasCache.filter(f => f.clienteId === clienteId && f.saldo > 0);
+    if (facturas.length === 0) return UI.toast('No hay facturas pendientes', 'info');
+    
+    const cliente = facturas[0];
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.id = 'modalDetalleFacturas';
+    modal.innerHTML = `
+      <div class="modal-content">
+        <button class="modal-close" onclick="UI.modal('modalDetalleFacturas','close')">✕</button>
+        <h2>📋 Facturas de ${cliente.clienteNombre}</h2>
+        <p>📱 ${cliente.clienteTelefono || 'N/A'} | 🆔 ${cliente.cedula}</p>
+        
+        <div style="max-height: 60vh; overflow-y: auto; margin-top: 15px;">
+          ${facturas.map(f => `
+            <div style="border: 1px solid #eee; padding: 12px; margin-bottom: 10px; border-radius: 8px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <strong>📄 #${f.id.slice(-6).toUpperCase()}</strong>
+                <span style="color: #e74c3c; font-weight: bold;">₡${f.saldo.toLocaleString()}</span>
+              </div>
+              <p style="margin: 4px 0; font-size: 0.9rem;">📅 ${new Date(f.fecha).toLocaleDateString()} | ⏰ ${f.diasAtraso} días</p>
+              <p style="margin: 4px 0; font-size: 0.9rem;">💳 ${f.metodoPago?.toUpperCase()}</p>
+              <div style="margin-top: 8px;">
+                <button class="btn-sm" onclick="CobrosManager.abrirModalAbono('${f.id}', ${f.saldo})">💵 Abonar</button>
+                <button class="btn-sm" onclick="ImpresionManager.imprimir('${f.id}')">🖨️ Imprimir</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  },
 
-  // Cierre cordial (más serio solo si supera 15 días)
-  if (tieneAtraso) {
-    mensaje += `Te agradecemos regularizar tu cuenta a la brevedad para mantener tu historial al día. ¡Estamos para servirte! 💜`;
-  } else {
-    mensaje += `Recuerda que puedes realizar tus abonos en cualquier momento. ¡Gracias por preferirnos! 💜`;
-  }
-
-  // ✅ Abrir WhatsApp
-  window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensaje)}`, '_blank');
-  UI.toast('📱 Recordatorio listo para enviar', 'success');
-  
-  // ✅ Registrar log opcional
-  this.registrarLogRecordatorio?.(clienteId, totalPendiente, cleanPhone, tieneAtraso ? 'fuerte' : 'amable');
-}
-
-  async abrirModalAbono(clienteId) {
-    const factura = this.todosLosClientes.find(f => f.id === clienteId && f.saldo > 0);
-    if (!factura) return UI.toast('No hay saldo pendiente', 'warning');
+  // ✅ ABRIR MODAL DE ABONO PARA FACTURA ESPECÍFICA
+  async abrirModalAbono(facturaId, saldo) {
+    const factura = this.facturasCache.find(f => f.id === facturaId);
+    if (!factura) return UI.toast('Factura no encontrada', 'warning');
     
     const modal = document.createElement('div');
     modal.className = 'modal show';
@@ -412,10 +458,12 @@ async enviarRecordatorioDeuda(clienteId) {
       <div class="modal-content">
         <button class="modal-close" onclick="UI.modal('modalAbonoCobros','close')">✕</button>
         <h2>💵 Registrar Abono</h2>
-        <p><strong>Cliente:</strong> ${factura.nombre}</p>
-        <p><strong>Saldo pendiente:</strong> ₡${factura.saldo.toLocaleString()}</p>
+        <p><strong>Factura:</strong> #${facturaId.slice(-6).toUpperCase()}</p>
+        <p><strong>Cliente:</strong> ${factura.clienteNombre}</p>
+        <p><strong>Saldo pendiente:</strong> ₡${saldo.toLocaleString()}</p>
+        
         <form id="formAbonoCobros">
-          <input type="number" id="montoAbono" placeholder="Monto" min="1" max="${factura.saldo}" required>
+          <input type="number" id="montoAbono" placeholder="Monto" min="1" max="${saldo}" required>
           <select id="metodoAbono">
             <option value="Efectivo">💵 Efectivo</option>
             <option value="SINPE">📱 SINPE</option>
@@ -430,18 +478,22 @@ async enviarRecordatorioDeuda(clienteId) {
     
     document.getElementById('formAbonoCobros').onsubmit = async (e) => {
       e.preventDefault();
-      await this.procesarAbono(clienteId, factura.saldo);
+      await this.procesarAbono(facturaId, saldo);
     };
   },
 
-  async procesarAbono(clienteId, saldoActual) {
+  // ✅ PROCESAR ABONO (actualizar factura en Firebase)
+  async procesarAbono(facturaId, saldoActual) {
     const monto = Number(document.getElementById('montoAbono').value) || 0;
     const metodo = document.getElementById('metodoAbono').value;
+    const nota = document.getElementById('notaAbono').value;
     
-    if (monto <= 0) return UI.toast('Monto inválido', 'warning');
+    if (monto <= 0 || monto > saldoActual) {
+      return UI.toast('Monto inválido', 'warning');
+    }
     
     try {
-      const factRef = doc(DB.db, "facturas_rapidas", clienteId);
+      const factRef = doc(DB.db, "facturas_rapidas", facturaId);
       const snap = await getDoc(factRef);
       const data = snap.data();
       
@@ -453,17 +505,95 @@ async enviarRecordatorioDeuda(clienteId) {
         pagado: nuevoPagado,
         saldo: nuevoSaldo,
         estado: nuevoEstado,
-        metodoPago: metodo
+        abonos: arrayUnion({
+          fecha: new Date().toISOString(),
+          monto,
+          metodo,
+          nota: nota || ''
+        })
       });
       
       UI.toast('✅ Abono registrado', 'success');
       UI.modal('modalAbonoCobros', 'close');
+      UI.modal('modalDetalleFacturas', 'close');
+      
+      // Recargar datos
       await this.cargarBaseCobros();
       this.renderPendientes();
       this.renderPagosPorTipo();
-    } catch (e) { 
-      UI.toast('❌ Error al procesar abono', 'error'); 
+    } catch (e) {
+      console.error(e);
+      UI.toast('❌ Error al procesar abono', 'error');
     }
+  },
+
+  // ✅ ENVIAR RECORDATORIO UNIFICADO CON ENLACES
+  async enviarRecordatorioDeuda(clienteId) {
+    // Filtrar facturas pendientes del cliente
+    const facturasPendientes = this.facturasCache.filter(f => 
+      f.clienteId === clienteId && f.saldo > 0 && f.estado !== 'anulada'
+    );
+    
+    if (facturasPendientes.length === 0) {
+      return UI.toast('✅ No tiene saldos pendientes', 'info');
+    }
+
+    const cliente = facturasPendientes[0];
+    
+    // Validar teléfono
+    let telefono = cliente.clienteTelefono || '';
+    telefono = telefono.replace(/\D/g, '');
+    if (telefono.length < 8) {
+      return UI.toast(`⚠️ Teléfono inválido: ${telefono || 'Sin teléfono'}`, 'warning');
+    }
+    const cleanPhone = telefono.length === 8 ? '506' + telefono : telefono;
+
+    // Calcular totales y días
+    const hoy = new Date();
+    let totalPendiente = 0;
+    let tieneAtraso = false;
+    
+    const detalleFacturas = facturasPendientes.map(f => {
+      const dias = Math.floor((hoy - new Date(f.fecha)) / (1000 * 60 * 60 * 24));
+      if (dias > 15) tieneAtraso = true;
+      totalPendiente += f.saldo;
+      const verLink = `${this.BASE_URL}/ver-factura.html?id=${f.id}`;
+      return {
+        fecha: new Date(f.fecha).toLocaleDateString(),
+        saldo: f.saldo,
+        dias,
+        link: verLink
+      };
+    });
+
+    // Construir mensaje AMIGABLE y UNIFICADO
+    let mensaje = `Hola ${cliente.clienteNombre} 🌸\n\n`;
+    mensaje += `Gracias por confiar en Esentia. Te compartimos un resumen de tus compras pendientes:\n\n`;
+
+    detalleFacturas.forEach((item, index) => {
+      mensaje += `🧾 *Factura ${index + 1}* (${item.fecha})\n`;
+      mensaje += `Monto pendiente: ₡${item.saldo.toLocaleString()}\n`;
+      if (item.dias > 15) {
+        mensaje += `⚠️ *Con ${item.dias} días desde la emisión.*\n`;
+      }
+      mensaje += `🔗 Ver e imprimir: ${item.link}\n\n`;
+    });
+
+    mensaje += `💰 *Total pendiente: ₡${totalPendiente.toLocaleString()}*\n\n`;
+    mensaje += `💳 *Formas de pago:*\n`;
+    mensaje += `📱 SINPE Móvil: 72952454\n`;
+   // mensaje += `🏦 IBAN: CR76015114620010283743\n`;
+   // mensaje += `💡 Opción rápida: SMS "PASE ${Math.round(totalPendiente)} 72952454"\n\n`;
+
+    if (tieneAtraso) {
+      mensaje += `Te agradecemos regularizar tu cuenta a la brevedad. ¡Estamos para servirte! 💜`;
+    } else {
+      mensaje += `Recuerda que puedes realizar tus abonos en cualquier momento. ¡Gracias! 💜`;
+    }
+
+    // Abrir WhatsApp
+    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensaje)}`, '_blank');
+    UI.toast('📱 Recordatorio listo para enviar', 'success');
   }
 };
 
