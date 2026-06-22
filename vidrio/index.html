@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8"/>
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+/>
+
+<title>
+ESENTIA PROMO STUDIO V3
+</title>
+
+<link
+rel="stylesheet"
+href="styles.css"
+/>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+
+<link
+href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Poppins:wght@400;700&family=Bebas+Neue&family=Playfair+Display:wght@700&display=swap"
+rel="stylesheet"
+/>
+
+</head>
+
+<body>
+
+<div class="app">
+
+<!-- SIDEBAR -->
+
+<aside class="sidebar">
+
+<div class="logo-area">
+
+<h1>ESENTIA</h1>
+
+<p>PROMO STUDIO V3</p>
+
+</div>
+
+<!-- CATALOGO -->
+
+<div class="panel">
+
+<h3>CATÁLOGO</h3>
+
+<select id="catalogSelect">
+
+<option value="ESENCIAS">
+Esencias
+</option>
+
+<option value="LIMPIEZA">
+Limpieza
+</option>
+
+<option value="VELAS">
+Velas
+</option>
+
+</select>
+
+<select id="productSelect">
+
+<option>
+Cargando...
+</option>
+
+</select>
+
+<input
+  type="text"
+  id="productSearch"
+  placeholder="Buscar producto..."
+/>
+
+</div>
+
+<!-- FORMATO -->
+
+<div class="panel">
+
+<h3>FORMATO</h3>
+
+<select id="canvasSize">
+
+<option value="story">
+Story
+</option>
+
+<option value="post">
+Post
+</option>
+
+<option value="portrait">
+Portrait
+</option>
+
+</select>
+
+</div>
+
+<!-- FONDO -->
+
+<div class="panel">
+
+<h3>FONDO</h3>
+
+<label>Color</label>
+
+<input
+type="color"
+id="bgColor"
+value="#1a1a1a"
+/>
+
+<label>Imagen</label>
+
+<input
+type="file"
+id="bgUpload"
+/>
+
+<label>Overlay</label>
+
+<select id="overlaySelect">
+
+<option value="none">
+Ninguno
+</option>
+
+<option value="drops">
+Gotas
+</option>
+
+<option value="smoke">
+Smoke
+</option>
+
+<option value="glossy">
+Glossy
+</option>
+
+</select>
+
+</div>
+
+<!-- SHAPE -->
+ <div class="panel">
+
+ <label>Separador</label>
+
+ <select id="shapeSelect">
+
+  <option value="none">
+    Ninguno
+  </option>
+
+  <option value="wave1">
+    Wave 1
+  </option>
+
+  <option value="wave2">
+    Wave 2
+  </option>
+
+  <option value="blob1">
+    Blob 1
+  </option>
+
+</select>
+
+<label>Shape X</label>
+
+<input
+  type="range"
+  id="shapeX"
+  min="-1000"
+  max="1000"
+  value="0"
+/>
+
+<label>Shape Y</label>
+
+<input
+  type="range"
+  id="shapeY"
+  min="-1000"
+  max="1000"
+  value="0"
+/>
+
+<label>Shape Scale</label>
+
+<input
+  type="range"
+  id="shapeScale"
+  min="10"
+  max="300"
+  value="100"
+/>
+
+<label>Shape Rotate</label>
+
+<input
+  type="range"
+  id="shapeRotate"
+  min="-180"
+  max="180"
+  value="0"
+/>
+
+<label>Shape Opacity</label>
+
+<input
+  type="range"
+  id="shapeOpacity"
+  min="0"
+  max="100"
+  value="100"
+/>
+
+<label>Color Shape</label>
+
+<input
+  type="color"
+  id="shapeColor"
+  value="#ffffff"
+/>
+</div>
+<!-- LOGO -->
+
+<div class="panel">
+
+<h3>LOGO</h3>
+
+<input
+type="file"
+id="logoUpload"
+accept="image/*"
+/>
+
+<label>X</label>
+
+<input
+type="range"
+id="logoX"
+min="-500"
+max="500"
+value="0"
+/>
+
+<label>Y</label>
+
+<input
+type="range"
+id="logoY"
+min="-500"
+max="500"
+value="0"
+/>
+
+<label>Scale</label>
+
+<input
+type="range"
+id="logoScale"
+min="1"
+max="200"
+value="25"
+/>
+
+<label>Rotate</label>
+
+<input
+type="range"
+id="logoRotate"
+min="-180"
+max="180"
+value="0"
+/>
+
+<label>Opacity</label>
+
+<input
+type="range"
+id="logoOpacity"
+min="0"
+max="100"
+value="100"
+/>
+
+</div>
+
+<!-- IMAGEN EXTRA -->
+<div class="panel">
+
+  <h3>IMAGEN EXTRA</h3>
+
+  <input
+    type="file"
+    id="extraImageUpload"
+    accept="image/*"
+  />
+
+  <label>X</label>
+
+  <input
+    type="range"
+    id="extraX"
+    min="-500"
+    max="500"
+    value="0"
+  />
+
+  <label>Y</label>
+
+  <input
+    type="range"
+    id="extraY"
+    min="-500"
+    max="500"
+    value="0"
+  />
+
+  <label>Scale</label>
+
+  <input
+    type="range"
+    id="extraScale"
+    min="1"
+    max="300"
+    value="100"
+  />
+
+  <label>Rotate</label>
+
+  <input
+    type="range"
+    id="extraRotate"
+    min="-180"
+    max="180"
+    value="0"
+  />
+
+</div>
+
+<!-- PRODUCTO -->
+
+<div class="panel">
+
+<h3>PRODUCTO</h3>
+
+<label>X</label>
+
+<input
+type="range"
+id="productX"
+min="-500"
+max="500"
+value="0"
+/>
+
+<label>Y</label>
+
+<input
+type="range"
+id="productY"
+min="-500"
+max="500"
+value="0"
+/>
+
+<label>Scale</label>
+
+<input
+type="range"
+id="productScale"
+min="10"
+max="200"
+value="55"
+/>
+
+<label>Rotate</label>
+
+<input
+type="range"
+id="productRotate"
+min="-180"
+max="180"
+value="0"
+/>
+
+<label>Opacity</label>
+
+<input
+type="range"
+id="productOpacity"
+min="0"
+max="100"
+value="100"
+/>
+
+</div>
+
+<!-- PRECIO -->
+
+<div class="panel">
+
+<h3>PRECIO</h3>
+
+<label>
+
+<input
+type="checkbox"
+id="togglePrice"
+/>
+
+Mostrar
+
+</label>
+
+<input
+type="text"
+id="manualPrice"
+placeholder="₡3500"
+/>
+
+</div>
+
+<!-- TEXTO -->
+
+<div class="panel">
+
+<h3>TEXTO</h3>
+
+<label>Color</label>
+
+<input
+type="color"
+id="textColor"
+value="#ffffff"
+/>
+
+<label>Size</label>
+
+<input
+type="range"
+id="textSize"
+min="20"
+max="120"
+value="46"
+/>
+
+<label>Opacity</label>
+
+<input
+type="range"
+id="textOpacity"
+min="0"
+max="100"
+value="100"
+/>
+
+<label>Shadow</label>
+
+<input
+type="range"
+id="textShadow"
+min="0"
+max="80"
+value="10"
+/>
+
+<label>Stroke</label>
+
+<input
+type="range"
+id="textStroke"
+min="0"
+max="10"
+value="1"
+/>
+
+<label>Font</label>
+
+<select id="fontFamily">
+
+<option value="Arial">Arial</option>
+<option value="Montserrat">Montserrat</option>
+<option value="Poppins">Poppins</option>
+<option value="Bebas Neue">Bebas</option>
+<option value="Playfair Display">Playfair</option>
+<option value="Adelia">Adelia</option>
+
+</select>
+
+</div>
+
+<!-- EFECTOS -->
+<div class="panel">
+
+  <h3>EFECTOS</h3>
+
+  <!-- GLOW -->
+
+  <label>Glow</label>
+
+  <input
+    type="range"
+    id="effectGlow"
+    min="0"
+    max="100"
+    value="0"
+  />
+
+  <!-- BLUR -->
+
+  <label>Blur</label>
+
+  <input
+    type="range"
+    id="effectBlur"
+    min="0"
+    max="20"
+    value="0"
+  />
+
+  <!-- SHADOW -->
+
+  <label>Shadow</label>
+
+  <input
+    type="range"
+    id="effectShadow"
+    min="0"
+    max="100"
+    value="10"
+  />
+
+  <!-- OPACITY -->
+
+  <label>Glass Opacity</label>
+
+  <input
+    type="range"
+    id="glassOpacity"
+    min="0"
+    max="100"
+    value="100"
+  />
+
+  <!-- GRADIENT -->
+
+  <button id="applyGradient">
+
+    Aplicar Gradient
+
+  </button>
+
+  <!-- GLASS -->
+
+  <button id="applyGlass">
+
+    Glassmorphism
+
+  </button>
+
+</div>
+
+<!-- DESCRIPCION -->
+
+<div class="panel">
+
+<h3>DESCRIPCIÓN</h3>
+
+<label>
+
+<input
+type="checkbox"
+id="toggleDescription"
+checked
+/>
+
+Mostrar
+
+</label>
+
+<textarea
+id="manualDescription"
+rows="4"
+></textarea>
+
+<label>Size</label>
+
+<input
+type="range"
+id="descriptionSize"
+min="10"
+max="60"
+value="24"
+/>
+
+<label>Opacity</label>
+
+<input
+type="range"
+id="descriptionOpacity"
+min="0"
+max="100"
+value="90"
+/>
+
+<label>Color</label>
+
+<input
+type="color"
+id="descriptionColor"
+value="#f1f1f1"
+/>
+
+</div>
+
+<!-- IA -->
+
+<div class="panel">
+
+<h3>IA VISUAL</h3>
+
+<button id="applySmartAI">
+
+Aplicar Smart IA
+
+</button>
+
+</div>
+
+<!-- ESCENAS -->
+
+<div class="panel">
+
+<h3>ESCENAS</h3>
+
+<button id="saveSceneBtn">
+Guardar
+</button>
+
+<button id="loadSceneBtn">
+Cargar
+</button>
+
+</div>
+
+<!-- CAPAS -->
+
+<div class="panel">
+
+<h3>CAPAS</h3>
+
+<div class="layers-list">
+
+<button id="selectProduct">
+PRODUCTO
+</button>
+
+<button id="selectTitle">
+TEXTO
+</button>
+
+<button id="selectDescription">
+DESCRIPCIÓN
+</button>
+
+<button id="selectPrice">
+PRECIO
+</button>
+
+<button id="selectLogo">
+LOGO
+</button>
+
+</div>
+
+<button id="bringFront">
+
+Traer Adelante
+
+</button>
+
+<button id="sendBack">
+
+Enviar Atrás
+
+</button>
+
+</div>
+
+<!-- EXPORT -->
+
+<div class="panel">
+
+<button id="downloadBtn">
+
+Descargar PNG
+
+</button>
+
+<button id="exportVideo">
+
+  Export Reel
+
+</button>
+</div>
+
+</aside>
+
+<!-- WORKSPACE -->
+
+<main class="workspace">
+
+<canvas id="canvas"></canvas>
+
+</main>
+
+</div>
+
+<!-- MOBILE TOOLBAR -->
+
+<div class="mobile-toolbar">
+
+  <button id="openSidebar">
+
+    🎛
+
+    <span>Editar</span>
+
+  </button>
+
+  <button id="mobileLayers">
+
+    📦
+
+    <span>Capas</span>
+
+  </button>
+
+  <button id="mobileExport">
+
+    ⬇
+
+    <span>Export</span>
+
+  </button>
+
+</div>
+
+<!-- DYNAMIC PANEL -->
+
+<div
+  id="dynamicPanel"
+  class="dynamic-panel"
+></div>
+
+<script
+type="module"
+src="app.js"
+></script>
+
+<script src="https://cdn.jsdelivr.net/npm/ccapture.js-npmfixed@1.1.0/build/CCapture.all.min.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generador Fresh Pro v3.0 - Controles Individuales + Logo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Playfair+Display:wght@400;700;900&family=Bebas+Neue&family=Lobster&family=Pacifico&family=Raleway:wght@400;700;900&family=Poppins:wght@400;700;900&family=Oswald:wght@400;700&family=Roboto+Condensed:wght@400;700&family=Dancing+Script:wght@400;700&family=Abril+Fatface&family=Righteous&family=Comfortaa:wght@400;700&family=Josefin+Sans:wght@400;700&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#e94560;--secondary:#0f3460;--dark:#1a1a2e;--light:#a2d5f2;--success:#27ae60;--warning:#f39c12}
+body{font-family:'Poppins',sans-serif;background:var(--dark);color:#eee;display:flex;height:100vh;overflow:hidden}
+.controls{width:420px;background:#16213e;padding:15px;overflow-y:auto;border-right:2px solid var(--secondary);scrollbar-width:thin;scrollbar-color:var(--primary) var(--secondary)}
+.controls::-webkit-scrollbar{width:8px}
+.controls::-webkit-scrollbar-track{background:var(--secondary)}
+.controls::-webkit-scrollbar-thumb{background:var(--primary);border-radius:4px}
+.controls h1{font-size:1.2rem;margin-bottom:5px;color:var(--primary);text-align:center;font-family:'Righteous',cursive;text-shadow:0 0 20px rgba(233,69,96,0.5)}
+.version-badge{text-align:center;font-size:0.7rem;color:var(--light);margin-bottom:15px;opacity:0.7}
+.section{margin-bottom:15px;padding:12px;background:var(--secondary);border-radius:12px;border:1px solid rgba(255,255,255,0.05)}
+.section h3{font-size:0.85rem;margin-bottom:10px;color:var(--light);border-bottom:2px solid var(--primary);padding-bottom:6px;display:flex;align-items:center;gap:8px}
+.section h3::before{content:'';width:3px;height:16px;background:var(--primary);border-radius:2px}
+label{display:block;margin:6px 0 3px;font-size:0.78rem;color:#bbb;font-weight:500}
+input[type="color"],input[type="number"],input[type="text"],select,textarea{width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:var(--dark);color:#fff;font-size:0.82rem;transition:all 0.3s}
+input[type="color"]{height:38px;cursor:pointer;padding:4px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 8px rgba(233,69,96,0.2)}
+input[type="range"]{width:100%;margin:4px 0;accent-color:var(--primary);height:6px;-webkit-appearance:none;background:#2a2a5e;border-radius:3px;outline:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--primary);cursor:pointer}
+input[type="file"]{width:100%;margin:5px 0;color:#ccc;font-size:0.75rem;padding:8px;background:#0f0f23;border-radius:8px;border:2px dashed #2a2a5e;cursor:pointer}
+input[type="file"]:hover{border-color:var(--primary)}
+.btn{width:100%;padding:10px;margin:4px 0;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-family:'Poppins',sans-serif;transition:all 0.3s;font-size:0.85rem}
+.btn-primary{background:var(--primary);color:white;box-shadow:0 4px 15px rgba(233,69,96,0.4)}
+.btn-primary:hover{background:#c13651;transform:translateY(-2px)}
+.btn-secondary{background:transparent;color:var(--light);border:2px solid var(--light)}
+.btn-secondary:hover{background:var(--light);color:var(--dark)}
+.btn-accent{background:var(--success);color:white}
+.btn-accent:hover{background:#219a52}
+.btn-warning{background:var(--warning);color:var(--dark)}
+.btn-warning:hover{background:#e67e22}
+.image-card{background:var(--dark);border-radius:10px;padding:12px;margin:8px 0;border:1px solid rgba(255,255,255,0.1);transition:all 0.3s}
+.image-card:hover{border-color:var(--primary);box-shadow:0 4px 15px rgba(233,69,96,0.2)}
+.image-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.1)}
+.image-card-title{font-size:0.85rem;font-weight:700;color:var(--light);display:flex;align-items:center;gap:8px}
+.image-card-title .img-num{background:var(--primary);color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem}
+.image-card-actions{display:flex;gap:5px}
+.image-card-actions button{background:transparent;border:1px solid rgba(255,255,255,0.2);color:#fff;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:0.7rem;transition:all 0.2s}
+.image-card-actions button:hover{background:var(--primary);border-color:var(--primary)}
+.image-card-actions button.delete:hover{background:#c0392b;border-color:#c0392b}
+.image-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.image-card-grid label{font-size:0.7rem;margin:4px 0 2px}
+.image-card-grid input[type="range"]{margin:2px 0}
+.image-card-toggle{text-align:center;color:var(--light);font-size:0.75rem;cursor:pointer;margin-top:8px;opacity:0.7;padding:4px;border-radius:6px;transition:all 0.2s}
+.image-card-toggle:hover{opacity:1;background:rgba(255,255,255,0.05)}
+.image-card-advanced{display:none;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(255,255,255,0.1)}
+.image-card-advanced.show{display:block}
+.image-card-mask{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px}
+.img-mask-btn{width:32px;height:32px;border-radius:6px;cursor:pointer;border:2px solid transparent;background:var(--secondary);display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all 0.2s}
+.img-mask-btn:hover{transform:scale(1.1)}
+.img-mask-btn.active{border-color:var(--primary)}
+.logo-section{background:linear-gradient(135deg,rgba(233,69,96,0.1),rgba(162,213,242,0.1));border:1px solid rgba(233,69,96,0.3)}
+.logo-preview{width:100%;max-height:100px;object-fit:contain;border-radius:8px;margin:8px 0;background:rgba(0,0,0,0.3);padding:10px}
+.logo-position-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:8px 0}
+.logo-pos-btn{padding:8px;background:var(--dark);border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:6px;cursor:pointer;font-size:0.8rem;transition:all 0.2s}
+.logo-pos-btn:hover{background:var(--secondary)}
+.logo-pos-btn.active{background:var(--primary);border-color:var(--primary)}
+.preview-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;background:#0a0a1a;position:relative}
+.canvas-container{position:relative;box-shadow:0 25px 80px rgba(0,0,0,0.6);border-radius:12px;overflow:hidden;border:2px solid rgba(255,255,255,0.05)}
+canvas{display:block;max-width:85vw;max-height:75vh}
+.stats{position:absolute;top:10px;right:15px;font-size:0.7rem;color:rgba(255,255,255,0.3);font-family:monospace}
+.quick-actions{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:10px;z-index:100}
+.quick-btn{width:50px;height:50px;border-radius:50%;background:var(--primary);color:white;border:none;cursor:pointer;font-size:1.2rem;box-shadow:0 4px 15px rgba(233,69,96,0.4);transition:all 0.3s;display:flex;align-items:center;justify-content:center}
+.quick-btn:hover{transform:scale(1.1)}
+.quick-btn.green{background:var(--success)}
+.range-value{float:right;color:var(--primary);font-weight:700;font-size:0.78rem}
+.preset-colors{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.color-preset{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all 0.3s}
+.color-preset:hover{transform:scale(1.15)}
+.color-preset.active{border-color:#fff;box-shadow:0 0 8px rgba(255,255,255,0.5)}
+.checkbox-group{display:flex;gap:10px;flex-wrap:wrap}
+.checkbox-group label{display:flex;align-items:center;gap:5px;cursor:pointer;background:#0f0f23;padding:5px 10px;border-radius:20px;font-size:0.72rem;border:1px solid rgba(255,255,255,0.1)}
+.checkbox-group input[type="checkbox"]{accent-color:var(--primary)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.mask-preview{width:36px;height:36px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all 0.3s;background:#0f0f23;display:flex;align-items:center;justify-content:center;font-size:1rem}
+.mask-preview:hover{transform:scale(1.1)}
+.mask-preview.active{border-color:var(--primary)}
+.mask-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-top:6px}
+.tabs{display:flex;gap:4px;margin-bottom:10px;background:#0f0f23;padding:4px;border-radius:10px}
+.tab{flex:1;padding:8px;text-align:center;cursor:pointer;border-radius:8px;font-size:0.75rem;font-weight:600;transition:all 0.2s;color:#9ca3af}
+.tab.active{background:var(--primary);color:white}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.empty-state{text-align:center;padding:20px;color:rgba(255,255,255,0.3);font-size:0.85rem}
+.empty-state-icon{font-size:2rem;margin-bottom:8px}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div class="controls">
+<h1>GENERADOR FRESH PRO MAX</h1>
+<div class="version-badge">v3.0 - Controles Individuales + Logo</div>
+
+<div class="section">
+<h3>Dimensiones</h3>
+<label>Tamano predefinido:</label>
+<select id="presetSize">
+<option value="1080,1920">Instagram Story (1080x1920)</option>
+<option value="1080,1080">Instagram Post (1080x1080)</option>
+<option value="1200,630">Facebook/Twitter (1200x630)</option>
+<option value="1920,1080">Full HD (1920x1080)</option>
+<option value="800,1200">Pinterest (800x1200)</option>
+<option value="1080,1350">LinkedIn (1080x1350)</option>
+<option value="1500,500">Twitter Header (1500x500)</option>
+<option value="custom">Personalizado</option>
+</select>
+<div id="customSize" style="display:none;margin-top:10px;" class="two-col">
+<label>Ancho:<input type="number" id="width" value="1080" min="100" max="4000"></label>
+<label>Alto:<input type="number" id="height" value="1920" min="100" max="4000"></label>
+</div>
+</div>
+
+<div class="section">
+<h3>Colores de Fondo</h3>
+<div class="two-col">
+<label>Color Superior:<input type="color" id="colorTop" value="#c0392b"></label>
+<label>Color Inferior:<input type="color" id="colorBottom" value="#8e291d"></label>
+</div>
+<label style="margin-top:8px;">Presets rapidos:</label>
+<div class="preset-colors">
+<div class="color-preset active" style="background:linear-gradient(180deg,#c0392b,#8e291d)" data-top="#c0392b" data-bottom="#8e291d"></div>
+<div class="color-preset" style="background:linear-gradient(180deg,#27ae60,#1e8449)" data-top="#27ae60" data-bottom="#1e8449"></div>
+<div class="color-preset" style="background:linear-gradient(180deg,#2980b9,#1a5276)" data-top="#2980b9" data-bottom="#1a5276"></div>
+<div class="color-preset" style="background:linear-gradient(180deg,#8e44ad,#6c3483)" data-top="#8e44ad" data-bottom="#6c3483"></div>
+<div class="color-preset" style="background:linear-gradient(180deg,#d35400,#a04000)" data-top="#d35400" data-bottom="#a04000"></div>
+<div class="color-preset" style="background:linear-gradient(180deg,#2c3e50,#1a252f)" data-top="#2c3e50" data-bottom="#1a252f"></div>
+<div class="color-preset" style="background:linear-gradient(180deg,#f39c12,#d68910)" data-top="#f39c12" data-bottom="#d68910"></div>
+<div class="color-preset" style="background:linear-gradient(180deg,#e91e63,#ad1457)" data-top="#e91e63" data-bottom="#ad1457"></div>
+</div>
+<label style="margin-top:8px;">Intensidad del degradado:<span class="range-value" id="gradIntVal">80%</span></label>
+<input type="range" id="gradientIntensity" min="0" max="100" value="80">
+<label>Angulo del degradado:<span class="range-value" id="gradAngleVal">180</span></label>
+<input type="range" id="gradientAngle" min="0" max="360" value="180">
+</div>
+
+<div class="section">
+<h3>Imagenes Individuales</h3>
+<input type="file" id="imageInput" accept="image/*" multiple>
+<div id="imagesContainer">
+<div class="empty-state">
+<div class="empty-state-icon">-</div>
+Sube imagenes para ver controles individuales
+</div>
+</div>
+</div>
+
+<div class="section logo-section">
+<h3>Logo / Watermark</h3>
+<input type="file" id="logoInput" accept="image/*">
+<div id="logoPreviewContainer" style="display:none;">
+<img id="logoPreview" class="logo-preview" src="" alt="Logo preview">
+</div>
+<div class="tabs" style="margin-top:10px;">
+<div class="tab active" data-tab="logo-basic">Basico</div>
+<div class="tab" data-tab="logo-advanced">Avanzado</div>
+</div>
+<div class="tab-content active" id="logo-basic">
+<label>Posicion:</label>
+<div class="logo-position-grid">
+<button class="logo-pos-btn" data-pos="tl">TL</button>
+<button class="logo-pos-btn" data-pos="tc">TC</button>
+<button class="logo-pos-btn" data-pos="tr">TR</button>
+<button class="logo-pos-btn" data-pos="cl">CL</button>
+<button class="logo-pos-btn" data-pos="cc">CC</button>
+<button class="logo-pos-btn" data-pos="cr">CR</button>
+<button class="logo-pos-btn" data-pos="bl">BL</button>
+<button class="logo-pos-btn" data-pos="bc">BC</button>
+<button class="logo-pos-btn active" data-pos="br">BR</button>
+</div>
+<label style="margin-top:8px;">Tamano:<span class="range-value" id="logoSizeVal">15%</span></label>
+<input type="range" id="logoSize" min="5" max="50" value="15">
+<label>Opacidad:<span class="range-value" id="logoOpVal">80%</span></label>
+<input type="range" id="logoOpacity" min="10" max="100" value="80">
+</div>
+<div class="tab-content" id="logo-advanced">
+<label>Posicion X manual:<span class="range-value" id="logoXVal">90%</span></label>
+<input type="range" id="logoX" min="0" max="100" value="90">
+<label>Posicion Y manual:<span class="range-value" id="logoYVal">90%</span></label>
+<input type="range" id="logoY" min="0" max="100" value="90">
+<label>Rotacion:<span class="range-value" id="logoRotVal">0</span></label>
+<input type="range" id="logoRotate" min="-180" max="180" value="0">
+<label>Sombra:<span class="range-value" id="logoShadVal">10px</span></label>
+<input type="range" id="logoShadow" min="0" max="30" value="10">
+<label>Desenfoque:<span class="range-value" id="logoBlurVal">0px</span></label>
+<input type="range" id="logoBlur" min="0" max="10" value="0">
+<label>Modo de fusion:</label>
+<select id="logoBlend">
+<option value="source-over">Normal</option>
+<option value="multiply">Multiplicar</option>
+<option value="screen">Pantalla</option>
+<option value="overlay">Superponer</option>
+<option value="soft-light">Luz Suave</option>
+<option value="hard-light">Luz Dura</option>
+</select>
+</div>
+</div>
+
+<div class="section">
+<h3>Texto Principal</h3>
+<input type="text" id="mainText" value="SAMPLE TEXT" placeholder="Tu texto aqui...">
+<div class="two-col">
+<label>Color:<input type="color" id="textColor" value="#ffffff"></label>
+<label>Tamano:<span class="range-value" id="textSizeVal">48px</span></label>
+</div>
+<input type="range" id="textSize" min="20" max="150" value="48">
+<label>Fuente:</label>
+<select id="fontFamily">
+<option value="'Montserrat',sans-serif">Montserrat</option>
+<option value="'Playfair Display',serif">Playfair Display</option>
+<option value="'Bebas Neue',sans-serif">Bebas Neue</option>
+<option value="'Lobster',cursive">Lobster</option>
+<option value="'Pacifico',cursive">Pacifico</option>
+<option value="'Raleway',sans-serif">Raleway</option>
+<option value="'Poppins',sans-serif">Poppins</option>
+<option value="'Oswald',sans-serif">Oswald</option>
+<option value="'Roboto Condensed',sans-serif">Roboto Condensed</option>
+<option value="'Dancing Script',cursive">Dancing Script</option>
+<option value="'Abril Fatface',cursive">Abril Fatface</option>
+<option value="'Righteous',cursive">Righteous</option>
+<option value="'Comfortaa',cursive">Comfortaa</option>
+<option value="'Josefin Sans',sans-serif">Josefin Sans</option>
+<option value="'Quicksand',sans-serif">Quicksand</option>
+<option value="Impact,sans-serif">Impact</option>
+<option value="Arial Black,sans-serif">Arial Black</option>
+</select>
+<label>Peso:<span class="range-value" id="textWeightVal">700</span></label>
+<input type="range" id="textWeight" min="100" max="900" step="100" value="700">
+<label>Espaciado:<span class="range-value" id="textSpacingVal">0px</span></label>
+<input type="range" id="textSpacing" min="-5" max="20" value="0">
+<label>Sombra:<span class="range-value" id="textShadowVal">15px</span></label>
+<input type="range" id="textShadow" min="0" max="50" value="15">
+<label>Contorno:<span class="range-value" id="textStrokeVal">0px</span></label>
+<input type="range" id="textStroke" min="0" max="10" value="0">
+<label>Color del contorno:<input type="color" id="textStrokeColor" value="#000000"></label>
+<label>Opacidad:<span class="range-value" id="textOpacityVal">100%</span></label>
+<input type="range" id="textOpacity" min="10" max="100" value="100">
+</div>
+
+<div class="section">
+<h3>Texto Secundario</h3>
+<textarea id="subText" rows="3" style="width:100%;background:var(--dark);color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px;font-family:inherit;resize:vertical;">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</textarea>
+<div class="two-col">
+<label>Tamano:<span class="range-value" id="subTextSizeVal">14px</span></label>
+<label>Color:<input type="color" id="subTextColor" value="#dddddd"></label>
+</div>
+<input type="range" id="subTextSize" min="8" max="40" value="14">
+<label>Fuente:</label>
+<select id="subFontFamily">
+<option value="'Montserrat',sans-serif">Montserrat</option>
+<option value="'Playfair Display',serif">Playfair Display</option>
+<option value="'Raleway',sans-serif">Raleway</option>
+<option value="'Poppins',sans-serif">Poppins</option>
+<option value="'Josefin Sans',sans-serif">Josefin Sans</option>
+<option value="'Quicksand',sans-serif">Quicksand</option>
+<option value="Georgia,serif">Georgia</option>
+<option value="Arial,sans-serif">Arial</option>
+</select>
+<label>Opacidad:<span class="range-value" id="subTextOpacityVal">90%</span></label>
+<input type="range" id="subTextOpacity" min="10" max="100" value="90">
+</div>
+
+<div class="section">
+<h3>Efectos & Texturas</h3>
+<div class="checkbox-group">
+<label><input type="checkbox" id="dropsEffect" checked>Gotas</label>
+<label><input type="checkbox" id="smokeEffect">Humo</label>
+<label><input type="checkbox" id="paperEffect">Papel</label>
+<label><input type="checkbox" id="grainEffect">Grano</label>
+<label><input type="checkbox" id="waveEffect" checked>Onda</label>
+<label><input type="checkbox" id="bokehEffect">Bokeh</label>
+<label><input type="checkbox" id="lightEffect">Luz</label>
+<label><input type="checkbox" id="vignetteEffect">Vigneta</label>
+<label><input type="checkbox" id="noiseEffect">Ruido</label>
+<label><input type="checkbox" id="glitchEffect">Glitch</label>
+</div>
+<label style="margin-top:10px;">Gotas - Cantidad:<span class="range-value" id="dropsIntVal">100</span></label>
+<input type="range" id="dropsIntensity" min="10" max="400" value="100">
+<label>Gotas - Tamano max:<span class="range-value" id="dropsSizeVal">15px</span></label>
+<input type="range" id="dropsMaxSize" min="5" max="30" value="15">
+<label>Humo - Opacidad:<span class="range-value" id="smokeOpVal">30%</span></label>
+<input type="range" id="smokeOpacity" min="10" max="100" value="30">
+<label>Bokeh - Cantidad:<span class="range-value" id="bokehCountVal">20</span></label>
+<input type="range" id="bokehCount" min="5" max="60" value="20">
+<label>Bokeh - Tamano:<span class="range-value" id="bokehSizeVal">80px</span></label>
+<input type="range" id="bokehSize" min="20" max="200" value="80">
+<label>Luz - Intensidad:<span class="range-value" id="lightIntVal">50%</span></label>
+<input type="range" id="lightIntensity" min="10" max="100" value="50">
+<label>Luz - Color:<input type="color" id="lightColor" value="#ffffff"></label>
+<label>Vigneta - Intensidad:<span class="range-value" id="vignetteIntVal">40%</span></label>
+<input type="range" id="vignetteIntensity" min="0" max="80" value="40">
+</div>
+
+<button class="btn btn-primary" onclick="downloadImage()">Descargar PNG</button>
+<button class="btn btn-accent" onclick="downloadHD()">Descargar HD (2x)</button>
+<button class="btn btn-warning" onclick="randomize()">Aleatorio</button>
+<button class="btn btn-secondary" onclick="resetAll()">Resetear</button>
+</div>
+
+<div class="preview-area">
+<div class="stats" id="stats">1080 x 1920 px</div>
+<div class="canvas-container">
+<canvas id="canvas"></canvas>
+</div>
+<div class="quick-actions">
+<button class="quick-btn" onclick="randomize()" title="Aleatorio">?</button>
+<button class="quick-btn green" onclick="downloadImage()" title="Descargar">v</button>
+</div>
+</div>
+
+<script>
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+let imageData=[];
+let logoImage=null;
+let logoSettings={position:'br',x:90,y:90,size:15,opacity:80,rotate:0,shadow:10,blur:0,blend:'source-over'};
+let seed=Math.random()*10000;
+
+function createImageDefaults(){
+return{x:50,y:30,scale:40,rotate:0,opacity:100,shadow:20,blur:0,brightness:100,saturation:100,contrast:100,mask:'none',maskSize:80,maskBorder:0,maskBorderColor:'#ffffff'};
+}
+
+function initCanvas(){
+const preset=document.getElementById('presetSize').value;
+let w,h;
+if(preset==='custom'){
+w=parseInt(document.getElementById('width').value)||1080;
+h=parseInt(document.getElementById('height').value)||1920;
+}else{
+[w,h]=preset.split(',').map(Number);
+}
+canvas.width=w;
+canvas.height=h;
+document.getElementById('stats').textContent=w+' x '+h+' px';
+draw();
+}
+
+function draw(){
+const w=canvas.width;
+const h=canvas.height;
+ctx.clearRect(0,0,w,h);
+drawGradient(w,h);
+if(document.getElementById('paperEffect').checked)drawPaperTexture(w,h);
+if(document.getElementById('grainEffect').checked)drawGrain(w,h);
+if(document.getElementById('noiseEffect').checked)drawNoise(w,h);
+if(document.getElementById('smokeEffect').checked)drawSmoke(w,h);
+if(document.getElementById('bokehEffect').checked)drawBokeh(w,h);
+if(document.getElementById('lightEffect').checked)drawLightRays(w,h);
+if(document.getElementById('waveEffect').checked)drawWave(w,h);
+drawIndividualImages(w,h);
+if(document.getElementById('dropsEffect').checked)drawDrops(w,h);
+drawText(w,h);
+if(logoImage)drawLogo(w,h);
+if(document.getElementById('vignetteEffect').checked)drawVignette(w,h);
+if(document.getElementById('glitchEffect').checked)drawGlitch(w,h);
+}
+
+function drawGradient(w,h){
+const angle=(document.getElementById('gradientAngle').value*Math.PI)/180;
+const intensity=document.getElementById('gradientIntensity').value/100;
+const x1=w/2-Math.cos(angle)*w/2;
+const y1=h/2-Math.sin(angle)*h/2;
+const x2=w/2+Math.cos(angle)*w/2;
+const y2=h/2+Math.sin(angle)*h/2;
+const gradient=ctx.createLinearGradient(x1,y1,x2,y2);
+gradient.addColorStop(0,document.getElementById('colorTop').value);
+gradient.addColorStop(1,document.getElementById('colorBottom').value);
+ctx.fillStyle=gradient;
+ctx.globalAlpha=intensity;
+ctx.fillRect(0,0,w,h);
+ctx.globalAlpha=1;
+}
+
+function drawWave(w,h){
+const waveY=h*0.55;
+const colorTop=document.getElementById('colorTop').value;
+const colorBottom=document.getElementById('colorBottom').value;
+ctx.beginPath();
+ctx.moveTo(0,waveY+15);
+ctx.bezierCurveTo(w*0.25,waveY+35,w*0.75,waveY-5,w,waveY+15);
+ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath();
+ctx.fillStyle='rgba(0,0,0,0.12)';ctx.fill();
+ctx.beginPath();
+ctx.moveTo(0,waveY);
+ctx.bezierCurveTo(w*0.3,waveY+20,w*0.7,waveY-20,w,waveY);
+ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath();
+const waveGrad=ctx.createLinearGradient(0,waveY,0,h);
+waveGrad.addColorStop(0,colorTop);
+waveGrad.addColorStop(1,adjustColor(colorBottom,-20));
+ctx.fillStyle=waveGrad;ctx.fill();
+ctx.beginPath();
+ctx.moveTo(w*0.15,waveY+35);
+ctx.bezierCurveTo(w*0.35,waveY+55,w*0.65,waveY+15,w*0.85,waveY+35);
+ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=2;ctx.stroke();
+}
+
+function drawIndividualImages(w,h){
+imageData.forEach((data)=>{
+const img=data.img;
+const s=data.settings;
+if(!img.complete)return;
+ctx.save();
+ctx.globalAlpha=s.opacity/100;
+ctx.filter='brightness('+s.brightness+'%) saturate('+s.saturation+'%) contrast('+s.contrast+'%) blur('+s.blur+'px)';
+if(s.shadow>0){
+ctx.shadowColor='rgba(0,0,0,0.4)';
+ctx.shadowBlur=s.shadow;
+ctx.shadowOffsetX=4;
+ctx.shadowOffsetY=6;
+}
+const x=(s.x/100)*w;
+const y=(s.y/100)*h;
+ctx.translate(x,y);
+ctx.rotate((s.rotate*Math.PI)/180);
+const maxSize=Math.min(w,h)*(s.scale/100);
+const ratio=img.width/img.height;
+let dw,dh;
+if(ratio>1){dw=maxSize;dh=maxSize/ratio;}
+else{dh=maxSize;dw=maxSize*ratio;}
+const finalW=dw*(s.maskSize/100);
+const finalH=dh*(s.maskSize/100);
+if(s.mask!=='none'){
+ctx.save();
+createMaskPath(ctx,0,0,finalW,finalH,s.mask);
+ctx.clip();
+}
+ctx.drawImage(img,-finalW/2,-finalH/2,finalW,finalH);
+if(s.mask!=='none'){
+ctx.restore();
+if(s.maskBorder>0){
+ctx.strokeStyle=s.maskBorderColor;
+ctx.lineWidth=s.maskBorder;
+createMaskPath(ctx,0,0,finalW,finalH,s.mask);
+ctx.stroke();
+}
+}
+ctx.restore();
+});
+}
+
+function drawDrops(w,h){
+const count=parseInt(document.getElementById('dropsIntensity').value);
+const maxSize=parseInt(document.getElementById('dropsMaxSize').value);
+const waveY=h*0.55;
+const pr=(n)=>{const x=Math.sin(seed+n*137.5)*10000;return x-Math.floor(x);};
+for(let i=0;i<count;i++){
+const x=pr(i*3)*w;
+const y=pr(i*3+1)*waveY;
+const radius=2+pr(i*3+2)*maxSize;
+ctx.save();
+ctx.beginPath();
+ctx.ellipse(x+radius*0.3,y+radius*0.4,radius*0.8,radius*0.6,0,0,Math.PI*2);
+ctx.fillStyle='rgba(0,0,0,0.15)';ctx.fill();
+ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);
+const dropGrad=ctx.createRadialGradient(x-radius*0.25,y-radius*0.25,0,x,y,radius);
+dropGrad.addColorStop(0,'rgba(255,255,255,0.95)');
+dropGrad.addColorStop(0.3,'rgba(255,255,255,0.5)');
+dropGrad.addColorStop(0.7,'rgba(255,255,255,0.15)');
+dropGrad.addColorStop(1,'rgba(255,255,255,0.05)');
+ctx.fillStyle=dropGrad;ctx.fill();
+ctx.beginPath();
+ctx.ellipse(x-radius*0.3,y-radius*0.35,radius*0.2,radius*0.12,-0.5,0,Math.PI*2);
+ctx.fillStyle='rgba(255,255,255,0.98)';ctx.fill();
+ctx.beginPath();ctx.arc(x+radius*0.4,y+radius*0.3,radius*0.08,0,Math.PI*2);
+ctx.fillStyle='rgba(255,255,255,0.7)';ctx.fill();
+ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);
+ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=0.5;ctx.stroke();
+ctx.restore();
+}
+}
+
+function drawSmoke(w,h){
+const opacity=document.getElementById('smokeOpacity').value/100;
+for(let i=0;i<20;i++){
+const x=(Math.sin(seed+i*47.3)*0.5+0.5)*w;
+const y=(Math.cos(seed+i*31.7)*0.5+0.5)*h*0.7;
+const radius=60+(Math.sin(seed+i*73.1)*0.5+0.5)*200;
+const grad=ctx.createRadialGradient(x,y,0,x,y,radius);
+grad.addColorStop(0,'rgba(255,255,255,'+(opacity*0.25)+')');
+grad.addColorStop(0.5,'rgba(255,255,255,'+(opacity*0.1)+')');
+grad.addColorStop(1,'rgba(255,255,255,0)');
+ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);
+ctx.fillStyle=grad;ctx.fill();
+}
+}
+
+function drawBokeh(w,h){
+const count=parseInt(document.getElementById('bokehCount').value);
+const size=parseInt(document.getElementById('bokehSize').value);
+for(let i=0;i<count;i++){
+const x=(Math.sin(seed+i*89.1)*0.5+0.5)*w;
+const y=(Math.cos(seed+i*67.3)*0.5+0.5)*h;
+const radius=10+(Math.sin(seed+i*53.7)*0.5+0.5)*size;
+const hue=(Math.sin(seed+i*41.2)*0.5+0.5)*360;
+const alpha=0.1+(Math.sin(seed+i*29.5)*0.5+0.5)*0.3;
+const grad=ctx.createRadialGradient(x,y,0,x,y,radius);
+grad.addColorStop(0,'hsla('+hue+',70%,70%,'+alpha+')');
+grad.addColorStop(0.5,'hsla('+hue+',60%,60%,'+(alpha*0.5)+')');
+grad.addColorStop(1,'hsla(0,0%,0%,0)');
+ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);
+ctx.fillStyle=grad;ctx.fill();
+}
+}
+
+function drawLightRays(w,h){
+const intensity=document.getElementById('lightIntensity').value/100;
+const color=document.getElementById('lightColor').value;
+const r=parseInt(color.slice(1,3),16);
+const g=parseInt(color.slice(3,5),16);
+const b=parseInt(color.slice(5,7),16);
+ctx.save();ctx.globalCompositeOperation='screen';
+for(let i=0;i<5;i++){
+const angle=-Math.PI/2+(i-2)*0.3;
+const grad=ctx.createLinearGradient(w/2+Math.cos(angle)*100,0,w/2+Math.cos(angle)*w,h);
+grad.addColorStop(0,'rgba('+r+','+g+','+b+','+(intensity*0.4)+')');
+grad.addColorStop(1,'rgba('+r+','+g+','+b+',0)');
+ctx.beginPath();
+ctx.moveTo(w/2+Math.cos(angle-0.15)*50,0);
+ctx.lineTo(w/2+Math.cos(angle+0.15)*50,0);
+ctx.lineTo(w/2+Math.cos(angle+0.3)*w*1.5,h);
+ctx.lineTo(w/2+Math.cos(angle-0.3)*w*1.5,h);
+ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+}
+const centerGrad=ctx.createRadialGradient(w/2,h*0.2,0,w/2,h*0.2,w*0.4);
+centerGrad.addColorStop(0,'rgba('+r+','+g+','+b+','+(intensity*0.3)+')');
+centerGrad.addColorStop(1,'rgba('+r+','+g+','+b+',0)');
+ctx.fillStyle=centerGrad;ctx.fillRect(0,0,w,h);
+ctx.restore();
+}
+
+function drawVignette(w,h){
+const intensity=document.getElementById('vignetteIntensity').value/100;
+const grad=ctx.createRadialGradient(w/2,h/2,w*0.3,w/2,h/2,w*0.8);
+grad.addColorStop(0,'rgba(0,0,0,0)');
+grad.addColorStop(1,'rgba(0,0,0,'+intensity+')');
+ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
+}
+
+function drawGlitch(w,h){
+const imageData=ctx.getImageData(0,0,w,h);
+const data=imageData.data;
+for(let i=0;i<data.length;i+=4){
+if(Math.random()<0.03){
+const offset=(Math.random()-0.5)*20;
+data[i]=Math.min(255,data[i]+offset);
+data[i+1]=Math.min(255,data[i+1]-offset);
+data[i+2]=Math.min(255,data[i+2]+offset*2);
+}
+}
+ctx.putImageData(imageData,0,0);
+}
+
+function drawPaperTexture(w,h){
+ctx.save();ctx.globalAlpha=0.06;
+for(let i=0;i<8000;i++){
+ctx.fillStyle=Math.random()>0.5?'#fff':'#000';
+ctx.fillRect(Math.random()*w,Math.random()*h,1,1);
+}
+ctx.restore();
+}
+
+function drawGrain(w,h){
+ctx.save();ctx.globalAlpha=0.04;
+for(let i=0;i<5000;i++){
+const shade=Math.random()*255;
+ctx.fillStyle='rgb('+shade+','+shade+','+shade+')';
+ctx.fillRect(Math.random()*w,Math.random()*h,2,2);
+}
+ctx.restore();
+}
+
+function drawNoise(w,h){
+ctx.save();ctx.globalAlpha=0.03;
+for(let i=0;i<10000;i++){
+const val=Math.random()>0.5?255:0;
+ctx.fillStyle='rgb('+val+','+val+','+val+')';
+ctx.fillRect(Math.random()*w,Math.random()*h,1,1);
+}
+ctx.restore();
+}
+
+function drawText(w,h){
+const mainText=document.getElementById('mainText').value;
+const textColor=document.getElementById('textColor').value;
+const textSize=parseInt(document.getElementById('textSize').value);
+const fontFamily=document.getElementById('fontFamily').value;
+const textWeight=document.getElementById('textWeight').value;
+const textSpacing=document.getElementById('textSpacing').value;
+const textShadow=parseInt(document.getElementById('textShadow').value);
+const textStroke=parseInt(document.getElementById('textStroke').value);
+const textStrokeColor=document.getElementById('textStrokeColor').value;
+const textOpacity=document.getElementById('textOpacity').value/100;
+const subText=document.getElementById('subText').value;
+const subTextSize=parseInt(document.getElementById('subTextSize').value);
+const subTextColor=document.getElementById('subTextColor').value;
+const subFontFamily=document.getElementById('subFontFamily').value;
+const subTextOpacity=document.getElementById('subTextOpacity').value/100;
+const textY=h*0.72;
+
+ctx.save();
+ctx.font=textWeight+' '+textSize+'px '+fontFamily;
+ctx.textAlign='center';
+ctx.letterSpacing=textSpacing+'px';
+if(textStroke>0){
+ctx.strokeStyle=textStrokeColor;
+ctx.lineWidth=textStroke;
+ctx.lineJoin='round';
+ctx.strokeText(mainText,w/2,textY);
+}
+if(textShadow>0){
+ctx.shadowColor='rgba(0,0,0,0.5)';
+ctx.shadowBlur=textShadow;
+ctx.shadowOffsetX=3;
+ctx.shadowOffsetY=4;
+}
+ctx.fillStyle=textColor;
+ctx.globalAlpha=textOpacity;
+ctx.fillText(mainText,w/2,textY);
+ctx.restore();
+
+if(subText){
+ctx.save();
+ctx.font=subTextSize+'px '+subFontFamily;
+ctx.textAlign='center';
+ctx.fillStyle=subTextColor;
+ctx.globalAlpha=subTextOpacity;
+const maxWidth=w*0.75;
+const lineHeight=subTextSize*1.5;
+const words=subText.split(' ');
+let line='';
+let lines=[];
+words.forEach(word=>{
+const testLine=line+word+' ';
+const metrics=ctx.measureText(testLine);
+if(metrics.width>maxWidth&&line!==''){
+lines.push(line);line=word+' ';
+}else{line=testLine;}
+});
+lines.push(line);
+const startY=textY+textSize+25;
+lines.forEach((line,i)=>{
+ctx.fillText(line,w/2,startY+(i*lineHeight));
+});
+ctx.restore();
+}
+}
+
+function drawLogo(w,h){
+if(!logoImage||!logoImage.complete)return;
+ctx.save();
+ctx.globalAlpha=logoSettings.opacity/100;
+ctx.globalCompositeOperation=logoSettings.blend;
+let x,y;
+if(logoSettings.position!=='custom'){
+const positions={'tl':[10,10],'tc':[50,10],'tr':[90,10],'cl':[10,50],'cc':[50,50],'cr':[90,50],'bl':[10,90],'bc':[50,90],'br':[90,90]};
+[x,y]=positions[logoSettings.position];
+}else{
+x=logoSettings.x;
+y=logoSettings.y;
+}
+const logoX=(x/100)*w;
+const logoY=(y/100)*h;
+const maxLogoSize=Math.min(w,h)*(logoSettings.size/100);
+const ratio=logoImage.width/logoImage.height;
+let lw,lh;
+if(ratio>1){lw=maxLogoSize;lh=maxLogoSize/ratio;}
+else{lh=maxLogoSize;lw=maxLogoSize*ratio;}
+ctx.translate(logoX,logoY);
+ctx.rotate((logoSettings.rotate*Math.PI)/180);
+if(logoSettings.shadow>0){
+ctx.shadowColor='rgba(0,0,0,0.4)';
+ctx.shadowBlur=logoSettings.shadow;
+ctx.shadowOffsetX=2;
+ctx.shadowOffsetY=3;
+}
+if(logoSettings.blur>0){
+ctx.filter='blur('+logoSettings.blur+'px)';
+}
+ctx.drawImage(logoImage,-lw/2,-lh/2,lw,lh);
+ctx.restore();
+}
+
+function createMaskPath(ctx,x,y,w,h,mask){
+ctx.beginPath();
+switch(mask){
+case'circle':
+ctx.arc(x,y,Math.max(w,h)/2,0,Math.PI*2);
+break;
+case'rounded':
+const r=Math.min(w,h)*0.15;
+ctx.moveTo(x-w/2+r,y-h/2);
+ctx.lineTo(x+w/2-r,y-h/2);
+ctx.quadraticCurveTo(x+w/2,y-h/2,x+w/2,y-h/2+r);
+ctx.lineTo(x+w/2,y+h/2-r);
+ctx.quadraticCurveTo(x+w/2,y+h/2,x+w/2-r,y+h/2);
+ctx.lineTo(x-w/2+r,y+h/2);
+ctx.quadraticCurveTo(x-w/2,y+h/2,x-w/2,y+h/2-r);
+ctx.lineTo(x-w/2,y-h/2+r);
+ctx.quadraticCurveTo(x-w/2,y-h/2,x-w/2+r,y-h/2);
+break;
+case'hexagon':
+for(let i=0;i<6;i++){
+const angle=(Math.PI/3)*i-Math.PI/6;
+const px=x+Math.cos(angle)*w/2;
+const py=y+Math.sin(angle)*h/2;
+if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+}
+ctx.closePath();
+break;
+case'diamond':
+ctx.moveTo(x,y-h/2);
+ctx.lineTo(x+w/2,y);
+ctx.lineTo(x,y+h/2);
+ctx.lineTo(x-w/2,y);
+ctx.closePath();
+break;
+case'star':
+const outerR=Math.max(w,h)/2;
+const innerR=outerR*0.4;
+for(let i=0;i<10;i++){
+const angle=(Math.PI/5)*i-Math.PI/2;
+const r=i%2===0?outerR:innerR;
+const px=x+Math.cos(angle)*r;
+const py=y+Math.sin(angle)*r;
+if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+}
+ctx.closePath();
+break;
+case'heart':
+const size=Math.max(w,h)/2;
+ctx.moveTo(x,y+size*0.3);
+ctx.bezierCurveTo(x,y,x-size,y-size*0.5,x-size,y-size*0.1);
+ctx.bezierCurveTo(x-size,y+size*0.4,x,y+size*0.8,x,y+size*0.8);
+ctx.bezierCurveTo(x,y+size*0.8,x+size,y+size*0.4,x+size,y-size*0.1);
+ctx.bezierCurveTo(x+size,y-size*0.5,x,y,x,y+size*0.3);
+break;
+case'cloud':
+ctx.arc(x-w*0.2,y,h*0.25,0,Math.PI*2);
+ctx.arc(x+w*0.2,y,h*0.25,0,Math.PI*2);
+ctx.arc(x,y-h*0.1,h*0.3,0,Math.PI*2);
+ctx.arc(x-w*0.1,y+h*0.1,h*0.2,0,Math.PI*2);
+ctx.arc(x+w*0.1,y+h*0.1,h*0.2,0,Math.PI*2);
+break;
+case'blob':
+ctx.moveTo(x+w*0.5,y);
+for(let i=1;i<=8;i++){
+const angle=(Math.PI*2/8)*i;
+const r=(i%2===0)?Math.max(w,h)*0.45:Math.max(w,h)*0.35;
+const cpx=x+Math.cos(angle-Math.PI/8)*r*1.3;
+const cpy=y+Math.sin(angle-Math.PI/8)*r*1.3;
+const px=x+Math.cos(angle)*r;
+const py=y+Math.sin(angle)*r;
+ctx.quadraticCurveTo(cpx,cpy,px,py);
+}
+ctx.closePath();
+break;
+case'triangle':
+ctx.moveTo(x,y-h/2);
+ctx.lineTo(x+w/2,y+h/2);
+ctx.lineTo(x-w/2,y+h/2);
+ctx.closePath();
+break;
+}
+}
+
+function adjustColor(color,amount){
+const num=parseInt(color.replace('#',''),16);
+const r=Math.max(0,Math.min(255,(num>>16)+amount));
+const g=Math.max(0,Math.min(255,((num>>8)&0x00FF)+amount));
+const b=Math.max(0,Math.min(255,(num&0x0000FF)+amount));
+return'#'+((r<<16)|(g<<8)|b).toString(16).padStart(6,'0');
+}
+
+// ===== MANEJO DE IMÁGENES INDIVIDUALES =====
+document.getElementById('imageInput').addEventListener('change',function(e){
+const files=Array.from(e.target.files);
+files.forEach(file=>{
+const reader=new FileReader();
+reader.onload=function(event){
+const img=new Image();
+img.onload=function(){
+imageData.push({
+img:img,
+settings:createImageDefaults(),
+name:file.name,
+id:Date.now()+Math.random()
+});
+renderImageCards();
+draw();
+};
+img.src=event.target.result;
+};
+reader.readAsDataURL(file);
+});
+});
+
+function renderImageCards(){
+const container=document.getElementById('imagesContainer');
+if(imageData.length===0){
+container.innerHTML='<div class="empty-state"><div class="empty-state-icon">-</div>Sube imagenes para ver controles individuales</div>';
+return;
+}
+container.innerHTML='';
+imageData.forEach((data,index)=>{
+const card=document.createElement('div');
+card.className='image-card';
+card.innerHTML=`<div class="image-card-header"><div class="image-card-title"><span class="img-num">${index+1}</span><span>${data.name.substring(0,20)}${data.name.length>20?'...':''}</span></div><div class="image-card-actions"><button onclick="moveImageUp(${index})" title="Subir">u</button><button onclick="moveImageDown(${index})" title="Bajar">d</button><button onclick="duplicateImage(${index})" title="Duplicar">c</button><button class="delete" onclick="removeImage(${index})" title="Eliminar">x</button></div></div><div class="image-card-grid"><div><label>Pos X:<span class="range-value">${data.settings.x}%</span></label><input type="range" min="0" max="100" value="${data.settings.x}" oninput="updateImageSetting(${index},'x',this.value)"></div><div><label>Pos Y:<span class="range-value">${data.settings.y}%</span></label><input type="range" min="0" max="100" value="${data.settings.y}" oninput="updateImageSetting(${index},'y',this.value)"></div><div><label>Tamano:<span class="range-value">${data.settings.scale}%</span></label><input type="range" min="10" max="100" value="${data.settings.scale}" oninput="updateImageSetting(${index},'scale',this.value)"></div><div><label>Rotacion:<span class="range-value">${data.settings.rotate}deg</span></label><input type="range" min="-180" max="180" value="${data.settings.rotate}" oninput="updateImageSetting(${index},'rotate',this.value)"></div></div><div class="image-card-toggle" onclick="toggleImageAdvanced(${index})">v Opciones avanzadas</div><div class="image-card-advanced" id="img-adv-${index}"><div class="image-card-grid"><div><label>Opacidad:<span class="range-value">${data.settings.opacity}%</span></label><input type="range" min="10" max="100" value="${data.settings.opacity}" oninput="updateImageSetting(${index},'opacity',this.value)"></div><div><label>Sombra:<span class="range-value">${data.settings.shadow}px</span></label><input type="range" min="0" max="50" value="${data.settings.shadow}" oninput="updateImageSetting(${index},'shadow',this.value)"></div><div><label>Brillo:<span class="range-value">${data.settings.brightness}%</span></label><input type="range" min="50" max="150" value="${data.settings.brightness}" oninput="updateImageSetting(${index},'brightness',this.value)"></div><div><label>Saturacion:<span class="range-value">${data.settings.saturation}%</span></label><input type="range" min="0" max="200" value="${data.settings.saturation}" oninput="updateImageSetting(${index},'saturation',this.value)"></div><div><label>Contraste:<span class="range-value">${data.settings.contrast}%</span></label><input type="range" min="50" max="150" value="${data.settings.contrast}" oninput="updateImageSetting(${index},'contrast',this.value)"></div><div><label>Desenfoque:<span class="range-value">${data.settings.blur}px</span></label><input type="range" min="0" max="20" value="${data.settings.blur}" oninput="updateImageSetting(${index},'blur',this.value)"></div></div><label style="margin-top:6px;">Mascara:</label><div class="image-card-mask"><div class="img-mask-btn ${data.settings.mask==='none'?'active':''}" onclick="updateImageSetting(${index},'mask','none')" title="Ninguna">N</div><div class="img-mask-btn ${data.settings.mask==='circle'?'active':''}" onclick="updateImageSetting(${index},'mask','circle')" title="Circulo">C</div><div class="img-mask-btn ${data.settings.mask==='rounded'?'active':''}" onclick="updateImageSetting(${index},'mask','rounded')" title="Redondeado">R</div><div class="img-mask-btn ${data.settings.mask==='hexagon'?'active':''}" onclick="updateImageSetting(${index},'mask','hexagon')" title="Hexagono">H</div><div class="img-mask-btn ${data.settings.mask==='diamond'?'active':''}" onclick="updateImageSetting(${index},'mask','diamond')" title="Diamante">D</div></div><label style="margin-top:6px;">Tamano mascara:<span class="range-value">${data.settings.maskSize}%</span></label><input type="range" min="20" max="100" value="${data.settings.maskSize}" oninput="updateImageSetting(${index},'maskSize',this.value)"><label>Borde mascara:<span class="range-value">${data.settings.maskBorder}px</span></label><input type="range" min="0" max="20" value="${data.settings.maskBorder}" oninput="updateImageSetting(${index},'maskBorder',this.value)"><label>Color borde:<input type="color" value="${data.settings.maskBorderColor}" oninput="updateImageSetting(${index},'maskBorderColor',this.value)"></label></div>`;
+container.appendChild(card);
+});
+}
+
+function updateImageSetting(index,property,value){
+if(index<0||index>=imageData.length)return;
+const s=imageData[index].settings;
+if(property==='mask'||property==='maskBorderColor'){
+s[property]=value;
+}else{
+s[property]=parseInt(value);
+}
+renderImageCards();
+draw();
+}
+
+function toggleImageAdvanced(index){
+const el=document.getElementById('img-adv-'+index);
+el.classList.toggle('show');
+}
+
+function moveImageUp(index){
+if(index<=0)return;
+[imageData[index-1],imageData[index]]=[imageData[index],imageData[index-1]];
+renderImageCards();
+draw();
+}
+
+function moveImageDown(index){
+if(index>=imageData.length-1)return;
+[imageData[index],imageData[index+1]]=[imageData[index+1],imageData[index]];
+renderImageCards();
+draw();
+}
+
+function duplicateImage(index){
+if(index<0||index>=imageData.length)return;
+const original=imageData[index];
+const newData={
+img:original.img,
+name:original.name+' (copia)',
+settings:{...original.settings}
+};
+imageData.splice(index+1,0,newData);
+renderImageCards();
+draw();
+}
+
+function removeImage(index){
+imageData.splice(index,1);
+renderImageCards();
+draw();
+}
+
+// ===== LOGO =====
+document.getElementById('logoInput').addEventListener('change',function(e){
+const file=e.target.files[0];
+if(!file)return;
+const reader=new FileReader();
+reader.onload=function(event){
+logoImage=new Image();
+logoImage.onload=function(){
+document.getElementById('logoPreview').src=event.target.result;
+document.getElementById('logoPreviewContainer').style.display='block';
+draw();
+};
+logoImage.src=event.target.result;
+};
+reader.readAsDataURL(file);
+});
+
+function removeLogo(){
+logoImage=null;
+document.getElementById('logoPreviewContainer').style.display='none';
+document.getElementById('logoInput').value='';
+draw();
+}
+
+// ===== TABS =====
+document.querySelectorAll('.tab').forEach(tab=>{
+tab.addEventListener('click',function(){
+const parent=this.closest('.tabs');
+parent.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+this.classList.add('active');
+const tabId=this.dataset.tab;
+parent.parentElement.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+document.getElementById(tabId).classList.add('active');
+});
+});
+
+// ===== POSICIONES DE LOGO =====
+document.querySelectorAll('.logo-pos-btn').forEach(btn=>{
+btn.addEventListener('click',function(){
+document.querySelectorAll('.logo-pos-btn').forEach(b=>b.classList.remove('active'));
+this.classList.add('active');
+logoSettings.position=this.dataset.pos;
+draw();
+});
+});
+
+// ===== PRESETS DE COLOR =====
+document.querySelectorAll('.color-preset').forEach(preset=>{
+preset.addEventListener('click',function(){
+document.querySelectorAll('.color-preset').forEach(p=>p.classList.remove('active'));
+this.classList.add('active');
+document.getElementById('colorTop').value=this.dataset.top;
+document.getElementById('colorBottom').value=this.dataset.bottom;
+draw();
+});
+});
+
+// ===== EVENT LISTENERS GENERALES =====
+const generalInputs=[
+'presetSize','colorTop','colorBottom','gradientIntensity','gradientAngle',
+'mainText','textColor','textSize','fontFamily','textWeight','textSpacing',
+'textShadow','textStroke','textStrokeColor','textOpacity',
+'subText','subTextSize','subTextColor','subFontFamily','subTextOpacity',
+'dropsIntensity','dropsMaxSize','smokeOpacity','bokehCount','bokehSize',
+'lightIntensity','lightColor','vignetteIntensity',
+'logoX','logoY','logoSize','logoOpacity','logoRotate','logoShadow','logoBlur','logoBlend'
+];
+
+generalInputs.forEach(id=>{
+const el=document.getElementById(id);
+if(el){
+el.addEventListener('input',function(){
+if(id==='presetSize'){
+document.getElementById('customSize').style.display=this.value==='custom'?'grid':'none';
+initCanvas();
+}else{
+const valMap={
+'gradientIntensity':v=>v+'%','gradientAngle':v=>v+'deg',
+'textSize':v=>v+'px','textWeight':v=>v,
+'textSpacing':v=>v+'px','textShadow':v=>v+'px',
+'textStroke':v=>v+'px','textOpacity':v=>v+'%',
+'subTextSize':v=>v+'px','subTextOpacity':v=>v+'%',
+'dropsIntensity':v=>v,'dropsMaxSize':v=>v+'px',
+'smokeOpacity':v=>v+'%','bokehCount':v=>v,
+'bokehSize':v=>v+'px','lightIntensity':v=>v+'%',
+'vignetteIntensity':v=>v+'%',
+'logoX':v=>v+'%','logoY':v=>v+'%',
+'logoSize':v=>v+'%','logoOpacity':v=>v+'%',
+'logoRotate':v=>v+'deg','logoShadow':v=>v+'px',
+'logoBlur':v=>v+'px'
+};
+const displayEl=document.getElementById(id+'Val');
+if(displayEl&&valMap[id])displayEl.textContent=valMap[id](this.value);
+draw();
+}
+});
+}
+});
+
+// Checkboxes
+['dropsEffect','smokeEffect','paperEffect','grainEffect','waveEffect',
+'bokehEffect','lightEffect','vignetteEffect','noiseEffect','glitchEffect'].forEach(id=>{
+const el=document.getElementById(id);
+if(el)el.addEventListener('change',draw);
+});
+
+// ===== DESCARGAS =====
+function downloadImage(){
+const link=document.createElement('a');
+link.download='fresh-design-'+Date.now()+'.png';
+link.href=canvas.toDataURL('image/png',1.0);
+link.click();
+}
+
+function downloadHD(){
+const tempCanvas=document.createElement('canvas');
+const tempCtx=tempCanvas.getContext('2d');
+tempCanvas.width=canvas.width*2;
+tempCanvas.height=canvas.height*2;
+const originalW=canvas.width;
+const originalH=canvas.height;
+canvas.width=tempCanvas.width;
+canvas.height=tempCanvas.height;
+draw();
+const link=document.createElement('a');
+link.download='fresh-design-HD-'+Date.now()+'.png';
+link.href=canvas.toDataURL('image/png',1.0);
+link.click();
+canvas.width=originalW;
+canvas.height=originalH;
+draw();
+}
+
+// ===== ALEATORIO =====
+function randomize(){
+const colors=[
+['#c0392b','#8e291d'],['#27ae60','#1e8449'],
+['#2980b9','#1a5276'],['#8e44ad','#6c3483'],
+['#d35400','#a04000'],['#2c3e50','#1a252f'],
+['#f39c12','#d68910'],['#e91e63','#ad1457'],
+['#00bcd4','#00838f'],['#ff5722','#d84315'],
+['#9c27b0','#6a1b9a'],['#795548','#4e342e']
+];
+const random=colors[Math.floor(Math.random()*colors.length)];
+document.getElementById('colorTop').value=random[0];
+document.getElementById('colorBottom').value=random[1];
+seed=Math.random()*10000;
+draw();
+}
+
+// ===== RESET =====
+function resetAll(){
+document.getElementById('colorTop').value='#c0392b';
+document.getElementById('colorBottom').value='#8e291d';
+document.getElementById('gradientIntensity').value=80;
+document.getElementById('gradientAngle').value=180;
+document.getElementById('dropsIntensity').value=100;
+document.getElementById('dropsMaxSize').value=15;
+document.getElementById('textSize').value=48;
+document.getElementById('textShadow').value=15;
+document.getElementById('subTextSize').value=14;
+imageData=[];
+logoImage=null;
+document.getElementById('logoPreviewContainer').style.display='none';
+renderImageCards();
+seed=Math.random()*10000;
+draw();
+}
+
+// ===== INICIALIZAR =====
+window.onload=function(){
+initCanvas();
+};
+
+// ===== HACER FUNCIONES GLOBALES =====
+window.downloadImage=downloadImage;
+window.downloadHD=downloadHD;
+window.randomize=randomize;
+window.resetAll=resetAll;
+window.removeImage=removeImage;
+window.moveImageUp=moveImageUp;
+window.moveImageDown=moveImageDown;
+window.duplicateImage=duplicateImage;
+window.updateImageSetting=updateImageSetting;
+window.toggleImageAdvanced=toggleImageAdvanced;
+window.removeLogo=removeLogo;
+</script>
+</body>
+</html>
