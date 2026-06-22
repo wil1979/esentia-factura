@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Grupos</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+        .form-section {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        input[type="text"] {
+            flex: 1;
+            min-width: 200px;
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+        }
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(17, 153, 142, 0.4);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            color: white;
+        }
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 65, 108, 0.4);
+        }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #555;
+        }
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 8px;
+        }
+        .groups-list {
+            list-style: none;
+        }
+        .group-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px;
+            background: #f8f9ff;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+            animation: slideIn 0.4s ease;
+        }
+        .group-item:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+        .group-item.editing {
+            border-color: #11998e;
+            background: #f0fff4;
+        }
+        .group-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+        .group-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .group-details h3 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 3px;
+        }
+        .group-details p {
+            color: #888;
+            font-size: 13px;
+        }
+        .group-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .edit-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 2px solid #11998e;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #999;
+        }
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+        }
+        .stat-box h2 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+        .stat-box p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateX(100px); }
+        }
+        .removing {
+            animation: fadeOut 0.4s ease forwards;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #333;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s;
+            z-index: 1000;
+        }
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .toast.success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .toast.error { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📁 Gestión de Grupos</h1>
+
+        <div class="stats">
+            <div class="stat-box">
+                <h2 id="totalGroups">0</h2>
+                <p>Total Grupos</p>
+            </div>
+            <div class="stat-box">
+                <h2 id="lastCreated">-</h2>
+                <p>Último Creado</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="form-section">
+                <input type="text" id="groupInput" placeholder="Nombre del nuevo grupo..." maxlength="50">
+                <button class="btn btn-primary" onclick="addGroup()">
+                    <span>➕</span> Agregar Grupo
+                </button>
+            </div>
+
+            <ul class="groups-list" id="groupsList">
+                <!-- Los grupos se renderizan aquí -->
+            </ul>
+
+            <div class="empty-state" id="emptyState">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                </svg>
+                <h3>No hay grupos creados</h3>
+                <p>Agrega tu primer grupo usando el campo de arriba</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Datos iniciales de ejemplo (puedes reemplazarlos o cargarlos desde tu backend)
+        let groups = JSON.parse(localStorage.getItem('groups')) || [
+            { id: 1, name: 'Administradores', created: '2024-01-15' },
+            { id: 2, name: 'Ventas', created: '2024-02-20' },
+            { id: 3, name: 'Soporte Técnico', created: '2024-03-10' }
+        ];
+
+        let editingId = null;
+
+        function saveToStorage() {
+            localStorage.setItem('groups', JSON.stringify(groups));
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function updateStats() {
+            document.getElementById('totalGroups').textContent = groups.length;
+            const last = groups[groups.length - 1];
+            document.getElementById('lastCreated').textContent = last ? last.name : '-';
+        }
+
+        function renderGroups() {
+            const list = document.getElementById('groupsList');
+            const empty = document.getElementById('emptyState');
+
+            if (groups.length === 0) {
+                list.innerHTML = '';
+                empty.style.display = 'block';
+                updateStats();
+                return;
+            }
+
+            empty.style.display = 'none';
+            list.innerHTML = groups.map(group => {
+                const isEditing = editingId === group.id;
+                return `
+                    <li class="group-item ${isEditing ? 'editing' : ''}" data-id="${group.id}">
+                        <div class="group-info">
+                            <div class="group-icon">${group.name.charAt(0).toUpperCase()}</div>
+                            ${isEditing ? `
+                                <input type="text" class="edit-input" id="edit-${group.id}" 
+                                    value="${group.name}" maxlength="50" 
+                                    onkeypress="if(event.key==='Enter') saveEdit(${group.id})">
+                            ` : `
+                                <div class="group-details">
+                                    <h3>${group.name}</h3>
+                                    <p>Creado: ${group.created}</p>
+                                </div>
+                            `}
+                        </div>
+                        <div class="group-actions">
+                            ${isEditing ? `
+                                <button class="btn btn-success btn-sm" onclick="saveEdit(${group.id})">💾 Guardar</button>
+                                <button class="btn btn-secondary btn-sm" onclick="cancelEdit()">❌ Cancelar</button>
+                            ` : `
+                                <button class="btn btn-primary btn-sm" onclick="startEdit(${group.id})">✏️ Editar</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteGroup(${group.id})">🗑️ Eliminar</button>
+                            `}
+                        </div>
+                    </li>
+                `;
+            }).join('');
+
+            updateStats();
+        }
+
+        function addGroup() {
+            const input = document.getElementById('groupInput');
+            const name = input.value.trim();
+
+            if (!name) {
+                showToast('Por favor ingresa un nombre para el grupo', 'error');
+                return;
+            }
+
+            if (groups.some(g => g.name.toLowerCase() === name.toLowerCase())) {
+                showToast('Ya existe un grupo con ese nombre', 'error');
+                return;
+            }
+
+            const newGroup = {
+                id: Date.now(),
+                name: name,
+                created: new Date().toLocaleDateString('es-ES')
+            };
+
+            groups.push(newGroup);
+            saveToStorage();
+            input.value = '';
+            renderGroups();
+            showToast(`Grupo "${name}" creado exitosamente`);
+        }
+
+        function startEdit(id) {
+            editingId = id;
+            renderGroups();
+            const input = document.getElementById(`edit-${id}`);
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        }
+
+        function saveEdit(id) {
+            const input = document.getElementById(`edit-${id}`);
+            const newName = input.value.trim();
+
+            if (!newName) {
+                showToast('El nombre no puede estar vacío', 'error');
+                return;
+            }
+
+            if (groups.some(g => g.id !== id && g.name.toLowerCase() === newName.toLowerCase())) {
+                showToast('Ya existe un grupo con ese nombre', 'error');
+                return;
+            }
+
+            const group = groups.find(g => g.id === id);
+            const oldName = group.name;
+            group.name = newName;
+
+            editingId = null;
+            saveToStorage();
+            renderGroups();
+            showToast(`Grupo actualizado: "${oldName}" → "${newName}"`);
+        }
+
+        function cancelEdit() {
+            editingId = null;
+            renderGroups();
+        }
+
+        function deleteGroup(id) {
+            const group = groups.find(g => g.id === id);
+            if (!confirm(`¿Estás seguro de eliminar el grupo "${group.name}"?`)) return;
+
+            const item = document.querySelector(`[data-id="${id}"]`);
+            item.classList.add('removing');
+
+            setTimeout(() => {
+                groups = groups.filter(g => g.id !== id);
+                saveToStorage();
+                renderGroups();
+                showToast(`Grupo "${group.name}" eliminado`);
+            }, 400);
+        }
+
+        // Permitir agregar con Enter
+        document.getElementById('groupInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addGroup();
+        });
+
+        // Inicializar
+        renderGroups();
+    </script>
+</body>
+</html>
