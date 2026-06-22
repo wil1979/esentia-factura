@@ -5,456 +5,191 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Ruleta de Premios - Sorteo Dinámico con Grupos">
     <meta name="theme-color" content="#0f172a">
-    <title>🎰Esentia Ruleta de Premios</title>
-    
+    <title>🎰Esentia Ruleta de Premios v3.7</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%230ea5e9' width='192' height='192'/><text x='50%' y='50%' font-size='120' fill='white' text-anchor='middle' dominant-baseline='middle'>🎰</text></svg>">
-    <!--<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%230ea5e9' width='192' height='192'/><text x='50%' y='50%' font-size='120' fill='white' text-anchor='middle' dominant-baseline='middle'>🎰</text></svg>">-->
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
-    
     <style>
-        :root {
-            --primary: #0ea5e9;
-            --accent: #f59e0b;
-            --glass: rgba(255, 255, 255, 0.08);
-            --glass-border: rgba(255, 255, 255, 0.15);
-        }
-
-        * { 
-            font-family: 'Outfit', sans-serif;
-            box-sizing: border-box;
-        }
-
-        body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #0c4a6e 70%, #0f172a 100%);
-            min-height: 100vh;
-            overflow-x: hidden;
-            margin: 0;
-            padding: 0;
-        }
-
-        .bg-particles {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 0; overflow: hidden;
-        }
-        .particle {
-            position: absolute; border-radius: 50%;
-            background: rgba(14, 165, 233, 0.15);
-            animation: floatUp linear infinite;
-            will-change: transform, opacity;
-        }
-        @keyframes floatUp {
-            0% { transform: translateY(100vh) scale(0); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
-        }
-
-        .glass {
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        }
-
-        .wheel-container {
-            position: relative;
-            width: 480px; height: 480px;
-            margin: 0 auto;
-            contain: layout style paint;
-        }
-        
-        .wheel-svg {
-            width: 100%; height: 100%;
-            filter: drop-shadow(0 0 30px rgba(14,165,233,0.3));
-            transition: transform 0.1s linear;
-            will-change: transform;
-        }
-        
-        .wheel-center {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80px; height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #f59e0b, #d97706);
-            border: 5px solid rgba(255,255,255,0.3);
-            box-shadow: 0 0 40px rgba(245,158,11,0.5), inset 0 0 20px rgba(0,0,0,0.3);
-            z-index: 10;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .wheel-center i {
-            font-size: 32px; color: white;
-            animation: pulse-center 2s ease-in-out infinite;
-            will-change: transform;
-        }
-        @keyframes pulse-center {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.15); }
-        }
-        .wheel-pointer {
-            position: absolute;
-            top: -20px; left: 50%;
-            transform: translateX(-50%);
-            width: 0; height: 0;
-            border-left: 22px solid transparent;
-            border-right: 22px solid transparent;
-            border-top: 42px solid #f59e0b;
-            filter: drop-shadow(0 2px 10px rgba(245,158,11,0.8));
-            z-index: 20;
-        }
-        .wheel-pointer::after {
-            content: '';
-            position: absolute;
-            top: -50px; left: 50%;
-            transform: translateX(-50%);
-            width: 16px; height: 16px;
-            background: #f59e0b;
-            border-radius: 50%;
-            box-shadow: 0 0 20px rgba(245,158,11,0.9);
-        }
-
-        .spin-btn {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            border: none;
-            color: white;
-            font-weight: 900;
-            font-size: 1.4rem;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            padding: 18px 60px;
-            border-radius: 50px;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 40px rgba(245,158,11,0.4);
-            will-change: transform, box-shadow;
-        }
-        .spin-btn::before {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.5s;
-        }
+        :root { --primary: #0ea5e9; --accent: #f59e0b; --glass: rgba(255,255,255,0.08); --glass-border: rgba(255,255,255,0.15); }
+        * { font-family: 'Outfit', sans-serif; box-sizing: border-box; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #0c4a6e 70%, #0f172a 100%); min-height: 100vh; overflow-x: hidden; margin: 0; padding: 0; }
+        .bg-particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
+        .particle { position: absolute; border-radius: 50%; background: rgba(14,165,233,0.15); animation: floatUp linear infinite; will-change: transform, opacity; }
+        @keyframes floatUp { 0% { transform: translateY(100vh) scale(0); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(-10vh) scale(1); opacity: 0; } }
+        .glass { background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+        .wheel-container { position: relative; width: 480px; height: 480px; margin: 0 auto; contain: layout style paint; }
+        .wheel-svg { width: 100%; height: 100%; filter: drop-shadow(0 0 30px rgba(14,165,233,0.3)); transition: transform 0.1s linear; will-change: transform; }
+        .wheel-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(145deg, #f59e0b, #d97706); border: 5px solid rgba(255,255,255,0.3); box-shadow: 0 0 40px rgba(245,158,11,0.5), inset 0 0 20px rgba(0,0,0,0.3); z-index: 10; display: flex; align-items: center; justify-content: center; }
+        .wheel-center i { font-size: 32px; color: white; animation: pulse-center 2s ease-in-out infinite; will-change: transform; }
+        @keyframes pulse-center { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+        .wheel-pointer { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 22px solid transparent; border-right: 22px solid transparent; border-top: 42px solid #f59e0b; filter: drop-shadow(0 2px 10px rgba(245,158,11,0.8)); z-index: 20; }
+        .wheel-pointer::after { content: ''; position: absolute; top: -50px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: #f59e0b; border-radius: 50%; box-shadow: 0 0 20px rgba(245,158,11,0.9); }
+        .spin-btn { background: linear-gradient(135deg, #f59e0b, #d97706); border: none; color: white; font-weight: 900; font-size: 1.4rem; letter-spacing: 3px; text-transform: uppercase; padding: 18px 60px; border-radius: 50px; cursor: pointer; position: relative; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 10px 40px rgba(245,158,11,0.4); will-change: transform, box-shadow; }
+        .spin-btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); transition: left 0.5s; }
         .spin-btn:hover::before { left: 100%; }
-        .spin-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 50px rgba(245,158,11,0.6);
-        }
-        .spin-btn:disabled {
-            opacity: 0.4; cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .reset-btn {
-            background: linear-gradient(135deg, #ef4444, #b91c1c);
-            border: none;
-            color: white;
-            font-weight: 700;
-            font-size: 1rem;
-            padding: 12px 28px;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 6px 25px rgba(239,68,68,0.3);
-            will-change: transform, box-shadow;
-        }
-        .reset-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 35px rgba(239,68,68,0.5);
-        }
-        .reset-btn:disabled {
-            opacity: 0.3; cursor: not-allowed;
-            background: #475569;
-            box-shadow: none;
-        }
-
-        .admin-btn {
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
-            border: none;
-            color: white;
-            font-weight: 700;
-            font-size: 1rem;
-            padding: 12px 28px;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 6px 25px rgba(99,102,241,0.3);
-        }
-        .admin-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 35px rgba(99,102,241,0.5);
-        }
-
-        .group-selector {
-            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-            border: none;
-            color: white;
-            font-weight: 600;
-            padding: 10px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(139,92,246,0.3);
-        }
-        .group-selector:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(139,92,246,0.5);
-        }
-
-        .overlay {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.88);
-            backdrop-filter: blur(12px);
-            z-index: 100;
-            display: none;
-            align-items: center; justify-content: center;
-            flex-direction: column;
-            padding: 20px;
-        }
+        .spin-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 50px rgba(245,158,11,0.6); }
+        .spin-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+        .reset-btn { background: linear-gradient(135deg, #ef4444, #b91c1c); border: none; color: white; font-weight: 700; font-size: 1rem; padding: 12px 28px; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 6px 25px rgba(239,68,68,0.3); will-change: transform, box-shadow; }
+        .reset-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 35px rgba(239,68,68,0.5); }
+        .reset-btn:disabled { opacity: 0.3; cursor: not-allowed; background: #475569; box-shadow: none; }
+        .admin-btn { background: linear-gradient(135deg, #6366f1, #4f46e5); border: none; color: white; font-weight: 700; font-size: 1rem; padding: 12px 28px; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 6px 25px rgba(99,102,241,0.3); }
+        .admin-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 35px rgba(99,102,241,0.5); }
+        .group-selector { background: linear-gradient(135deg, #8b5cf6, #7c3aed); border: none; color: white; font-weight: 600; padding: 10px 16px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(139,92,246,0.3); }
+        .group-selector:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(139,92,246,0.5); }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88); backdrop-filter: blur(12px); z-index: 100; display: none; align-items: center; justify-content: center; flex-direction: column; padding: 20px; }
         .overlay.active { display: flex; }
-        
-        .modal-card {
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            border: 2px solid var(--glass-border);
-            border-radius: 28px;
-            padding: 40px;
-            width: 100%;
-            max-width: 800px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 0 100px rgba(0,0,0,0.5);
-            position: relative;
-        }
-
-        .winner-card {
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            border: 3px solid var(--accent);
-            border-radius: 28px;
-            padding: 50px 70px;
-            text-align: center;
-            animation: winnerPop 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            box-shadow: 0 0 100px rgba(245,158,11,0.4);
-            position: relative;
-            will-change: transform;
-        }
-        @keyframes winnerPop {
-            0% { transform: scale(0) rotate(-10deg); opacity: 0; }
-            100% { transform: scale(1) rotate(0deg); opacity: 1; }
-        }
-        .winner-avatar {
-            width: 120px; height: 120px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 24px;
-            font-size: 56px;
-            font-weight: 900;
-            box-shadow: 0 0 50px rgba(245,158,11,0.6);
-        }
-        .confetti-canvas {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none; z-index: 101;
-        }
-
-        .winner-item, .admin-item {
-            background: rgba(14, 165, 233, 0.1);
-            border: 1px solid rgba(14, 165, 233, 0.2);
-            border-radius: 14px;
-            padding: 14px 18px;
-            margin-bottom: 10px;
-            display: flex; align-items: center; gap: 14px;
-            animation: slideIn 0.4s ease;
-            transition: all 0.3s;
-            will-change: transform, background;
-        }
-        .winner-item:hover, .admin-item:hover {
-            background: rgba(14, 165, 233, 0.2);
-            transform: translateX(5px);
-        }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        .winner-rank {
-            width: 36px; height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #0ea5e9, #0284c7);
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 800; font-size: 15px; color: white;
-            flex-shrink: 0;
-        }
+        .modal-card { background: linear-gradient(145deg, #1e293b, #0f172a); border: 2px solid var(--glass-border); border-radius: 28px; padding: 40px; width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; box-shadow: 0 0 100px rgba(0,0,0,0.5); position: relative; }
+        .winner-card { background: linear-gradient(145deg, #1e293b, #0f172a); border: 3px solid var(--accent); border-radius: 28px; padding: 50px 70px; text-align: center; animation: winnerPop 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55); box-shadow: 0 0 100px rgba(245,158,11,0.4); position: relative; will-change: transform; }
+        @keyframes winnerPop { 0% { transform: scale(0) rotate(-10deg); opacity: 0; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+        .winner-avatar { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b, #d97706); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; font-size: 56px; font-weight: 900; box-shadow: 0 0 50px rgba(245,158,11,0.6); }
+        .confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 101; }
+        .winner-item, .admin-item { background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.2); border-radius: 14px; padding: 14px 18px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; animation: slideIn 0.4s ease; transition: all 0.3s; will-change: transform, background; }
+        .winner-item:hover, .admin-item:hover { background: rgba(14,165,233,0.2); transform: translateX(5px); }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        .winner-rank { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #0ea5e9, #0284c7); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; color: white; flex-shrink: 0; }
         .winner-rank.gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
         .winner-rank.silver { background: linear-gradient(135deg, #94a3b8, #64748b); }
         .winner-rank.bronze { background: linear-gradient(135deg, #b45309, #92400e); }
-
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 3px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: rgba(14,165,233,0.4); border-radius: 3px; }
-
-        .glow-text {
-            text-shadow: 0 0 20px rgba(14,165,233,0.5), 0 0 40px rgba(14,165,233,0.3);
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            padding: 14px 28px;
-            border-radius: 50px;
-            font-weight: 600;
-            box-shadow: 0 10px 40px rgba(16,185,129,0.4);
-            z-index: 200;
-            opacity: 0;
-            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            will-change: transform, opacity;
-        }
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-        .toast.error {
-            background: linear-gradient(135deg, #ef4444, #b91c1c);
-            box-shadow: 0 10px 40px rgba(239,68,68,0.4);
-        }
-
-        .loading-overlay {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.95);
-            z-index: 300;
-            display: flex;
-            align-items: center; justify-content: center;
-            flex-direction: column;
-            gap: 20px;
-        }
+        .glow-text { text-shadow: 0 0 20px rgba(14,165,233,0.5), 0 0 40px rgba(14,165,233,0.3); }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 14px 28px; border-radius: 50px; font-weight: 600; box-shadow: 0 10px 40px rgba(16,185,129,0.4); z-index: 200; opacity: 0; transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); will-change: transform, opacity; }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .toast.error { background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 10px 40px rgba(239,68,68,0.4); }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.95); z-index: 300; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
         .loading-overlay.hidden { display: none; }
-        .spinner-ring {
-            width: 60px; height: 60px;
-            border: 4px solid rgba(14,165,233,0.2);
-            border-top-color: #0ea5e9;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            will-change: transform;
-        }
+        .spinner-ring { width: 60px; height: 60px; border: 4px solid rgba(14,165,233,0.2); border-top-color: #0ea5e9; border-radius: 50%; animation: spin 1s linear infinite; will-change: transform; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .input-field { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 16px; color: white; width: 100%; outline: none; transition: all 0.3s; }
+        .input-field:focus { border-color: var(--primary); background: rgba(255,255,255,0.1); }
+        @media (max-width: 768px) { .wheel-container { width: 320px; height: 320px; } .winner-card { padding: 28px 36px; } .modal-card { padding: 20px; } }
+        .fb-banner { width: 100%; background: linear-gradient(135deg, #1877f2 0%, #166fe5 50%, #0d5cb6 100%); color: white; padding: 14px 24px; border-radius: 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 4px 20px rgba(24,119,242,0.3); box-sizing: border-box; flex-wrap: wrap; }
+        .fb-banner .fb-icon { width: 44px; height: 44px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .fb-banner .fb-icon svg { width: 26px; height: 26px; fill: #1877f2; }
+        .fb-banner .fb-text { flex: 1; min-width: 200px; }
+        .fb-banner .fb-text h2 { margin: 0; font-size: 1.15rem; font-weight: 700; }
+        .fb-banner .fb-text p { margin: 3px 0 0; font-size: 0.82rem; opacity: 0.9; }
+        .fb-banner .fb-btn { background: white; color: #1877f2; border: none; padding: 10px 22px; border-radius: 50px; font-weight: 700; font-size: 0.9rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s ease; flex-shrink: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+        .fb-banner .fb-btn:hover { background: #f0f2f5; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.25); }
+        .fb-banner .fb-btn svg { width: 16px; height: 16px; fill: #1877f2; }
+        @media (max-width: 768px) { .fb-banner { text-align: center; justify-content: center; padding: 12px 16px; } .fb-banner .fb-text { min-width: 100%; } .fb-banner .fb-text h2 { font-size: 1rem; } .fb-banner .fb-btn { width: 100%; justify-content: center; } }
 
-        .input-field {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 12px 16px;
-            color: white;
-            width: 100%;
-            outline: none;
-            transition: all 0.3s;
-        }
-        .input-field:focus {
-            border-color: var(--primary);
-            background: rgba(255,255,255,0.1);
-        }
+        /* ===== MODAL CALCULADORA ===== */
+        .calc-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 1000; justify-content: center; align-items: center; padding: 20px; overflow-y: auto; }
+        .calc-modal-overlay.active { display: flex; }
+        .calc-modal-content { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid rgba(14,165,233,0.3); border-radius: 20px; max-width: 1200px; width: 95%; max-height: 90vh; overflow-y: auto; box-shadow: 0 0 60px rgba(14,165,233,0.2); position: relative; }
+        .calc-modal-header { background: linear-gradient(135deg, #0ea5e9, #0284c7); padding: 1.2rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-radius: 20px 20px 0 0; position: sticky; top: 0; z-index: 10; }
+        .calc-modal-header h2 { color: white; font-size: 1.4rem; margin: 0; }
+        .calc-modal-close { background: rgba(255,255,255,0.2); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; transition: 0.3s; }
+        .calc-modal-close:hover { background: #ef4444; }
+        .calc-body { padding: 1.5rem; }
+        .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .calc-card { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.1); }
+        .calc-card h3 { color: #f59e0b; margin-bottom: 1.2rem; font-size: 1.2rem; border-bottom: 2px solid rgba(245,158,11,0.3); padding-bottom: 0.5rem; }
+        .calc-form-group { margin-bottom: 1rem; }
+        .calc-form-group label { display: block; color: rgba(255,255,255,0.7); font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 600; }
+        .calc-form-group input, .calc-form-group select { width: 100%; padding: 0.7rem 1rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: white; font-size: 0.95rem; outline: none; transition: all 0.3s; }
+        .calc-form-group input:focus, .calc-form-group select:focus { border-color: #0ea5e9; background: rgba(255,255,255,0.12); }
+        .calc-form-group input::placeholder { color: rgba(255,255,255,0.3); }
+        .calc-resumen { background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(239,68,68,0.1)); border: 1px solid rgba(245,158,11,0.3); border-radius: 12px; padding: 1.2rem; margin-bottom: 1.5rem; }
+        .calc-resumen-row { display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 0.9rem; color: rgba(255,255,255,0.85); border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .calc-resumen-row:last-child { border: none; font-size: 1.3rem; font-weight: bold; color: #f59e0b; margin-top: 0.5rem; padding-top: 0.8rem; border-top: 2px solid rgba(245,158,11,0.3); }
+        .calc-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.2rem; }
+        .calc-btn { padding: 0.7rem 1.2rem; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: white; transition: all 0.3s; }
+        .calc-btn:hover { transform: translateY(-2px); }
+        .calc-btn-calc { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+        .calc-btn-calc:hover { box-shadow: 0 5px 15px rgba(14,165,233,0.4); }
+        .calc-btn-save { background: linear-gradient(135deg, #10b981, #059669); }
+        .calc-btn-save:hover { box-shadow: 0 5px 15px rgba(16,185,129,0.4); }
+        .calc-btn-pdf { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .calc-btn-pdf:hover { box-shadow: 0 5px 15px rgba(139,92,246,0.4); }
+        .calc-btn-excel { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+        .calc-btn-excel:hover { box-shadow: 0 5px 15px rgba(14,165,233,0.4); }
+        .calc-btn-clear { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+        .calc-btn-clear:hover { box-shadow: 0 5px 15px rgba(239,68,68,0.4); }
+        .calc-btn-edit { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .calc-btn-edit:hover { box-shadow: 0 5px 15px rgba(245,158,11,0.4); }
+        .calc-btn-update { background: linear-gradient(135deg, #10b981, #059669); }
+        .calc-btn-update:hover { box-shadow: 0 5px 15px rgba(16,185,129,0.4); }
+        .calc-historial-section { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.1); margin-top: 1.5rem; }
+        .calc-historial-section h3 { color: #f59e0b; margin-bottom: 1rem; font-size: 1.1rem; }
+        .calc-historial-list { max-height: 350px; overflow-y: auto; padding-right: 0.5rem; }
+        .calc-historial-item { background: rgba(255,255,255,0.05); padding: 0.8rem 1rem; border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.3s; border: 1px solid rgba(255,255,255,0.05); gap: 0.8rem; }
+        .calc-historial-item:hover { background: rgba(14,165,233,0.1); transform: translateX(5px); border-color: rgba(14,165,233,0.3); }
+        .calc-historial-item-info { flex: 1; min-width: 0; }
+        .calc-historial-item-info h4 { color: #f59e0b; margin-bottom: 0.2rem; font-size: 0.9rem; }
+        .calc-historial-item-info p { color: rgba(255,255,255,0.5); font-size: 0.8rem; }
+        .calc-historial-img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; border: 2px solid rgba(245,158,11,0.3); flex-shrink: 0; }
+        .calc-historial-img-placeholder { width: 50px; height: 50px; border-radius: 8px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
+        .calc-historial-actions { display: flex; gap: 0.3rem; flex-shrink: 0; }
+        .calc-historial-actions button { background: rgba(255,255,255,0.1); border: none; color: white; padding: 0.3rem 0.5rem; border-radius: 5px; cursor: pointer; font-size: 0.75rem; transition: all 0.3s; }
+        .calc-historial-actions button:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
+        .calc-historial-actions .btn-delete:hover { background: #ef4444; }
+        .calc-historial-actions .btn-edit:hover { background: #f59e0b; }
 
-        @media (max-width: 768px) {
-            .wheel-container { width: 320px; height: 320px; }
-            .winner-card { padding: 28px 36px; }
-            .modal-card { padding: 20px; }
-        }
-    
-        /* Banner Facebook */
-        .fb-banner {
-            width: 100%;
-            background: linear-gradient(135deg, #1877f2 0%, #166fe5 50%, #0d5cb6 100%);
-            color: white;
-            padding: 14px 24px;
-            border-radius: 16px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            box-shadow: 0 4px 20px rgba(24, 119, 242, 0.3);
-            box-sizing: border-box;
-            flex-wrap: wrap;
-        }
-        .fb-banner .fb-icon {
-            width: 44px;
-            height: 44px;
-            background: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-        .fb-banner .fb-icon svg {
-            width: 26px;
-            height: 26px;
-            fill: #1877f2;
-        }
-        .fb-banner .fb-text {
-            flex: 1;
-            min-width: 200px;
-        }
-        .fb-banner .fb-text h2 {
-            margin: 0;
-            font-size: 1.15rem;
-            font-weight: 700;
-        }
-        .fb-banner .fb-text p {
-            margin: 3px 0 0;
-            font-size: 0.82rem;
-            opacity: 0.9;
-        }
-        .fb-banner .fb-btn {
-            background: white;
-            color: #1877f2;
-            border: none;
-            padding: 10px 22px;
-            border-radius: 50px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-        }
-        .fb-banner .fb-btn:hover {
-            background: #f0f2f5;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
-        }
-        .fb-banner .fb-btn svg {
-            width: 16px;
-            height: 16px;
-            fill: #1877f2;
-        }
-        @media (max-width: 768px) {
-            .fb-banner { text-align: center; justify-content: center; padding: 12px 16px; }
-            .fb-banner .fb-text { min-width: 100%; }
-            .fb-banner .fb-text h2 { font-size: 1rem; }
-            .fb-banner .fb-btn { width: 100%; justify-content: center; }
-        }
+        /* ===== IMAGEN PRODUCTO ===== */
+        .calc-imagen-section { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 1rem; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 1rem; }
+        .calc-imagen-preview { width: 100%; max-width: 200px; height: 150px; border-radius: 10px; object-fit: cover; border: 2px solid rgba(245,158,11,0.4); margin: 0.5rem auto; display: block; background: rgba(0,0,0,0.2); }
+        .calc-imagen-preview.empty { display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.3); font-size: 3rem; }
+        .calc-imagen-tabs { display: flex; gap: 0.5rem; margin-bottom: 0.8rem; }
+        .calc-imagen-tab { flex: 1; padding: 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: rgba(255,255,255,0.6); cursor: pointer; text-align: center; font-size: 0.8rem; transition: all 0.3s; }
+        .calc-imagen-tab.active { background: rgba(14,165,233,0.2); border-color: #0ea5e9; color: white; }
+        .calc-imagen-tab:hover:not(.active) { background: rgba(255,255,255,0.1); }
+        .calc-imagen-input-file { display: none; }
+        .calc-imagen-btn-file { display: block; width: 100%; padding: 0.7rem; background: linear-gradient(135deg, #6366f1, #4f46e5); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.3s; }
+        .calc-imagen-btn-file:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(99,102,241,0.4); }
+        .calc-imagen-remove { display: block; width: 100%; margin-top: 0.5rem; padding: 0.4rem; background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; color: #ef4444; font-size: 0.8rem; cursor: pointer; text-align: center; transition: all 0.3s; }
+        .calc-imagen-remove:hover { background: rgba(239,68,68,0.3); }
 
+        /* Botón flotante calculadora */
+        .btn-calc-flotante { position: fixed; bottom: 30px; right: 30px; width: 65px; height: 65px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b, #d97706); border: 3px solid rgba(255,255,255,0.2); color: white; font-size: 1.8rem; cursor: pointer; box-shadow: 0 5px 25px rgba(245,158,11,0.4); z-index: 999; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; animation: pulseGlow 2s infinite; }
+        .btn-calc-flotante:hover { transform: scale(1.15) rotate(15deg); box-shadow: 0 8px 35px rgba(245,158,11,0.6); }
+        @keyframes pulseGlow { 0%,100% { box-shadow: 0 5px 25px rgba(245,158,11,0.4); } 50% { box-shadow: 0 5px 35px rgba(245,158,11,0.7), 0 0 15px rgba(245,158,11,0.3); } }
+        .btn-calc-flotante::after { content: 'Calculadora'; position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; color: #f59e0b; font-weight: bold; white-space: nowrap; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
+
+        @media (max-width: 768px) { .calc-grid { grid-template-columns: 1fr; } .calc-modal-content { width: 100%; max-height: 95vh; } .btn-calc-flotante { width: 55px; height: 55px; font-size: 1.5rem; bottom: 20px; right: 20px; } .calc-historial-item { flex-wrap: wrap; } .calc-historial-img, .calc-historial-img-placeholder { width: 40px; height: 40px; } }
+
+        /* ===== ESTILOS EDICIÓN DE GRUPOS ===== */
+        .group-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 16px; transition: all 0.3s ease; }
+        .group-card:hover { border-color: rgba(14,165,233,0.4); background: rgba(255,255,255,0.05); }
+        .group-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .group-card-title { font-size: 1.1rem; font-weight: 700; color: white; }
+        .group-card-actions { display: flex; gap: 8px; }
+        .group-card-actions button { background: rgba(255,255,255,0.1); border: none; color: white; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
+        .group-card-actions button:hover { transform: scale(1.1); }
+        .group-card-actions .btn-edit:hover { background: #f59e0b; }
+        .group-card-actions .btn-delete:hover { background: #ef4444; }
+        .group-card-actions .btn-expand:hover { background: #0ea5e9; }
+        .participant-list { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .participant-list.active { display: block; }
+        .participant-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(14,165,233,0.05); border-radius: 8px; margin-bottom: 6px; transition: all 0.2s; }
+        .participant-item:hover { background: rgba(14,165,233,0.1); }
+        .participant-item input { background: transparent; border: none; color: white; font-size: 0.9rem; width: 100%; outline: none; }
+        .participant-item input:focus { border-bottom: 1px solid #0ea5e9; }
+        .participant-item .participant-actions { display: flex; gap: 6px; opacity: 0; transition: opacity 0.2s; }
+        .participant-item:hover .participant-actions { opacity: 1; }
+        .participant-item .participant-actions button { background: none; border: none; color: rgba(255,255,255,0.6); cursor: pointer; padding: 4px; border-radius: 4px; transition: all 0.2s; }
+        .participant-item .participant-actions button:hover { color: white; background: rgba(255,255,255,0.1); }
+        .participant-item .participant-actions .btn-delete-part:hover { color: #ef4444; }
+        .add-participant-row { display: flex; gap: 8px; margin-top: 10px; }
+        .add-participant-row input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 12px; color: white; outline: none; }
+        .add-participant-row input:focus { border-color: #10b981; }
+        .add-participant-row button { background: linear-gradient(135deg, #10b981, #059669); border: none; color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .add-participant-row button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16,185,129,0.4); }
+        .group-edit-form { display: none; margin-bottom: 12px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid rgba(245,158,11,0.3); }
+        .group-edit-form.active { display: block; }
+        .group-edit-form input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 14px; color: white; width: 100%; margin-bottom: 8px; outline: none; }
+        .group-edit-form input:focus { border-color: #f59e0b; }
+        .group-edit-form .edit-actions { display: flex; gap: 8px; justify-content: flex-end; }
+        .group-edit-form .edit-actions button { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .group-edit-form .edit-actions .btn-save { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .group-edit-form .edit-actions .btn-cancel { background: rgba(255,255,255,0.1); color: white; }
+        .group-edit-form .edit-actions button:hover { transform: translateY(-2px); }
+        .badge-count { background: rgba(14,165,233,0.2); color: #0ea5e9; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
     </style>
-<base target="_blank">
 </head>
 <body class="text-white">
 
@@ -495,8 +230,6 @@
                     <i class="fas fa-times text-2xl"></i>
                 </button>
             </div>
-
-            <!-- Formulario Nuevo Grupo -->
             <div class="glass rounded-2xl p-6 mb-8">
                 <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
                     <i class="fas fa-plus-circle text-green-400"></i> Crear Nuevo Grupo
@@ -513,8 +246,6 @@
                     <i class="fas fa-save mr-2"></i> Guardar Grupo
                 </button>
             </div>
-
-            <!-- Lista de Grupos Existentes -->
             <div id="adminGroupsList">
                 <p class="text-center text-slate-500 py-8">Cargando grupos...</p>
             </div>
@@ -552,20 +283,14 @@
     </header>
 
     <!-- Main Content -->
-    
-    
-
     <main class="relative z-10 max-w-7xl mx-auto px-4 py-6">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-            <!-- Panel Izquierdo: Ruleta -->
             <div class="lg:col-span-7">
                 <div class="glass rounded-2xl p-8 text-center">
                     <div class="mb-6">
                         <p class="text-slate-400 text-sm mb-1">Premio Semanal</p>
                         <h2 class="text-2xl font-bold text-sky-300">Sorteo #<span id="sorteoNum">1</span></h2>
                     </div>
-
                     <div class="wheel-container mb-10">
                         <div class="wheel-pointer"></div>
                         <svg class="wheel-svg" id="wheelSVG" viewBox="0 0 480 480"></svg>
@@ -573,7 +298,6 @@
                             <i class="fas fa-star"></i>
                         </div>
                     </div>
-
                     <div class="flex justify-center gap-4 mb-6">
                         <button id="spinBtn" onclick="spinWheel()" class="spin-btn">
                             <i class="fas fa-play mr-2"></i> GIRAR
@@ -581,8 +305,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Panel Derecho: Ganadores -->
             <div class="lg:col-span-5">
                 <div class="glass rounded-2xl p-6 h-full">
                     <div class="flex items-center justify-between mb-6">
@@ -591,13 +313,11 @@
                         </h3>
                         <span class="text-sm bg-amber-500/20 text-amber-300 px-3 py-1 rounded-full font-semibold" id="winnersCount">0</span>
                     </div>
-
                     <div class="mb-6 flex items-center gap-4">
                         <div class="relative w-20 h-20 flex-shrink-0">
                             <svg class="w-20 h-20" style="transform: rotate(-90deg);" viewBox="0 0 80 80">
                                 <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="5"/>
-                                <circle id="progressCircle" cx="40" cy="40" r="34" fill="none" stroke="#0ea5e9" stroke-width="5"
-                                    stroke-dasharray="213.6" stroke-dashoffset="213.6" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease;"/>
+                                <circle id="progressCircle" cx="40" cy="40" r="34" fill="none" stroke="#0ea5e9" stroke-width="5" stroke-dasharray="213.6" stroke-dashoffset="213.6" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s ease;"/>
                             </svg>
                             <div class="absolute inset-0 flex items-center justify-center text-base font-bold" id="progressPercent">0%</div>
                         </div>
@@ -606,7 +326,6 @@
                             <p class="text-xl font-bold"><span id="winnersCount2">0</span> de <span id="totalCount">0</span></p>
                         </div>
                     </div>
-
                     <div class="custom-scroll overflow-y-auto max-h-[520px] pr-2" id="winnersList">
                         <div class="text-center text-slate-500 py-12">
                             <i class="fas fa-gift text-5xl mb-4 opacity-30"></i>
@@ -614,29 +333,29 @@
                         </div>
                     </div>
                 </div>
-
-                
             </div>
         </div>
-        <!-- Banner Facebook -->
-    <div class="fb-banner" style="max-width: 1280px; margin: 0 auto 20px auto;">
-        <div class="fb-icon">
-            <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        <div class="fb-banner" style="max-width: 1280px; margin: 0 auto 20px auto;">
+            <div class="fb-icon">
+                <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </div>
+            <div class="fb-text">
+                <h2>🎉 ¡Esentia, Síguenos en Facebook!</h2>
+                <p>Descubre nuestros productos, promociones exclusivas y novedades.</p>
+            </div>
+            <a href="https://www.facebook.com/profile.php?id=61579078480913" target="_blank" rel="noopener noreferrer" class="fb-btn">
+                <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                Seguir página
+            </a>
         </div>
-        <div class="fb-text">
-            <h2>🎉 ¡Esentia, Síguenos en Facebook!</h2>
-            <p>Descubre nuestros productos, promociones exclusivas y novedades.</p>
-        </div>
-        <a href="https://www.facebook.com/profile.php?id=61579078480913" target="_blank" rel="noopener noreferrer" class="fb-btn">
-            <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-            Seguir página
-        </a>
-    </div>
     </main>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <script>
         // ==================== FIREBASE CONFIG ====================
@@ -654,24 +373,60 @@
         let winners = [];
         let isSpinning = false;
         let db = null;
+        let storage = null;
         let currentRotation = 0;
         let currentGroupId = null;
         let groups = [];
+        let currentEditingId = null;
+        let currentImageBase64 = null;
+        let currentImageUrl = null;
+        let imageTabActive = 'file';
+        let editingGroupId = null;
+
+        // ==================== COSTOS CERA ====================
+        const costosCera = {
+            cera_china: 1000, cera_soya: 2500, cera_abeja: 4000,
+            parafina_gel: 3000, cera_coco: 3500
+        };
 
         // ==================== INICIALIZACIÓN ====================
         document.addEventListener('DOMContentLoaded', async () => {
             createParticles();
-
             try {
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
+                storage = firebase.storage();
                 console.log('✅ Firebase conectado');
-
                 await loadGroups();
+                cargarHistorialCalculadora();
             } catch (e) {
                 console.error('Error Firebase:', e);
                 showToast('Error conectando Firebase', true);
             }
+
+            // Event listeners calculadora
+            const calcModalOverlay = document.getElementById('calcModalOverlay');
+            if (calcModalOverlay) {
+                calcModalOverlay.addEventListener('click', function(e) {
+                    if (e.target === this) cerrarCalculadora();
+                });
+            }
+            const calcTipoCera = document.getElementById('calcTipoCera');
+            if (calcTipoCera) {
+                calcTipoCera.addEventListener('change', function() {
+                    const tipo = this.value;
+                    if (tipo !== 'personalizado' && costosCera[tipo]) {
+                        const costoCeraInput = document.getElementById('calcCostoCera');
+                        if (costoCeraInput) costoCeraInput.value = costosCera[tipo];
+                        calcularProduccion();
+                    }
+                });
+            }
+            ['calcPesoVela', 'calcPorcentajeFragancia', 'calcCostoCera', 'calcCostoFragancia',
+             'calcCostoMecheEnvase', 'calcCostosIndirectos', 'calcManoObra', 'calcMargenGanancia'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', calcularProduccion);
+            });
 
             document.getElementById('loadingOverlay').classList.add('hidden');
         });
@@ -681,13 +436,7 @@
             try {
                 const snapshot = await db.collection('participantes_ruleta').get();
                 groups = [];
-                snapshot.forEach(doc => {
-                    groups.push({
-                        id: doc.id,
-                        ...doc.data()
-                    });
-                });
-
+                snapshot.forEach(doc => groups.push({ id: doc.id, ...doc.data() }));
                 renderGroupSelector();
                 renderAdminGroups();
             } catch (e) {
@@ -695,7 +444,6 @@
                 showToast('Error cargando grupos', true);
             }
         }
-
         function renderGroupSelector() {
             const selector = document.getElementById('groupSelector');
             const currentVal = selector.value;
@@ -713,71 +461,42 @@
                 changeGroup();
             }
         }
-
         async function changeGroup() {
             const selector = document.getElementById('groupSelector');
             currentGroupId = selector.value;
-
             if (!currentGroupId) {
-                participants = [];
-                winners = [];
-                updateUI();
-                renderWheel();
-                return;
+                participants = []; winners = [];
+                updateUI(); renderWheel(); return;
             }
-
             await loadWinnersFromFirestore();
         }
-
-        // ==================== PANEL ADMIN ====================
         function openAdmin() {
             document.getElementById('adminOverlay').classList.add('active');
             renderAdminGroups();
         }
-
         function closeAdmin() {
             document.getElementById('adminOverlay').classList.remove('active');
+            editingGroupId = null;
         }
 
+        // ===== CREAR NUEVO GRUPO =====
         async function createNewGroup() {
             const name = document.getElementById('newGroupName').value.trim();
             const desc = document.getElementById('newGroupDesc').value.trim();
             const participantsText = document.getElementById('newGroupParticipants').value.trim();
-
-            if (!name) {
-                showToast('El nombre del grupo es obligatorio', true);
-                return;
-            }
-
-            if (!participantsText) {
-                showToast('Debes agregar al menos un participante', true);
-                return;
-            }
-
-            // Procesar participantes
-            const participantList = participantsText.split(/[\n,]+/)
-                .map(p => p.trim())
-                .filter(p => p !== "")
-                .map((p, index) => ({
-                    id: Date.now().toString() + index,
-                    nombre: p.toUpperCase(),
-                    departamento: desc || "General"
-                }));
-
+            if (!name) { showToast('El nombre del grupo es obligatorio', true); return; }
+            if (!participantsText) { showToast('Debes agregar al menos un participante', true); return; }
+            const participantList = participantsText.split(/[\n,]+/).map(p => p.trim()).filter(p => p !== "")
+                .map((p, index) => ({ id: Date.now().toString() + index, nombre: p.toUpperCase(), departamento: desc || "General" }));
             try {
                 document.getElementById('loadingOverlay').classList.remove('hidden');
                 await db.collection('participantes_ruleta').add({
-                    nombre: name,
-                    descripcion: desc,
-                    participantes: participantList,
+                    nombre: name, descripcion: desc, participantes: participantList,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-
-                // Limpiar formulario
                 document.getElementById('newGroupName').value = '';
                 document.getElementById('newGroupDesc').value = '';
                 document.getElementById('newGroupParticipants').value = '';
-
                 showToast('✅ Grupo creado exitosamente');
                 await loadGroups();
             } catch (e) {
@@ -788,19 +507,16 @@
             }
         }
 
+        // ===== ELIMINAR GRUPO =====
         async function deleteGroup(id) {
             if (!confirm('¿Estás seguro de eliminar este grupo? Esta acción no se puede deshacer.')) return;
-
             try {
                 document.getElementById('loadingOverlay').classList.remove('hidden');
                 await db.collection('participantes_ruleta').doc(id).delete();
-                
-                // También borrar ganadores asociados si se desea (opcional)
                 const snapshot = await db.collection('premios').where('grupoId', '==', id).get();
                 const batch = db.batch();
                 snapshot.docs.forEach(doc => batch.delete(doc.ref));
                 await batch.commit();
-
                 showToast('✅ Grupo eliminado');
                 await loadGroups();
                 if (currentGroupId === id) {
@@ -816,6 +532,227 @@
             }
         }
 
+        // ===== EDITAR GRUPO (NOMBRE Y DESCRIPCIÓN) =====
+        function toggleEditGroup(id) {
+            const form = document.getElementById(`editForm-${id}`);
+            const isActive = form.classList.contains('active');
+            
+            // Cerrar todos los formularios de edición
+            document.querySelectorAll('.group-edit-form').forEach(f => f.classList.remove('active'));
+            
+            if (!isActive) {
+                form.classList.add('active');
+                const group = groups.find(g => g.id === id);
+                if (group) {
+                    document.getElementById(`editName-${id}`).value = group.nombre;
+                    document.getElementById(`editDesc-${id}`).value = group.descripcion || '';
+                }
+            }
+        }
+
+        async function saveGroupEdit(id) {
+            const nombre = document.getElementById(`editName-${id}`).value.trim();
+            const descripcion = document.getElementById(`editDesc-${id}`).value.trim();
+            
+            if (!nombre) {
+                showToast('El nombre del grupo es obligatorio', true);
+                return;
+            }
+
+            try {
+                document.getElementById('loadingOverlay').classList.remove('hidden');
+                await db.collection('participantes_ruleta').doc(id).update({
+                    nombre: nombre,
+                    descripcion: descripcion,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                showToast('✅ Grupo actualizado');
+                await loadGroups();
+                document.getElementById(`editForm-${id}`).classList.remove('active');
+            } catch (e) {
+                console.error('Error actualizando grupo:', e);
+                showToast('Error al actualizar el grupo', true);
+            } finally {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }
+        }
+
+        // ===== EXPANDIR/CONTRAER PARTICIPANTES =====
+        function toggleParticipants(id) {
+            const list = document.getElementById(`participants-${id}`);
+            const icon = document.getElementById(`expandIcon-${id}`);
+            list.classList.toggle('active');
+            icon.style.transform = list.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
+
+        // ===== AGREGAR PARTICIPANTE =====
+        async function addParticipant(groupId) {
+            const input = document.getElementById(`newParticipant-${groupId}`);
+            const nombre = input.value.trim().toUpperCase();
+            
+            if (!nombre) {
+                showToast('Ingresa un nombre', true);
+                return;
+            }
+
+            const group = groups.find(g => g.id === groupId);
+            if (!group) return;
+
+            // Verificar si ya existe
+            const existe = group.participantes?.some(p => p.nombre.toUpperCase() === nombre);
+            if (existe) {
+                showToast('Este participante ya existe en el grupo', true);
+                return;
+            }
+
+            const nuevoParticipante = {
+                id: Date.now().toString(),
+                nombre: nombre,
+                departamento: group.descripcion || 'General'
+            };
+
+            const nuevosParticipantes = [...(group.participantes || []), nuevoParticipante];
+
+            try {
+                document.getElementById('loadingOverlay').classList.remove('hidden');
+                await db.collection('participantes_ruleta').doc(groupId).update({
+                    participantes: nuevosParticipantes,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                input.value = '';
+                showToast(`✅ ${nombre} agregado al grupo`);
+                await loadGroups();
+                // Mantener expandido
+                setTimeout(() => {
+                    const list = document.getElementById(`participants-${groupId}`);
+                    if (list) list.classList.add('active');
+                }, 100);
+            } catch (e) {
+                console.error('Error agregando participante:', e);
+                showToast('Error al agregar participante', true);
+            } finally {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }
+        }
+
+        // ===== ELIMINAR PARTICIPANTE =====
+        async function deleteParticipant(groupId, participantId) {
+            if (!confirm('¿Eliminar este participante?')) return;
+
+            const group = groups.find(g => g.id === groupId);
+            if (!group) return;
+
+            const nuevosParticipantes = group.participantes.filter(p => p.id !== participantId);
+
+            try {
+                document.getElementById('loadingOverlay').classList.remove('hidden');
+                await db.collection('participantes_ruleta').doc(groupId).update({
+                    participantes: nuevosParticipantes,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                showToast('✅ Participante eliminado');
+                await loadGroups();
+                // Mantener expandido
+                setTimeout(() => {
+                    const list = document.getElementById(`participants-${groupId}`);
+                    if (list) list.classList.add('active');
+                }, 100);
+            } catch (e) {
+                console.error('Error eliminando participante:', e);
+                showToast('Error al eliminar participante', true);
+            } finally {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }
+        }
+
+        // ===== EDITAR PARTICIPANTE =====
+        function enableParticipantEdit(groupId, participantId) {
+            const input = document.getElementById(`participant-input-${groupId}-${participantId}`);
+            const actions = document.getElementById(`participant-actions-${groupId}-${participantId}`);
+            
+            input.readOnly = false;
+            input.focus();
+            input.style.borderBottom = '1px solid #0ea5e9';
+            
+            // Cambiar botones a guardar/cancelar
+            actions.innerHTML = `
+                <button onclick="saveParticipantEdit('${groupId}', '${participantId}')" title="Guardar">
+                    <i class="fas fa-check" style="color: #10b981;"></i>
+                </button>
+                <button onclick="cancelParticipantEdit('${groupId}', '${participantId}')" title="Cancelar">
+                    <i class="fas fa-times" style="color: #ef4444;"></i>
+                </button>
+            `;
+        }
+
+        async function saveParticipantEdit(groupId, participantId) {
+            const input = document.getElementById(`participant-input-${groupId}-${participantId}`);
+            const nuevoNombre = input.value.trim().toUpperCase();
+            
+            if (!nuevoNombre) {
+                showToast('El nombre no puede estar vacío', true);
+                return;
+            }
+
+            const group = groups.find(g => g.id === groupId);
+            if (!group) return;
+
+            // Verificar si ya existe otro con ese nombre
+            const existe = group.participantes?.some(p => p.id !== participantId && p.nombre.toUpperCase() === nuevoNombre);
+            if (existe) {
+                showToast('Ya existe un participante con ese nombre', true);
+                return;
+            }
+
+            const nuevosParticipantes = group.participantes.map(p => {
+                if (p.id === participantId) {
+                    return { ...p, nombre: nuevoNombre };
+                }
+                return p;
+            });
+
+            try {
+                document.getElementById('loadingOverlay').classList.remove('hidden');
+                await db.collection('participantes_ruleta').doc(groupId).update({
+                    participantes: nuevosParticipantes,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                showToast('✅ Participante actualizado');
+                await loadGroups();
+                setTimeout(() => {
+                    const list = document.getElementById(`participants-${groupId}`);
+                    if (list) list.classList.add('active');
+                }, 100);
+            } catch (e) {
+                console.error('Error actualizando participante:', e);
+                showToast('Error al actualizar participante', true);
+            } finally {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }
+        }
+
+        function cancelParticipantEdit(groupId, participantId) {
+            const group = groups.find(g => g.id === groupId);
+            const participant = group?.participantes?.find(p => p.id === participantId);
+            if (participant) {
+                const input = document.getElementById(`participant-input-${groupId}-${participantId}`);
+                input.value = participant.nombre;
+                input.readOnly = true;
+                input.style.borderBottom = 'none';
+                
+                const actions = document.getElementById(`participant-actions-${groupId}-${participantId}`);
+                actions.innerHTML = `
+                    <button onclick="enableParticipantEdit('${groupId}', '${participantId}')" title="Editar">
+                        <i class="fas fa-pen" style="color: #f59e0b;"></i>
+                    </button>
+                    <button onclick="deleteParticipant('${groupId}', '${participantId}')" class="btn-delete-part" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+            }
+        }
+
+        // ===== RENDER ADMIN GROUPS =====
         function renderAdminGroups() {
             const list = document.getElementById('adminGroupsList');
             if (groups.length === 0) {
@@ -823,46 +760,101 @@
                 return;
             }
 
-            list.innerHTML = '<h3 class="text-xl font-bold mb-4">Grupos Existentes</h3>' + 
-                groups.map(g => `
-                <div class="admin-item justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-lg bg-sky-500/20 flex items-center justify-center text-sky-400">
-                            <i class="fas fa-users"></i>
+            let html = '<h3 class="text-xl font-bold mb-4">Grupos Existentes</h3>';
+            
+            groups.forEach(g => {
+                const participantCount = g.participantes?.length || 0;
+                html += `
+                <div class="group-card" id="group-card-${g.id}">
+                    <div class="group-card-header">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-sky-500/20 flex items-center justify-center text-sky-400">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div>
+                                <p class="group-card-title">${g.nombre}</p>
+                                <p class="text-xs text-slate-400">${g.descripcion || 'Sin descripción'} • <span class="badge-count">${participantCount} participantes</span></p>
+                            </div>
                         </div>
-                        <div>
-                            <p class="font-bold text-white">${g.nombre}</p>
-                            <p class="text-xs text-slate-400">${g.participantes?.length || 0} participantes • ${g.descripcion || 'Sin descripción'}</p>
+                        <div class="group-card-actions">
+                            <button onclick="toggleEditGroup('${g.id}')" class="btn-edit" title="Editar grupo">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button onclick="deleteGroup('${g.id}')" class="btn-delete" title="Eliminar grupo">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                            <button onclick="toggleParticipants('${g.id}')" class="btn-expand" title="Ver participantes">
+                                <i class="fas fa-chevron-down" id="expandIcon-${g.id}"></i>
+                            </button>
                         </div>
                     </div>
-                    <button onclick="deleteGroup('${g.id}')" class="text-red-400 hover:text-red-300 p-2">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
+                    
+                    <!-- Formulario de edición del grupo -->
+                    <div class="group-edit-form" id="editForm-${g.id}">
+                        <input type="text" id="editName-${g.id}" placeholder="Nombre del grupo">
+                        <input type="text" id="editDesc-${g.id}" placeholder="Descripción">
+                        <div class="edit-actions">
+                            <button class="btn-cancel" onclick="toggleEditGroup('${g.id}')">Cancelar</button>
+                            <button class="btn-save" onclick="saveGroupEdit('${g.id}')">Guardar Cambios</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Lista de participantes -->
+                    <div class="participant-list" id="participants-${g.id}">
+                        ${g.participantes?.map(p => `
+                            <div class="participant-item">
+                                <input type="text" 
+                                    id="participant-input-${g.id}-${p.id}" 
+                                    value="${p.nombre}" 
+                                    readonly 
+                                    onkeydown="if(event.key==='Enter') saveParticipantEdit('${g.id}', '${p.id}')"
+                                    onblur="setTimeout(() => cancelParticipantEdit('${g.id}', '${p.id}'), 200)"
+                                >
+                                <div class="participant-actions" id="participant-actions-${g.id}-${p.id}">
+                                    <button onclick="enableParticipantEdit('${g.id}', '${p.id}')" title="Editar">
+                                        <i class="fas fa-pen" style="color: #f59e0b;"></i>
+                                    </button>
+                                    <button onclick="deleteParticipant('${g.id}', '${p.id}')" class="btn-delete-part" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('') || '<p class="text-sm text-slate-500 text-center py-2">Sin participantes</p>'}
+                        
+                        <!-- Agregar nuevo participante -->
+                        <div class="add-participant-row">
+                            <input type="text" 
+                                id="newParticipant-${g.id}" 
+                                placeholder="Nuevo participante..." 
+                                onkeydown="if(event.key==='Enter') addParticipant('${g.id}')"
+                            >
+                            <button onclick="addParticipant('${g.id}')">
+                                <i class="fas fa-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            `).join('');
+                `;
+            });
+            
+            list.innerHTML = html;
         }
 
-        // ==================== PARTICULAS ====================
         function createParticles() {
             const container = document.getElementById('particles');
-            const particleCount = 30;
             const fragment = document.createDocumentFragment();
-            
-            for (let i = 0; i < particleCount; i++) {
+            for (let i = 0; i < 30; i++) {
                 const p = document.createElement('div');
                 p.className = 'particle';
                 p.style.left = Math.random() * 100 + '%';
                 const size = Math.random() * 6 + 2;
-                p.style.width = size + 'px';
-                p.style.height = size + 'px';
+                p.style.width = size + 'px'; p.style.height = size + 'px';
                 p.style.animationDuration = (Math.random() * 10 + 8) + 's';
                 p.style.animationDelay = (Math.random() * 10) + 's';
                 fragment.appendChild(p);
             }
             container.appendChild(fragment);
         }
-
-        // ==================== TOAST ====================
         function showToast(message, isError = false) {
             const toast = document.getElementById('toast');
             if (!toast) return;
@@ -871,55 +863,25 @@
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
-
-        // ==================== FIRESTORE: CARGAR GANADORES ====================
         async function loadWinnersFromFirestore() {
             if (!db || !currentGroupId) return;
-
             try {
-                const snapshot = await db.collection('premios')
-                    .where('grupoId', '==', currentGroupId)
-                    .orderBy('posicion', 'asc')
-                    .get();
-
+                const snapshot = await db.collection('premios').where('grupoId', '==', currentGroupId).orderBy('posicion', 'asc').get();
                 const firestoreWinners = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    firestoreWinners.push({
-                        ...data,
-                        firestoreId: doc.id
-                    });
-                });
-
+                snapshot.forEach(doc => firestoreWinners.push({ ...doc.data(), firestoreId: doc.id }));
                 const currentGroup = groups.find(g => g.id === currentGroupId);
                 if (!currentGroup) return;
-
                 if (firestoreWinners.length > 0) {
-                    winners = firestoreWinners.map(w => ({
-                        id: w.id || '',
-                        nombre: w.nombre,
-                        departamento: w.departamento || '',
-                        posicion: w.posicion,
-                        fecha: w.fecha || '',
-                        firestoreId: w.firestoreId
-                    }));
-
+                    winners = firestoreWinners.map(w => ({ id: w.id || '', nombre: w.nombre, departamento: w.departamento || '', posicion: w.posicion, fecha: w.fecha || '', firestoreId: w.firestoreId }));
                     const winnerNames = new Set(winners.map(w => w.nombre.toUpperCase().trim()));
-                    participants = (currentGroup.participantes || []).filter(p => 
-                        !winnerNames.has(p.nombre.toUpperCase().trim())
-                    ).map(p => ({...p}));
-
+                    participants = (currentGroup.participantes || []).filter(p => !winnerNames.has(p.nombre.toUpperCase().trim())).map(p => ({...p}));
                     showToast(`📋 ${winners.length} ganador(es) cargado(s)`);
                 } else {
                     participants = (currentGroup.participantes || []).map(p => ({...p}));
                     winners = [];
                 }
-
                 document.getElementById('totalCount').textContent = currentGroup.participantes?.length || 0;
-                updateUI();
-                renderWheel();
-                checkResetButton();
-
+                updateUI(); renderWheel(); checkResetButton();
             } catch (e) {
                 console.error('Error cargando ganadores:', e);
                 showToast('Error cargando datos', true);
@@ -928,249 +890,144 @@
                     participants = (currentGroup.participantes || []).map(p => ({...p}));
                     document.getElementById('totalCount').textContent = currentGroup.participantes?.length || 0;
                 }
-                winners = [];
-                updateUI();
-                renderWheel();
-                checkResetButton();
+                winners = []; updateUI(); renderWheel(); checkResetButton();
             }
         }
-
-        // ==================== FIRESTORE: GUARDAR GANADOR ====================
         async function saveWinnerToFirestore(winner) {
-            if (!db || !currentGroupId) {
-                showToast('Grupo no seleccionado', true);
-                return false;
-            }
+            if (!db || !currentGroupId) { showToast('Grupo no seleccionado', true); return false; }
             try {
                 await db.collection('premios').add({
-                    nombre: winner.nombre,
-                    departamento: winner.departamento || '',
-                    fecha: winner.fecha,
-                    posicion: winner.posicion,
-                    grupoId: currentGroupId,
+                    nombre: winner.nombre, departamento: winner.departamento || '',
+                    fecha: winner.fecha, posicion: winner.posicion, grupoId: currentGroupId,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 return true;
             } catch (e) {
                 console.error('Error guardando:', e);
-                showToast('Error guardando ganador', true);
-                return false;
+                showToast('Error guardando ganador', true); return false;
             }
         }
-
-        // ==================== FIRESTORE: ARCHIVAR Y LIMPIAR ====================
         async function archiveAndClearFirestore() {
             if (!db || !currentGroupId) return false;
-
             try {
                 const currentGroup = groups.find(g => g.id === currentGroupId);
                 const sortedWinners = [...winners].sort((a, b) => a.posicion - b.posicion);
-                
-                const semanaData = {
-                    grupoId: currentGroupId,
-                    grupoNombre: currentGroup?.nombre || 'Desconocido',
+                await db.collection('premios_historial').add({
+                    grupoId: currentGroupId, grupoNombre: currentGroup?.nombre || 'Desconocido',
                     fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
                     totalGanadores: winners.length,
-                    ganadores: sortedWinners.map(w => ({
-                        nombre: w.nombre,
-                        departamento: w.departamento,
-                        posicion: w.posicion,
-                        fecha: w.fecha
-                    }))
-                };
-
-                await db.collection('premios_historial').add(semanaData);
-
-                const snapshot = await db.collection('premios')
-                    .where('grupoId', '==', currentGroupId)
-                    .get();
+                    ganadores: sortedWinners.map(w => ({ nombre: w.nombre, departamento: w.departamento, posicion: w.posicion, fecha: w.fecha }))
+                });
+                const snapshot = await db.collection('premios').where('grupoId', '==', currentGroupId).get();
                 const batch = db.batch();
                 snapshot.docs.forEach(doc => batch.delete(doc.ref));
                 await batch.commit();
-
                 return true;
             } catch (e) {
                 console.error('Error archivando:', e);
-                showToast('Error archivando datos', true);
-                return false;
+                showToast('Error archivando datos', true); return false;
             }
         }
-
-        // ==================== RULETA SVG ====================
         function renderWheel() {
             const svg = document.getElementById('wheelSVG');
             svg.innerHTML = '';
-
             const count = participants.length;
             if (count === 0) return;
-
-            const cx = 240;
-            const cy = 240;
-            const radius = 220;
+            const cx = 240, cy = 240, radius = 220;
             const angleStep = (2 * Math.PI) / count;
-
-            const colors = [
-                '#0ea5e9', '#0284c7', '#0369a1', '#075985',
-                '#0c4a6e', '#155e75', '#164e63', '#1e3a5f',
-                '#1e40af', '#1d4ed8', '#2563eb', '#3b82f6'
-            ];
-
+            const colors = ['#0ea5e9', '#0284c7', '#0369a1', '#075985', '#0c4a6e', '#155e75', '#164e63', '#1e3a5f', '#1e40af', '#1d4ed8', '#2563eb', '#3b82f6'];
             const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
             const filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
             filter.setAttribute("id", "textShadow");
             filter.innerHTML = `<feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="black" flood-opacity="0.8"/>`;
-            defs.appendChild(filter);
-            svg.appendChild(defs);
-
+            defs.appendChild(filter); svg.appendChild(defs);
             participants.forEach((p, i) => {
                 const startAngle = i * angleStep - Math.PI / 2;
                 const endAngle = startAngle + angleStep;
-
-                const x1 = cx + radius * Math.cos(startAngle);
-                const y1 = cy + radius * Math.sin(startAngle);
-                const x2 = cx + radius * Math.cos(endAngle);
-                const y2 = cy + radius * Math.sin(endAngle);
-
+                const x1 = cx + radius * Math.cos(startAngle), y1 = cy + radius * Math.sin(startAngle);
+                const x2 = cx + radius * Math.cos(endAngle), y2 = cy + radius * Math.sin(endAngle);
                 const largeArc = angleStep > Math.PI ? 1 : 0;
-
                 const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
                 path.setAttribute("d", `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`);
                 path.setAttribute("fill", colors[i % colors.length]);
-                path.setAttribute("stroke", "rgba(255,255,255,0.15)");
-                path.setAttribute("stroke-width", "1");
+                path.setAttribute("stroke", "rgba(255,255,255,0.15)"); path.setAttribute("stroke-width", "1");
                 svg.appendChild(path);
-
                 const midAngle = startAngle + angleStep / 2;
                 const textRadius = radius * 0.65;
                 const textX = cx + textRadius * Math.cos(midAngle);
                 const textY = cy + textRadius * Math.sin(midAngle);
-
                 const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                text.setAttribute("x", textX);
-                text.setAttribute("y", textY);
-                text.setAttribute("text-anchor", "middle");
-                text.setAttribute("dominant-baseline", "middle");
-                text.setAttribute("fill", "white");
-                text.setAttribute("font-size", count > 20 ? "10" : "13");
-                text.setAttribute("font-weight", "800");
-                text.setAttribute("filter", "url(#textShadow)");
-
+                text.setAttribute("x", textX); text.setAttribute("y", textY);
+                text.setAttribute("text-anchor", "middle"); text.setAttribute("dominant-baseline", "middle");
+                text.setAttribute("fill", "white"); text.setAttribute("font-size", count > 20 ? "10" : "13");
+                text.setAttribute("font-weight", "800"); text.setAttribute("filter", "url(#textShadow)");
                 let rotation = (midAngle * 180 / Math.PI);
                 if (rotation > 90 && rotation < 270) rotation += 180;
-
                 text.setAttribute("transform", `rotate(${rotation}, ${textX}, ${textY})`);
-                text.textContent = p.nombre;
-                svg.appendChild(text);
+                text.textContent = p.nombre; svg.appendChild(text);
             });
-
             const outerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             outerCircle.setAttribute("cx", cx); outerCircle.setAttribute("cy", cy);
-            outerCircle.setAttribute("r", radius);
-            outerCircle.setAttribute("fill", "none");
-            outerCircle.setAttribute("stroke", "rgba(255,255,255,0.2)");
-            outerCircle.setAttribute("stroke-width", "3");
+            outerCircle.setAttribute("r", radius); outerCircle.setAttribute("fill", "none");
+            outerCircle.setAttribute("stroke", "rgba(255,255,255,0.2)"); outerCircle.setAttribute("stroke-width", "3");
             svg.appendChild(outerCircle);
         }
-
         function spinWheel() {
             if (isSpinning || participants.length === 0) return;
-            if (participants.length === 1) {
-                selectWinner(0);
-                return;
-            }
-
+            if (participants.length === 1) { selectWinner(0); return; }
             isSpinning = true;
             const btn = document.getElementById('spinBtn');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> GIRANDO...';
-            }
-
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> GIRANDO...'; }
             const svg = document.getElementById('wheelSVG');
             const winnerIndex = Math.floor(Math.random() * participants.length);
             const count = participants.length;
             const angleStep = 360 / count;
-
             const segmentCenterAngle = winnerIndex * angleStep + (angleStep / 2);
             const targetRotation = 360 - segmentCenterAngle;
-
             const spins = 5 + Math.floor(Math.random() * 3);
             const finalRotation = currentRotation + (spins * 360) + targetRotation - (currentRotation % 360);
-
             const duration = 4500 + Math.random() * 1500;
             const startTime = performance.now();
             const startRotation = currentRotation;
             const totalRotation = finalRotation - startRotation;
-
             function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
-
             function animate(currentTime) {
                 const elapsed = currentTime - startTime;
                 const progress = Math.min(elapsed / duration, 1);
                 const eased = easeOutCubic(progress);
-
                 currentRotation = startRotation + (totalRotation * eased);
                 svg.style.transform = `rotate(${currentRotation}deg)`;
-
-                if (progress < 1) {
-                    requestAnimationFrame(animate);
-                } else {
-                    setTimeout(() => selectWinner(winnerIndex), 400);
-                }
+                if (progress < 1) requestAnimationFrame(animate);
+                else setTimeout(() => selectWinner(winnerIndex), 400);
             }
             requestAnimationFrame(animate);
         }
-
         async function selectWinner(index) {
             const winner = participants[index];
             const now = new Date();
-            const fechaStr = now.toLocaleDateString('es-ES', {
-                day: '2-digit', month: 'long', year: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-            });
-
-            const winnerData = {
-                ...winner,
-                posicion: winners.length + 1,
-                fecha: fechaStr,
-                timestamp: now.toISOString()
-            };
-
+            const fechaStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const winnerData = { ...winner, posicion: winners.length + 1, fecha: fechaStr, timestamp: now.toISOString() };
             await saveWinnerToFirestore(winnerData);
             winners.unshift(winnerData);
             participants.splice(index, 1);
-
             document.getElementById('winnerName').textContent = winner.nombre;
             document.getElementById('winnerDate').textContent = fechaStr;
             document.getElementById('winnerAvatar').textContent = winner.nombre.charAt(0).toUpperCase();
             document.getElementById('winnerOverlay').classList.add('active');
-
-            launchConfetti();
-            updateUI();
-            renderWheel();
-            checkResetButton();
-
+            launchConfetti(); updateUI(); renderWheel(); checkResetButton();
             isSpinning = false;
             const btn = document.getElementById('spinBtn');
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-play mr-2"></i> GIRAR';
-            }
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-play mr-2"></i> GIRAR'; }
         }
-
         function closeWinner() {
             document.getElementById('winnerOverlay').classList.remove('active');
-            if (participants.length === 0) {
-                setTimeout(() => showToast('🎉 ¡Sorteo completado!'), 300);
-            }
+            if (participants.length === 0) setTimeout(() => showToast('🎉 ¡Sorteo completado!'), 300);
         }
-
         function updateUI() {
             document.getElementById('remainingCount').textContent = participants.length;
             document.getElementById('winnersCount').textContent = winners.length;
             document.getElementById('winnersCount2').textContent = winners.length;
             document.getElementById('sorteoNum').textContent = winners.length + 1;
-
             const totalParticipants = parseInt(document.getElementById('totalCount').textContent) || 1;
             const percent = (winners.length / totalParticipants) * 100;
             const circumference = 2 * Math.PI * 34;
@@ -1179,13 +1036,10 @@
             if (progressCircle) progressCircle.style.strokeDashoffset = offset;
             const progressPercent = document.getElementById('progressPercent');
             if (progressPercent) progressPercent.textContent = Math.round(percent) + '%';
-
             const list = document.getElementById('winnersList');
             if (winners.length === 0) {
-                list.innerHTML = `<div class="text-center text-slate-500 py-12"><i class="fas fa-gift text-5xl mb-4 opacity-30"></i><p class="text-sm">Gira la ruleta para comenzar.</p></div>`;
-                return;
+                list.innerHTML = `<div class="text-center text-slate-500 py-12"><i class="fas fa-gift text-5xl mb-4 opacity-30"></i><p class="text-sm">Gira la ruleta para comenzar.</p></div>`; return;
             }
-
             const sortedWinners = [...winners].sort((a, b) => a.posicion - b.posicion);
             list.innerHTML = sortedWinners.map((w) => {
                 let rankClass = w.posicion === 1 ? 'gold' : w.posicion === 2 ? 'silver' : w.posicion === 3 ? 'bronze' : '';
@@ -1201,36 +1055,39 @@
                 `;
             }).join('');
         }
-
         function checkResetButton() {
             const resetBtn = document.getElementById('resetBtn');
             if (!resetBtn) return;
             const totalParticipants = parseInt(document.getElementById('totalCount').textContent) || 0;
-            if (participants.length === 0 && winners.length === totalParticipants && totalParticipants > 0) {
+            if (currentGroupId && totalParticipants > 0) {
                 resetBtn.disabled = false;
-                resetBtn.innerHTML = '<i class="fas fa-rotate-right mr-2"></i> Reiniciar Sorteo';
+                resetBtn.innerHTML = winners.length > 0 ? '<i class="fas fa-rotate-right mr-2"></i> Reiniciar Sorteo' : '<i class="fas fa-rotate-right mr-2"></i> Reiniciar';
             } else {
                 resetBtn.disabled = true;
-                resetBtn.innerHTML = '<i class="fas fa-lock mr-2"></i> Completar para reiniciar';
+                resetBtn.innerHTML = '<i class="fas fa-lock mr-2"></i> Selecciona un grupo';
             }
         }
-
         async function resetAll() {
-            if (participants.length > 0) {
-                showToast('Debes completar el sorteo antes de reiniciar', true);
-                return;
-            }
-            if (!confirm('¿Archivar sorteo actual y comenzar uno nuevo?')) return;
-
+            if (!currentGroupId) { showToast('Selecciona un grupo primero', true); return; }
+            if (!confirm('¿Reiniciar el sorteo? Los ganadores actuales se archivarán y todos los participantes volverán a estar disponibles.')) return;
             document.getElementById('loadingOverlay').classList.remove('hidden');
-            const archived = await archiveAndClearFirestore();
-            if (archived) {
-                await loadWinnersFromFirestore();
-                showToast('✅ Sorteo archivado y reiniciado');
+            try {
+                if (winners.length > 0) await archiveAndClearFirestore();
+                const currentGroup = groups.find(g => g.id === currentGroupId);
+                if (currentGroup) {
+                    participants = (currentGroup.participantes || []).map(p => ({...p}));
+                    winners = []; currentRotation = 0;
+                    document.getElementById('totalCount').textContent = currentGroup.participantes?.length || 0;
+                    updateUI(); renderWheel(); checkResetButton();
+                    showToast('✅ Sorteo reiniciado. Todos los participantes disponibles.');
+                }
+            } catch (e) {
+                console.error('Error reiniciando:', e);
+                showToast('Error al reiniciar', true);
+            } finally {
+                document.getElementById('loadingOverlay').classList.add('hidden');
             }
-            document.getElementById('loadingOverlay').classList.add('hidden');
         }
-
         function launchConfetti() {
             const canvas = document.getElementById('confettiCanvas');
             const ctx = canvas.getContext('2d');
@@ -1261,15 +1118,624 @@
             }
             animateConfetti();
         }
-
         window.addEventListener('resize', () => {
             const canvas = document.getElementById('confettiCanvas');
             if (canvas) { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         });
-
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(() => console.log('SW no disponible'));
         }
+
+        // ==================== CALCULADORA DE PRODUCCIÓN ====================
+
+        // Abrir/cerrar modal
+        function abrirCalculadora() {
+            const modal = document.getElementById('calcModalOverlay');
+            if (modal) {
+                modal.classList.add('active');
+                calcularProduccion();
+            }
+        }
+        function cerrarCalculadora() {
+            const modal = document.getElementById('calcModalOverlay');
+            if (modal) modal.classList.remove('active');
+        }
+
+        // ===== GESTIÓN DE IMÁGENES =====
+        function cambiarTabImagen(tab) {
+            imageTabActive = tab;
+            document.querySelectorAll('.calc-imagen-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.calc-imagen-tab[data-tab="${tab}"]`).classList.add('active');
+            if (tab === 'file') {
+                document.getElementById('calcImagenFileSection').style.display = 'block';
+                document.getElementById('calcImagenUrlSection').style.display = 'none';
+            } else {
+                document.getElementById('calcImagenFileSection').style.display = 'none';
+                document.getElementById('calcImagenUrlSection').style.display = 'block';
+            }
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('⚠️ La imagen no debe superar 2MB', true);
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentImageBase64 = e.target.result;
+                currentImageUrl = null;
+                mostrarPreviewImagen(currentImageBase64);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleUrlImagen() {
+            const url = document.getElementById('calcImagenUrlInput').value.trim();
+            if (!url) {
+                showToast('⚠️ Ingresa una URL válida', true);
+                return;
+            }
+            currentImageUrl = url;
+            currentImageBase64 = null;
+            mostrarPreviewImagen(url);
+        }
+
+        function mostrarPreviewImagen(src) {
+            const preview = document.getElementById('calcImagenPreview');
+            if (preview) {
+                preview.src = src;
+                preview.style.display = 'block';
+                preview.classList.remove('empty');
+                preview.innerHTML = '';
+            }
+            const removeBtn = document.getElementById('calcImagenRemove');
+            if (removeBtn) removeBtn.style.display = 'block';
+        }
+
+        function removerImagen() {
+            currentImageBase64 = null;
+            currentImageUrl = null;
+            const preview = document.getElementById('calcImagenPreview');
+            if (preview) {
+                preview.src = '';
+                preview.style.display = 'none';
+                preview.classList.add('empty');
+                preview.innerHTML = '🖼️';
+            }
+            const fileInput = document.getElementById('calcImagenFile');
+            if (fileInput) fileInput.value = '';
+            const urlInput = document.getElementById('calcImagenUrlInput');
+            if (urlInput) urlInput.value = '';
+            const removeBtn = document.getElementById('calcImagenRemove');
+            if (removeBtn) removeBtn.style.display = 'none';
+        }
+
+        function calcularProduccion() {
+            const pesoVela = parseFloat(document.getElementById('calcPesoVela')?.value) || 0;
+            let porcentajeFragancia = parseFloat(document.getElementById('calcPorcentajeFragancia')?.value) || 0;
+            const costoCeraKg = parseFloat(document.getElementById('calcCostoCera')?.value) || 0;
+            const costoFraganciaKg = parseFloat(document.getElementById('calcCostoFragancia')?.value) || 0;
+            const costoMecheEnvase = parseFloat(document.getElementById('calcCostoMecheEnvase')?.value) || 0;
+            const costosIndirectos = parseFloat(document.getElementById('calcCostosIndirectos')?.value) || 0;
+            const manoObra = parseFloat(document.getElementById('calcManoObra')?.value) || 0;
+            const margenGanancia = parseFloat(document.getElementById('calcMargenGanancia')?.value) || 0;
+
+            if (porcentajeFragancia > 100) {
+                const input = document.getElementById('calcPorcentajeFragancia');
+                if (input) input.value = 100;
+                porcentajeFragancia = 100;
+            }
+
+            const pesoVelaKg = pesoVela / 1000;
+            const pesoFraganciaKg = pesoVelaKg * (porcentajeFragancia / 100);
+            const pesoCeraKg = pesoVelaKg - pesoFraganciaKg;
+
+            const costoCeraTotal = pesoCeraKg * costoCeraKg;
+            const costoFraganciaTotal = pesoFraganciaKg * costoFraganciaKg;
+            const costoTotal = costoCeraTotal + costoFraganciaTotal + costoMecheEnvase + costosIndirectos + manoObra;
+            const gananciaVela = costoTotal * (margenGanancia / 100);
+            const precioVenta = costoTotal + gananciaVela;
+
+            const setText = (id, text) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = text;
+            };
+
+            setText('calcPesoFraganciaTotal', (pesoFraganciaKg * 1000).toFixed(1) + 'g');
+            setText('calcCostoCeraTotal', '₡' + costoCeraTotal.toLocaleString('es-CR', {minimumFractionDigits: 0, maximumFractionDigits: 0}));
+            setText('calcCostoFraganciaTotal', '₡' + costoFraganciaTotal.toLocaleString('es-CR', {minimumFractionDigits: 0, maximumFractionDigits: 0}));
+            setText('calcCostoMecheEnvaseTotal', '₡' + costoMecheEnvase.toLocaleString('es-CR', {minimumFractionDigits: 0, maximumFractionDigits: 0}));
+            setText('calcCostosIndirectosTotal', '₡' + costosIndirectos.toLocaleString('es-CR', {minimumFractionDigits: 0, maximumFractionDigits: 0}));
+            setText('calcManoObraTotal', '₡' + manoObra.toLocaleString('es-CR', {minimumFractionDigits: 0, maximumFractionDigits: 0}));
+            setText('calcCostoTotal', '₡' + costoTotal.toLocaleString('es-CR', {minimumFractionDigits: 0, maximumFractionDigits: 0}));
+            setText('calcMargenGananciaValor', margenGanancia + '%');
+            setText('calcGananciaVela', '₡' + gananciaVela.toLocaleString('es-CR', {minimumFractionDigits: 0, maximumFractionDigits: 0}));
+            setText('calcPrecioVenta', '₡' + precioVenta.toLocaleString('es-CR', {minimumFractionDigits: 0, maximumFractionDigits: 0}));
+
+            return {
+                pesoVela, porcentajeFragancia,
+                pesoFraganciaKg: pesoFraganciaKg * 1000,
+                pesoCeraKg: pesoCeraKg * 1000,
+                costoCeraKg, costoFraganciaKg, costoMecheEnvase,
+                costosIndirectos, manoObra, margenGanancia,
+                costoCeraTotal, costoFraganciaTotal, costoTotal,
+                gananciaVela, precioVenta,
+                nombreProducto: document.getElementById('calcNombreProducto')?.value || ''
+            };
+        }
+
+        function formatearFechaFirestore(fechaGuardado) {
+            if (!fechaGuardado) return 'Sin fecha';
+            if (typeof fechaGuardado.toDate === 'function') {
+                return fechaGuardado.toDate().toLocaleString('es-CR');
+            }
+            if (fechaGuardado.seconds !== undefined) {
+                const date = new Date(fechaGuardado.seconds * 1000 + (fechaGuardado.nanoseconds || 0) / 1000000);
+                return date.toLocaleString('es-CR');
+            }
+            if (fechaGuardado instanceof Date) return fechaGuardado.toLocaleString('es-CR');
+            if (typeof fechaGuardado === 'string') return new Date(fechaGuardado).toLocaleString('es-CR');
+            return 'Sin fecha';
+        }
+
+        async function guardarCalculoFirestore() {
+            const calculo = calcularProduccion();
+            if (calculo.costoTotal === 0) {
+                showToast('⚠️ Ingresa los datos antes de guardar', true);
+                return;
+            }
+            try {
+                const dataToSave = {
+                    ...calculo,
+                    tipoCera: document.getElementById('calcTipoCera')?.value || 'cera_china',
+                    fechaGuardado: firebase.firestore.FieldValue.serverTimestamp(),
+                    imagenBase64: currentImageBase64 || null,
+                    imagenUrl: currentImageUrl || null
+                };
+
+                if (currentEditingId) {
+                    // Actualizar existente
+                    await db.collection('calculadora_produccion').doc(currentEditingId).update(dataToSave);
+                    showToast('✅ Cálculo actualizado exitosamente');
+                    currentEditingId = null;
+                    // Restaurar botón guardar
+                    const saveBtn = document.getElementById('calcBtnSave');
+                    if (saveBtn) {
+                        saveBtn.innerHTML = '💾 Guardar';
+                        saveBtn.onclick = guardarCalculoFirestore;
+                        saveBtn.classList.remove('calc-btn-update');
+                        saveBtn.classList.add('calc-btn-save');
+                    }
+                } else {
+                    // Crear nuevo
+                    await db.collection('calculadora_produccion').add(dataToSave);
+                    showToast('✅ Cálculo guardado exitosamente');
+                }
+                cargarHistorialCalculadora();
+            } catch (error) {
+                console.error('Error guardando:', error);
+                showToast('❌ Error al guardar en Firestore', true);
+            }
+        }
+
+        async function cargarHistorialCalculadora() {
+            try {
+                const snapshot = await db.collection('calculadora_produccion')
+                    .orderBy('fechaGuardado', 'desc')
+                    .limit(20)
+                    .get();
+
+                const list = document.getElementById('calcHistorialList');
+                if (!list) return;
+                if (snapshot.empty) {
+                    list.innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.4); font-size: 0.9rem;">No hay cálculos guardados.</p>';
+                    return;
+                }
+
+                let html = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const fecha = formatearFechaFirestore(data.fechaGuardado);
+                    let imagenHTML = '';
+                    if (data.imagenBase64) {
+                        imagenHTML = `<img src="${data.imagenBase64}" class="calc-historial-img" alt="Producto">`;
+                    } else if (data.imagenUrl) {
+                        imagenHTML = `<img src="${data.imagenUrl}" class="calc-historial-img" alt="Producto" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="calc-historial-img-placeholder" style="display:none">🖼️</div>`;
+                    } else {
+                        imagenHTML = '<div class="calc-historial-img-placeholder">🖼️</div>';
+                    }
+
+                    html += `
+                        <div class="calc-historial-item" onclick="cargarCalculoPorId('${doc.id}')">
+                            ${imagenHTML}
+                            <div class="calc-historial-item-info">
+                                <h4>${data.nombreProducto || 'Sin nombre'}</h4>
+                                <p>📅 ${fecha} | 💰 Costo: ₡${(data.costoTotal?.toLocaleString() || 0)} | 💵 Venta: ₡${(data.precioVenta?.toLocaleString() || 0)}</p>
+                            </div>
+                            <div class="calc-historial-actions">
+                                <button class="btn-edit" onclick="event.stopPropagation(); editarCalculoPorId('${doc.id}')" title="Editar">✏️</button>
+                                <button class="btn-delete" onclick="event.stopPropagation(); eliminarCalculoPorId('${doc.id}')" title="Eliminar">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            } catch (error) {
+                console.error('Error cargando historial:', error);
+                showToast('❌ Error al cargar historial', true);
+            }
+        }
+
+        async function cargarCalculoPorId(docId) {
+            try {
+                const docSnap = await db.collection('calculadora_produccion').doc(docId).get();
+                if (!docSnap.exists) return;
+                const data = docSnap.data();
+                cargarDatosEnFormulario(data);
+                showToast('📋 Cálculo cargado');
+            } catch (e) {
+                console.error('Error cargando cálculo:', e);
+                showToast('❌ Error al cargar cálculo', true);
+            }
+        }
+
+        async function editarCalculoPorId(docId) {
+            try {
+                const docSnap = await db.collection('calculadora_produccion').doc(docId).get();
+                if (!docSnap.exists) return;
+                const data = docSnap.data();
+                cargarDatosEnFormulario(data);
+                currentEditingId = docId;
+
+                // Cambiar botón guardar a "Actualizar"
+                const saveBtn = document.getElementById('calcBtnSave');
+                if (saveBtn) {
+                    saveBtn.innerHTML = '💾 Actualizar';
+                    saveBtn.classList.remove('calc-btn-save');
+                    saveBtn.classList.add('calc-btn-update');
+                }
+
+                showToast('✏️ Modo edición activado. Modifica los datos y presiona Actualizar.');
+                abrirCalculadora();
+            } catch (e) {
+                console.error('Error editando cálculo:', e);
+                showToast('❌ Error al cargar para edición', true);
+            }
+        }
+
+        function cargarDatosEnFormulario(data) {
+            const setVal = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.value = val;
+            };
+            setVal('calcNombreProducto', data.nombreProducto || '');
+            setVal('calcTipoCera', data.tipoCera || 'cera_china');
+            setVal('calcPesoVela', data.pesoVela || 0);
+            setVal('calcPorcentajeFragancia', data.porcentajeFragancia || 10);
+            setVal('calcCostoCera', data.costoCeraKg || 0);
+            setVal('calcCostoFragancia', data.costoFraganciaKg || 0);
+            setVal('calcCostoMecheEnvase', data.costoMecheEnvase || 0);
+            setVal('calcCostosIndirectos', data.costosIndirectos || 0);
+            setVal('calcManoObra', data.manoObra || 0);
+            setVal('calcMargenGanancia', data.margenGanancia || 50);
+
+            // Cargar imagen
+            if (data.imagenBase64) {
+                currentImageBase64 = data.imagenBase64;
+                currentImageUrl = null;
+                mostrarPreviewImagen(data.imagenBase64);
+                cambiarTabImagen('file');
+            } else if (data.imagenUrl) {
+                currentImageUrl = data.imagenUrl;
+                currentImageBase64 = null;
+                mostrarPreviewImagen(data.imagenUrl);
+                setVal('calcImagenUrlInput', data.imagenUrl);
+                cambiarTabImagen('url');
+            } else {
+                removerImagen();
+            }
+
+            calcularProduccion();
+        }
+
+        async function eliminarCalculoPorId(docId) {
+            if (!confirm('¿Eliminar este cálculo?')) return;
+            try {
+                await db.collection('calculadora_produccion').doc(docId).delete();
+                showToast('🗑️ Cálculo eliminado');
+                cargarHistorialCalculadora();
+            } catch (e) {
+                console.error('Error eliminando:', e);
+                showToast('❌ Error al eliminar', true);
+            }
+        }
+
+        function descargarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const calculo = calcularProduccion();
+            const nombreProducto = document.getElementById('calcNombreProducto')?.value || 'Sin_nombre';
+
+            doc.setFontSize(20);
+            doc.text('Esentia - Calculadora de Produccion', 20, 20);
+            doc.setFontSize(12);
+            doc.text('Fecha: ' + new Date().toLocaleString(), 20, 30);
+            doc.text('Producto: ' + nombreProducto, 20, 40);
+            doc.setFontSize(14);
+            doc.text('Detalles de Costos:', 20, 55);
+
+            let y = 65;
+            doc.setFontSize(11);
+            doc.text('Peso Total: ' + calculo.pesoVela + 'g', 20, y); y += 10;
+            doc.text('Peso Fragancia (' + calculo.porcentajeFragancia + '%): ' + calculo.pesoFraganciaKg.toFixed(1) + 'g', 20, y); y += 10;
+            doc.text('Peso Cera (Restante): ' + calculo.pesoCeraKg.toFixed(1) + 'g', 20, y); y += 15;
+            doc.text('Costo de Cera: ' + calculo.costoCeraTotal.toLocaleString(), 20, y); y += 10;
+            doc.text('Costo de Fragancia: ' + calculo.costoFraganciaTotal.toLocaleString(), 20, y); y += 10;
+            doc.text('Mecha + Envase: ' + calculo.costoMecheEnvase.toLocaleString(), 20, y); y += 10;
+            doc.text('Costos Indirectos: ' + calculo.costosIndirectos.toLocaleString(), 20, y); y += 10;
+            doc.text('Mano de Obra: ' + calculo.manoObra.toLocaleString(), 20, y); y += 15;
+
+            doc.setFontSize(13);
+            doc.text('COSTO TOTAL: ' + calculo.costoTotal.toLocaleString(), 20, y); y += 15;
+            doc.setFontSize(11);
+            doc.text('Margen de Ganancia: ' + calculo.margenGanancia + '%', 20, y); y += 10;
+            doc.text('Ganancia por Vela: ' + calculo.gananciaVela.toLocaleString(), 20, y); y += 15;
+
+            doc.setFontSize(16);
+            doc.setTextColor(245, 158, 11);
+            doc.text('PRECIO DE VENTA SUGERIDO: ' + calculo.precioVenta.toLocaleString(), 20, y);
+
+            // Agregar imagen si existe
+            if (currentImageBase64) {
+                try {
+                    doc.addImage(currentImageBase64, 'JPEG', 150, 20, 40, 40);
+                } catch(e) { console.log('No se pudo agregar imagen al PDF'); }
+            }
+
+            doc.save('calculadora_' + nombreProducto.replace(/\s+/g, '_') + '.pdf');
+            showToast('📄 PDF descargado');
+        }
+
+        function descargarExcel() {
+            const calculo = calcularProduccion();
+            const nombreProducto = document.getElementById('calcNombreProducto')?.value || 'Sin_nombre';
+
+            const datos = {
+                'Producto': nombreProducto,
+                'Fecha': new Date().toLocaleString(),
+                'Peso Vela (g)': calculo.pesoVela,
+                'Porcentaje Fragancia (%)': calculo.porcentajeFragancia,
+                'Peso Fragancia (g)': calculo.pesoFraganciaKg.toFixed(2),
+                'Peso Cera (g)': calculo.pesoCeraKg.toFixed(2),
+                'Costo Cera/kg': calculo.costoCeraKg,
+                'Costo Fragancia/kg': calculo.costoFraganciaKg,
+                'Costo Meche+Envase': calculo.costoMecheEnvase,
+                'Costos Indirectos': calculo.costosIndirectos,
+                'Mano de Obra': calculo.manoObra,
+                'Costo Cera Total': calculo.costoCeraTotal,
+                'Costo Fragancia Total': calculo.costoFraganciaTotal,
+                'COSTO TOTAL': calculo.costoTotal,
+                'Margen Ganancia (%)': calculo.margenGanancia,
+                'Ganancia por Vela': calculo.gananciaVela,
+                'PRECIO DE VENTA': calculo.precioVenta
+            };
+
+            const ws = XLSX.utils.json_to_sheet([datos]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Calculo');
+            XLSX.writeFile(wb, 'calculadora_' + nombreProducto.replace(/\s+/g, '_') + '.xlsx');
+            showToast('📊 Excel descargado');
+        }
+
+        function limpiarCalculadora() {
+            const setVal = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.value = val;
+            };
+            setVal('calcPesoVela', '');
+            setVal('calcPorcentajeFragancia', '10');
+            setVal('calcCostoCera', '');
+            setVal('calcCostoFragancia', '');
+            setVal('calcCostoMecheEnvase', '');
+            setVal('calcCostosIndirectos', '');
+            setVal('calcManoObra', '');
+            setVal('calcMargenGanancia', '50');
+            setVal('calcNombreProducto', '');
+            setVal('calcTipoCera', 'cera_china');
+            setVal('calcImagenUrlInput', '');
+            removerImagen();
+            currentEditingId = null;
+
+            // Restaurar botón guardar
+            const saveBtn = document.getElementById('calcBtnSave');
+            if (saveBtn) {
+                saveBtn.innerHTML = '💾 Guardar';
+                saveBtn.classList.remove('calc-btn-update');
+                saveBtn.classList.add('calc-btn-save');
+            }
+
+            calcularProduccion();
+            showToast('🗑️ Calculadora limpiada');
+        }
     </script>
+
+    <!-- ===== MODAL CALCULADORA ===== -->
+    <div class="calc-modal-overlay" id="calcModalOverlay">
+        <div class="calc-modal-content">
+            <div class="calc-modal-header">
+                <h2>🕯️ Calculadora de Producción</h2>
+                <button class="calc-modal-close" onclick="cerrarCalculadora()">✕</button>
+            </div>
+            <div class="calc-body">
+                <div class="calc-grid">
+                    <!-- Panel Izquierdo: Inputs -->
+                    <div class="calc-card">
+                        <h3>📋 Datos de Producción</h3>
+
+                        <!-- ===== SECCIÓN IMAGEN ===== -->
+                        <div class="calc-imagen-section">
+                            <label style="display:block; color:rgba(255,255,255,0.7); font-size:0.85rem; margin-bottom:0.6rem; font-weight:600;">📸 Imagen del Producto</label>
+
+                            <div class="calc-imagen-tabs">
+                                <div class="calc-imagen-tab active" data-tab="file" onclick="cambiarTabImagen('file')">📁 Archivo</div>
+                                <div class="calc-imagen-tab" data-tab="url" onclick="cambiarTabImagen('url')">🔗 URL Web</div>
+                            </div>
+
+                            <div id="calcImagenFileSection">
+                                <input type="file" id="calcImagenFile" class="calc-imagen-input-file" accept="image/*" onchange="handleFileSelect(event)">
+                                <button class="calc-imagen-btn-file" onclick="document.getElementById('calcImagenFile').click()">
+                                    <i class="fas fa-upload"></i> Seleccionar Imagen
+                                </button>
+                            </div>
+
+                            <div id="calcImagenUrlSection" style="display:none;">
+                                <div class="calc-form-group" style="margin-bottom:0.5rem;">
+                                    <input type="text" id="calcImagenUrlInput" placeholder="https://ejemplo.com/imagen.jpg" class="input-field">
+                                </div>
+                                <button class="calc-imagen-btn-file" onclick="handleUrlImagen()">
+                                    <i class="fas fa-link"></i> Cargar desde URL
+                                </button>
+                            </div>
+
+                            <img id="calcImagenPreview" class="calc-imagen-preview empty" style="display:none;" alt="Preview">
+                            <button id="calcImagenRemove" class="calc-imagen-remove" style="display:none;" onclick="removerImagen()">
+                                <i class="fas fa-trash"></i> Quitar Imagen
+                            </button>
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Tipo de Cera</label>
+                            <select id="calcTipoCera">
+                                <option value="cera_china">Cera China (₡1,000/kg)</option>
+                                <option value="cera_soya">Cera de Soya (₡2,500/kg)</option>
+                                <option value="cera_abeja">Cera de Abeja (₡4,000/kg)</option>
+                                <option value="parafina_gel">Parafina en Gel (₡3,000/kg)</option>
+                                <option value="cera_coco">Cera de Coco (₡3,500/kg)</option>
+                                <option value="personalizado">Personalizado</option>
+                            </select>
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Peso total de la Vela (gramos)</label>
+                            <input type="number" id="calcPesoVela" placeholder="Ej: 200" min="1">
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Porcentaje de Fragancia (%)</label>
+                            <input type="number" id="calcPorcentajeFragancia" value="10" min="0" max="50">
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Costo de Cera por kg (₡)</label>
+                            <input type="number" id="calcCostoCera" placeholder="0" min="0">
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Costo de Fragancia por kg (₡)</label>
+                            <input type="number" id="calcCostoFragancia" placeholder="0" min="0">
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Costo de Mecha + Envase (₡)</label>
+                            <input type="number" id="calcCostoMecheEnvase" placeholder="0" min="0">
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Costos Indirectos (₡)</label>
+                            <input type="number" id="calcCostosIndirectos" placeholder="Electricidad, gas, empaque..." min="0">
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Mano de Obra por Vela (₡)</label>
+                            <input type="number" id="calcManoObra" placeholder="Tiempo de elaboración" min="0">
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Margen de Ganancia Deseado (%)</label>
+                            <input type="number" id="calcMargenGanancia" value="50" min="0">
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Nombre del Producto (opcional)</label>
+                            <input type="text" id="calcNombreProducto" placeholder="Ej: Vela Aromática Lavanda">
+                        </div>
+                    </div>
+
+                    <!-- Panel Derecho: Resultados -->
+                    <div class="calc-card">
+                        <h3>💰 Resumen de Costos</h3>
+
+                        <div class="calc-resumen">
+                            <div class="calc-resumen-row">
+                                <span>Peso Fragancia (g):</span>
+                                <span id="calcPesoFraganciaTotal">0g</span>
+                            </div>
+                            <div class="calc-resumen-row">
+                                <span>Costo de Cera:</span>
+                                <span id="calcCostoCeraTotal">₡0</span>
+                            </div>
+                            <div class="calc-resumen-row">
+                                <span>Costo de Fragancia:</span>
+                                <span id="calcCostoFraganciaTotal">₡0</span>
+                            </div>
+                            <div class="calc-resumen-row">
+                                <span>Mecha + Envase:</span>
+                                <span id="calcCostoMecheEnvaseTotal">₡0</span>
+                            </div>
+                            <div class="calc-resumen-row">
+                                <span>Costos Indirectos:</span>
+                                <span id="calcCostosIndirectosTotal">₡0</span>
+                            </div>
+                            <div class="calc-resumen-row">
+                                <span>Mano de Obra:</span>
+                                <span id="calcManoObraTotal">₡0</span>
+                            </div>
+                            <div class="calc-resumen-row" style="background: rgba(255,255,255,0.1); margin: 10px 0; padding: 12px; border-radius: 8px;">
+                                <span><strong>COSTO TOTAL:</strong></span>
+                                <span><strong id="calcCostoTotal">₡0</strong></span>
+                            </div>
+                            <div class="calc-resumen-row">
+                                <span>Margen de Ganancia:</span>
+                                <span id="calcMargenGananciaValor">0%</span>
+                            </div>
+                            <div class="calc-resumen-row">
+                                <span>Ganancia por Vela:</span>
+                                <span id="calcGananciaVela">₡0</span>
+                            </div>
+                            <div class="calc-resumen-row">
+                                <span>PRECIO DE VENTA:</span>
+                                <span id="calcPrecioVenta">₡0</span>
+                            </div>
+                        </div>
+
+                        <div class="calc-actions">
+                            <button class="calc-btn calc-btn-calc" onclick="calcularProduccion()">🔄 Calcular</button>
+                            <button id="calcBtnSave" class="calc-btn calc-btn-save" onclick="guardarCalculoFirestore()">💾 Guardar</button>
+                            <button class="calc-btn calc-btn-pdf" onclick="descargarPDF()">📄 PDF</button>
+                            <button class="calc-btn calc-btn-excel" onclick="descargarExcel()">📊 Excel</button>
+                            <button class="calc-btn calc-btn-clear" onclick="limpiarCalculadora()">🗑️ Limpiar</button>
+                        </div>
+
+                        <!-- Historial -->
+                        <div class="calc-historial-section">
+                            <h3>📚 Historial de Cálculos</h3>
+                            <div class="calc-actions" style="margin-bottom: 1rem;">
+                                <button class="calc-btn calc-btn-calc" onclick="cargarHistorialCalculadora()">🔄 Cargar Historial</button>
+                            </div>
+                            <div id="calcHistorialList" class="calc-historial-list">
+                                <p style="text-align: center; color: rgba(255,255,255,0.4); font-size: 0.9rem;">No hay cálculos guardados.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== BOTÓN FLOTANTE CALCULADORA ===== -->
+    <button class="btn-calc-flotante" onclick="abrirCalculadora()" title="Calculadora de Producción">🕯️</button>
+
 </body>
 </html>
