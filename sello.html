@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Esentia — Generador de Etiquetas Circulares (300 DPI DTF)</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <style>
+    :root { --bg: #f8f9fa; --panel: #ffffff; --primary: #2563eb; --text: #1f2937; --border: #e5e7eb; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+    h1 { margin-bottom: 10px; font-size: 1.5rem; }
+    .app-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1100px; width: 100%; background: var(--panel); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .controls { display: flex; flex-direction: column; gap: 12px; max-height: 90vh; overflow-y: auto; padding-right: 10px; }
+    .group { background: #f9fafb; padding: 12px; border-radius: 8px; border: 1px solid var(--border); }
+    .group h3 { margin: 0 0 10px; font-size: 0.95rem; color: #4b5563; display: flex; justify-content: space-between; align-items: center; }
+    .row { display: flex; gap: 10px; margin-bottom: 8px; align-items: center; flex-wrap: wrap; }
+    .row label { font-size: 0.85rem; min-width: 95px; color: #4b5563; }
+    input[type="text"], input[type="number"], input[type="color"], select { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; flex: 1; background: #fff; }
+    input[type="range"] { flex: 1; cursor: pointer; }
+    .checkbox-row { display: flex; align-items: center; margin-bottom: 6px; }
+    .checkbox-row label { font-size: 0.85rem; cursor: pointer; }
+    .preview-panel { display: flex; flex-direction: column; align-items: center; gap: 10px; position: sticky; top: 20px; }
+    canvas { border: 1px solid var(--border); border-radius: 8px; background-image: linear-gradient(45deg, #eee 25%, transparent 25%), linear-gradient(-45deg, #eee 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #eee 75%), linear-gradient(-45deg, transparent 75%, #eee 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; max-width: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .btn { background: var(--primary); color: white; border: none; padding: 10px 14px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; margin-top: 5px; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.9; }
+    .btn.secondary { background: #6b7280; }
+    .btn.success { background: #10b981; }
+    .btn.warning { background: #d97706; }
+    .btn.danger { background: #ef4444; }
+    .btn.preset-btn { background: #8b5cf6; font-size: 0.8rem; padding: 6px 10px; margin: 2px; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%; }
+    .info { font-size: 0.8rem; color: #6b7280; background: #f3f4f6; padding: 8px; border-radius: 6px; line-height: 1.4; }
+    .angle-control { background: #ffffff; padding: 8px; border-radius: 6px; margin-top: 5px; border: 1px dashed var(--border); }
+    .val-display { font-size: 0.75rem; font-weight: bold; color: var(--primary); width: 35px; text-align: right; display: inline-block; }
+    .res-badge { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+    .sheet-preview { font-size: 0.75rem; color: #059669; background: #ecfdf5; padding: 4px 6px; border-radius: 4px; margin-top: 4px; display: none; }
+    #customPaperInputs { display: none; flex-direction: column; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+    
+    /* NUEVO: Estilos para Presets */
+    .preset-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; max-height: 120px; overflow-y: auto; }
+    .preset-item { background: #f3f4f6; border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    .preset-item:hover { background: #e5e7eb; }
+    .preset-item .delete-preset { color: #ef4444; font-weight: bold; cursor: pointer; padding: 0 2px; }
+    .preset-item .delete-preset:hover { background: #fee2e2; border-radius: 2px; }
+    
+    /* NUEVO: Estilos para Galería */
+    .gallery-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+    .gallery-item { background: #fff; border: 2px solid var(--border); border-radius: 8px; padding: 8px; cursor: pointer; text-align: center; transition: all 0.2s; }
+    .gallery-item:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .gallery-item canvas { width: 100% !important; height: auto !important; border: none; box-shadow: none; background: transparent; }
+    .gallery-item p { margin: 4px 0 0; font-size: 0.75rem; color: #4b5563; font-weight: 600; }
+    
+    @media (max-width: 800px) { 
+      .app-container { grid-template-columns: 1fr; } 
+      .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 500px) {
+      .gallery-grid { grid-template-columns: 1fr; }
+    }
+  
+    /* Banner Facebook */
+    .fb-banner {
+      width: 100%;
+      max-width: 1100px;
+      background: linear-gradient(135deg, #1877f2 0%, #166fe5 50%, #0d5cb6 100%);
+      color: white;
+      padding: 14px 24px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: 0 4px 15px rgba(24, 119, 242, 0.3);
+      box-sizing: border-box;
+      flex-wrap: wrap;
+    }
+    .fb-banner .fb-icon {
+      width: 40px;
+      height: 40px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .fb-banner .fb-icon svg {
+      width: 24px;
+      height: 24px;
+      fill: #1877f2;
+    }
+    .fb-banner .fb-text {
+      flex: 1;
+      min-width: 200px;
+    }
+    .fb-banner .fb-text h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .fb-banner .fb-text p {
+      margin: 2px 0 0;
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+    .fb-banner .fb-btn {
+      background: white;
+      color: #1877f2;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .fb-banner .fb-btn:hover {
+      background: #f0f2f5;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .fb-banner .fb-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: #1877f2;
+    }
+    @media (max-width: 600px) {
+      .fb-banner { text-align: center; justify-content: center; }
+      .fb-banner .fb-text { min-width: 100%; }
+    }
+
+  </style>
+<base target="_blank">
+</head>
+<body>
+  <h1>Esentia — Generador de Etiquetas Circulares (300 DPI DTF)</h1>
+  
+  <!-- Banner Facebook -->
+  <div class="fb-banner">
+    <div class="fb-icon">
+      <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+    </div>
+    <div class="fb-text">
+      <h2>🎉 ¡Síguenos en Facebook!</h2>
+      <p>Descubre nuevos diseños en Candelas, promociones exclusivas y fragancias para tu hogar.</p>
+    </div>
+    <a href="https://www.facebook.com/profile.php?id=61579078480913" target="_blank" rel="noopener noreferrer" class="fb-btn">
+      <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+      Seguir página
+    </a>
+  </div>
+
+  <div class="app-container">
+    <div class="controls">
+      <div class="info">
+        ✓ <b>DPI:</b> 300 Fijos | <span id="resInfo" class="res-badge">Base: 1.75" | Final: 573×573 px</span>
+      </div>
+
+      <!-- NUEVO: Sección de Presets -->
+      <div class="group" style="border-color: #c4b5fd; background: #f5f3ff;">
+        <h3>💾 Presets Guardados</h3>
+        <div class="row">
+          <input type="text" id="presetName" placeholder="Nombre del preset..." style="flex: 2;">
+          <button class="btn preset-btn" onclick="savePreset()" style="flex: 1;">💾 Guardar</button>
+        </div>
+        <div id="presetList" class="preset-list">
+          <span style="font-size: 0.8rem; color: #9ca3af; font-style: italic;">No hay presets guardados</span>
+        </div>
+        <button class="btn secondary" style="width: 100%; margin-top: 8px; font-size: 0.8rem;" onclick="exportPresets()">📤 Exportar Presets</button>
+        <input type="file" id="importPresetsFile" accept=".json" style="display: none;" onchange="importPresets(this)">
+        <button class="btn secondary" style="width: 100%; margin-top: 4px; font-size: 0.8rem;" onclick="document.getElementById('importPresetsFile').click()">📥 Importar Presets</button>
+      </div>
+
+      <!-- NUEVO: Galería de Ejemplos -->
+      <div class="group" style="border-color: #fde68a; background: #fffbeb;">
+        <h3>🎨 Galería de Ejemplos</h3>
+        <p style="font-size: 0.8rem; color: #6b7280; margin: 0 0 8px;">Haz clic en un diseño para cargarlo</p>
+        <div class="gallery-grid" id="galleryGrid"></div>
+      </div>
+
+      <div class="group" style="border-color: #bfdbfe; background: #eff6ff;">
+        <h3>📏 Tamaño y Resolución</h3>
+        <div class="row"><label>Tamaño (pulg):</label><input type="range" id="labelInches" min="0.63" max="4.0" step="0.01" value="1.75" oninput="updateDimensions()"><span id="valInches" class="val-display">1.75</span></div>
+        <div class="row"><label>Sangrado (mm):</label><input type="range" id="bleedMm" min="0" max="5" step="0.5" value="2" oninput="updateDimensions()"><span id="valBleed" class="val-display">2</span></div>
+      </div>
+
+      <div class="group">
+        <h3>🔲 Visibilidad & Fondo</h3>
+        <div class="checkbox-row"><input type="checkbox" id="transparentBg" checked><label for="transparentBg">Fondo transparente</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="showImg1" checked><label for="showImg1">Imagen 1 (Fondo)</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="showImg2"><label for="showImg2">Imagen 2 (Capa extra)</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="showBrand" unchecked><label for="showBrand">Marca (Arriba)</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="showName" checked><label for="showName">Nombre (Circular)</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="showSlogan" checked><label for="showSlogan">Slogan (Circular)</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="showBottom" unchecked><label for="showBottom">Texto Inferior</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="showQR" checked><label for="showQR">Código QR</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="showCutMarks" checked><label for="showCutMarks">Marcas de corte</label></div>
+      </div>
+
+      <div class="group">
+        <h3>🖼️ Imagen 1 (Fondo)</h3>
+        <input type="file" id="imgUpload1" accept="image/*" style="width: 100%; box-sizing: border-box;">
+        <div class="angle-control">
+          <div class="row"><label>Escala (%):</label><input type="range" id="img1Scale" min="10" max="1200" value="100" oninput="document.getElementById('valImg1Scale').innerText=this.value"><span id="valImg1Scale" class="val-display">100</span></div>
+          <div class="row"><label>Rotación (°):</label><input type="range" id="img1Rot" min="-180" max="180" value="0" oninput="document.getElementById('valImg1Rot').innerText=this.value"><span id="valImg1Rot" class="val-display">0</span></div>
+          <div class="row"><label>Offset X:</label><input type="range" id="img1OffX" min="-200" max="200" value="0" oninput="document.getElementById('valImg1OffX').innerText=this.value"><span id="valImg1OffX" class="val-display">0</span></div>
+          <div class="row"><label>Offset Y:</label><input type="range" id="img1OffY" min="-200" max="200" value="0" oninput="document.getElementById('valImg1OffY').innerText=this.value"><span id="valImg1OffY" class="val-display">0</span></div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>🖼️ Imagen 2 (Extra / Logo)</h3>
+        <input type="file" id="imgUpload2" accept="image/*" style="width: 100%; box-sizing: border-box;">
+        <div class="angle-control">
+          <div class="row"><label>Escala (%):</label><input type="range" id="img2Scale" min="10" max="200" value="100" oninput="document.getElementById('valImg2Scale').innerText=this.value"><span id="valImg2Scale" class="val-display">100</span></div>
+          <div class="row"><label>Rotación (°):</label><input type="range" id="img2Rot" min="-180" max="180" value="0" oninput="document.getElementById('valImg2Rot').innerText=this.value"><span id="valImg2Rot" class="val-display">0</span></div>
+          <div class="row"><label>Offset X:</label><input type="range" id="img2OffX" min="-200" max="200" value="0" oninput="document.getElementById('valImg2OffX').innerText=this.value"><span id="valImg2OffX" class="val-display">0</span></div>
+          <div class="row"><label>Offset Y:</label><input type="range" id="img2OffY" min="-200" max="200" value="0" oninput="document.getElementById('valImg2OffY').innerText=this.value"><span id="valImg2OffY" class="val-display">0</span></div>
+          <div class="row"><label>Opacidad:</label><input type="range" id="img2Alpha" min="0" max="100" value="100" oninput="document.getElementById('valImg2Alpha').innerText=this.value"><span id="valImg2Alpha" class="val-display">100</span></div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>📝 Marca (Arriba)</h3>
+        <div class="row"><label>Texto:</label><input type="text" id="brandText" value="Esentia" style="font-family: 'Adelia'"></div>
+        
+        <div class="row"><label>Tamaño:</label><input type="number" id="brandSize" value="16" min="8" max="60"></div>
+        <div class="row"><label>Color:</label><input type="color" id="brandColor" value="#000000"></div>
+        <div class="row"><label>Offset V:</label><input type="number" id="brandOffY" value="397" min="-200" max="400"></div>
+
+      </div>
+
+      <div class="group">
+        <h3>🔤 Nombre Circular</h3>
+        <div class="row"><label>Texto:</label><input type="text" id="nameText" value="ESENTIA ESENCIAS & ESENTIA CANDELAS*"></div>
+        <div class="row"><label>Tamaño:</label><input type="number" id="nameSize" value="18" min="4" max="50"></div>
+        <div class="row"><label>Color:</label><input type="color" id="nameColor" value="#111827"></div>
+        <div class="row"><label>Radio:</label><input type="number" id="nameRadius" value="210" min="-100" max="400"></div>
+
+        <div class="angle-control">
+          <div class="row"><label>Rotación (°):</label><input type="range" id="nameRot" min="-180" max="180" value="-90" oninput="document.getElementById('valNameRot').innerText=this.value"><span id="valNameRot" class="val-display">-90</span></div>
+          <div class="row"><label>Cobertura (°):</label><input type="range" id="nameSweep" min="360" max="360" value="360" oninput="document.getElementById('valNameSweep').innerText=this.value"><span id="valNameSweep" class="val-display">360</span></div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>💬 Slogan Circular</h3>
+        <div class="row"><label>Texto:</label><input type="text" id="sloganText" value="FRAGANCIAS QUE ENAMORAN ❤ FRAGANCIAS QUE ENAMORAN ❤ FRAGANCIAS QUE ENAMORAN ❤ FRAGANCIAS QUE ENAMORAN ❤ "></div>
+        <div class="row"><label>Tamaño:</label><input type="number" id="sloganSize" value="14" min="4" max="40"></div>
+        <div class="row"><label>Color:</label><input type="color" id="sloganColor" value="#e996d9"></div>
+        <div class="row"><label>Radio:</label><input type="number" id="sloganRadius" value="235" min="-100" max="400"></div>
+        <div class="angle-control">
+          <div class="checkbox-row"><input type="checkbox" id="sloganInvert"><label for="sloganInvert">Invertir (Lectura exterior)</label></div>
+          <div class="row"><label>Rotación (°):</label><input type="range" id="sloganRot" min="-180" max="180" value="90" oninput="document.getElementById('valSloganRot').innerText=this.value"><span id="valSloganRot" class="val-display">90</span></div>
+          <div class="row"><label>Cobertura (°):</label><input type="range" id="sloganSweep" min="10" max="360" value="360" oninput="document.getElementById('valSloganSweep').innerText=this.value"><span id="valSloganSweep" class="val-display">120</span></div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>📌 Texto Inferior</h3>
+        <div class="row"><label>Texto:</label><input type="text" id="bottomText" value="Gracias"></div>
+        <div class="row"><label>Tamaño:</label><input type="number" id="bottomSize" value="14" min="8" max="40"></div>
+        <div class="row"><label>Color:</label><input type="color" id="bottomColor" value="#374151"></div>
+        <div class="row"><label>Offset V:</label><input type="number" id="bottomOffY" value="220" min="0" max="600"></div>
+      </div>
+
+      <div class="group">
+        <h3>🔗 QR Personalizado</h3>
+        <div class="row"><label>URL/Texto:</label><input type="text" id="qrData" value="https://www.facebook.com/profile.php?id=61579078480913"></div>
+        <div class="row"><label>Tamaño:</label><input type="number" id="qrSize" value="60" min="30" max="200"></div>
+        <div class="row"><label>Offset V:</label><input type="number" id="qrOffY" value="400" min="0" max="600"></div>
+      </div>
+
+      <div class="group" style="border-color: #fde68a; background: #fffbeb;">
+        <h3>🖨️ Hoja de Impresión</h3>
+        <div class="row"><label>Papel:</label>
+          <select id="paperSize" onchange="toggleCustomPaper()">
+            <option value="a4">A4 (210×297mm)</option>
+            <option value="letter">Carta (216×279mm)</option>
+            <option value="custom">Personalizado...</option>
+          </select>
+        </div>
+        <div id="customPaperInputs">
+          <div class="row">
+            <label>Ancho (mm):</label><input type="number" id="customPaperW" value="210" min="50" max="1000" oninput="checkSheetFit()">
+          </div>
+          <div class="row">
+            <label>Alto (mm):</label><input type="number" id="customPaperH" value="297" min="50" max="1000" oninput="checkSheetFit()">
+          </div>
+        </div>
+        <div class="row"><label>Filas:</label><input type="number" id="sheetRows" value="5" min="5" max="20" oninput="checkSheetFit()">
+            <label style="min-width:50px;">Cols:</label><input type="number" id="sheetCols" value="4" min="1" max="20" oninput="checkSheetFit()"></div>
+        <div class="row"><label>Margen (mm):</label><input type="number" id="sheetMargin" value="7" min="0" max="50">
+            <label style="min-width:50px;">Espacio:</label><input type="number" id="sheetGap" value="5" min="0" max="50" oninput="checkSheetFit()"></div>
+        <div id="sheetFitMsg" class="sheet-preview">✅ Ajusta perfectamente: <b>12 etiquetas</b></div>
+      </div>
+    </div>
+
+    <div class="preview-panel">
+      <h3>Vista Previa <span id="canvasSizeLabel">(525×525 px)</span></h3>
+      <canvas id="canvas" width="525" height="525"></canvas>
+      <div class="btn-row">
+        <button class="btn" id="btnPreview">🔄 Actualizar</button>
+        <button class="btn secondary" id="btnPNG">📥 PNG</button>
+        <button class="btn secondary" id="btnZIP">📦 ZIP</button>
+        <button class="btn success" id="btnPDF">📄 PDF (1 etiq.)</button>
+        <button class="btn warning" id="btnSheet">🖨️ Generar Hoja PDF</button>
+      </div>
+      <p class="info">Exportación ajustada a tu tamaño físico. Hojas listas para imprimir/cortar.</p>
+    </div>
+  </div>
+
+  <script>
+    let BASE_SIZE = 525;
+    let ACTUAL_FINAL = 573;
+    const DPI = 300;
+    let CX = BASE_SIZE / 2;
+    let CY = BASE_SIZE / 2;
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let uploadedImg1 = null;
+    let uploadedImg2 = null;
+    let qrImageCache = null;
+
+    // NUEVO: Configuraciones de ejemplos pre-diseñados
+    const EXAMPLE_CONFIGS = [
+      {
+        name: "Clásico Premium",
+        config: {
+          labelInches: 2.0, bleedMm: 2,
+          transparentBg: true, showImg1: false, showImg2: false,
+          showBrand: true, showName: true, showSlogan: true, showBottom: true, showQR: true, showCutMarks: true,
+          brandText: "LUXE", brandSize: 20, brandColor: "#1f2937", brandOffY: 55,
+          nameText: "PARFUM EXCLUSIF", nameSize: 16, nameColor: "#111827", nameRadius: 180, nameRot: -90, nameSweep: 140,
+          sloganText: "COLLECTION PRIVEE", sloganSize: 11, sloganColor: "#6b7280", sloganRadius: 205, sloganRot: 90, sloganSweep: 140, sloganInvert: false,
+          bottomText: "50ml • Eau de Parfum", bottomSize: 12, bottomColor: "#4b5563", bottomOffY: 210,
+          qrData: "https://luxe-parfum.com", qrSize: 70, qrOffY: 170,
+          img1Scale: 100, img1Rot: 0, img1OffX: 0, img1OffY: 0,
+          img2Scale: 100, img2Rot: 0, img2OffX: 0, img2OffY: 0, img2Alpha: 100,
+          paperSize: "a4", sheetRows: 3, sheetCols: 3, sheetMargin: 10, sheetGap: 5
+        }
+      },
+      {
+        name: "Botánica Natural",
+        config: {
+          labelInches: 1.75, bleedMm: 1.5,
+          transparentBg: true, showImg1: false, showImg2: false,
+          showBrand: true, showName: true, showSlogan: true, showBottom: true, showQR: false, showCutMarks: true,
+          brandText: "BOTANICA", brandSize: 18, brandColor: "#065f46", brandOffY: 60,
+          nameText: "ACEITES ESENCIALES", nameSize: 15, nameColor: "#064e3b", nameRadius: 190, nameRot: -90, nameSweep: 130,
+          sloganText: "100% ORGANICO", sloganSize: 12, sloganColor: "#059669", sloganRadius: 215, sloganRot: 90, sloganSweep: 120, sloganInvert: false,
+          bottomText: "30ml • Puro & Natural", bottomSize: 11, bottomColor: "#047857", bottomOffY: 200,
+          qrData: "", qrSize: 80, qrOffY: 180,
+          img1Scale: 100, img1Rot: 0, img1OffX: 0, img1OffY: 0,
+          img2Scale: 100, img2Rot: 0, img2OffX: 0, img2OffY: 0, img2Alpha: 100,
+          paperSize: "a4", sheetRows: 4, sheetCols: 3, sheetMargin: 8, sheetGap: 4
+        }
+      },
+      {
+        name: "Moderno Minimal",
+        config: {
+          labelInches: 1.5, bleedMm: 2,
+          transparentBg: false, showImg1: false, showImg2: false,
+          showBrand: true, showName: true, showSlogan: false, showBottom: true, showQR: true, showCutMarks: true,
+          brandText: "MINIM", brandSize: 22, brandColor: "#000000", brandOffY: 70,
+          nameText: "ESSENCE NO.5", nameSize: 14, nameColor: "#374151", nameRadius: 170, nameRot: -90, nameSweep: 110,
+          sloganText: "", sloganSize: 12, sloganColor: "#9ca3af", sloganRadius: 200, sloganRot: 90, sloganSweep: 120, sloganInvert: false,
+          bottomText: "10ml • Roll-on", bottomSize: 10, bottomColor: "#6b7280", bottomOffY: 190,
+          qrData: "https://minim.co", qrSize: 60, qrOffY: 155,
+          img1Scale: 100, img1Rot: 0, img1OffX: 0, img1OffY: 0,
+          img2Scale: 100, img2Rot: 0, img2OffX: 0, img2OffY: 0, img2Alpha: 100,
+          paperSize: "letter", sheetRows: 5, sheetCols: 4, sheetMargin: 10, sheetGap: 5
+        }
+      },
+      {
+        name: "Vintage Artesanal",
+        config: {
+          labelInches: 2.25, bleedMm: 3,
+          transparentBg: true, showImg1: false, showImg2: false,
+          showBrand: true, showName: true, showSlogan: true, showBottom: true, showQR: false, showCutMarks: true,
+          brandText: "ARTESANIA", brandSize: 19, brandColor: "#78350f", brandOffY: 65,
+          nameText: "JABON NATURAL", nameSize: 17, nameColor: "#451a03", nameRadius: 200, nameRot: -90, nameSweep: 150,
+          sloganText: "HECHO CON AMOR", sloganSize: 13, sloganColor: "#92400e", sloganRadius: 230, sloganRot: 90, sloganSweep: 150, sloganInvert: false,
+          bottomText: "120g • A mano", bottomSize: 13, bottomColor: "#78350f", bottomOffY: 230,
+          qrData: "", qrSize: 90, qrOffY: 190,
+          img1Scale: 100, img1Rot: 0, img1OffX: 0, img1OffY: 0,
+          img2Scale: 100, img2Rot: 0, img2OffX: 0, img2OffY: 0, img2Alpha: 100,
+          paperSize: "a4", sheetRows: 3, sheetCols: 2, sheetMargin: 12, sheetGap: 6
+        }
+      },
+      {
+        name: "Cosmética Lujo",
+        config: {
+          labelInches: 2.0, bleedMm: 2,
+          transparentBg: true, showImg1: false, showImg2: false,
+          showBrand: true, showName: true, showSlogan: true, showBottom: true, showQR: true, showCutMarks: true,
+          brandText: "ORO PURO", brandSize: 21, brandColor: "#b45309", brandOffY: 58,
+          nameText: "SERUM ANTIEDAD", nameSize: 16, nameColor: "#78350f", nameRadius: 185, nameRot: -90, nameSweep: 135,
+          sloganText: "REJUVENECIMIENTO", sloganSize: 11, sloganColor: "#d97706", sloganRadius: 210, sloganRot: 90, sloganSweep: 135, sloganInvert: false,
+          bottomText: "15ml • Concentrado", bottomSize: 11, bottomColor: "#92400e", bottomOffY: 215,
+          qrData: "https://oropuro.com", qrSize: 65, qrOffY: 175,
+          img1Scale: 100, img1Rot: 0, img1OffX: 0, img1OffY: 0,
+          img2Scale: 100, img2Rot: 0, img2OffX: 0, img2OffY: 0, img2Alpha: 100,
+          paperSize: "a4", sheetRows: 3, sheetCols: 3, sheetMargin: 10, sheetGap: 5
+        }
+      },
+      {
+        name: "Dulce Repostería",
+        config: {
+          labelInches: 1.75, bleedMm: 2,
+          transparentBg: false, showImg1: false, showImg2: false,
+          showBrand: true, showName: true, showSlogan: true, showBottom: true, showQR: false, showCutMarks: true,
+          brandText: "DULCE HOGAR", brandSize: 17, brandColor: "#be185d", brandOffY: 62,
+          nameText: "MERMELADA ARTESANAL", nameSize: 13, nameColor: "#9d174d", nameRadius: 185, nameRot: -90, nameSweep: 160,
+          sloganText: "SIN CONSERVADORES", sloganSize: 11, sloganColor: "#db2777", sloganRadius: 210, sloganRot: 90, sloganSweep: 160, sloganInvert: false,
+          bottomText: "250g • Frasco", bottomSize: 12, bottomColor: "#be185d", bottomOffY: 205,
+          qrData: "", qrSize: 80, qrOffY: 170,
+          img1Scale: 100, img1Rot: 0, img1OffX: 0, img1OffY: 0,
+          img2Scale: 100, img2Rot: 0, img2OffX: 0, img2OffY: 0, img2Alpha: 100,
+          paperSize: "letter", sheetRows: 4, sheetCols: 3, sheetMargin: 10, sheetGap: 5
+        }
+      }
+    ];
+
+    // NUEVO: Funciones de Presets
+    function getPresets() {
+      try {
+        return JSON.parse(localStorage.getItem('esentia_presets') || '[]');
+      } catch(e) { return []; }
+    }
+
+    function savePresets(presets) {
+      localStorage.setItem('esentia_presets', JSON.stringify(presets));
+      renderPresetList();
+    }
+
+    function getCurrentConfig() {
+      const config = {};
+      const inputs = document.querySelectorAll('input[type="text"], input[type="number"], input[type="color"], input[type="range"], select');
+      inputs.forEach(input => {
+        if(input.type === 'checkbox') return;
+        config[input.id] = input.type === 'number' || input.type === 'range' ? parseFloat(input.value) : input.value;
+      });
+      
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(cb => {
+        config[cb.id] = cb.checked;
+      });
+      
+      return config;
+    }
+
+    function loadConfig(config) {
+      Object.keys(config).forEach(key => {
+        const el = document.getElementById(key);
+        if(!el) return;
+        
+        if(el.type === 'checkbox') {
+          el.checked = config[key];
+        } else {
+          el.value = config[key];
+        }
+        
+        // Actualizar displays de valores
+        const displayEl = document.getElementById('val' + key.charAt(0).toUpperCase() + key.slice(1));
+        if(displayEl) displayEl.innerText = config[key];
+      });
+      
+      // Actualizar displays especiales
+      const displays = ['valInches', 'valBleed', 'valImg1Scale', 'valImg1Rot', 'valImg1OffX', 'valImg1OffY',
+                       'valImg2Scale', 'valImg2Rot', 'valImg2OffX', 'valImg2OffY', 'valImg2Alpha',
+                       'valNameRot', 'valNameSweep', 'valSloganRot', 'valSloganSweep'];
+      displays.forEach(id => {
+        const el = document.getElementById(id);
+        const inputId = id.replace('val', '').charAt(0).toLowerCase() + id.replace('val', '').slice(1);
+        const inputEl = document.getElementById(inputId);
+        if(el && inputEl) el.innerText = inputEl.value;
+      });
+      
+      updateDimensions();
+      updateQR();
+      draw();
+    }
+
+    function savePreset() {
+      const name = document.getElementById('presetName').value.trim();
+      if(!name) { alert('Por favor ingresa un nombre para el preset'); return; }
+      
+      const presets = getPresets();
+      const existingIndex = presets.findIndex(p => p.name === name);
+      const config = getCurrentConfig();
+      
+      if(existingIndex >= 0) {
+        if(!confirm(`Ya existe un preset "${name}". ¿Deseas sobrescribirlo?`)) return;
+        presets[existingIndex].config = config;
+      } else {
+        presets.push({ name, config, date: new Date().toISOString() });
+      }
+      
+      savePresets(presets);
+      document.getElementById('presetName').value = '';
+      alert(`Preset "${name}" guardado correctamente`);
+    }
+
+    function loadPreset(name) {
+      const presets = getPresets();
+      const preset = presets.find(p => p.name === name);
+      if(preset) {
+        loadConfig(preset.config);
+      }
+    }
+
+    function deletePreset(name, event) {
+      event.stopPropagation();
+      if(!confirm(`¿Eliminar preset "${name}"?`)) return;
+      const presets = getPresets().filter(p => p.name !== name);
+      savePresets(presets);
+    }
+
+    function renderPresetList() {
+      const presets = getPresets();
+      const container = document.getElementById('presetList');
+      
+      if(presets.length === 0) {
+        container.innerHTML = '<span style="font-size: 0.8rem; color: #9ca3af; font-style: italic;">No hay presets guardados</span>';
+        return;
+      }
+      
+      container.innerHTML = presets.map(p => `
+        <div class="preset-item" onclick="loadPreset('${p.name.replace(/'/g, "\\'")}')" title="Cargar preset">
+          <span>${p.name}</span>
+          <span class="delete-preset" onclick="deletePreset('${p.name.replace(/'/g, "\\'")}', event)" title="Eliminar">×</span>
+        </div>
+      `).join('');
+    }
+
+    function exportPresets() {
+      const presets = getPresets();
+      if(presets.length === 0) { alert('No hay presets para exportar'); return; }
+      const blob = new Blob([JSON.stringify(presets, null, 2)], {type: 'application/json'});
+      saveAs(blob, 'esentia_presets.json');
+    }
+
+    function importPresets(input) {
+      const file = input.files[0];
+      if(!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if(!Array.isArray(imported)) throw new Error('Formato inválido');
+          
+          const current = getPresets();
+          let added = 0;
+          
+          imported.forEach(preset => {
+            if(preset.name && preset.config) {
+              const exists = current.find(p => p.name === preset.name);
+              if(!exists) {
+                current.push(preset);
+                added++;
+              }
+            }
+          });
+          
+          savePresets(current);
+          alert(`Importados ${added} presets nuevos`);
+        } catch(err) {
+          alert('Error al importar: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+      input.value = '';
+    }
+
+    // NUEVO: Funciones de Galería
+    function renderGallery() {
+      const grid = document.getElementById('galleryGrid');
+      grid.innerHTML = '';
+      
+      EXAMPLE_CONFIGS.forEach((example, index) => {
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+        item.onclick = () => {
+          loadConfig(example.config);
+          // Scroll al inicio
+          document.querySelector('.controls').scrollTop = 0;
+        };
+        
+        const previewCanvas = document.createElement('canvas');
+        previewCanvas.width = 200;
+        previewCanvas.height = 200;
+        previewCanvas.style.width = '100%';
+        previewCanvas.style.height = 'auto';
+        
+        const pCtx = previewCanvas.getContext('2d');
+        
+        // Dibujar miniatura del ejemplo
+        drawExamplePreview(pCtx, example.config, 200);
+        
+        const title = document.createElement('p');
+        title.textContent = example.name;
+        
+        item.appendChild(previewCanvas);
+        item.appendChild(title);
+        grid.appendChild(item);
+      });
+    }
+
+    function drawExamplePreview(ctx, config, size) {
+      const scale = size / 525;
+      ctx.save();
+      ctx.scale(scale, scale);
+      
+      const cx = 262.5;
+      const cy = 262.5;
+      
+      // Fondo
+      if(!config.transparentBg) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 525, 525);
+      }
+      
+      // Círculo base
+      ctx.beginPath();
+      ctx.arc(cx, cy, 250, 0, Math.PI * 2);
+      ctx.fillStyle = '#f3f4f6';
+      ctx.fill();
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // Marca
+      if(config.showBrand) {
+        ctx.fillStyle = config.brandColor;
+        ctx.font = `bold ${config.brandSize}px system-ui, Adelia`;
+        ctx.textAlign = 'center';
+        ctx.fillText(config.brandText, cx, config.brandOffY);
+      }
+      
+      // Nombre circular
+      if(config.showName) {
+        drawCircularTextPreview(ctx, config.nameText, config.nameRadius, config.nameSize, config.nameColor, config.nameRot, config.nameSweep);
+      }
+      
+      // Slogan
+      if(config.showSlogan) {
+        drawCircularTextPreview(ctx, config.sloganText, config.sloganRadius, config.sloganSize, config.sloganColor, config.sloganRot, config.sloganSweep, config.sloganInvert);
+      }
+      
+      // Texto inferior
+      if(config.showBottom) {
+        ctx.fillStyle = config.bottomColor;
+        ctx.font = `${config.bottomSize}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(config.bottomText, cx, config.bottomOffY);
+      }
+      
+      // QR
+      if(config.showQR && config.qrData) {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(cx - config.qrSize/2, config.qrOffY, config.qrSize, config.qrSize);
+        ctx.fillStyle = '#fff';
+        ctx.font = '10px sans-serif';
+        ctx.fillText('QR', cx, config.qrOffY + config.qrSize/2);
+      }
+      
+      // Marcas de corte
+      if(config.showCutMarks) {
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 1;
+        const markLen = 20;
+        [[30,30],[495,30],[30,495],[495,495]].forEach(([x,y]) => {
+          ctx.beginPath();
+          ctx.moveTo(x-6,y); ctx.lineTo(x+6,y);
+          ctx.moveTo(x,y-6); ctx.lineTo(x,y+6);
+          ctx.stroke();
+        });
+      }
+      
+      ctx.restore();
+    }
+
+    function drawCircularTextPreview(ctx, text, radius, fontSize, color, startAngleDeg, sweepAngleDeg, invert = false) {
+      if(!text || text.length === 0) return;
+      ctx.save();
+      ctx.translate(262.5, 262.5);
+      ctx.font = `bold ${fontSize}px system-ui, sans-serif`;
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      const startAngle = startAngleDeg * (Math.PI / 180);
+      const step = (sweepAngleDeg * (Math.PI / 180)) / (sweepAngleDeg >= 359 ? text.length : Math.max(text.length - 1, 1));
+
+      for(let i = 0; i < text.length; i++) {
+        let angle = startAngle + step * i;
+        ctx.save();
+        ctx.rotate(angle);
+        if(invert) ctx.rotate(Math.PI);
+        ctx.translate(0, -radius);
+        ctx.fillText(text[i], 0, 0);
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
+    function toggleCustomPaper() {
+      const isCustom = document.getElementById('paperSize').value === 'custom';
+      document.getElementById('customPaperInputs').style.display = isCustom ? 'flex' : 'none';
+      checkSheetFit();
+    }
+
+    function updateDimensions() {
+      const inches = parseFloat(document.getElementById('labelInches').value);
+      const bleed = parseFloat(document.getElementById('bleedMm').value);
+      
+      document.getElementById('valInches').innerText = inches;
+      document.getElementById('valBleed').innerText = bleed;
+
+      BASE_SIZE = Math.round(inches * DPI);
+      const bleedPx = Math.round((bleed / 25.4) * DPI);
+      ACTUAL_FINAL = BASE_SIZE + (bleedPx * 2);
+      CX = BASE_SIZE / 2;
+      CY = BASE_SIZE / 2;
+
+      canvas.width = BASE_SIZE;
+      canvas.height = BASE_SIZE;
+      document.getElementById('canvasSizeLabel').innerText = `(${BASE_SIZE}×${BASE_SIZE} px)`;
+      document.getElementById('resInfo').innerText = `Base: ${inches}" (${BASE_SIZE}px) | Final: ${ACTUAL_FINAL}×${ACTUAL_FINAL} px`;
+      checkSheetFit();
+      draw();
+    }
+
+    function handleImgUpload(inputId, targetVarName) {
+      document.getElementById(inputId).addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => { 
+            if(targetVarName === 'img1') uploadedImg1 = img; 
+            else uploadedImg2 = img; 
+            draw(); 
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    handleImgUpload('imgUpload1', 'img1');
+    handleImgUpload('imgUpload2', 'img2');
+
+    function updateQR() {
+      const url = document.getElementById('qrData').value;
+      const size = parseInt(document.getElementById('qrSize').value);
+      if(!url) { qrImageCache = null; draw(); return; }
+      
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'fixed'; tempDiv.style.left = '-9999px';
+      document.body.appendChild(tempDiv);
+      
+      try {
+        new QRCode(tempDiv, { text: url, width: size, height: size, correctLevel: 2 });
+        setTimeout(() => {
+          const generated = tempDiv.querySelector('canvas') || tempDiv.querySelector('img');
+          if(generated) {
+            const img = new Image();
+            img.onload = () => { qrImageCache = img; draw(); };
+            img.src = generated.toDataURL ? generated.toDataURL() : generated.src;
+          }
+          document.body.removeChild(tempDiv);
+        }, 50);
+      } catch(e) { document.body.removeChild(tempDiv); }
+    }
+
+    function drawCircularText(ctx, text, radius, fontSize, color, startAngleDeg, sweepAngleDeg, invert = false) {
+      if(!text || text.length === 0) return;
+      ctx.save();
+      ctx.translate(CX, CY);
+      ctx.font = `bold ${fontSize}px system-ui, sans-serif`;
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      const startAngle = startAngleDeg * (Math.PI / 180);
+      const step = (sweepAngleDeg * (Math.PI / 180)) / (sweepAngleDeg >= 359 ? text.length : Math.max(text.length - 1, 1));
+
+      for(let i = 0; i < text.length; i++) {
+        let angle = startAngle + step * i;
+        ctx.save();
+        ctx.rotate(angle);
+        if(invert) ctx.rotate(Math.PI);
+        ctx.translate(0, -radius);
+        ctx.fillText(text[i], 0, 0);
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
+    function drawImageTransformed(ctx, img, offX, offY, scale, rotDeg, alpha = 1) {
+      if(!img) return;
+      ctx.save();
+      ctx.translate(CX + offX, CY + offY);
+      ctx.rotate(rotDeg * Math.PI / 180);
+      ctx.scale(scale / 100, scale / 100);
+      ctx.globalAlpha = alpha;
+      const ratio = img.width / img.height;
+      let w, h;
+      if(ratio > 1) { w = BASE_SIZE; h = BASE_SIZE / ratio; }
+      else { h = BASE_SIZE; w = BASE_SIZE * ratio; }
+      ctx.drawImage(img, -w/2, -h/2, w, h);
+      ctx.restore();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, BASE_SIZE, BASE_SIZE);
+      
+      if(!document.getElementById('transparentBg').checked) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, BASE_SIZE, BASE_SIZE);
+      }
+
+      if(document.getElementById('showImg1').checked && uploadedImg1) {
+        ctx.save();
+        ctx.beginPath(); ctx.arc(CX, CY, CX - 5, 0, Math.PI * 2); ctx.clip();
+        drawImageTransformed(ctx, uploadedImg1, 
+          parseInt(document.getElementById('img1OffX').value),
+          parseInt(document.getElementById('img1OffY').value), 
+          parseInt(document.getElementById('img1Scale').value), 
+          parseInt(document.getElementById('img1Rot').value));
+        ctx.restore();
+      }
+
+      if(document.getElementById('showImg2').checked && uploadedImg2) {
+        drawImageTransformed(ctx, uploadedImg2,
+          parseInt(document.getElementById('img2OffX').value),
+          parseInt(document.getElementById('img2OffY').value),
+          parseInt(document.getElementById('img2Scale').value),
+          parseInt(document.getElementById('img2Rot').value),
+          parseInt(document.getElementById('img2Alpha').value) / 100);
+      }
+
+      if(document.getElementById('showBrand').checked) {
+        ctx.fillStyle = document.getElementById('brandColor').value;
+        ctx.font = `bold ${document.getElementById('brandSize').value}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(document.getElementById('brandText').value, CX, parseInt(document.getElementById('brandOffY').value));
+      }
+
+      if(document.getElementById('showName').checked) {
+        drawCircularText(ctx, document.getElementById('nameText').value, 
+          parseInt(document.getElementById('nameRadius').value), parseInt(document.getElementById('nameSize').value), 
+          document.getElementById('nameColor').value, parseInt(document.getElementById('nameRot').value), 
+          parseInt(document.getElementById('nameSweep').value));
+      }
+
+      if(document.getElementById('showSlogan').checked) {
+        drawCircularText(ctx, document.getElementById('sloganText').value, 
+          parseInt(document.getElementById('sloganRadius').value), parseInt(document.getElementById('sloganSize').value), 
+          document.getElementById('sloganColor').value, parseInt(document.getElementById('sloganRot').value), 
+          parseInt(document.getElementById('sloganSweep').value), document.getElementById('sloganInvert').checked);
+      }
+
+      if(document.getElementById('showBottom').checked) {
+        ctx.fillStyle = document.getElementById('bottomColor').value;
+        ctx.font = `${document.getElementById('bottomSize').value}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(document.getElementById('bottomText').value, CX, parseInt(document.getElementById('bottomOffY').value));
+      }
+
+      if(document.getElementById('showQR').checked && qrImageCache) {
+        const size = parseInt(document.getElementById('qrSize').value);
+        const offY = parseInt(document.getElementById('qrOffY').value);
+        ctx.drawImage(qrImageCache, CX - size/2, offY, size, size);
+      }
+
+      if(document.getElementById('showCutMarks').checked) {
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 1;
+        const markLen = BASE_SIZE / 20;
+        const margin = markLen + 5;
+        ctx.beginPath();
+        [[margin,margin],[BASE_SIZE-margin,margin],[margin,BASE_SIZE-margin],[BASE_SIZE-margin,BASE_SIZE-margin]].forEach(([x,y]) => {
+          ctx.moveTo(x-6,y); ctx.lineTo(x+6,y);
+          ctx.moveTo(x,y-6); ctx.lineTo(x,y+6);
+        });
+        ctx.stroke();
+      }
+    }
+
+    function getHighResCanvas() {
+      const hiCanvas = document.createElement('canvas');
+      hiCanvas.width = ACTUAL_FINAL; hiCanvas.height = ACTUAL_FINAL;
+      const hiCtx = hiCanvas.getContext('2d');
+      hiCtx.scale(ACTUAL_FINAL / BASE_SIZE, ACTUAL_FINAL / BASE_SIZE);
+      hiCtx.drawImage(canvas, 0, 0);
+      return hiCanvas;
+    }
+
+    function getPaperDimensions() {
+      const paper = document.getElementById('paperSize').value;
+      if(paper === 'a4') return { w: 210, h: 297 };
+      if(paper === 'letter') return { w: 215.9, h: 279.4 };
+      if(paper === 'custom') {
+        return {
+          w: parseFloat(document.getElementById('customPaperW').value) || 210,
+          h: parseFloat(document.getElementById('customPaperH').value) || 297
+        };
+      }
+      return { w: 210, h: 297 };
+    }
+
+    function checkSheetFit() {
+      const dims = getPaperDimensions();
+      const rows = parseInt(document.getElementById('sheetRows').value);
+      const cols = parseInt(document.getElementById('sheetCols').value);
+      const margin = parseInt(document.getElementById('sheetMargin').value);
+      const gap = parseInt(document.getElementById('sheetGap').value);
+      const labelMm = parseFloat(document.getElementById('labelInches').value) * 25.4;
+
+      const totalW = margin*2 + cols*labelMm + (cols-1)*gap;
+      const totalH = margin*2 + rows*labelMm + (rows-1)*gap;
+      const pageW = dims.w;
+      const pageH = dims.h;
+
+      const msg = document.getElementById('sheetFitMsg');
+      if(totalW <= pageW && totalH <= pageH) {
+        msg.style.display = 'block';
+        msg.style.background = '#ecfdf5'; msg.style.color = '#059669';
+        msg.innerHTML = `✅ Ajusta: <b>${rows*cols} etiquetas</b> (${Math.round(labelMm)}mm c/u)`;
+      } else {
+        msg.style.display = 'block';
+        msg.style.background = '#fef2f2'; msg.style.color = '#b91c1c';
+        msg.innerHTML = `⚠️ Excede página (${Math.round(totalW)}×${Math.round(totalH)}mm > ${pageW}×${pageH}mm)`;
+      }
+    }
+
+    document.querySelectorAll('input, select').forEach(el => {
+      el.addEventListener('input', () => { 
+        if(el.id.includes('qr') || el.id === 'qrData') updateQR(); 
+        else if(el.id === 'labelInches' || el.id === 'bleedMm') updateDimensions();
+        else draw(); 
+      });
+      el.addEventListener('change', () => { 
+        if(el.id.includes('qr') || el.id === 'qrData') updateQR(); 
+        else if(el.id === 'labelInches' || el.id === 'bleedMm') updateDimensions();
+        else draw(); 
+      });
+    });
+    
+    document.getElementById('btnPreview').addEventListener('click', draw);
+
+    document.getElementById('btnPNG').addEventListener('click', () => {
+      const hi = getHighResCanvas();
+      hi.toBlob(blob => saveAs(blob, `etiqueta_${ACTUAL_FINAL}px_300dpi.png`));
+    });
+    document.getElementById('btnZIP').addEventListener('click', () => {
+      const zip = new JSZip(); const hi = getHighResCanvas();
+      hi.toBlob(blob => { zip.file(`etiqueta_${ACTUAL_FINAL}px_300dpi.png`, blob); zip.generateAsync({type:"blob"}).then(c => saveAs(c, 'etiquetas.zip')); });
+    });
+    document.getElementById('btnPDF').addEventListener('click', () => {
+      const { jsPDF } = window.jspdf; 
+      const dims = getPaperDimensions();
+      const pdf = new jsPDF('p', 'mm', [dims.w, dims.h]);
+      const pdfSize = parseFloat(document.getElementById('labelInches').value) * 25.4;
+      const marginX = (dims.w - pdfSize) / 2;
+      const marginY = (dims.h - pdfSize) / 2;
+      pdf.addImage(getHighResCanvas().toDataURL('image/png'), 'PNG', marginX, marginY, pdfSize, pdfSize);
+      pdf.save('etiqueta_circular.pdf');
+    });
+
+    document.getElementById('btnSheet').addEventListener('click', () => {
+      const { jsPDF } = window.jspdf;
+      const dims = getPaperDimensions();
+      const rows = parseInt(document.getElementById('sheetRows').value);
+      const cols = parseInt(document.getElementById('sheetCols').value);
+      const margin = parseInt(document.getElementById('sheetMargin').value);
+      const gap = parseInt(document.getElementById('sheetGap').value);
+      const labelMm = parseFloat(document.getElementById('labelInches').value) * 25.4;
+
+      const pageW = dims.w;
+      const pageH = dims.h;
+
+      const totalW = margin*2 + cols*labelMm + (cols-1)*gap;
+      const totalH = margin*2 + rows*labelMm + (rows-1)*gap;
+      if(totalW > pageW || totalH > pageH) {
+        alert('⚠️ Las etiquetas no caben en la hoja seleccionada. Ajusta filas, columnas, márgenes o el tamaño de la etiqueta.');
+        return;
+      }
+
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [dims.w, dims.h] });
+      const imgData = getHighResCanvas().toDataURL('image/png');
+
+      for(let r=0; r<rows; r++) {
+        for(let c=0; c<cols; c++) {
+          const x = margin + c * (labelMm + gap);
+          const y = margin + r * (labelMm + gap);
+          pdf.addImage(imgData, 'PNG', x, y, labelMm, labelMm);
+        }
+      }
+
+      pdf.save(`hoja_personalizada_${rows}x${cols}_${Math.round(labelMm)}mm_300dpi.pdf`);
+    });
+
+    // Inicialización
+    updateDimensions(); 
+    updateQR();
+    renderPresetList();
+    renderGallery();
+  </script>
+</body>
+</html>
