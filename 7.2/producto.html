@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esentia • Producto</title>
+    
+    <!-- Fuentes -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Estilos externos -->
+    <link rel="stylesheet" href="producto.css">
+    
+    <!-- Metadatos OG dinámicos para Facebook -->
+    <script src="modules/og-meta.js" defer></script>
+    <script src="modules/carrito-utils.js"></script>
+</head>
+<body>
+
+    <!-- Header Esentia -->
+    <header class="header-esentia">
+        <h1>Esentia</h1>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <div class="contenedor">
+        <div class="card" id="contenedorProducto">
+            <div class="skeleton-loader">
+                <div class="skeleton skeleton-image"></div>
+                <div class="skeleton skeleton-text" style="width:80%"></div>
+                <div class="skeleton skeleton-text" style="width:60%"></div>
+                <div class="skeleton skeleton-text" style="width:90%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón Flotante Volver -->
+    <button class="btn-volver" onclick="window.history.back()" title="Volver al catálogo">⟵</button>
+
+    <!-- Lightbox para imagen -->
+    <div id="lightbox" class="lightbox-overlay" onclick="cerrarLightbox(event)">
+        <span class="lightbox-close">×</span>
+        <img id="lightbox-img" class="lightbox-img" src="" alt="Vista ampliada">
+    </div>
+
+    <!-- ✅ LÓGICA PRINCIPAL ACTUALIZADA: Carga los 3 catálogos -->
+   <!-- ✅ SCRIPT ACTUALIZADO CON CARRITO INTEGRADO -->
+<script type="module">
+  // URLs de TODOS los catálogos
+  const CATALOGS = [
+    "https://wil1979.github.io/esentia-factura/data/productos_esentia.json",
+    "https://wil1979.github.io/esentia-factura/data/productos_limpieza_completo.json",
+    "https://wil1979.github.io/esentia-factura/data/catalogo-velas.json"
+  ];
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetId = urlParams.get("id")?.trim();
+  const container = document.getElementById("contenedorProducto");
+
+  if (!targetId) {
+    container.innerHTML = `<div class="empty-state"><h2>🔗 Producto no especificado</h2><button onclick="window.history.back()">← Volver</button></div>`;
+  } else {
+    loadAndRender(targetId);
+  }
+
+  // 🔧 Helper para limpiar claves con espacios
+  const cleanKeys = (obj) => {
+    if (!obj) return {};
+    const clean = {};
+    Object.keys(obj).forEach(k => {
+      const key = k.trim();
+      const val = typeof obj[k] === 'string' ? obj[k].trim() : obj[k];
+      clean[key] = val;
+    });
+    return clean;
+  };
+
+  // 📦 Cargar y fusionar los 3 JSONs
+  async function loadAllProducts() {
+    const promises = CATALOGS.map(url => 
+      fetch(url).then(res => res.ok ? res.json() : [])
+    );
+    const results = await Promise.allSettled(promises);
+    let all = [];
+
+    results.forEach(res => {
+      if (res.status === "fulfilled") {
+        const data = res.value;
+        if (Array.isArray(data)) {
+          all.push(...data);
+        } else if (typeof data === "object" && data !== null) {
+          Object.values(data).forEach(arr => {
+            if (Array.isArray(arr)) all.push(...arr);
+          });
+        }
+      }
+    });
+
+    return all.map(p => {
+      const clean = cleanKeys(p);
+      return {
+        id: String(clean.id || clean.nombre?.toLowerCase().replace(/\s+/g, "-")),
+        nombre: clean.nombre || "Producto",
+        tipo: clean.tipo || "General",
+        precio: Number(clean.precio || clean.precioPublico || 0),
+        precioOriginal: clean.precioOriginal || clean.precioOferta,
+        descuentoPromo: clean.descuentoPromo || 0,
+        imagen: clean.imagen || "images/default.png",
+        descripcion: clean.descripcion || clean.info || "",
+        beneficios: clean.beneficios || "",
+        variantes: clean.variantes || [{ nombre: "Única", precio: Number(clean.precio || 0) }],
+        stock: clean.stock || 0,
+        activo: clean.activo !== false,
+        esNuevo: clean.esNuevo || false,
+        calificacion: clean.calificacion || 0
+      };
+    });
+  }
+
+  // 🖼️ Renderizar producto con botón de carrito ✅ NUEVO
+  async function loadAndRender(productId) {
+    container.innerHTML = `<div class="skeleton-loader"><div class="skeleton skeleton-image"></div><div class="skeleton skeleton-text" style="width:80%"></div><div class="skeleton skeleton-text" style="width:60%"></div><div class="skeleton skeleton-text" style="width:90%"></div></div>`;
+    
+    try {
+      const productos = await loadAllProducts();
+      const producto = productos.find(p => 
+        String(p.id) === String(productId) || 
+        p.nombre?.toLowerCase().includes(productId.toLowerCase())
+      );
+
+      if (!producto) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h2>😕 Producto no encontrado</h2>
+            <p>El ID <strong>${productId}</strong> no existe en ningún catálogo.</p>
+            <button onclick="window.history.back()">← Volver al catálogo</button>
+          </div>`;
+        return;
+      }
+
+      // Calcular precios
+      const precioBase = producto.variantes?.[0]?.precio || producto.precio;
+      const precioFinal = producto.descuentoPromo > 0 
+        ? Math.round(precioBase * (1 - producto.descuentoPromo / 100))
+        : precioBase;
+
+      // Generar HTML de variantes
+     // Dentro de loadAndRender(), en la sección de variantes:
+const variantsHtml = (producto.variantes?.length > 1 ? producto.variantes.map((v, i) => 
+  `<button class="variante-btn ${i===0?'active':''}" 
+          data-idx="${i}" 
+          data-price="${v.precio}" 
+          data-original="${v.precio}"
+          data-img="${v.imagenVariante || producto.imagen}">
+     ${v.nombre}
+   </button>`
+).join('') : '');
+
+// Y en attachProductEvents(), actualiza el listener de variantes:
+document.querySelectorAll('.variante-btn')?.forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('.variante-btn').forEach(b => b.classList.remove('active'));
+    e.currentTarget.classList.add('active');
+    
+    const idx = parseInt(e.currentTarget.dataset.idx);
+    const variante = producto.variantes[idx];
+    const precioBase = variante.precio;
+    const precioFinal = producto.descuentoPromo > 0 
+      ? Math.round(precioBase * (1 - producto.descuentoPromo / 100))
+      : precioBase;
+    
+    // ✅ ACTUALIZAR PRECIO
+    document.getElementById('precioDisplay').textContent = `₡${precioFinal.toLocaleString()}`;
+    
+    // ✅ ACTUALIZAR IMAGEN CON EFECTO
+    const img = document.querySelector('.producto-imagen img');
+    const nuevaImg = e.currentTarget.dataset.img;
+    if (img && nuevaImg && img.src !== nuevaImg) {
+      img.style.opacity = '0.6';
+      setTimeout(() => {
+        img.src = nuevaImg;
+        img.alt = `${producto.nombre} - ${variante.nombre}`;
+        img.onload = () => { img.style.opacity = '1'; };
+      }, 150);
+    }
+    
+    // Animación en botón carrito
+    const cartBtn = document.getElementById('btnAgregarCarrito');
+    if (cartBtn) {
+      cartBtn.classList.add('radar-pulse');
+      setTimeout(() => cartBtn.classList.remove('radar-pulse'), 300);
+    }
+  });
+});
+
+      // ✅ RENDERIZAR CON BOTÓN DE CARRITO
+      container.innerHTML = `
+        <div class="producto-detalle">
+          <div class="producto-imagen">
+            <img src="${producto.imagen}" alt="${producto.nombre}" onclick="abrirLightbox(this.src)" loading="lazy">
+            ${producto.descuentoPromo > 0 ? `<span class="badge-oferta">-${producto.descuentoPromo}%</span>` : ''}
+            ${producto.esNuevo ? `<span class="badge-nuevo">NUEVO</span>` : ''}
+          </div>
+          
+          <div class="producto-info">
+            <span class="producto-tipo">${producto.tipo}</span>
+            <h2 class="producto-nombre">${producto.nombre}</h2>
+            
+            ${producto.calificacion > 0 ? `
+              <div class="producto-calificacion">
+                ${'★'.repeat(Math.floor(producto.calificacion))}${'☆'.repeat(5-Math.floor(producto.calificacion))}
+              </div>` : ''}
+            
+            <div class="producto-precio">
+              ${producto.descuentoPromo > 0 ? `<span class="precio-original">₡${precioBase.toLocaleString()}</span>` : ''}
+              <span class="precio-final" id="precioDisplay">₡${precioFinal.toLocaleString()}</span>
+            </div>
+
+            ${variantsHtml ? `
+              <div class="producto-variantes">
+                <small style="display:block;margin-bottom:6px;color:var(--text-muted);">Tamaño:</small>
+                <div class="variantes-buttons">${variantsHtml}</div>
+              </div>` : ''}
+            
+            ${producto.descripcion ? `<p class="producto-desc">${producto.descripcion}</p>` : ''}
+            ${producto.beneficios ? `<p class="producto-beneficios"><strong>✨ Beneficios:</strong> ${producto.beneficios}</p>` : ''}
+            
+            <div class="producto-acciones">
+              <button class="btn-whatsapp" onclick="consultarWA('${producto.nombre}')">
+                📱 Consultar por WhatsApp
+              </button>
+              <button class="btn-cart" id="btnAgregarCarrito" data-product-id="${producto.id}">
+                🛒 Agregar al Carrito
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.title = `${producto.nombre} | Esentia`;
+      
+      // Actualizar OG meta tags
+      if (window.updateOGMeta) {
+        window.updateOGMeta({
+          title: producto.nombre,
+          description: producto.descripcion || producto.beneficios || 'Producto Esentia',
+          image: producto.imagen,
+          url: window.location.href
+        });
+      }
+
+      // ✅ EVENTOS: Variantes y Carrito
+      attachProductEvents(producto);
+      
+    } catch (err) {
+      console.error(err);
+      container.innerHTML = `<div class="empty-state"><h2>❌ Error al cargar</h2><p>Intenta recargar la página.</p><button onclick="location.reload()">🔄 Recargar</button></div>`;
+    }
+  }
+
+  // ✅ MANEJO DE EVENTOS: Variantes + Agregar al Carrito
+  function attachProductEvents(producto) {
+    // Cambiar variante (tamaño)
+    document.querySelectorAll('.variante-btn')?.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.variante-btn').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        
+        const idx = parseInt(e.currentTarget.dataset.idx);
+        const variante = producto.variantes[idx];
+        const precioBase = variante.precio;
+        const precioFinal = producto.descuentoPromo > 0 
+          ? Math.round(precioBase * (1 - producto.descuentoPromo / 100))
+          : precioBase;
+        
+         // ✅ ACTUALIZAR PRECIO
+    document.getElementById('precioDisplay').textContent = `₡${precioFinal.toLocaleString()}`;
+    
+    // ✅ ACTUALIZAR IMAGEN CON EFECTO
+    const img = document.querySelector('.producto-imagen img');
+    const nuevaImg = e.currentTarget.dataset.img;
+    if (img && nuevaImg && img.src !== nuevaImg) {
+      img.style.opacity = '0.6';
+      setTimeout(() => {
+        img.src = nuevaImg;
+        img.alt = `${producto.nombre} - ${variante.nombre}`;
+        img.onload = () => { img.style.opacity = '1'; };
+      }, 150);
+    }
+        
+        // Animación sutil
+        const cartBtn = document.getElementById('btnAgregarCarrito');
+        if (cartBtn) {
+          cartBtn.classList.add('radar-pulse');
+          setTimeout(() => cartBtn.classList.remove('radar-pulse'), 300);
+        }
+      });
+    });
+
+    // ✅ AGREGAR AL CARRITO
+    document.getElementById('btnAgregarCarrito')?.addEventListener('click', async () => {
+      // Obtener variante activa
+      const activeBtn = document.querySelector('.variante-btn.active');
+      const variantIdx = activeBtn ? parseInt(activeBtn.dataset.idx) : 0;
+      const variante = producto.variantes[variantIdx] || producto.variantes[0];
+      
+      const precioBase = variante.precio;
+      const precioFinal = producto.descuentoPromo > 0 
+        ? Math.round(precioBase * (1 - producto.descuentoPromo / 100))
+        : precioBase;
+
+      // ✅ 1. Si es Velas → abrir VelaCustomizer
+      if (producto.tipo === 'Velas' && window.VelaCustomizer) {
+        // Inyectar producto con precio calculado para el customizer
+        const productoParaCustom = {
+          ...producto,
+          precio: precioFinal,
+          variantes: producto.variantes.map((v, i) => ({
+            ...v,
+            precio: producto.descuentoPromo > 0 
+              ? Math.round(v.precio * (1 - producto.descuentoPromo / 100))
+              : v.precio
+          }))
+        };
+        window.VelaCustomizer.abrir(productoParaCustom);
+        return;
+      }
+
+      // ✅ 2. Si es Difusor → abrir selector de aromas
+      if (producto.tipo === 'Difusores' || producto.tipo === 'Difusor') {
+        mostrarSelectorAroma(producto, variante, precioFinal, precioBase);
+        return;
+      }
+
+      // ✅ 3. Productos estándar → agregar directo
+      agregarAlCarrito(producto, variante, precioFinal, precioBase);
+    });
+  }
+
+  // ✅ AGREGAR DIRECTO AL CARRITO (para productos sin selector especial)
+  function agregarAlCarrito(producto, variante, precioFinal, precioBase) {
+    // Emitir evento compatible con cart.js
+    if (window.Store) {
+      window.Store.emit('cart:add', {
+        product: producto,
+        variant: {
+          nombre: variante.nombre || 'Única',
+          precio: precioFinal,
+          precioOriginal: precioBase
+        }
+      });
+      
+      // Feedback visual
+      const btn = document.getElementById('btnAgregarCarrito');
+      if (btn) {
+        const original = btn.innerHTML;
+        btn.innerHTML = '✅ Agregado';
+        btn.disabled = true;
+        setTimeout(() => {
+          btn.innerHTML = original;
+          btn.disabled = false;
+        }, 1500);
+      }
+      
+      // Actualizar badge del carrito si existe
+      if (window.CartManager?.updateUI) window.CartManager.updateUI();
+    }
+  }
+
+  // 🌸 MODAL DE AROMAS PARA DIFUSORES (copiado de product-card.js)
+  function mostrarSelectorAroma(product, variant, precioFinal, precioBase) {
+    const AROMAS = ["Pera", "Manzana Verde", "Coco", "Vainilla", "Lavanda", "Melon & Vainilla", "Kiwi", "Carro Nuevo", "Manzana & Canela", "Limón", "Menta", "Fresa"];
+    const ICONOS = { "Pera":"🍐","Manzana Verde":"🍏","Coco":"🥥","Vainilla":"🍦","Lavanda":"💜","Rosas":"🌹","Jazmín":"🌼","Sándalo":"🪵","Canela":"🫚","Limón":"🍋","Menta":"🌿","Fresa":"🍓" };
+
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.id = 'modalSelectorAroma';
+    modal.innerHTML = `
+      <div class="modal-content aroma-modal">
+        <button class="modal-close" onclick="UI.modal('modalSelectorAroma','close')">✕</button>
+        <h3>🌸 Selecciona el Aroma</h3>
+        <p class="subtitle">${product.nombre} — ${variant.nombre}</p>
+        <div class="aromas-grid">
+          ${AROMAS.map(a => `
+            <button class="btn-aroma" data-aroma="${a}">
+              <span class="aroma-icon">${ICONOS[a] || '✨'}</span>
+              <span>${a}</span>
+            </button>
+          `).join('')}
+        </div>
+        <div class="custom-aroma-box">
+          <label>🖊️ ¿No encuentras el aroma? Escríbelo aquí:</label>
+          <div class="custom-input-row">
+            <input type="text" id="customAromaInput" placeholder="Ej: Durazno, Chocolate...">
+            <button id="btnConfirmCustomAroma" class="btn-primary">✅ Usar</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const cerrar = () => {
+      document.removeEventListener('keydown', handleEscape);
+      modal.removeEventListener('click', handleOverlay);
+      modal.remove();
+    };
+    const handleOverlay = (e) => { if (e.target === modal) cerrar(); };
+    modal.addEventListener('click', handleOverlay);
+    const handleEscape = (e) => { if (e.key === 'Escape') cerrar(); };
+    document.addEventListener('keydown', handleEscape);
+
+    modal.querySelectorAll('.btn-aroma').forEach(btn => {
+      btn.addEventListener('click', () => {
+        agregarAlCarrito(product, variant, precioFinal, precioBase, btn.dataset.aroma);
+        cerrar();
+      });
+    });
+
+    document.getElementById('btnConfirmCustomAroma')?.addEventListener('click', () => {
+      const custom = document.getElementById('customAromaInput')?.value.trim();
+      if (!custom) { if(window.UI) UI.toast('Escribe un aroma válido', 'warning'); return; }
+      agregarAlCarrito(product, variant, precioFinal, precioBase, custom.toUpperCase());
+      cerrar();
+    });
+
+    setTimeout(() => document.getElementById('customAromaInput')?.focus(), 100);
+  }
+
+  // 📱 Funciones globales
+  window.abrirLightbox = (src) => {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  };
+  window.cerrarLightbox = (e) => {
+    if (e.target.id === 'lightbox' || e.target.className === 'lightbox-close') {
+      document.getElementById('lightbox').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  };
+  window.consultarWA = (nombreProducto) => {
+    const mensaje = `Hola Esentia 🌸\nMe interesa el producto:\n\n🕯️ *${nombreProducto}*\n\n¿Podrían brindarme más información?`;
+    window.open(`https://wa.me/50672952454?text=${encodeURIComponent(mensaje)}`, '_blank');
+  };
+
+  // Cerrar lightbox con Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') window.cerrarLightbox({ target: { id: 'lightbox' } });
+  });
+</script>
+
+</body>
+</html>

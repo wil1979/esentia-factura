@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esentia - Panel de Herramientas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1a1a2e;
+            --secondary: #16213e;
+            --accent: #e94560;
+            --accent-light: #ff6b6b;
+            --gold: #d4af37;
+            --text: #eaeaea;
+            --text-muted: #a0a0a0;
+            --card-bg: rgba(255,255,255,0.05);
+            --card-border: rgba(255,255,255,0.1);
+            --hover-bg: rgba(233, 69, 96, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* Partículas de fondo */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--gold);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: float 15s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Header */
+        .header {
+            position: relative;
+            z-index: 10;
+            padding: 40px 20px 20px;
+            text-align: center;
+            background: linear-gradient(180deg, rgba(26,26,46,0.9) 0%, transparent 100%);
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--gold), #f4e4ba, var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        /* Buscador */
+        .search-container {
+            position: relative;
+            z-index: 10;
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 16px 25px 16px 55px;
+            border: 2px solid var(--card-border);
+            border-radius: 50px;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            color: var(--text);
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .search-box:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.2);
+        }
+
+        .search-box::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Contador */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Grid de categorías */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .category {
+            margin-bottom: 40px;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+
+        .category-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .category-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .category-count {
+            background: var(--card-bg);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            border: 1px solid var(--card-border);
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .tool-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--gold));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            background: var(--hover-bg);
+            border-color: rgba(233, 69, 96, 0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .tool-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .tool-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 16px;
+            background: rgba(233, 69, 96, 0.1);
+            color: var(--accent);
+        }
+
+        .tool-name {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        .tool-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .tool-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-new {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            border: 1px solid rgba(46, 204, 113, 0.3);
+        }
+
+        .badge-recent {
+            background: rgba(233, 69, 96, 0.2);
+            color: var(--accent-light);
+            border: 1px solid rgba(233, 69, 96, 0.3);
+        }
+
+        /* Sin resultados */
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+            display: none;
+        }
+
+        .no-results i {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .footer span {
+            color: var(--gold);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 4px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo { font-size: 2rem; }
+            .tools-grid { grid-template-columns: 1fr; }
+            .stats-bar { gap: 20px; }
+        }
+
+        /* Animación de entrada */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tool-card {
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Partículas decorativas -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">ESENTIA</div>
+        <div class="subtitle">Panel de Herramientas</div>
+    </header>
+
+    <!-- Buscador -->
+    <div class="search-container">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" class="search-box" id="searchBox" placeholder="Buscar herramienta...">
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-number" id="totalTools">0</div>
+            <div class="stat-label">Herramientas</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number" id="totalCategories">0</div>
+            <div class="stat-label">Categorías</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number" id="recentUpdates">0</div>
+            <div class="stat-label">Actualizadas</div>
+        </div>
+    </div>
+
+    <!-- Contenedor de categorías -->
+    <div class="container" id="categoriesContainer">
+        <!-- Las categorías se generan dinámicamente -->
+    </div>
+
+    <!-- Sin resultados -->
+    <div class="no-results" id="noResults">
+        <i class="fas fa-search"></i>
+        <h3>No se encontraron herramientas</h3>
+        <p>Intenta con otra búsqueda</p>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Esentia <span>©</span> 2024 — Sistema de Gestión Integral</p>
+    </footer>
+
+    <script>
+        // Datos de las herramientas organizadas por categoría
+        const toolsData = {
+            "Catálogo & Productos": {
+                icon: "fa-box-open",
+                color: "#e94560",
+                tools: [
+                    { name: "catalogo.html", desc: "Catálogo principal de productos", icon: "fa-book", badge: "new" },
+                    { name: "catalogo2.html", desc: "Versión alternativa del catálogo", icon: "fa-book-open" },
+                    { name: "catalogomini.html", desc: "Catálogo miniatura", icon: "fa-compress" },
+                    { name: "catalogos.html", desc: "Catálogos múltiples", icon: "fa-layer-group" },
+                    { name: "indexcatalogo.html", desc: "Índice de catálogos", icon: "fa-list" },
+                    { name: "producto.html", desc: "Vista detallada de producto", icon: "fa-tag", badge: "recent" },
+                    { name: "producto.css", desc: "Estilos de producto", icon: "fa-palette", isFile: true },
+                    { name: "producto.js", desc: "Lógica de producto", icon: "fa-code", isFile: true },
+                    { name: "product-card.js", desc: "Componente de tarjeta", icon: "fa-cube", isFile: true },
+                    { name: "catalogo.css", desc: "Estilos del catálogo", icon: "fa-palette", isFile: true },
+                    { name: "catalogo.js", desc: "Lógica del catálogo", icon: "fa-code", isFile: true },
+                    { name: "catalogo-velas.json", desc: "Datos de velas", icon: "fa-database", isFile: true },
+                    { name: "productos_esentia.json", desc: "Productos Esentia", icon: "fa-database", isFile: true },
+                    { name: "productos_limpieza_completo.json", desc: "Productos de limpieza", icon: "fa-database", isFile: true },
+                    { name: "nombreproductos.html", desc: "Generador de nombres", icon: "fa-font" }
+                ]
+            },
+            "Facturación & Ventas": {
+                icon: "fa-file-invoice-dollar",
+                color: "#2ecc71",
+                tools: [
+                    { name: "factura.html", desc: "Generador de facturas", icon: "fa-file-invoice" },
+                    { name: "factura.js", desc: "Lógica de facturación", icon: "fa-code", isFile: true },
+                    { name: "ver-factura.html", desc: "Visualizador de facturas", icon: "fa-eye" },
+                    { name: "reportes-ventas.html", desc: "Reportes de ventas", icon: "fa-chart-line", badge: "recent" },
+                    { name: "reportes_ventas.html", desc: "Reportes alternativo", icon: "fa-chart-bar" },
+                    { name: "reporte-independiente.html", desc: "Reporte independiente", icon: "fa-file-alt" },
+                    { name: "tipo-pago.html", desc: "Tipos de pago", icon: "fa-credit-card" },
+                    { name: "backup_facturas_1777258327150.json", desc: "Backup de facturas", icon: "fa-save", isFile: true }
+                ]
+            },
+            "Clientes & Lealtad": {
+                icon: "fa-users",
+                color: "#9b59b6",
+                tools: [
+                    { name: "clientes.html", desc: "Gestión de clientes", icon: "fa-user-friends" },
+                    { name: "clientes-lealtad", desc: "Carpeta de clientes leales", icon: "fa-folder", isFolder: true },
+                    { name: "admin-clientes.html", desc: "Administración de clientes", icon: "fa-user-cog" },
+                    { name: "importar-clientes.html", desc: "Importar clientes", icon: "fa-file-import" },
+                    { name: "programa-lealtad.html", desc: "Programa de lealtad", icon: "fa-award", badge: "recent" },
+                    { name: "ruleta-esentia", desc: "Ruleta de premios", icon: "fa-dharmachakra", isFolder: true },
+                    { name: "ruleta_demo.html", desc: "Demo de ruleta", icon: "fa-play-circle" },
+                    { name: "lealtad", desc: "Carpeta de lealtad", icon: "fa-folder", isFolder: true },
+                    { name: "premios.json", desc: "Configuración de premios", icon: "fa-trophy", isFile: true }
+                ]
+            },
+            "Inventario & Stock": {
+                icon: "fa-warehouse",
+                color: "#f39c12",
+                tools: [
+                    { name: "inventario", desc: "Carpeta de inventario", icon: "fa-boxes", isFolder: true },
+                    { name: "Inventario", desc: "Carpeta principal", icon: "fa-archive", isFolder: true },
+                    { name: "data", desc: "Carpeta de datos", icon: "fa-database", isFolder: true },
+                    { name: "calculadora-produccion.html", desc: "Calculadora de producción", icon: "fa-calculator", badge: "new" },
+                    { name: "costo-velas.html", desc: "Costos de velas", icon: "fa-coins" },
+                    { name: "extractor.html", desc: "Extractor de datos", icon: "fa-download", badge: "recent" }
+                ]
+            },
+            "Etiquetas & Impresión": {
+                icon: "fa-tags",
+                color: "#1abc9c",
+                tools: [
+                    { name: "etiqueta", desc: "Carpeta de etiquetas", icon: "fa-folder", isFolder: true },
+                    { name: "etiquetas-json.html", desc: "Etiquetas desde JSON", icon: "fa-file-code", badge: "new" },
+                    { name: "etiquetas-json_v2.html", desc: "Etiquetas JSON v2", icon: "fa-file-code", badge: "new" },
+                    { name: "etiqueta-personalizable.html", desc: "Etiqueta personalizable", icon: "fa-edit", badge: "recent" },
+                    { name: "etiquetacircular.html", desc: "Etiqueta circular con QR", icon: "fa-circle" },
+                    { name: "etiquetasproductos.html", desc: "Etiquetas de productos", icon: "fa-barcode" },
+                    { name: "etiq_4x4.html", desc: "Etiqueta 4x4", icon: "fa-th-large" },
+                    { name: "etiqueta_4x4_tracera.html", desc: "Etiqueta 4x4 trasera", icon: "fa-th" },
+                    { name: "etiqaromatizante.html", desc: "Etiqueta aromatizante", icon: "fa-spray-can" },
+                    { name: "etiqconpuestocitronella.html", desc: "Etiqueta citronella", icon: "fa-leaf" },
+                    { name: "etiqcontrolador.html", desc: "Controlador de etiquetas", icon: "fa-sliders-h" },
+                    { name: "etiquetaaceitesmasages.html", desc: "Etiqueta aceites", icon: "fa-oil-can" },
+                    { name: "etiqvaritas.html", desc: "Etiqueta varitas", icon: "fa-magic", badge: "recent" },
+                    { name: "etiqweb.html", desc: "Etiqueta web", icon: "fa-globe" },
+                    { name: "newetiq.html", desc: "Nueva etiqueta", icon: "fa-plus-square" },
+                    { name: "mini-etiquetas.html", desc: "Mini etiquetas", icon: "fa-compress-alt", badge: "recent" },
+                    { name: "label-generator-circle.html", desc: "Generador circular", icon: "fa-bullseye" },
+                    { name: "sello.html", desc: "Sello", icon: "fa-stamp", badge: "new" },
+                    { name: "sello_circular.html", desc: "Sello circular", icon: "fa-stamp", badge: "recent" },
+                    { name: "etiquetas.json", desc: "Datos de etiquetas", icon: "fa-database", isFile: true },
+                    { name: "indicaciones.json", desc: "Indicaciones", icon: "fa-info-circle", isFile: true }
+                ]
+            },
+            "Limpieza & Hogar": {
+                icon: "fa-broom",
+                color: "#3498db",
+                tools: [
+                    { name: "limpieza", desc: "Carpeta de limpieza", icon: "fa-folder", isFolder: true },
+                    { name: "limpieza.html", desc: "Catálogo de limpieza", icon: "fa-soap" },
+                    { name: "limpieza.css", desc: "Estilos de limpieza", icon: "fa-palette", isFile: true },
+                    { name: "limpieza.js", desc: "Lógica de limpieza", icon: "fa-code", isFile: true },
+                    { name: "catalogo-limpieza.html", desc: "Catálogo limpieza", icon: "fa-book" }
+                ]
+            },
+            "Velas & Aromaterapia": {
+                icon: "fa-fire",
+                color: "#e74c3c",
+                tools: [
+                    { name: "velas", desc: "Carpeta de velas", icon: "fa-folder", isFolder: true },
+                    { name: "perfumes", desc: "Carpeta de perfumes", icon: "fa-folder", isFolder: true },
+                    { name: "esentia_candelas.html", desc: "Candelas Esentia", icon: "fa-fire-alt", badge: "new" },
+                    { name: "moldevaritas.html", desc: "Molde de varitas", icon: "fa-magic" },
+                    { name: "vidrio", desc: "Carpeta de vidrio", icon: "fa-folder", isFolder: true }
+                ]
+            },
+            "Marketing & Web": {
+                icon: "fa-bullhorn",
+                color: "#e67e22",
+                tools: [
+                    { name: "og", desc: "Carpeta Open Graph", icon: "fa-folder", isFolder: true },
+                    { name: "og-meta.js", desc: "Meta tags OG", icon: "fa-code", isFile: true },
+                    { name: "tarjetapresentacion.html", desc: "Tarjeta de presentación", icon: "fa-id-card" },
+                    { name: "generador.html", desc: "Generador de contenido", icon: "fa-magic", badge: "recent" },
+                    { name: "dtf.html", desc: "DTF", icon: "fa-print", badge: "recent" },
+                    { name: "dtf.css", desc: "Estilos DTF", icon: "fa-palette", isFile: true, badge: "recent" },
+                    { name: "gold.svg", desc: "SVG dorado", icon: "fa-image", isFile: true }
+                ]
+            },
+            "Juegos & Entretenimiento": {
+                icon: "fa-gamepad",
+                color: "#8e44ad",
+                tools: [
+                    { name: "juego", desc: "Carpeta de juegos", icon: "fa-folder", isFolder: true },
+                    { name: "juego.html", desc: "Juego principal", icon: "fa-play", badge: "new" },
+                    { name: "ruleta_demo.html", desc: "Demo ruleta", icon: "fa-dharmachakra" }
+                ]
+            },
+            "Configuración & Sistema": {
+                icon: "fa-cogs",
+                color: "#7f8c8d",
+                tools: [
+                    { name: "app.js", desc: "Aplicación principal", icon: "fa-rocket", isFile: true, badge: "new" },
+                    { name: "script.js", desc: "Scripts generales", icon: "fa-code", isFile: true },
+                    { name: "style.css", desc: "Estilos generales", icon: "fa-palette", isFile: true },
+                    { name: "esentia.css", desc: "Estilos Esentia", icon: "fa-palette", isFile: true, badge: "new" },
+                    { name: "esentia.js", desc: "Lógica Esentia", icon: "fa-code", isFile: true },
+                    { name: "esentia-mejorado.js", desc: "Esentia mejorado", icon: "fa-code", isFile: true },
+                    { name: "esentia-optimizaciones.js", desc: "Optimizaciones", icon: "fa-code", isFile: true },
+                    { name: "esentia-optimizado.css", desc: "CSS optimizado", icon: "fa-palette", isFile: true, badge: "new" },
+                    { name: "esentia-integracion.js", desc: "Integración", icon: "fa-code", isFile: true },
+                    { name: "firebase-init.js", desc: "Firebase", icon: "fa-fire", isFile: true },
+                    { name: "manifest.json", desc: "Manifest PWA", icon: "fa-mobile-alt", isFile: true },
+                    { name: "service-worker.js", desc: "Service Worker", icon: "fa-cog", isFile: true },
+                    { name: "sw.js", desc: "Service Worker alt", icon: "fa-cog", isFile: true },
+                    { name: "carrito-utils.js", desc: "Utilidades carrito", icon: "fa-shopping-cart", isFile: true },
+                    { name: "components", desc: "Carpeta de componentes", icon: "fa-folder", isFolder: true, badge: "new" },
+                    { name: "modules", desc: "Carpeta de módulos", icon: "fa-folder", isFolder: true, badge: "new" }
+                ]
+            },
+            "Agenda & Personal": {
+                icon: "fa-calendar-alt",
+                color: "#16a085",
+                tools: [
+                    { name: "agenda", desc: "Carpeta de agenda", icon: "fa-folder", isFolder: true, badge: "recent" },
+                    { name: "personal.html", desc: "Gestión de personal", icon: "fa-users-cog" },
+                    { name: "personal.json", desc: "Datos de personal", icon: "fa-database", isFile: true }
+                ]
+            },
+            "Recursos & Assets": {
+                icon: "fa-images",
+                color: "#d35400",
+                tools: [
+                    { name: "assets", desc: "Carpeta de assets", icon: "fa-folder", isFolder: true },
+                    { name: "images", desc: "Carpeta de imágenes", icon: "fa-folder", isFolder: true },
+                    { name: "fonts", desc: "Carpeta de fuentes", icon: "fa-folder", isFolder: true },
+                    { name: "fondos", desc: "Carpeta de fondos", icon: "fa-folder", isFolder: true },
+                    { name: "pdf", desc: "Carpeta de PDFs", icon: "fa-folder", isFolder: true }
+                ]
+            },
+            "Utilidades": {
+                icon: "fa-tools",
+                color: "#2c3e50",
+                tools: [
+                    { name: "qr.html", desc: "Generador de QR", icon: "fa-qrcode" },
+                    { name: "justificacion.html", desc: "Justificación", icon: "fa-file-signature" },
+                    { name: "deletefiles.html", desc: "Eliminar archivos", icon: "fa-trash-alt" },
+                    { name: "new.html", desc: "Nuevo template", icon: "fa-file", badge: "recent" },
+                    { name: "new_v3.html", desc: "Nuevo template v3", icon: "fa-file", badge: "recent" }
+                ]
+            }
+        };
+
+        // Crear partículas
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        // Renderizar categorías
+        function renderCategories(filter = '') {
+            const container = document.getElementById('categoriesContainer');
+            const noResults = document.getElementById('noResults');
+            container.innerHTML = '';
+
+            let hasResults = false;
+            let totalTools = 0;
+            let totalCategories = 0;
+            let recentCount = 0;
+
+            Object.entries(toolsData).forEach(([categoryName, categoryData], catIndex) => {
+                const filteredTools = categoryData.tools.filter(tool => {
+                    const searchTerm = filter.toLowerCase();
+                    return tool.name.toLowerCase().includes(searchTerm) || 
+                           tool.desc.toLowerCase().includes(searchTerm) ||
+                           categoryName.toLowerCase().includes(searchTerm);
+                });
+
+                if (filteredTools.length === 0) return;
+
+                hasResults = true;
+                totalCategories++;
+                totalTools += filteredTools.length;
+                recentCount += filteredTools.filter(t => t.badge).length;
+
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category';
+                categoryDiv.style.animationDelay = `${catIndex * 0.1}s`;
+
+                const headerHtml = `
+                    <div class="category-header">
+                        <div class="category-icon" style="background: linear-gradient(135deg, ${categoryData.color}, ${categoryData.color}88)">
+                            <i class="fas ${categoryData.icon}"></i>
+                        </div>
+                        <div class="category-title">${categoryName}</div>
+                        <div class="category-count">${filteredTools.length}</div>
+                    </div>
+                `;
+
+                const gridHtml = document.createElement('div');
+                gridHtml.className = 'tools-grid';
+
+                filteredTools.forEach((tool, index) => {
+                    const card = document.createElement('a');
+                    card.className = 'tool-card';
+                    card.style.animationDelay = `${index * 0.05}s`;
+
+                    const href = tool.isFolder ? `./${tool.name}/` : `./${tool.name}`;
+                    card.href = href;
+
+                    const badgeHtml = tool.badge ? 
+                        `<span class="tool-badge badge-${tool.badge}">${tool.badge === 'new' ? 'Nuevo' : 'Reciente'}</span>` : '';
+
+                    card.innerHTML = `
+                        ${badgeHtml}
+                        <div class="tool-icon">
+                            <i class="fas ${tool.icon}"></i>
+                        </div>
+                        <div class="tool-name">${tool.name}</div>
+                        <div class="tool-desc">${tool.desc}</div>
+                    `;
+
+                    gridHtml.appendChild(card);
+                });
+
+                categoryDiv.innerHTML = headerHtml;
+                categoryDiv.appendChild(gridHtml);
+                container.appendChild(categoryDiv);
+            });
+
+            // Actualizar estadísticas
+            document.getElementById('totalTools').textContent = totalTools;
+            document.getElementById('totalCategories').textContent = totalCategories;
+            document.getElementById('recentUpdates').textContent = recentCount;
+
+            noResults.style.display = hasResults ? 'none' : 'flex';
+        }
+
+        // Búsqueda
+        document.getElementById('searchBox').addEventListener('input', (e) => {
+            renderCategories(e.target.value);
+        });
+
+        // Inicializar
+        createParticles();
+        renderCategories();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esentia Cándelas — Iluminando tu vida</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1a1a2e;
+            --secondary: #16213e;
+            --accent: #e94560;
+            --accent-light: #ff6b81;
+            --gold: #d4a574;
+            --gold-light: #e8c9a0;
+            --cream: #faf7f2;
+            --white: #ffffff;
+            --text: #2c2c2c;
+            --text-light: #666;
+            --shadow: 0 10px 40px rgba(0,0,0,0.1);
+            --shadow-hover: 0 20px 60px rgba(0,0,0,0.15);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--text); overflow-x: hidden; }
+        .hero {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, #0f3460 100%);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: ''; position: absolute; width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(233,69,96,0.15) 0%, transparent 70%);
+            top: -200px; right: -200px; animation: float 8s ease-in-out infinite;
+        }
+        .hero::after {
+            content: ''; position: absolute; width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(212,165,116,0.2) 0%, transparent 70%);
+            bottom: -100px; left: -100px; animation: float 10s ease-in-out infinite reverse;
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -30px) scale(1.1); }
+        }
+        .hero-content { text-align: center; z-index: 2; padding: 2rem; max-width: 900px; }
+        .hero-badge {
+            display: inline-block; padding: 0.5rem 1.5rem;
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 50px;
+            color: var(--gold-light); font-size: 0.85rem; letter-spacing: 3px;
+            text-transform: uppercase; margin-bottom: 2rem; animation: fadeInDown 1s ease;
+        }
+        .hero h1 {
+            font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 6vw, 5rem);
+            color: var(--white); margin-bottom: 1rem; line-height: 1.1; animation: fadeInUp 1s ease 0.2s both;
+        }
+        .hero h1 span { color: var(--gold); display: block; font-size: 0.5em; font-weight: 400; letter-spacing: 8px; margin-top: 0.5rem; }
+        .hero-slogan { font-size: 1.3rem; color: rgba(255,255,255,0.7); font-weight: 300; letter-spacing: 2px; margin-bottom: 3rem; animation: fadeInUp 1s ease 0.4s both; }
+        .hero-cta {
+            display: inline-flex; align-items: center; gap: 0.75rem;
+            padding: 1rem 2.5rem; background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            color: var(--white); text-decoration: none; border-radius: 50px;
+            font-weight: 600; font-size: 1rem; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 30px rgba(233,69,96,0.4); animation: fadeInUp 1s ease 0.6s both;
+            border: none; cursor: pointer;
+        }
+        .hero-cta:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 20px 50px rgba(233,69,96,0.5); }
+        .scroll-indicator { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.5); animation: bounce 2s infinite; cursor: pointer; }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); } 40% { transform: translateX(-50%) translateY(-10px); } 60% { transform: translateX(-50%) translateY(-5px); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; transition: all 0.4s ease; }
+        nav.scrolled { background: rgba(26,26,46,0.95); backdrop-filter: blur(20px); box-shadow: 0 2px 20px rgba(0,0,0,0.1); padding: 0.75rem 2rem; }
+        .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--white); text-decoration: none; font-weight: 700; }
+        .nav-logo span { color: var(--gold); }
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-links a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.3s; position: relative; }
+        .nav-links a::after { content: ''; position: absolute; bottom: -5px; left: 0; width: 0; height: 2px; background: var(--gold); transition: width 0.3s; }
+        .nav-links a:hover { color: var(--gold); }
+        .nav-links a:hover::after { width: 100%; }
+        .cart-btn { position: relative; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--white); padding: 0.6rem 1.2rem; border-radius: 50px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; transition: all 0.3s; }
+        .cart-btn:hover { background: rgba(255,255,255,0.2); }
+        .cart-count { background: var(--accent); color: var(--white); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; }
+        section { padding: 5rem 2rem; }
+        .section-header { text-align: center; margin-bottom: 4rem; }
+        .section-header h2 { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 4vw, 3rem); color: var(--primary); margin-bottom: 0.5rem; }
+        .section-header p { color: var(--text-light); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+        .section-header .line { width: 60px; height: 3px; background: linear-gradient(90deg, var(--gold), var(--accent)); margin: 1rem auto; border-radius: 2px; }
+        #catalogo { background: var(--white); }
+        .wax-filter { display: flex; justify-content: center; gap: 1rem; margin-bottom: 3rem; flex-wrap: wrap; }
+        .wax-btn { padding: 0.6rem 1.5rem; border: 2px solid var(--gold); background: transparent; color: var(--primary); border-radius: 50px; cursor: pointer; font-weight: 500; transition: all 0.3s; font-size: 0.9rem; }
+        .wax-btn.active, .wax-btn:hover { background: var(--gold); color: var(--white); }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem; max-width: 1400px; margin: 0 auto; }
+        .product-card { background: var(--white); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; border: 1px solid rgba(0,0,0,0.05); }
+        .product-card:hover { transform: translateY(-10px); box-shadow: var(--shadow-hover); }
+        .product-img { height: 220px; background: linear-gradient(135deg, #f5e6d3 0%, #e8d5c0 50%, #d4c4b0 100%); display: flex; align-items: center; justify-content: center; font-size: 4rem; position: relative; overflow: hidden; }
+        .product-img::before { content: ''; position: absolute; width: 150px; height: 150px; background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .product-wax-tag { position: absolute; top: 1rem; right: 1rem; padding: 0.3rem 0.8rem; background: rgba(26,26,46,0.8); color: var(--gold-light); border-radius: 20px; font-size: 0.75rem; font-weight: 600; backdrop-filter: blur(10px); }
+        .product-info { padding: 1.5rem; }
+        .product-info h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--primary); margin-bottom: 0.5rem; }
+        .product-info .weight { color: var(--text-light); font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .product-price { font-size: 1.5rem; font-weight: 700; color: var(--accent); margin-bottom: 1rem; }
+        .product-price span { font-size: 0.9rem; color: var(--text-light); font-weight: 400; }
+        .btn-select { width: 100%; padding: 0.9rem; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: var(--white); border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .btn-select:hover { background: linear-gradient(135deg, var(--accent), var(--accent-light)); transform: scale(1.02); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 1rem; animation: fadeIn 0.3s ease; }
+        .modal-overlay.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal { background: var(--white); border-radius: 24px; max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 80px rgba(0,0,0,0.3); animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(40px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .modal-header { padding: 2rem 2rem 1rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--primary); }
+        .modal-close { background: none; border: none; font-size: 1.5rem; color: var(--text-light); cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .modal-close:hover { background: #f0f0f0; color: var(--accent); }
+        .modal-body { padding: 1.5rem 2rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--primary); font-size: 0.9rem; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.9rem 1rem; border: 2px solid #e8e8e8; border-radius: 12px; font-size: 0.95rem; transition: all 0.3s; font-family: 'Inter', sans-serif; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 4px rgba(212,165,116,0.15); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .color-options { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+        .color-option { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: all 0.3s; position: relative; }
+        .color-option:hover { transform: scale(1.15); }
+        .color-option.selected { border-color: var(--primary); transform: scale(1.15); }
+        .color-option.selected::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--white); font-size: 0.8rem; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+        .accessory-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+        .accessory-item { padding: 0.75rem; border: 2px solid #e8e8e8; border-radius: 12px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem; }
+        .accessory-item:hover { border-color: var(--gold); }
+        .accessory-item.selected { border-color: var(--accent); background: rgba(233,69,96,0.05); }
+        .accessory-item input { display: none; }
+        .accessory-item .acc-name { font-size: 0.85rem; font-weight: 500; }
+        .accessory-item .acc-price { margin-left: auto; font-size: 0.8rem; color: var(--accent); font-weight: 600; }
+        .custom-price-input { display: flex; align-items: center; gap: 0.5rem; }
+        .custom-price-input span { font-weight: 600; color: var(--primary); }
+        .total-box { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: var(--white); padding: 1.5rem; border-radius: 16px; margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .total-box .total-label { font-size: 0.9rem; opacity: 0.8; }
+        .total-box .total-amount { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: var(--gold); }
+        .modal-footer { padding: 1rem 2rem 2rem; display: flex; gap: 1rem; }
+        .btn-add-cart { flex: 1; padding: 1rem; background: linear-gradient(135deg, var(--accent), var(--accent-light)); color: var(--white); border: none; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.3s; }
+        .btn-add-cart:hover { transform: scale(1.02); box-shadow: 0 10px 30px rgba(233,69,96,0.4); }
+        .btn-cancel { padding: 1rem 1.5rem; background: #f0f0f0; color: var(--text); border: none; border-radius: 12px; font-weight: 500; cursor: pointer; transition: all 0.3s; }
+        .btn-cancel:hover { background: #e0e0e0; }
+        .cart-sidebar { position: fixed; top: 0; right: -450px; width: 450px; max-width: 100%; height: 100vh; background: var(--white); z-index: 3000; box-shadow: -10px 0 40px rgba(0,0,0,0.15); transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; }
+        .cart-sidebar.open { right: 0; }
+        .cart-header { padding: 1.5rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .cart-header h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; }
+        .cart-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-light); }
+        .cart-items { flex: 1; overflow-y: auto; padding: 1rem; }
+        .cart-item { display: flex; gap: 1rem; padding: 1rem; background: #fafafa; border-radius: 12px; margin-bottom: 0.75rem; position: relative; }
+        .cart-item-img { width: 60px; height: 60px; background: linear-gradient(135deg, #f5e6d3, #e8d5c0); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
+        .cart-item-info { flex: 1; }
+        .cart-item-info h4 { font-size: 0.95rem; margin-bottom: 0.25rem; }
+        .cart-item-info p { font-size: 0.8rem; color: var(--text-light); }
+        .cart-item-price { font-weight: 700; color: var(--accent); font-size: 0.95rem; }
+        .cart-item-remove { position: absolute; top: 0.5rem; right: 0.5rem; background: none; border: none; color: #ccc; cursor: pointer; font-size: 0.9rem; }
+        .cart-item-remove:hover { color: var(--accent); }
+        .cart-empty { text-align: center; padding: 3rem 1rem; color: var(--text-light); }
+        .cart-empty i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.3; }
+        .cart-footer { padding: 1.5rem; border-top: 1px solid #eee; background: var(--white); }
+        .cart-total-row { display: flex; justify-content: space-between; margin-bottom: 1rem; font-size: 1.1rem; }
+        .cart-total-row.total { font-weight: 700; font-size: 1.3rem; color: var(--primary); border-top: 2px solid #eee; padding-top: 1rem; margin-top: 0.5rem; }
+        .btn-whatsapp { width: 100%; padding: 1rem; background: linear-gradient(135deg, #25d366, #128c7e); color: var(--white); border: none; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.75rem; transition: all 0.3s; }
+        .btn-whatsapp:hover { transform: scale(1.02); box-shadow: 0 10px 30px rgba(37,211,102,0.3); }
+        .checkout-modal .modal { max-width: 500px; }
+        #nosotros { background: linear-gradient(135deg, #faf7f2 0%, #f0ebe3 100%); }
+        .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; max-width: 1200px; margin: 0 auto; align-items: center; }
+        .about-img { height: 400px; background: linear-gradient(135deg, #e8d5c0, #d4c4b0, #c4b0a0); border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 6rem; position: relative; overflow: hidden; }
+        .about-img::before { content: ''; position: absolute; width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .about-content h2 { font-family: 'Playfair Display', serif; font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem; }
+        .about-content p { color: var(--text-light); line-height: 1.8; margin-bottom: 1.5rem; }
+        .features-list { list-style: none; }
+        .features-list li { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; color: var(--text); }
+        .features-list li i { color: var(--gold); font-size: 1.1rem; }
+        .wax-types-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; max-width: 1200px; margin: 0 auto; }
+        .wax-type-card { background: var(--white); padding: 2rem 1.5rem; border-radius: 20px; text-align: center; box-shadow: var(--shadow); transition: all 0.3s; border: 2px solid transparent; }
+        .wax-type-card:hover { transform: translateY(-5px); border-color: var(--gold); }
+        .wax-type-card .icon { font-size: 2.5rem; margin-bottom: 1rem; }
+        .wax-type-card h4 { font-family: 'Playfair Display', serif; margin-bottom: 0.5rem; color: var(--primary); }
+        .wax-type-card p { font-size: 0.85rem; color: var(--text-light); line-height: 1.6; }
+        .wax-type-card .price-tag { display: inline-block; margin-top: 1rem; padding: 0.4rem 1rem; background: var(--cream); border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: var(--primary); }
+        .wax-type-card .coming-soon { display: inline-block; margin-top: 1rem; padding: 0.4rem 1rem; background: #f0f0f0; border-radius: 20px; font-size: 0.8rem; color: var(--text-light); }
+        footer { background: var(--primary); color: var(--white); padding: 4rem 2rem 2rem; }
+        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem; max-width: 1200px; margin: 0 auto 3rem; }
+        .footer-brand h3 { font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 1rem; }
+        .footer-brand h3 span { color: var(--gold); }
+        .footer-brand p { color: rgba(255,255,255,0.6); line-height: 1.7; font-size: 0.9rem; }
+        .footer-col h4 { font-size: 1rem; margin-bottom: 1.5rem; color: var(--gold); }
+        .footer-col a { display: block; color: rgba(255,255,255,0.6); text-decoration: none; margin-bottom: 0.75rem; font-size: 0.9rem; transition: color 0.3s; }
+        .footer-col a:hover { color: var(--gold); }
+        .social-links { display: flex; gap: 1rem; margin-top: 1.5rem; }
+        .social-links a { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: var(--white); transition: all 0.3s; }
+        .social-links a:hover { background: var(--gold); transform: translateY(-3px); }
+        .footer-bottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 2rem; text-align: center; color: rgba(255,255,255,0.4); font-size: 0.85rem; }
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .about-grid { grid-template-columns: 1fr; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .accessory-grid { grid-template-columns: 1fr; }
+            .cart-sidebar { width: 100%; }
+            .hero h1 { font-size: 2.5rem; }
+        }
+        .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--primary); color: var(--white); padding: 1rem 2rem; border-radius: 12px; font-weight: 500; z-index: 4000; opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .suggestions-section { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: var(--white); padding: 4rem 2rem; margin-top: 3rem; }
+        .suggestions-section h2 { font-family: 'Playfair Display', serif; text-align: center; font-size: 2rem; margin-bottom: 2rem; }
+        .suggestions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; max-width: 1200px; margin: 0 auto; }
+        .suggestion-card { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 1.5rem; transition: all 0.3s; }
+        .suggestion-card:hover { background: rgba(255,255,255,0.1); transform: translateY(-5px); }
+        .suggestion-card i { font-size: 1.5rem; color: var(--gold); margin-bottom: 0.75rem; }
+        .suggestion-card h4 { font-size: 1rem; margin-bottom: 0.5rem; }
+        .suggestion-card p { font-size: 0.85rem; color: rgba(255,255,255,0.6); line-height: 1.6; }
+
+        /* CALCULADORA */
+        .calc-section { background: linear-gradient(135deg, #f8f4ef 0%, #ede7df 100%); padding: 5rem 2rem; }
+        .calc-container { max-width: 900px; margin: 0 auto; }
+        .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        .calc-inputs { background: var(--white); padding: 2rem; border-radius: 20px; box-shadow: var(--shadow); }
+        .calc-results { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: var(--white); padding: 2rem; border-radius: 20px; box-shadow: var(--shadow); }
+        .calc-results h3 { font-family: 'Playfair Display', serif; margin-bottom: 1.5rem; font-size: 1.3rem; }
+        .calc-row { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.95rem; }
+        .calc-row.total { border-bottom: none; font-size: 1.3rem; font-weight: 700; color: var(--gold); padding-top: 1rem; margin-top: 0.5rem; border-top: 2px solid rgba(255,255,255,0.2); }
+        .calc-input-group { margin-bottom: 1.2rem; }
+        .calc-input-group label { display: block; margin-bottom: 0.4rem; font-weight: 600; color: var(--primary); font-size: 0.9rem; }
+        .calc-input-group input, .calc-input-group select { width: 100%; padding: 0.8rem 1rem; border: 2px solid #e8e8e8; border-radius: 10px; font-size: 0.95rem; transition: all 0.3s; font-family: 'Inter', sans-serif; }
+        .calc-input-group input:focus, .calc-input-group select:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,165,116,0.15); }
+        .calc-input-group .hint { font-size: 0.8rem; color: var(--text-light); margin-top: 0.3rem; }
+        .calc-btn { width: 100%; padding: 1rem; background: linear-gradient(135deg, var(--accent), var(--accent-light)); color: var(--white); border: none; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.3s; margin-top: 0.5rem; }
+        .calc-btn:hover { transform: scale(1.02); box-shadow: 0 10px 30px rgba(233,69,96,0.4); }
+        .profit-positive { color: #2ecc71; }
+        .profit-negative { color: var(--accent-light); }
+
+        /* GALERIA */
+        .gallery-section { background: var(--white); padding: 5rem 2rem; }
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; max-width: 1200px; margin: 0 auto; }
+        .gallery-item { position: relative; border-radius: 16px; overflow: hidden; aspect-ratio: 4/3; cursor: pointer; box-shadow: var(--shadow); transition: all 0.4s; }
+        .gallery-item:hover { transform: translateY(-5px); box-shadow: var(--shadow-hover); }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+        .gallery-item:hover img { transform: scale(1.08); }
+        .gallery-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(26,26,46,0.8) 0%, transparent 60%); display: flex; flex-direction: column; justify-content: flex-end; padding: 1.5rem; opacity: 0; transition: opacity 0.3s; }
+        .gallery-item:hover .gallery-overlay { opacity: 1; }
+        .gallery-overlay h4 { color: var(--white); font-family: 'Playfair Display', serif; font-size: 1.1rem; margin-bottom: 0.3rem; }
+        .gallery-overlay p { color: var(--gold-light); font-size: 0.85rem; }
+        .gallery-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 5000; display: none; align-items: center; justify-content: center; padding: 2rem; }
+        .gallery-lightbox.active { display: flex; }
+        .gallery-lightbox img { max-width: 90%; max-height: 85vh; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        .gallery-lightbox-close { position: absolute; top: 2rem; right: 2rem; background: none; border: none; color: var(--white); font-size: 2rem; cursor: pointer; }
+        .gallery-upload { border: 3px dashed var(--gold); border-radius: 16px; padding: 3rem; text-align: center; background: var(--cream); cursor: pointer; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 4/3; }
+        .gallery-upload:hover { background: rgba(212,165,116,0.1); border-color: var(--accent); }
+        .gallery-upload i { font-size: 3rem; color: var(--gold); margin-bottom: 1rem; }
+        .gallery-upload p { color: var(--text-light); font-size: 0.95rem; }
+        .gallery-upload input { display: none; }
+
+        /* TESTIMONIOS */
+        .testimonials-section { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: var(--white); padding: 5rem 2rem; }
+        .testimonials-section .section-header h2 { color: var(--white); }
+        .testimonials-section .section-header p { color: rgba(255,255,255,0.7); }
+        .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto; }
+        .testimonial-card { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 2rem; transition: all 0.3s; }
+        .testimonial-card:hover { background: rgba(255,255,255,0.1); transform: translateY(-5px); }
+        .testimonial-stars { color: var(--gold); margin-bottom: 1rem; font-size: 0.9rem; }
+        .testimonial-text { font-size: 1rem; line-height: 1.7; margin-bottom: 1.5rem; color: rgba(255,255,255,0.85); font-style: italic; }
+        .testimonial-author { display: flex; align-items: center; gap: 1rem; }
+        .testimonial-avatar { width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--accent)); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--white); font-size: 1.1rem; }
+        .testimonial-name { font-weight: 600; color: var(--white); }
+        .testimonial-role { font-size: 0.85rem; color: var(--gold-light); }
+
+        /* FAQ */
+        .faq-section { background: var(--cream); padding: 5rem 2rem; }
+        .faq-container { max-width: 800px; margin: 0 auto; }
+        .faq-item { background: var(--white); border-radius: 16px; margin-bottom: 1rem; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: all 0.3s; }
+        .faq-item:hover { box-shadow: 0 5px 20px rgba(0,0,0,0.08); }
+        .faq-question { padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: 600; color: var(--primary); }
+        .faq-question i { transition: transform 0.3s; color: var(--gold); }
+        .faq-item.active .faq-question i { transform: rotate(180deg); }
+        .faq-answer { padding: 0 1.5rem; max-height: 0; overflow: hidden; transition: all 0.4s ease; color: var(--text-light); line-height: 1.7; }
+        .faq-item.active .faq-answer { padding: 0 1.5rem 1.5rem; max-height: 300px; }
+
+        /* NEWSLETTER */
+        .newsletter-section { background: linear-gradient(135deg, var(--gold), #c4956a); padding: 4rem 2rem; text-align: center; }
+        .newsletter-content { max-width: 600px; margin: 0 auto; }
+        .newsletter-section h2 { font-family: 'Playfair Display', serif; color: var(--white); font-size: 2rem; margin-bottom: 0.5rem; }
+        .newsletter-section p { color: rgba(255,255,255,0.9); margin-bottom: 1.5rem; }
+        .newsletter-form { display: flex; gap: 0.75rem; max-width: 450px; margin: 0 auto; }
+        .newsletter-form input { flex: 1; padding: 1rem 1.5rem; border: none; border-radius: 50px; font-size: 1rem; outline: none; }
+        .newsletter-form button { padding: 1rem 2rem; background: var(--primary); color: var(--white); border: none; border-radius: 50px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .newsletter-form button:hover { background: var(--secondary); transform: scale(1.05); }
+
+        /* SCROLL TOP */
+        .scroll-top { position: fixed; bottom: 2rem; right: 2rem; width: 50px; height: 50px; background: linear-gradient(135deg, var(--accent), var(--accent-light)); color: var(--white); border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; opacity: 0; transform: translateY(20px); transition: all 0.3s; z-index: 1000; box-shadow: 0 5px 20px rgba(233,69,96,0.3); }
+        .scroll-top.visible { opacity: 1; transform: translateY(0); }
+        .scroll-top:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(233,69,96,0.4); }
+
+        /* MOBILE MENU */
+        .mobile-menu-btn { display: none; background: none; border: none; color: var(--white); font-size: 1.5rem; cursor: pointer; }
+        @media (max-width: 768px) {
+            .mobile-menu-btn { display: block; }
+            .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background: rgba(26,26,46,0.98); flex-direction: column; padding: 1.5rem; gap: 1rem; }
+            .nav-links.open { display: flex; }
+            .nav-links a { color: var(--white); }
+            .calc-grid { grid-template-columns: 1fr; }
+            .newsletter-form { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav id="navbar">
+        <a href="#" class="nav-logo">Esentia <span>Cándelas</span></a>
+        <button class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></button>
+        <ul class="nav-links" id="navLinks">
+           <!-- <li><a href="#catalogo">Catálogo</a></li>-->
+            <li><a href="#calculadora">Calculadora</a></li>
+            <!--<li><a href="#galeria">Galería</a></li>-->
+          <!--  <li><a href="#testimonios">Testimonios</a></li>-->
+           <!-- <li><a href="#faq">FAQ</a></li>-->
+           <!-- <li><a href="#nosotros">Nosotros</a></li>-->
+            <li><a href="#tipos-cera">Tipos de Cera</a></li>
+          <!--  <li><a href="#sugerencias">Sugerencias</a></li>-->
+        </ul>
+        <button class="cart-btn" onclick="toggleCart()">
+            <i class="fas fa-shopping-bag"></i>
+            <span>Carrito</span>
+            <span class="cart-count" id="cartCount">0</span>
+        </button>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero" id="inicio">
+        <div class="hero-content">
+            <div class="hero-badge">✨ Hecho a mano en Costa Rica</div>
+            <h1>Esentia Cándelas <span>Artisan Candles</span></h1>
+            <p class="hero-slogan">Iluminando tu vida</p>
+            <a href="#catalogo" class="hero-cta">
+                <i class="fas fa-fire"></i> Explorar Colección
+            </a>
+        </div>
+        <div class="scroll-indicator" onclick="document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">
+            <i class="fas fa-chevron-down"></i>
+        </div>
+    </section>
+
+    <!-- CATALOGO -->
+    <section id="catalogo">
+        <div class="section-header">
+            <h2>Nuestra Colección</h2>
+            <div class="line"></div>
+            <p>Selecciona tu candelaría ideal y personalízala a tu gusto</p>
+        </div>
+        <div class="wax-filter">
+            <button class="wax-btn active" data-wax="all">Todas</button>
+            <button class="wax-btn" data-wax="china">Cera China</button>
+            <button class="wax-btn" data-wax="soya">Cera de Soya</button>
+            <button class="wax-btn" data-wax="abeja">Cera de Abeja</button>
+            <button class="wax-btn" data-wax="parafina">Parafina en Gel</button>
+            <button class="wax-btn" data-wax="coco">Cera de Coco</button>
+        </div>
+        <div class="products-grid" id="productsGrid"></div>
+    </section>
+
+    <!-- CALCULADORA DE COSTOS -->
+    <section class="calc-section" id="calculadora">
+        <div class="section-header">
+            <h2>Calculadora de Costos de Producción</h2>
+            <div class="line"></div>
+            <p>Calcula tu costo de producción y margen de ganancia en tiempo real</p>
+        </div>
+        <div class="calc-container">
+            <div class="calc-grid">
+                <div class="calc-inputs">
+                    <div class="calc-input-group">
+                        <label>Tipo de Cera</label>
+                        <select id="calcWaxType">
+                            <option value="china">Cera China</option>
+                            <option value="soya">Cera de Soya</option>
+                            <option value="abeja">Cera de Abeja</option>
+                            <option value="parafina">Parafina en Gel</option>
+                            <option value="coco">Cera de Coco</option>
+                        </select>
+                    </div>
+                    <div class="calc-input-group">
+                        <label>Peso de la Vela (gramos)</label>
+                        <input type="number" id="calcWeight" value="72" min="10" step="10">
+                        <div class="hint">Ejemplo: 100g, 200g, 350g</div>
+                    </div>
+                    <div class="calc-input-group">
+                        <label>Costo de Cera por kg (₡)</label>
+                        <input type="number" id="calcWaxCost" value="1000" min="0" step="100">
+                        <div class="hint">Costo de materia prima de cera</div>
+                    </div>
+                    <div class="calc-input-group">
+                        <label>Costo de Fragancia por kg (₡)</label>
+                        <input type="number" id="calcFragranceCost" value="22000" min="0" step="100">
+                        <div class="hint">Incluye aceites esenciales o fragancias</div>
+                    </div>
+                    <div class="calc-input-group">
+                        <label>Costo de Mecha + Envase (₡)</label>
+                        <input type="number" id="calcWickCost" value="10" min="0" step="50">
+                        <div class="hint">Mecha, pegamento, envase/ recipiente</div>
+                    </div>
+                    <div class="calc-input-group">
+                        <label>Costos Indirectos (₡)</label>
+                        <input type="number" id="calcIndirectCost" value="50" min="0" step="50">
+                        <div class="hint">Electricidad, gas, empaque, etiquetas</div>
+                    </div>
+                    <div class="calc-input-group">
+                        <label>Mano de Obra por Vela (₡)</label>
+                        <input type="number" id="calcLaborCost" value="400" min="0" step="50">
+                        <div class="hint">Tiempo de elaboración valorado</div>
+                    </div>
+                    <div class="calc-input-group">
+                        <label>Margen de Ganancia Deseado (%)</label>
+                        <input type="number" id="calcMargin" value="100" min="0" max="500" step="5">
+                        <div class="hint">Porcentaje de utilidad sobre costo</div>
+                    </div>
+                </div>
+                <div class="calc-results">
+                    <h3><i class="fas fa-chart-pie"></i> Resumen de Costos</h3>
+                    <div class="calc-row">
+                        <span>Costo de Cera</span>
+                        <span id="resWaxCost">₡0</span>
+                    </div>
+                    <div class="calc-row">
+                        <span>Costo de Fragancia</span>
+                        <span id="resFragranceCost">₡0</span>
+                    </div>
+                    <div class="calc-row">
+                        <span>Mecha + Envase</span>
+                        <span id="resWickCost">₡0</span>
+                    </div>
+                    <div class="calc-row">
+                        <span>Costos Indirectos</span>
+                        <span id="resIndirectCost">₡0</span>
+                    </div>
+                    <div class="calc-row">
+                        <span>Mano de Obra</span>
+                        <span id="resLaborCost">₡0</span>
+                    </div>
+                    <div class="calc-row" style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 1rem;">
+                        <span><strong>COSTO TOTAL</strong></span>
+                        <span id="resTotalCost" style="font-weight:700;">₡0</span>
+                    </div>
+                    <div class="calc-row">
+                        <span>Margen de Ganancia</span>
+                        <span id="resMargin">0%</span>
+                    </div>
+                    <div class="calc-row">
+                        <span>Ganancia por Vela</span>
+                        <span id="resProfit">₡0</span>
+                    </div>
+                    <div class="calc-row total">
+                        <span>PRECIO DE VENTA SUGERIDO</span>
+                        <span id="resSalePrice">₡0</span>
+                    </div>
+                    <div class="calc-row" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <span>Comparación con Precio Actual</span>
+                        <span id="resComparison">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- GALERÍA -->
+    <section class="gallery-section" id="galeria">
+        <div class="section-header">
+            <h2>Galería de Creaciones</h2>
+            <div class="line"></div>
+            <p>Inspírate con nuestras velas artesanales. Haz clic para ampliar.</p>
+        </div>
+        <div class="gallery-grid" id="galleryGrid">
+            <label class="gallery-upload" id="galleryUpload">
+                <input type="file" id="galleryFileInput" accept="image/*" multiple onchange="handleGalleryUpload(event)">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p><strong>Subir Fotos</strong></p>
+                <p style="font-size:0.8rem;margin-top:0.3rem;">Arrastra o haz clic para agregar imágenes</p>
+            </label>
+        </div>
+    </section>
+
+    <!-- LIGHTBOX -->
+    <div class="gallery-lightbox" id="galleryLightbox" onclick="closeLightbox()">
+        <button class="gallery-lightbox-close" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
+        <img id="lightboxImg" src="" alt="">
+    </div>
+
+    <!-- TESTIMONIOS -->
+    <section class="testimonials-section" id="testimonios">
+        <div class="section-header">
+            <h2>Lo que dicen nuestros clientes</h2>
+            <div class="line"></div>
+            <p style="color:rgba(255,255,255,0.7);">Experiencias reales de quienes ya iluminaron su vida</p>
+        </div>
+        <div class="testimonials-grid">
+            <div class="testimonial-card">
+                <div class="testimonial-stars">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                </div>
+                <p class="testimonial-text">"Las velas de soya de Esentia son simplemente mágicas. El aroma a lavanda dura horas y la presentación es impecable. Ya son mi regalo favorito para cualquier ocasión."</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">MR</div>
+                    <div>
+                        <div class="testimonial-name">María Rodríguez</div>
+                        <div class="testimonial-role">Cliente frecuente — San José</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-stars">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                </div>
+                <p class="testimonial-text">"Pedí velas personalizadas para la boda de mi hermana. La atención al detalle fue increíble, desde el color exacto que pedí hasta la tarjeta con nuestro mensaje. ¡Un 10/10!"</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">CG</div>
+                    <div>
+                        <div class="testimonial-name">Carlos Gómez</div>
+                        <div class="testimonial-role">Evento especial — Cartago</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-stars">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                </div>
+                <p class="testimonial-text">"Como terapeuta holística, busco productos naturales y de calidad. Las velas de cera de abeja de Esentia son puras, limpias y crean el ambiente perfecto para mis sesiones."</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">LF</div>
+                    <div>
+                        <div class="testimonial-name">Laura Fernández</div>
+                        <div class="testimonial-role">Terapeuta — Heredia</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ 
+    <section class="faq-section" id="faq">
+        <div class="section-header">
+            <h2>Preguntas Frecuentes</h2>
+            <div class="line"></div>
+            <p>Todo lo que necesitas saber sobre nuestras candelas</p>
+        </div>
+        <div class="faq-container">
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>¿Cuánto duran las velas de Esentia?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    La duración depende del tamaño y tipo de cera. Nuestras velas de 100g duran aproximadamente 20-25 horas, las de 200g entre 40-50 horas, y las de 350g pueden llegar a 70-80 horas de quema continua. Las velas de soya y coco suelen tener mayor duración que las de parafina.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>¿Hacen envíos a todo Costa Rica?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    ¡Sí! Realizamos envíos a todo el territorio nacional. En el Área Metropolitana ofrecemos entrega el mismo día para pedidos confirmados antes de las 2:00 p.m. Para el resto del país, el tiempo de entrega es de 2-4 días hábiles. El costo de envío se coordina directamente por WhatsApp.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>¿Puedo personalizar completamente mi vela?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Absolutamente. Puedes elegir el tipo de cera, peso, color, aroma, accesorios adicionales, e incluso agregar una tarjeta personalizada con tu mensaje. También ofrecemos la opción de crear aromas completamente personalizados para eventos especiales como bodas, cumpleaños o corporativos.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>¿Qué tipo de cera es mejor para regalo?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Para regalos recomendamos la cera de soya o de coco por ser 100% naturales, biodegradables y de quema limpia. Si buscas algo más decorativo y elegante, la cera china ofrece un acabado brillante único. Para regalos de bienestar, la cera de abeja es ideal por sus propiedades purificadoras del aire.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>¿Tienen opciones para eventos corporativos o bodas?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Sí, ofrecemos paquetes especiales para eventos. Podemos crear velas con aromas personalizados, colores corporativos, etiquetas con tu logo, y presentaciones en cajas de regalo premium. Los pedidos para eventos requieren un mínimo de 2 semanas de anticipación. Contáctanos por WhatsApp para cotización personalizada.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>¿Cómo debo cuidar mi vela para que dure más?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Para maximizar la vida de tu vela: 1) Recorta la mecha a 5mm antes de cada uso. 2) Deja que la cera se derrita completamente hasta los bordes en la primera quema (2-3 horas). 3) No dejes la vela encendida más de 4 horas seguidas. 4) Mantén la vela alejada de corrientes de aire. 5) Usa un extintor de vela en lugar de soplar para evitar humo.
+                </div>
+            </div>
+        </div>
+    </section>-->
+
+    <!-- NEWSLETTER 
+    <section class="newsletter-section" id="newsletter">
+        <div class="newsletter-content">
+            <h2>Únete a la Comunidad Esentia</h2>
+            <p>Recibe ofertas exclusivas, tips de cuidado de velas y sé el primero en conocer nuevos aromas.</p>
+            <form class="newsletter-form" onsubmit="handleNewsletter(event)">
+                <input type="email" placeholder="tu@email.com" required id="newsletterEmail">
+                <button type="submit">Suscribirme</button>
+            </form>
+        </div>
+    </section>-->
+
+    <!-- NOSOTROS
+    <section id="nosotros">
+        <div class="about-grid">
+            <div class="about-img">🕯️</div>
+            <div class="about-content">
+                <h2>Hechas con Esencia y Propósito</h2>
+                <p>Cada candelaria de Esentia es elaborada artesanalmente con las mejores ceras naturales, fragancias premium y un toque de amor. Creemos que una vela no solo ilumina un espacio, sino que transforma el ambiente y eleva los momentos cotidianos.</p>
+                <p>Nuestras candelas están diseñadas para ofrecer una experiencia sensorial única: aromas que evocan recuerdos, colores que armonizan con tu decoración y una llama que danza con elegancia.</p>
+                <ul class="features-list">
+                    <li><i class="fas fa-leaf"></i> 100% ceras naturales y sostenibles</li>
+                    <li><i class="fas fa-hand-sparkles"></i> Elaboración artesanal en pequeños lotes</li>
+                    <li><i class="fas fa-heart"></i> Fragrancias sin ftalatos ni toxinas</li>
+                    <li><i class="fas fa-recycle"></i> Envases reutilizables y eco-amigables</li>
+                    <li><i class="fas fa-gift"></i> Tarjetas personalizadas para cada ocasión</li>
+                </ul>
+            </div>
+        </div>
+    </section> -->
+
+    <!-- TIPOS DE CERA -->
+    <section id="tipos-cera">
+        <div class="section-header">
+            <h2>Tipos de Cera</h2>
+            <div class="line"></div>
+            <p>Elige la cera perfecta para tu experiencia</p>
+        </div>
+        <div class="wax-types-grid">
+            <div class="wax-type-card">
+                <div class="icon">🇨🇳</div>
+                <h4>Cera China</h4>
+                <p>Tradición milenaria con acabado brillante y excelente retención de aroma. Ideal para velas decorativas.</p>
+                <span class="price-tag">Desde ₡1000</span>
+            </div>
+            <div class="wax-type-card">
+                <div class="icon">🌱</div>
+                <h4>Cera de Soya</h4>
+                <p>100% vegetal, biodegradable y de larga duración. Quema limpia y libre de toxinas.</p>
+                <span class="price-tag">Desde ₡2500</span>
+            </div>
+            <div class="wax-type-card">
+                <div class="icon">🐝</div>
+                <h4>Cera de Abeja</h4>
+                <p>Natural y pura, libera un sutil aroma a miel. La opción más ecológica y saludable.</p>
+                <span class="coming-soon">Próximamente</span>
+            </div>
+            <div class="wax-type-card">
+                <div class="icon">💎</div>
+                <h4>Parafina en Gel</h4>
+                <p>Transparencia cristalina que realza decoraciones internas. Efecto visual único y moderno.</p>
+                <span class="coming-soon">Próximamente</span>
+            </div>
+            <div class="wax-type-card">
+                <div class="icon">🥥</div>
+                <h4>Cera de Coco</h4>
+                <p>Excelente throw de fragancia y quema limpia. Sostenible y de alto rendimiento.</p>
+                <span class="coming-soon">Próximamente</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- SUGERENCIAS -->
+    <section class="suggestions-section" id="sugerencias">
+        <h2>💡 Sugerencias para tu Negocio</h2>
+        <div class="suggestions-grid">
+            <div class="suggestion-card">
+                <i class="fas fa-box-open"></i>
+                <h4>Sets de Descubrimiento</h4>
+                <p>Ofrece sets con velas pequeñas de diferentes aromas. Es la tendencia #1 en 2026 para reducir la incertidumbre de compra online.</p>
+            </div>
+            <div class="suggestion-card">
+                <i class="fas fa-spa"></i>
+                <h4>Experiencia de Bienestar</h4>
+                <p>Posiciona tus velas como ritual de self-care. Incluye guías de meditación o aromaterapia con cada compra.</p>
+            </div>
+            <div class="suggestion-card">
+                <i class="fas fa-palette"></i>
+                <h4>Personalización Total</h4>
+                <p>Permite a los clientes crear su vela desde cero: color, aroma, mensaje y envase. La personalización aumenta el valor percibido.</p>
+            </div>
+            <div class="suggestion-card">
+                <i class="fas fa-seedling"></i>
+                <h4>Suscripción Mensual</h4>
+                <p>Implementa un club de suscripción con aroma del mes. Genera ingresos recurrentes y fideliza clientes.</p>
+            </div>
+            <div class="suggestion-card">
+                <i class="fas fa-camera"></i>
+                <h4>Contenido Visual</h4>
+                <p>Usa videos ASMR del proceso de vertido y fotos lifestyle. El contenido sensorial vende velas mejor que cualquier descripción.</p>
+            </div>
+            <div class="suggestion-card">
+                <i class="fas fa-gift"></i>
+                <h4>Enfoque en Regalos</h4>
+                <p>Las velas son el regalo perfecto. Ofrece envoltura de regalo premium y mensajes personalizados para ocasiones especiales.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER 
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <h3>Esentia <span>Cándelas</span></h3>
+                <p>Iluminando tu vida con velas artesanales hechas con amor en Costa Rica. Cada lluma cuenta una historia, cada aroma evoca un recuerdo.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://wa.me/50672952454" target="_blank"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h4>Productos</h4>
+                <a href="#catalogo">Cera China</a>
+                <a href="#catalogo">Cera de Soya</a>
+                <a href="#catalogo">Accesorios</a>
+                <a href="#catalogo">Tarjetas Personalizadas</a>
+            </div>
+            <div class="footer-col">
+                <h4>Empresa</h4>
+                <a href="#nosotros">Sobre Nosotros</a>
+                <a href="#tipos-cera">Tipos de Cera</a>
+                <a href="#sugerencias">Sugerencias</a>
+                <a href="#faq">Preguntas Frecuentes</a>
+            </div>
+            <div class="footer-col">
+                <h4>Contacto</h4>
+                <a href="https://wa.me/50672952454" target="_blank"><i class="fab fa-whatsapp"></i> +506 7295-2454</a>
+                <a href="#"><i class="fas fa-envelope"></i> info@esentiacandelas.com</a>
+                <a href="#"><i class="fas fa-map-marker-alt"></i> Costa Rica</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 Esentia Cándelas. Todos los derechos reservados. Iluminando tu vida.</p>
+        </div>
+    </footer>-->
+
+    <!-- MODAL PERSONALIZACIÓN -->
+    <div class="modal-overlay" id="customizeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Personalizar Candelaria</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Cantidad</label>
+                        <input type="number" id="cantidad" min="1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio Base</label>
+                        <input type="text" id="precioBase" readonly style="background:#f5f5f5;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Aroma</label>
+                    <select id="aroma">
+                        <option value="0">Selecciona un aroma...</option>
+                        <option value="0">Vainilla Dulce</option>
+                        <option value="0">Lavanda Francesa</option>
+                        <option value="0">Cítricos Frescos</option>
+                        <option value="0">Sándalo & Cedro</option>
+                        <option value="0">Jazmín Nocturno</option>
+                        <option value="0">Canela & Manzana</option>
+                        <option value="500">Aroma Personalizado (+₡500)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Color de la Vela</label>
+                    <div class="color-options" id="colorOptions">
+                        <div class="color-option selected" style="background:#f5e6d3" data-color="Natural" data-price="0"></div>
+                        <div class="color-option" style="background:#e74c3c" data-color="Rojo Pasión" data-price="0"></div>
+                        <div class="color-option" style="background:#3498db" data-color="Azul Serenidad" data-price="0"></div>
+                        <div class="color-option" style="background:#2ecc71" data-color="Verde Naturaleza" data-price="0"></div>
+                        <div class="color-option" style="background:#9b59b6" data-color="Púrpura Místico" data-price="0"></div>
+                        <div class="color-option" style="background:#f39c12" data-color="Dorado Cálido" data-price="200"></div>
+                        <div class="color-option" style="background:#1abc9c" data-color="Turquesa Océano" data-price="0"></div>
+                        <div class="color-option" style="background:#e91e63" data-color="Rosa Romántico" data-price="0"></div>
+                    </div>
+                    <small style="color:var(--text-light);margin-top:0.5rem;display:block;">Color seleccionado: <strong id="selectedColorName">Natural</strong></small>
+                </div>
+                <div class="form-group">
+                    <label>Accesorios Adicionales</label>
+                    <div class="accessory-grid" id="accessoryGrid"></div>
+                </div>
+                <div class="form-group">
+                    <label>Tarjeta Personalizada</label>
+                    <select id="tarjeta">
+                        <option value="0">Sin tarjeta</option>
+                        <option value="800">Tarjeta básica - ₡800</option>
+                        <option value="1500">Tarjeta premium con foil - ₡1,500</option>
+                        <option value="2500">Tarjeta artesanal 3D - ₡2,500</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Mensaje para la Tarjeta (opcional)</label>
+                    <textarea id="mensajeTarjeta" rows="2" placeholder="Escribe tu mensaje personalizado..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Precio Personalizado Adicional (opcional)</label>
+                    <div class="custom-price-input">
+                        <span>₡</span>
+                        <input type="number" id="precioCustom" min="0" value="0" placeholder="0">
+                    </div>
+                    <small style="color:var(--text-light);">Agrega costos extras personalizados si aplica</small>
+                </div>
+                <div class="total-box">
+                    <div>
+                        <div class="total-label">Total del Producto</div>
+                        <small id="detallePrecio" style="opacity:0.7;font-size:0.8rem;"></small>
+                    </div>
+                    <div class="total-amount" id="totalAmount">₡0</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+                <button class="btn-add-cart" onclick="addToCart()">
+                    <i class="fas fa-cart-plus"></i> Agregar al Carrito
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHECKOUT MODAL -->
+    <div class="modal-overlay checkout-modal" id="checkoutModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Confirmar Pedido</h3>
+                <button class="modal-close" onclick="closeCheckoutModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Nombre Completo *</label>
+                    <input type="text" id="checkoutNombre" placeholder="Tu nombre completo">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono *</label>
+                    <input type="tel" id="checkoutTelefono" placeholder="+506 XXXX-XXXX">
+                </div>
+                <div class="form-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="checkoutEmail" placeholder="tu@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Dirección de Entrega *</label>
+                    <textarea id="checkoutDireccion" rows="2" placeholder="Dirección exacta para la entrega"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Notas Adicionales</label>
+                    <textarea id="checkoutNotas" rows="2" placeholder="Instrucciones especiales..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeCheckoutModal()">Volver</button>
+                <button class="btn-whatsapp" onclick="sendWhatsAppOrder()">
+                    <i class="fab fa-whatsapp"></i> Enviar Pedido por WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CART SIDEBAR -->
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3><i class="fas fa-shopping-bag"></i> Tu Carrito</h3>
+            <button class="cart-close" onclick="toggleCart()">&times;</button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <div class="cart-empty">
+                <i class="fas fa-shopping-bag"></i>
+                <p>Tu carrito está vacío</p>
+                <small>Agrega candelas para comenzar</small>
+            </div>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total-row">
+                <span>Subtotal</span>
+                <span id="cartSubtotal">₡0</span>
+            </div>
+            <div class="cart-total-row">
+                <span>Envío</span>
+                <span id="cartShipping">A coordinar</span>
+            </div>
+            <div class="cart-total-row total">
+                <span>Total</span>
+                <span id="cartTotal">₡0</span>
+            </div>
+            <button class="btn-whatsapp" onclick="openCheckout()">
+                <i class="fab fa-whatsapp"></i> Confirmar Pedido
+            </button>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <!-- SCROLL TO TOP -->
+    <button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+        // ========== DATOS DE PRODUCTOS ==========
+        const products = [
+            { id: 1, name: "Candelaria China Pequeña", wax: "china", weight: "100g", price: 3500, icon: "🕯️", desc: "Vela decorativa con brillo característico" },
+            { id: 2, name: "Candelaria China Mediana", wax: "china", weight: "200g", price: 5500, icon: "🕯️", desc: "Equilibrio perfecto entre diseño y duración" },
+            { id: 3, name: "Candelaria China Grande", wax: "china", weight: "350g", price: 8000, icon: "🕯️", desc: "Pieza central impresionante para cualquier espacio" },
+            { id: 4, name: "Candelaria Soya Pequeña", wax: "soya", weight: "100g", price: 5000, icon: "🌿", desc: "100% vegetal, quema limpia y duradera" },
+            { id: 5, name: "Candelaria Soya Mediana", wax: "soya", weight: "200g", price: 7500, icon: "🌿", desc: "Aromaterapia natural en su máxima expresión" },
+            { id: 6, name: "Candelaria Soya Grande", wax: "soya", weight: "350g", price: 10500, icon: "🌿", desc: "Experiencia sensorial completa y sostenible" },
+            { id: 7, name: "Candelaria Abeja Pequeña", wax: "abeja", weight: "100g", price: 6000, icon: "🐝", desc: "Pureza natural con sutil aroma a miel", comingSoon: true },
+            { id: 8, name: "Candelaria Abeja Mediana", wax: "abeja", weight: "200g", price: 9000, icon: "🐝", desc: "La opción más ecológica y saludable", comingSoon: true },
+            { id: 9, name: "Candelaria Abeja Grande", wax: "abeja", weight: "350g", price: 13000, icon: "🐝", desc: "Lujo natural con propiedades purificadoras", comingSoon: true },
+            { id: 10, name: "Candelaria Gel Pequeña", wax: "parafina", weight: "100g", price: 4500, icon: "💎", desc: "Transparencia cristalina, efecto visual único", comingSoon: true },
+            { id: 11, name: "Candelaria Gel Mediana", wax: "parafina", weight: "200g", price: 7000, icon: "💎", desc: "Decoraciones internas visibles en 3D", comingSoon: true },
+            { id: 12, name: "Candelaria Gel Grande", wax: "parafina", weight: "350g", price: 10000, icon: "💎", desc: "Arte luminoso para espacios modernos", comingSoon: true },
+            { id: 13, name: "Candelaria Coco Pequeña", wax: "coco", weight: "100g", price: 5500, icon: "🥥", desc: "Excelente throw de fragancia, quema limpia", comingSoon: true },
+            { id: 14, name: "Candelaria Coco Mediana", wax: "coco", weight: "200g", price: 8500, icon: "🥥", desc: "Sostenible y de alto rendimiento", comingSoon: true },
+            { id: 15, name: "Candelaria Coco Grande", wax: "coco", weight: "350g", price: 12000, icon: "🥥", desc: "La experiencia premium en velas naturales", comingSoon: true },
+        ];
+
+        const accessories = [
+            { id: 'portavelas', name: 'Portavelas de Madera', price: 2500 },
+            { id: 'extintor', name: 'Extintor de Vela', price: 1500 },
+            { id: 'mechero', name: 'Mechero de Largo Alcance', price: 2000 },
+            { id: 'caja', name: 'Caja de Regalo Premium', price: 3000 },
+            { id: 'fundavela', name: 'Funda Protectora', price: 1000 },
+            { id: 'diftusor', name: 'Difusor de Aroma Extra', price: 3500 },
+        ];
+
+        // ========== ESTADO ==========
+        let cart = [];
+        let currentProduct = null;
+        let selectedAccessories = [];
+        let selectedColorPrice = 0;
+
+        // ========== INICIALIZACIÓN ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            renderProducts('all');
+            renderAccessories();
+            setupWaxFilter();
+            setupNavbar();
+            setupScrollTop();
+            setupColorOptions();
+            setupCalcListeners();
+            calcularCostos();
+            loadGallery();
+        });
+
+        // ========== MOBILE MENU ==========
+        function toggleMobileMenu() {
+            document.getElementById('navLinks').classList.toggle('open');
+        }
+
+        // ========== NAVBAR SCROLL ==========
+        function setupNavbar() {
+            window.addEventListener('scroll', function() {
+                const nav = document.getElementById('navbar');
+                if (window.scrollY > 50) {
+                    nav.classList.add('scrolled');
+                } else {
+                    nav.classList.remove('scrolled');
+                }
+            });
+        }
+
+        // ========== SCROLL TO TOP ==========
+        function setupScrollTop() {
+            const btn = document.getElementById('scrollTop');
+            window.addEventListener('scroll', function() {
+                if (window.scrollY > 500) {
+                    btn.classList.add('visible');
+                } else {
+                    btn.classList.remove('visible');
+                }
+            });
+        }
+
+        // ========== RENDER PRODUCTOS ==========
+        function renderProducts(filter) {
+            const grid = document.getElementById('productsGrid');
+            const filtered = filter === 'all' ? products : products.filter(function(p) { return p.wax === filter; });
+            grid.innerHTML = filtered.map(function(p) {
+                return '<div class="product-card" data-wax="' + p.wax + '">' +
+                    '<div class="product-img">' + p.icon +
+                    '<span class="product-wax-tag">' + getWaxName(p.wax) + '</span>' +
+                    (p.comingSoon ? '<span class="product-wax-tag" style="top:3.5rem;background:rgba(233,69,96,0.8);">Próximamente</span>' : '') +
+                    '</div>' +
+                    '<div class="product-info">' +
+                    '<h3>' + p.name + '</h3>' +
+                    '<p class="weight">' + p.weight + ' — ' + p.desc + '</p>' +
+                    '<div class="product-price">₡' + p.price.toLocaleString('es-CR') + '<span>/ unidad</span></div>' +
+                    '<button class="btn-select" onclick="openCustomizeModal(' + p.id + ')" ' + (p.comingSoon ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '>' +
+                    '<i class="fas fa-sliders-h"></i> ' + (p.comingSoon ? 'Próximamente' : 'Personalizar') +
+                    '</button></div></div>';
+            }).join('');
+        }
+
+        function getWaxName(wax) {
+            const names = { china: 'Cera China', soya: 'Cera de Soya', abeja: 'Cera de Abeja', parafina: 'Parafina Gel', coco: 'Cera de Coco' };
+            return names[wax] || wax;
+        }
+
+        // ========== FILTRO DE CERA ==========
+        function setupWaxFilter() {
+            document.querySelectorAll('.wax-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.wax-btn').forEach(function(b) { b.classList.remove('active'); });
+                    btn.classList.add('active');
+                    renderProducts(btn.dataset.wax);
+                });
+            });
+        }
+
+        // ========== ACCESORIOS ==========
+        function renderAccessories() {
+            const grid = document.getElementById('accessoryGrid');
+            grid.innerHTML = accessories.map(function(acc) {
+                return '<label class="accessory-item" id="acc-' + acc.id + '" onclick="toggleAccessory(\'' + acc.id + '\', ' + acc.price + ')">' +
+                    '<input type="checkbox" value="' + acc.id + '">' +
+                    '<span class="acc-name">' + acc.name + '</span>' +
+                    '<span class="acc-price">+₡' + acc.price.toLocaleString('es-CR') + '</span>' +
+                    '</label>';
+            }).join('');
+        }
+
+        function toggleAccessory(id, price) {
+            const el = document.getElementById('acc-' + id);
+            const idx = selectedAccessories.findIndex(function(a) { return a.id === id; });
+            if (idx > -1) {
+                selectedAccessories.splice(idx, 1);
+                el.classList.remove('selected');
+            } else {
+                selectedAccessories.push({ id: id, price: price });
+                el.classList.add('selected');
+            }
+            calcularTotal();
+        }
+
+        // ========== COLOR ==========
+        function setupColorOptions() {
+            document.querySelectorAll('.color-option').forEach(function(el) {
+                el.addEventListener('click', function() {
+                    document.querySelectorAll('.color-option').forEach(function(c) { c.classList.remove('selected'); });
+                    el.classList.add('selected');
+                    selectedColorPrice = parseInt(el.dataset.price) || 0;
+                    document.getElementById('selectedColorName').textContent = el.dataset.color;
+                    calcularTotal();
+                });
+            });
+        }
+
+        // ========== MODAL ==========
+        function openCustomizeModal(productId) {
+            currentProduct = products.find(function(p) { return p.id === productId; });
+            if (!currentProduct || currentProduct.comingSoon) return;
+            document.getElementById('modalTitle').textContent = currentProduct.name;
+            document.getElementById('precioBase').value = '₡' + currentProduct.price.toLocaleString('es-CR');
+            document.getElementById('cantidad').value = 1;
+            document.getElementById('aroma').value = '0';
+            document.getElementById('tarjeta').value = '0';
+            document.getElementById('mensajeTarjeta').value = '';
+            document.getElementById('precioCustom').value = '0';
+            document.querySelectorAll('.color-option').forEach(function(c) { c.classList.remove('selected'); });
+            document.querySelector('.color-option[data-color="Natural"]').classList.add('selected');
+            selectedColorPrice = 0;
+            document.getElementById('selectedColorName').textContent = 'Natural';
+            selectedAccessories = [];
+            document.querySelectorAll('.accessory-item').forEach(function(a) { a.classList.remove('selected'); });
+            calcularTotal();
+            document.getElementById('customizeModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('customizeModal').classList.remove('active');
+            document.body.style.overflow = '';
+            currentProduct = null;
+        }
+
+        // ========== CALCULAR TOTAL CARRITO ==========
+        function calcularTotal() {
+            if (!currentProduct) return;
+            const cantidad = parseInt(document.getElementById('cantidad').value) || 1;
+            const aromaSelect = document.getElementById('aroma');
+            const aromaPrice = parseInt(aromaSelect.value) || 0;
+            const tarjetaSelect = document.getElementById('tarjeta');
+            const tarjetaPrice = parseInt(tarjetaSelect.value) || 0;
+            const customPrice = parseInt(document.getElementById('precioCustom').value) || 0;
+            const accTotal = selectedAccessories.reduce(function(sum, a) { return sum + a.price; }, 0);
+            const unitTotal = currentProduct.price + aromaPrice + selectedColorPrice + accTotal + tarjetaPrice + customPrice;
+            const total = unitTotal * cantidad;
+            document.getElementById('totalAmount').textContent = '₡' + total.toLocaleString('es-CR');
+            let detalle = [];
+            if (cantidad > 1) detalle.push(cantidad + ' unidades');
+            if (aromaPrice > 0) detalle.push('Aroma personalizado');
+            if (selectedColorPrice > 0) detalle.push('Color especial');
+            if (accTotal > 0) detalle.push(selectedAccessories.length + ' accesorio(s)');
+            if (tarjetaPrice > 0) detalle.push('Tarjeta personalizada');
+            if (customPrice > 0) detalle.push('Extra personalizado');
+            document.getElementById('detallePrecio').textContent = detalle.length > 0 ? detalle.join(' • ') : 'Producto base';
+        }
+
+        // ========== CARRITO ==========
+        function addToCart() {
+            if (!currentProduct) return;
+            const cantidad = parseInt(document.getElementById('cantidad').value) || 1;
+            const aromaSelect = document.getElementById('aroma');
+            const aromaText = aromaSelect.options[aromaSelect.selectedIndex].text;
+            const aromaPrice = parseInt(aromaSelect.value) || 0;
+            const tarjetaSelect = document.getElementById('tarjeta');
+            const tarjetaText = tarjetaSelect.options[tarjetaSelect.selectedIndex].text;
+            const tarjetaPrice = parseInt(tarjetaSelect.value) || 0;
+            const customPrice = parseInt(document.getElementById('precioCustom').value) || 0;
+            const mensajeTarjeta = document.getElementById('mensajeTarjeta').value;
+            const colorName = document.getElementById('selectedColorName').textContent;
+            const accTotal = selectedAccessories.reduce(function(sum, a) { return sum + a.price; }, 0);
+            const unitTotal = currentProduct.price + aromaPrice + selectedColorPrice + accTotal + tarjetaPrice + customPrice;
+            const total = unitTotal * cantidad;
+            const cartItem = {
+                id: Date.now(), product: currentProduct, cantidad: cantidad, aroma: aromaText, color: colorName,
+                accessories: selectedAccessories.slice(), tarjeta: tarjetaText, tarjetaMensaje: mensajeTarjeta,
+                customPrice: customPrice, unitTotal: unitTotal, total: total
+            };
+            cart.push(cartItem);
+            updateCartUI();
+            closeModal();
+            showToast('¡Producto agregado al carrito! 🕯️');
+        }
+
+        function removeFromCart(itemId) {
+            cart = cart.filter(function(item) { return item.id !== itemId; });
+            updateCartUI();
+            showToast('Producto eliminado del carrito');
+        }
+
+        function updateCartUI() {
+            const cartItems = document.getElementById('cartItems');
+            const cartCount = document.getElementById('cartCount');
+            const cartSubtotal = document.getElementById('cartSubtotal');
+            const cartTotal = document.getElementById('cartTotal');
+            const totalItems = cart.reduce(function(sum, item) { return sum + item.cantidad; }, 0);
+            const subtotal = cart.reduce(function(sum, item) { return sum + item.total; }, 0);
+            cartCount.textContent = totalItems;
+            cartSubtotal.textContent = '₡' + subtotal.toLocaleString('es-CR');
+            cartTotal.textContent = '₡' + subtotal.toLocaleString('es-CR');
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<div class="cart-empty"><i class="fas fa-shopping-bag"></i><p>Tu carrito está vacío</p><small>Agrega candelas para comenzar</small></div>';
+            } else {
+                cartItems.innerHTML = cart.map(function(item) {
+                    return '<div class="cart-item">' +
+                        '<div class="cart-item-img">' + item.product.icon + '</div>' +
+                        '<div class="cart-item-info">' +
+                        '<h4>' + item.product.name + '</h4>' +
+                        '<p>' + item.cantidad + 'x | ' + item.color + ' | ' + item.aroma + '</p>' +
+                        (item.accessories.length > 0 ? '<p><small>+' + item.accessories.length + ' accesorio(s)</small></p>' : '') +
+                        (item.tarjeta !== 'Sin tarjeta' ? '<p><small>' + item.tarjeta + '</small></p>' : '') +
+                        '</div>' +
+                        '<div class="cart-item-price">₡' + item.total.toLocaleString('es-CR') + '</div>' +
+                        '<button class="cart-item-remove" onclick="removeFromCart(' + item.id + ')"><i class="fas fa-times"></i></button>' +
+                        '</div>';
+                }).join('');
+            }
+        }
+
+        function toggleCart() {
+            document.getElementById('cartSidebar').classList.toggle('open');
+        }
+
+        // ========== CHECKOUT ==========
+        function openCheckout() {
+            if (cart.length === 0) { showToast('Tu carrito está vacío'); return; }
+            toggleCart();
+            document.getElementById('checkoutModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCheckoutModal() {
+            document.getElementById('checkoutModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function sendWhatsAppOrder() {
+            const nombre = document.getElementById('checkoutNombre').value.trim();
+            const telefono = document.getElementById('checkoutTelefono').value.trim();
+            const email = document.getElementById('checkoutEmail').value.trim();
+            const direccion = document.getElementById('checkoutDireccion').value.trim();
+            const notas = document.getElementById('checkoutNotas').value.trim();
+            if (!nombre || !telefono || !direccion) { showToast('Por favor completa los campos obligatorios (*)'); return; }
+            let mensaje = '🕯️ *PEDIDO ESENTIA CÁNDELAS* 🕯️%0A%0A';
+            mensaje += '👤 *Cliente:* ' + nombre + '%0A';
+            mensaje += '📞 *Teléfono:* ' + telefono + '%0A';
+            if (email) mensaje += '📧 *Email:* ' + email + '%0A';
+            mensaje += '📍 *Dirección:* ' + direccion + '%0A%0A';
+            mensaje += '📦 *PRODUCTOS:*%0A━━━━━━━━━━━━━━━%0A';
+            let totalGeneral = 0;
+            cart.forEach(function(item) {
+                mensaje += '%0A🔸 *' + item.product.name + '* x' + item.cantidad + '%0A';
+                mensaje += '   💰 Precio unitario: ₡' + item.product.price.toLocaleString('es-CR') + '%0A';
+                mensaje += '   🎨 Color: ' + item.color + '%0A';
+                mensaje += '   🌸 Aroma: ' + item.aroma + '%0A';
+                if (item.accessories.length > 0) mensaje += '   🎁 Accesorios: ' + item.accessories.map(function(a) { return a.name; }).join(', ') + '%0A';
+                if (item.tarjeta !== 'Sin tarjeta') {
+                    mensaje += '   💌 Tarjeta: ' + item.tarjeta + '%0A';
+                    if (item.tarjetaMensaje) mensaje += '   ✉️ Mensaje: "' + item.tarjetaMensaje + '"%0A';
+                }
+                if (item.customPrice > 0) mensaje += '   ➕ Extra personalizado: ₡' + item.customPrice.toLocaleString('es-CR') + '%0A';
+                mensaje += '   💵 *Subtotal: ₡' + item.total.toLocaleString('es-CR') + '*%0A';
+                totalGeneral += item.total;
+            });
+            mensaje += '%0A━━━━━━━━━━━━━━━%0A';
+            mensaje += '💰 *TOTAL DEL PEDIDO: ₡' + totalGeneral.toLocaleString('es-CR') + '*%0A%0A';
+            if (notas) mensaje += '📝 *Notas:* ' + notas + '%0A%0A';
+            mensaje += '✨ *Esentia Cándelas — Iluminando tu vida* ✨%0A';
+            mensaje += 'Gracias por tu pedido. Te contactaremos para confirmar la entrega. 🙏';
+            const whatsappUrl = 'https://wa.me/50672952454?text=' + mensaje;
+            window.open(whatsappUrl, '_blank');
+            cart = [];
+            updateCartUI();
+            closeCheckoutModal();
+            showToast('¡Pedido enviado por WhatsApp! 📱');
+        }
+
+        // ========== CALCULADORA DE COSTOS - CORREGIDA ==========
+        function setupCalcListeners() {
+            const ids = ['calcWaxType', 'calcWeight', 'calcWaxCost', 'calcFragranceCost', 'calcWickCost', 'calcIndirectCost', 'calcLaborCost', 'calcMargin'];
+            ids.forEach(function(id) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', calcularCostos);
+                    el.addEventListener('change', calcularCostos);
+                }
+            });
+        }
+
+        function calcularCostos() {
+            // Obtener valores como números (forzar conversión)
+            const weight = parseFloat(document.getElementById('calcWeight').value) || 0;
+            const waxCostPerKg = parseFloat(document.getElementById('calcWaxCost').value) || 0;
+            const fragranceCostPerKg = parseFloat(document.getElementById('calcFragranceCost').value) || 0;
+            const wickCost = parseFloat(document.getElementById('calcWickCost').value) || 0;
+            const indirectCost = parseFloat(document.getElementById('calcIndirectCost').value) || 0;
+            const laborCost = parseFloat(document.getElementById('calcLaborCost').value) || 0;
+            const marginPercent = parseFloat(document.getElementById('calcMargin').value) || 0;
+
+            // Cálculos
+            const weightKg = weight / 1000;
+            const waxCost = Math.round(waxCostPerKg * weightKg);
+            // Fragancia: típicamente 6-10% del peso de la cera
+            const fragranceCost = Math.round(fragranceCostPerKg * weightKg * 0.08);
+            const totalCost = waxCost + fragranceCost + wickCost + indirectCost + laborCost;
+            const profit = Math.round(totalCost * (marginPercent / 100));
+            const salePrice = totalCost + profit;
+
+            // Actualizar UI
+            document.getElementById('resWaxCost').textContent = '₡' + waxCost.toLocaleString('es-CR');
+            document.getElementById('resFragranceCost').textContent = '₡' + fragranceCost.toLocaleString('es-CR');
+            document.getElementById('resWickCost').textContent = '₡' + wickCost.toLocaleString('es-CR');
+            document.getElementById('resIndirectCost').textContent = '₡' + indirectCost.toLocaleString('es-CR');
+            document.getElementById('resLaborCost').textContent = '₡' + laborCost.toLocaleString('es-CR');
+            document.getElementById('resTotalCost').textContent = '₡' + totalCost.toLocaleString('es-CR');
+            document.getElementById('resMargin').textContent = marginPercent + '%';
+            document.getElementById('resProfit').textContent = '₡' + profit.toLocaleString('es-CR');
+            document.getElementById('resSalePrice').textContent = '₡' + salePrice.toLocaleString('es-CR');
+
+            // Comparar con precio actual del catálogo
+            const waxType = document.getElementById('calcWaxType').value;
+            let closestProduct = null;
+            let minDiff = Infinity;
+            products.forEach(function(p) {
+                if (p.wax === waxType && !p.comingSoon) {
+                    const diff = Math.abs(parseInt(p.weight) - weight);
+                    if (diff < minDiff) { minDiff = diff; closestProduct = p; }
+                }
+            });
+            const compEl = document.getElementById('resComparison');
+            if (closestProduct) {
+                const diff = salePrice - closestProduct.price;
+                const diffPercent = ((diff / closestProduct.price) * 100).toFixed(1);
+                if (diff > 0) {
+                    compEl.innerHTML = '<span class="profit-positive">+₡' + diff.toLocaleString('es-CR') + ' (+' + diffPercent + '%) vs catálogo</span>';
+                } else if (diff < 0) {
+                    compEl.innerHTML = '<span class="profit-negative">₡' + diff.toLocaleString('es-CR') + ' (' + diffPercent + '%) vs catálogo</span>';
+                } else {
+                    compEl.innerHTML = '<span style="color:#2ecc71;">✓ Coincide con precio de catálogo</span>';
+                }
+            } else {
+                compEl.textContent = 'Sin producto comparable en catálogo';
+            }
+        }
+
+        // ========== GALERÍA ==========
+        function loadGallery() {
+            const grid = document.getElementById('galleryGrid');
+            const uploadLabel = document.getElementById('galleryUpload');
+            // Placeholder images con gradientes
+            const demoImages = [
+                { color1: '#f5e6d3', color2: '#e8d5c0', title: 'Vela Decorativa Mono', desc: 'Cera China con aroma a escoger' },
+                { color1: '#d4c4b0', color2: '#c4b0a0', title: 'Vela de Ángel con Corazón ', desc: 'Cera China con aroma a escoger' },
+                { color1: '#e8c9a0', color2: '#d4a574', title: 'Vela Decorativa Calavera', desc: 'Cera China con aroma a escoger' },
+            ];
+            demoImages.forEach(function(img) {
+                addGalleryItem(img.color1, img.color2, img.title, img.desc);
+            });
+            grid.appendChild(uploadLabel);
+        }
+
+        function addGalleryItem(color1, color2, title, desc) {
+            const grid = document.getElementById('galleryGrid');
+            const uploadLabel = document.getElementById('galleryUpload');
+            const item = document.createElement('div');
+            item.className = 'gallery-item';
+            item.innerHTML = '<div style="width:100%;height:100%;background:linear-gradient(135deg,' + color1 + ',' + color2 + ');display:flex;align-items:center;justify-content:center;font-size:3rem;">🕯️</div>' +
+                '<div class="gallery-overlay"><h4>' + title + '</h4><p>' + desc + '</p></div>';
+            item.onclick = function() { openLightbox(color1, color2); };
+            grid.insertBefore(item, uploadLabel);
+        }
+
+        function handleGalleryUpload(event) {
+            const files = event.target.files;
+            for (let i = 0; i < files.length; i++) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const grid = document.getElementById('galleryGrid');
+                    const uploadLabel = document.getElementById('galleryUpload');
+                    const item = document.createElement('div');
+                    item.className = 'gallery-item';
+                    item.innerHTML = '<img src="' + e.target.result + '" alt="Nueva Creación" loading="lazy">' +
+                        '<div class="gallery-overlay"><h4>Nueva Creación</h4><p>Vela personalizada</p></div>';
+                    item.onclick = function() {
+                        document.getElementById('lightboxImg').src = e.target.result;
+                        document.getElementById('galleryLightbox').classList.add('active');
+                        document.body.style.overflow = 'hidden';
+                    };
+                    grid.insertBefore(item, uploadLabel);
+                };
+                reader.readAsDataURL(files[i]);
+            }
+            showToast(files.length + ' imagen(es) agregada(s) a la galería');
+        }
+
+        function openLightbox(color1, color2) {
+            // Para las imágenes placeholder, mostrar un div con el gradiente
+            const lb = document.getElementById('galleryLightbox');
+            const img = document.getElementById('lightboxImg');
+            img.style.display = 'none';
+            // Crear un div temporal con el gradiente
+            let tempDiv = document.getElementById('lightboxTemp');
+            if (!tempDiv) {
+                tempDiv = document.createElement('div');
+                tempDiv.id = 'lightboxTemp';
+                tempDiv.style.cssText = 'width:80%;height:70vh;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:8rem;box-shadow:0 20px 60px rgba(0,0,0,0.5);';
+                lb.appendChild(tempDiv);
+            }
+            tempDiv.style.background = 'linear-gradient(135deg,' + color1 + ',' + color2 + ')';
+            tempDiv.innerHTML = '🕯️';
+            tempDiv.style.display = 'flex';
+            lb.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            document.getElementById('galleryLightbox').classList.remove('active');
+            document.getElementById('lightboxImg').style.display = '';
+            const tempDiv = document.getElementById('lightboxTemp');
+            if (tempDiv) tempDiv.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        // ========== FAQ ==========
+        function toggleFaq(el) {
+            const item = el.parentElement;
+            const wasActive = item.classList.contains('active');
+            document.querySelectorAll('.faq-item').forEach(function(i) { i.classList.remove('active'); });
+            if (!wasActive) item.classList.add('active');
+        }
+
+        // ========== NEWSLETTER ==========
+        function handleNewsletter(e) {
+            e.preventDefault();
+            const email = document.getElementById('newsletterEmail').value;
+            showToast('¡Gracias por suscribirte! 🎉 Revisa ' + email);
+            document.getElementById('newsletterEmail').value = '';
+        }
+
+        // ========== TOAST ==========
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(function() { toast.classList.remove('show'); }, 3000);
+        }
+
+        // ========== CERRAR MODALES ==========
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal(); closeCheckoutModal(); closeLightbox();
+                document.getElementById('cartSidebar').classList.remove('open');
+            }
+        });
+        document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    if (overlay.id === 'customizeModal') closeModal();
+                    if (overlay.id === 'checkoutModal') closeCheckoutModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
