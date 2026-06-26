@@ -1,5 +1,5 @@
 // modules/firebaseStorage.js
-import { db, auth, collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, where, orderBy, serverTimestamp, signInAnonymously, onAuthStateChanged } from 'modules/firebase2.js';
+import { db, auth, collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, where, orderBy, serverTimestamp, signInAnonymously, onAuthStateChanged } from 'https://wil1979.github.io/esentia-factura/etiquetas/modules/firebase2.js';
 
 // Nombre de la colección en Firestore
 const COLLECTION_NAME = 'etiquetas_proyectos';

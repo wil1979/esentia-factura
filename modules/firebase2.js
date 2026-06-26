@@ -1,4 +1,4 @@
-// modules/firebase.js
+// modules/firebase2.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import {
   getFirestore, collection, getDocs, getDoc, doc,
@@ -21,15 +21,29 @@ const config = {
 
 const app = initializeApp(config);
 const db = getFirestore(app);
-const auth = getAuth(app); // ✅ Inicializar Auth
+const auth = getAuth(app);
 
 // ✅ EXPORTAR TODO lo necesario
-export { 
-  app, db, auth, 
+export {
+  app, db, auth,
   collection, doc, setDoc, getDoc, getDocs, deleteDoc, updateDoc, addDoc,
   query, where, orderBy, serverTimestamp, arrayUnion, increment, onSnapshot,
   signInAnonymously, onAuthStateChanged, signOut
 };
+
+// ✅ Helper para verificar conexión
+export async function testConnection() {
+  try {
+    console.log('🔍 Probando conexión a Firestore...');
+    const testRef = doc(db, '_test', 'ping');
+    await setDoc(testRef, { timestamp: serverTimestamp() }, { merge: true });
+    console.log('✅ Firestore: OK');
+    return { firestore: true, auth: !!auth };
+  } catch (error) {
+    console.error('❌ Error de conexión:', error.code, error.message);
+    return { firestore: false, auth: false, error: error.message };
+  }
+}
 
 export const DB = {
   db,
@@ -65,14 +79,18 @@ export const DB = {
     if (snap.empty) return { valid: false, message: "Código no existe" };
     const promo = snap.docs[0].data();
     const now = new Date();
-    if (promo.fechaExpiracion && new Date(promo.fechaExpiracion) < now) return { valid: false, message: "Código expirado" };
-    if (promo.usosMax && promo.usosActuales >= promo.usosMax) return { valid: false, message: "Código agotado" };
-    if (promo.clientesUsados?.includes(clientId)) return { valid: false, message: "Ya usaste este código" };
+    if (promo.fechaExpiracion && new Date(promo.fechaExpiracion) < now)
+      return { valid: false, message: "Código expirado" };
+    if (promo.usosMax && promo.usosActuales >= promo.usosMax)
+      return { valid: false, message: "Código agotado" };
+    if (promo.clientesUsados?.includes(clientId))
+      return { valid: false, message: "Ya usaste este código" };
     return { valid: true, promo: { id: snap.docs[0].id, ...promo } };
   },
   usePromo: (promoId, clientId) => updateDoc(doc(db, "promociones", promoId), {
     usosActuales: increment(1),
     clientesUsados: arrayUnion(clientId)
   }),
-  registerVisit: (clientId, data) => setDoc(doc(db, "registroVisitas", clientId), { ...data, ultimaVisita: serverTimestamp() }, { merge: true })
+  registerVisit: (clientId, data) => setDoc(doc(db, "registroVisitas", clientId),
+    { ...data, ultimaVisita: serverTimestamp() }, { merge: true })
 };
