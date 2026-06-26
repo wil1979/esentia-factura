@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AromaLabel Pro - Diseñador de Etiquetas para Velas</title>
+  <!-- Librería para generar QR real -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="velas.css">
+  <!-- Fuentes -->
+  <link href="https://fonts.googleapis.com/css2?family=Adelia&family=Great+Vibes&family=Alex+Brush&family=Tangerine&family=Playfair+Display&family=Cinzel&family=Cormorant+Garamond&family=Montserrat&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="app-header">
+    <h1>🕯️ AromaLabelPro Designer · Velas</h1>
+    <nav>
+      <button class="tab-btn active" data-tab="designer">✏️ Diseñador</button>
+      <button class="tab-btn" data-tab="projects">📁 Proyectos</button>
+      <button class="tab-btn" data-tab="print">🖨️ Impresión</button>
+      <span id="connectionStatus" class="status-badge">Conectando...</span>
+    </nav>
+  </header>
+
+  <!-- TAB: DISEÑADOR -->
+  <section id="tab-designer" class="tab-content active">
+    <div class="designer-layout">
+      <!-- Panel de configuración -->
+      <aside class="config-panel">
+        <h2>Configuración de Etiqueta</h2>
+
+        <fieldset>
+          <legend>📋 Plantillas Rápidas (Velas)</legend>
+          <div class="templates-grid">
+            <button class="template-btn" data-w="50" data-h="60">🕯️ Pequeña 50×60</button>
+            <button class="template-btn" data-w="70" data-h="90">🕯️ Mediana 70×90</button>
+            <button class="template-btn" data-w="90" data-h="110">🕯️ Grande 90×110</button>
+            <button class="template-btn" data-w="50" data-h="50">⭕ Tapa 50×50</button>
+            <button class="template-btn" data-w="80" data-h="100">✨ Luxury 80×100</button>
+            <button class="template-btn" data-w="60" data-h="40">◻️ Minimal 60×40</button>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Marca</legend>
+          <label>Nombre del Proyecto
+            <input type="text" id="projectName" placeholder="Mi marca de velas">
+          </label>
+          <label>Logo / Marca
+            <input type="file" id="logoInput" accept="image/*">
+          </label>
+          <!-- CONTROLES DE IMAGEN IMPORTADA -->
+          <div id="imageControls" class="image-controls" style="display:none;">
+            <h4>🖼️ Controles de Imagen</h4>
+            <label>Tamaño (%) <input type="range" id="imgSize" min="10" max="200" value="100"></label>
+            <label>Posición X (%) <input type="range" id="imgX" min="0" max="100" value="50"></label>
+            <label>Posición Y (%) <input type="range" id="imgY" min="0" max="100" value="50"></label>
+            <label>Opacidad (%) <input type="range" id="imgOpacity" min="0" max="100" value="100"></label>
+            <label>Rotación (°) <input type="range" id="imgRotation" min="-180" max="180" value="0"></label>
+            <label>Filtro
+              <select id="imgFilter">
+                <option value="none">Normal</option>
+                <option value="grayscale(100%)">Escala de grises</option>
+                <option value="sepia(100%)">Sepia</option>
+                <option value="invert(100%)">Invertido</option>
+                <option value="contrast(150%)">Alto contraste</option>
+              </select>
+            </label>
+            <label><input type="checkbox" id="imgCircle"> Recorte circular</label>
+            <button id="removeImage" class="btn-danger">🗑️ Eliminar imagen</button>
+          </div>
+          <label>Fuente de la Marca
+            <select id="brandFont">
+              <option value="Adelia">Adelia (Premium)</option>
+              <option value="Great Vibes">Great Vibes (Elegante)</option>
+              <option value="Alex Brush">Alex Brush (Manuscrita)</option>
+              <option value="Tangerine">Tangerine (Caligráfica)</option>
+              <option value="Playfair Display">Playfair Display (Clásica)</option>
+              <option value="Cinzel">Cinzel (Romana)</option>
+              <option value="Cormorant Garamond">Cormorant (Sofisticada)</option>
+              <option value="Montserrat">Montserrat (Moderna)</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Producto</legend>
+          <label>Nombre del Producto / Aroma
+            <input type="text" id="productName" placeholder="Lavanda">
+          </label>
+          <label>Fuente del Producto
+            <select id="productFont">
+              <option value="Playfair Display">Playfair Display</option>
+              <option value="Cinzel">Cinzel</option>
+              <option value="Cormorant Garamond">Cormorant</option>
+              <option value="Montserrat">Montserrat</option>
+              <option value="Great Vibes">Great Vibes</option>
+            </select>
+          </label>
+          <label>Tipo / Categoría
+            <input type="text" id="productType" placeholder="Vela Aromática de Soya">
+          </label>
+          <label>Detalles
+            <input type="text" id="productDetails" placeholder="180g · 40h de quemado">
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Seguridad y Legal</legend>
+          <label>Instrucciones de Seguridad
+            <textarea id="safetyInstructions">Quemar sobre superficie resistente al calor. No dejar sin supervisión. Mantener alejado de corrientes de aire, niños y mascotas. No quemar más de 4 horas seguidas. Detener cuando queden 1cm de cera.</textarea>
+          </label>
+          <label>URL para QR
+            <input type="url" id="qrUrl" value="https://www.facebook.com/profile.php?id=61579078480913" placeholder="https://...">
+          </label>
+          <label>Info Legal / Lote
+            <input type="text" id="legalInfo" placeholder="Lote: 001 | Exp: 12/2026">
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>📐 Dimensiones</legend>
+          <div class="grid-2">
+            <label>Ancho (mm)<input type="number" id="dimW" value="60"></label>
+            <label>Alto (mm)<input type="number" id="dimH" value="80"></label>
+            <label>Padding (mm)<input type="number" id="padding" value="3"></label>
+            <label>Radio esquinas (px)<input type="number" id="radius" value="4"></label>
+            <label>Línea superior (px)<input type="number" id="lineTop" value="4"></label>
+            <label>Línea inferior (px)<input type="number" id="lineBottom" value="0"></label>
+            <label>Espaciado áreas (px)<input type="number" id="spacing" value="6"></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>🔤 Tamaños de Fuente</legend>
+          <div class="grid-2">
+            <label>Marca (px)<input type="number" id="fsBrand" value="16"></label>
+            <label>Submarca (px)<input type="number" id="fsSubbrand" value="8"></label>
+            <label>Producto (px)<input type="number" id="fsProduct" value="22"></label>
+            <label>Tipo (px)<input type="number" id="fsType" value="10"></label>
+            <label>Detalles (px)<input type="number" id="fsDetails" value="9"></label>
+            <label>Instrucciones (px)<input type="number" id="fsSafety" value="7"></label>
+            <label>Lote (px)<input type="number" id="fsLot" value="7"></label>
+            <label>Origen (px)<input type="number" id="fsOrigin" value="7"></label>
+            <label>Tamaño QR (%)<input type="number" id="qrSize" value="22"></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>🎨 Colores</legend>
+          <label>Color de Acento<input type="color" id="colorAccent" value="#c9a96e"></label>
+          <label>Color de Texto<input type="color" id="colorText" value="#1a1a1a"></label>
+          <label>Color de Fondo<input type="color" id="colorBg" value="#ffffff"></label>
+          <label>Color del QR<input type="color" id="colorQr" value="#1a1a1a"></label>
+          <label>Color fondo QR<input type="color" id="colorQrBg" value="#ffffff"></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>👁️ Visibilidad</legend>
+          <label><input type="checkbox" id="showDivider" checked> Línea divisoria</label>
+          <label><input type="checkbox" id="showQR" checked> Código QR</label>
+          <label><input type="checkbox" id="showSafety" checked> Instrucciones</label>
+          <label><input type="checkbox" id="showLegal" checked> Información legal</label>
+        </fieldset>
+
+        <div class="action-buttons">
+          <button id="btnSave" class="btn-primary">💾 Guardar Proyecto</button>
+          <button id="btnAddQueue" class="btn-secondary">➕ Añadir a Cola</button>
+          <button id="btnPDF" class="btn-secondary">📄 PDF</button>
+          <button id="btnPNG" class="btn-secondary">🖼️ PNG</button>
+          <button id="btnExport" class="btn-secondary">📤 Exportar</button>
+          <button id="btnImport" class="btn-secondary">📥 Importar</button>
+        </div>
+      </aside>
+
+      <!-- Vista previa -->
+      <main class="preview-panel">
+        <h2>Vista Previa de Etiqueta</h2>
+        <div id="labelPreview" class="label-preview">
+          <div class="label-dimensions">60 × 80 mm</div>
+          <div class="label-content">
+            <div class="brand-area">
+              <img id="previewLogo" class="brand-logo" style="display:none;">
+              <div class="brand-name">Esentia</div>
+              <div class="brand-sub">Velas Artesanales</div>
+            </div>
+            <div class="divider"></div>
+            <div class="product-area">
+              <div class="product-name">Lavanda</div>
+              <div class="product-type">Vela Aromática de Soya</div>
+              <div class="product-details">180g · 40h de quemado</div>
+            </div>
+            <div class="safety-area">
+              <p>Quemar sobre superficie resistente al calor. No dejar sin supervisión.</p>
+            </div>
+            <div class="footer-area">
+              <span class="lot">Lote: 001 | Exp: 12/2026</span>
+              <span class="origin">Cera de Soya · Esencias naturales · Hecho a mano</span>
+            </div>
+            <div class="qr-area">
+              <div id="qrContainer"></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <!-- TAB: PROYECTOS -->
+  <section id="tab-projects" class="tab-content">
+    <h2>Mis Proyectos Guardados</h2>
+    <div class="projects-toolbar">
+      <button id="btnSync">🔄 Sincronizar</button>
+      <button id="btnImportAll">📥 Importar</button>
+      <button id="btnExportAll">📤 Exportar Todo</button>
+      <button id="btnRefresh">🔄 Actualizar</button>
+    </div>
+    <div id="projectsList" class="projects-list">
+      <div class="empty-state">
+        <p>📁 No hay proyectos guardados</p>
+        <p>Crea tu primera etiqueta en el Diseñador y guárdala aquí.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB: IMPRESIÓN -->
+  <section id="tab-print" class="tab-content">
+    <h2>Optimización de Impresión</h2>
+    <div class="print-layout">
+      <aside class="print-config">
+        <label>Tamaño de Hoja
+          <select id="paperSize">
+            <option value="A4">A4 (210×297mm)</option>
+            <option value="Carta">Carta (216×279mm)</option>
+            <option value="Oficio">Oficio (216×356mm)</option>
+            <option value="A3">A3 (297×420mm)</option>
+            <option value="A5">A5 (148×210mm)</option>
+          </select>
+        </label>
+        <div class="grid-2">
+          <label>Margen Sup. (mm)<input type="number" id="marginTop" value="10"></label>
+          <label>Margen Izq. (mm)<input type="number" id="marginLeft" value="10"></label>
+          <label>Margen Der. (mm)<input type="number" id="marginRight" value="10"></label>
+          <label>Margen Inf. (mm)<input type="number" id="marginBottom" value="10"></label>
+          <label>Espacio Horiz. (mm)<input type="number" id="spaceH" value="5"></label>
+          <label>Espacio Vert. (mm)<input type="number" id="spaceV" value="5"></label>
+        </div>
+      </aside>
+      <div class="print-queue">
+        <h3>🖨️ Cola de Impresión</h3>
+        <div id="printQueue" class="queue-list">
+          <p class="empty">No hay etiquetas en cola.</p>
+        </div>
+        <div class="queue-actions">
+          <button id="btnClearQueue" class="btn-danger">🗑️ Vaciar Cola</button>
+          <button id="btnPrint" class="btn-primary">🖨️ Imprimir</button>
+          <button id="btnExportPDF" class="btn-secondary">📄 Exportar PDF</button>
+        </div>
+        <div class="queue-stats">
+          <div><span id="statLabels">0</span> Etiquetas en Cola</div>
+          <div><span id="statPerSheet">0</span> Por Hoja</div>
+          <div><span id="statSheets">0</span> Hojas Necesarias</div>
+          <div><span id="statEfficiency">0</span>% Eficiencia</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal de confirmación -->
+  <div id="confirmModal" class="modal">
+    <div class="modal-content">
+      <h3>Confirmar</h3>
+      <p id="confirmMessage">¿Estás seguro?</p>
+      <div class="modal-actions">
+        <button id="confirmCancel" class="btn-secondary">Cancelar</button>
+        <button id="confirmOk" class="btn-primary">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="velas.js" type="module"></script>
+</body>
+</html>
