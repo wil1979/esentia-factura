@@ -3,307 +3,1104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LabelMaker Pro v2 - Esencias</title>
+    <title>LabelMaker Pro v3 — Esencias</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .canvas-shadow { box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        * { font-family: 'Inter', sans-serif; }
+        body { background-color: #f0f2f5; }
+        .canvas-shadow { box-shadow: 0 10px 40px rgba(0,0,0,0.15); }
+        .canvas-wrapper {
+            background-image: 
+                linear-gradient(45deg, #e5e7eb 25%, transparent 25%), 
+                linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #e5e7eb 75%), 
+                linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background-color: #f3f4f6;
+        }
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .asset-card:hover .delete-btn { display: block; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .tab-btn { position: relative; transition: all 0.2s ease; }
+        .tab-btn.active { color: #4f46e5; background: #eef2ff; font-weight: 600; }
+        .tab-btn.active::after {
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+            height: 2px; background: #4f46e5; border-radius: 2px 2px 0 0;
+        }
+        .tab-content { display: none; animation: fadeIn 0.25s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .input-sm {
+            width: 100%; border: 1px solid #e5e7eb; border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem; font-size: 0.875rem;
+            outline: none; transition: all 0.2s; background: #f9fafb;
+        }
+        .input-sm:focus { ring: 2px; border-color: #4f46e5; background: white; }
+        .input-xs {
+            width: 100%; border: 1px solid #e5e7eb; border-radius: 0.375rem;
+            padding: 0.375rem 0.5rem; font-size: 0.75rem;
+            outline: none; background: #f9fafb;
+        }
+        .input-xs:focus { border-color: #4f46e5; background: white; }
+        .btn-primary {
+            background: #4f46e5; color: white; font-weight: 500;
+            padding: 0.625rem 1rem; border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(79,70,229,0.2);
+            transition: all 0.2s; font-size: 0.875rem; border: none; cursor: pointer;
+        }
+        .btn-primary:hover { background: #4338ca; }
+        .btn-primary:active { transform: scale(0.97); }
+        .btn-ghost {
+            background: white; border: 1px solid #e5e7eb; color: #374151;
+            font-weight: 500; padding: 0.5rem 0.75rem; border-radius: 0.5rem;
+            font-size: 0.75rem; transition: all 0.2s; cursor: pointer;
+        }
+        .btn-ghost:hover { background: #f9fafb; border-color: #d1d5db; }
+        .btn-tool {
+            display: flex; align-items: center; gap: 0.5rem;
+            background: white; border: 1px solid #e5e7eb;
+            color: #374151; padding: 0.75rem; border-radius: 0.75rem;
+            font-size: 0.75rem; font-weight: 500;
+            transition: all 0.2s; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .btn-tool:hover { border-color: #a5b4fc; background: #eef2ff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .btn-tool:active { transform: scale(0.97); }
+        .asset-card {
+            position: relative; cursor: pointer; border: 1px solid #e5e7eb;
+            border-radius: 0.5rem; background: white; padding: 0.375rem;
+            transition: all 0.2s;
+        }
+        .asset-card:hover { border-color: #818cf8; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .asset-card .delete-btn {
+            position: absolute; top: -6px; right: -6px; width: 18px; height: 18px;
+            background: #ef4444; color: white; border-radius: 50%;
+            font-size: 10px; display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.2s; border: none; cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .asset-card:hover .delete-btn { opacity: 1; }
+        .asset-card .delete-btn:hover { background: #dc2626; }
+        input[type="range"] {
+            -webkit-appearance: none; appearance: none; height: 6px;
+            background: #e2e8f0; border-radius: 3px; outline: none; width: 100%;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 16px; height: 16px;
+            background: #4f46e5; border-radius: 50%; cursor: pointer;
+            border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        input[type="color"] {
+            -webkit-appearance: none; border: none; width: 100%; height: 36px;
+            border-radius: 0.5rem; cursor: pointer; padding: 2px;
+            background: white; border: 1px solid #e2e8f0;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 0.375rem; }
+        .section-label {
+            font-size: 0.625rem; font-weight: 700; color: #9ca3af;
+            text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;
+        }
+        .prop-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.75rem; }
+        .prop-label { font-size: 0.75rem; color: #4b5563; font-weight: 500; min-width: 80px; }
+        .toast {
+            position: fixed; bottom: 1.5rem; right: 1.5rem;
+            background: #1f2937; color: white; padding: 0.75rem 1rem;
+            border-radius: 0.75rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+            font-size: 0.875rem; font-weight: 500; z-index: 50;
+            transform: translateY(80px); opacity: 0; transition: all 0.3s;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .empty-state { text-align: center; padding: 2rem 0; color: #9ca3af; font-size: 0.75rem; }
+        .grid-bg {
+            background-size: 20px 20px;
+            background-image:
+                linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px);
+        }
+        .toggle-switch {
+            position: relative; display: inline-flex; align-items: center; cursor: pointer;
+        }
+        .toggle-switch input { display: none; }
+        .toggle-switch .slider {
+            width: 36px; height: 20px; background: #e5e7eb; border-radius: 9999px;
+            position: relative; transition: 0.2s;
+        }
+        .toggle-switch .slider::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 16px; height: 16px; background: white; border-radius: 50%;
+            transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .toggle-switch input:checked + .slider { background: #4f46e5; }
+        .toggle-switch input:checked + .slider::after { transform: translateX(16px); }
     </style>
+<base target="_blank">
 </head>
 <body class="h-screen flex flex-col md:flex-row overflow-hidden">
 
-    <!-- SIDEBAR IZQUIERDO: CONTROLES -->
-    <aside class="w-full md:w-96 bg-white border-r flex flex-col h-full shadow-2xl z-20">
-        <div class="p-5 bg-indigo-700 text-white">
-            <h1 class="text-xl font-bold">Esencias Pro Designer</h1>
-            <p class="text-xs opacity-80">Control de etiquetas de alta precisión</p>
-        </div>
-
-        <div class="flex-1 overflow-y-auto p-5 custom-scroll">
-            
-            <!-- 1. TAMAÑO DE ETIQUETA -->
-            <section class="mb-8">
-                <h2 class="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">1. Dimensiones (cm)</h2>
-                <div class="grid grid-cols-2 gap-3 mb-3">
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase">Ancho</label>
-                        <input type="number" id="labelWidth" value="6" step="0.1" class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" onchange="updateCanvasSize()">
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-gray-500 uppercase">Alto</label>
-                        <input type="number" id="labelHeight" value="4" step="0.1" class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" onchange="updateCanvasSize()">
-                    </div>
+    <!-- SIDEBAR -->
+    <aside class="w-full md:w-[420px] bg-white border-r border-gray-200 flex flex-col h-full shadow-xl z-20">
+        <!-- Header -->
+        <div class="p-5 bg-gradient-to-r from-indigo-700 to-indigo-600 text-white shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                    </svg>
                 </div>
-            </section>
-
-            <!-- 2. GESTIÓN DE CAPAS / ORDEN -->
-            <section class="mb-8 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <h2 class="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">2. Posicionamiento de Capas</h2>
-                <div class="flex gap-2">
-                    <button onclick="changeZIndex('front')" class="flex-1 bg-white border border-gray-300 hover:bg-gray-100 p-2 rounded text-xs shadow-sm">Traer Al Frente</button>
-                    <button onclick="changeZIndex('back')" class="flex-1 bg-white border border-gray-300 hover:bg-gray-100 p-2 rounded text-xs shadow-sm">Enviar Atrás</button>
+                <div>
+                    <h1 class="text-lg font-bold">LabelMaker Pro v3</h1>
+                    <p class="text-[11px] opacity-75">Diseñador de etiquetas profesional</p>
                 </div>
-            </section>
-
-            <!-- 3. ELEMENTOS -->
-            <section class="mb-8">
-                <h2 class="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">3. Insertar Elementos</h2>
-                <div class="grid grid-cols-2 gap-2 mb-4">
-                    <button onclick="addText('NOMBRE PRODUCTO', 22, true)" class="bg-indigo-50 text-indigo-700 border border-indigo-200 p-2 rounded text-xs font-semibold hover:bg-indigo-100">+ Texto Título</button>
-                    <button onclick="addText('Información e indicaciones...', 12, false)" class="bg-indigo-50 text-indigo-700 border border-indigo-200 p-2 rounded text-xs font-semibold hover:bg-indigo-100">+ Texto Detalle</button>
-                    <button onclick="addLine()" class="bg-emerald-50 text-emerald-700 border border-emerald-200 p-2 rounded text-xs font-semibold hover:bg-emerald-100">+ Línea Divisoria</button>
-                    <button onclick="addQR()" class="bg-blue-50 text-blue-700 border border-blue-200 p-2 rounded text-xs font-semibold hover:bg-blue-100">+ Código QR</button>
-                </div>
-
-                <!-- Editor de propiedades dinámico -->
-                <div id="controls-box" class="p-3 bg-white border rounded shadow-sm hidden">
-                    <label class="text-[10px] font-bold">COLOR Y OPACIDAD</label>
-                    <input type="color" id="objColor" class="w-full h-8 mb-2">
-                    <label class="text-[10px] font-bold">GROSOR / TAMAÑO</label>
-                    <input type="range" id="objWidth" min="1" max="20" value="2" class="w-full">
-                </div>
-            </section>
-
-            <!-- 4. BANCO DE IMÁGENES -->
-            <section class="mb-8">
-                <h2 class="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">4. Mis Imágenes / Logos</h2>
-                <input type="file" id="imgLoader" class="hidden" onchange="handleImageUpload(this)">
-                <button onclick="document.getElementById('imgLoader').click()" class="w-full border-2 border-dashed border-gray-300 p-4 rounded-lg text-gray-500 hover:border-indigo-500 hover:text-indigo-500 transition mb-3">
-                    Subir Imagen (Logo/Prod)
-                </button>
-                <div id="imageGallery" class="grid grid-cols-3 gap-2 overflow-y-auto max-h-40 p-1">
-                    <!-- Imágenes cargadas aparecerán aquí -->
-                </div>
-            </section>
-
-        </div>
-
-        <!-- BOTÓN IMPRESIÓN -->
-        <div class="p-5 border-t bg-gray-50">
-            <div class="mb-3">
-                <label class="text-xs font-bold text-gray-600 uppercase">Cantidad de etiquetas:</label>
-                <input type="number" id="printQty" value="12" class="w-full border rounded p-2 text-center font-bold text-indigo-700">
             </div>
-            <button onclick="exportHighResPDF()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg transform active:scale-95 transition">
-                GENERAR DOCUMENTO PDF
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-100 bg-white shrink-0">
+            <button class="tab-btn active flex-1 py-3 text-xs font-medium text-gray-500 hover:text-gray-700" onclick="switchTab('design')">Diseño</button>
+            <button class="tab-btn flex-1 py-3 text-xs font-medium text-gray-500 hover:text-gray-700" onclick="switchTab('elements')">Elementos</button>
+            <button class="tab-btn flex-1 py-3 text-xs font-medium text-gray-500 hover:text-gray-700" onclick="switchTab('properties')">Propiedades</button>
+            <button class="tab-btn flex-1 py-3 text-xs font-medium text-gray-500 hover:text-gray-700" onclick="switchTab('assets')">Assets</button>
+        </div>
+
+        <!-- Tab Contents -->
+        <div class="flex-1 overflow-y-auto custom-scroll p-5">
+
+            <!-- TAB 1: DISEÑO -->
+            <div id="tab-design" class="tab-content active">
+                <div class="section-label">Dimensiones de etiqueta</div>
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase font-semibold block mb-1">Ancho (cm)</label>
+                        <input type="number" id="labelWidth" value="6" step="0.1" min="1" max="30" class="input-sm" onchange="updateCanvasSize()">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase font-semibold block mb-1">Alto (cm)</label>
+                        <input type="number" id="labelHeight" value="4" step="0.1" min="1" max="30" class="input-sm" onchange="updateCanvasSize()">
+                    </div>
+                </div>
+
+                <div class="section-label">Fondo de etiqueta</div>
+                <div class="prop-row">
+                    <span class="prop-label">Color fondo</span>
+                    <input type="color" id="canvasBgColor" value="#ffffff" class="w-20" onchange="updateCanvasBg()">
+                </div>
+                <div class="prop-row">
+                    <span class="prop-label">Mostrar cuadrícula</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="showGrid" onchange="toggleGrid()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="section-label mt-6">Alineación rápida</div>
+                <div class="grid grid-cols-4 gap-2">
+                    <button onclick="alignObject('left')" class="btn-ghost" title="Alinear izquierda">L</button>
+                    <button onclick="alignObject('center')" class="btn-ghost" title="Centrar horizontal">C</button>
+                    <button onclick="alignObject('right')" class="btn-ghost" title="Alinear derecha">R</button>
+                    <button onclick="alignObject('middle')" class="btn-ghost" title="Centrar vertical">M</button>
+                </div>
+
+                <div class="section-label mt-6">Capas / Orden</div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="changeZIndex('front')" class="btn-ghost">Traer al frente</button>
+                    <button onclick="changeZIndex('back')" class="btn-ghost">Enviar atrás</button>
+                    <button onclick="changeZIndex('up')" class="btn-ghost">Subir capa</button>
+                    <button onclick="changeZIndex('down')" class="btn-ghost">Bajar capa</button>
+                </div>
+
+                <div class="section-label mt-6">Acciones</div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="duplicateSelected()" class="btn-ghost">Duplicar</button>
+                    <button onclick="deleteSelected()" class="btn-ghost" style="color:#dc2626">Eliminar</button>
+                    <button onclick="clearCanvas()" class="btn-ghost" style="color:#dc2626">Limpiar todo</button>
+                    <button onclick="undo()" class="btn-ghost">Deshacer</button>
+                </div>
+            </div>
+
+            <!-- TAB 2: ELEMENTOS -->
+            <div id="tab-elements" class="tab-content">
+                <div class="section-label">Texto</div>
+                <div class="grid grid-cols-1 gap-2 mb-6">
+                    <button onclick="addText('NOMBRE PRODUCTO', 24, true)" class="btn-tool">+ Texto Título (Grande)</button>
+                    <button onclick="addText('Información del producto...', 14, false)" class="btn-tool">+ Texto Detalle</button>
+                    <button onclick="addText('Precio: $0.00', 16, true)" class="btn-tool">+ Texto Precio</button>
+                </div>
+
+                <div class="section-label">Formas y líneas</div>
+                <div class="grid grid-cols-2 gap-2 mb-6">
+                    <button onclick="addLine()" class="btn-tool">+ Línea divisoria</button>
+                    <button onclick="addRect()" class="btn-tool">+ Rectángulo</button>
+                    <button onclick="addCircle()" class="btn-tool">+ Círculo</button>
+                    <button onclick="addTriangle()" class="btn-tool">+ Triángulo</button>
+                </div>
+
+                <div class="section-label">Códigos y datos</div>
+                <div class="grid grid-cols-1 gap-2 mb-6">
+                    <button onclick="addQR()" class="btn-tool">+ Código QR</button>
+                    <button onclick="addBarcode()" class="btn-tool">+ Código de barras</button>
+                </div>
+
+                <div class="section-label">Plantillas rápidas</div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="loadTemplate('basic')" class="btn-tool" style="font-size:10px">Básica</button>
+                    <button onclick="loadTemplate('product')" class="btn-tool" style="font-size:10px">Producto</button>
+                    <button onclick="loadTemplate('qr')" class="btn-tool" style="font-size:10px">Con QR</button>
+                    <button onclick="loadTemplate('minimal')" class="btn-tool" style="font-size:10px">Minimal</button>
+                </div>
+            </div>
+
+            <!-- TAB 3: PROPIEDADES -->
+            <div id="tab-properties" class="tab-content">
+                <div id="no-selection" class="empty-state">
+                    <div style="font-size:2rem;margin-bottom:0.5rem">🖱️</div>
+                    <p>Selecciona un elemento en el canvas<br>para editar sus propiedades</p>
+                </div>
+
+                <div id="prop-editor" style="display:none">
+                    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;padding:0.5rem;background:#eef2ff;border-radius:0.5rem;border:1px solid #c7d2fe">
+                        <span id="objTypeIcon" style="font-size:1.25rem">📝</span>
+                        <div>
+                            <div id="objTypeLabel" style="font-size:0.75rem;font-weight:700;color:#4338ca">Texto</div>
+                            <div id="objId" style="font-size:10px;color:#818cf8">ID: #1</div>
+                        </div>
+                    </div>
+
+                    <div class="section-label">Posición y tamaño</div>
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div>
+                            <label class="text-[10px] text-gray-500 uppercase">X (px)</label>
+                            <input type="number" id="propX" class="input-xs" onchange="updateObjectProp('left', this.value)">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500 uppercase">Y (px)</label>
+                            <input type="number" id="propY" class="input-xs" onchange="updateObjectProp('top', this.value)">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500 uppercase">Ancho</label>
+                            <input type="number" id="propW" class="input-xs" onchange="updateObjectProp('width', this.value)">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500 uppercase">Alto</label>
+                            <input type="number" id="propH" class="input-xs" onchange="updateObjectProp('height', this.value)">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500 uppercase">Ángulo (°)</label>
+                            <input type="number" id="propAngle" class="input-xs" onchange="updateObjectProp('angle', this.value)">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500 uppercase">Opacidad</label>
+                            <input type="range" id="propOpacity" min="0" max="100" style="margin-top:8px" oninput="updateObjectProp('opacity', this.value/100)">
+                        </div>
+                    </div>
+
+                    <!-- TEXTO -->
+                    <div id="text-props" style="display:none">
+                        <div class="section-label">Propiedades de texto</div>
+                        <div class="prop-row"><span class="prop-label">Contenido</span></div>
+                        <textarea id="propTextContent" rows="2" class="input-sm" style="resize:none;margin-bottom:0.75rem" oninput="updateTextContent(this.value)"></textarea>
+
+                        <div class="prop-row">
+                            <span class="prop-label">Tamaño fuente</span>
+                            <input type="number" id="propFontSize" class="input-xs" style="width:80px" onchange="updateObjectProp('fontSize', this.value)">
+                        </div>
+                        <div class="prop-row">
+                            <span class="prop-label">Color texto</span>
+                            <input type="color" id="propTextColor" style="width:80px" onchange="updateObjectProp('fill', this.value)">
+                        </div>
+                        <div class="prop-row">
+                            <span class="prop-label">Color fondo</span>
+                            <input type="color" id="propTextBg" value="#ffffff" style="width:80px" onchange="updateObjectProp('textBackgroundColor', this.value)">
+                        </div>
+                        <div class="prop-row">
+                            <span class="prop-label">Fuente</span>
+                            <select id="propFontFamily" class="input-xs" style="width:140px" onchange="updateObjectProp('fontFamily', this.value)">
+                                <option value="Inter, sans-serif">Inter</option>
+                                <option value="Helvetica, Arial, sans-serif">Helvetica</option>
+                                <option value="Georgia, serif">Georgia</option>
+                                <option value="'Courier New', monospace">Courier</option>
+                                <option value="'Times New Roman', serif">Times</option>
+                                <option value="Verdana, sans-serif">Verdana</option>
+                                <option value="Impact, sans-serif">Impact</option>
+                            </select>
+                        </div>
+                        <div class="prop-row">
+                            <span class="prop-label">Peso</span>
+                            <select id="propFontWeight" class="input-xs" style="width:140px" onchange="updateObjectProp('fontWeight', this.value)">
+                                <option value="normal">Normal</option>
+                                <option value="bold">Negrita</option>
+                                <option value="300">Light</option>
+                                <option value="600">Semi-bold</option>
+                                <option value="900">Black</option>
+                            </select>
+                        </div>
+                        <div class="prop-row">
+                            <span class="prop-label">Alineación</span>
+                            <div style="display:flex;gap:4px">
+                                <button onclick="updateObjectProp('textAlign', 'left')" class="btn-ghost" style="padding:2px 8px">L</button>
+                                <button onclick="updateObjectProp('textAlign', 'center')" class="btn-ghost" style="padding:2px 8px">C</button>
+                                <button onclick="updateObjectProp('textAlign', 'right')" class="btn-ghost" style="padding:2px 8px">R</button>
+                            </div>
+                        </div>
+                        <div class="prop-row">
+                            <span class="prop-label">Estilo</span>
+                            <div style="display:flex;gap:8px">
+                                <label style="display:flex;align-items:center;gap:4px;font-size:0.75rem;cursor:pointer">
+                                    <input type="checkbox" id="propBold" onchange="toggleTextStyle('bold', this.checked)">
+                                    <span style="font-weight:bold">B</span>
+                                </label>
+                                <label style="display:flex;align-items:center;gap:4px;font-size:0.75rem;cursor:pointer">
+                                    <input type="checkbox" id="propItalic" onchange="toggleTextStyle('italic', this.checked)">
+                                    <span style="font-style:italic">I</span>
+                                </label>
+                                <label style="display:flex;align-items:center;gap:4px;font-size:0.75rem;cursor:pointer">
+                                    <input type="checkbox" id="propUnderline" onchange="toggleTextStyle('underline', this.checked)">
+                                    <span style="text-decoration:underline">U</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FORMA -->
+                    <div id="shape-props" style="display:none">
+                        <div class="section-label">Propiedades de forma</div>
+                        <div class="prop-row">
+                            <span class="prop-label">Color relleno</span>
+                            <input type="color" id="propShapeFill" style="width:80px" onchange="updateObjectProp('fill', this.value)">
+                        </div>
+                        <div class="prop-row">
+                            <span class="prop-label">Color borde</span>
+                            <input type="color" id="propShapeStroke" style="width:80px" onchange="updateObjectProp('stroke', this.value)">
+                        </div>
+                        <div class="prop-row">
+                            <span class="prop-label">Grosor borde</span>
+                            <input type="range" id="propStrokeWidth" min="0" max="20" style="width:100px" oninput="updateObjectProp('strokeWidth', this.value)">
+                        </div>
+                        <div class="prop-row">
+                            <span class="prop-label">Radio esquinas</span>
+                            <input type="range" id="propRx" min="0" max="50" style="width:100px" oninput="updateObjectProp('rx', this.value)">
+                        </div>
+                    </div>
+
+                    <!-- IMAGEN -->
+                    <div id="image-props" style="display:none">
+                        <div class="section-label">Propiedades de imagen</div>
+                        <div class="prop-row">
+                            <span class="prop-label">Escala</span>
+                            <input type="range" id="propImgScale" min="0.1" max="3" step="0.1" style="width:100px" oninput="updateObjectProp('scaleX', this.value); updateObjectProp('scaleY', this.value)">
+                        </div>
+                        <div class="prop-row">
+                            <span class="prop-label">Filtro B&W</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="propBwFilter" onchange="toggleBwFilter(this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- EFECTOS COMUNES -->
+                    <div class="section-label" style="margin-top:1rem">Efectos</div>
+                    <div class="prop-row">
+                        <span class="prop-label">Sombra</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="propShadow" onchange="toggleShadow(this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: ASSETS -->
+            <div id="tab-assets" class="tab-content">
+                <div class="section-label">Subir imagen</div>
+                <input type="file" id="imgLoader" class="hidden" accept="image/*" onchange="handleImageUpload(this)">
+                <button onclick="document.getElementById('imgLoader').click()" class="w-full border-2 border-dashed border-gray-300 p-5 rounded-xl text-gray-500 hover:border-indigo-500 hover:text-indigo-500 hover:bg-indigo-50 transition-all mb-4" style="display:flex;flex-direction:column;align-items:center;gap:0.5rem">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <span class="text-sm font-medium">Haz clic para subir</span>
+                    <span class="text-[10px] text-gray-400">JPG, PNG, SVG, WEBP</span>
+                </button>
+
+                <div class="section-label">Galería de imágenes</div>
+                <div id="imageGallery" class="grid grid-cols-3 gap-2 overflow-y-auto" style="max-height:240px;padding:4px">
+                    <div class="empty-state" style="grid-column:span 3">
+                        <div style="font-size:1.5rem;margin-bottom:0.25rem">🖼️</div>
+                        <p style="font-size:10px">No hay imágenes cargadas</p>
+                    </div>
+                </div>
+
+                <div class="section-label" style="margin-top:1.5rem">Iconos prediseñados</div>
+                <div class="grid grid-cols-4 gap-2">
+                    <button onclick="addIcon('star')" class="btn-ghost" style="font-size:1.25rem" title="Estrella">⭐</button>
+                    <button onclick="addIcon('heart')" class="btn-ghost" style="font-size:1.25rem" title="Corazón">❤️</button>
+                    <button onclick="addIcon('check')" class="btn-ghost" style="font-size:1.25rem" title="Check">✅</button>
+                    <button onclick="addIcon('warning')" class="btn-ghost" style="font-size:1.25rem" title="Advertencia">⚠️</button>
+                    <button onclick="addIcon('leaf')" class="btn-ghost" style="font-size:1.25rem" title="Natural">🌿</button>
+                    <button onclick="addIcon('drop')" class="btn-ghost" style="font-size:1.25rem" title="Esencia">💧</button>
+                    <button onclick="addIcon('flame')" class="btn-ghost" style="font-size:1.25rem" title="Calor">🔥</button>
+                    <button onclick="addIcon('sparkle')" class="btn-ghost" style="font-size:1.25rem" title="Brillo">✨</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer: Impresión -->
+        <div class="p-5 border-t border-gray-100 bg-gray-50 shrink-0">
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem">
+                <div style="flex:1">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase block mb-1">Cantidad</label>
+                    <input type="number" id="printQty" value="12" min="1" max="1000" class="input-sm" style="text-align:center;font-weight:700;color:#4338ca">
+                </div>
+                <div style="flex:1">
+                    <label class="text-[10px] font-bold text-gray-500 uppercase block mb-1">Formato</label>
+                    <select id="paperFormat" class="input-sm" style="font-size:0.75rem">
+                        <option value="a4">A4</option>
+                        <option value="letter">Carta</option>
+                        <option value="a5">A5</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="exportHighResPDF()" class="btn-primary w-full" style="display:flex;align-items:center;justify-content:center;gap:0.5rem">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Generar PDF Profesional
             </button>
         </div>
     </aside>
 
     <!-- AREA DE TRABAJO -->
-    <main class="flex-1 flex flex-col items-center justify-center p-10 relative overflow-hidden">
+    <main class="flex-1 flex flex-col items-center justify-center p-6 relative overflow-hidden canvas-wrapper">
         <div class="mb-4 text-center">
-            <h3 class="text-gray-400 font-medium uppercase text-xs tracking-[0.2em]">Vista Previa de Alta Resolución</h3>
-            <p class="text-gray-500 text-[10px]">Los textos se renderizarán nítidos en el PDF final</p>
+            <h3 class="text-gray-500 font-semibold uppercase text-[10px] tracking-[0.25em]">Vista Previa</h3>
+            <p class="text-gray-400 text-[10px] mt-0.5">Arrastra · Escala · Rota · Elimina · Clona</p>
         </div>
-        
-        <div class="canvas-shadow bg-white">
+
+        <div class="canvas-shadow bg-white rounded-lg overflow-hidden" id="canvasContainer">
             <canvas id="mainCanvas"></canvas>
         </div>
 
-        <div class="mt-8 flex gap-6 text-gray-400 text-xs">
-            <span class="flex items-center"><span class="w-3 h-3 bg-indigo-500 rounded-full mr-2"></span> Arrastra para mover</span>
-            <span class="flex items-center"><span class="w-3 h-3 bg-emerald-500 rounded-full mr-2"></span> Esquinas para escalar</span>
-            <span class="flex items-center"><span class="w-3 h-3 bg-orange-500 rounded-full mr-2"></span> Círculo superior para rotar</span>
+        <div class="mt-6 flex gap-6 text-gray-400 text-[10px]">
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:#4f46e5;border-radius:50%;display:inline-block"></span> Mover</span>
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:#10b981;border-radius:50%;display:inline-block"></span> Escalar</span>
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:#f97316;border-radius:50%;display:inline-block"></span> Rotar</span>
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:#ef4444;border-radius:50%;display:inline-block"></span> Eliminar</span>
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:#3b82f6;border-radius:50%;display:inline-block"></span> Clonar</span>
         </div>
     </main>
 
-    <!-- QR Helper Oculto -->
     <div id="qrBuffer" style="display:none"></div>
+    <div id="toast" class="toast">Mensaje</div>
 
     <script>
+        // ─── CONFIGURACIÓN GLOBAL ───
         let canvas;
-        const SCALE_FACTOR = 37.795; // 1cm a pixeles en pantalla
+        const SCALE_FACTOR = 37.795;
+        let objectCounter = 0;
+        let historyStack = [];
+        let historyIndex = -1;
 
-        // 1. Inicialización
+        // Iconos SVG para controles personalizados
+        const deleteIconSVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ef4444'%3E%3Cpath d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/%3E%3C/svg%3E";
+        const cloneIconSVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'%3E%3Cpath d='M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z'/%3E%3C/svg%3E";
+
+        const deleteImg = document.createElement('img');
+        deleteImg.src = deleteIconSVG;
+        const cloneImg = document.createElement('img');
+        cloneImg.src = cloneIconSVG;
+
+        // ─── INICIALIZACIÓN ───
         window.onload = () => {
             canvas = new fabric.Canvas('mainCanvas', {
                 backgroundColor: 'white',
-                preserveObjectStacking: true
+                preserveObjectStacking: true,
+                selection: true,
+                hoverCursor: 'pointer',
+                moveCursor: 'move'
             });
-            updateCanvasSize();
 
-            // Evento para mostrar controles cuando se selecciona algo
+            updateCanvasSize();
+            setupCustomControls();
+            setupEvents();
+            saveState();
+            loadTemplate('basic');
+        };
+
+        // ─── CONTROLES PERSONALIZADOS ───
+        function setupCustomControls() {
+            fabric.Object.prototype.transparentCorners = false;
+            fabric.Object.prototype.cornerColor = '#4f46e5';
+            fabric.Object.prototype.cornerStyle = 'circle';
+            fabric.Object.prototype.cornerSize = 10;
+            fabric.Object.prototype.borderColor = '#4f46e5';
+            fabric.Object.prototype.borderScaleFactor = 1.5;
+            fabric.Object.prototype.padding = 5;
+
+            // Eliminar (esquina superior izquierda)
+            fabric.Object.prototype.controls.deleteControl = new fabric.Control({
+                x: -0.5, y: -0.5, offsetY: -16, offsetX: -16,
+                cursorStyle: 'pointer', mouseUpHandler: deleteObjectHandler,
+                render: renderIcon(deleteImg), cornerSize: 20
+            });
+
+            // Clonar (esquina superior derecha)
+            fabric.Object.prototype.controls.cloneControl = new fabric.Control({
+                x: 0.5, y: -0.5, offsetY: -16, offsetX: 16,
+                cursorStyle: 'pointer', mouseUpHandler: cloneObjectHandler,
+                render: renderIcon(cloneImg), cornerSize: 20
+            });
+        }
+
+        function renderIcon(icon) {
+            return function(ctx, left, top, styleOverride, fabricObject) {
+                var size = this.cornerSize;
+                ctx.save();
+                ctx.translate(left, top);
+                ctx.rotate(fabric.util.degreesToRadians(fabricObject.angle));
+                ctx.beginPath();
+                ctx.arc(0, 0, size/2 + 2, 0, 2 * Math.PI);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.drawImage(icon, -size/2, -size/2, size, size);
+                ctx.restore();
+            }
+        }
+
+        function deleteObjectHandler(eventData, transform) {
+            var target = transform.target;
+            var c = target.canvas;
+            c.remove(target);
+            c.requestRenderAll();
+            hideControls();
+            showToast('Elemento eliminado');
+            saveState();
+            return true;
+        }
+
+        function cloneObjectHandler(eventData, transform) {
+            var target = transform.target;
+            var c = target.canvas;
+            target.clone(function(cloned) {
+                cloned.left += 20; cloned.top += 20;
+                cloned.set('id', ++objectCounter);
+                c.add(cloned);
+                c.setActiveObject(cloned);
+            });
+            showToast('Elemento duplicado');
+            saveState();
+            return true;
+        }
+
+        // ─── EVENTOS ───
+        function setupEvents() {
             canvas.on('selection:created', showControls);
             canvas.on('selection:updated', showControls);
             canvas.on('selection:cleared', hideControls);
-        };
+            canvas.on('object:modified', function() { updatePropInputs(); saveState(); });
+            canvas.on('object:moving', updatePropInputs);
+            canvas.on('object:scaling', updatePropInputs);
+            canvas.on('object:rotating', updatePropInputs);
 
+            document.addEventListener('keydown', (e) => {
+                if ((e.key === 'Delete' || e.key === 'Backspace') && canvas.getActiveObject()) {
+                    deleteSelected();
+                }
+                if (e.ctrlKey && e.key === 'd') {
+                    e.preventDefault();
+                    duplicateSelected();
+                }
+            });
+        }
+
+        // ─── TABS ───
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        // ─── CANVAS ───
         function updateCanvasSize() {
-            const w = document.getElementById('labelWidth').value * SCALE_FACTOR;
-            const h = document.getElementById('labelHeight').value * SCALE_FACTOR;
+            const w = parseFloat(document.getElementById('labelWidth').value) * SCALE_FACTOR;
+            const h = parseFloat(document.getElementById('labelHeight').value) * SCALE_FACTOR;
             canvas.setDimensions({ width: w, height: h });
             canvas.renderAll();
         }
 
-        // 2. Funciones de Elementos
+        function updateCanvasBg() {
+            canvas.setBackgroundColor(document.getElementById('canvasBgColor').value, canvas.renderAll.bind(canvas));
+        }
+
+        function toggleGrid() {
+            const container = document.getElementById('canvasContainer');
+            container.classList.toggle('grid-bg', document.getElementById('showGrid').checked);
+        }
+
+        // ─── ELEMENTOS ───
         function addText(text, size, isBold) {
             const txt = new fabric.IText(text, {
-                left: 50,
-                top: 50,
-                fontSize: size,
-                fontFamily: 'Helvetica, Arial, sans-serif',
+                left: 50, top: 50, fontSize: size,
+                fontFamily: 'Inter, Helvetica, Arial, sans-serif',
                 fontWeight: isBold ? 'bold' : 'normal',
-                fill: '#333'
+                fill: '#1f2937', id: ++objectCounter
             });
             canvas.add(txt);
             canvas.setActiveObject(txt);
+            showToast('Texto agregado');
+            saveState();
         }
 
         function addLine() {
             const line = new fabric.Rect({
-                left: 50,
-                top: 80,
-                width: 150,
-                height: 2,
-                fill: '#000000',
-                originX: 'center',
-                originY: 'center'
+                left: 50, top: 100, width: 150, height: 2,
+                fill: '#374151', originX: 'center', originY: 'center',
+                id: ++objectCounter
             });
             canvas.add(line);
             canvas.setActiveObject(line);
+            showToast('Línea agregada');
+            saveState();
         }
 
-        // 3. Gestión de Capas
-        function changeZIndex(direction) {
-            const obj = canvas.getActiveObject();
-            if (!obj) return;
-            if (direction === 'front') obj.bringToFront();
-            else obj.sendToBack();
-            canvas.renderAll();
+        function addRect() {
+            const rect = new fabric.Rect({
+                left: 50, top: 50, width: 120, height: 80,
+                fill: '#e0e7ff', stroke: '#4f46e5', strokeWidth: 2,
+                rx: 4, ry: 4, id: ++objectCounter
+            });
+            canvas.add(rect);
+            canvas.setActiveObject(rect);
+            showToast('Rectángulo agregado');
+            saveState();
         }
 
-        // 4. Gestión de Imágenes y Banco de Archivos
+        function addCircle() {
+            const circle = new fabric.Circle({
+                left: 50, top: 50, radius: 40,
+                fill: '#fce7f3', stroke: '#ec4899', strokeWidth: 2,
+                id: ++objectCounter
+            });
+            canvas.add(circle);
+            canvas.setActiveObject(circle);
+            showToast('Círculo agregado');
+            saveState();
+        }
+
+        function addTriangle() {
+            const tri = new fabric.Triangle({
+                left: 50, top: 50, width: 80, height: 80,
+                fill: '#fef3c7', stroke: '#f59e0b', strokeWidth: 2,
+                id: ++objectCounter
+            });
+            canvas.add(tri);
+            canvas.setActiveObject(tri);
+            showToast('Triángulo agregado');
+            saveState();
+        }
+
+        function addQR() {
+            const url = prompt("URL para el código QR:", "https://esencias.com");
+            if (!url) return;
+            const buffer = document.getElementById('qrBuffer');
+            buffer.innerHTML = "";
+            new QRCode(buffer, { text: url, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H });
+            setTimeout(() => {
+                const imgTag = buffer.querySelector('img');
+                fabric.Image.fromURL(imgTag.src, (img) => {
+                    img.scaleToWidth(80);
+                    img.set('id', ++objectCounter);
+                    canvas.add(img);
+                    canvas.setActiveObject(img);
+                    showToast('QR generado');
+                    saveState();
+                });
+            }, 300);
+        }
+
+        function addBarcode() {
+            const group = new fabric.Group([], { left: 50, top: 50, id: ++objectCounter });
+            for (let i = 0; i < 20; i++) {
+                const w = Math.random() > 0.5 ? 3 : 1;
+                const rect = new fabric.Rect({ left: i * 5, top: 0, width: w, height: 50, fill: '#1f2937' });
+                group.addWithUpdate(rect);
+            }
+            canvas.add(group);
+            canvas.setActiveObject(group);
+            showToast('Código de barras agregado');
+            saveState();
+        }
+
+        function addIcon(type) {
+            const icons = { star: '⭐', heart: '❤️', check: '✅', warning: '⚠️', leaf: '🌿', drop: '💧', flame: '🔥', sparkle: '✨' };
+            const txt = new fabric.Text(icons[type] || '⭐', { left: 50, top: 50, fontSize: 40, id: ++objectCounter });
+            canvas.add(txt);
+            canvas.setActiveObject(txt);
+            saveState();
+        }
+
+        // ─── IMÁGENES ───
         function handleImageUpload(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const imgUrl = e.target.result;
-                    addToGallery(imgUrl);
+                    addToGallery(e.target.result);
+                    showToast('Imagen cargada');
                 };
                 reader.readAsDataURL(input.files[0]);
             }
+            input.value = '';
         }
 
         function addToGallery(url) {
             const gallery = document.getElementById('imageGallery');
+            if (gallery.querySelector('.empty-state')) gallery.innerHTML = '';
+
             const container = document.createElement('div');
-            container.className = 'asset-card relative group cursor-pointer border rounded bg-white p-1 hover:border-indigo-500';
-            
+            container.className = 'asset-card';
+
             const img = document.createElement('img');
             img.src = url;
-            img.className = 'w-full h-12 object-contain';
+            img.style.width = '100%';
+            img.style.height = '48px';
+            img.style.objectFit = 'contain';
             img.onclick = () => {
                 fabric.Image.fromURL(url, (fImg) => {
                     fImg.scaleToWidth(100);
+                    fImg.set('id', ++objectCounter);
                     canvas.add(fImg);
                     canvas.setActiveObject(fImg);
+                    showToast('Imagen agregada al canvas');
+                    saveState();
                 });
+            };
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'delete-btn';
+            delBtn.innerHTML = '×';
+            delBtn.onclick = (e) => {
+                e.stopPropagation();
+                container.remove();
+                if (gallery.children.length === 0) {
+                    gallery.innerHTML = '<div class="empty-state" style="grid-column:span 3"><div style="font-size:1.5rem;margin-bottom:0.25rem">🖼️</div><p style="font-size:10px">No hay imágenes cargadas</p></div>';
+                }
             };
 
             container.appendChild(img);
+            container.appendChild(delBtn);
             gallery.appendChild(container);
         }
 
-        // 5. Generación de QR
-        function addQR() {
-            const url = prompt("Dirección Web para el QR:", "https://");
-            if (!url) return;
-            
-            const buffer = document.getElementById('qrBuffer');
-            buffer.innerHTML = "";
-            new QRCode(buffer, {
-                text: url,
-                width: 200,
-                height: 200,
-                correctLevel: QRCode.CorrectLevel.H
-            });
-
-            setTimeout(() => {
-                const imgTag = buffer.querySelector('img');
-                fabric.Image.fromURL(imgTag.src, (img) => {
-                    img.scaleToWidth(60);
-                    canvas.add(img);
-                    canvas.setActiveObject(img);
-                });
-            }, 200);
+        // ─── CAPAS Y ACCIONES ───
+        function changeZIndex(direction) {
+            const obj = canvas.getActiveObject();
+            if (!obj) { showToast('Selecciona un elemento primero'); return; }
+            switch(direction) {
+                case 'front': obj.bringToFront(); break;
+                case 'back': obj.sendToBack(); break;
+                case 'up': obj.bringForward(); break;
+                case 'down': obj.sendBackwards(); break;
+            }
+            canvas.renderAll();
+            showToast('Capa actualizada');
+            saveState();
         }
 
-        // 6. Controles Dinámicos
+        function duplicateSelected() {
+            const obj = canvas.getActiveObject();
+            if (!obj) { showToast('Selecciona un elemento primero'); return; }
+            obj.clone(function(cloned) {
+                cloned.left += 20; cloned.top += 20;
+                cloned.set('id', ++objectCounter);
+                canvas.add(cloned);
+                canvas.setActiveObject(cloned);
+            });
+            showToast('Duplicado');
+            saveState();
+        }
+
+        function deleteSelected() {
+            const obj = canvas.getActiveObject();
+            if (!obj) return;
+            canvas.remove(obj);
+            canvas.renderAll();
+            hideControls();
+            showToast('Eliminado');
+            saveState();
+        }
+
+        function clearCanvas() {
+            if (!confirm('¿Eliminar todos los elementos?')) return;
+            canvas.clear();
+            canvas.setBackgroundColor(document.getElementById('canvasBgColor').value, canvas.renderAll.bind(canvas));
+            hideControls();
+            showToast('Canvas limpiado');
+            saveState();
+        }
+
+        function alignObject(align) {
+            const obj = canvas.getActiveObject();
+            if (!obj) { showToast('Selecciona un elemento'); return; }
+            const cw = canvas.width, ch = canvas.height;
+            switch(align) {
+                case 'left': obj.set('left', (obj.width * obj.scaleX) / 2); break;
+                case 'center': obj.set('left', cw / 2); break;
+                case 'right': obj.set('left', cw - (obj.width * obj.scaleX) / 2); break;
+                case 'middle': obj.set('top', ch / 2); break;
+            }
+            obj.setCoords();
+            canvas.renderAll();
+            updatePropInputs();
+            saveState();
+        }
+
+        // ─── HISTORIAL (UNDO) ───
+        function saveState() {
+            const json = JSON.stringify(canvas.toJSON(['id']));
+            if (historyIndex < historyStack.length - 1) {
+                historyStack = historyStack.slice(0, historyIndex + 1);
+            }
+            historyStack.push(json);
+            historyIndex++;
+            if (historyStack.length > 20) {
+                historyStack.shift();
+                historyIndex--;
+            }
+        }
+
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                canvas.loadFromJSON(historyStack[historyIndex], function() {
+                    canvas.renderAll();
+                    hideControls();
+                });
+                showToast('Deshacer');
+            }
+        }
+
+        // ─── PROPIEDADES CONTEXTUALES ───
         function showControls() {
             const obj = canvas.getActiveObject();
-            document.getElementById('controls-box').classList.remove('hidden');
-            document.getElementById('objColor').value = obj.fill || '#000000';
-            
-            document.getElementById('objColor').oninput = (e) => {
-                obj.set('fill', e.target.value);
-                canvas.renderAll();
-            };
-            
-            document.getElementById('objWidth').oninput = (e) => {
-                if(obj.type === 'rect') { // Para la línea
-                    obj.set('height', parseInt(e.target.value));
-                } else {
-                    obj.set('fontSize', parseInt(e.target.value) * 5);
-                }
-                canvas.renderAll();
-            };
+            if (!obj) return;
+
+            document.getElementById('no-selection').style.display = 'none';
+            document.getElementById('prop-editor').style.display = 'block';
+
+            let typeLabel = 'Elemento', typeIcon = '📦', isText = false, isShape = false, isImage = false;
+
+            if (obj.type === 'i-text' || obj.type === 'text') { typeLabel = 'Texto'; typeIcon = '📝'; isText = true; }
+            else if (['rect','circle','triangle','polygon'].includes(obj.type)) { typeLabel = 'Forma'; typeIcon = '🔷'; isShape = true; }
+            else if (obj.type === 'image') { typeLabel = 'Imagen'; typeIcon = '🖼️'; isImage = true; }
+            else if (obj.type === 'group') { typeLabel = 'Grupo'; typeIcon = '🔳'; }
+
+            document.getElementById('objTypeLabel').textContent = typeLabel;
+            document.getElementById('objTypeIcon').textContent = typeIcon;
+            document.getElementById('objId').textContent = 'ID: #' + (obj.id || 'N/A');
+
+            document.getElementById('text-props').style.display = isText ? 'block' : 'none';
+            document.getElementById('shape-props').style.display = isShape ? 'block' : 'none';
+            document.getElementById('image-props').style.display = isImage ? 'block' : 'none';
+
+            updatePropInputs();
+        }
+
+        function updatePropInputs() {
+            const obj = canvas.getActiveObject();
+            if (!obj) return;
+
+            document.getElementById('propX').value = Math.round(obj.left || 0);
+            document.getElementById('propY').value = Math.round(obj.top || 0);
+            document.getElementById('propW').value = Math.round((obj.width || 0) * (obj.scaleX || 1));
+            document.getElementById('propH').value = Math.round((obj.height || 0) * (obj.scaleY || 1));
+            document.getElementById('propAngle').value = Math.round(obj.angle || 0);
+            document.getElementById('propOpacity').value = Math.round((obj.opacity || 1) * 100);
+
+            if (obj.type === 'i-text' || obj.type === 'text') {
+                document.getElementById('propTextContent').value = obj.text || '';
+                document.getElementById('propFontSize').value = obj.fontSize || 16;
+                document.getElementById('propTextColor').value = obj.fill || '#000000';
+                document.getElementById('propTextBg').value = obj.textBackgroundColor || '#ffffff';
+                document.getElementById('propFontFamily').value = obj.fontFamily || 'Inter, sans-serif';
+                document.getElementById('propFontWeight').value = obj.fontWeight || 'normal';
+                document.getElementById('propBold').checked = obj.fontWeight === 'bold';
+                document.getElementById('propItalic').checked = obj.fontStyle === 'italic';
+                document.getElementById('propUnderline').checked = obj.underline || false;
+            }
+
+            if (['rect','circle','triangle'].includes(obj.type)) {
+                document.getElementById('propShapeFill').value = obj.fill || '#000000';
+                document.getElementById('propShapeStroke').value = obj.stroke || '#000000';
+                document.getElementById('propStrokeWidth').value = obj.strokeWidth || 0;
+                if (obj.type === 'rect') document.getElementById('propRx').value = obj.rx || 0;
+            }
+
+            if (obj.type === 'image') {
+                document.getElementById('propImgScale').value = obj.scaleX || 1;
+            }
         }
 
         function hideControls() {
-            document.getElementById('controls-box').classList.add('hidden');
+            document.getElementById('no-selection').style.display = 'block';
+            document.getElementById('prop-editor').style.display = 'none';
         }
 
-        // 7. EXPORTACIÓN PROFESIONAL (PDF ALTA CALIDAD)
+        function updateObjectProp(prop, value) {
+            const obj = canvas.getActiveObject();
+            if (!obj) return;
+            const numProps = ['left','top','width','height','angle','fontSize','strokeWidth','rx','scaleX','scaleY'];
+            if (numProps.includes(prop)) value = parseFloat(value);
+            obj.set(prop, value);
+            obj.setCoords();
+            canvas.renderAll();
+        }
+
+        function updateTextContent(text) {
+            const obj = canvas.getActiveObject();
+            if (!obj || (obj.type !== 'i-text' && obj.type !== 'text')) return;
+            obj.set('text', text);
+            canvas.renderAll();
+        }
+
+        function toggleTextStyle(style, checked) {
+            const obj = canvas.getActiveObject();
+            if (!obj || (obj.type !== 'i-text' && obj.type !== 'text')) return;
+            if (style === 'bold') obj.set('fontWeight', checked ? 'bold' : 'normal');
+            else if (style === 'italic') obj.set('fontStyle', checked ? 'italic' : 'normal');
+            else if (style === 'underline') obj.set('underline', checked);
+            canvas.renderAll();
+        }
+
+        function toggleShadow(enabled) {
+            const obj = canvas.getActiveObject();
+            if (!obj) return;
+            obj.set('shadow', enabled ? new fabric.Shadow({ color: 'rgba(0,0,0,0.3)', blur: 10, offsetX: 5, offsetY: 5 }) : null);
+            canvas.renderAll();
+        }
+
+        function toggleBwFilter(enabled) {
+            const obj = canvas.getActiveObject();
+            if (!obj || obj.type !== 'image') return;
+            if (enabled) {
+                obj.filters = [new fabric.Image.filters.Grayscale()];
+                obj.applyFilters();
+            } else {
+                obj.filters = [];
+                obj.applyFilters();
+            }
+            canvas.renderAll();
+        }
+
+        // ─── PLANTILLAS ───
+        function loadTemplate(name) {
+            canvas.clear();
+            canvas.setBackgroundColor('#ffffff', canvas.renderAll.bind(canvas));
+            const cw = canvas.width, ch = canvas.height;
+
+            if (name === 'basic') {
+                addText('NOMBRE DEL PRODUCTO', 22, true);
+                const t = canvas.item(canvas.getObjects().length - 1);
+                t.set({ left: cw/2, top: 30, textAlign: 'center', originX: 'center' });
+
+                addLine();
+                const l = canvas.item(canvas.getObjects().length - 1);
+                l.set({ left: cw/2, top: 65, width: cw - 40, originX: 'center' });
+
+                addText('Descripción del producto y características principales...', 11, false);
+                const d = canvas.item(canvas.getObjects().length - 1);
+                d.set({ left: 20, top: 80, width: cw - 40 });
+
+            } else if (name === 'product') {
+                addText('ESENCIA NATURAL', 20, true);
+                const title = canvas.item(canvas.getObjects().length - 1);
+                title.set({ left: cw/2, top: 20, textAlign: 'center', originX: 'center', fill: '#059669' });
+
+                addText('100% Orgánico · 50ml', 12, false);
+                const sub = canvas.item(canvas.getObjects().length - 1);
+                sub.set({ left: cw/2, top: 50, textAlign: 'center', originX: 'center', fill: '#6b7280' });
+
+                addRect();
+                const border = canvas.item(canvas.getObjects().length - 1);
+                border.set({ left: 10, top: 10, width: cw - 20, height: ch - 20, fill: 'transparent', stroke: '#059669', strokeWidth: 2, rx: 8, selectable: false });
+                border.sendToBack();
+
+                addText('$ 24.99', 18, true);
+                const price = canvas.item(canvas.getObjects().length - 1);
+                price.set({ left: cw/2, top: ch - 40, textAlign: 'center', originX: 'center', fill: '#dc2626' });
+
+            } else if (name === 'qr') {
+                addText('ESCANEA PARA INFO', 16, true);
+                const t = canvas.item(canvas.getObjects().length - 1);
+                t.set({ left: cw/2, top: 15, textAlign: 'center', originX: 'center' });
+
+                addText('www.esencias.com/producto', 10, false);
+                const url = canvas.item(canvas.getObjects().length - 1);
+                url.set({ left: cw/2, top: ch - 20, textAlign: 'center', originX: 'center', fill: '#6b7280' });
+
+                addRect();
+                const qr = canvas.item(canvas.getObjects().length - 1);
+                qr.set({ left: cw/2, top: ch/2, width: 80, height: 80, fill: 'white', stroke: '#374151', strokeWidth: 1, originX: 'center', originY: 'center' });
+
+            } else if (name === 'minimal') {
+                addText('esencias', 28, true);
+                const brand = canvas.item(canvas.getObjects().length - 1);
+                brand.set({ left: cw/2, top: ch/2 - 20, textAlign: 'center', originX: 'center', fontFamily: 'Helvetica, Arial, sans-serif', fill: '#111827' });
+
+                addLine();
+                const l = canvas.item(canvas.getObjects().length - 1);
+                l.set({ left: cw/2, top: ch/2 + 15, width: 60, originX: 'center', height: 1 });
+
+                addText('pure essence', 10, false);
+                const tag = canvas.item(canvas.getObjects().length - 1);
+                tag.set({ left: cw/2, top: ch/2 + 25, textAlign: 'center', originX: 'center', fill: '#9ca3af' });
+            }
+
+            canvas.renderAll();
+            saveState();
+            showToast('Plantilla "' + name + '" cargada');
+        }
+
+        // ─── EXPORTAR PDF ───
         async function exportHighResPDF() {
             const { jsPDF } = window.jspdf;
-            
-            // Medidas etiqueta mm
             const wMm = parseFloat(document.getElementById('labelWidth').value);
             const hMm = parseFloat(document.getElementById('labelHeight').value);
             const qty = parseInt(document.getElementById('printQty').value);
+            const format = document.getElementById('paperFormat').value;
 
-            // Crear PDF A4 (300 DPI aprox se logra con multiplicador en el canvas)
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pW = pdf.internal.pageSize.getWidth();
-            const pH = pdf.internal.pageSize.getHeight();
+            const pageSizes = { a4: [210, 297], letter: [216, 279], a5: [148, 210] };
+            const [pW, pH] = pageSizes[format] || pageSizes.a4;
 
-            // Renderizar el diseño a una imagen de alta resolución (4x tamaño pantalla)
-            const dataURL = canvas.toDataURL({
-                format: 'png',
-                multiplier: 4 
-            });
+            const pdf = new jsPDF('p', 'mm', format);
+            const dataURL = canvas.toDataURL({ format: 'png', multiplier: 4 });
 
-            const margin = 10;
-            let curX = margin;
-            let curY = margin;
-            let labelsInPage = 0;
+            const margin = 8;
+            let curX = margin, curY = margin;
 
             for (let i = 0; i < qty; i++) {
-                // Si la siguiente etiqueta no cabe horizontalmente
-                if (curX + wMm > pW - margin) {
-                    curX = margin;
-                    curY += hMm + 2; // 2mm espacio entre etiquetas
-                }
-
-                // Si la siguiente fila no cabe verticalmente
-                if (curY + hMm > pH - margin) {
-                    pdf.addPage();
-                    curX = margin;
-                    curY = margin;
-                }
-
+                if (curX + wMm > pW - margin) { curX = margin; curY += hMm + 2; }
+                if (curY + hMm > pH - margin) { pdf.addPage(); curX = margin; curY = margin; }
                 pdf.addImage(dataURL, 'PNG', curX, curY, wMm, hMm);
                 curX += wMm + 2;
             }
 
-            pdf.save("Etiquetas_Esencias_Profesional.pdf");
+            pdf.save("Etiquetas_Esencias_Pro_v3.pdf");
+            showToast('PDF generado con éxito');
+        }
+
+        // ─── TOAST ───
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
         }
     </script>
 </body>
