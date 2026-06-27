@@ -3,237 +3,308 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LabelMaker Pro - Esencias Aromáticas</title>
+    <title>LabelMaker Pro v2 - Esencias</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        .canvas-container { margin: 0 auto; border: 2px solid #ccc; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
-        body { background-color: #f3f4f6; }
-        .sidebar { height: 100vh; overflow-y: auto; }
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .canvas-shadow { box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .asset-card:hover .delete-btn { display: block; }
     </style>
 </head>
-<body class="flex flex-col md:flex-row">
+<body class="h-screen flex flex-col md:flex-row overflow-hidden">
 
-    <!-- Sidebar de Controles -->
-    <aside class="sidebar w-full md:w-1/3 bg-white p-6 shadow-xl z-10">
-        <h1 class="text-2xl font-bold mb-6 text-indigo-700">Diseñador de Etiquetas</h1>
-        
-        <!-- Ajustes de Tamaño -->
-        <section class="mb-6 border-b pb-4">
-            <h2 class="font-semibold mb-2">1. Tamaño de Etiqueta (cm)</h2>
-            <div class="grid grid-cols-2 gap-2 mb-2">
-                <input type="number" id="labelWidth" placeholder="Ancho" class="border p-2 rounded" value="6">
-                <input type="number" id="labelHeight" placeholder="Alto" class="border p-2 rounded" value="4">
-            </div>
-            <select id="presets" class="w-full border p-2 rounded bg-gray-50">
-                <option value="">Presets Rápidos</option>
-                <option value="5,5">Cuadrada (5x5 cm)</option>
-                <option value="10,5">Rectangular Grande (10x5 cm)</option>
-                <option value="6,4">Estándar Esencias (6x4 cm)</option>
-            </select>
-        </section>
+    <!-- SIDEBAR IZQUIERDO: CONTROLES -->
+    <aside class="w-full md:w-96 bg-white border-r flex flex-col h-full shadow-2xl z-20">
+        <div class="p-5 bg-indigo-700 text-white">
+            <h1 class="text-xl font-bold">Esencias Pro Designer</h1>
+            <p class="text-xs opacity-80">Control de etiquetas de alta precisión</p>
+        </div>
 
-        <!-- Gestión de Textos -->
-        <section class="mb-6 border-b pb-4">
-            <h2 class="font-semibold mb-2">2. Textos</h2>
-            <div class="space-y-2">
-                <button onclick="addText('Marca')" class="bg-indigo-500 text-white px-3 py-1 rounded text-sm hover:bg-indigo-600 w-full mb-1">Añadir Nombre/Marca</button>
-                <button onclick="addText('Slogan')" class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600 w-full">Añadir Slogan</button>
-                <button onclick="addText('Contenido: 50ml')" class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600 w-full">Añadir Presentación/Venc</button>
-                
-                <div class="mt-4 p-3 bg-gray-100 rounded">
-                    <label class="text-xs block">Color de texto seleccionado:</label>
-                    <input type="color" id="textColor" class="w-full">
-                    <label class="text-xs block mt-2">Tamaño Fuente:</label>
-                    <input type="range" id="textSize" min="8" max="100" value="20" class="w-full">
-                </div>
-            </div>
-        </section>
-
-        <!-- Imágenes y QR -->
-        <section class="mb-6 border-b pb-4">
-            <h2 class="font-semibold mb-2">3. Elementos Gráficos</h2>
-            <label class="block text-xs mb-1">Subir Logo o Imagen:</label>
-            <input type="file" id="imageUpload" class="text-xs mb-3">
+        <div class="flex-1 overflow-y-auto p-5 custom-scroll">
             
-            <div class="bg-blue-50 p-3 rounded">
-                <label class="text-xs block mb-1">URL para QR:</label>
-                <input type="text" id="qrUrl" placeholder="https://tuweb.com" class="border p-1 w-full mb-2 text-sm">
-                <button onclick="addQR()" class="bg-blue-600 text-white px-4 py-1 rounded text-sm w-full">Insertar QR</button>
-            </div>
-        </section>
+            <!-- 1. TAMAÑO DE ETIQUETA -->
+            <section class="mb-8">
+                <h2 class="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">1. Dimensiones (cm)</h2>
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase">Ancho</label>
+                        <input type="number" id="labelWidth" value="6" step="0.1" class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" onchange="updateCanvasSize()">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase">Alto</label>
+                        <input type="number" id="labelHeight" value="4" step="0.1" class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" onchange="updateCanvasSize()">
+                    </div>
+                </div>
+            </section>
 
-        <!-- Impresión -->
-        <section class="mb-6">
-            <h2 class="font-semibold mb-2">4. Finalizar e Imprimir</h2>
-            <label class="text-xs block">Papel de impresión:</label>
-            <select id="paperSize" class="w-full border p-2 mb-2">
-                <option value="a4">A4 (210 x 297 mm)</option>
-                <option value="letter">Carta (216 x 279 mm)</option>
-            </select>
-            <button onclick="exportPDF()" class="bg-green-600 text-white font-bold py-3 px-4 rounded w-full shadow-lg hover:bg-green-700 transition">
-                GENERAR PDF ALTA CALIDAD
+            <!-- 2. GESTIÓN DE CAPAS / ORDEN -->
+            <section class="mb-8 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <h2 class="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">2. Posicionamiento de Capas</h2>
+                <div class="flex gap-2">
+                    <button onclick="changeZIndex('front')" class="flex-1 bg-white border border-gray-300 hover:bg-gray-100 p-2 rounded text-xs shadow-sm">Traer Al Frente</button>
+                    <button onclick="changeZIndex('back')" class="flex-1 bg-white border border-gray-300 hover:bg-gray-100 p-2 rounded text-xs shadow-sm">Enviar Atrás</button>
+                </div>
+            </section>
+
+            <!-- 3. ELEMENTOS -->
+            <section class="mb-8">
+                <h2 class="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">3. Insertar Elementos</h2>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button onclick="addText('NOMBRE PRODUCTO', 22, true)" class="bg-indigo-50 text-indigo-700 border border-indigo-200 p-2 rounded text-xs font-semibold hover:bg-indigo-100">+ Texto Título</button>
+                    <button onclick="addText('Información e indicaciones...', 12, false)" class="bg-indigo-50 text-indigo-700 border border-indigo-200 p-2 rounded text-xs font-semibold hover:bg-indigo-100">+ Texto Detalle</button>
+                    <button onclick="addLine()" class="bg-emerald-50 text-emerald-700 border border-emerald-200 p-2 rounded text-xs font-semibold hover:bg-emerald-100">+ Línea Divisoria</button>
+                    <button onclick="addQR()" class="bg-blue-50 text-blue-700 border border-blue-200 p-2 rounded text-xs font-semibold hover:bg-blue-100">+ Código QR</button>
+                </div>
+
+                <!-- Editor de propiedades dinámico -->
+                <div id="controls-box" class="p-3 bg-white border rounded shadow-sm hidden">
+                    <label class="text-[10px] font-bold">COLOR Y OPACIDAD</label>
+                    <input type="color" id="objColor" class="w-full h-8 mb-2">
+                    <label class="text-[10px] font-bold">GROSOR / TAMAÑO</label>
+                    <input type="range" id="objWidth" min="1" max="20" value="2" class="w-full">
+                </div>
+            </section>
+
+            <!-- 4. BANCO DE IMÁGENES -->
+            <section class="mb-8">
+                <h2 class="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">4. Mis Imágenes / Logos</h2>
+                <input type="file" id="imgLoader" class="hidden" onchange="handleImageUpload(this)">
+                <button onclick="document.getElementById('imgLoader').click()" class="w-full border-2 border-dashed border-gray-300 p-4 rounded-lg text-gray-500 hover:border-indigo-500 hover:text-indigo-500 transition mb-3">
+                    Subir Imagen (Logo/Prod)
+                </button>
+                <div id="imageGallery" class="grid grid-cols-3 gap-2 overflow-y-auto max-h-40 p-1">
+                    <!-- Imágenes cargadas aparecerán aquí -->
+                </div>
+            </section>
+
+        </div>
+
+        <!-- BOTÓN IMPRESIÓN -->
+        <div class="p-5 border-t bg-gray-50">
+            <div class="mb-3">
+                <label class="text-xs font-bold text-gray-600 uppercase">Cantidad de etiquetas:</label>
+                <input type="number" id="printQty" value="12" class="w-full border rounded p-2 text-center font-bold text-indigo-700">
+            </div>
+            <button onclick="exportHighResPDF()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg transform active:scale-95 transition">
+                GENERAR DOCUMENTO PDF
             </button>
-        </section>
+        </div>
     </aside>
 
-    <!-- Área de Previsualización -->
-    <main class="flex-1 p-10 flex flex-col items-center justify-start overflow-auto h-screen">
-        <div class="bg-white p-4 rounded shadow-inner mb-4">
-            <span class="text-gray-400 text-sm italic">Previsualización Real (Escala 10px = 1mm)</span>
+    <!-- AREA DE TRABAJO -->
+    <main class="flex-1 flex flex-col items-center justify-center p-10 relative overflow-hidden">
+        <div class="mb-4 text-center">
+            <h3 class="text-gray-400 font-medium uppercase text-xs tracking-[0.2em]">Vista Previa de Alta Resolución</h3>
+            <p class="text-gray-500 text-[10px]">Los textos se renderizarán nítidos en el PDF final</p>
         </div>
-        <canvas id="labelCanvas"></canvas>
         
-        <div id="status" class="mt-4 text-sm text-gray-500 bg-white p-4 rounded shadow">
-            Selecciona un objeto para editar su posición (X, Y) o rotación con los controles del ratón.
+        <div class="canvas-shadow bg-white">
+            <canvas id="mainCanvas"></canvas>
+        </div>
+
+        <div class="mt-8 flex gap-6 text-gray-400 text-xs">
+            <span class="flex items-center"><span class="w-3 h-3 bg-indigo-500 rounded-full mr-2"></span> Arrastra para mover</span>
+            <span class="flex items-center"><span class="w-3 h-3 bg-emerald-500 rounded-full mr-2"></span> Esquinas para escalar</span>
+            <span class="flex items-center"><span class="w-3 h-3 bg-orange-500 rounded-full mr-2"></span> Círculo superior para rotar</span>
         </div>
     </main>
 
-    <!-- Div oculto para generar QR -->
-    <div id="qrcode" style="display:none"></div>
+    <!-- QR Helper Oculto -->
+    <div id="qrBuffer" style="display:none"></div>
 
     <script>
-        // --- CONFIGURACIÓN INICIAL ---
-        const canvas = new fabric.Canvas('labelCanvas', {
-            backgroundColor: '#fff',
-            preserveObjectStacking: true
-        });
+        let canvas;
+        const SCALE_FACTOR = 37.795; // 1cm a pixeles en pantalla
 
-        // Conversión: 1cm = 37.8px para visualización en pantalla aprox
-        const SCALE = 37.8;
+        // 1. Inicialización
+        window.onload = () => {
+            canvas = new fabric.Canvas('mainCanvas', {
+                backgroundColor: 'white',
+                preserveObjectStacking: true
+            });
+            updateCanvasSize();
 
-        function initCanvas() {
-            const w = document.getElementById('labelWidth').value * SCALE;
-            const h = document.getElementById('labelHeight').value * SCALE;
-            canvas.setWidth(w);
-            canvas.setHeight(h);
+            // Evento para mostrar controles cuando se selecciona algo
+            canvas.on('selection:created', showControls);
+            canvas.on('selection:updated', showControls);
+            canvas.on('selection:cleared', hideControls);
+        };
+
+        function updateCanvasSize() {
+            const w = document.getElementById('labelWidth').value * SCALE_FACTOR;
+            const h = document.getElementById('labelHeight').value * SCALE_FACTOR;
+            canvas.setDimensions({ width: w, height: h });
             canvas.renderAll();
         }
 
-        // --- MANEJO DE TAMAÑOS ---
-        document.getElementById('presets').addEventListener('change', (e) => {
-            if(!e.target.value) return;
-            const [w, h] = e.target.value.split(',');
-            document.getElementById('labelWidth').value = w;
-            document.getElementById('labelHeight').value = h;
-            initCanvas();
-        });
-
-        // --- AGREGAR TEXTO ---
-        function addText(str) {
-            const text = new fabric.IText(str, {
-                left: 20,
-                top: 20,
-                fontFamily: 'Arial',
-                fontSize: 20,
-                fill: document.getElementById('textColor').value
+        // 2. Funciones de Elementos
+        function addText(text, size, isBold) {
+            const txt = new fabric.IText(text, {
+                left: 50,
+                top: 50,
+                fontSize: size,
+                fontFamily: 'Helvetica, Arial, sans-serif',
+                fontWeight: isBold ? 'bold' : 'normal',
+                fill: '#333'
             });
-            canvas.add(text);
-            canvas.setActiveObject(text);
+            canvas.add(txt);
+            canvas.setActiveObject(txt);
         }
 
-        // Actualizar color/tamaño de objeto seleccionado
-        document.getElementById('textColor').oninput = function() {
+        function addLine() {
+            const line = new fabric.Rect({
+                left: 50,
+                top: 80,
+                width: 150,
+                height: 2,
+                fill: '#000000',
+                originX: 'center',
+                originY: 'center'
+            });
+            canvas.add(line);
+            canvas.setActiveObject(line);
+        }
+
+        // 3. Gestión de Capas
+        function changeZIndex(direction) {
             const obj = canvas.getActiveObject();
-            if(obj && obj.type === 'i-text') {
-                obj.set('fill', this.value);
-                canvas.renderAll();
-            }
-        };
+            if (!obj) return;
+            if (direction === 'front') obj.bringToFront();
+            else obj.sendToBack();
+            canvas.renderAll();
+        }
 
-        document.getElementById('textSize').oninput = function() {
-            const obj = canvas.getActiveObject();
-            if(obj) {
-                obj.set('fontSize', parseInt(this.value));
-                canvas.renderAll();
+        // 4. Gestión de Imágenes y Banco de Archivos
+        function handleImageUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imgUrl = e.target.result;
+                    addToGallery(imgUrl);
+                };
+                reader.readAsDataURL(input.files[0]);
             }
-        };
+        }
 
-        // --- AGREGAR IMÁGENES ---
-        document.getElementById('imageUpload').addEventListener('change', function(e) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                fabric.Image.fromURL(event.target.result, function(img) {
-                    img.scaleToWidth(100);
-                    canvas.add(img);
-                    canvas.setActiveObject(img);
-                });
-            }
-            reader.readAsDataURL(e.target.files[0]);
-        });
-
-        // --- GENERAR QR ---
-        function addQR() {
-            const url = document.getElementById('qrUrl').value || "https://google.com";
-            const qrcodeDiv = document.getElementById("qrcode");
-            qrcodeDiv.innerHTML = "";
+        function addToGallery(url) {
+            const gallery = document.getElementById('imageGallery');
+            const container = document.createElement('div');
+            container.className = 'asset-card relative group cursor-pointer border rounded bg-white p-1 hover:border-indigo-500';
             
-            new QRCode(qrcodeDiv, {
+            const img = document.createElement('img');
+            img.src = url;
+            img.className = 'w-full h-12 object-contain';
+            img.onclick = () => {
+                fabric.Image.fromURL(url, (fImg) => {
+                    fImg.scaleToWidth(100);
+                    canvas.add(fImg);
+                    canvas.setActiveObject(fImg);
+                });
+            };
+
+            container.appendChild(img);
+            gallery.appendChild(container);
+        }
+
+        // 5. Generación de QR
+        function addQR() {
+            const url = prompt("Dirección Web para el QR:", "https://");
+            if (!url) return;
+            
+            const buffer = document.getElementById('qrBuffer');
+            buffer.innerHTML = "";
+            new QRCode(buffer, {
                 text: url,
-                width: 256,
-                height: 256,
-                correctLevel : QRCode.CorrectLevel.H
+                width: 200,
+                height: 200,
+                correctLevel: QRCode.CorrectLevel.H
             });
 
-            // Esperar a que el QR se genere y pasarlo al canvas
             setTimeout(() => {
-                const qrImgTag = qrcodeDiv.querySelector('img');
-                fabric.Image.fromURL(qrImgTag.src, function(img) {
-                    img.scaleToWidth(80);
+                const imgTag = buffer.querySelector('img');
+                fabric.Image.fromURL(imgTag.src, (img) => {
+                    img.scaleToWidth(60);
                     canvas.add(img);
                     canvas.setActiveObject(img);
                 });
-            }, 100);
+            }, 200);
         }
 
-        // --- EXPORTACIÓN PROFESIONAL A PDF ---
-        async function exportPDF() {
+        // 6. Controles Dinámicos
+        function showControls() {
+            const obj = canvas.getActiveObject();
+            document.getElementById('controls-box').classList.remove('hidden');
+            document.getElementById('objColor').value = obj.fill || '#000000';
+            
+            document.getElementById('objColor').oninput = (e) => {
+                obj.set('fill', e.target.value);
+                canvas.renderAll();
+            };
+            
+            document.getElementById('objWidth').oninput = (e) => {
+                if(obj.type === 'rect') { // Para la línea
+                    obj.set('height', parseInt(e.target.value));
+                } else {
+                    obj.set('fontSize', parseInt(e.target.value) * 5);
+                }
+                canvas.renderAll();
+            };
+        }
+
+        function hideControls() {
+            document.getElementById('controls-box').classList.add('hidden');
+        }
+
+        // 7. EXPORTACIÓN PROFESIONAL (PDF ALTA CALIDAD)
+        async function exportHighResPDF() {
             const { jsPDF } = window.jspdf;
             
-            // Datos de la etiqueta en mm
-            const lWidthMm = parseFloat(document.getElementById('labelWidth').value);
-            const lHeightMm = parseFloat(document.getElementById('labelHeight').value);
-            
-            // Datos del papel (A4 por defecto)
-            const pSize = document.getElementById('paperSize').value;
-            const pdf = new jsPDF('p', 'mm', pSize);
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
+            // Medidas etiqueta mm
+            const wMm = parseFloat(document.getElementById('labelWidth').value);
+            const hMm = parseFloat(document.getElementById('labelHeight').value);
+            const qty = parseInt(document.getElementById('printQty').value);
 
-            // Calidad: Exportamos el canvas a una resolución alta (300 DPI)
-            // Multiplicador: Para que el texto pequeño sea legible, el canvas se renderiza más grande
+            // Crear PDF A4 (300 DPI aprox se logra con multiplicador en el canvas)
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pW = pdf.internal.pageSize.getWidth();
+            const pH = pdf.internal.pageSize.getHeight();
+
+            // Renderizar el diseño a una imagen de alta resolución (4x tamaño pantalla)
             const dataURL = canvas.toDataURL({
                 format: 'png',
-                multiplier: 4 // Aumenta la resolución 4 veces para el PDF
+                multiplier: 4 
             });
 
-            // Calcular cuántas caben
             const margin = 10;
-            const cols = Math.floor((pageWidth - margin) / lWidthMm);
-            const rows = Math.floor((pageHeight - margin) / lHeightMm);
-            
-            let currentX = margin;
-            let currentY = margin;
-            let count = 0;
+            let curX = margin;
+            let curY = margin;
+            let labelsInPage = 0;
 
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    pdf.addImage(dataURL, 'PNG', currentX, currentY, lWidthMm, lHeightMm);
-                    currentX += lWidthMm + 2; // 2mm de separación
-                    count++;
+            for (let i = 0; i < qty; i++) {
+                // Si la siguiente etiqueta no cabe horizontalmente
+                if (curX + wMm > pW - margin) {
+                    curX = margin;
+                    curY += hMm + 2; // 2mm espacio entre etiquetas
                 }
-                currentX = margin;
-                currentY += lHeightMm + 2;
+
+                // Si la siguiente fila no cabe verticalmente
+                if (curY + hMm > pH - margin) {
+                    pdf.addPage();
+                    curX = margin;
+                    curY = margin;
+                }
+
+                pdf.addImage(dataURL, 'PNG', curX, curY, wMm, hMm);
+                curX += wMm + 2;
             }
 
-            pdf.save(`Etiquetas_Esencias_${count}.pdf`);
-            alert(`Se han generado ${count} etiquetas en el PDF.`);
+            pdf.save("Etiquetas_Esencias_Profesional.pdf");
         }
-
-        // Inicializar
-        initCanvas();
     </script>
 </body>
 </html>
