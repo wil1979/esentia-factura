@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabelMaker Pro - Esencias Aromáticas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        .canvas-container { margin: 0 auto; border: 2px solid #ccc; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        body { background-color: #f3f4f6; }
+        .sidebar { height: 100vh; overflow-y: auto; }
+    </style>
+</head>
+<body class="flex flex-col md:flex-row">
+
+    <!-- Sidebar de Controles -->
+    <aside class="sidebar w-full md:w-1/3 bg-white p-6 shadow-xl z-10">
+        <h1 class="text-2xl font-bold mb-6 text-indigo-700">Diseñador de Etiquetas</h1>
+        
+        <!-- Ajustes de Tamaño -->
+        <section class="mb-6 border-b pb-4">
+            <h2 class="font-semibold mb-2">1. Tamaño de Etiqueta (cm)</h2>
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <input type="number" id="labelWidth" placeholder="Ancho" class="border p-2 rounded" value="6">
+                <input type="number" id="labelHeight" placeholder="Alto" class="border p-2 rounded" value="4">
+            </div>
+            <select id="presets" class="w-full border p-2 rounded bg-gray-50">
+                <option value="">Presets Rápidos</option>
+                <option value="5,5">Cuadrada (5x5 cm)</option>
+                <option value="10,5">Rectangular Grande (10x5 cm)</option>
+                <option value="6,4">Estándar Esencias (6x4 cm)</option>
+            </select>
+        </section>
+
+        <!-- Gestión de Textos -->
+        <section class="mb-6 border-b pb-4">
+            <h2 class="font-semibold mb-2">2. Textos</h2>
+            <div class="space-y-2">
+                <button onclick="addText('Marca')" class="bg-indigo-500 text-white px-3 py-1 rounded text-sm hover:bg-indigo-600 w-full mb-1">Añadir Nombre/Marca</button>
+                <button onclick="addText('Slogan')" class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600 w-full">Añadir Slogan</button>
+                <button onclick="addText('Contenido: 50ml')" class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600 w-full">Añadir Presentación/Venc</button>
+                
+                <div class="mt-4 p-3 bg-gray-100 rounded">
+                    <label class="text-xs block">Color de texto seleccionado:</label>
+                    <input type="color" id="textColor" class="w-full">
+                    <label class="text-xs block mt-2">Tamaño Fuente:</label>
+                    <input type="range" id="textSize" min="8" max="100" value="20" class="w-full">
+                </div>
+            </div>
+        </section>
+
+        <!-- Imágenes y QR -->
+        <section class="mb-6 border-b pb-4">
+            <h2 class="font-semibold mb-2">3. Elementos Gráficos</h2>
+            <label class="block text-xs mb-1">Subir Logo o Imagen:</label>
+            <input type="file" id="imageUpload" class="text-xs mb-3">
+            
+            <div class="bg-blue-50 p-3 rounded">
+                <label class="text-xs block mb-1">URL para QR:</label>
+                <input type="text" id="qrUrl" placeholder="https://tuweb.com" class="border p-1 w-full mb-2 text-sm">
+                <button onclick="addQR()" class="bg-blue-600 text-white px-4 py-1 rounded text-sm w-full">Insertar QR</button>
+            </div>
+        </section>
+
+        <!-- Impresión -->
+        <section class="mb-6">
+            <h2 class="font-semibold mb-2">4. Finalizar e Imprimir</h2>
+            <label class="text-xs block">Papel de impresión:</label>
+            <select id="paperSize" class="w-full border p-2 mb-2">
+                <option value="a4">A4 (210 x 297 mm)</option>
+                <option value="letter">Carta (216 x 279 mm)</option>
+            </select>
+            <button onclick="exportPDF()" class="bg-green-600 text-white font-bold py-3 px-4 rounded w-full shadow-lg hover:bg-green-700 transition">
+                GENERAR PDF ALTA CALIDAD
+            </button>
+        </section>
+    </aside>
+
+    <!-- Área de Previsualización -->
+    <main class="flex-1 p-10 flex flex-col items-center justify-start overflow-auto h-screen">
+        <div class="bg-white p-4 rounded shadow-inner mb-4">
+            <span class="text-gray-400 text-sm italic">Previsualización Real (Escala 10px = 1mm)</span>
+        </div>
+        <canvas id="labelCanvas"></canvas>
+        
+        <div id="status" class="mt-4 text-sm text-gray-500 bg-white p-4 rounded shadow">
+            Selecciona un objeto para editar su posición (X, Y) o rotación con los controles del ratón.
+        </div>
+    </main>
+
+    <!-- Div oculto para generar QR -->
+    <div id="qrcode" style="display:none"></div>
+
+    <script>
+        // --- CONFIGURACIÓN INICIAL ---
+        const canvas = new fabric.Canvas('labelCanvas', {
+            backgroundColor: '#fff',
+            preserveObjectStacking: true
+        });
+
+        // Conversión: 1cm = 37.8px para visualización en pantalla aprox
+        const SCALE = 37.8;
+
+        function initCanvas() {
+            const w = document.getElementById('labelWidth').value * SCALE;
+            const h = document.getElementById('labelHeight').value * SCALE;
+            canvas.setWidth(w);
+            canvas.setHeight(h);
+            canvas.renderAll();
+        }
+
+        // --- MANEJO DE TAMAÑOS ---
+        document.getElementById('presets').addEventListener('change', (e) => {
+            if(!e.target.value) return;
+            const [w, h] = e.target.value.split(',');
+            document.getElementById('labelWidth').value = w;
+            document.getElementById('labelHeight').value = h;
+            initCanvas();
+        });
+
+        // --- AGREGAR TEXTO ---
+        function addText(str) {
+            const text = new fabric.IText(str, {
+                left: 20,
+                top: 20,
+                fontFamily: 'Arial',
+                fontSize: 20,
+                fill: document.getElementById('textColor').value
+            });
+            canvas.add(text);
+            canvas.setActiveObject(text);
+        }
+
+        // Actualizar color/tamaño de objeto seleccionado
+        document.getElementById('textColor').oninput = function() {
+            const obj = canvas.getActiveObject();
+            if(obj && obj.type === 'i-text') {
+                obj.set('fill', this.value);
+                canvas.renderAll();
+            }
+        };
+
+        document.getElementById('textSize').oninput = function() {
+            const obj = canvas.getActiveObject();
+            if(obj) {
+                obj.set('fontSize', parseInt(this.value));
+                canvas.renderAll();
+            }
+        };
+
+        // --- AGREGAR IMÁGENES ---
+        document.getElementById('imageUpload').addEventListener('change', function(e) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                fabric.Image.fromURL(event.target.result, function(img) {
+                    img.scaleToWidth(100);
+                    canvas.add(img);
+                    canvas.setActiveObject(img);
+                });
+            }
+            reader.readAsDataURL(e.target.files[0]);
+        });
+
+        // --- GENERAR QR ---
+        function addQR() {
+            const url = document.getElementById('qrUrl').value || "https://google.com";
+            const qrcodeDiv = document.getElementById("qrcode");
+            qrcodeDiv.innerHTML = "";
+            
+            new QRCode(qrcodeDiv, {
+                text: url,
+                width: 256,
+                height: 256,
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            // Esperar a que el QR se genere y pasarlo al canvas
+            setTimeout(() => {
+                const qrImgTag = qrcodeDiv.querySelector('img');
+                fabric.Image.fromURL(qrImgTag.src, function(img) {
+                    img.scaleToWidth(80);
+                    canvas.add(img);
+                    canvas.setActiveObject(img);
+                });
+            }, 100);
+        }
+
+        // --- EXPORTACIÓN PROFESIONAL A PDF ---
+        async function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            
+            // Datos de la etiqueta en mm
+            const lWidthMm = parseFloat(document.getElementById('labelWidth').value);
+            const lHeightMm = parseFloat(document.getElementById('labelHeight').value);
+            
+            // Datos del papel (A4 por defecto)
+            const pSize = document.getElementById('paperSize').value;
+            const pdf = new jsPDF('p', 'mm', pSize);
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+
+            // Calidad: Exportamos el canvas a una resolución alta (300 DPI)
+            // Multiplicador: Para que el texto pequeño sea legible, el canvas se renderiza más grande
+            const dataURL = canvas.toDataURL({
+                format: 'png',
+                multiplier: 4 // Aumenta la resolución 4 veces para el PDF
+            });
+
+            // Calcular cuántas caben
+            const margin = 10;
+            const cols = Math.floor((pageWidth - margin) / lWidthMm);
+            const rows = Math.floor((pageHeight - margin) / lHeightMm);
+            
+            let currentX = margin;
+            let currentY = margin;
+            let count = 0;
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    pdf.addImage(dataURL, 'PNG', currentX, currentY, lWidthMm, lHeightMm);
+                    currentX += lWidthMm + 2; // 2mm de separación
+                    count++;
+                }
+                currentX = margin;
+                currentY += lHeightMm + 2;
+            }
+
+            pdf.save(`Etiquetas_Esencias_${count}.pdf`);
+            alert(`Se han generado ${count} etiquetas en el PDF.`);
+        }
+
+        // Inicializar
+        initCanvas();
+    </script>
+</body>
+</html>
