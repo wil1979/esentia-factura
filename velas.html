@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AromaLabel Pro - Diseñador de Etiquetas para Velas</title>
-  <!-- Librería para generar QR real -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <link rel="stylesheet" href="velas.css">
-  <!-- Fuentes -->
-  <link href="https://fonts.googleapis.com/css2?family=Adelia&family=Great+Vibes&family=Alex+Brush&family=Tangerine&family=Playfair+Display&family=Cinzel&family=Cormorant+Garamond&family=Montserrat&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Adelia&family=Great+Vibes&family=Alex+Brush&family=Tangerine&family=Playfair+Display:wght@400;700&family=Cinzel:wght@400;700&family=Cormorant+Garamond:wght@400;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <header class="app-header">
@@ -21,10 +21,8 @@
     </nav>
   </header>
 
-  <!-- TAB: DISEÑADOR -->
   <section id="tab-designer" class="tab-content active">
     <div class="designer-layout">
-      <!-- Panel de configuración -->
       <aside class="config-panel">
         <h2>Configuración de Etiqueta</h2>
 
@@ -41,14 +39,41 @@
         </fieldset>
 
         <fieldset>
-          <legend>Marca</legend>
-          <label>Nombre del Proyecto
+          <legend>📝 Nombre del Proyecto</legend>
+          <label>Nombre del Proyecto (solo para guardar)
             <input type="text" id="projectName" placeholder="Mi marca de velas">
           </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>🏷️ Nombre de la Marca</legend>
+          <label>Texto de la Marca
+            <input type="text" id="brandNameText" value="Esentia" placeholder="Nombre de tu marca">
+          </label>
+          <label>Fuente de la Marca
+            <select id="brandFont">
+              <option value="Adelia" selected>Adelia (Premium)</option>
+              <option value="Great Vibes">Great Vibes (Elegante)</option>
+              <option value="Alex Brush">Alex Brush (Manuscrita)</option>
+              <option value="Tangerine">Tangerine (Caligráfica)</option>
+              <option value="Playfair Display">Playfair Display (Clásica)</option>
+              <option value="Cinzel">Cinzel (Romana)</option>
+              <option value="Cormorant Garamond">Cormorant (Sofisticada)</option>
+              <option value="Montserrat">Montserrat (Moderna)</option>
+            </select>
+          </label>
+          <div class="grid-2">
+            <label>Tamaño (px)<input type="number" id="fsBrand" value="16" min="6" max="72"></label>
+            <label>Color<input type="color" id="brandNameColor" value="#2c1810"></label>
+          </div>
+          <label><input type="checkbox" id="brandNameBold" checked> Negrita</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>🖼️ Logo / Imagen</legend>
           <label>Logo / Marca
             <input type="file" id="logoInput" accept="image/*">
           </label>
-          <!-- CONTROLES DE IMAGEN IMPORTADA -->
           <div id="imageControls" class="image-controls" style="display:none;">
             <h4>🖼️ Controles de Imagen</h4>
             <label>Tamaño (%) <input type="range" id="imgSize" min="10" max="200" value="100"></label>
@@ -66,20 +91,34 @@
               </select>
             </label>
             <label><input type="checkbox" id="imgCircle"> Recorte circular</label>
+            <label>Capa / Posición
+              <select id="imgLayer">
+                <option value="front">Frente (sobre texto)</option>
+                <option value="behind">Detrás (tras texto)</option>
+                <option value="background">Fondo de etiqueta</option>
+              </select>
+            </label>
             <button id="removeImage" class="btn-danger">🗑️ Eliminar imagen</button>
           </div>
-          <label>Fuente de la Marca
-            <select id="brandFont">
-              <option value="Adelia">Adelia (Premium)</option>
-              <option value="Great Vibes">Great Vibes (Elegante)</option>
-              <option value="Alex Brush">Alex Brush (Manuscrita)</option>
-              <option value="Tangerine">Tangerine (Caligráfica)</option>
-              <option value="Playfair Display">Playfair Display (Clásica)</option>
-              <option value="Cinzel">Cinzel (Romana)</option>
-              <option value="Cormorant Garamond">Cormorant (Sofisticada)</option>
-              <option value="Montserrat">Montserrat (Moderna)</option>
-            </select>
+        </fieldset>
+
+        <fieldset>
+          <legend>🎨 Vector Decorativo (Splash)</legend>
+          <label>Mostrar vector
+            <input type="checkbox" id="showVector" checked>
           </label>
+          <div class="grid-2">
+            <label>Color<input type="color" id="vectorColor" value="#c9a96e"></label>
+            <label>Opacidad (%)<input type="range" id="vectorOpacity" min="0" max="100" value="25"></label>
+          </div>
+          <div class="grid-2">
+            <label>Posición X (%)<input type="range" id="vectorX" min="-50" max="150" value="50"></label>
+            <label>Posición Y (%)<input type="range" id="vectorY" min="-50" max="150" value="50"></label>
+          </div>
+          <div class="grid-2">
+            <label>Escala (%)<input type="range" id="vectorScale" min="10" max="200" value="90"></label>
+            <label>Rotación (°)<input type="range" id="vectorRotation" min="-180" max="180" value="0"></label>
+          </div>
         </fieldset>
 
         <fieldset>
@@ -87,6 +126,14 @@
           <label>Nombre del Producto / Aroma
             <input type="text" id="productName" placeholder="Lavanda">
           </label>
+
+                      <div class="action-buttons">
+          <button id="btnSave" class="btn-primary">💾 Guardar Proyecto</button>
+          <button id="btnAddQueue" class="btn-secondary">➕ Añadir a Cola</button>
+         
+        </div>
+
+
           <label>Fuente del Producto
             <select id="productFont">
               <option value="Playfair Display">Playfair Display</option>
@@ -109,6 +156,7 @@
           <label>Instrucciones de Seguridad
             <textarea id="safetyInstructions">Quemar sobre superficie resistente al calor. No dejar sin supervisión. Mantener alejado de corrientes de aire, niños y mascotas. No quemar más de 4 horas seguidas. Detener cuando queden 1cm de cera.</textarea>
           </label>
+          <label><input type="checkbox" id="safetyBold" checked> Instrucciones en negrita</label>
           <label>URL para QR
             <input type="url" id="qrUrl" value="https://www.facebook.com/profile.php?id=61579078480913" placeholder="https://...">
           </label>
@@ -133,7 +181,6 @@
         <fieldset>
           <legend>🔤 Tamaños de Fuente</legend>
           <div class="grid-2">
-            <label>Marca (px)<input type="number" id="fsBrand" value="16"></label>
             <label>Submarca (px)<input type="number" id="fsSubbrand" value="8"></label>
             <label>Producto (px)<input type="number" id="fsProduct" value="22"></label>
             <label>Tipo (px)<input type="number" id="fsType" value="10"></label>
@@ -150,8 +197,29 @@
           <label>Color de Acento<input type="color" id="colorAccent" value="#c9a96e"></label>
           <label>Color de Texto<input type="color" id="colorText" value="#1a1a1a"></label>
           <label>Color de Fondo<input type="color" id="colorBg" value="#ffffff"></label>
+          <label>Color de Líneas<input type="color" id="colorLines" value="#c9a96e"></label>
           <label>Color del QR<input type="color" id="colorQr" value="#1a1a1a"></label>
           <label>Color fondo QR<input type="color" id="colorQrBg" value="#ffffff"></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>📍 Posición QR</legend>
+          <div class="grid-2">
+            <label>Posición X (%)
+              <select id="qrPosX">
+                <option value="center">Centro</option>
+                <option value="left">Izquierda</option>
+                <option value="right">Derecha</option>
+              </select>
+            </label>
+            <label>Posición Y (%)
+              <select id="qrPosY">
+                <option value="bottom">Abajo</option>
+                <option value="center">Centro</option>
+                <option value="top">Arriba</option>
+              </select>
+            </label>
+          </div>
         </fieldset>
 
         <fieldset>
@@ -172,16 +240,39 @@
         </div>
       </aside>
 
-      <!-- Vista previa -->
       <main class="preview-panel">
-        <h2>Vista Previa de Etiqueta</h2>
+        <div class="preview-header">
+          <h2>Vista Previa de Etiqueta</h2>
+          <div class="zoom-controls">
+            <button id="zoomOut" class="zoom-btn" title="Alejar">−</button>
+            <input type="range" id="zoomSlider" min="50" max="300" value="100" title="Zoom">
+            <button id="zoomIn" class="zoom-btn" title="Acercar">+</button>
+            <button id="zoomReset" class="zoom-btn" title="Restablecer">⟲</button>
+            <span id="zoomValue" class="zoom-value">100%</span>
+          </div>
+        </div>
         <div id="labelPreview" class="label-preview">
           <div class="label-dimensions">60 × 80 mm</div>
+
           <div class="label-content">
+            <div class="vector-bg-layer" id="vectorContainer">
+              <svg id="vectorSplash" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+                <path d="M510.5,140 C514.8,95.3 472.1,38.1 462.8,4.5 C459,-9.2 443.4,32.7 444,111.4 C444.2,143.1 423.8,171.1 411.3,184.2 C386.3,210.5 352.5,191.9 330.3,195 C311,197.7 289.4,228 318.5,251.9 C339.7,269.3 349.5,285.5 318,302.2 C280.4,322.2 216.7,287.4 179.8,272.7 C164.5,266.6 195.9,320.1 234.3,342.3 C254.4,354 266,375.4 256.7,398.8 C242,435.5 169.6,441.9 119.8,444.6 C14,450.4 1.1,438.4 12,475.2 C19,498.7 101.4,498.4 163.6,500.5 C197.5,501.7 221.7,517.9 228.6,535.1 C243,571 185,572.7 136.5,584.2 C115.1,589.3 118,619.1 161.7,609.4 C203.2,600.2 238.1,595 242,618.3 C247.2,649.3 176.6,664.1 113.8,675.2 C85.6,680.2 73.1,698.4 105.7,690.3 C145.4,680.4 204.6,654.1 228.2,674.3 C248,691.3 252.1,720.1 247.3,732.1 C234,765.4 200,742 189,774 C181.5,795.7 218.4,778.5 241,757 C264,735 288.7,716.2 301.6,743 C319.4,780.1 289.4,809.5 292,845 C293.6,866.5 315.8,851.3 328.7,832.2 C347,805.1 366.5,778 393,791.5 C421,805.8 401,847.4 402,878.1 C402.7,899.4 425.2,878.5 431.1,858 C444,813 460.5,781.1 498.1,798.2 C541,817.7 520,865.1 526,905 C530.1,932.3 548,895 549,871.1 C552,800.1 578,788.1 602,818.2 C624.1,846 605,891.4 631,885.2 C652,880.2 642,842 639,819.1 C633.3,775.2 663.1,752 688,779.1 C719.1,813 710,875.2 742,848.2 C759.1,833.8 741.2,795.1 734.5,770 C723.1,727 751,712 788.5,739.3 C819,761.5 831,792.1 855.2,763.1 C871,744.2 828,719.1 803,702.2 C762.5,674.8 798,642.1 832,661.1 C862.1,678 894,660 918,629 C941,599.2 865.2,593.1 819.3,588.2 C781,584.1 789.2,551 818,549 C864.5,545.8 921,556.1 942,519 C959.1,489 874,481.1 826.5,477.2 C789.2,474.1 791,442.1 819.2,429 C860,410.1 915.2,431.1 928,392.1 C938.5,360.1 862.1,364 819.3,356.2 C781,349.3 782,319.1 811.2,298.1 C845,273.8 891,301 905,263 C915.8,233.7 842.1,238.1 801,235.2 C761.5,232.4 766,201.1 792,185 C824.1,165.1 865,201 882.1,168.1 C895,143.1 821,148.2 782.1,149 C743,149.8 738,121 762.1,102.1 C789.2,81 835.1,114.1 845.2,81 C852.1,58.4 791.2,67 756.1,72.2 C716.5,78 709,51.1 728,32.2 C749.1,11.3 785.2,44 792,12 C797.1,-12.3 732,1.1 702,15.2 C662.1,34.1 661,64 631,43.2 C601.5,22.8 619.1,-21.4 589,-28.3 C561.2,-34.7 558,21.1 542.1,44.2 C520,76.3 506.2,95.1 510.5,140 Z"/>
+                <circle cx="290" cy="85" r="30" />
+                <circle cx="41" cy="570" r="28" />
+                <circle cx="265" cy="830" r="15" />
+                <circle cx="558" cy="895" r="10" />
+                <circle cx="775" cy="365" r="25" />
+              </svg>
+            </div>
+
             <div class="brand-area">
               <img id="previewLogo" class="brand-logo" style="display:none;">
-              <div class="brand-name">Esentia</div>
-              <div class="brand-sub">Velas Artesanales</div>
+              <div class="img-resize-handle se" data-handle="se"></div>
+              <div class="img-resize-handle sw" data-handle="sw"></div>
+              <div class="img-resize-handle ne" data-handle="ne"></div>
+              <div class="img-resize-handle nw" data-handle="nw"></div>
+              <div class="brand-name" id="previewBrandName">Esentia</div>
             </div>
             <div class="divider"></div>
             <div class="product-area">
@@ -205,7 +296,6 @@
     </div>
   </section>
 
-  <!-- TAB: PROYECTOS -->
   <section id="tab-projects" class="tab-content">
     <h2>Mis Proyectos Guardados</h2>
     <div class="projects-toolbar">
@@ -222,11 +312,11 @@
     </div>
   </section>
 
-  <!-- TAB: IMPRESIÓN -->
   <section id="tab-print" class="tab-content">
-    <h2>Optimización de Impresión</h2>
+    <h2>🖨️ Optimización de Impresión</h2>
     <div class="print-layout">
       <aside class="print-config">
+        <h3>Configuración de Hoja</h3>
         <label>Tamaño de Hoja
           <select id="paperSize">
             <option value="A4">A4 (210×297mm)</option>
@@ -244,9 +334,15 @@
           <label>Espacio Horiz. (mm)<input type="number" id="spaceH" value="5"></label>
           <label>Espacio Vert. (mm)<input type="number" id="spaceV" value="5"></label>
         </div>
+        <label>🔄 Orientación
+          <select id="orientation">
+            <option value="portrait">Vertical</option>
+            <option value="landscape">Horizontal</option>
+          </select>
+        </label>
       </aside>
       <div class="print-queue">
-        <h3>🖨️ Cola de Impresión</h3>
+        <h3>📋 Cola de Impresión</h3>
         <div id="printQueue" class="queue-list">
           <p class="empty">No hay etiquetas en cola.</p>
         </div>
@@ -261,11 +357,14 @@
           <div><span id="statSheets">0</span> Hojas Necesarias</div>
           <div><span id="statEfficiency">0</span>% Eficiencia</div>
         </div>
+        <div class="print-preview-area">
+          <h4>👁️ Vista Previa de Hoja</h4>
+          <div id="printPreviewSheet" class="print-preview-sheet"></div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Modal de confirmación -->
   <div id="confirmModal" class="modal">
     <div class="modal-content">
       <h3>Confirmar</h3>
