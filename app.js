@@ -59,90 +59,103 @@ const App = {
 currentTab: 'login',
 appliedPromo: null,
 // ✅ FUNCIÓN CORREGIDA: Sintaxis limpia y lógica segura
-async integrarJSONsLocales() {
-console.log('📦 Integrando catálogos locales (Limpieza y Velas)...');
-const productosActuales = Store.get('productos') || [];
-let nuevosProductos = [];
-try {
-  // Función auxiliar para limpiar claves sucias
-  const limpiarClaves = (obj) => {
-    const limpio = {};
-    Object.keys(obj).forEach(k => {
-      const key = k.trim();
-      const val = typeof obj[k] === 'string' ? obj[k].trim() : obj[k];
-      limpio[key] = val;
-    });
-    return limpio;
-  };
+  async integrarJSONsLocales() {
+    console.log('📦 Integrando catálogos locales (Limpieza y Velas)...');
+    const productosActuales = Store.get('productos') || [];
+    let nuevosProductos = [];
+    
+    try {
+      const limpiarClaves = (obj) => {
+        const limpio = {};
+        Object.keys(obj).forEach(k => {
+          const key = k.trim();
+          const val = typeof obj[k] === 'string' ? obj[k].trim() : obj[k];
+          limpio[key] = val;
+        });
+        return limpio;
+      };
 
-  // 1. Cargar Limpieza
-  try {
-    const resLimpieza = await fetch('./data/productos_limpieza_completo.json');
-    if (resLimpieza.ok) {
-      const dataLimpieza = await resLimpieza.json();
-      const productosLimpieza = dataLimpieza.map(p => {
-        const pLimpio = limpiarClaves(p);
-        return {
-          id: pLimpio.id,
-          nombre: pLimpio.nombre,
-          tipo: 'Limpieza',
-          precio: pLimpio.precioPublico || pLimpio.precio,
-          categoria: pLimpio.categoria || 'General',
-          variantes: (pLimpio.aromas && pLimpio.aromas.length > 0)
-            ? pLimpio.aromas.map(a => ({ nombre: a, precio: pLimpio.precioPublico }))
-            : [{ nombre: 'Única', precio: pLimpio.precioPublico }],
-          stock: 0,
-          activo: pLimpio.disponible !== false,
-          imagen: pLimpio.imagen || 'images/default.png',
-          precioCompra: pLimpio.precioCompra || 0
-        };
+      // 1. Cargar Limpieza (✅ CACHE-BUSTER: ?v=Date.now() obliga al navegador a descargar la versión nueva)
+      try {
+        const resLimpieza = await fetch(`./data/productos_limpieza_completo.json?v=${Date.now()}`);
+        if (resLimpieza.ok) {
+          const dataLimpieza = await resLimpieza.json();
+          const productosLimpieza = dataLimpieza.map(p => {
+            const pLimpio = limpiarClaves(p);
+            return {
+              id: pLimpio.id,
+              nombre: pLimpio.nombre,
+              tipo: 'Limpieza',
+              precio: pLimpio.precioPublico || pLimpio.precio,
+              categoria: pLimpio.categoria || 'General',
+              variantes: (pLimpio.aromas && pLimpio.aromas.length > 0)
+                ? pLimpio.aromas.map(a => ({ nombre: a, precio: pLimpio.precioPublico }))
+                : [{ nombre: 'Única', precio: pLimpio.precioPublico }],
+              stock: 0,
+              activo: pLimpio.disponible !== false,
+              imagen: pLimpio.imagen || 'images/default.png',
+              precioCompra: pLimpio.precioCompra || 0
+            };
+          });
+          nuevosProductos = [...nuevosProductos, ...productosLimpieza];
+          console.log(`✅ Limpieza: ${productosLimpieza.length} productos`);
+        }
+      } catch (e) {
+        console.warn('⚠️ Error cargando limpieza:', e);
+      }
+
+      // 2. Cargar Velas (✅ CACHE-BUSTER)
+      try {
+        const resVelas = await fetch(`./data/catalogo-velas.json?v=${Date.now()}`);
+        if (resVelas.ok) {
+          const dataVelasRaw = await resVelas.json();
+          const dataVelas = Array.isArray(dataVelasRaw) ? dataVelasRaw : [dataVelasRaw];
+          const productosVelas = dataVelas.map(p => {
+            const pLimpio = limpiarClaves(p);
+            return {
+              id: pLimpio.id,
+              nombre: pLimpio.nombre,
+              tipo: 'Velas',
+              precio: pLimpio.precio || pLimpio.precioPublico,
+              categoria: (pLimpio.tipo ? pLimpio.tipo.split('|')[0] : 'Decoración'),
+              variantes: pLimpio.variantes || [{ nombre: 'Única', precio: pLimpio.precio }],
+              stock: pLimpio.stock || 0,
+              activo: pLimpio.disponible !== false,
+              imagen: pLimpio.imagen,
+              precioCompra: pLimpio.precioCompra || 0
+            };
+          });
+          nuevosProductos = [...nuevosProductos, ...productosVelas];
+          console.log(`✅ Velas: ${productosVelas.length} productos`);
+        }
+      } catch (e) {
+        console.warn('⚠️ Error cargando velas:', e);
+      }
+
+      // 3. ✅ FUSIÓN INTELIGENTE: Actualiza existentes y agrega nuevos
+      const mapaProductos = new Map();
+      
+      // Primero, cargamos los productos actuales en el mapa
+      (productosActuales || []).forEach(p => {
+        if (p.id) mapaProductos.set(p.id, p);
       });
-      nuevosProductos = [...nuevosProductos, ...productosLimpieza];
-      console.log(`✅ Limpieza: ${productosLimpieza.length} productos`);
-    }
-  } catch (e) {
-    console.warn('⚠️ Error cargando limpieza:', e);
-  }
-
-  // 2. Cargar Velas
-  try {
-    const resVelas = await fetch('./data/catalogo-velas.json');
-    if (resVelas.ok) {
-      const dataVelasRaw = await resVelas.json();
-      const dataVelas = Array.isArray(dataVelasRaw) ? dataVelasRaw : [dataVelasRaw];
-
-      const productosVelas = dataVelas.map(p => {
-        const pLimpio = limpiarClaves(p);
-        return {
-          id: pLimpio.id,
-          nombre: pLimpio.nombre,
-          tipo: 'Velas',
-          precio: pLimpio.precio || pLimpio.precioPublico,
-          categoria: (pLimpio.tipo ? pLimpio.tipo.split('|')[0] : 'Decoración'),
-          variantes: pLimpio.variantes || [{ nombre: 'Única', precio: pLimpio.precio }],
-          stock: pLimpio.stock || 0,
-          activo: pLimpio.disponible !== false,
-          imagen: pLimpio.imagen,
-          precioCompra: pLimpio.precioCompra || 0
-        };
+      
+      // Luego, fusionamos los nuevos productos del JSON.
+      // Si el ID ya existe, sobrescribe con los datos frescos del JSON. Si no existe, lo agrega.
+      nuevosProductos.forEach(p => {
+        if (p.id) {
+          const existente = mapaProductos.get(p.id) || {};
+          mapaProductos.set(p.id, { ...existente, ...p });
+        }
       });
-      nuevosProductos = [...nuevosProductos, ...productosVelas];
-      console.log(`✅ Velas: ${productosVelas.length} productos`);
+      
+      Store.set('productos', Array.from(mapaProductos.values()));
+      console.log(`✅ Total productos gestionados: ${mapaProductos.size} (Actualizados y nuevos)`);
+      
+    } catch (error) {
+      console.error('❌ Error en integrarJSONsLocales:', error);
     }
-  } catch (e) {
-     console.warn('⚠️ Error cargando velas:', e);
-  }
-
-  // 3. Fusionar evitando duplicados
-  const idsExistentes = new Set(productosActuales.map(p => p.id));
-  const productosUnicos = nuevosProductos.filter(p => !idsExistentes.has(p.id));
-
-  Store.set('productos', [...productosActuales, ...productosUnicos]);
-  console.log(`✅ Total integrados: ${productosUnicos.length} productos locales`);
-} catch (error) {
-  console.error('❌ Error en integrarJSONsLocales:', error);
-}
-},
+  },
 async init() {
 console.log('🌸 Esentia v7.1 - Iniciando...');
 await Store.init();

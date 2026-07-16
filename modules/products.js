@@ -20,10 +20,10 @@ const ProductManager = {
   PROMO_ESPECIAL: {
    // "freshkiwienergiafrutal": 35,
    // "strawberryjoy": 35,
-    "nightcaress": 45,
-    "crystalembrace": 45,
+    //"nightcaress": 45,
+   // "crystalembrace": 45,
    // "puremagnolia": 35,
-   // "melonvanilladelight": 35,
+    "melonvanilladelight": 35,
    // "freshbreatheeucalipto": 35,
     //"freshmint": 35,
   },
