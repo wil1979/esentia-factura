@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Telefónica de Extensiones</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" 
+        integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" 
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        :root {
+            --primary: #1a5276;
+            --primary-light: #2980b9;
+            --secondary: #27ae60;
+            --accent: #e74c3c;
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #2c3e50;
+            --text-light: #5d6d7e;
+            --border: #d5d8dc;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-hover: 0 4px 16px rgba(0,0,0,0.12);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a5276 0%, #2980b9 100%);
+            color: white;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 { font-size: 1.6rem; margin-bottom: 0.3rem; font-weight: 600; }
+        .header .meta {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            opacity: 0.95;
+        }
+        .header .badge {
+            background: rgba(255,255,255,0.25);
+            padding: 0.15rem 0.6rem;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .controls {
+            max-width: 1200px;
+            margin: -1rem auto 1.5rem;
+            padding: 0 1rem;
+            position: relative;
+            z-index: 101;
+        }
+        .controls-inner {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.25rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        .search-box {
+            flex: 1;
+            min-width: 220px;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 0.65rem 1rem 0.65rem 2.2rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(41,128,185,0.12);
+        }
+        .search-box::before {
+            content: "🔍";
+            position: absolute;
+            left: 0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.9rem;
+        }
+        .filters { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .filter-select {
+            padding: 0.65rem 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: white;
+            cursor: pointer;
+            min-width: 140px;
+        }
+        .filter-select:focus { outline: none; border-color: var(--primary-light); }
+        .btn {
+            padding: 0.65rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-weight: 500;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-light); transform: translateY(-1px); }
+        .btn-secondary { background: var(--secondary); color: white; }
+        .btn-secondary:hover { background: #229954; transform: translateY(-1px); }
+        .btn-outline { background: white; color: var(--primary); border: 2px solid var(--primary); }
+        .btn-outline:hover { background: var(--primary); color: white; }
+        .stats-bar {
+            max-width: 1200px;
+            margin: 0 auto 1rem;
+            padding: 0 1rem;
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .stat-card .number { font-weight: 700; color: var(--primary); font-size: 1rem; }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem 2rem;
+        }
+        .area-section {
+            margin-bottom: 1.5rem;
+            animation: fadeIn 0.4s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .area-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 0.85rem 1.25rem;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: filter 0.2s;
+            user-select: none;
+        }
+        .area-header:hover { filter: brightness(1.08); }
+        .area-letter {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .area-title { flex: 1; font-weight: 600; font-size: 1rem; }
+        .area-count {
+            background: rgba(255,255,255,0.2);
+            padding: 0.2rem 0.6rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        .area-toggle { font-size: 1.1rem; transition: transform 0.3s; }
+        .area-section.collapsed .area-toggle { transform: rotate(-90deg); }
+        .area-section.collapsed .subareas-container { display: none; }
+        .subareas-container {
+            background: var(--card-bg);
+            border-radius: 0 0 10px 10px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .subarea { border-bottom: 1px solid #eef0f2; }
+        .subarea:last-child { border-bottom: none; }
+        .subarea-header {
+            background: #f4f6f7;
+            padding: 0.6rem 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .contacts-table { width: 100%; border-collapse: collapse; }
+        .contacts-table th {
+            background: #f8f9fa;
+            padding: 0.6rem 1.25rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.78rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border);
+        }
+        .contacts-table td {
+            padding: 0.7rem 1.25rem;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+        }
+        .contacts-table tr:hover { background: #f8f9fa; }
+        .contacts-table tr:last-child td { border-bottom: none; }
+        .ext-number {
+            font-family: 'SF Mono', 'Courier New', monospace;
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 0.95rem;
+            background: #e8f4f8;
+            padding: 0.2rem 0.6rem;
+            border-radius: 5px;
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .type-physical { background: #d4edda; color: #155724; }
+        .type-softphone { background: #d1ecf1; color: #0c5460; }
+        .type-physical::before { content: "📞"; font-size: 0.8rem; }
+        .type-softphone::before { content: "💻"; font-size: 0.8rem; }
+        .no-results {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-light);
+        }
+        .no-results-icon { font-size: 3rem; margin-bottom: 0.5rem; opacity: 0.4; }
+        .scroll-top {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            width: 45px;
+            height: 45px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            box-shadow: var(--shadow-hover);
+            transition: all 0.3s;
+            opacity: 0;
+            visibility: hidden;
+            z-index: 99;
+        }
+        .scroll-top.visible { opacity: 1; visibility: visible; }
+        .scroll-top:hover { transform: translateY(-2px); background: var(--primary-light); }
+        @media print {
+            .header { background: white !important; color: black !important; box-shadow: none; position: static; border-bottom: 2px solid #333; }
+            .controls, .stats-bar, .btn, .scroll-top { display: none !important; }
+            .area-section { page-break-inside: avoid; margin-bottom: 0.8rem; }
+            .area-header { background: #e0e0e0 !important; color: black !important; border: 1px solid #333; }
+            .subarea-header { background: #f0f0f0 !important; color: #333 !important; }
+            .contacts-table th { background: #f0f0f0 !important; }
+            .type-badge { border: 1px solid #999; }
+            body { background: white; }
+            .container { max-width: 100%; padding: 0; }
+        }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.3rem; }
+            .controls-inner { flex-direction: column; align-items: stretch; }
+            .search-box { min-width: 100%; }
+            .filters { width: 100%; }
+            .filter-select { flex: 1; }
+            .contacts-table th, .contacts-table td { padding: 0.5rem 0.75rem; font-size: 0.85rem; }
+            .area-header { padding: 0.7rem 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>📋 Agenda Telefónica de Extensiones</h1>
+        <div class="meta">
+            <span>📞 Central: <span class="badge">2550-1999</span></span>
+            <span>📅 Actualización: <span class="badge">20/03/2026</span></span>
+        </div>
+    </header>
+
+    <div class="controls">
+        <div class="controls-inner">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Buscar por puesto, extensión o área...">
+            </div>
+            <div class="filters">
+                <select class="filter-select" id="filterArea"><option value="">Todas las áreas</option></select>
+                <select class="filter-select" id="filterType">
+                    <option value="">Todos los tipos</option>
+                    <option value="Físico">📞 Físico</option>
+                    <option value="Softphone">💻 Softphone</option>
+                </select>
+                <select class="filter-select" id="filterSubarea"><option value="">Todas las subáreas</option></select>
+            </div>
+            <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="printAgenda()">🖨️ Imprimir</button>
+                <button class="btn btn-secondary" onclick="exportPDF()">📄 PDF</button>
+                <button class="btn btn-outline" onclick="expandAll()">📂</button>
+                <button class="btn btn-outline" onclick="collapseAll()">📁</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-bar" id="statsBar">
+        <div class="stat-card"><span class="number" id="totalContacts">0</span> contactos</div>
+        <div class="stat-card"><span class="number" id="totalAreas">0</span> áreas</div>
+        <div class="stat-card"><span class="number" id="totalSubareas">0</span> subáreas</div>
+        <div class="stat-card"><span class="number" id="physicalCount">0</span> físicos</div>
+        <div class="stat-card"><span class="number" id="softphoneCount">0</span> softphones</div>
+    </div>
+
+    <main class="container" id="content"></main>
+    <button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+
+// Datos de la agenda telefónica
+const agendaData = {"meta":{"central_telefonica":"2550-1999","fecha_actualizacion":"20/03/2026","titulo":"Agenda Telefónica de Extensiones","nota":"Las descripciones se encuentran en proceso de actualización."},"areas":[{"letra":"A","nombre":"Administración","subareas":[{"nombre":"Administración","contactos":[{"puesto":"Director Administrativo Financiero","extension":"1501","tipo":"Softphone"},{"puesto":"Secretaría Administración","extension":"1948","tipo":"Físico"},{"puesto":"Asistentes Dir. Adm. Financiera","extension":"1531/1507","tipo":"Softphone"},{"puesto":"Capellanía","extension":"1984","tipo":"Físico"}]},{"nombre":"Admisión","contactos":[{"puesto":"Jefatura admisión","extension":"1875","tipo":"Físico"},{"puesto":"Guarda Ropa","extension":"1709","tipo":"Físico"},{"puesto":"Ventanilla admisión","extension":"1811","tipo":"Físico"}]},{"nombre":"AGBS","contactos":[{"puesto":"Jefatura Bienes y Servicio","extension":"1661","tipo":"Softphone"},{"puesto":"Secretaría AGBS","extension":"1693","tipo":"Softphone"},{"puesto":"Coord. Sub Área Contratación","extension":"1662","tipo":"Softphone"},{"puesto":"Coordinador SAAD - AGBS","extension":"1672","tipo":"Softphone"},{"puesto":"Coordinador SACA-ABS","extension":"1662","tipo":"Softphone"},{"puesto":"Despensa AGBS","extension":"1861","tipo":"Físico"},{"puesto":"Facturación","extension":"1562","tipo":"Físico"},{"puesto":"Planificación","extension":"1560","tipo":"Físico"},{"puesto":"Recepción de Documentos Proveeduría","extension":"1833","tipo":"Físico"},{"puesto":"SAAD - Almacenamiento y Distribución","extension":"1666/1667/1668/1669/1670","tipo":"Softphone"},{"puesto":"SACA - AGBS","extension":"1664/1673","tipo":"Softphone"},{"puesto":"SAP-Planificación","extension":"1665/1671/1674","tipo":"Softphone"},{"puesto":"Tramitador de compras","extension":"1561","tipo":"Físico"},{"puesto":"Trámite SACA - AGBS","extension":"1663","tipo":"Softphone"}]}]},{"letra":"C","nombre":"Centro Det. Tem CA Gástrico / Central Telefónica / Centro de Equipos / Cirugía","subareas":[{"nombre":"Centro Det. Tem CA Gástrico","contactos":[{"puesto":"CDTCG Jefatura","extension":"1604","tipo":"Físico"},{"puesto":"CDTCG Jefaturas Administrativas","extension":"1651","tipo":"Físico"},{"puesto":"CDTCG Secretaría Administrativa","extension":"1935","tipo":"Físico"},{"puesto":"CDTCG Administrativo","extension":"1605","tipo":"Físico"},{"puesto":"CDTCG Administrativa TAC","extension":"1611","tipo":"Físico"},{"puesto":"CDTCG Enfermería Gastro","extension":"1608","tipo":"Físico"},{"puesto":"CDTCG Enfermería RX","extension":"1602","tipo":"Físico"},{"puesto":"CDTCG Oficina Programación","extension":"1628","tipo":"Físico"},{"puesto":"CDTCG Recepción","extension":"1919","tipo":"Físico"},{"puesto":"CDTCG Recepción","extension":"1601","tipo":"Físico"},{"puesto":"CDTCG Sala Endoscopia","extension":"1609","tipo":"Físico"},{"puesto":"CDTCG Salas RX","extension":"1610","tipo":"Físico"},{"puesto":"CDTCG TAC","extension":"1763","tipo":"Físico"},{"puesto":"CDTCG TAC","extension":"1603","tipo":"Físico"},{"puesto":"CDTCG Ultrasonido","extension":"1606","tipo":"Físico"},{"puesto":"CDTCG Ultrasonido","extension":"1607","tipo":"Físico"}]},{"nombre":"Central Telefónica","contactos":[{"puesto":"Central Telefónica","extension":"1999","tipo":"Físico"},{"puesto":"Central Telefónica-Información pacientes","extension":"1515","tipo":"Físico"},{"puesto":"Central Telefónica","extension":"1995","tipo":"Físico"}]},{"nombre":"Centro de Equipos","contactos":[{"puesto":"Jefatura de Centro de Equipos","extension":"1876","tipo":"Físico"},{"puesto":"Secretaría Oficina Centro de Equipos","extension":"1901","tipo":"Físico"},{"puesto":"Bodega","extension":"1789","tipo":"Físico"},{"puesto":"Centro de Equipos","extension":"1849","tipo":"Físico"},{"puesto":"Minicentro de equipos de emergencias","extension":"1768","tipo":"Físico"}]},{"nombre":"Cirugía","contactos":[{"puesto":"Jefatura de Cirugía","extension":"1549","tipo":"Físico"},{"puesto":"Secretaría Jef. Cirugía","extension":"1640","tipo":"Físico"},{"puesto":"Jefatura de Cirugía","extension":"1634","tipo":"Físico"}]}]},{"letra":"I","nombre":"Informática / Ingeniería y Mantenimiento","subareas":[{"nombre":"Informática","contactos":[{"puesto":"CGI Jefatura","extension":"1823","tipo":"Físico"},{"puesto":"CGI Asistente Administrativa","extension":"1769","tipo":"Físico"},{"puesto":"CGI Desarrollo","extension":"1766","tipo":"Físico"},{"puesto":"CGI SASTR","extension":"1692","tipo":"Softphone"},{"puesto":"CGI SASTR","extension":"1921","tipo":"Físico"},{"puesto":"CGI SAUU","extension":"1613","tipo":"Físico"},{"puesto":"CGI SAUU","extension":"1896","tipo":"Físico"},{"puesto":"CGI SAUU","extension":"1975","tipo":"Físico"}]},{"nombre":"Ingeniería y Mantenimiento","contactos":[{"puesto":"SIM Jefatura","extension":"1826","tipo":"Físico"},{"puesto":"SIM Secretaría","extension":"1950","tipo":"Físico"},{"puesto":"SIM Casa Máquinas","extension":"1917","tipo":"Físico"},{"puesto":"SIM Bodega","extension":"1813","tipo":"Físico"},{"puesto":"SIM Electromecánico","extension":"1965","tipo":"Físico"},{"puesto":"SIM Equipo Médico","extension":"1918/1547","tipo":"Físico"},{"puesto":"SIM Gases Médicos","extension":"1902","tipo":"Físico"},{"puesto":"SIM Ingeniería Electromecánica - Dibujo Técnico","extension":"1720","tipo":"Físico"},{"puesto":"SIM Ingeniero civil","extension":"1803","tipo":"Físico"},{"puesto":"SIM Ingeniero Eléctrico","extension":"1785","tipo":"Físico"},{"puesto":"SIM Supervisión Mecánica","extension":"1885","tipo":"Físico"},{"puesto":"SIM Taller Electromecánico","extension":"1955","tipo":"Físico"},{"puesto":"SIM Taller Mecánica","extension":"1978","tipo":"Físico"}]}]},{"letra":"L","nombre":"Laboratorio / Lavandería","subareas":[{"nombre":"Laboratorio","contactos":[{"puesto":"Dirección Laboratorio","extension":"1971","tipo":"Físico"},{"puesto":"Banco de sangre Donación","extension":"1830","tipo":"Físico"},{"puesto":"Banco de sangre Transfusión","extension":"1930","tipo":"Físico"},{"puesto":"Emergencias Laboratorio","extension":"1894","tipo":"Físico"},{"puesto":"Laboratorio Anexo/Subdirectora/Recepción","extension":"1630","tipo":"Físico"},{"puesto":"Laboratorio Diag. Molecular","extension":"1810","tipo":"Físico"},{"puesto":"Laboratorio Hematología","extension":"1932","tipo":"Físico"},{"puesto":"Laboratorio Microbiología","extension":"1981","tipo":"Físico"},{"puesto":"Laboratorio Química Clínica","extension":"1759","tipo":"Físico"},{"puesto":"Laboratorio Ventanilla","extension":"1820","tipo":"Físico"}]},{"nombre":"Lavandería","contactos":[{"puesto":"Jefatura Lavandería","extension":"1855","tipo":"Físico"},{"puesto":"Supervisión Lavandería","extension":"1828","tipo":"Físico"}]}]},{"letra":"M","nombre":"Maternidad / Medicina","subareas":[{"nombre":"Maternidad","contactos":[{"puesto":"Maternidad Supervisión","extension":"1966","tipo":"Físico"},{"puesto":"Clínica de Lactancia","extension":"1713","tipo":"Físico"},{"puesto":"Estación de Maternidad","extension":"1746","tipo":"Físico"},{"puesto":"Estación de Maternidad","extension":"1745","tipo":"Físico"},{"puesto":"Maternidad (consulta US Ginecología)","extension":"1883","tipo":"Físico"},{"puesto":"Maternidad Emergencias","extension":"1834","tipo":"Físico"},{"puesto":"Sala de labor Maternidad","extension":"1893","tipo":"Físico"},{"puesto":"Sala de Partos","extension":"1838","tipo":"Físico"}]},{"nombre":"Medicina","contactos":[{"puesto":"Jefatura Medicina (Jefatura)","extension":"1872","tipo":"Físico"},{"puesto":"Jefatura Medicina (Secretaría)","extension":"1816","tipo":"Físico"},{"puesto":"Cuarto Médicos Medicina Mujeres","extension":"1940","tipo":"Físico"}]}]},{"letra":"C2","nombre":"Cirugía General / Cardiología / Contraloría / Consulta Externa / Estación Medicina","subareas":[{"nombre":"Cirugía General","contactos":[{"puesto":"Jefatura de Cirugía General","extension":"1644","tipo":"Físico"},{"puesto":"Charla Cirugía Ambulatoria","extension":"1625","tipo":"Físico"},{"puesto":"Consultorio 9 Cirugía General","extension":"1780","tipo":"Físico"},{"puesto":"Cuarto de Médicos Cirugía Hombres","extension":"1701","tipo":"Físico"},{"puesto":"Dorm. Residentes CX","extension":"1796","tipo":"Físico"},{"puesto":"Salón Cirugía Hombre","extension":"1743","tipo":"Físico"},{"puesto":"Salón Cirugía Hombres","extension":"1742","tipo":"Físico"},{"puesto":"Salón Cirugía Mujeres","extension":"1740","tipo":"Físico"},{"puesto":"Salón Cirugía Mujeres","extension":"1741","tipo":"Físico"},{"puesto":"Supervisión Cirugía Mujeres","extension":"1802","tipo":"Físico"}]},{"nombre":"Cardiología","contactos":[{"puesto":"Cardiología (Consultorio)","extension":"1716","tipo":"Físico"},{"puesto":"Electrocardiograma","extension":"1989","tipo":"Físico"},{"puesto":"Electroencefalografía","extension":"1892","tipo":"Físico"},{"puesto":"Programa Falla Cardiaca","extension":"1933","tipo":"Físico"}]},{"nombre":"Contraloría de Servicios","contactos":[{"puesto":"Jefatura Contraloría","extension":"1655","tipo":"Físico"},{"puesto":"Contraloría Secretaría","extension":"1927","tipo":"Físico"}]},{"nombre":"Consulta Externa","contactos":[{"puesto":"Jefatura de Consulta Externa","extension":"1805","tipo":"Físico"},{"puesto":"Secretaría Jefatura de Consulta Externa","extension":"1962","tipo":"Físico"},{"puesto":"Asist. Consulta Externa","extension":"1806","tipo":"Físico"},{"puesto":"Anticoagulados (Antigua Biblioteca)","extension":"1754","tipo":"Físico"},{"puesto":"Audiometría","extension":"1939","tipo":"Físico"},{"puesto":"Cirugía General Recepción","extension":"1657","tipo":"Físico"},{"puesto":"Consulta Externa (Fisiatría)","extension":"1907","tipo":"Físico"},{"puesto":"Consultorio Broncoscopía","extension":"1756","tipo":"Físico"},{"puesto":"Consultorio Cirugía Pediátrica","extension":"1786","tipo":"Físico"},{"puesto":"Consultorio H27 Neumología","extension":"1964","tipo":"Físico"},{"puesto":"Coordinación de Consulta Externa","extension":"1866","tipo":"Físico"},{"puesto":"Dermatología Consultorio","extension":"1650","tipo":"Físico"},{"puesto":"Electroencefalografía","extension":"1892","tipo":"Físico"},{"puesto":"Enfermería Curaciones","extension":"1888","tipo":"Físico"},{"puesto":"Gestión de Referencias/Archivo Clínico","extension":"1906","tipo":"Físico"},{"puesto":"Jefatura/Consultorio Urología","extension":"1717","tipo":"Físico"},{"puesto":"Oficina Neurocirugía","extension":"1790","tipo":"Físico"},{"puesto":"Oftalmología Programación","extension":"1645","tipo":"Físico"},{"puesto":"Oncología Médica","extension":"1923","tipo":"Físico"},{"puesto":"Oncología Quirúrgica","extension":"1822","tipo":"Físico"},{"puesto":"Ortopedia","extension":"1865","tipo":"Físico"},{"puesto":"Ortopedia","extension":"1938","tipo":"Físico"},{"puesto":"Ortopedia programación","extension":"1643","tipo":"Físico"},{"puesto":"Ortopedia Sala de Yesos","extension":"1818","tipo":"Físico"},{"puesto":"Otorrino consulta/Enfermería Otorrino","extension":"1979","tipo":"Físico"},{"puesto":"Otorrinolaringología /Vascular Periférico","extension":"1817","tipo":"Físico"},{"puesto":"Plataforma","extension":"1636","tipo":"Físico"},{"puesto":"Plataforma","extension":"1873","tipo":"Físico"},{"puesto":"Plataforma","extension":"1637","tipo":"Físico"},{"puesto":"Plataforma (Archivo)","extension":"1710","tipo":"Físico"},{"puesto":"Programa de Oxígeno","extension":"1913","tipo":"Físico"},{"puesto":"Psicología","extension":"1626","tipo":"Físico"},{"puesto":"Quimioterapia Programación","extension":"1635","tipo":"Físico"},{"puesto":"Quimioterapia Salón","extension":"1638","tipo":"Físico"},{"puesto":"Recep. Neurología/Geriatría/Medicina Interna/Alto Riesgo","extension":"1733","tipo":"Físico"},{"puesto":"Recepción Cardiología y Audiometría","extension":"1881","tipo":"Físico"}]},{"nombre":"Estación Medicina","contactos":[{"puesto":"Estación Medicina Hombres","extension":"1738","tipo":"Físico"},{"puesto":"Estación Medicina Hombres","extension":"1739","tipo":"Físico"},{"puesto":"Estación Medicina Mujeres","extension":"1736","tipo":"Físico"},{"puesto":"Estación Medicina Mujeres","extension":"1737","tipo":"Físico"},{"puesto":"Medicina Interna - Geriatría-Psiquiatría","extension":"1886","tipo":"Físico"},{"puesto":"Teleconsulta","extension":"1658","tipo":"Físico"},{"puesto":"Teleconsulta","extension":"1846","tipo":"Físico"}]}]},{"letra":"N","nombre":"Nutrición / Neonatología","subareas":[{"nombre":"Nutrición","contactos":[{"puesto":"Nutrición Jefatura","extension":"1942","tipo":"Físico"},{"puesto":"Nutrición Secretaría","extension":"1874","tipo":"Físico"},{"puesto":"Nutrición Compras","extension":"1982","tipo":"Físico"},{"puesto":"Nutrición Despensa","extension":"1853","tipo":"Físico"},{"puesto":"Nutrición Fórmulas","extension":"1703","tipo":"Físico"},{"puesto":"Nutrición Oficina Nutricionistas","extension":"1847","tipo":"Físico"}]},{"nombre":"Neonatología","contactos":[{"puesto":"Jefatura Neonatología","extension":"1778","tipo":"Físico"},{"puesto":"Consultorio Neonatología","extension":"1848","tipo":"Físico"},{"puesto":"Dormitorio Médicos Neonatología","extension":"1708","tipo":"Físico"},{"puesto":"Unidad de Cuidados Intensivos Neonatos","extension":"1864","tipo":"Físico"}]}]},{"letra":"O","nombre":"Odontología","subareas":[{"nombre":"Odontología","contactos":[{"puesto":"Jefatura Odontología","extension":"1878","tipo":"Físico"},{"puesto":"Secretaría Jefatura Odontología","extension":"1718","tipo":"Físico"},{"puesto":"Consultorio 1 Odontología","extension":"1614","tipo":"Físico"},{"puesto":"Consultorio 2 Odontología","extension":"1615","tipo":"Físico"},{"puesto":"Consultorio 3 Odontología","extension":"1616","tipo":"Físico"},{"puesto":"Consultorio 4 Odontología","extension":"1617","tipo":"Físico"},{"puesto":"Odontología Recepción","extension":"1879","tipo":"Físico"}]}]},{"letra":"P","nombre":"Patología / Pediatría","subareas":[{"nombre":"Patología","contactos":[{"puesto":"Patología (Morgue)","extension":"1860","tipo":"Físico"},{"puesto":"Patología (Secretaría)","extension":"1969","tipo":"Físico"},{"puesto":"Patología (Transcripción)","extension":"1862","tipo":"Físico"}]},{"nombre":"Pediatría","contactos":[{"puesto":"Jefatura Pediatría","extension":"1839","tipo":"Físico"},{"puesto":"Jefatura Secretaría","extension":"1904","tipo":"Físico"},{"puesto":"Anexo Pediatría","extension":"1781","tipo":"Físico"},{"puesto":"Cirugía pediátrica (cuarto de médicos)","extension":"1765","tipo":"Físico"},{"puesto":"Dormitorio Médicos Pediatría","extension":"1715","tipo":"Físico"},{"puesto":"Jefatura Pediatría","extension":"1945","tipo":"Físico"},{"puesto":"Pediatría Consultorio","extension":"1880","tipo":"Físico"},{"puesto":"Pediatría Emergencias/Observación","extension":"1798","tipo":"Físico"},{"puesto":"Pediatría Estación","extension":"1748/1749","tipo":"Físico"},{"puesto":"Pediatría Supervisión","extension":"1835","tipo":"Físico"},{"puesto":"Pediatría Supervisión","extension":"1922","tipo":"Físico"}]}]},{"letra":"R2","nombre":"Recepciones / Cuidados Paliativos / Diálisis / Dirección Médica / Emergencias / Enfermería","subareas":[{"nombre":"Recepciones Varios","contactos":[{"puesto":"Recepción Cirugía General","extension":"1832","tipo":"Físico"},{"puesto":"Recepción Endocrinología/Reumatología/Pediatría Nutrición","extension":"1891","tipo":"Físico"},{"puesto":"Recepción Hematología","extension":"1825","tipo":"Físico"},{"puesto":"Recepción Hematología","extension":"1840","tipo":"Físico"},{"puesto":"Recepción Oftalmología","extension":"1646","tipo":"Físico"},{"puesto":"Recepción Quimioterapia y Dermatología","extension":"1958","tipo":"Físico"},{"puesto":"Recepción Urología","extension":"1887","tipo":"Físico"},{"puesto":"Recepción Urología","extension":"1882","tipo":"Físico"},{"puesto":"Secretaría Oftalmología","extension":"1639","tipo":"Físico"},{"puesto":"Terapia Física","extension":"1889","tipo":"Físico"},{"puesto":"Vacunatorio","extension":"1777","tipo":"Físico"},{"puesto":"Visita Domiciliar","extension":"1764","tipo":"Físico"}]},{"nombre":"Cuidados Paliativos","contactos":[{"puesto":"Cuidados Paliativos Recepción","extension":"1784","tipo":"Físico"}]},{"nombre":"Diálisis","contactos":[{"puesto":"Hemodiálisis","extension":"1719","tipo":"Físico"}]},{"nombre":"Dirección Médica","contactos":[{"puesto":"Dirección Médica","extension":"1526","tipo":"Softphone"},{"puesto":"Sub Director Médico","extension":"1528","tipo":"Softphone"},{"puesto":"Asistente Dirección Médica","extension":"1535","tipo":"Softphone"},{"puesto":"Asesoría Legal","extension":"1532/1534/1536","tipo":"Softphone"},{"puesto":"Asistente","extension":"1504","tipo":"Softphone"},{"puesto":"Asistente","extension":"1506","tipo":"Softphone"},{"puesto":"Consejo Académico Local","extension":"1502/1520/1521/1522/1523","tipo":"Softphone"},{"puesto":"Grupo de compra","extension":"1967","tipo":"Físico"},{"puesto":"Oficina de Comunicación","extension":"1967","tipo":"Físico"},{"puesto":"Visita Domiciliar","extension":"1699","tipo":"Softphone"}]},{"nombre":"Emergencias","contactos":[{"puesto":"Jefatura Emergencias","extension":"1779","tipo":"Físico"},{"puesto":"Emergencias Jefatura Secretaría","extension":"1960","tipo":"Físico"},{"puesto":"Consulta Tercera Pediatría Emergencias","extension":"1711","tipo":"Físico"},{"puesto":"Cuarto Médicos Gen. Residentes","extension":"1550","tipo":"Físico"},{"puesto":"Ortopedia","extension":"","tipo":"Físico"},{"puesto":"Cuarto Médicos Emergencias","extension":"1731","tipo":"Físico"},{"puesto":"Emergencias Agudos 4","extension":"1735","tipo":"Físico"},{"puesto":"Emergencias Estación Enfermería","extension":"1911","tipo":"Físico"},{"puesto":"Emergencias Ortopedia","extension":"1973","tipo":"Físico"},{"puesto":"Emergencias Rojo","extension":"1871","tipo":"Físico"},{"puesto":"Emergencias Supervisión Enfermería","extension":"1837","tipo":"Físico"},{"puesto":"Emergencias Triage","extension":"1783","tipo":"Físico"},{"puesto":"Emergencias Ventanilla","extension":"1867","tipo":"Físico"},{"puesto":"Trauma Emergencias","extension":"1724","tipo":"Físico"}]},{"nombre":"Enfermería","contactos":[{"puesto":"Dirección Enfermería","extension":"1908","tipo":"Físico"},{"puesto":"Subdirección Enfermería","extension":"1851","tipo":"Físico"},{"puesto":"Medicina y Educación","extension":"1782","tipo":"Físico"},{"puesto":"Secretaría Jefatura Dirección Enfermería","extension":"1956","tipo":"Físico"},{"puesto":"Secretaría Trámites","extension":"1791","tipo":"Físico"},{"puesto":"Secretaría Trámites","extension":"1852","tipo":"Físico"},{"puesto":"Servicio de Educación","extension":"1928","tipo":"Físico"},{"puesto":"Supervisión de Enfermería Clínica","extension":"1899","tipo":"Físico"},{"puesto":"Supervisión de Enfermería","extension":"1912","tipo":"Físico"},{"puesto":"TAC-Enfermería","extension":"1916","tipo":"Físico"}]}]},{"letra":"R","nombre":"Rayos X / Recursos Humanos / Redes","subareas":[{"nombre":"Rayos X","contactos":[{"puesto":"RX Jefatura","extension":"1909","tipo":"Físico"},{"puesto":"RX Secretaría","extension":"1824","tipo":"Físico"},{"puesto":"RX Asistente Administrativa","extension":"1924","tipo":"Físico"},{"puesto":"Call Center Rayos #1","extension":"1859","tipo":"Físico"},{"puesto":"Call Center Rayos #2","extension":"1721","tipo":"Físico"},{"puesto":"Call Center Rayos #3","extension":"1807","tipo":"Físico"},{"puesto":"Radiología Ofic","extension":"1845","tipo":"Físico"},{"puesto":"RX Centro de llamadas","extension":"1842","tipo":"Físico"},{"puesto":"RX Técnicos","extension":"1760","tipo":"Físico"},{"puesto":"RX US","extension":"1797","tipo":"Físico"}]},{"nombre":"Recursos Humanos","contactos":[{"puesto":"RRHH Jefatura","extension":"1688","tipo":"Softphone"},{"puesto":"RRHH Sub Jefatura","extension":"1689","tipo":"Softphone"},{"puesto":"Recursos Humanos Secretaría","extension":"1675","tipo":"Softphone"},{"puesto":"RRHH Certificaciones","extension":"1684","tipo":"Softphone"},{"puesto":"RRHH Nómina","extension":"1687","tipo":"Softphone"},{"puesto":"RRHH Nómina","extension":"1676","tipo":"Softphone"},{"puesto":"RRHH Nómina","extension":"1677","tipo":"Softphone"},{"puesto":"RRHH Nómina","extension":"1679","tipo":"Softphone"},{"puesto":"RRHH Nómina","extension":"1680","tipo":"Softphone"},{"puesto":"RRHH Nómina","extension":"1681","tipo":"Softphone"},{"puesto":"RRHH Nómina","extension":"1682","tipo":"Softphone"},{"puesto":"RRHH Nómina","extension":"1683","tipo":"Softphone"},{"puesto":"RRHH Nómina","extension":"1686","tipo":"Softphone"},{"puesto":"RRHH Reasignaciones de Puesto","extension":"1685","tipo":"Softphone"},{"puesto":"RRHH Reclutamiento y Selección","extension":"1517","tipo":"Softphone"}]},{"nombre":"Redes","contactos":[{"puesto":"Jefatura Redes","extension":"1961","tipo":"Físico"},{"puesto":"Secretaría Redes","extension":"1926","tipo":"Físico"},{"puesto":"Centro de Llamadas (Antigua Biblioteca)","extension":"1977","tipo":"Físico"},{"puesto":"Centro de llamadas (Antigua Biblioteca)","extension":"1929","tipo":"Físico"},{"puesto":"Centro llamadas","extension":"1905","tipo":"Físico"}]}]},{"letra":"S","nombre":"Servicios Generales / Salud Ocupacional / Seguridad y Vigilancia","subareas":[{"nombre":"Servicios Generales","contactos":[{"puesto":"Servicios Generales Bodega","extension":"1836","tipo":"Físico"},{"puesto":"Servicios Generales","extension":"1814","tipo":"Físico"}]},{"nombre":"Salud Ocupacional","contactos":[{"puesto":"Salud Ocupacional","extension":"1619","tipo":"Físico"}]},{"nombre":"Seguridad y Vigilancia","contactos":[{"puesto":"Jefatura Seguridad y Vigilancia","extension":"1622","tipo":"Físico"},{"puesto":"Secretaría Seguridad y Vigilancia","extension":"1621","tipo":"Físico"},{"puesto":"Asistente Seguridad #1","extension":"1641","tipo":"Físico"},{"puesto":"Asistente Seguridad #2","extension":"1642","tipo":"Físico"},{"puesto":"CDTCG Guarda","extension":"1627","tipo":"Físico"},{"puesto":"Entrada Principal Norte","extension":"1706","tipo":"Físico"},{"puesto":"Guarda 3 Piso","extension":"1898","tipo":"Físico"},{"puesto":"Guarda Admisión","extension":"1795","tipo":"Físico"}]}]},{"letra":"E","nombre":"Epidemiología / Estadística / Farmacia / Financiero Contable / Gastroenterología / Ginecología / Hospital de Día","subareas":[{"nombre":"Epidemiología","contactos":[{"puesto":"Epidemiología Enfermería","extension":"1511","tipo":"Softphone"},{"puesto":"Epidemiología Médico","extension":"1509","tipo":"Softphone"},{"puesto":"Vigilancia Epidemiología","extension":"1624","tipo":"Físico"}]},{"nombre":"Estadística","contactos":[{"puesto":"Coordinador Estadística","extension":"1809","tipo":"Físico"},{"puesto":"Agenda codificación","extension":"1793","tipo":"Físico"},{"puesto":"Estadística","extension":"1770","tipo":"Físico"},{"puesto":"Estadística Agenda","extension":"1844","tipo":"Físico"}]},{"nombre":"Farmacia","contactos":[{"puesto":"Farmacia Jefatura","extension":"1937","tipo":"Físico"},{"puesto":"Farmacia Asistente Administrativo","extension":"1951","tipo":"Físico"},{"puesto":"Farmacia Secretaría","extension":"1877","tipo":"Físico"},{"puesto":"Farmacia Bodega","extension":"1829","tipo":"Físico"},{"puesto":"Farmacia CIM","extension":"1612","tipo":"Físico"},{"puesto":"Farmacia Consulta Externa","extension":"1941","tipo":"Físico"},{"puesto":"Farmacia Oficina Compras","extension":"1963","tipo":"Físico"},{"puesto":"Farmacia Oficina Control","extension":"1943","tipo":"Físico"},{"puesto":"Farmacia Quimioterapia","extension":"1944","tipo":"Físico"},{"puesto":"Farmacia Revisión Inicial","extension":"1702","tipo":"Físico"},{"puesto":"Farmacia Satélite 1","extension":"1704","tipo":"Físico"},{"puesto":"Farmacia Satélite 2","extension":"1705","tipo":"Físico"},{"puesto":"Farmacia Soporte Nutricional","extension":"1775","tipo":"Físico"}]},{"nombre":"Financiero Contable","contactos":[{"puesto":"Jefatura Financiero Contable","extension":"1623","tipo":"Físico"},{"puesto":"Jefatura Sub Área Validación y Facturación","extension":"1652","tipo":"Físico"},{"puesto":"Activo Caja Chica","extension":"1618","tipo":"Físico"},{"puesto":"Presupuesto","extension":"1620","tipo":"Físico"},{"puesto":"Sub Área Validación y Facturación","extension":"1952","tipo":"Físico"},{"puesto":"Sub Área Validación y Facturación","extension":"1914","tipo":"Físico"}]},{"nombre":"Gastroenterología","contactos":[{"puesto":"Gastro Cons. H3","extension":"1653","tipo":"Físico"},{"puesto":"Gastro Cons. H2","extension":"1656","tipo":"Físico"},{"puesto":"Recepción Gastroenterología","extension":"1722","tipo":"Físico"},{"puesto":"Técnicos Endoscopia","extension":"1988","tipo":"Físico"}]},{"nombre":"Ginecología","contactos":[{"puesto":"Jefatura Ginecología","extension":"1762","tipo":"Físico"},{"puesto":"Secretaría Ginecología","extension":"1895","tipo":"Físico"},{"puesto":"Consultorio H-41 Ginecología","extension":"1730","tipo":"Físico"},{"puesto":"Estación Ginecología","extension":"1744","tipo":"Físico"},{"puesto":"Ginecología Programación","extension":"1723","tipo":"Físico"},{"puesto":"Programación Ginecología","extension":"1957","tipo":"Físico"},{"puesto":"Unidad de Perinotología","extension":"1750","tipo":"Físico"}]},{"nombre":"Hospital de Día","contactos":[{"puesto":"Enfermería Hop. Día","extension":"2551-9755 / 2551-7155","tipo":"Físico"},{"puesto":"Hostomizado Hop. Día","extension":"2551-8719","tipo":"Físico"},{"puesto":"Recepción Hop. Día","extension":"2551-6557","tipo":"Físico"}]}]},{"letra":"G2","nombre":"Guardas / Sala de Operaciones / Terapia Respiratoria / Transportes / Trabajo Social","subareas":[{"nombre":"Guardas y Seguridad","contactos":[{"puesto":"Guarda Emergencias (Entrada de ambulancias)","extension":"1850","tipo":"Físico"},{"puesto":"Guarda Puerta Comedor","extension":"1734","tipo":"Físico"},{"puesto":"Guarda Puerta Sur","extension":"1983","tipo":"Físico"},{"puesto":"Seguridad y Vigilancia Monitoreo","extension":"1758","tipo":"Físico"},{"puesto":"Seguridad y Vigilancia Supervisión","extension":"1936","tipo":"Físico"},{"puesto":"Super Guarda P Sur","extension":"1794","tipo":"Físico"}]},{"nombre":"Sala de Operaciones","contactos":[{"puesto":"Jefatura de Sala de Operaciones","extension":"1890","tipo":"Físico"},{"puesto":"Sala de Operación Anestesia Secretaría","extension":"1897","tipo":"Físico"},{"puesto":"Sala de Operación Anestesia Jefatura","extension":"1974","tipo":"Físico"},{"puesto":"Anestesistas Cuarto Descanso","extension":"1792","tipo":"Físico"},{"puesto":"Asist. Jef. Anestesia","extension":"1633","tipo":"Físico"},{"puesto":"Bodega SOP Enf.","extension":"1632","tipo":"Físico"},{"puesto":"Dormitorio de Médicos Anestesiólogos","extension":"1707","tipo":"Físico"},{"puesto":"Recuperación","extension":"1857","tipo":"Físico"},{"puesto":"Sala de Operación (Sala de Operación)","extension":"1856","tipo":"Físico"},{"puesto":"Sala de Operación Ambulatoria CX","extension":"1751","tipo":"Físico"},{"puesto":"Sala de Operación Arsenal CX","extension":"1712","tipo":"Físico"},{"puesto":"Sala de Recuperación Maternidad","extension":"1757","tipo":"Físico"}]},{"nombre":"Terapia Respiratoria","contactos":[{"puesto":"Supervisor UTI","extension":"1726","tipo":"Físico"},{"puesto":"UTI Médico","extension":"1819","tipo":"Físico"},{"puesto":"Terapia respiratoria (cuarto)","extension":"1725","tipo":"Físico"},{"puesto":"Terapia respiratoria","extension":"1539","tipo":"Softphone"},{"puesto":"Dormitorio Medicina Interna","extension":"1752","tipo":"Físico"}]},{"nombre":"Transportes","contactos":[{"puesto":"Transportes","extension":"1869","tipo":"Físico"}]},{"nombre":"Trabajo Social","contactos":[{"puesto":"Sub Jefatura Trabajo Social","extension":"1540","tipo":"Softphone"},{"puesto":"Secretaría Trabajo Social","extension":"1529","tipo":"Softphone"},{"puesto":"Trabajo Social","extension":"1658","tipo":"Softphone"},{"puesto":"Trabajo Social","extension":"1659","tipo":"Softphone"},{"puesto":"Trabajo Social","extension":"1660","tipo":"Softphone"},{"puesto":"Trabajo Social","extension":"1541","tipo":"Softphone"},{"puesto":"Trabajo Social","extension":"1542","tipo":"Softphone"}]}]}]};
+
+// Variables globales
+let allContacts = [];
+let filteredData = [];
+
+// Inicializar
+function init() {
+    flattenData();
+    populateFilters();
+    render();
+    updateStats();
+    setupEventListeners();
+}
+
+// Aplanar datos para búsqueda
+function flattenData() {
+    allContacts = [];
+    agendaData.areas.forEach(area => {
+        area.subareas.forEach(subarea => {
+            subarea.contactos.forEach(contacto => {
+                allContacts.push({
+                    ...contacto,
+                    area: area.nombre,
+                    areaLetra: area.letra,
+                    subarea: subarea.nombre
+                });
+            });
+        });
+    });
+}
+
+// Poblar filtros
+function populateFilters() {
+    const areaSelect = document.getElementById('filterArea');
+    const subareaSelect = document.getElementById('filterSubarea');
+    const areas = new Set();
+    const subareas = new Set();
+
+    agendaData.areas.forEach(area => {
+        areas.add(area.nombre);
+        area.subareas.forEach(sub => subareas.add(sub.nombre));
+    });
+
+    [...areas].sort().forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a;
+        opt.textContent = a;
+        areaSelect.appendChild(opt);
+    });
+
+    [...subareas].sort().forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = s;
+        subareaSelect.appendChild(opt);
+    });
+}
+
+// Filtrar datos
+function filterData() {
+    const search = document.getElementById('searchInput').value.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const areaFilter = document.getElementById('filterArea').value;
+    const typeFilter = document.getElementById('filterType').value;
+    const subareaFilter = document.getElementById('filterSubarea').value;
+
+    return agendaData.areas.map(area => {
+        const filteredSubareas = area.subareas.map(subarea => {
+            const filteredContactos = subarea.contactos.filter(c => {
+                const matchSearch = !search || 
+                    c.puesto.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(search) ||
+                    c.extension.toLowerCase().includes(search) ||
+                    area.nombre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(search) ||
+                    subarea.nombre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(search);
+                const matchArea = !areaFilter || area.nombre === areaFilter;
+                const matchType = !typeFilter || c.tipo === typeFilter;
+                const matchSubarea = !subareaFilter || subarea.nombre === subareaFilter;
+                return matchSearch && matchArea && matchType && matchSubarea;
+            });
+            return { ...subarea, contactos: filteredContactos };
+        }).filter(s => s.contactos.length > 0);
+
+        return { ...area, subareas: filteredSubareas };
+    }).filter(a => a.subareas.length > 0);
+}
+
+// Renderizar
+function render() {
+    const content = document.getElementById('content');
+    const data = filterData();
+
+    if (data.length === 0) {
+        content.innerHTML = `
+            <div class="no-results">
+                <div class="no-results-icon">🔍</div>
+                <h3>No se encontraron resultados</h3>
+                <p>Intenta con otros términos de búsqueda o ajusta los filtros</p>
+            </div>`;
+        return;
+    }
+
+    content.innerHTML = data.map(area => {
+        const totalContacts = area.subareas.reduce((sum, s) => sum + s.contactos.length, 0);
+        return `
+            <div class="area-section" data-area="${area.letra}">
+                <div class="area-header" onclick="toggleArea(this)">
+                    <div class="area-letter">${area.letra.replace(/\d/, '')}</div>
+                    <div class="area-title">${area.nombre}</div>
+                    <div class="area-count">${totalContacts} contactos</div>
+                    <div class="area-toggle">▼</div>
+                </div>
+                <div class="subareas-container">
+                    ${area.subareas.map(subarea => `
+                        <div class="subarea">
+                            <div class="subarea-header">${subarea.nombre}</div>
+                            <table class="contacts-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:55%">Puesto / Descripción</th>
+                                        <th style="width:25%">Extensión</th>
+                                        <th style="width:20%">Tipo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${subarea.contactos.map(c => `
+                                        <tr>
+                                            <td>${c.puesto}</td>
+                                            <td><span class="ext-number">${c.extension || '-'}</span></td>
+                                            <td><span class="type-badge ${c.tipo === 'Físico' ? 'type-physical' : 'type-softphone'}">${c.tipo}</span></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Actualizar estadísticas
+function updateStats() {
+    const data = filterData();
+    let contacts = 0, subareas = 0, physical = 0, softphone = 0;
+
+    data.forEach(area => {
+        area.subareas.forEach(sub => {
+            subareas++;
+            sub.contactos.forEach(c => {
+                contacts++;
+                if (c.tipo === 'Físico') physical++;
+                else if (c.tipo === 'Softphone') softphone++;
+            });
+        });
+    });
+
+    document.getElementById('totalContacts').textContent = contacts;
+    document.getElementById('totalAreas').textContent = data.length;
+    document.getElementById('totalSubareas').textContent = subareas;
+    document.getElementById('physicalCount').textContent = physical;
+    document.getElementById('softphoneCount').textContent = softphone;
+}
+
+// Toggle área
+function toggleArea(header) {
+    header.closest('.area-section').classList.toggle('collapsed');
+}
+
+// Expandir todo
+function expandAll() {
+    document.querySelectorAll('.area-section').forEach(s => s.classList.remove('collapsed'));
+}
+
+// Colapsar todo
+function collapseAll() {
+    document.querySelectorAll('.area-section').forEach(s => s.classList.add('collapsed'));
+}
+
+// Imprimir
+function printAgenda() {
+    window.print();
+}
+
+// Exportar PDF
+function exportPDF() {
+    const element = document.getElementById('content');
+    const opt = {
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename: 'Agenda_Telefonica_Extensiones.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    // Expandir todo para el PDF
+    expandAll();
+
+    html2pdf().set(opt).from(element).save().then(() => {
+        // Restaurar estado después
+        console.log('PDF generado exitosamente');
+    });
+}
+
+// Event listeners
+function setupEventListeners() {
+    document.getElementById('searchInput').addEventListener('input', () => {
+        render();
+        updateStats();
+    });
+    document.getElementById('filterArea').addEventListener('change', () => {
+        render();
+        updateStats();
+    });
+    document.getElementById('filterType').addEventListener('change', () => {
+        render();
+        updateStats();
+    });
+    document.getElementById('filterSubarea').addEventListener('change', () => {
+        render();
+        updateStats();
+    });
+
+    // Scroll top button
+    window.addEventListener('scroll', () => {
+        const btn = document.getElementById('scrollTop');
+        btn.classList.toggle('visible', window.scrollY > 300);
+    });
+}
+
+// Iniciar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
+</script>
+</body>
+</html>
