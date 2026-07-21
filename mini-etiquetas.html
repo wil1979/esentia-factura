@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Etiquetas</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary: #0ea5e9;
+            --accent: #f59e0b;
+        }
+        * { font-family: 'Outfit', sans-serif; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0c4a6e 100%);
+            min-height: 100vh; margin: 0; padding: 0; color: white;
+        }
+        .glass {
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.12);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .input-field {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: white;
+            width: 100%;
+            outline: none;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+        .input-field:focus {
+            border-color: var(--primary);
+            background: rgba(255,255,255,0.1);
+            box-shadow: 0 0 15px rgba(14,165,233,0.2);
+        }
+        .input-field::placeholder { color: rgba(255,255,255,0.3); }
+        .btn-primary {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border: none; color: white; font-weight: 800;
+            padding: 14px 32px; border-radius: 50px;
+            cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 8px 30px rgba(245,158,11,0.35);
+            font-size: 1.1rem; letter-spacing: 1px;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(245,158,11,0.5);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            border: none; color: white; font-weight: 700;
+            padding: 10px 24px; border-radius: 50px;
+            cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 6px 20px rgba(99,102,241,0.3);
+        }
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99,102,241,0.5);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            border: none; color: white; font-weight: 700;
+            padding: 8px 18px; border-radius: 50px;
+            cursor: pointer; transition: all 0.3s;
+            font-size: 0.85rem;
+        }
+        .btn-danger:hover { transform: scale(1.05); }
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none; color: white; font-weight: 700;
+            padding: 10px 24px; border-radius: 50px;
+            cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 6px 20px rgba(16,185,129,0.3);
+        }
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(16,185,129,0.5);
+        }
+        .product-card {
+            background: rgba(14, 165, 233, 0.08);
+            border: 1px solid rgba(14, 165, 233, 0.2);
+            border-radius: 16px;
+            padding: 16px;
+            transition: all 0.3s;
+            animation: slideIn 0.4s ease;
+        }
+        .product-card:hover {
+            background: rgba(14, 165, 233, 0.15);
+            transform: translateX(5px);
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .label-preview {
+            background: white;
+            color: #1e293b;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        .label-barcode {
+            font-family: 'Libre Barcode 39', monospace;
+            font-size: 2.5rem;
+            letter-spacing: 4px;
+            text-align: center;
+            color: #0f172a;
+        }
+        .label-barcode-text {
+            font-family: 'Outfit', monospace;
+            font-size: 0.75rem;
+            text-align: center;
+            color: #475569;
+            letter-spacing: 2px;
+            margin-top: -4px;
+        }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(14,165,233,0.4); border-radius: 3px; }
+
+        /* Print styles */
+        @media print {
+            body { background: white; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            .labels-grid {
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 10px !important;
+                padding: 10px !important;
+            }
+            .label-preview {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+            }
+        }
+        .print-only { display: none; }
+
+        @media (max-width: 768px) {
+            .labels-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 480px) {
+            .labels-grid { grid-template-columns: 1fr !important; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="no-print relative z-10 px-6 py-5">
+        <div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-700 flex items-center justify-center shadow-lg shadow-sky-500/30">
+                    <i class="fas fa-tags text-2xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-black tracking-tight">Generador de Etiquetas</h1>
+                    <p class="text-sm text-slate-400">Crea etiquetas personalizadas a tu gusto</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 flex-wrap">
+                <button onclick="generateAllLabels()" class="btn-success">
+                    <i class="fas fa-magic mr-2"></i> Generar Todas
+                </button>
+                <button onclick="window.print()" class="btn-secondary" id="printBtn" style="display:none;">
+                    <i class="fas fa-print mr-2"></i> Imprimir
+                </button>
+                <button onclick="clearAll()" class="btn-danger">
+                    <i class="fas fa-trash-alt mr-1"></i> Limpiar
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="no-print relative z-10 max-w-7xl mx-auto px-4 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Panel Izquierdo: Formulario -->
+            <div class="lg:col-span-5">
+                <div class="glass rounded-2xl p-6">
+                    <h2 class="text-xl font-bold mb-1 flex items-center gap-2">
+                        <i class="fas fa-plus-circle text-green-400"></i> Agregar Producto
+                    </h2>
+                    <p class="text-sm text-slate-400 mb-6">Ingresa los datos de tu producto para generar la etiqueta.</p>
+
+                    <form id="productForm" onsubmit="addProduct(event)">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm text-slate-300 mb-1.5 font-medium">Nombre del Producto *</label>
+                                <input type="text" id="prodName" placeholder="Ej: Camiseta Algodón" class="input-field" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-slate-300 mb-1.5 font-medium">Código / SKU</label>
+                                <input type="text" id="prodCode" placeholder="Ej: CAM-001" class="input-field">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm text-slate-300 mb-1.5 font-medium">Precio *</label>
+                                <input type="text" id="prodPrice" placeholder="Ej: $25.00" class="input-field" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-slate-300 mb-1.5 font-medium">Categoría</label>
+                                <input type="text" id="prodCategory" placeholder="Ej: Ropa" class="input-field">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm text-slate-300 mb-1.5 font-medium">Cantidad / Tamaño</label>
+                                <input type="text" id="prodSize" placeholder="Ej: M, L, XL" class="input-field">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-slate-300 mb-1.5 font-medium">Color</label>
+                                <input type="text" id="prodColor" placeholder="Ej: Azul Marino" class="input-field">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm text-slate-300 mb-1.5 font-medium">Descripción breve</label>
+                            <input type="text" id="prodDesc" placeholder="Ej: 100% Algodón, Hecho en México" class="input-field">
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label class="block text-sm text-slate-300 mb-1.5 font-medium">Cantidad de etiquetas</label>
+                                <input type="number" id="prodQty" value="1" min="1" max="50" class="input-field">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-slate-300 mb-1.5 font-medium">Fecha (opcional)</label>
+                                <input type="date" id="prodDate" class="input-field" style="color-scheme: dark;">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary w-full">
+                            <i class="fas fa-plus mr-2"></i> Agregar a la Lista
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Lista de productos agregados -->
+                <div class="glass rounded-2xl p-6 mt-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold flex items-center gap-2">
+                            <i class="fas fa-list text-sky-400"></i> Productos Agregados
+                        </h3>
+                        <span class="text-sm bg-sky-500/20 text-sky-300 px-3 py-1 rounded-full font-bold" id="productCount">0</span>
+                    </div>
+                    <div class="custom-scroll overflow-y-auto max-h-[400px] pr-2" id="productList">
+                        <div class="text-center text-slate-500 py-8">
+                            <i class="fas fa-box-open text-4xl mb-3 opacity-30"></i>
+                            <p class="text-sm">No hay productos agregados aún.</p>
+                            <p class="text-xs text-slate-600 mt-1">Usa el formulario para agregar productos.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Derecho: Vista Previa -->
+            <div class="lg:col-span-7">
+                <div class="glass rounded-2xl p-6 h-full">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold flex items-center gap-2">
+                            <i class="fas fa-eye text-amber-400"></i> Vista Previa de Etiquetas
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-slate-400">Etiquetas:</span>
+                            <span class="text-sm font-bold text-amber-400" id="labelCount">0</span>
+                        </div>
+                    </div>
+
+                    <div id="labelsContainer" class="labels-grid grid grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div class="text-center text-slate-500 py-16 col-span-full">
+                            <i class="fas fa-tags text-5xl mb-4 opacity-20"></i>
+                            <p class="text-sm">Agrega productos para ver la vista previa de etiquetas.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Print-only section -->
+    <div class="print-only" id="printSection"></div>
+
+    <script>
+        let products = [];
+        let labelCounter = 1;
+
+        // Set today's date as default
+        document.getElementById('prodDate').valueAsDate = new Date();
+
+        function addProduct(e) {
+            e.preventDefault();
+
+            const product = {
+                id: Date.now(),
+                name: document.getElementById('prodName').value.trim(),
+                code: document.getElementById('prodCode').value.trim(),
+                price: document.getElementById('prodPrice').value.trim(),
+                category: document.getElementById('prodCategory').value.trim(),
+                size: document.getElementById('prodSize').value.trim(),
+                color: document.getElementById('prodColor').value.trim(),
+                description: document.getElementById('prodDesc').value.trim(),
+                qty: parseInt(document.getElementById('prodQty').value) || 1,
+                date: document.getElementById('prodDate').value
+            };
+
+            products.push(product);
+            updateProductList();
+            updateLabelPreview();
+
+            // Reset form except date
+            document.getElementById('productForm').reset();
+            document.getElementById('prodDate').valueAsDate = new Date();
+            document.getElementById('prodQty').value = '1';
+            document.getElementById('prodName').focus();
+
+            showToast('✅ Producto agregado');
+        }
+
+        function removeProduct(id) {
+            products = products.filter(p => p.id !== id);
+            updateProductList();
+            updateLabelPreview();
+            showToast('🗑️ Producto eliminado');
+        }
+
+        function clearAll() {
+            if (products.length === 0) return;
+            if (!confirm('¿Eliminar todos los productos?')) return;
+            products = [];
+            updateProductList();
+            updateLabelPreview();
+            showToast('🗑️ Lista limpiada');
+        }
+
+        function updateProductList() {
+            const list = document.getElementById('productList');
+            const count = document.getElementById('productCount');
+
+            count.textContent = products.length;
+
+            if (products.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center text-slate-500 py-8">
+                        <i class="fas fa-box-open text-4xl mb-3 opacity-30"></i>
+                        <p class="text-sm">No hay productos agregados aún.</p>
+                        <p class="text-xs text-slate-600 mt-1">Usa el formulario para agregar productos.</p>
+                    </div>`;
+                document.getElementById('printBtn').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('printBtn').style.display = 'inline-block';
+
+            list.innerHTML = products.map((p, idx) => `
+                <div class="product-card flex items-center justify-between gap-3">
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-white truncate">${p.name}</p>
+                        <p class="text-xs text-slate-400">
+                            ${p.code ? `<span class="text-sky-400">${p.code}</span> • ` : ''}
+                            <span class="text-amber-400 font-semibold">${p.price}</span>
+                            ${p.qty > 1 ? ` • <span class="text-green-400">x${p.qty} etiquetas</span>` : ''}
+                        </p>
+                    </div>
+                    <button onclick="removeProduct(${p.id})" class="btn-danger flex-shrink-0">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function updateLabelPreview() {
+            const container = document.getElementById('labelsContainer');
+            const labelCount = document.getElementById('labelCount');
+
+            let totalLabels = 0;
+            products.forEach(p => totalLabels += p.qty);
+            labelCount.textContent = totalLabels;
+
+            if (products.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-slate-500 py-16 col-span-full">
+                        <i class="fas fa-tags text-5xl mb-4 opacity-20"></i>
+                        <p class="text-sm">Agrega productos para ver la vista previa de etiquetas.</p>
+                    </div>`;
+                return;
+            }
+
+            let labelsHTML = '';
+            products.forEach(p => {
+                for (let i = 0; i < p.qty; i++) {
+                    labelsHTML += generateLabelHTML(p);
+                }
+            });
+
+            container.innerHTML = labelsHTML;
+
+            // Also update print section
+            document.getElementById('printSection').innerHTML = `
+                <div class="labels-grid grid grid-cols-3 gap-3 p-4">
+                    ${labelsHTML}
+                </div>
+            `;
+        }
+
+        function generateLabelHTML(p) {
+            const barcodeText = p.code || 'NO-CODE';
+            const dateStr = p.date ? new Date(p.date).toLocaleDateString('es-ES') : '';
+
+            return `
+                <div class="label-preview">
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="flex-1 min-w-0">
+                            <p class="font-black text-sm leading-tight truncate" style="font-size: 0.85rem;">${p.name}</p>
+                            ${p.category ? `<p class="text-xs text-slate-500 mt-0.5">${p.category}</p>` : ''}
+                        </div>
+                        <div class="text-right flex-shrink-0 ml-2">
+                            <p class="font-black text-lg leading-none" style="color: #dc2626;">${p.price}</p>
+                        </div>
+                    </div>
+
+                    ${(p.size || p.color || p.description) ? `
+                    <div class="flex flex-wrap gap-1 mb-2">
+                        ${p.size ? `<span class="text-xs bg-slate-100 px-2 py-0.5 rounded font-semibold" style="color: #334155;">Talla: ${p.size}</span>` : ''}
+                        ${p.color ? `<span class="text-xs bg-slate-100 px-2 py-0.5 rounded font-semibold" style="color: #334155;">Color: ${p.color}</span>` : ''}
+                    </div>
+                    ${p.description ? `<p class="text-xs text-slate-500 mb-2 truncate">${p.description}</p>` : ''}
+                    ` : ''}
+
+                    <div class="border-t border-slate-200 pt-2 mt-1">
+                        <div class="label-barcode">*${barcodeText}*</div>
+                        <div class="label-barcode-text">${barcodeText}</div>
+                    </div>
+
+                    ${dateStr ? `<p class="text-xs text-slate-400 text-center mt-1">${dateStr}</p>` : ''}
+                </div>
+            `;
+        }
+
+        function generateAllLabels() {
+            if (products.length === 0) {
+                showToast('Agrega productos primero', true);
+                return;
+            }
+            updateLabelPreview();
+            showToast(`✅ ${document.getElementById('labelCount').textContent} etiquetas generadas`);
+            setTimeout(() => {
+                document.getElementById('printBtn').scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
+
+        function showToast(message, isError = false) {
+            const existing = document.querySelector('.toast-msg');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = 'toast-msg fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full font-semibold text-white z-50 shadow-lg';
+            toast.style.cssText = `
+                background: ${isError ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'linear-gradient(135deg, #10b981, #059669)'};
+                box-shadow: 0 10px 40px ${isError ? 'rgba(239,68,68,0.4)' : 'rgba(16,185,129,0.4)'};
+                animation: toastSlide 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'toastOut 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        // Add toast animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes toastSlide {
+                from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+                to { transform: translateX(-50%) translateY(0); opacity: 1; }
+            }
+            @keyframes toastOut {
+                from { transform: translateX(-50%) translateY(0); opacity: 1; }
+                to { transform: translateX(-50%) translateY(100px); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

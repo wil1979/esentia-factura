@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AromaLabel Pro - Diseñador de Etiquetas para Velas</title>
+<!-- Fuentes de Google -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Montserrat:wght@300;400;500;600&family=Roboto:wght@300;400;500&family=Great+Vibes&family=Alex+Brush&family=Cormorant+Garamond:wght@400;600;700&family=Cinzel:wght@400;600;700&family=Tangerine:wght@400;700&display=swap" rel="stylesheet">
+<!-- Librerías de Exportación -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+/* ===== FUENTE ADELIA (LOCAL) ===== */
+@font-face {
+  font-family: 'Adelia';
+  src: url('fonts/Adelia.ttf2') format('ttf2'),
+       url('fonts/Adelia.ttf') format('ttf'),
+       url('fonts/Adelia.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --primary: #1a1a1a; --secondary: #4a4a4a; --accent: #c9a96e; --accent-light: #e8d5a3;
+  --bg: #ffffff; --card-bg: #ffffff; --border: #ffffff;
+  --success: #4caf50; --danger: #e74c3c; --info: #2196f3;
+  --shadow: 0 4px 20px rgba(0,0,0,0.08); --shadow-hover: 0 8px 30px rgba(0,0,0,0.12);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Montserrat', sans-serif; background: var(--bg); color: var(--primary); min-height: 100vh; overflow-x: hidden; }
+.header { background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+.logo { display: flex; align-items: center; gap: 0.75rem; }
+.logo-icon { width: 40px; height: 40px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+.logo-text { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+.logo-sub { font-size: 0.7rem; color: var(--secondary); letter-spacing: 2px; text-transform: uppercase; }
+.nav-tabs { display: flex; gap: 0.5rem; }
+.nav-tab { padding: 0.6rem 1.2rem; border: none; background: transparent; color: var(--secondary); font-family: 'Montserrat', sans-serif; font-weight: 500; cursor: pointer; border-radius: 8px; transition: all 0.3s ease; font-size: 0.9rem; }
+.nav-tab:hover { background: var(--bg); color: var(--primary); }
+.nav-tab.active { background: var(--primary); color: white; }
+.main-container { display: grid; grid-template-columns: 380px 1fr; gap: 2rem; padding: 2rem; max-width: 1700px; margin: 0 auto; }
+.sidebar { background: var(--card-bg); border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow); height: fit-content; position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow-y: auto; }
+.sidebar::-webkit-scrollbar { width: 6px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.sidebar-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--accent); }
+.form-group { margin-bottom: 1.2rem; }
+.form-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--secondary); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 1px; }
+.form-input, .form-textarea, .form-select { width: 100%; padding: 0.7rem 0.9rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Montserrat', sans-serif; font-size: 0.9rem; transition: all 0.3s ease; background: var(--bg); }
+.form-input:focus, .form-textarea:focus, .form-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.15); }
+.form-textarea { resize: vertical; min-height: 80px; }
+.color-picker-wrapper { display: flex; gap: 0.5rem; align-items: center; }
+.color-picker { width: 50px; height: 36px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; padding: 2px; background: white; }
+.color-value { font-size: 0.8rem; color: var(--secondary); font-family: 'Roboto', monospace; }
+.btn { padding: 0.8rem 1.5rem; border: none; border-radius: 10px; font-family: 'Montserrat', sans-serif; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center; }
+.btn-primary { background: var(--primary); color: white; width: 100%; }
+.btn-primary:hover { background: var(--secondary); transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+.btn-accent { background: var(--accent); color: white; width: 100%; margin-top: 0.5rem; }
+.btn-accent:hover { background: #b8945a; transform: translateY(-2px); }
+.btn-secondary { background: var(--bg); color: var(--primary); border: 1.5px solid var(--border); }
+.btn-secondary:hover { background: var(--border); }
+.btn-danger { background: var(--danger); color: white; }
+.btn-info { background: var(--info); color: white; }
+.btn-info:hover { background: #1976d2; }
+.btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+.btn-xs { padding: 0.25rem 0.5rem; font-size: 0.7rem; }
+
+.range-group { display: flex; flex-direction: column; gap: 0.3rem; }
+.range-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--secondary); }
+.range-label span { font-weight: 600; color: var(--primary); }
+input[type="range"] { width: 100%; height: 6px; border-radius: 3px; background: var(--border); outline: none; -webkit-appearance: none; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+.preview-area { display: flex; flex-direction: column; gap: 2rem; }
+.preview-card { background: var(--card-bg); border-radius: 16px; padding: 2rem; box-shadow: var(--shadow); }
+.preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.preview-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; }
+.label-container { display: flex; justify-content: center; align-items: center; min-height: 500px; background: linear-gradient(45deg, #e8e8e8 25%, transparent 25%), linear-gradient(-45deg, #e8e8e8 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e8e8e8 75%), linear-gradient(-45deg, transparent 75%, #e8e8e8 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; background-color: #f0f0f0; border-radius: 12px; padding: 2rem; overflow: auto; }
+
+.label { background: white; border-radius: var(--border-radius, 4px); box-shadow: 0 2px 10px rgba(0,0,0,0.0); display: flex; flex-direction: column; position: relative; overflow: hidden; transition: all 0.3s ease; margin: 0 auto; width: var(--label-width, 60mm); height: var(--label-height, 80mm); padding: var(--label-padding, 3mm); }
+.label-top-line { position: absolute; top: 0; left: 0; right: 0; height: var(--top-line, 4px); background: var(--accent-color, #c9a96e); z-index: 2; }
+.label-bottom-line { position: absolute; bottom: 0; left: 0; right: 0; height: var(--bottom-line, 0px); background: var(--accent-color, #c9a96e); z-index: 2; }
+.label-logo-area { text-align: center; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--area-gap, 3px) 0; }
+.label-logo { font-family: var(--brand-font, 'Adelia', cursive); font-weight: 400; color: var(--text-color, #1a1a1a); letter-spacing: 1px; line-height: 1.2; }
+.label-logo-sub { color: var(--secondary); letter-spacing: 2px; text-transform: uppercase; font-family: 'Montserrat', sans-serif; }
+.label-logo-img { max-width: 80%; max-height: 100%; object-fit: contain; display: block; }
+.label-product { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; overflow: hidden; padding: var(--area-gap, 3px) 0; }
+.label-name { font-family: var(--product-font, 'Playfair Display', serif); font-weight: 700; color: var(--text-color, #1a1a1a); line-height: 1.2; word-break: break-word; }
+.label-type { color: var(--accent-color, #c9a96e); text-transform: uppercase; letter-spacing: 2px; font-weight: 500; word-break: break-word; }
+.label-details { color: var(--secondary); word-break: break-word; }
+.label-divider { width: 40px; height: 1px; background: var(--accent-color, #c9a96e); margin: 0.4rem auto; }
+.label-instructions { color: var(--secondary); line-height: 1.4; text-align: justify; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); overflow: hidden; word-break: break-word; padding: var(--area-gap, 3px) 0; }
+.label-footer { display: flex; justify-content: space-between; align-items: flex-end; gap: 0.5rem; padding-top: var(--area-gap, 3px); }
+.label-qr {
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  width: var(--qr-size, 22%);
+  aspect-ratio: 1 / 1;
+  /* Fondo blanco opaco forzado: obligatorio para vinil transparente */
+  background: #ffffff !important;
+  /* Quiet zone física: margen blanco alrededor del QR */
+  padding: 3px;
+  box-sizing: border-box;
+}.label-qr table { border-collapse: collapse !important; width: 100% !important; height: 100% !important; }
+.label-qr td { padding: 0 !important; }
+.label-info { color: var(--secondary); line-height: 1.4; text-align: right; flex: 1; min-width: 0; overflow: hidden; }
+.label-batch { font-family: 'Roboto', monospace; color: var(--text-color, #1a1a1a); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.sheet-controls { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.sheet-control-group { display: flex; flex-direction: column; gap: 0.3rem; }
+.sheet-control-group label { font-size: 0.75rem; color: var(--secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.sheet-control-group select, .sheet-control-group input { padding: 0.5rem 0.8rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Montserrat', sans-serif; font-size: 0.85rem; background: var(--bg); }
+.sheet-preview { background: white; border: 2px solid var(--border); border-radius: 8px; padding: 1rem; position: relative; overflow: hidden; }
+.sheet-page { position: relative; margin: 0 auto; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.sheet-label { position: absolute; border: 1px dashed #ccc; background: white; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #999; transition: all 0.2s ease; overflow: hidden; }
+.sheet-label.filled { border: 1px solid var(--primary); background: var(--bg); }
+.sheet-label.filled::after { content: attr(data-name); font-size: 0.5rem; color: var(--primary); font-weight: 600; text-align: center; padding: 0.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.sheet-label.empty { background: repeating-linear-gradient(45deg, #fafafa, #fafafa 5px, #f0f0f0 5px, #f0f0f0 10px); }
+.sheet-stats { display: flex; gap: 2rem; margin-top: 1rem; padding: 1rem; background: var(--bg); border-radius: 10px; flex-wrap: wrap; }
+.stat { text-align: center; }
+.stat-value { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+.stat-label { font-size: 0.75rem; color: var(--secondary); text-transform: uppercase; letter-spacing: 1px; }
+.stat-highlight { color: var(--success); }
+.projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+.project-card { background: var(--card-bg); border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow); transition: all 0.3s ease; cursor: pointer; border: 2px solid transparent; }
+.project-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: var(--accent); }
+.project-preview { width: 100%; height: 160px; background: var(--bg); border-radius: 10px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+.project-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 600; margin-bottom: 0.3rem; }
+.project-meta { font-size: 0.8rem; color: var(--secondary); margin-bottom: 1rem; }
+.project-actions { display: flex; gap: 0.5rem; }
+.project-actions .btn { flex: 1; justify-content: center; }
+.font-control-group { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
+  .no-print { display: none !important; }
+  .print-page { page-break-after: always; width: 100%; height: 100vh; position: relative; }
+  .print-page:last-child { page-break-after: avoid; }
+  .print-label-wrapper { position: absolute; }
+}
+@media (max-width: 1024px) { .main-container { grid-template-columns: 1fr; } .sidebar { position: relative; top: 0; max-height: none; } .font-control-group { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .header { flex-direction: column; gap: 1rem; padding: 1rem; } .main-container { padding: 1rem; } .sheet-controls { flex-direction: column; } }
+.section { display: none; }
+.section.active { display: block; }
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+.modal-overlay.show { opacity: 1; pointer-events: all; }
+.modal { background: var(--card-bg); border-radius: 16px; padding: 2rem; max-width: 500px; width: 90%; box-shadow: var(--shadow-hover); transform: scale(0.9); transition: transform 0.3s ease; }
+.modal-overlay.show .modal { transform: scale(1); }
+.modal-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; margin-bottom: 1rem; }
+.modal-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
+.modal-actions .btn { flex: 1; justify-content: center; }
+.empty-state { text-align: center; padding: 4rem 2rem; color: var(--secondary); }
+.empty-state-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.5; }
+.empty-state h3 { font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--primary); }
+.batch-list { max-height: 300px; overflow-y: auto; border: 1.5px solid var(--border); border-radius: 8px; padding: 0.5rem; background: var(--bg); }
+.batch-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 6px; margin-bottom: 0.3rem; background: white; transition: all 0.2s ease; }
+.batch-item:hover { background: var(--bg); }
+.batch-item input { flex: 1; border: none; background: transparent; font-family: 'Montserrat', sans-serif; font-size: 0.85rem; padding: 0.3rem; }
+.batch-item input:focus { outline: none; background: white; border-radius: 4px; }
+.batch-item .qty-input { width: 50px; text-align: center; border: 1px solid var(--border); border-radius: 4px; padding: 0.2rem; }
+.batch-item .btn-sm { opacity: 0.5; transition: opacity 0.2s ease; }
+.batch-item:hover .btn-sm { opacity: 1; }
+.toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 1000; display: flex; flex-direction: column; gap: 0.5rem; }
+.toast { background: var(--primary); color: white; padding: 1rem 1.5rem; border-radius: 10px; box-shadow: var(--shadow-hover); display: flex; align-items: center; gap: 0.75rem; animation: slideIn 0.3s ease; font-size: 0.9rem; }
+.toast.fade-out { animation: fadeOut 0.3s ease forwards; }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+.image-upload-area { border: 2px dashed var(--border); border-radius: 10px; padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: var(--bg); }
+.image-upload-area:hover { border-color: var(--accent); background: rgba(201, 169, 110, 0.05); }
+.image-upload-area.has-image { border-style: solid; border-color: var(--success); background: rgba(76, 175, 80, 0.05); }
+.image-upload-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+.image-upload-text { font-size: 0.8rem; color: var(--secondary); }
+.image-preview { max-width: 100%; max-height: 80px; object-fit: contain; margin: 0.5rem auto; display: block; }
+.hidden-input { display: none; }
+.export-buttons { display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
+.export-buttons .btn { flex: 1; min-width: 120px; }
+.toggle-group { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0; }
+.toggle-label { font-size: 0.85rem; color: var(--secondary); }
+.toggle-switch { position: relative; width: 44px; height: 24px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border); border-radius: 24px; transition: 0.3s; }
+.toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: 0.3s; }
+.toggle-switch input:checked + .toggle-slider { background-color: var(--accent); }
+.toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
+.template-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1rem; }
+.template-btn { padding: 0.5rem; border: 1.5px solid var(--border); border-radius: 8px; background: var(--bg); cursor: pointer; font-size: 0.7rem; text-align: center; transition: all 0.2s ease; font-family: 'Montserrat', sans-serif; }
+.template-btn:hover { border-color: var(--accent); background: rgba(201, 169, 110, 0.1); }
+.template-btn.active { border-color: var(--accent); background: var(--accent); color: white; }
+.template-icon { font-size: 1.5rem; display: block; margin-bottom: 0.3rem; }
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+/* ===== CONTROLES DE IMÁGENES ===== */
+.images-panel { margin-top: 1rem; }
+.image-item { background: var(--bg); border-radius: 12px; padding: 1rem; margin-bottom: 0.8rem; border: 1.5px solid var(--border); transition: all 0.3s ease; }
+.image-item:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+.image-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; }
+.image-item-name { font-weight: 600; font-size: 0.85rem; color: var(--primary); }
+.image-item-badge { background: var(--accent); color: white; font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 8px; font-weight: 600; }
+.image-preview-mini { width: 100%; height: 70px; background: linear-gradient(45deg, #e8e8e8 25%, transparent 25%), linear-gradient(-45deg, #e8e8e8 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e8e8e8 75%), linear-gradient(-45deg, transparent 75%, #e8e8e8 75%); background-size: 10px 10px; background-position: 0 0, 0 5px, 5px -5px, -5px 0px; background-color: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.6rem; position: relative; overflow: hidden; }
+.image-preview-mini img { max-width: 80%; max-height: 80%; object-fit: contain; transition: all 0.3s ease; }
+.image-upload-mini { border: 2px dashed var(--border); border-radius: 8px; padding: 0.8rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: var(--bg); }
+.image-upload-mini:hover { border-color: var(--accent); background: rgba(201, 169, 110, 0.05); }
+.image-upload-mini.has-image { border-style: solid; border-color: var(--success); background: rgba(76, 175, 80, 0.05); }
+.image-pos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.image-pos-input { padding: 0.4rem 0.6rem; border: 1.5px solid var(--border); border-radius: 6px; font-size: 0.8rem; font-family: 'Montserrat', sans-serif; width: 100%; }
+.image-pos-input:focus { outline: none; border-color: var(--accent); }
+.btn-add-image { width: 100%; padding: 0.7rem; border: 2px dashed var(--accent); border-radius: 10px; background: rgba(201, 169, 110, 0.05); color: var(--accent); font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease; font-family: 'Montserrat', sans-serif; margin-top: 0.5rem; }
+.btn-add-image:hover { background: rgba(201, 169, 110, 0.15); transform: translateY(-1px); }
+.btn-remove-image { background: var(--danger); color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.7rem; cursor: pointer; font-family: 'Montserrat', sans-serif; transition: all 0.2s ease; }
+.btn-remove-image:hover { background: #c0392b; }
+.label-image { position: absolute; pointer-events: none; z-index: 1; }
+.label-image img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon">🕯️</div>
+    <div><div class="logo-text">AromaLabel</div><div class="logo-sub">Pro Designer · Velas</div></div>
+  </div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showSection('designer', this)">✏️ Diseñador</button>
+    <button class="nav-tab" onclick="showSection('projects', this)">📁 Proyectos</button>
+    <button class="nav-tab" onclick="showSection('print', this)">🖨️ Impresión</button>
+  </nav>
+</header>
+
+<!-- Indicador de estado de Firebase -->
+<div id="firebaseStatus" style="position:fixed;top:70px;right:20px;background:var(--card-bg);padding:0.5rem 1rem;border-radius:8px;box-shadow:var(--shadow);font-size:0.8rem;z-index:99;display:flex;align-items:center;gap:0.5rem;">
+  <span id="firebaseIcon" style="width:10px;height:10px;border-radius:50%;background:#ffc107;"></span>
+  <span id="firebaseText">Conectando...</span>
+</div>
+
+<div class="main-container">
+  <aside class="sidebar" id="editorSidebar">
+    <h2 class="sidebar-title">Configuración de Etiqueta</h2>
+
+    <div class="form-group">
+      <label class="form-label">📋 Plantillas Rápidas (Velas)</label>
+      <div class="template-grid">
+        <button class="template-btn" onclick="applyTemplate('vela-pequena')"><span class="template-icon">🕯️</span>Pequeña<br>50×60mm</button>
+        <button class="template-btn" onclick="applyTemplate('vela-mediana')"><span class="template-icon">🕯️</span>Mediana<br>70×90mm</button>
+        <button class="template-btn" onclick="applyTemplate('vela-grande')"><span class="template-icon">🕯️</span>Grande<br>90×110mm</button>
+        <button class="template-btn" onclick="applyTemplate('vela-redonda')"><span class="template-icon">⭕</span>Tapa<br>50×50mm</button>
+        <button class="template-btn" onclick="applyTemplate('vela-luxury')"><span class="template-icon">✨</span>Luxury<br>80×100mm</button>
+        <button class="template-btn" onclick="applyTemplate('vela-minimal')"><span class="template-icon">◻️</span>Minimal<br>60×40mm</button>
+        <button class="template-btn" onclick="applyTemplate('vela-mini')"><span class="template-icon">🕯️</span>Mini<br>30×40mm</button>
+        <button class="template-btn" onclick="applyTemplate('vela-micro')"><span class="template-icon">💫</span>Micro<br>25×35mm</button>
+        <button class="template-btn" onclick="applyTemplate('vela-tea-light')"><span class="template-icon">⚪</span>Tea Light<br>35×25mm</button>
+        <button class="template-btn" onclick="applyTemplate('vela-votiva')"><span class="template-icon">🔶</span>Votiva<br>40×50mm</button>
+        <button class="template-btn" onclick="applyTemplate('vela-rectangular')"><span class="template-icon">▭</span>Rectangular<br>45×30mm</button>
+        <button class="template-btn" onclick="applyTemplate('vela-etiqueta')"><span class="template-icon">🏷️</span>Etiqueta<br>55×35mm</button>
+      </div>
+    </div>
+    <hr class="section-divider">
+
+    <div class="form-group">
+      <label class="form-label">Nombre del Proyecto</label>
+      <input type="text" class="form-input" id="projectName" value="Vela Aromática de Parafina" oninput="updateLabel()">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Logo / Marca</label>
+      <div class="image-upload-area" id="logoUploadArea" onclick="document.getElementById('logoInput').click()">
+        <div class="image-upload-icon" id="logoIcon">📷</div>
+        <div class="image-upload-text" id="logoText">Haz clic para subir logo</div>
+        <img id="logoPreview" class="image-preview" style="display:none;">
+      </div>
+      <input type="file" id="logoInput" class="hidden-input" accept="image/*" onchange="handleLogoUpload(event)">
+      <input type="text" class="form-input" id="brandName" value="Esentia" style="margin-top:0.5rem; font-family: 'Adelia', cursive; font-size: 1.3rem;">
+      <input type="text" class="form-input" id="brandSub" value="Velas Artesanales" style="margin-top:0.5rem;">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">🔤 Fuente de la Marca</label>
+      <select class="form-select" id="brandFont" onchange="updateLabel()">
+        <option value="'Adelia', cursive" selected>✨ Adelia (Premium)</option>
+        <option value="'Great Vibes', cursive">Great Vibes (Elegante)</option>
+        <option value="'Alex Brush', cursive">Alex Brush (Manuscrita)</option>
+        <option value="'Tangerine', cursive">Tangerine (Caligráfica)</option>
+        <option value="'Playfair Display', serif">Playfair Display (Clásica)</option>
+        <option value="'Cinzel', serif">Cinzel (Romana)</option>
+        <option value="'Cormorant Garamond', serif">Cormorant (Sofisticada)</option>
+        <option value="'Montserrat', sans-serif">Montserrat (Moderna)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label"></label>
+      <input type="text" class="form-input" id="productName" value="Sin Aroma" oninput="updateLabel()">
+    </div>
+
+
+    <h3 class="sidebar-title" style="margin-top:1.5rem;font-size:1rem;">🖼️ Imágenes</h3>
+    <div id="imagesPanel" class="images-panel">
+    </div>
+    <button class="btn-add-image" onclick="addNewImage()">➕ Agregar Imagen</button>
+    <input type="file" id="imageInputGlobal" class="hidden-input" accept="image/*" onchange="handleImageUpload(event)">
+
+     <button class="btn btn-primary" onclick="saveProject()" style="margin-top:1.5rem;">💾 Guardar Proyecto</button>
+     <button class="btn btn-accent" onclick="addToPrintQueue()">➕ Añadir a Cola</button>
+     <div class="form-group"><label class="form-label">Color de Acento</label><div class="color-picker-wrapper"><input type="color" class="color-picker" id="accentColor" value="#c9a96e" oninput="updateLabel()"><span class="color-value" id="accentColorValue">#c9a96e</span></div></div>
+    
+
+    <div class="form-group">
+      <label class="form-label">🔤 Fuente del Producto</label>
+      <select class="form-select" id="productFont" onchange="updateLabel()">
+        <option value="'Playfair Display', serif" selected>Playfair Display (Clásica)</option>
+        <option value="'Cinzel', serif">Cinzel (Romana)</option>
+        <option value="'Cormorant Garamond', serif">Cormorant (Sofisticada)</option>
+        <option value="'Montserrat', sans-serif">Montserrat (Moderna)</option>
+        <option value="'Great Vibes', cursive">Great Vibes (Elegante)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Tipo / Categoría</label>
+      <input type="text" class="form-input" id="productType" value="Vela Aromática de Parafina">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Detalles (peso, tiempo, etc.)</label>
+      <input type="text" class="form-input" id="productDetails" value="180g · 40h de quemado">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Instrucciones de Seguridad</label>
+      <textarea class="form-textarea" id="instructions">Quemar sobre superficie resistente al calor. No dejar sin supervisión. Mantener alejado de corrientes de aire, niños y mascotas. No quemar más de 4 horas seguidas. Detener cuando queden 1cm de cera.</textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">URL para QR</label>
+      <input type="text" class="form-input" id="qrUrl" value="https://www.facebook.com/profile.php?id=61579078480913">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Info Legal / Lote</label>
+      <input type="text" class="form-input" id="batchInfo" value="Lote: 001 | Exp: 12/2026">
+      <input type="text" class="form-input" id="originInfo" value="Cera de Parafina · Esencias naturales · Hecho a mano" style="margin-top:0.5rem;">
+    </div>
+
+    <h3 class="sidebar-title" style="margin-top:2rem;font-size:1rem;">📐 Dimensiones</h3>
+    <div class="form-group"><div class="range-group"><div class="range-label">Ancho (mm) <span id="labelWidthVal">60</span></div><input type="range" id="labelWidth" min="0" max="150" value="60" oninput="updateLabel()"></div></div>
+    <div class="form-group"><div class="range-group"><div class="range-label">Alto (mm) <span id="labelHeightVal">80</span></div><input type="range" id="labelHeight" min="0" max="200" value="80" oninput="updateLabel()"></div></div>
+    <div class="form-group"><div class="range-group"><div class="range-label">Padding (mm) <span id="labelPaddingVal">3</span></div><input type="range" id="labelPadding" min="0" max="15" value="3" step="0.5" oninput="updateLabel()"></div></div>
+    <div class="form-group"><div class="range-group"><div class="range-label">Radio esquinas (px) <span id="borderRadiusVal">4</span></div><input type="range" id="borderRadius" min="0" max="360" value="4" oninput="updateLabel()"></div></div>
+    <div class="form-group"><div class="range-group"><div class="range-label">Línea superior (px) <span id="topLineVal">4</span></div><input type="range" id="topLine" min="0" max="12" value="4" oninput="updateLabel()"></div></div>
+    <div class="form-group"><div class="range-group"><div class="range-label">Línea inferior (px) <span id="bottomLineVal">0</span></div><input type="range" id="bottomLine" min="0" max="12" value="0" oninput="updateLabel()"></div></div>
+    <div class="form-group"><div class="range-group"><div class="range-label">Espaciado áreas (px) <span id="areaGapVal">6</span></div><input type="range" id="areaGap" min="0" max=100" value="6" oninput="updateLabel()"></div></div>
+
+    <h3 class="sidebar-title" style="margin-top:1.5rem;font-size:1rem;">🔤 Tamaños de Fuente</h3>
+    <div class="font-control-group">
+      <div class="form-group"><div class="range-group"><div class="range-label">Marca (px) <span id="fontBrandVal">16</span></div><input type="range" id="fontBrand" min="0" max="40" value="16" oninput="updateLabel()"></div></div>
+      <div class="form-group"><div class="range-group"><div class="range-label">Submarca (px) <span id="fontBrandSubVal">8</span></div><input type="range" id="fontBrandSub" min="0" max="20" value="8" oninput="updateLabel()"></div></div>
+    </div>
+    <div class="font-control-group">
+      <div class="form-group"><div class="range-group"><div class="range-label">  (px) <span id="fontProductVal">22</span></div><input type="range" id="fontProduct" min="0" max="48" value="22" oninput="updateLabel()"></div></div>
+      <div class="form-group"><div class="range-group"><div class="range-label">Tipo (px) <span id="fontTypeVal">10</span></div><input type="range" id="fontType" min="0" max="24" value="10" oninput="updateLabel()"></div></div>
+    </div>
+    <div class="font-control-group">
+      <div class="form-group"><div class="range-group"><div class="range-label">Detalles (px) <span id="fontDetailsVal">9</span></div><input type="range" id="fontDetails" min="0" max="20" value="9" oninput="updateLabel()"></div></div>
+      <div class="form-group"><div class="range-group"><div class="range-label">Instrucciones (px) <span id="fontInstrVal">7</span></div><input type="range" id="fontInstr" min="0" max="16" value="7" oninput="updateLabel()"></div></div>
+    </div>
+    <div class="font-control-group">
+      <div class="form-group"><div class="range-group"><div class="range-label">Lote (px) <span id="fontBatchVal">7</span></div><input type="range" id="fontBatch" min="0" max="14" value="7" oninput="updateLabel()"></div></div>
+      <div class="form-group"><div class="range-group"><div class="range-label">Origen (px) <span id="fontOriginVal">7</span></div><input type="range" id="fontOrigin" min="0" max="14" value="7" oninput="updateLabel()"></div></div>
+    </div>
+    <div class="form-group"><div class="range-group"><div class="range-label">Tamaño QR (%) <span id="qrSizeVal">22</span></div><input type="range" id="qrSize" min="0" max="100" value="22" oninput="updateLabel()"></div></div>
+
+    <h3 class="sidebar-title" style="margin-top:1.5rem;font-size:1rem;">🎨 Colores</h3>
+    <div class="form-group"><label class="form-label">Color de Acento</label><div class="color-picker-wrapper"><input type="color" class="color-picker" id="accentColor" value="#c9a96e" oninput="updateLabel()"><span class="color-value" id="accentColorValue">#c9a96e</span></div></div>
+    <div class="form-group"><label class="form-label">Color de Texto</label><div class="color-picker-wrapper"><input type="color" class="color-picker" id="textColor" value="#1a1a1a" oninput="updateLabel()"><span class="color-value" id="textColorValue">#1a1a1a</span></div></div>
+    <div class="form-group"><label class="form-label">Color de Fondo</label><div class="color-picker-wrapper"><input type="color" class="color-picker" id="bgColor" value="#ffffff" oninput="updateLabel()"><span class="color-value" id="bgColorValue">#ffffff</span></div></div>
+    <div class="form-group"><label class="form-label">Color del QR</label><div class="color-picker-wrapper"><input type="color" class="color-picker" id="qrColor" value="#1a1a1a" oninput="updateLabel()"><span class="color-value" id="qrColorValue">#1a1a1a</span></div></div>
+    <div class="form-group"><label class="form-label">Color fondo QR</label><div class="color-picker-wrapper"><input type="color" class="color-picker" id="qrBgColor" value="#ffffff" oninput="updateLabel()"><span class="color-value" id="qrBgColorValue">#ffffff</span></div></div>
+
+    <h3 class="sidebar-title" style="margin-top:1.5rem;font-size:1rem;">👁️ Visibilidad</h3>
+    <div class="toggle-group"><span class="toggle-label">Línea divisoria</span><label class="toggle-switch"><input type="checkbox" id="showDivider" checked onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
+    <div class="toggle-group"><span class="toggle-label">Código QR</span><label class="toggle-switch"><input type="checkbox" id="showQR" checked onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
+    <div class="toggle-group"><span class="toggle-label">Instrucciones</span><label class="toggle-switch"><input type="checkbox" id="showInstructions" checked onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
+    <div class="toggle-group"><span class="toggle-label">Información legal</span><label class="toggle-switch"><input type="checkbox" id="showFooter" checked onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
+
+    <button class="btn btn-primary" onclick="saveProject()" style="margin-top:1.5rem;">💾 Guardar Proyecto</button>
+    <button class="btn btn-accent" onclick="addToPrintQueue()">➕ Añadir a Cola</button>
+    <div class="export-buttons">
+      <button class="btn btn-info btn-sm" onclick="exportSinglePDF()">📄 PDF</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportSinglePNG()">🖼️ PNG</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportProjectJSON()">📤 Exportar</button>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importInput').click()">📥 Importar</button>
+      <input type="file" id="importInput" class="hidden-input" accept=".json" onchange="importProjectJSON(event)">
+    </div>
+  </aside>
+
+  <main class="preview-area">
+    <div id="section-designer" class="section active">
+      <div class="preview-card">
+        <div class="preview-header">
+          <h2 class="preview-title">Vista Previa de Etiqueta</h2>
+          <span style="font-size:0.85rem;color:var(--secondary);" id="previewSize">60 × 80 mm</span>
+        </div>
+        <div class="label-container">
+          <div class="label" id="labelPreview">
+            <div class="label-images-container" id="labelImagesContainer" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:hidden;"></div>
+            <div class="label-top-line" id="labelTopLine"></div>
+            <div class="label-bottom-line" id="labelBottomLine"></div>
+            <div class="label-logo-area" id="labelLogoArea">
+              <img id="previewLogoImg" class="label-logo-img" style="display:none;">
+              <div class="label-logo" id="previewBrand">Esentia</div>
+              <div class="label-logo-sub" id="previewBrandSub">Velas Artesanales</div>
+            </div>
+            <div class="label-product" id="labelProduct">
+              <div class="label-name" id="previewProduct">Lavanda</div>
+              <div class="label-type" id="previewType">Vela Aromática de Soya</div>
+              <div class="label-divider" id="labelDivider"></div>
+              <div class="label-details" id="previewDetails">180g · 40h de quemado</div>
+            </div>
+            <div class="label-instructions" id="previewInstructions">Quemar sobre superficie resistente al calor. No dejar sin supervisión.</div>
+            <div class="label-footer" id="labelFooter">
+              <div class="label-qr" id="previewQR"></div>
+              <div class="label-info" id="labelInfo">
+                <div class="label-batch" id="previewBatch">Lote: 001 | Exp: 12/2026</div>
+                <div id="previewOrigin">Cera de Parafina · Esencias naturales · Hecho a mano</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="section-projects" class="section">
+      <div class="preview-card">
+        <div class="preview-header">
+          <h2 class="preview-title">Mis Proyectos Guardados</h2>
+          <div style="display:flex;gap:0.5rem;">
+            <button class="btn btn-info btn-sm" onclick="syncProjectsManual()">🔄 Sincronizar</button>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importAllInput').click()">📥 Importar</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAllProjectsJSON()">📤 Exportar Todo</button>
+            <button class="btn btn-secondary btn-sm" onclick="loadAllProjects()">🔄 Actualizar</button>
+            <input type="file" id="importAllInput" class="hidden-input" accept=".json" onchange="importAllProjectsJSON(event)">
+          </div>
+        </div>
+        <div id="projectsList"><div class="empty-state"><div class="empty-state-icon">📁</div><h3>No hay proyectos guardados</h3><p>Crea tu primera etiqueta en el Diseñador y guárdala aquí.</p></div></div>
+      </div>
+    </div>
+
+    <div id="section-print" class="section">
+      <div class="preview-card">
+        <div class="preview-header"><h2 class="preview-title">Optimización de Impresión</h2></div>
+        <div class="sheet-controls">
+          <div class="sheet-control-group"><label>Tamaño de Hoja</label><select id="paperSize" onchange="updateSheetPreview()"><option value="A4">A4 (210×297mm)</option><option value="Letter">Carta (216×279mm)</option><option value="Legal">Oficio (216×356mm)</option><option value="A3">A3 (297×420mm)</option><option value="A5">A5 (148×210mm)</option></select></div>
+          <div class="sheet-control-group"><label>Margen Sup. (mm)</label><input type="number" id="marginTop" value="10" min="0" max="50" onchange="updateSheetPreview()"></div>
+          <div class="sheet-control-group"><label>Margen Izq. (mm)</label><input type="number" id="marginLeft" value="10" min="0" max="50" onchange="updateSheetPreview()"></div>
+          <div class="sheet-control-group"><label>Margen Der. (mm)</label><input type="number" id="marginRight" value="10" min="0" max="50" onchange="updateSheetPreview()"></div>
+          <div class="sheet-control-group"><label>Margen Inf. (mm)</label><input type="number" id="marginBottom" value="10" min="0" max="50" onchange="updateSheetPreview()"></div>
+          <div class="sheet-control-group"><label>Espacio Horiz. (mm)</label><input type="number" id="gapX" value="2" min="0" max="10" onchange="updateSheetPreview()"></div>
+          <div class="sheet-control-group"><label>Espacio Vert. (mm)</label><input type="number" id="gapY" value="2" min="0" max="10" onchange="updateSheetPreview()"></div>
+        </div>
+        <div class="sheet-section">
+          <h3 style="font-family:'Playfair Display',serif;margin-bottom:1rem;">Cola de Impresión</h3>
+          <div class="batch-list" id="printQueue"><div class="empty-state" style="padding:2rem;"><div class="empty-state-icon" style="font-size:2rem;">🖨️</div><p style="font-size:0.85rem;">No hay etiquetas en cola.</p></div></div>
+        </div>
+        <div style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="clearPrintQueue()" style="flex:1;">🗑️ Vaciar Cola</button>
+          <button class="btn btn-accent" onclick="printLabels()" style="flex:1;">🖨️ Imprimir</button>
+          <button class="btn btn-info" onclick="exportQueuePDF()" style="flex:1;">📄 Exportar PDF</button>
+        </div>
+        <div class="sheet-preview" id="sheetPreviewContainer" style="margin-top:1.5rem;"><div class="sheet-page" id="sheetPage"></div></div>
+        <div class="sheet-stats" id="sheetStats">
+          <div class="stat"><div class="stat-value" id="statTotal">0</div><div class="stat-label">Etiquetas en Cola</div></div>
+          <div class="stat"><div class="stat-value" id="statPerSheet">0</div><div class="stat-label">Por Hoja</div></div>
+          <div class="stat"><div class="stat-value" id="statSheets">0</div><div class="stat-label">Hojas Necesarias</div></div>
+          <div class="stat"><div class="stat-value stat-highlight" id="statEfficiency">0%</div><div class="stat-label">Eficiencia</div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="printArea" class="print-area" style="display:none;"></div>
+<div class="toast-container" id="toastContainer"></div>
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 class="modal-title" id="modalTitle">Confirmar</h3>
+    <p id="modalText">¿Estás seguro?</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="modalConfirm">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MÓDULO DE FIREBASE -->
+<script type="module">
+  import { initAuth, saveProjectToFirestore, loadProjectsFromFirestore, deleteProjectFromFirestore, syncProjects, getConnectionStatus } from 'https://wil1979.github.io/esentia-factura/modules/firebaseStorage.js';
+  
+  window.firebaseStorage = { initAuth, saveProjectToFirestore, loadProjectsFromFirestore, deleteProjectFromFirestore, syncProjects, getConnectionStatus };
+  
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      updateFirebaseStatus('connecting', 'Conectando a Firebase...');
+      await initAuth();
+      const status = getConnectionStatus();
+      if (status.authenticated) {
+        updateFirebaseStatus('connected', 'Conectado ✓');
+        try {
+          await syncProjects();
+          loadAllProjects();
+        } catch (e) { console.warn('Error en sincronización inicial:', e); }
+      } else {
+        updateFirebaseStatus('error', 'Error de conexión');
+      }
+    } catch (error) {
+      console.error('Error al inicializar Firebase:', error);
+      updateFirebaseStatus('error', 'Error de conexión');
+    }
+  });
+  
+  function updateFirebaseStatus(state, text) {
+    const icon = document.getElementById('firebaseIcon');
+    const textEl = document.getElementById('firebaseText');
+    if (!icon || !textEl) return;
+    textEl.textContent = text;
+    icon.style.background = state === 'connecting' ? '#ffc107' : state === 'connected' ? '#4caf50' : '#e74c3c';
+  }
+</script>
+
+<!-- LÓGICA PRINCIPAL DE LA APP -->
+<script>
+let currentProject = null;
+let printQueue = [];
+let projects = JSON.parse(localStorage.getItem('aromaProjects') || '[]');
+let logoDataUrl = null;
+let labelImages = [];
+let currentImageInputId = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  updateLabel();
+  initImagesPanel();
+  loadAllProjects();
+  updateSheetPreview();
+});
+
+
+/* ===== FUNCIONES DE IMÁGENES ===== */
+function initImagesPanel() {
+  renderImagesPanel();
+  updateLabelImages();
+}
+
+function renderImagesPanel() {
+  const panel = document.getElementById('imagesPanel');
+  if (!panel) return;
+  if (labelImages.length === 0) {
+    panel.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--secondary);font-size:0.8rem;">No hay imágenes. Agrega una nueva.</div>';
+    return;
+  }
+  let html = '';
+  labelImages.forEach(function(img, idx) {
+    html += '<div class="image-item" data-image-id="' + img.id + '">';
+    html += '<div class="image-item-header">';
+    html += '<span class="image-item-name">' + (img.name || 'Imagen ' + (idx + 1)) + '</span>';
+    html += '<span class="image-item-badge">IMG ' + (idx + 1) + '</span>';
+    if (labelImages.length > 1) {
+      html += '<button class="btn-remove-image" onclick="removeImage(' + img.id + ')" title="Eliminar">&#10005;</button>';
+    }
+    html += '</div>';
+    html += '<div class="image-preview-mini">';
+    if (img.dataUrl) {
+      html += '<img src="' + img.dataUrl + '" style="width:' + img.size + '%;transform:rotate(' + img.rotation + 'deg);opacity:' + (img.visible ? 1 : 0.3) + ';">';
+    } else {
+      html += '<span style="font-size:1.5rem;">&#128444;</span>';
+    }
+    html += '</div>';
+    html += '<div class="image-upload-mini ' + (img.dataUrl ? 'has-image' : '') + '" onclick="triggerImageUpload(' + img.id + ')">';
+    html += '<div style="font-size:0.75rem;color:var(--secondary);">' + (img.dataUrl ? 'Cambiar imagen' : 'Haz clic para subir imagen') + '</div>';
+    html += '</div>';
+    html += '<div class="range-group" style="margin-top:0.6rem;">';
+    html += '<div class="range-label">Tama&#241;o (%) <span id="imgSizeVal' + img.id + '">' + img.size + '</span></div>';
+    html += '<input type="range" min="5" max="100" value="' + img.size + '" oninput="updateImageProp(' + img.id + ', \'size\', this.value)">';
+    html += '</div>';
+    html += '<div class="range-group">';
+    html += '<div class="range-label">Rotaci&#243;n (&#176;) <span id="imgRotVal' + img.id + '">' + img.rotation + '</span></div>';
+    html += '<input type="range" min="-180" max="180" value="' + img.rotation + '" oninput="updateImageProp(' + img.id + ', \'rotation\', this.value)">';
+    html += '</div>';
+    html += '<div class="range-group">';
+    html += '<div class="range-label">Opacidad (%) <span id="imgOpaVal' + img.id + '">' + Math.round(img.opacity * 100) + '</span></div>';
+    html += '<input type="range" min="0" max="100" value="' + Math.round(img.opacity * 100) + '" oninput="updateImageProp(' + img.id + ', \'opacity\', this.value / 100)">';
+    html += '</div>';
+    html += '<div class="image-pos-grid" style="margin-top:0.5rem;">';
+    html += '<div><label style="font-size:0.7rem;color:var(--secondary);">Pos. X (%)</label>';
+    html += '<input type="number" class="image-pos-input" value="' + img.posX + '" min="0" max="100" oninput="updateImageProp(' + img.id + ', \'posX\', this.value)"></div>';
+    html += '<div><label style="font-size:0.7rem;color:var(--secondary);">Pos. Y (%)</label>';
+    html += '<input type="number" class="image-pos-input" value="' + img.posY + '" min="0" max="100" oninput="updateImageProp(' + img.id + ', \'posY\', this.value)"></div>';
+    html += '</div>';
+    html += '<div class="toggle-group" style="margin-top:0.5rem;">';
+    html += '<span class="toggle-label">Visible en etiqueta</span>';
+    html += '<label class="toggle-switch"><input type="checkbox" ' + (img.visible ? 'checked' : '') + ' onchange="updateImageProp(' + img.id + ', \'visible\', this.checked)"><span class="toggle-slider"></span></label>';
+    html += '</div>';
+    html += '</div>';
+  });
+  panel.innerHTML = html;
+}
+
+function addNewImage() {
+  var newId = Date.now() + Math.floor(Math.random() * 1000);
+  labelImages.push({ id: newId, dataUrl: null, name: 'Imagen ' + (labelImages.length + 1), size: 30, rotation: 0, posX: 50, posY: 50, opacity: 1, visible: true });
+  renderImagesPanel();
+  updateLabelImages();
+  showToast('Nueva imagen agregada', 'success');
+}
+
+function removeImage(id) {
+  showModal('Eliminar Imagen', '&#191;Eliminar esta imagen?', function() {
+    labelImages = labelImages.filter(function(img) { return img.id !== id; });
+    renderImagesPanel();
+    updateLabelImages();
+    showToast('Imagen eliminada', 'success');
+  });
+}
+
+function triggerImageUpload(imageId) {
+  currentImageInputId = imageId;
+  document.getElementById('imageInputGlobal').click();
+}
+
+function handleImageUpload(event) {
+  var file = event.target.files[0];
+  if (!file || currentImageInputId === null) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = labelImages.find(function(i) { return i.id === currentImageInputId; });
+    if (img) {
+      img.dataUrl = e.target.result;
+      img.name = file.name;
+      renderImagesPanel();
+      updateLabelImages();
+      showToast('Imagen cargada: ' + file.name, 'success');
+    }
+    currentImageInputId = null;
+    event.target.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateImageProp(id, prop, value) {
+  var img = labelImages.find(function(i) { return i.id === id; });
+  if (!img) return;
+  if (prop === 'size') img.size = parseInt(value);
+  else if (prop === 'rotation') img.rotation = parseInt(value);
+  else if (prop === 'posX') img.posX = parseFloat(value);
+  else if (prop === 'posY') img.posY = parseFloat(value);
+  else if (prop === 'opacity') img.opacity = parseFloat(value);
+  else if (prop === 'visible') img.visible = value;
+  var valEl = document.getElementById('img' + prop.charAt(0).toUpperCase() + prop.slice(1) + 'Val' + id);
+  if (valEl) {
+    if (prop === 'opacity') valEl.textContent = Math.round(value * 100);
+    else valEl.textContent = value;
+  }
+  updateLabelImages();
+}
+
+function updateLabelImages() {
+  var container = document.getElementById('labelImagesContainer');
+  if (!container) return;
+  container.innerHTML = '';
+  labelImages.forEach(function(img) {
+    if (!img.visible || !img.dataUrl) return;
+    var wrapper = document.createElement('div');
+    wrapper.className = 'label-image';
+    wrapper.style.left = img.posX + '%';
+    wrapper.style.top = img.posY + '%';
+    wrapper.style.width = img.size + '%';
+    wrapper.style.transform = 'translate(-50%, -50%) rotate(' + img.rotation + 'deg)';
+    wrapper.style.opacity = img.opacity;
+    var imageEl = document.createElement('img');
+    imageEl.src = img.dataUrl;
+    imageEl.alt = img.name;
+    wrapper.appendChild(imageEl);
+    container.appendChild(wrapper);
+  });
+}
+
+function getImagesConfig() {
+  return labelImages.map(function(img) {
+    return { id: img.id, name: img.name, size: img.size, rotation: img.rotation, posX: img.posX, posY: img.posY, opacity: img.opacity, visible: img.visible, dataUrl: img.dataUrl };
+  });
+}
+
+function loadImagesConfig(images) {
+  if (!images || !Array.isArray(images)) return;
+  labelImages = images.map(function(img) { return Object.assign({}, img); });
+  renderImagesPanel();
+  updateLabelImages();
+}
+
+function showSection(section, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-' + section).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (section === 'projects') loadAllProjects();
+  if (section === 'print') updateSheetPreview();
+}
+
+function applyTemplate(template) {
+  const templates = {
+    'vela-pequena': { width: 50, height: 60, padding: 2, borderRadius: 2, topLine: 3, bottomLine: 0, areaGap: 4, fontBrand: 14, fontBrandSub: 7, fontProduct: 18, fontType: 9, fontDetails: 8, fontInstr: 6, fontBatch: 6, fontOrigin: 6, qrSize: 20, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Playfair Display', serif" },
+    'vela-mediana': { width: 70, height: 90, padding: 3, borderRadius: 4, topLine: 4, bottomLine: 2, areaGap: 6, fontBrand: 18, fontBrandSub: 8, fontProduct: 24, fontType: 10, fontDetails: 9, fontInstr: 7, fontBatch: 7, fontOrigin: 7, qrSize: 22, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Playfair Display', serif" },
+    'vela-grande': { width: 90, height: 110, padding: 4, borderRadius: 5, topLine: 5, bottomLine: 3, areaGap: 8, fontBrand: 22, fontBrandSub: 9, fontProduct: 30, fontType: 12, fontDetails: 11, fontInstr: 8, fontBatch: 8, fontOrigin: 8, qrSize: 25, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Playfair Display', serif" },
+    'vela-redonda': { width: 50, height: 50, padding: 2, borderRadius: 25, topLine: 0, bottomLine: 0, areaGap: 3, fontBrand: 14, fontBrandSub: 6, fontProduct: 16, fontType: 8, fontDetails: 7, fontInstr: 0, fontBatch: 6, fontOrigin: 6, qrSize: 30, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Cormorant Garamond', serif", showInstructions: false },
+    'vela-luxury': { width: 80, height: 100, padding: 4, borderRadius: 0, topLine: 6, bottomLine: 6, areaGap: 8, fontBrand: 20, fontBrandSub: 8, fontProduct: 28, fontType: 11, fontDetails: 10, fontInstr: 7, fontBatch: 7, fontOrigin: 7, qrSize: 22, accentColor: '#8b6914', textColor: '#1a1a1a', bgColor: '#faf8f3', brandFont: "'Cinzel', serif", productFont: "'Cinzel', serif" },
+    'vela-minimal': { width: 60, height: 40, padding: 2, borderRadius: 0, topLine: 2, bottomLine: 0, areaGap: 3, fontBrand: 12, fontBrandSub: 6, fontProduct: 16, fontType: 8, fontDetails: 7, fontInstr: 0, fontBatch: 6, fontOrigin: 6, qrSize: 25, accentColor: '#1a1a1a', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Montserrat', sans-serif", productFont: "'Montserrat', sans-serif", showInstructions: false }
+    ,
+    'vela-mini': { width: 30, height: 40, padding: 1.5, borderRadius: 2, topLine: 2, bottomLine: 0, areaGap: 2, fontBrand: 10, fontBrandSub: 5, fontProduct: 12, fontType: 7, fontDetails: 6, fontInstr: 0, fontBatch: 5, fontOrigin: 5, qrSize: 28, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Montserrat', sans-serif" },
+    'vela-micro': { width: 25, height: 35, padding: 1, borderRadius: 1, topLine: 1, bottomLine: 0, areaGap: 2, fontBrand: 9, fontBrandSub: 5, fontProduct: 11, fontType: 6, fontDetails: 6, fontInstr: 0, fontBatch: 5, fontOrigin: 5, qrSize: 30, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Montserrat', sans-serif" },
+    'vela-tea-light': { width: 35, height: 25, padding: 1.5, borderRadius: 12, topLine: 0, bottomLine: 0, areaGap: 2, fontBrand: 10, fontBrandSub: 5, fontProduct: 12, fontType: 6, fontDetails: 6, fontInstr: 0, fontBatch: 5, fontOrigin: 5, qrSize: 32, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Cormorant Garamond', serif", showInstructions: false },
+    'vela-votiva': { width: 40, height: 50, padding: 2, borderRadius: 3, topLine: 2, bottomLine: 1, areaGap: 3, fontBrand: 11, fontBrandSub: 6, fontProduct: 14, fontType: 7, fontDetails: 7, fontInstr: 0, fontBatch: 6, fontOrigin: 6, qrSize: 26, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Playfair Display', serif" },
+    'vela-rectangular': { width: 45, height: 30, padding: 1.8, borderRadius: 2, topLine: 2, bottomLine: 0, areaGap: 3, fontBrand: 11, fontBrandSub: 6, fontProduct: 13, fontType: 7, fontDetails: 7, fontInstr: 0, fontBatch: 6, fontOrigin: 6, qrSize: 28, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Montserrat', sans-serif", productFont: "'Montserrat', sans-serif" },
+    'vela-etiqueta': { width: 55, height: 35, padding: 2, borderRadius: 2, topLine: 3, bottomLine: 0, areaGap: 4, fontBrand: 13, fontBrandSub: 7, fontProduct: 16, fontType: 8, fontDetails: 8, fontInstr: 6, fontBatch: 6, fontOrigin: 6, qrSize: 24, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Montserrat', sans-serif" }
+  };
+  const t = templates[template];
+  if (!t) return;
+  document.getElementById('labelWidth').value = t.width;
+  document.getElementById('labelHeight').value = t.height;
+  document.getElementById('labelPadding').value = t.padding;
+  document.getElementById('borderRadius').value = t.borderRadius;
+  document.getElementById('topLine').value = t.topLine;
+  document.getElementById('bottomLine').value = t.bottomLine;
+  document.getElementById('areaGap').value = t.areaGap;
+  document.getElementById('fontBrand').value = t.fontBrand;
+  document.getElementById('fontBrandSub').value = t.fontBrandSub;
+  document.getElementById('fontProduct').value = t.fontProduct;
+  document.getElementById('fontType').value = t.fontType;
+  document.getElementById('fontDetails').value = t.fontDetails;
+  document.getElementById('fontInstr').value = t.fontInstr;
+  document.getElementById('fontBatch').value = t.fontBatch;
+  document.getElementById('fontOrigin').value = t.fontOrigin;
+  document.getElementById('qrSize').value = t.qrSize;
+  document.getElementById('accentColor').value = t.accentColor;
+  document.getElementById('textColor').value = t.textColor;
+  document.getElementById('bgColor').value = t.bgColor;
+  document.getElementById('brandFont').value = t.brandFont;
+  document.getElementById('productFont').value = t.productFont;
+  if (t.showInstructions !== undefined) document.getElementById('showInstructions').checked = t.showInstructions;
+  updateLabel();
+  showToast('Plantilla aplicada', 'success');
+}
+
+function updateLabel() {
+  const label = document.getElementById('labelPreview');
+  const widthMm = parseInt(document.getElementById('labelWidth').value);
+  const heightMm = parseInt(document.getElementById('labelHeight').value);
+  const paddingMm = parseFloat(document.getElementById('labelPadding').value);
+  const borderRadius = parseInt(document.getElementById('borderRadius').value);
+  const topLine = parseInt(document.getElementById('topLine').value);
+  const bottomLine = parseInt(document.getElementById('bottomLine').value);
+  const areaGap = parseInt(document.getElementById('areaGap').value);
+  const fontBrand = parseInt(document.getElementById('fontBrand').value);
+  const fontBrandSub = parseInt(document.getElementById('fontBrandSub').value);
+  const fontProduct = parseInt(document.getElementById('fontProduct').value);
+  const fontType = parseInt(document.getElementById('fontType').value);
+  const fontDetails = parseInt(document.getElementById('fontDetails').value);
+  const fontInstr = parseInt(document.getElementById('fontInstr').value);
+  const fontBatch = parseInt(document.getElementById('fontBatch').value);
+  const fontOrigin = parseInt(document.getElementById('fontOrigin').value);
+  const qrSizePercent = parseInt(document.getElementById('qrSize').value);
+  const brandFont = document.getElementById('brandFont').value;
+  const productFont = document.getElementById('productFont').value;
+  const accentColor = document.getElementById('accentColor').value;
+  const textColor = document.getElementById('textColor').value;
+  const bgColor = document.getElementById('bgColor').value;
+  const qrColor = document.getElementById('qrColor').value;
+  const qrBgColor = document.getElementById('qrBgColor').value;
+  const showDivider = document.getElementById('showDivider').checked;
+  const showQR = document.getElementById('showQR').checked;
+  const showInstructions = document.getElementById('showInstructions').checked;
+  const showFooter = document.getElementById('showFooter').checked;
+
+  document.getElementById('labelWidthVal').textContent = widthMm;
+  document.getElementById('labelHeightVal').textContent = heightMm;
+  document.getElementById('labelPaddingVal').textContent = paddingMm;
+  document.getElementById('borderRadiusVal').textContent = borderRadius;
+  document.getElementById('topLineVal').textContent = topLine;
+  document.getElementById('bottomLineVal').textContent = bottomLine;
+  document.getElementById('areaGapVal').textContent = areaGap;
+  document.getElementById('fontBrandVal').textContent = fontBrand;
+  document.getElementById('fontBrandSubVal').textContent = fontBrandSub;
+  document.getElementById('fontProductVal').textContent = fontProduct;
+  document.getElementById('fontTypeVal').textContent = fontType;
+  document.getElementById('fontDetailsVal').textContent = fontDetails;
+  document.getElementById('fontInstrVal').textContent = fontInstr;
+  document.getElementById('fontBatchVal').textContent = fontBatch;
+  document.getElementById('fontOriginVal').textContent = fontOrigin;
+  document.getElementById('qrSizeVal').textContent = qrSizePercent;
+  document.getElementById('accentColorValue').textContent = accentColor;
+  document.getElementById('textColorValue').textContent = textColor;
+  document.getElementById('bgColorValue').textContent = bgColor;
+  document.getElementById('qrColorValue').textContent = qrColor;
+  document.getElementById('qrBgColorValue').textContent = qrBgColor;
+  document.getElementById('previewSize').textContent = widthMm + ' × ' + heightMm + ' mm';
+
+  label.style.setProperty('--label-width', widthMm + 'mm');
+  label.style.setProperty('--label-height', heightMm + 'mm');
+  label.style.setProperty('--label-padding', paddingMm + 'mm');
+  label.style.setProperty('--border-radius', borderRadius + 'px');
+  label.style.setProperty('--top-line', topLine + 'px');
+  label.style.setProperty('--bottom-line', bottomLine + 'px');
+  label.style.setProperty('--area-gap', areaGap + 'px');
+  label.style.setProperty('--accent-color', accentColor);
+  label.style.setProperty('--text-color', textColor);
+  label.style.setProperty('--qr-size', qrSizePercent + '%');
+  label.style.setProperty('--qr-bg', qrBgColor);
+  label.style.setProperty('--brand-font', brandFont);
+  label.style.setProperty('--product-font', productFont);
+  label.style.backgroundColor = bgColor;
+  label.style.borderRadius = borderRadius + 'px';
+
+  const topLineEl = document.getElementById('labelTopLine');
+  topLineEl.style.height = topLine + 'px'; topLineEl.style.backgroundColor = accentColor; topLineEl.style.display = topLine > 0 ? 'block' : 'none';
+  const bottomLineEl = document.getElementById('labelBottomLine');
+  bottomLineEl.style.height = bottomLine + 'px'; bottomLineEl.style.backgroundColor = accentColor; bottomLineEl.style.display = bottomLine > 0 ? 'block' : 'none';
+
+  document.getElementById('previewBrand').style.fontSize = fontBrand + 'px';
+  document.getElementById('previewBrand').style.fontFamily = brandFont;
+  document.getElementById('previewBrandSub').style.fontSize = fontBrandSub + 'px';
+  document.getElementById('previewProduct').style.fontSize = fontProduct + 'px';
+  document.getElementById('previewProduct').style.fontFamily = productFont;
+  document.getElementById('previewType').style.fontSize = fontType + 'px';
+  document.getElementById('previewDetails').style.fontSize = fontDetails + 'px';
+  document.getElementById('previewInstructions').style.fontSize = fontInstr + 'px';
+  document.getElementById('previewBatch').style.fontSize = fontBatch + 'px';
+  document.getElementById('previewOrigin').style.fontSize = fontOrigin + 'px';
+
+  document.getElementById('previewBrand').style.color = textColor;
+  document.getElementById('previewProduct').style.color = textColor;
+  document.getElementById('previewBatch').style.color = textColor;
+
+  const qrEl = document.getElementById('previewQR');
+  if (showQR) {
+    qrEl.style.display = 'flex';
+    qrEl.style.width = qrSizePercent + '%';
+    // Fondo blanco opaco + quiet zone para vinil transparente
+    qrEl.style.backgroundColor = '#ffffff';
+    qrEl.style.padding = '3px';
+    qrEl.style.boxSizing = 'border-box';
+    try {
+      const qr = qrcode(0, 'H'); // 'H' = máxima corrección de errores (30%)
+      qr.addData(document.getElementById('qrUrl').value || 'https://example.com');
+      qr.make();
+      const moduleCount = qr.getModuleCount();
+      // Grid CSS que se estira al 100% del contenedor sin cortarse
+      let qrHtml = '<div style="display:grid;grid-template-columns:repeat(' + moduleCount + ',1fr);grid-template-rows:repeat(' + moduleCount + ',1fr);width:100%;height:100%;">';
+      for (let row = 0; row < moduleCount; row++) {
+        for (let col = 0; col < moduleCount; col++) {
+          const isDark = qr.isDark(row, col);
+          // Negro puro / blanco puro para máximo contraste en vinil
+          qrHtml += '<div style="background:' + (isDark ? '#000000' : '#ffffff') + ';"></div>';
+        }
+      }
+      qrHtml += '</div>';
+      qrEl.innerHTML = qrHtml;
+    } catch (e) { qrEl.innerHTML = '<span style="font-size:0.5rem;color:#999;">QR Error</span>'; }
+  } else { qrEl.style.display = 'none'; }
+
+  document.getElementById('labelDivider').style.display = showDivider ? 'block' : 'none';
+  document.getElementById('previewInstructions').style.display = showInstructions ? 'block' : 'none';
+  document.getElementById('labelFooter').style.display = showFooter ? 'flex' : 'none';
+
+  const logoArea = document.getElementById('labelLogoArea');
+  const productArea = document.getElementById('labelProduct');
+  const instrArea = document.getElementById('previewInstructions');
+  const footerArea = document.getElementById('labelFooter');
+  logoArea.style.padding = (areaGap * 0.5) + 'px 0';
+  productArea.style.padding = (areaGap * 0.5) + 'px 0';
+  instrArea.style.padding = (areaGap * 0.5) + 'px 0';
+  footerArea.style.paddingTop = areaGap + 'px';
+
+  document.getElementById('previewBrand').textContent = document.getElementById('brandName').value || 'Marca';
+  document.getElementById('previewBrandSub').textContent = document.getElementById('brandSub').value || '';
+  document.getElementById('previewProduct').textContent = document.getElementById('productName').value || 'Producto';
+  document.getElementById('previewType').textContent = document.getElementById('productType').value || '';
+  document.getElementById('previewDetails').textContent = document.getElementById('productDetails').value || '';
+  document.getElementById('previewInstructions').textContent = document.getElementById('instructions').value || '';
+  document.getElementById('previewBatch').textContent = document.getElementById('batchInfo').value || '';
+  document.getElementById('previewOrigin').textContent = document.getElementById('originInfo').value || '';
+
+  const logoImg = document.getElementById('previewLogoImg');
+  const brandText = document.getElementById('previewBrand');
+  const brandSub = document.getElementById('previewBrandSub');
+  if (logoDataUrl) {
+    logoImg.src = logoDataUrl; logoImg.style.display = 'block'; brandText.style.display = 'none'; brandSub.style.display = 'none';
+    logoImg.style.maxHeight = (heightMm * 0.15) + 'mm';
+  } else {
+    logoImg.style.display = 'none'; brandText.style.display = 'block'; brandSub.style.display = 'block';
+  }
+}
+
+function handleLogoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    logoDataUrl = e.target.result;
+    document.getElementById('logoPreview').src = logoDataUrl;
+    document.getElementById('logoPreview').style.display = 'block';
+    document.getElementById('logoIcon').style.display = 'none';
+    document.getElementById('logoText').textContent = file.name;
+    document.getElementById('logoUploadArea').classList.add('has-image');
+    updateLabel();
+    showToast('Logo cargado correctamente', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function getCurrentConfig() {
+  return {
+    width: document.getElementById('labelWidth').value, height: document.getElementById('labelHeight').value,
+    padding: document.getElementById('labelPadding').value, borderRadius: document.getElementById('borderRadius').value,
+    topLine: document.getElementById('topLine').value, bottomLine: document.getElementById('bottomLine').value,
+    areaGap: document.getElementById('areaGap').value, fontBrand: document.getElementById('fontBrand').value,
+    fontBrandSub: document.getElementById('fontBrandSub').value, fontProduct: document.getElementById('fontProduct').value,
+    fontType: document.getElementById('fontType').value, fontDetails: document.getElementById('fontDetails').value,
+    fontInstr: document.getElementById('fontInstr').value, fontBatch: document.getElementById('fontBatch').value,
+    fontOrigin: document.getElementById('fontOrigin').value, qrSize: document.getElementById('qrSize').value,
+    brandFont: document.getElementById('brandFont').value, productFont: document.getElementById('productFont').value,
+    accentColor: document.getElementById('accentColor').value, textColor: document.getElementById('textColor').value,
+    bgColor: document.getElementById('bgColor').value, qrColor: document.getElementById('qrColor').value,
+    qrBgColor: document.getElementById('qrBgColor').value, showDivider: document.getElementById('showDivider').checked,
+    showQR: document.getElementById('showQR').checked, showInstructions: document.getElementById('showInstructions').checked,
+    showFooter: document.getElementById('showFooter').checked,
+    images: getImagesConfig()
+  };
+}
+
+function getCurrentContent() {
+  return {
+    brandName: document.getElementById('brandName').value, brandSub: document.getElementById('brandSub').value,
+    productName: document.getElementById('productName').value, productType: document.getElementById('productType').value,
+    productDetails: document.getElementById('productDetails').value, instructions: document.getElementById('instructions').value,
+    qrUrl: document.getElementById('qrUrl').value, batchInfo: document.getElementById('batchInfo').value,
+    originInfo: document.getElementById('originInfo').value
+  };
+}
+
+async function saveProject() {
+  const project = {
+    id: Date.now(), name: document.getElementById('projectName').value || 'Sin nombre',
+    date: new Date().toLocaleDateString('es-ES'), config: getCurrentConfig(), content: getCurrentContent(),
+    logoDataUrl: logoDataUrl, images: getImagesConfig(), lastModified: new Date().toISOString()
+  };
+  const existingIdx = projects.findIndex(p => p.name === project.name);
+  if (existingIdx >= 0) { project.id = projects[existingIdx].id; projects[existingIdx] = project; showToast('Proyecto actualizado localmente', 'success'); }
+  else { projects.push(project); showToast('Proyecto guardado localmente', 'success'); }
+  localStorage.setItem('aromaProjects', JSON.stringify(projects));
+  loadAllProjects();
+
+  try {
+    if (window.firebaseStorage) {
+      await window.firebaseStorage.saveProjectToFirestore(project);
+      showToast('✅ Sincronizado con la nube', 'success');
+    }
+  } catch (error) {
+    console.warn('No se pudo sincronizar con Firebase:', error);
+    showToast('⚠️ Guardado solo localmente', 'info');
+  }
+}
+
+async function loadAllProjects() {
+  const container = document.getElementById('projectsList');
+  if (window.firebaseStorage) {
+    try {
+      const firestoreProjects = await window.firebaseStorage.loadProjectsFromFirestore();
+      if (firestoreProjects.length > 0) { projects = firestoreProjects; localStorage.setItem('aromaProjects', JSON.stringify(projects)); }
+    } catch (error) { console.warn('Error al cargar desde Firebase:', error); projects = JSON.parse(localStorage.getItem('aromaProjects') || '[]'); }
+  } else { projects = JSON.parse(localStorage.getItem('aromaProjects') || '[]'); }
+
+  if (projects.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📁</div><h3>No hay proyectos guardados</h3><p>Crea tu primera etiqueta en el Diseñador y guárdala aquí.</p></div>';
+    return;
+  }
+  let html = '<div class="projects-grid">';
+  projects.forEach(p => {
+    const accentColor = p.config.accentColor || '#c9a96e';
+    const bgColor = p.config.bgColor || '#ffffff';
+    const textColor = p.config.textColor || '#1a1a1a';
+    html += '<div class="project-card" onclick="loadProject(' + p.id + ')">';
+    html += '<div class="project-preview" style="background:' + bgColor + ';">';
+    html += '<div style="text-align:center;padding:1rem;">';
+    html += '<div style="font-family:' + (p.config.brandFont || "'Adelia', cursive") + ';font-size:1.2rem;color:' + textColor + ';">' + (p.content.brandName || 'Marca') + '</div>';
+    html += '<div style="font-family:' + (p.config.productFont || "'Playfair Display', serif") + ';font-size:1.5rem;font-weight:700;color:' + textColor + ';margin:0.3rem 0;">' + (p.content.productName || 'Producto') + '</div>';
+    html += '<div style="color:' + accentColor + ';font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;">' + (p.content.productType || '') + '</div>';
+    html += '</div></div>';
+    html += '<div class="project-name">' + p.name + '</div>';
+    html += '<div class="project-meta">' + p.config.width + '×' + p.config.height + 'mm · ' + p.date + '</div>';
+    html += '<div class="project-actions">';
+    html += '<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();loadProject(' + p.id + ')">✏️ Editar</button>';
+    html += '<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteProject(' + p.id + ')">🗑️</button>';
+    html += '</div></div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+async function loadProject(id) {
+  const project = projects.find(p => p.id === id);
+  if (!project) return;
+  document.getElementById('projectName').value = project.name;
+  document.getElementById('brandName').value = project.content.brandName || '';
+  document.getElementById('brandSub').value = project.content.brandSub || '';
+  document.getElementById('productName').value = project.content.productName || '';
+  document.getElementById('productType').value = project.content.productType || '';
+  document.getElementById('productDetails').value = project.content.productDetails || '';
+  document.getElementById('instructions').value = project.content.instructions || '';
+  document.getElementById('qrUrl').value = project.content.qrUrl || '';
+  document.getElementById('batchInfo').value = project.content.batchInfo || '';
+  document.getElementById('originInfo').value = project.content.originInfo || '';
+  document.getElementById('labelWidth').value = project.config.width;
+  document.getElementById('labelHeight').value = project.config.height;
+  document.getElementById('labelPadding').value = project.config.padding;
+  document.getElementById('borderRadius').value = project.config.borderRadius;
+  document.getElementById('topLine').value = project.config.topLine;
+  document.getElementById('bottomLine').value = project.config.bottomLine || 0;
+  document.getElementById('areaGap').value = project.config.areaGap;
+  document.getElementById('fontBrand').value = project.config.fontBrand;
+  document.getElementById('fontBrandSub').value = project.config.fontBrandSub;
+  document.getElementById('fontProduct').value = project.config.fontProduct;
+  document.getElementById('fontType').value = project.config.fontType;
+  document.getElementById('fontDetails').value = project.config.fontDetails;
+  document.getElementById('fontInstr').value = project.config.fontInstr;
+  document.getElementById('fontBatch').value = project.config.fontBatch;
+  document.getElementById('fontOrigin').value = project.config.fontOrigin;
+  document.getElementById('qrSize').value = project.config.qrSize;
+  document.getElementById('accentColor').value = project.config.accentColor;
+  document.getElementById('textColor').value = project.config.textColor;
+  document.getElementById('bgColor').value = project.config.bgColor;
+  document.getElementById('qrColor').value = project.config.qrColor || '#1a1a1a';
+  document.getElementById('qrBgColor').value = project.config.qrBgColor || '#ffffff';
+  if (project.config.brandFont) document.getElementById('brandFont').value = project.config.brandFont;
+  if (project.config.productFont) document.getElementById('productFont').value = project.config.productFont;
+  document.getElementById('showDivider').checked = project.config.showDivider;
+  document.getElementById('showQR').checked = project.config.showQR;
+  document.getElementById('showInstructions').checked = project.config.showInstructions;
+  document.getElementById('showFooter').checked = project.config.showFooter !== false;
+
+  logoDataUrl = project.logoDataUrl;
+  if (logoDataUrl) {
+    document.getElementById('logoPreview').src = logoDataUrl; document.getElementById('logoPreview').style.display = 'block';
+    document.getElementById('logoIcon').style.display = 'none'; document.getElementById('logoText').textContent = 'Logo cargado';
+    document.getElementById('logoUploadArea').classList.add('has-image');
+  } else {
+    document.getElementById('logoPreview').style.display = 'none'; document.getElementById('logoIcon').style.display = 'block';
+    document.getElementById('logoText').textContent = 'Haz clic para subir logo'; document.getElementById('logoUploadArea').classList.remove('has-image');
+  }
+  if (project.images && project.images.length > 0) {
+    loadImagesConfig(project.images);
+  } else {
+    labelImages = [];
+    renderImagesPanel();
+    updateLabelImages();
+  }
+  updateLabel();
+  showSection('designer', document.querySelector('.nav-tab'));
+  showToast('Proyecto cargado: ' + project.name, 'success');
+}
+
+async function deleteProject(id) {
+  showModal('Eliminar Proyecto', '¿Estás seguro de eliminar este proyecto?', async () => {
+    projects = projects.filter(p => p.id !== id);
+    localStorage.setItem('aromaProjects', JSON.stringify(projects));
+    loadAllProjects();
+    showToast('Proyecto eliminado localmente', 'success');
+    try {
+      if (window.firebaseStorage) {
+        await window.firebaseStorage.deleteProjectFromFirestore(id);
+        showToast('✅ Eliminado de la nube', 'success');
+      }
+    } catch (error) { console.warn('No se pudo eliminar de Firebase:', error); showToast('⚠️ Eliminado solo localmente', 'info'); }
+  });
+}
+
+function exportProjectJSON() {
+  const project = { name: document.getElementById('projectName').value || 'Sin nombre', date: new Date().toLocaleDateString('es-ES'), config: getCurrentConfig(), content: getCurrentContent(), logoDataUrl: logoDataUrl };
+  const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = project.name.replace(/[^a-z0-9]/gi, '_') + '.json'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Proyecto exportado', 'success');
+}
+
+function importProjectJSON(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const project = JSON.parse(e.target.result); project.id = Date.now(); project.date = project.date || new Date().toLocaleDateString('es-ES');
+      const existingIdx = projects.findIndex(p => p.name === project.name);
+      if (existingIdx >= 0) projects[existingIdx] = project; else projects.push(project);
+      localStorage.setItem('aromaProjects', JSON.stringify(projects));
+      loadProject(project.id);
+      showToast('Proyecto importado: ' + project.name, 'success');
+    } catch (err) { showToast('Error al importar: archivo inválido', 'danger'); }
+  };
+  reader.readAsText(file); event.target.value = '';
+}
+
+function exportAllProjectsJSON() {
+  if (projects.length === 0) { showToast('No hay proyectos para exportar', 'danger'); return; }
+  const blob = new Blob([JSON.stringify(projects, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'aromalabel_proyectos_' + new Date().toISOString().slice(0,10) + '.json'; a.click();
+  URL.revokeObjectURL(url);
+  showToast(projects.length + ' proyectos exportados', 'success');
+}
+
+function importAllProjectsJSON(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result); if (!Array.isArray(imported)) throw new Error('Formato inválido');
+      let count = 0;
+      imported.forEach(p => {
+        p.id = p.id || Date.now() + Math.random();
+        const existingIdx = projects.findIndex(ep => ep.name === p.name);
+        if (existingIdx >= 0) projects[existingIdx] = p; else projects.push(p);
+        count++;
+      });
+      localStorage.setItem('aromaProjects', JSON.stringify(projects));
+      loadAllProjects();
+      showToast(count + ' proyectos importados', 'success');
+    } catch (err) { showToast('Error al importar: ' + err.message, 'danger'); }
+  };
+  reader.readAsText(file); event.target.value = '';
+}
+
+function addToPrintQueue() {
+  const labelClone = document.getElementById('labelPreview').cloneNode(true);
+  const item = { id: Date.now(), name: document.getElementById('projectName').value || 'Sin nombre', config: getCurrentConfig(), content: getCurrentContent(), logoDataUrl: logoDataUrl, html: labelClone.outerHTML, qty: 1 };
+  printQueue.push(item);
+  updatePrintQueueDisplay();
+  updateSheetPreview();
+  showToast('Etiqueta añadida a la cola', 'success');
+}
+
+function updatePrintQueueDisplay() {
+  const container = document.getElementById('printQueue');
+  if (printQueue.length === 0) {
+    container.innerHTML = '<div class="empty-state" style="padding:2rem;"><div class="empty-state-icon" style="font-size:2rem;">🖨️</div><p style="font-size:0.85rem;">No hay etiquetas en cola.</p></div>';
+    return;
+  }
+  let html = '';
+  printQueue.forEach((item, idx) => {
+    html += '<div class="batch-item">';
+    html += '<span style="font-weight:600;min-width:25px;">#' + (idx + 1) + '</span>';
+    html += '<input type="text" value="' + item.name + '" onchange="updateQueueItemName(' + idx + ', this.value)">';
+    html += '<input type="number" class="qty-input" value="' + item.qty + '" min="1" max="999" onchange="updateQueueItemQty(' + idx + ', this.value)" title="Cantidad">';
+    html += '<span style="font-size:0.75rem;color:var(--secondary);min-width:60px;">' + item.config.width + '×' + item.config.height + 'mm</span>';
+    html += '<button class="btn btn-info btn-xs" onclick="duplicateQueueItem(' + idx + ')" title="Duplicar">📋</button>';
+    html += '<button class="btn btn-danger btn-sm" onclick="removeFromQueue(' + idx + ')" title="Eliminar">✕</button>';
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function updateQueueItemName(idx, name) { if (printQueue[idx]) { printQueue[idx].name = name; updateSheetPreview(); } }
+function updateQueueItemQty(idx, qty) { if (printQueue[idx]) { printQueue[idx].qty = Math.max(1, parseInt(qty) || 1); updateSheetPreview(); } }
+function duplicateQueueItem(idx) {
+  if (printQueue[idx]) {
+    const copy = JSON.parse(JSON.stringify(printQueue[idx])); copy.id = Date.now(); copy.name = copy.name + ' (copia)';
+    printQueue.splice(idx + 1, 0, copy); updatePrintQueueDisplay(); updateSheetPreview(); showToast('Etiqueta duplicada', 'success');
+  }
+}
+function removeFromQueue(idx) { printQueue.splice(idx, 1); updatePrintQueueDisplay(); updateSheetPreview(); }
+function clearPrintQueue() {
+  if (printQueue.length === 0) return;
+  showModal('Vaciar Cola', '¿Estás seguro de vaciar la cola de impresión?', () => {
+    printQueue = []; updatePrintQueueDisplay(); updateSheetPreview(); showToast('Cola vaciada', 'success');
+  });
+}
+function getTotalLabelsCount() { return printQueue.reduce((sum, item) => sum + item.qty, 0); }
+
+function updateSheetPreview() {
+  const paperSize = document.getElementById('paperSize').value;
+  const marginTop = parseInt(document.getElementById('marginTop').value);
+  const marginLeft = parseInt(document.getElementById('marginLeft').value);
+  const marginRight = parseInt(document.getElementById('marginRight').value);
+  const marginBottom = parseInt(document.getElementById('marginBottom').value);
+  const gapX = parseInt(document.getElementById('gapX').value);
+  const gapY = parseInt(document.getElementById('gapY').value);
+  const paperSizes = { A4: [210, 297], Letter: [216, 279], Legal: [216, 356], A3: [297, 420], A5: [148, 210] };
+  const [paperW, paperH] = paperSizes[paperSize];
+  let labelW, labelH;
+  if (printQueue.length > 0) { labelW = parseInt(printQueue[0].config.width); labelH = parseInt(printQueue[0].config.height); }
+  else { labelW = parseInt(document.getElementById('labelWidth').value); labelH = parseInt(document.getElementById('labelHeight').value); }
+  const usableW = paperW - marginLeft - marginRight;
+  const usableH = paperH - marginTop - marginBottom;
+  const cols = Math.floor((usableW + gapX) / (labelW + gapX)) || 1;
+  const rows = Math.floor((usableH + gapY) / (labelH + gapY)) || 1;
+  const perSheet = cols * rows;
+  const total = getTotalLabelsCount();
+  const sheets = Math.ceil(total / perSheet) || 0;
+  const efficiency = perSheet > 0 && sheets > 0 ? Math.round((total / (sheets * perSheet)) * 100) : 0;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statPerSheet').textContent = perSheet;
+  document.getElementById('statSheets').textContent = sheets;
+  document.getElementById('statEfficiency').textContent = efficiency + '%';
+  const scale = Math.min(600 / paperW, 800 / paperH);
+  const sheetPage = document.getElementById('sheetPage');
+  sheetPage.style.width = (paperW * scale) + 'px'; sheetPage.style.height = (paperH * scale) + 'px'; sheetPage.innerHTML = '';
+  let labelCounter = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const div = document.createElement('div'); div.className = 'sheet-label';
+      div.style.left = ((marginLeft + c * (labelW + gapX)) * scale) + 'px';
+      div.style.top = ((marginTop + r * (labelH + gapY)) * scale) + 'px';
+      div.style.width = (labelW * scale) + 'px'; div.style.height = (labelH * scale) + 'px';
+      if (labelCounter < total) {
+        div.classList.add('filled');
+        let acc = 0, itemName = '';
+        for (const item of printQueue) { if (labelCounter < acc + item.qty) { itemName = item.name; break; } acc += item.qty; }
+        div.setAttribute('data-name', itemName);
+      } else { div.classList.add('empty'); }
+      labelCounter++; sheetPage.appendChild(div);
+    }
+  }
+}
+
+async function renderLabelForPrint(item) {
+  const container = document.createElement('div'); container.style.cssText = 'position:absolute;left:-9999px;top:0;';
+  container.innerHTML = item.html; document.body.appendChild(container);
+  const label = container.querySelector('.label');
+  const c = item.config;
+  label.style.setProperty('--label-width', c.width + 'mm'); label.style.setProperty('--label-height', c.height + 'mm');
+  label.style.setProperty('--label-padding', c.padding + 'mm'); label.style.setProperty('--border-radius', c.borderRadius + 'px');
+  label.style.setProperty('--top-line', c.topLine + 'px'); label.style.setProperty('--bottom-line', (c.bottomLine || 0) + 'px');
+  label.style.setProperty('--area-gap', c.areaGap + 'px'); label.style.setProperty('--accent-color', c.accentColor);
+  label.style.setProperty('--text-color', c.textColor); label.style.setProperty('--qr-size', c.qrSize + '%');
+  label.style.setProperty('--qr-bg', c.qrBgColor); label.style.setProperty('--brand-font', c.brandFont || "'Adelia', cursive");
+  label.style.setProperty('--product-font', c.productFont || "'Playfair Display', serif");
+  label.style.backgroundColor = c.bgColor; label.style.borderRadius = c.borderRadius + 'px'; label.style.boxShadow = 'none';
+
+  const content = item.content;
+  const brandEl = label.querySelector('.label-logo'); const brandSubEl = label.querySelector('.label-logo-sub');
+  const productEl = label.querySelector('.label-name'); const typeEl = label.querySelector('.label-type');
+  const detailsEl = label.querySelector('.label-details'); const instrEl = label.querySelector('.label-instructions');
+  const batchEl = label.querySelector('.label-batch'); const originEl = label.querySelector('#previewOrigin');
+  if (brandEl) { brandEl.textContent = content.brandName || ''; brandEl.style.fontSize = c.fontBrand + 'px'; brandEl.style.fontFamily = c.brandFont; brandEl.style.color = c.textColor; }
+  if (brandSubEl) { brandSubEl.textContent = content.brandSub || ''; brandSubEl.style.fontSize = c.fontBrandSub + 'px'; }
+  if (productEl) { productEl.textContent = content.productName || ''; productEl.style.fontSize = c.fontProduct + 'px'; productEl.style.fontFamily = c.productFont; productEl.style.color = c.textColor; }
+  if (typeEl) { typeEl.textContent = content.productType || ''; typeEl.style.fontSize = c.fontType + 'px'; typeEl.style.color = c.accentColor; }
+  if (detailsEl) { detailsEl.textContent = content.productDetails || ''; detailsEl.style.fontSize = c.fontDetails + 'px'; }
+  if (instrEl) { instrEl.textContent = content.instructions || ''; instrEl.style.fontSize = c.fontInstr + 'px'; instrEl.style.display = c.showInstructions ? 'block' : 'none'; }
+  if (batchEl) { batchEl.textContent = content.batchInfo || ''; batchEl.style.fontSize = c.fontBatch + 'px'; batchEl.style.color = c.textColor; }
+  if (originEl) { originEl.textContent = content.originInfo || ''; originEl.style.fontSize = c.fontOrigin + 'px'; }
+
+  const topLineEl = label.querySelector('.label-top-line');
+  if (topLineEl) { topLineEl.style.height = c.topLine + 'px'; topLineEl.style.backgroundColor = c.accentColor; topLineEl.style.display = c.topLine > 0 ? 'block' : 'none'; }
+  const bottomLineEl = label.querySelector('.label-bottom-line');
+  if (bottomLineEl) { bottomLineEl.style.height = (c.bottomLine || 0) + 'px'; bottomLineEl.style.backgroundColor = c.accentColor; bottomLineEl.style.display = (c.bottomLine || 0) > 0 ? 'block' : 'none'; }
+  const dividerEl = label.querySelector('.label-divider'); if (dividerEl) dividerEl.style.display = c.showDivider ? 'block' : 'none';
+  const footerEl = label.querySelector('.label-footer'); if (footerEl) footerEl.style.display = c.showFooter !== false ? 'flex' : 'none';
+
+  const qrEl = label.querySelector('.label-qr');
+  if (qrEl && c.showQR) {
+    qrEl.style.display = 'flex';
+    qrEl.style.width = c.qrSize + '%';
+    // Fondo blanco opaco + quiet zone para vinil transparente
+    qrEl.style.backgroundColor = '#ffffff';
+    qrEl.style.padding = '3px';
+    qrEl.style.boxSizing = 'border-box';
+    try {
+      const qr = qrcode(0, 'H'); // máxima corrección de errores (30%)
+      qr.addData(content.qrUrl || 'https://example.com');
+      qr.make();
+      const moduleCount = qr.getModuleCount();
+      // Grid CSS que se estira al 100% del contenedor sin cortarse
+      let qrHtml = '<div style="display:grid;grid-template-columns:repeat(' + moduleCount + ',1fr);grid-template-rows:repeat(' + moduleCount + ',1fr);width:100%;height:100%;">';
+      for (let row = 0; row < moduleCount; row++) {
+        for (let col = 0; col < moduleCount; col++) {
+          const isDark = qr.isDark(row, col);
+          // Negro puro / blanco puro para máximo contraste en vinil
+          qrHtml += '<div style="background:' + (isDark ? '#000000' : '#ffffff') + ';"></div>';
+        }
+      }
+      qrHtml += '</div>';
+      qrEl.innerHTML = qrHtml;
+    } catch (e) { qrEl.innerHTML = ''; }
+  } else if (qrEl) { qrEl.style.display = 'none'; }
+
+  const logoImg = label.querySelector('.label-logo-img');
+  if (logoImg) {
+    if (item.logoDataUrl) {
+      logoImg.src = item.logoDataUrl; logoImg.style.display = 'block';
+      if (brandEl) brandEl.style.display = 'none'; if (brandSubEl) brandSubEl.style.display = 'none';
+      logoImg.style.maxHeight = (parseInt(c.height) * 0.15) + 'mm';
+    } else { logoImg.style.display = 'none'; if (brandEl) brandEl.style.display = 'block'; if (brandSubEl) brandSubEl.style.display = 'block'; }
+  }
+
+  const logoArea = label.querySelector('.label-logo-area'); const productArea = label.querySelector('.label-product');
+  if (logoArea) logoArea.style.padding = (parseInt(c.areaGap) * 0.5) + 'px 0';
+  if (productArea) productArea.style.padding = (parseInt(c.areaGap) * 0.5) + 'px 0';
+  if (instrEl) instrEl.style.padding = (parseInt(c.areaGap) * 0.5) + 'px 0';
+  if (footerEl) footerEl.style.paddingTop = c.areaGap + 'px';
+
+  if (item.logoDataUrl && logoImg) { await new Promise(resolve => { if (logoImg.complete) resolve(); else { logoImg.onload = resolve; logoImg.onerror = resolve; } }); }
+  const canvas = await html2canvas(label, { scale: 4, backgroundColor: null, useCORS: true, logging: false });
+  document.body.removeChild(container);
+  return canvas;
+}
+
+async function printLabels() {
+  if (printQueue.length === 0) { showToast('La cola de impresión está vacía', 'danger'); return; }
+  showToast('Generando etiquetas para imprimir...', 'info');
+  const paperSize = document.getElementById('paperSize').value;
+  const marginTop = parseInt(document.getElementById('marginTop').value); const marginLeft = parseInt(document.getElementById('marginLeft').value);
+  const marginRight = parseInt(document.getElementById('marginRight').value); const marginBottom = parseInt(document.getElementById('marginBottom').value);
+  const gapX = parseInt(document.getElementById('gapX').value); const gapY = parseInt(document.getElementById('gapY').value);
+  const paperSizes = { A4: [210, 297], Letter: [216, 279], Legal: [216, 356], A3: [297, 420], A5: [148, 210] };
+  const [paperW, paperH] = paperSizes[paperSize];
+  const labelW = parseInt(printQueue[0].config.width); const labelH = parseInt(printQueue[0].config.height);
+  const usableW = paperW - marginLeft - marginRight; const usableH = paperH - marginTop - marginBottom;
+  const cols = Math.floor((usableW + gapX) / (labelW + gapX)) || 1; const rows = Math.floor((usableH + gapY) / (labelH + gapY)) || 1;
+  const expandedQueue = []; printQueue.forEach(item => { for (let i = 0; i < item.qty; i++) expandedQueue.push(item); });
+  const printArea = document.getElementById('printArea'); printArea.innerHTML = ''; printArea.style.display = 'block';
+  let labelIdx = 0; let pageNum = 0;
+  while (labelIdx < expandedQueue.length) {
+    const pageDiv = document.createElement('div'); pageDiv.className = 'print-page';
+    pageDiv.style.width = paperW + 'mm'; pageDiv.style.height = paperH + 'mm'; pageDiv.style.position = 'relative'; pageDiv.style.pageBreakAfter = 'always';
+    for (let r = 0; r < rows && labelIdx < expandedQueue.length; r++) {
+      for (let c = 0; c < cols && labelIdx < expandedQueue.length; c++) {
+        const item = expandedQueue[labelIdx];
+        try {
+          const canvas = await renderLabelForPrint(item); const imgData = canvas.toDataURL('image/png');
+          const wrapper = document.createElement('div'); wrapper.className = 'print-label-wrapper';
+          wrapper.style.left = (marginLeft + c * (labelW + gapX)) + 'mm'; wrapper.style.top = (marginTop + r * (labelH + gapY)) + 'mm';
+          wrapper.style.width = labelW + 'mm'; wrapper.style.height = labelH + 'mm';
+          const img = document.createElement('img'); img.src = imgData; img.style.width = '100%'; img.style.height = '100%'; img.style.display = 'block';
+          wrapper.appendChild(img); pageDiv.appendChild(wrapper);
+        } catch (e) { console.error('Error rendering label:', e); }
+        labelIdx++;
+      }
+    }
+    printArea.appendChild(pageDiv); pageNum++;
+  }
+  showToast('Imprimiendo ' + pageNum + ' hojas...', 'info');
+  setTimeout(() => { window.print(); setTimeout(() => { printArea.style.display = 'none'; printArea.innerHTML = ''; }, 1000); }, 500);
+}
+
+async function exportSinglePDF() {
+  showToast('Generando PDF...', 'info');
+  try {
+    const fakeItem = { config: getCurrentConfig(), content: getCurrentContent(), logoDataUrl: logoDataUrl, html: document.getElementById('labelPreview').outerHTML };
+    const canvas = await renderLabelForPrint(fakeItem); const imgData = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const widthMm = parseInt(document.getElementById('labelWidth').value); const heightMm = parseInt(document.getElementById('labelHeight').value);
+    const pdf = new jsPDF({ orientation: heightMm > widthMm ? 'portrait' : 'landscape', unit: 'mm', format: [widthMm, heightMm] });
+    pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
+    pdf.save('etiqueta_' + (document.getElementById('productName').value || 'etiqueta') + '.pdf');
+    showToast('PDF exportado correctamente', 'success');
+  } catch (e) { showToast('Error al generar PDF: ' + e.message, 'danger'); }
+}
+
+async function exportQueuePDF() {
+  if (printQueue.length === 0) { showToast('La cola de impresión está vacía', 'danger'); return; }
+  showToast('Generando PDF de ' + getTotalLabelsCount() + ' etiquetas...', 'info');
+  try {
+    const paperSize = document.getElementById('paperSize').value;
+    const marginTop = parseInt(document.getElementById('marginTop').value); const marginLeft = parseInt(document.getElementById('marginLeft').value);
+    const marginRight = parseInt(document.getElementById('marginRight').value); const marginBottom = parseInt(document.getElementById('marginBottom').value);
+    const gapX = parseInt(document.getElementById('gapX').value); const gapY = parseInt(document.getElementById('gapY').value);
+    const paperSizes = { A4: [210, 297], Letter: [216, 279], Legal: [216, 356], A3: [297, 420], A5: [148, 210] };
+    const [paperW, paperH] = paperSizes[paperSize];
+    const labelW = parseInt(printQueue[0].config.width); const labelH = parseInt(printQueue[0].config.height);
+    const usableW = paperW - marginLeft - marginRight; const usableH = paperH - marginTop - marginBottom;
+    const cols = Math.floor((usableW + gapX) / (labelW + gapX)) || 1; const rows = Math.floor((usableH + gapY) / (labelH + gapY)) || 1;
+    const expandedQueue = []; printQueue.forEach(item => { for (let i = 0; i < item.qty; i++) expandedQueue.push(item); });
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: paperH > paperW ? 'portrait' : 'landscape', unit: 'mm', format: [paperW, paperH] });
+    let labelIdx = 0; let pageNum = 0;
+    while (labelIdx < expandedQueue.length) {
+      if (pageNum > 0) pdf.addPage([paperW, paperH], paperH > paperW ? 'portrait' : 'landscape');
+      for (let r = 0; r < rows && labelIdx < expandedQueue.length; r++) {
+        for (let c = 0; c < cols && labelIdx < expandedQueue.length; c++) {
+          const item = expandedQueue[labelIdx];
+          try {
+            const canvas = await renderLabelForPrint(item); const imgData = canvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', marginLeft + c * (labelW + gapX), marginTop + r * (labelH + gapY), labelW, labelH);
+          } catch (e) { console.error('Error:', e); }
+          labelIdx++;
+        }
+      }
+      pageNum++;
+    }
+    pdf.save('etiquetas_' + new Date().toISOString().slice(0,10) + '.pdf');
+    showToast('PDF exportado: ' + expandedQueue.length + ' etiquetas en ' + pageNum + ' hojas', 'success');
+  } catch (e) { showToast('Error al generar PDF: ' + e.message, 'danger'); }
+}
+
+async function exportSinglePNG() {
+  showToast('Generando PNG...', 'info');
+  try {
+    const fakeItem = { config: getCurrentConfig(), content: getCurrentContent(), logoDataUrl: logoDataUrl, html: document.getElementById('labelPreview').outerHTML };
+    const canvas = await renderLabelForPrint(fakeItem);
+    const link = document.createElement('a'); link.download = 'etiqueta_' + (document.getElementById('productName').value || 'etiqueta') + '.png';
+    link.href = canvas.toDataURL('image/png'); link.click();
+    showToast('PNG exportado correctamente', 'success');
+  } catch (e) { showToast('Error al generar PNG: ' + e.message, 'danger'); }
+}
+
+async function syncProjectsManual() {
+  if (!window.firebaseStorage) { showToast('Firebase no está disponible', 'danger'); return; }
+  try {
+    showToast('Sincronizando con la nube...', 'info');
+    await window.firebaseStorage.syncProjects();
+    loadAllProjects();
+    showToast('✅ Sincronización completada', 'success');
+  } catch (error) {
+    console.error('Error en sincronización:', error);
+    showToast('❌ Error al sincronizar: ' + error.message, 'danger');
+  }
+}
+
+function showToast(message, type) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div'); toast.className = 'toast';
+  toast.style.background = type === 'success' ? 'var(--success)' : type === 'danger' ? 'var(--danger)' : 'var(--info)';
+  toast.innerHTML = '<span>' + message + '</span>'; container.appendChild(toast);
+  setTimeout(() => { toast.classList.add('fade-out'); setTimeout(() => toast.remove(), 300); }, 3000);
+}
+
+function showModal(title, text, onConfirm) {
+  document.getElementById('modalTitle').textContent = title; document.getElementById('modalText').textContent = text;
+  document.getElementById('modal').classList.add('show');
+  const confirmBtn = document.getElementById('modalConfirm');
+  const newBtn = confirmBtn.cloneNode(true); confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+  newBtn.id = 'modalConfirm'; newBtn.onclick = () => { closeModal(); onConfirm(); };
+}
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+document.addEventListener('keydown', function(e) { if (e.ctrlKey && e.key === 's') { e.preventDefault(); saveProject(); } if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>

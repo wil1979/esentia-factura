@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AromaLabel Pro - Diseñador de Etiquetas Elite</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600&family=Cinzel:wght@400;700&family=Tenor+Sans&family=Tangerine:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+@font-face {
+  font-family: 'Adelia';
+  src: url('fonts/Adelia.ttf') format('truetype');
+  font-weight: normal; font-style: normal; font-display: swap;
+}
+
+:root {
+  --primary: #1a1a1a; 
+  --secondary: #4a4a4a; 
+  --accent: #c9a96e;
+  --accent-green: #4a7c59;
+  --bg: #f0f2f5; 
+  --card-bg: rgba(255, 255, 255, 0.9); 
+  --border: rgba(201, 169, 110, 0.3);
+  --shadow: 0 8px 32px rgba(0,0,0,0.08);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Montserrat', sans-serif; background: var(--bg); color: var(--primary); }
+
+.header { 
+    background: rgba(255, 255, 255, 0.95); 
+    backdrop-filter: blur(10px); 
+    border-bottom: 1px solid var(--border); 
+    padding: 1rem 2rem; 
+    display: flex; justify-content: space-between; align-items: center; 
+    position: sticky; top: 0; z-index: 100; 
+}
+.logo-text { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; }
+.nav-tabs { display: flex; gap: 0.5rem; }
+.nav-tab { padding: 0.6rem 1.2rem; border: none; background: transparent; cursor: pointer; border-radius: 8px; font-weight: 500; transition: all 0.3s ease; }
+.nav-tab.active { background: var(--primary); color: white; }
+.nav-tab:hover:not(.active) { background: rgba(201, 169, 110, 0.1); }
+
+.main-container { display: grid; grid-template-columns: 420px 1fr; gap: 2rem; padding: 2rem; max-width: 1800px; margin: 0 auto; }
+.sidebar { 
+    background: var(--card-bg); 
+    backdrop-filter: blur(12px); 
+    border: 1px solid rgba(255, 255, 255, 0.6); 
+    border-radius: 16px; 
+    padding: 1.5rem; 
+    box-shadow: var(--shadow); 
+    height: calc(100vh - 120px); 
+    overflow-y: auto; 
+    position: sticky; top: 100px; 
+}
+.sidebar::-webkit-scrollbar { width: 5px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+.label-container { display: flex; justify-content: center; align-items: center; min-height: 600px; background: #e0e0e0; border-radius: 12px; padding: 20px; overflow: auto; }
+.label { 
+    background: white; position: relative; overflow: hidden; 
+    width: var(--label-width, 60mm); height: var(--label-height, 80mm); 
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.shape-rect { border-radius: 4px; }
+.shape-arch { border-radius: 100px 100px 4px 4px !important; }
+.shape-pill { border-radius: 500px !important; }
+.shape-hex { clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); }
+
+.draggable-text { position: absolute; text-align: center; cursor: default; white-space: nowrap; }
+.img-floating, .qr-floating, .separator-line { position: absolute; box-sizing: border-box; }
+.separator-line { height: var(--sep-thickness, 1px); background: var(--sep-color, #000); left: 50%; transform: translateX(-50%); }
+
+.form-group { margin-bottom: 1rem; background: rgba(252, 252, 252, 0.8); padding: 12px; border-radius: 10px; border: 1px solid var(--border); }
+.form-label { display: block; font-size: 0.7rem; font-weight: 800; color: var(--accent-green); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
+.form-input, .form-select, .form-textarea { width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 6px; background: white; transition: border 0.3s; font-family: inherit; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--accent); }
+.form-textarea { resize: vertical; min-height: 60px; }
+
+.range-group { margin-top: 8px; }
+.range-label { display: flex; justify-content: space-between; font-size: 0.65rem; color: #666; font-weight: 600; align-items: center; }
+.range-label input { width: 60%; }
+
+.text-format-btns { display: flex; gap: 5px; margin-top: 5px; }
+.format-btn { flex: 1; padding: 4px; border: 1px solid var(--border); background: white; border-radius: 4px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
+.format-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+.btn { padding: 0.8rem; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 8px; transition: transform 0.2s, box-shadow 0.2s; }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.btn-primary { background: var(--primary); color: white; }
+.btn-accent { background: linear-gradient(135deg, var(--accent), var(--accent-green)); color: white; }
+
+.duration-icons { display: flex; gap: 15px; justify-content: center; margin-top: 12px; }
+.duration-label { cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 12px; border-radius: 8px; transition: background 0.2s; }
+.duration-label:hover { background: rgba(201, 169, 110, 0.1); }
+.duration-icons input[type="checkbox"] { display: none; }
+.duration-icons input[type="checkbox"]:checked + span { color: var(--accent); font-weight: bold; }
+.fire-emoji { font-size: 20px; }
+
+.section { display: none; animation: fadeIn 0.3s ease; }
+.section.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+.sheet-preview { overflow: auto; max-height: 70vh; border: 1px solid #ddd; border-radius: 8px; padding: 10px; background: #e0e0e0; }
+.sheet-page { background: white; position: relative; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+
+.pdf-generation-container {
+    position: fixed;
+    left: -9999px;
+    top: 0;
+    z-index: -9999;
+}
+
+.label-for-pdf {
+    background: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: none;
+}
+
+.toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    color: white;
+    font-size: 1.2rem;
+    flex-direction: column;
+    gap: 20px;
+}
+.loading-overlay.active { display: flex; }
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Estilos para la cola de impresión */
+.queue-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border: 1px solid #e0e0e0;
+    transition: all 0.2s;
+}
+.queue-item:hover {
+    border-color: var(--accent);
+    box-shadow: 0 2px 8px rgba(201, 169, 110, 0.15);
+}
+.queue-item-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.queue-item-name {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--primary);
+}
+.queue-item-size {
+    font-size: 0.7rem;
+    color: #888;
+}
+.queue-item-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.qty-input {
+    width: 60px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+    background: white;
+    transition: border 0.2s;
+}
+.qty-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+.qty-label {
+    font-size: 0.7rem;
+    color: #666;
+    font-weight: 600;
+}
+.btn-remove {
+    background: #fee;
+    color: #c00;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-remove:hover {
+    background: #c00;
+    color: white;
+}
+.queue-summary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-green));
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo-text">AromaLabel <span style="color:var(--accent)">Pro</span></div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showSection('designer', this)">✏️ Diseñador</button>
+    <button class="nav-tab" onclick="showSection('projects', this)">📁 Proyectos</button>
+    <button class="nav-tab" onclick="showSection('print', this)">🖨️ Impresión</button>
+  </nav>
+</header>
+
+<div class="main-container">
+  <aside class="sidebar">
+    
+    <h2 class="form-label">🖨️ Configuración de Hoja</h2>
+    <div class="form-group">
+        <select class="form-select" id="paperSize" onchange="updateSheetPreview()">
+            <option value="A4">A4 (210 x 297 mm)</option>
+            <option value="Letter">Carta (216 x 279 mm)</option>
+        </select>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:8px;">
+            <div>
+                <label class="range-label">Margen (mm)</label>
+                <input type="number" class="form-input" id="printMargin" value="10" min="0" oninput="updateSheetPreview()">
+            </div>
+            <div>
+                <label class="range-label">Espacio entre etiq. (mm)</label>
+                <input type="number" class="form-input" id="printGap" value="2" min="0" oninput="updateSheetPreview()">
+            </div>
+        </div>
+    </div>
+
+    <h2 class="form-label">📐 Base y Forma</h2>
+    <div class="form-group">
+        <select class="form-select" id="labelShape" onchange="updateLabel()">
+            <option value="shape-rect">Rectangular</option>
+            <option value="shape-arch">Arqueada</option>
+            <option value="shape-pill">Píldora</option>
+            <option value="shape-hex">Hexagonal</option>
+        </select>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:10px;">
+            <input type="number" class="form-input" id="labelWidth" value="60" oninput="updateLabel()" placeholder="Ancho (mm)">
+            <input type="number" class="form-input" id="labelHeight" value="80" oninput="updateLabel()" placeholder="Alto (mm)">
+        </div>
+    </div>
+
+    <h2 class="form-label">🖼️ Bordes</h2>
+    <div class="form-group">
+        <label class="range-label"><input type="checkbox" id="borderEnabled" checked onchange="updateLabel()"> Activar Borde</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:8px;">
+            <input type="color" id="borderColor" value="#c9a96e" oninput="updateLabel()" style="height:35px; border:none; border-radius:6px; cursor:pointer;">
+            <input type="number" class="form-input" id="borderThickness" value="1" min="0" max="5" step="0.5" oninput="updateLabel()" placeholder="Grosor (px)">
+        </div>
+    </div>
+
+    <h2 class="form-label">🏷️ Marca (Brand)</h2>
+    <div class="form-group">
+        <input type="text" class="form-input" id="brandName" value="ESENTIA" oninput="updateLabel()">
+        <div class="text-format-btns">
+            <button class="format-btn" id="brandBold" onclick="toggleFormat('brandBold')">𝐁 Negrita</button>
+            <button class="format-btn" id="brandUnderline" onclick="toggleFormat('brandUnderline')">U̲ Subrayado</button>
+        </div>
+        <div class="range-group">
+            <div class="range-label">Posición X (%) <input type="range" id="brandX" min="0" max="100" value="50" oninput="updateLabel()"></div>
+            <div class="range-label">Posición Y (%) <input type="range" id="brandY" min="0" max="100" value="15" oninput="updateLabel()"></div>
+            <div class="range-label">Tamaño (px) <input type="range" id="brandSize" min="8" max="60" value="24" oninput="updateLabel()"></div>
+            <div class="range-label">Kerning (px) <input type="range" id="brandKern" min="0" max="20" value="4" oninput="updateLabel()"></div>
+        </div>
+        <select class="form-select" id="brandFont" onchange="updateLabel()" style="margin-top:5px;">
+            <option value="'Adelia', cursive">Adelia Script</option>
+            <option value="'Tenor Sans', sans-serif">Tenor Sans</option>
+            <option value="'Playfair Display', serif">Playfair Display</option>
+        </select>
+    </div>
+
+    <h2 class="form-label">🕯️ Producto</h2>
+    <div class="form-group">
+        <input type="text" class="form-input" id="productName" value="MIDNIGHT JASMINE" oninput="updateLabel()">
+        <div class="text-format-btns">
+            <button class="format-btn" id="prodBold" onclick="toggleFormat('prodBold')">𝐁 Negrita</button>
+            <button class="format-btn" id="prodUnderline" onclick="toggleFormat('prodUnderline')">U̲ Subrayado</button>
+        </div>
+        <div class="range-group">
+            <div class="range-label">Posición Y (%) <input type="range" id="prodY" min="0" max="100" value="45" oninput="updateLabel()"></div>
+            <div class="range-label">Tamaño (px) <input type="range" id="prodSize" min="8" max="50" value="24" oninput="updateLabel()"></div>
+        </div>
+    </div>
+
+    <h2 class="form-label">📋 Instrucciones</h2>
+    <div class="form-group">
+        <textarea class="form-textarea" id="instrText" placeholder="Ej: Mantener alejado del calor..." oninput="updateLabel()"></textarea>
+        <div class="range-group">
+            <div class="range-label">Posición X (%) <input type="range" id="instrX" min="0" max="100" value="50" oninput="updateLabel()"></div>
+            <div class="range-label">Posición Y (%) <input type="range" id="instrY" min="0" max="100" value="85" oninput="updateLabel()"></div>
+            <div class="range-label">Tamaño (px) <input type="range" id="instrSize" min="6" max="20" value="8" oninput="updateLabel()"></div>
+        </div>
+    </div>
+
+    <h2 class="form-label">➖ Línea Separadora</h2>
+    <div class="form-group">
+        <label class="range-label"><input type="checkbox" id="sepEnabled" onchange="updateLabel()"> Activar Línea</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:8px;">
+            <input type="color" id="sepColor" value="#1a1a1a" oninput="updateLabel()" style="height:35px; border:none; border-radius:6px; cursor:pointer;">
+            <input type="number" class="form-input" id="sepThickness" value="1" min="1" max="10" oninput="updateLabel()" placeholder="Grosor (px)">
+        </div>
+        <div class="range-group">
+            <div class="range-label">Ancho (%) <input type="range" id="sepWidth" min="10" max="100" value="60" oninput="updateLabel()"></div>
+            <div class="range-label">Posición Y (%) <input type="range" id="sepY" min="0" max="100" value="65" oninput="updateLabel()"></div>
+        </div>
+    </div>
+
+    <h2 class="form-label">🖼️ Imagen / Logo</h2>
+    <div class="form-group">
+        <input type="file" class="form-input" id="imgUpload" accept="image/*" onchange="handleImageUpload(this)">
+        <button class="btn" style="background:#eee; font-size:0.7rem; padding:5px; margin-top:5px;" onclick="clearImage()">Quitar Imagen</button>
+        <div class="range-group" id="imgControls" style="display:none;">
+            <div class="range-label">Posición X (%) <input type="range" id="imgX" min="0" max="100" value="50" oninput="updateLabel()"></div>
+            <div class="range-label">Posición Y (%) <input type="range" id="imgY" min="0" max="100" value="30" oninput="updateLabel()"></div>
+            <div class="range-label">Tamaño (%) <input type="range" id="imgSize" min="5" max="80" value="30" oninput="updateLabel()"></div>
+        </div>
+    </div>
+
+    <h2 class="form-label">🏁 QR Personalizado</h2>
+    <div class="form-group">
+        <input type="text" class="form-input" id="qrUrl" value="https://www.facebook.com/profile.php?id=61579078480913" oninput="updateLabel()">
+        <div class="range-group">
+            <div class="range-label">Posición X (%) <input type="range" id="qrX" min="0" max="90" value="40" oninput="updateLabel()"></div>
+            <div class="range-label">Posición Y (%) <input type="range" id="qrY" min="0" max="90" value="80" oninput="updateLabel()"></div>
+            <div class="range-label">Tamaño (%) <input type="range" id="qrSize" min="10" max="50" value="20" oninput="updateLabel()"></div>
+        </div>
+    </div>
+
+    <h2 class="form-label">🔥 Duración de la Vela</h2>
+    <div class="form-group">
+        <div class="duration-icons">
+            <label class="duration-label">
+                <input type="checkbox" class="duration-check" value="short" onchange="updateLabel()">
+                <span class="fire-emoji">🔥</span>
+                <span style="font-size: 0.7rem;">Corta</span>
+            </label>
+            <label class="duration-label">
+                <input type="checkbox" class="duration-check" value="medium" onchange="updateLabel()">
+                <span class="fire-emoji">🔥🔥</span>
+                <span style="font-size: 0.7rem;">Media</span>
+            </label>
+            <label class="duration-label">
+                <input type="checkbox" class="duration-check" value="long" onchange="updateLabel()">
+                <span class="fire-emoji">🔥🔥🔥</span>
+                <span style="font-size: 0.7rem;">Larga</span>
+            </label>
+        </div>
+    </div>
+
+    <!-- NUEVOS CONTROLES DE POSICIÓN Y ROTACIÓN PARA LAS FLAMAS -->
+    <h2 class="form-label">📍 Posición de Duración (Flamas)</h2>
+    <div class="form-group">
+        <div class="range-group">
+            <div class="range-label">Posición X (%) <input type="range" id="durX" min="0" max="100" value="50" oninput="updateLabel()"></div>
+            <div class="range-label">Posición Y (%) <input type="range" id="durY" min="0" max="100" value="85" oninput="updateLabel()"></div>
+            <div class="range-label">Rotación 
+                <select id="durRotation" class="form-select" style="width: auto; margin-left: 10px; padding: 4px;" onchange="updateLabel()">
+                    <option value="0">0° (Normal)</option>
+                    <option value="90">90°</option>
+                    <option value="180">180°</option>
+                    <option value="270">270°</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="form-label">🎨 Estética General</h2>
+    <div class="form-group">
+        <div style="display:flex; gap:5px;">
+            <input type="color" id="accentColor" value="#c9a96e" oninput="updateLabel()" style="flex:1; height:35px; border:none; border-radius:6px; cursor:pointer;" title="Color de acento">
+            <input type="color" id="textColor" value="#1a1a1a" oninput="updateLabel()" style="flex:1; height:35px; border:none; border-radius:6px; cursor:pointer;" title="Color de texto">
+            <input type="color" id="bgColor" value="#ffffff" oninput="updateLabel()" style="flex:1; height:35px; border:none; border-radius:6px; cursor:pointer;" title="Color de fondo">
+        </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveProject()">💾 Guardar Proyecto</button>
+    <button class="btn btn-accent" onclick="addToPrintQueue()">➕ Añadir a Cola de Impresión</button>
+  </aside>
+
+  <main class="preview-area">
+    <div id="section-designer" class="section active">
+        <div class="label-container">
+            <div class="label" id="labelPreview">
+                <div id="labelBorder" style="position:absolute; inset:0; border-style:solid; pointer-events:none; border-radius: inherit;"></div>
+                <div id="brandBlock" class="draggable-text text-brand">ESENTIA</div>
+                <div id="productBlock" class="draggable-text" style="left:0; right:0; width:100%;">
+                    <div id="prodTitle" style="font-weight:600;">MIDNIGHT JASMINE</div>
+                </div>
+                <div id="instrBlock" class="draggable-text" style="max-width: 90%; white-space: normal; line-height: 1.2;"></div>
+                
+                <!-- Bloque de duración ahora controlado totalmente por X, Y y Rotación -->
+                <div id="durationBlock" class="draggable-text">
+                    <div class="duration-icons-display" id="durationContainer" style="display: flex; justify-content: center; gap: 5px;"></div>
+                </div>
+                
+                <div id="separatorBlock" class="separator-line"></div>
+                <div id="imgBlock" class="img-floating"></div>
+                <div id="qrBlock" class="qr-floating"></div>
+                <div id="legalBlock" class="draggable-text" style="left:0; right:0; width:100%; bottom: 3px; font-size:6px; opacity:0.7; text-align:center;">
+                    Esentia - Fragancias que Enamoran
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="section-projects" class="section">
+        <div id="projectsList" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:1rem;"></div>
+    </div>
+
+    <div id="section-print" class="section">
+        <div style="background:var(--card-bg); padding:1.5rem; border-radius:12px; border:1px solid var(--border);">
+            <div style="display:flex; gap:10px; margin-bottom:1rem;">
+                <button class="btn btn-primary" onclick="generatePDF()" style="flex:1;">📄 Generar PDF</button>
+                <button class="btn" style="flex:1; background:#eee;" onclick="clearQueue()">🗑️ Vaciar Cola</button>
+            </div>
+            <div id="printQueueDisplay" style="margin-bottom:1rem;"></div>
+            <div class="sheet-preview">
+                <div class="sheet-page" id="sheetPage"></div>
+            </div>
+        </div>
+    </div>
+  </main>
+</div>
+
+<div id="pdfContainer" class="pdf-generation-container"></div>
+
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <div>Generando PDF...</div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script type="module">
+  import { initAuth, saveProjectToFirestore, loadProjectsFromFirestore, deleteProjectFromFirestore } from 'https://wil1979.github.io/esentia-factura/modules/firebaseStorage.js';
+  window.fb = { saveProjectToFirestore, loadProjectsFromFirestore, deleteProjectFromFirestore };
+  initAuth().then(() => console.log("Firebase Ready"));
+</script>
+
+<script>
+let projects = JSON.parse(localStorage.getItem('aromaProjects') || '[]');
+let printQueue = [];
+let currentImageData = null;
+
+function showSection(name, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('section-'+name).classList.add('active');
+    if(btn) btn.classList.add('active');
+    if(name === 'projects') loadProjects();
+    if(name === 'print') updateSheetPreview();
+}
+
+function toggleFormat(btnId) {
+    const btn = document.getElementById(btnId);
+    btn.classList.toggle('active');
+    updateLabel();
+}
+
+function handleImageUpload(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            currentImageData = e.target.result;
+            document.getElementById('imgControls').style.display = 'block';
+            updateLabel();
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function clearImage() {
+    currentImageData = null;
+    document.getElementById('imgUpload').value = '';
+    document.getElementById('imgControls').style.display = 'none';
+    updateLabel();
+}
+
+function updateLabel() {
+    const label = document.getElementById('labelPreview');
+    const w = document.getElementById('labelWidth').value;
+    const h = document.getElementById('labelHeight').value;
+    const accent = document.getElementById('accentColor').value;
+    const textColor = document.getElementById('textColor').value;
+
+    label.style.setProperty('--label-width', w + 'mm');
+    label.style.setProperty('--label-height', h + 'mm');
+    label.style.setProperty('--accent-color', accent);
+    label.style.backgroundColor = document.getElementById('bgColor').value;
+    label.className = 'label ' + document.getElementById('labelShape').value;
+
+    const borderEl = document.getElementById('labelBorder');
+    if(document.getElementById('borderEnabled').checked) {
+        borderEl.style.display = 'block';
+        borderEl.style.borderColor = document.getElementById('borderColor').value;
+        borderEl.style.borderWidth = document.getElementById('borderThickness').value + 'px';
+    } else {
+        borderEl.style.display = 'none';
+    }
+
+    const brand = document.getElementById('brandBlock');
+    brand.textContent = document.getElementById('brandName').value;
+    brand.style.left = document.getElementById('brandX').value + '%';
+    brand.style.top = document.getElementById('brandY').value + '%';
+    brand.style.transform = 'translateX(-50%)';
+    brand.style.fontSize = document.getElementById('brandSize').value + 'px';
+    brand.style.letterSpacing = document.getElementById('brandKern').value + 'px';
+    brand.style.fontFamily = document.getElementById('brandFont').value;
+    brand.style.color = textColor;
+    brand.style.fontWeight = document.getElementById('brandBold').classList.contains('active') ? 'bold' : 'normal';
+    brand.style.textDecoration = document.getElementById('brandUnderline').classList.contains('active') ? 'underline' : 'none';
+
+    const prod = document.getElementById('productBlock');
+    const prodTitle = document.getElementById('prodTitle');
+    prodTitle.textContent = document.getElementById('productName').value;
+    prod.style.top = document.getElementById('prodY').value + '%';
+    prodTitle.style.fontSize = document.getElementById('prodSize').value + 'px';
+    prodTitle.style.color = textColor;
+    prodTitle.style.fontWeight = document.getElementById('prodBold').classList.contains('active') ? 'bold' : 'normal';
+    prodTitle.style.textDecoration = document.getElementById('prodUnderline').classList.contains('active') ? 'underline' : 'none';
+
+    const instr = document.getElementById('instrBlock');
+    instr.textContent = document.getElementById('instrText').value;
+    instr.style.left = document.getElementById('instrX').value + '%';
+    instr.style.top = document.getElementById('instrY').value + '%';
+    instr.style.transform = 'translateX(-50%)';
+    instr.style.fontSize = document.getElementById('instrSize').value + 'px';
+    instr.style.color = textColor;
+
+    // ICONOS DE DURACIÓN CON NUEVOS CONTROLES DE POSICIÓN Y ROTACIÓN
+    const durationContainer = document.getElementById('durationContainer');
+    durationContainer.innerHTML = '';
+    const checkedDurations = Array.from(document.querySelectorAll('.duration-check:checked')).map(cb => cb.value);
+    
+    const durationOrder = { 'short': 1, 'medium': 2, 'long': 3 };
+    checkedDurations.sort((a, b) => durationOrder[a] - durationOrder[b]);
+    
+    if(checkedDurations.length > 0) {
+        const maxDuration = checkedDurations[checkedDurations.length - 1];
+        let fireText = '';
+        if(maxDuration === 'short') fireText = '🔥';
+        else if(maxDuration === 'medium') fireText = '🔥🔥';
+        else if(maxDuration === 'long') fireText = '🔥🔥🔥';
+        
+        durationContainer.innerHTML = `<span style="font-size: 20px;">${fireText}</span>`;
+    }
+
+    // Aplicar posición y rotación al bloque de duración
+    const durBlock = document.getElementById('durationBlock');
+    const durX = document.getElementById('durX').value;
+    const durY = document.getElementById('durY').value;
+    const durRot = document.getElementById('durRotation').value;
+    
+    durBlock.style.left = durX + '%';
+    durBlock.style.top = durY + '%';
+    durBlock.style.transform = `translateX(-50%) rotate(${durRot}deg)`;
+
+    const sep = document.getElementById('separatorBlock');
+    if(document.getElementById('sepEnabled').checked) {
+        sep.style.display = 'block';
+        sep.style.setProperty('--sep-color', document.getElementById('sepColor').value);
+        sep.style.setProperty('--sep-thickness', document.getElementById('sepThickness').value + 'px');
+        sep.style.width = document.getElementById('sepWidth').value + '%';
+        sep.style.top = document.getElementById('sepY').value + '%';
+    } else {
+        sep.style.display = 'none';
+    }
+
+    const imgBlock = document.getElementById('imgBlock');
+    if(currentImageData) {
+        imgBlock.style.display = 'block';
+        imgBlock.innerHTML = `<img src="${currentImageData}" style="width:100%; height:auto; display:block;">`;
+        imgBlock.style.left = document.getElementById('imgX').value + '%';
+        imgBlock.style.top = document.getElementById('imgY').value + '%';
+        imgBlock.style.transform = 'translateX(-50%)';
+        imgBlock.style.width = document.getElementById('imgSize').value + '%';
+    } else {
+        imgBlock.style.display = 'none';
+    }
+
+    const qr = document.getElementById('qrBlock');
+    const qSize = document.getElementById('qrSize').value;
+    qr.style.left = document.getElementById('qrX').value + '%';
+    qr.style.top = document.getElementById('qrY').value + '%';
+    qr.style.width = qSize + '%';
+    qr.style.transform = 'translateX(-50%)';
+    qr.innerHTML = '';
+    
+    try {
+        const qCode = qrcode(0, 'M');
+        qCode.addData(document.getElementById('qrUrl').value || 'https://esentia.com');
+        qCode.make();
+        qr.innerHTML = qCode.createImgTag(2, 0);
+        const img = qr.querySelector('img');
+        if(img) { img.style.width = '100%'; img.style.height = 'auto'; img.style.display = 'block'; }
+    } catch(e) {
+        qr.innerHTML = '<div style="font-size:8px; text-align:center; padding:5px;">QR</div>';
+    }
+}
+
+async function saveProject() {
+    const checkedDurations = Array.from(document.querySelectorAll('.duration-check:checked')).map(cb => cb.value);
+    
+    const p = {
+        id: Date.now(),
+        name: document.getElementById('brandName').value + " - " + document.getElementById('productName').value,
+        config: {
+            w: document.getElementById('labelWidth').value,
+            h: document.getElementById('labelHeight').value,
+            shape: document.getElementById('labelShape').value,
+            borderEnabled: document.getElementById('borderEnabled').checked,
+            borderColor: document.getElementById('borderColor').value,
+            borderThickness: document.getElementById('borderThickness').value,
+            brandX: document.getElementById('brandX').value,
+            brandY: document.getElementById('brandY').value,
+            brandSize: document.getElementById('brandSize').value,
+            brandKern: document.getElementById('brandKern').value,
+            brandFont: document.getElementById('brandFont').value,
+            brandBold: document.getElementById('brandBold').classList.contains('active'),
+            brandUnderline: document.getElementById('brandUnderline').classList.contains('active'),
+            prodY: document.getElementById('prodY').value,
+            prodSize: document.getElementById('prodSize').value,
+            prodBold: document.getElementById('prodBold').classList.contains('active'),
+            prodUnderline: document.getElementById('prodUnderline').classList.contains('active'),
+            instrText: document.getElementById('instrText').value,
+            instrX: document.getElementById('instrX').value,
+            instrY: document.getElementById('instrY').value,
+            instrSize: document.getElementById('instrSize').value,
+            durations: checkedDurations,
+            durX: document.getElementById('durX').value,
+            durY: document.getElementById('durY').value,
+            durRotation: document.getElementById('durRotation').value,
+            sepEnabled: document.getElementById('sepEnabled').checked,
+            sepColor: document.getElementById('sepColor').value,
+            sepThickness: document.getElementById('sepThickness').value,
+            sepWidth: document.getElementById('sepWidth').value,
+            sepY: document.getElementById('sepY').value,
+            imgData: currentImageData,
+            imgX: document.getElementById('imgX').value,
+            imgY: document.getElementById('imgY').value,
+            imgSize: document.getElementById('imgSize').value,
+            qrX: document.getElementById('qrX').value,
+            qrY: document.getElementById('qrY').value,
+            qrSize: document.getElementById('qrSize').value,
+            accent: document.getElementById('accentColor').value,
+            text: document.getElementById('textColor').value,
+            bg: document.getElementById('bgColor').value
+        },
+        content: {
+            brand: document.getElementById('brandName').value,
+            product: document.getElementById('productName').value,
+            qr: document.getElementById('qrUrl').value
+        }
+    };
+    projects.push(p);
+    localStorage.setItem('aromaProjects', JSON.stringify(projects));
+    if(window.fb) { try { await window.fb.saveProjectToFirestore(p); } catch(e) {} }
+    showToast("✅ Diseño guardado correctamente");
+}
+
+function loadProjects() {
+    const cont = document.getElementById('projectsList');
+    if(projects.length === 0) {
+        cont.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem; color:#888;">No hay proyectos guardados aún.</div>';
+        return;
+    }
+    cont.innerHTML = projects.map(p => `
+        <div style="background:white; padding:15px; border-radius:10px; box-shadow:var(--shadow); border:1px solid var(--border);">
+            <div style="font-weight:700; font-size:0.85rem; margin-bottom:10px; color:var(--primary);">${p.name}</div>
+            <div style="display:flex; gap:5px;">
+                <button class="btn btn-accent" style="font-size:0.75rem; padding:6px; margin-top:0;" onclick="loadProjectById(${p.id})">Cargar</button>
+                <button class="btn" style="background:#fee; color:#c00; font-size:0.75rem; padding:6px; margin-top:0;" onclick="deleteProject(${p.id})">Eliminar</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function loadProjectById(id) {
+    const p = projects.find(x => x.id === id);
+    if(!p) return;
+    
+    document.getElementById('labelWidth').value = p.config.w;
+    document.getElementById('labelHeight').value = p.config.h;
+    document.getElementById('labelShape').value = p.config.shape || 'shape-rect';
+    document.getElementById('borderEnabled').checked = p.config.borderEnabled !== false;
+    document.getElementById('borderColor').value = p.config.borderColor || '#c9a96e';
+    document.getElementById('borderThickness').value = p.config.borderThickness || 1;
+    document.getElementById('brandName').value = p.content.brand;
+    document.getElementById('brandX').value = p.config.brandX || 50;
+    document.getElementById('brandY').value = p.config.brandY;
+    document.getElementById('brandSize').value = p.config.brandSize;
+    document.getElementById('brandKern').value = p.config.brandKern || 4;
+    document.getElementById('brandFont').value = p.config.brandFont;
+    if(p.config.brandBold) document.getElementById('brandBold').classList.add('active'); else document.getElementById('brandBold').classList.remove('active');
+    if(p.config.brandUnderline) document.getElementById('brandUnderline').classList.add('active'); else document.getElementById('brandUnderline').classList.remove('active');
+    document.getElementById('productName').value = p.content.product;
+    document.getElementById('prodY').value = p.config.prodY;
+    document.getElementById('prodSize').value = p.config.prodSize;
+    if(p.config.prodBold) document.getElementById('prodBold').classList.add('active'); else document.getElementById('prodBold').classList.remove('active');
+    if(p.config.prodUnderline) document.getElementById('prodUnderline').classList.add('active'); else document.getElementById('prodUnderline').classList.remove('active');
+    document.getElementById('instrText').value = p.config.instrText || '';
+    document.getElementById('instrX').value = p.config.instrX || 50;
+    document.getElementById('instrY').value = p.config.instrY || 85;
+    document.getElementById('instrSize').value = p.config.instrSize || 8;
+    
+    document.querySelectorAll('.duration-check').forEach(cb => cb.checked = false);
+    if(p.config.durations) {
+        p.config.durations.forEach(d => {
+            const cb = document.querySelector(`.duration-check[value="${d}"]`);
+            if(cb) cb.checked = true;
+        });
+    }
+    
+    document.getElementById('durX').value = p.config.durX || 50;
+    document.getElementById('durY').value = p.config.durY || 85;
+    document.getElementById('durRotation').value = p.config.durRotation || '0';
+    
+    document.getElementById('sepEnabled').checked = p.config.sepEnabled || false;
+    document.getElementById('sepColor').value = p.config.sepColor || '#1a1a1a';
+    document.getElementById('sepThickness').value = p.config.sepThickness || 1;
+    document.getElementById('sepWidth').value = p.config.sepWidth || 60;
+    document.getElementById('sepY').value = p.config.sepY || 65;
+    currentImageData = p.config.imgData || null;
+    if(currentImageData) {
+        document.getElementById('imgControls').style.display = 'block';
+        document.getElementById('imgX').value = p.config.imgX || 50;
+        document.getElementById('imgY').value = p.config.imgY || 30;
+        document.getElementById('imgSize').value = p.config.imgSize || 30;
+    } else {
+        document.getElementById('imgControls').style.display = 'none';
+        document.getElementById('imgUpload').value = '';
+    }
+    document.getElementById('qrUrl').value = p.content.qr;
+    document.getElementById('qrX').value = p.config.qrX;
+    document.getElementById('qrY').value = p.config.qrY;
+    document.getElementById('qrSize').value = p.config.qrSize;
+    document.getElementById('accentColor').value = p.config.accent;
+    document.getElementById('textColor').value = p.config.text;
+    document.getElementById('bgColor').value = p.config.bg;
+    
+    updateLabel();
+    showSection('designer', document.querySelector('.nav-tab'));
+    showToast("📂 Proyecto cargado");
+}
+
+function deleteProject(id) {
+    if(!confirm('¿Eliminar este proyecto?')) return;
+    projects = projects.filter(x => x.id !== id);
+    localStorage.setItem('aromaProjects', JSON.stringify(projects));
+    if(window.fb) window.fb.deleteProjectFromFirestore(id);
+    loadProjects();
+    showToast("🗑️ Proyecto eliminado");
+}
+
+function addToPrintQueue() {
+    const qtyInput = prompt('¿Cuántas etiquetas de este tipo deseas imprimir?', '1');
+    if(qtyInput === null) return;
+    
+    const qty = parseInt(qtyInput);
+    if(isNaN(qty) || qty < 1) {
+        showToast("⚠️ La cantidad debe ser un número válido mayor a 0");
+        return;
+    }
+    
+    printQueue.push({
+        id: Date.now(),
+        name: document.getElementById('productName').value || 'Etiqueta',
+        config: getCurrentConfig(),
+        w: parseFloat(document.getElementById('labelWidth').value),
+        h: parseFloat(document.getElementById('labelHeight').value),
+        qty: qty
+    });
+    showToast(`➕ Añadido ${qty} etiqueta(s) a la cola`);
+    updateQueueDisplay();
+}
+
+function getCurrentConfig() {
+    const checkedDurations = Array.from(document.querySelectorAll('.duration-check:checked')).map(cb => cb.value);
+    
+    return {
+        labelWidth: document.getElementById('labelWidth').value,
+        labelHeight: document.getElementById('labelHeight').value,
+        labelShape: document.getElementById('labelShape').value,
+        borderEnabled: document.getElementById('borderEnabled').checked,
+        borderColor: document.getElementById('borderColor').value,
+        borderThickness: document.getElementById('borderThickness').value,
+        brandName: document.getElementById('brandName').value,
+        brandX: document.getElementById('brandX').value,
+        brandY: document.getElementById('brandY').value,
+        brandSize: document.getElementById('brandSize').value,
+        brandKern: document.getElementById('brandKern').value,
+        brandFont: document.getElementById('brandFont').value,
+        brandBold: document.getElementById('brandBold').classList.contains('active'),
+        brandUnderline: document.getElementById('brandUnderline').classList.contains('active'),
+        productName: document.getElementById('productName').value,
+        prodY: document.getElementById('prodY').value,
+        prodSize: document.getElementById('prodSize').value,
+        prodBold: document.getElementById('prodBold').classList.contains('active'),
+        prodUnderline: document.getElementById('prodUnderline').classList.contains('active'),
+        instrText: document.getElementById('instrText').value,
+        instrX: document.getElementById('instrX').value,
+        instrY: document.getElementById('instrY').value,
+        instrSize: document.getElementById('instrSize').value,
+        durations: checkedDurations,
+        durX: document.getElementById('durX').value,
+        durY: document.getElementById('durY').value,
+        durRotation: document.getElementById('durRotation').value,
+        sepEnabled: document.getElementById('sepEnabled').checked,
+        sepColor: document.getElementById('sepColor').value,
+        sepThickness: document.getElementById('sepThickness').value,
+        sepWidth: document.getElementById('sepWidth').value,
+        sepY: document.getElementById('sepY').value,
+        imgData: currentImageData,
+        imgX: document.getElementById('imgX').value,
+        imgY: document.getElementById('imgY').value,
+        imgSize: document.getElementById('imgSize').value,
+        qrUrl: document.getElementById('qrUrl').value,
+        qrX: document.getElementById('qrX').value,
+        qrY: document.getElementById('qrY').value,
+        qrSize: document.getElementById('qrSize').value,
+        accentColor: document.getElementById('accentColor').value,
+        textColor: document.getElementById('textColor').value,
+        bgColor: document.getElementById('bgColor').value
+    };
+}
+
+function createLabelHTML(config) {
+    let fireHTML = '';
+    if(config.durations && config.durations.length > 0) {
+        const durationOrder = { 'short': 1, 'medium': 2, 'long': 3 };
+        config.durations.sort((a, b) => durationOrder[a] - durationOrder[b]);
+        const maxDuration = config.durations[config.durations.length - 1];
+        let fireText = '';
+        if(maxDuration === 'short') fireText = '🔥';
+        else if(maxDuration === 'medium') fireText = '🔥🔥';
+        else if(maxDuration === 'long') fireText = '🔥🔥🔥';
+        
+        fireHTML = `<div style="
+            position: absolute;
+            left: ${config.durX || 50}%;
+            top: ${config.durY || 85}%;
+            transform: translateX(-50%) rotate(${config.durRotation || 0}deg);
+            text-align: center;
+            font-size: 20px;
+        ">${fireText}</div>`;
+    }
+
+    const borderStyle = config.borderEnabled ? 
+        `border: ${config.borderThickness}px solid ${config.borderColor};` : '';
+
+    return `
+        <div class="label-for-pdf" style="
+            width: ${config.labelWidth}mm;
+            height: ${config.labelHeight}mm;
+            background: ${config.bgColor};
+            ${borderStyle};
+            position: relative;
+            overflow: hidden;
+        ">
+            ${config.brandName ? `
+            <div style="
+                position: absolute;
+                left: ${config.brandX}%;
+                top: ${config.brandY}%;
+                transform: translateX(-50%);
+                font-size: ${config.brandSize}px;
+                letter-spacing: ${config.brandKern}px;
+                font-family: ${config.brandFont};
+                color: ${config.textColor};
+                font-weight: ${config.brandBold ? 'bold' : 'normal'};
+                text-decoration: ${config.brandUnderline ? 'underline' : 'none'};
+                white-space: nowrap;
+            ">${config.brandName}</div>` : ''}
+            
+            ${config.productName ? `
+            <div style="
+                position: absolute;
+                left: 0; right: 0;
+                top: ${config.prodY}%;
+                text-align: center;
+                font-size: ${config.prodSize}px;
+                color: ${config.textColor};
+                font-weight: ${config.prodBold ? 'bold' : 'normal'};
+                text-decoration: ${config.prodUnderline ? 'underline' : 'none'};
+            ">${config.productName}</div>` : ''}
+            
+            ${config.instrText ? `
+            <div style="
+                position: absolute;
+                left: ${config.instrX}%;
+                top: ${config.instrY}%;
+                transform: translateX(-50%);
+                font-size: ${config.instrSize}px;
+                color: ${config.textColor};
+                max-width: 90%;
+                text-align: center;
+                line-height: 1.2;
+            ">${config.instrText}</div>` : ''}
+            
+            ${fireHTML}
+            
+            ${config.sepEnabled ? `
+            <div style="
+                position: absolute;
+                left: 50%;
+                top: ${config.sepY}%;
+                transform: translateX(-50%);
+                width: ${config.sepWidth}%;
+                height: ${config.sepThickness}px;
+                background: ${config.sepColor};
+            "></div>` : ''}
+            
+            ${config.imgData ? `
+            <div style="
+                position: absolute;
+                left: ${config.imgX}%;
+                top: ${config.imgY}%;
+                transform: translateX(-50%);
+                width: ${config.imgSize}%;
+            ">
+                <img src="${config.imgData}" style="width:100%; height:auto; display:block;">
+            </div>` : ''}
+            
+            ${config.qrUrl ? `
+            <div style="
+                position: absolute;
+                left: ${config.qrX}%;
+                top: ${config.qrY}%;
+                transform: translateX(-50%);
+                width: ${config.qrSize}%;
+            " id="qrContainer_${Date.now()}"></div>` : ''}
+        </div>
+    `;
+}
+
+async function generatePDF() {
+    if(printQueue.length === 0) {
+        showToast("⚠️ La cola de impresión está vacía");
+        return;
+    }
+
+    const loading = document.getElementById('loadingOverlay');
+    loading.classList.add('active');
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const paperSize = document.getElementById('paperSize').value;
+        const margin = parseFloat(document.getElementById('printMargin').value) || 0;
+        const gap = parseFloat(document.getElementById('printGap').value) || 0;
+        
+        const paperDims = paperSize === 'A4' ? {w: 210, h: 297} : {w: 215.9, h: 279.4};
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: paperSize.toLowerCase()
+        });
+
+        const availableW = paperDims.w - (2 * margin);
+        const availableH = paperDims.h - (2 * margin);
+        
+        let currentX = margin;
+        let currentY = margin;
+
+        // CORRECCIÓN 1: Declarar el contenedor fuera del bucle para evitar errores de referencia
+        const pdfContainer = document.getElementById('pdfContainer');
+
+        for(const item of printQueue) {
+            for(let i = 0; i < item.qty; i++) {
+                const lw = item.w;
+                const lh = item.h;
+
+                // Verificar si cabe en la fila actual
+                if(currentX + lw > availableW + margin) {
+                    currentX = margin;
+                    currentY += lh + gap;
+                }
+
+                // Verificar si cabe en la página actual (si no, añadir nueva página)
+                if(currentY + lh > availableH + margin) {
+                    pdf.addPage();
+                    currentX = margin;
+                    currentY = margin;
+                }
+
+                const labelHTML = createLabelHTML(item.config);
+                pdfContainer.innerHTML = labelHTML;
+
+                const labelElement = pdfContainer.querySelector('.label-for-pdf');
+                
+                if(item.config.qrUrl) {
+                    const qrContainer = labelElement.querySelector('[id^="qrContainer_"]');
+                    if(qrContainer) {
+                        const qCode = qrcode(0, 'M');
+                        qCode.addData(item.config.qrUrl);
+                        qCode.make();
+                        qrContainer.innerHTML = qCode.createImgTag(2, 0);
+                        const img = qrContainer.querySelector('img');
+                        if(img) {
+                            img.style.width = '100%';
+                            img.style.height = 'auto';
+                        }
+                    }
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 50));
+
+                const canvas = await html2canvas(labelElement, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    logging: false,
+                    width: lw * 3.78,
+                    height: lh * 3.78
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                
+                // CORRECCIÓN 2: Eliminado el "if(!isFirstPage) { pdf.addPage(); }" que forzaba una hoja por etiqueta
+                pdf.addImage(imgData, 'PNG', currentX, currentY, lw, lh);
+                
+                currentX += lw + gap;
+            }
+        }
+
+        const fileName = `etiquetas_${new Date().getTime()}.pdf`;
+        pdf.save(fileName);
+        showToast("✅ PDF generado correctamente");
+        
+        pdfContainer.innerHTML = '';
+        
+    } catch(error) {
+        console.error('Error generando PDF:', error);
+        showToast("❌ Error al generar PDF: " + error.message);
+    } finally {
+        loading.classList.remove('active');
+    }
+}
+
+function updateQueueDisplay() {
+    const display = document.getElementById('printQueueDisplay');
+    
+    if(printQueue.length === 0) {
+        display.innerHTML = '<div style="text-align:center; padding:20px; color:#888; font-size:0.9rem;">La cola está vacía.</div>';
+        return;
+    }
+    
+    const totalLabels = printQueue.reduce((sum, item) => sum + item.qty, 0);
+    
+    let html = `
+        <div class="queue-summary">
+            <span>📊 Total en cola: ${printQueue.length} tipo(s)</span>
+            <span>🏷️ ${totalLabels} etiqueta(s) a imprimir</span>
+        </div>
+    `;
+    
+    printQueue.forEach((item, idx) => {
+        html += `
+            <div class="queue-item">
+                <div class="queue-item-info">
+                    <div class="queue-item-name">${item.name}</div>
+                    <div class="queue-item-size">${item.w} x ${item.h} mm</div>
+                </div>
+                <div class="queue-item-controls">
+                    <span class="qty-label">Cantidad:</span>
+                    <input type="number" class="qty-input" value="${item.qty}" min="1" max="999" 
+                           onchange="updateQuantity(${idx}, this.value)" 
+                           oninput="updateQuantity(${idx}, this.value)">
+                    <button class="btn-remove" onclick="removeFromQueue(${idx})" title="Eliminar">✕</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    display.innerHTML = html;
+}
+
+function updateQuantity(idx, value) {
+    const newQty = parseInt(value);
+    if(isNaN(newQty) || newQty < 1) {
+        showToast("⚠️ La cantidad mínima es 1");
+        printQueue[idx].qty = 1;
+        updateQueueDisplay();
+        return;
+    }
+    
+    printQueue[idx].qty = newQty;
+    updateSheetPreview();
+    
+    const totalLabels = printQueue.reduce((sum, item) => sum + item.qty, 0);
+    const summary = document.querySelector('.queue-summary');
+    if(summary) {
+        summary.innerHTML = `
+            <span>📊 Total en cola: ${printQueue.length} tipo(s)</span>
+            <span>🏷️ ${totalLabels} etiqueta(s) a imprimir</span>
+        `;
+    }
+}
+
+function removeFromQueue(idx) {
+    printQueue.splice(idx, 1);
+    updateQueueDisplay();
+    updateSheetPreview();
+    showToast("🗑️ Elemento eliminado de la cola");
+}
+
+function clearQueue() {
+    if(printQueue.length === 0) {
+        showToast("ℹ️ La cola ya está vacía");
+        return;
+    }
+    if(confirm('¿Vaciar toda la cola de impresión?')) {
+        printQueue = [];
+        updateQueueDisplay();
+        updateSheetPreview();
+        showToast("🗑️ Cola vaciada");
+    }
+}
+
+function updateSheetPreview() {
+    const page = document.getElementById('sheetPage');
+    const paperType = document.getElementById('paperSize').value;
+    const paper = paperType === 'A4' ? {w: 210, h: 297} : {w: 215.9, h: 279.4};
+    const margin = parseFloat(document.getElementById('printMargin').value) || 0;
+    const gap = parseFloat(document.getElementById('printGap').value) || 0;
+    
+    const scale = 2.5; 
+    page.style.width = paper.w * scale + 'px';
+    page.style.height = paper.h * scale + 'px';
+    page.innerHTML = '';
+
+    const availableW = paper.w - (2 * margin);
+    const availableH = paper.h - (2 * margin);
+    
+    let x = margin;
+    let y = margin;
+
+    printQueue.forEach(item => {
+        for(let i=0; i<item.qty; i++) {
+            const lw = item.w, lh = item.h;
+            
+            if(x + lw > availableW + margin) {
+                x = margin;
+                y += item.h + gap;
+            }
+            
+            if(y + lh > availableH + margin) {
+                page.innerHTML += '<div style="position:absolute; bottom:5px; width:100%; text-align:center; color:#999; font-size:12px;">-- Límite de hoja alcanzado --</div>';
+                break; 
+            }
+
+            const div = document.createElement('div');
+            div.style.position = 'absolute';
+            div.style.left = x * scale + 'px'; 
+            div.style.top = y * scale + 'px';
+            div.style.width = lw * scale + 'px'; 
+            div.style.height = lh * scale + 'px';
+            div.style.overflow = 'hidden';
+            div.style.border = '1px solid #ddd';
+            
+            div.innerHTML = `<div style="transform:scale(${scale/3.78}); transform-origin:0 0; width:${lw * 3.78}px; height:${lh * 3.78}px;">${document.getElementById('labelPreview').outerHTML}</div>`;
+            page.appendChild(div);
+            
+            x += lw + gap;
+        }
+    });
+}
+
+function showToast(m) {
+    const container = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.style.cssText = "background:var(--primary); color:white; padding:12px 24px; border-radius:50px; font-size:0.85rem; box-shadow:0 4px 15px rgba(0,0,0,0.2); animation: fadeIn 0.3s ease;";
+    t.textContent = m;
+    container.appendChild(t);
+    setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateY(10px)';
+        t.style.transition = 'all 0.3s ease';
+        setTimeout(() => t.remove(), 300);
+    }, 3000);
+}
+
+updateLabel();
+</script>
+</body>
+</html>

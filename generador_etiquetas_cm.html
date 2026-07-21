@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 Generador de Etiquetas</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0ea5e9;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --glass: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+        }
+
+        * { 
+            font-family: 'Outfit', sans-serif;
+            box-sizing: border-box;
+            margin: 0; padding: 0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #0c4a6e 70%, #0f172a 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .glass {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        /* Header */
+        header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), #0284c7);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+        }
+        .logo h1 { font-size: 1.4rem; font-weight: 800; }
+        .logo p { font-size: 0.8rem; color: #94a3b8; }
+
+        .header-actions {
+            display: flex; gap: 10px; flex-wrap: wrap;
+        }
+
+        .btn {
+            border: none;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), #0284c7); box-shadow: 0 4px 15px rgba(14,165,233,0.3); }
+        .btn-primary:hover { box-shadow: 0 6px 25px rgba(14,165,233,0.5); }
+        .btn-accent { background: linear-gradient(135deg, var(--accent), #d97706); box-shadow: 0 4px 15px rgba(245,158,11,0.3); }
+        .btn-accent:hover { box-shadow: 0 6px 25px rgba(245,158,11,0.5); }
+        .btn-danger { background: linear-gradient(135deg, var(--danger), #b91c1c); box-shadow: 0 4px 15px rgba(239,68,68,0.3); }
+        .btn-danger:hover { box-shadow: 0 6px 25px rgba(239,68,68,0.5); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16,185,129,0.3); }
+        .btn-success:hover { box-shadow: 0 6px 25px rgba(16,185,129,0.5); }
+        .btn-secondary { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.15); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+        /* Layout principal */
+        .main-layout {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 280px 1fr 300px;
+            gap: 16px;
+            padding: 16px;
+            height: calc(100vh - 85px);
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout { grid-template-columns: 260px 1fr; }
+            .right-panel { display: none; }
+        }
+        @media (max-width: 768px) {
+            .main-layout { grid-template-columns: 1fr; height: auto; }
+            .left-panel { order: 2; }
+            .center-panel { order: 1; min-height: 500px; }
+        }
+
+        /* Paneles */
+        .panel {
+            border-radius: 16px;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .panel-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            margin-bottom: 12px;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        /* Herramientas */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .tool-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 14px 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+        .tool-btn:hover {
+            background: rgba(14,165,233,0.15);
+            border-color: rgba(14,165,233,0.4);
+            transform: translateY(-2px);
+        }
+        .tool-btn i { font-size: 1.3rem; display: block; margin-bottom: 6px; color: var(--primary); }
+
+        .section-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+            margin: 16px 0;
+        }
+
+        /* Canvas / Área de trabajo */
+        .canvas-area {
+            background: #1a1a2e;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 600px;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.5);
+        }
+        .canvas-grid {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+            pointer-events: none;
+        }
+        .label-sheet {
+            background: white;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            transition: all 0.3s;
+        }
+        .label-sheet.landscape {
+            width: 794px; height: 492px;
+        }
+        .label-sheet.portrait {
+            width: 500px; height: 800px;
+        }
+        .label-sheet.square {
+            width: 600px; height: 600px;
+        }
+
+        /* Elementos en canvas */
+        .canvas-element {
+            position: absolute;
+            cursor: move;
+            user-select: none;
+            border: 2px solid transparent;
+            transition: border-color 0.15s;
+        }
+        .canvas-element:hover {
+            border-color: rgba(14,165,233,0.5);
+        }
+        .canvas-element.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(14,165,233,0.2);
+        }
+        .canvas-element .resize-handle {
+            position: absolute;
+            width: 10px; height: 10px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: none;
+            z-index: 10;
+        }
+        .canvas-element.selected .resize-handle {
+            display: block;
+        }
+        .resize-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+        .resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+        .resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+        .resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+        .resize-handle.rot {
+            top: -25px; left: 50%; transform: translateX(-50%);
+            cursor: grab;
+            background: var(--accent);
+        }
+        .resize-handle.rot:active { cursor: grabbing; }
+        .resize-handle.rot::after {
+            content: '';
+            position: absolute;
+            top: 10px; left: 50%;
+            transform: translateX(-50%);
+            width: 2px; height: 12px;
+            background: var(--accent);
+        }
+        .delete-btn {
+            position: absolute;
+            top: -12px; right: -12px;
+            width: 24px; height: 24px;
+            background: var(--danger);
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+            cursor: pointer;
+            z-index: 11;
+            box-shadow: 0 2px 8px rgba(239,68,68,0.4);
+        }
+        .canvas-element.selected .delete-btn { display: flex; }
+
+        .el-text {
+            color: #1a1a2e;
+            font-weight: 700;
+            padding: 4px;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+            word-wrap: break-word;
+            word-break: break-word;
+            hyphens: auto;
+            line-height: 1.2;
+        }
+        .el-image {
+            display: block;
+            object-fit: contain;
+        }
+        .el-barcode {
+            background: repeating-linear-gradient(
+                90deg,
+                #1a1a2e 0px, #1a1a2e 2px,
+                transparent 2px, transparent 4px
+            );
+            height: 40px;
+        }
+        .el-qr {
+            background: #1a1a2e;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 10px;
+        }
+        .el-shape {
+            border-radius: 4px;
+        }
+
+        /* Propiedades */
+        .prop-group {
+            margin-bottom: 14px;
+        }
+        .prop-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .prop-input, .prop-select {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .prop-input:focus, .prop-select:focus {
+            border-color: var(--primary);
+            background: rgba(255,255,255,0.08);
+        }
+        .prop-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .prop-slider {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.1);
+            outline: none;
+        }
+        .prop-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(14,165,233,0.4);
+        }
+        .color-picker-wrapper {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .color-picker-wrapper input[type="color"] {
+            width: 36px; height: 36px;
+            border: none; border-radius: 8px;
+            cursor: pointer;
+            background: none;
+        }
+
+        /* Plantillas */
+        .template-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .template-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 12px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            font-size: 0.75rem;
+        }
+        .template-card:hover {
+            border-color: var(--primary);
+            background: rgba(14,165,233,0.1);
+        }
+        .template-card i { font-size: 1.5rem; margin-bottom: 6px; display: block; color: var(--primary); }
+
+        /* Capas */
+        .layer-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
+        .layer-item:hover { background: rgba(255,255,255,0.05); }
+        .layer-item.active { background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.3); }
+        .layer-item i { width: 18px; text-align: center; color: #94a3b8; }
+        .layer-item span { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .layer-visibility {
+            color: #94a3b8; cursor: pointer;
+        }
+        .layer-visibility:hover { color: white; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 28px;
+            width: 100%; max-width: 500px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .modal-card h2 {
+            font-size: 1.3rem; font-weight: 800;
+            margin-bottom: 20px;
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        /* Vista previa impresión */
+        .print-preview {
+            background: white;
+            color: #1a1a2e;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        /* Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(14,165,233,0.3); border-radius: 3px; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 24px; left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white; padding: 12px 24px;
+            border-radius: 50px; font-weight: 600;
+            box-shadow: 0 10px 40px rgba(16,185,129,0.4);
+            z-index: 2000; opacity: 0;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .toast.error { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+
+        /* Zoom */
+        .zoom-controls {
+            position: absolute; bottom: 12px; right: 12px;
+            display: flex; gap: 4px;
+            z-index: 50;
+        }
+        .zoom-btn {
+            width: 32px; height: 32px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .zoom-btn:hover { background: rgba(14,165,233,0.4); }
+
+        /* Input file oculto */
+        input[type="file"] { display: none; }
+
+        .no-selection {
+            text-align: center;
+            color: #64748b;
+            padding: 40px 20px;
+            font-size: 0.85rem;
+        }
+        .no-selection i { font-size: 2rem; margin-bottom: 10px; display: block; }
+    </style>
+</head>
+<body>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Modal: Configurar Página -->
+    <div class="modal-overlay" id="pageModal">
+        <div class="modal-card">
+            <h2><i class="fas fa-file-alt text-sky-400"></i> Configurar Etiqueta</h2>
+            <div class="prop-group">
+                <label class="prop-label">Nombre de la etiqueta</label>
+                <input type="text" id="labelName" class="prop-input" placeholder="Ej: Etiqueta Premium" value="Mi Etiqueta">
+            </div>
+            <div class="prop-group">
+                <label class="prop-label">Orientación</label>
+                <div class="prop-row">
+                    <button class="btn btn-secondary" style="width:100%; justify-content:center;" onclick="setOrientation('landscape')">
+                        <i class="fas fa-arrows-alt-h"></i> Horizontal
+                    </button>
+                    <button class="btn btn-secondary" style="width:100%; justify-content:center;" onclick="setOrientation('portrait')">
+                        <i class="fas fa-arrows-alt-v"></i> Vertical
+                    </button>
+                </div>
+            </div>
+            <div class="prop-group">
+                <label class="prop-label">Ancho (cm)</label>
+                <input type="number" id="pageWidth" class="prop-input" value="21">
+            </div>
+            <div class="prop-group">
+                <label class="prop-label">Alto (cm)</label>
+                <input type="number" id="pageHeight" class="prop-input" value="13">
+            </div>
+            <div class="prop-group">
+                <label class="prop-label">Color de fondo</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="pageBgColor" value="#ffffff">
+                    <input type="text" id="pageBgColorText" class="prop-input" value="#ffffff" style="flex:1;" onchange="document.getElementById('pageBgColor').value=this.value">
+                </div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn btn-primary" style="flex:1; justify-content:center;" onclick="applyPageConfig()">
+                    <i class="fas fa-check"></i> Aplicar
+                </button>
+                <button class="btn btn-secondary" style="flex:1; justify-content:center;" onclick="closeModal('pageModal')">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Agregar Texto -->
+    <div class="modal-overlay" id="textModal">
+        <div class="modal-card">
+            <h2><i class="fas fa-font text-sky-400"></i> Agregar Texto</h2>
+            <div class="prop-group">
+                <label class="prop-label">Contenido</label>
+                <textarea id="textContent" class="prop-input" rows="3" placeholder="Escribe el texto..."></textarea>
+            </div>
+            <div class="prop-group">
+                <label class="prop-label">Tamaño de fuente (cm)</label>
+                <input type="number" id="textSize" class="prop-input" value="0.6">
+            </div>
+            <div class="prop-group">
+                <label class="prop-label">Color</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="textColor" value="#1a1a2e">
+                    <input type="text" id="textColorText" class="prop-input" value="#1a1a2e" style="flex:1;">
+                </div>
+            </div>
+            <div class="prop-group">
+                <label class="prop-label">Peso de fuente</label>
+                <select id="textWeight" class="prop-select">
+                    <option value="300">Light</option>
+                    <option value="400" selected>Regular</option>
+                    <option value="600">SemiBold</option>
+                    <option value="700">Bold</option>
+                    <option value="900">Black</option>
+                </select>
+            </div>
+            <div class="prop-group">
+                <label class="prop-label">Alineación</label>
+                <select id="textAlign" class="prop-select">
+                    <option value="left">Izquierda</option>
+                    <option value="center" selected>Centro</option>
+                    <option value="right">Derecha</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn btn-primary" style="flex:1; justify-content:center;" onclick="addTextElement()">
+                    <i class="fas fa-plus"></i> Agregar
+                </button>
+                <button class="btn btn-secondary" style="flex:1; justify-content:center;" onclick="closeModal('textModal')">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Agregar Imagen -->
+    <div class="modal-overlay" id="imageModal">
+        <div class="modal-card">
+            <h2><i class="fas fa-image text-sky-400"></i> Agregar Imagen</h2>
+            <div class="prop-group">
+                <label class="prop-label">Subir imagen</label>
+                <button class="btn btn-secondary" style="width:100%; justify-content:center;" onclick="document.getElementById('imageFile').click()">
+                    <i class="fas fa-upload"></i> Seleccionar archivo
+                </button>
+                <input type="file" id="imageFile" accept="image/*" onchange="previewImage(this)">
+                <div id="imagePreview" style="margin-top:10px; text-align:center; display:none;">
+                    <img id="previewImg" style="max-width:100%; max-height:150px; border-radius:8px; border:1px solid rgba(255,255,255,0.2);">
+                </div>
+            </div>
+            <div class="prop-group">
+                <label class="prop-label">Ancho (cm)</label>
+                <input type="number" id="imageWidth" class="prop-input" value="4">
+            </div>
+            <div class="prop-group">
+                <label class="prop-label">Alto (cm) — dejar en 0 para auto</label>
+                <input type="number" id="imageHeight" class="prop-input" value="0">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn btn-primary" style="flex:1; justify-content:center;" onclick="addImageElement()">
+                    <i class="fas fa-plus"></i> Agregar
+                </button>
+                <button class="btn btn-secondary" style="flex:1; justify-content:center;" onclick="closeModal('imageModal')">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Vista Previa Impresión -->
+    <div class="modal-overlay" id="printModal">
+        <div class="modal-card" style="max-width:900px;">
+            <h2><i class="fas fa-print text-sky-400"></i> Vista Previa</h2>
+            <div id="printPreviewContainer" style="display:flex; justify-content:center; margin-bottom:20px; overflow:auto;">
+                <!-- Aquí se clona la etiqueta -->
+            </div>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button class="btn btn-success" onclick="downloadPNG()">
+                    <i class="fas fa-download"></i> Descargar PNG
+                </button>
+                <button class="btn btn-primary" onclick="window.print()">
+                    <i class="fas fa-print"></i> Imprimir
+                </button>
+                <button class="btn btn-secondary" onclick="closeModal('printModal')">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-tags"></i></div>
+                <div>
+                    <h1>Generador de Etiquetas</h1>
+                    <p>Diseña etiquetas a tu gusto — Sin JSON, sin stock</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="openModal('pageModal')">
+                    <i class="fas fa-cog"></i> Configurar
+                </button>
+                <button class="btn btn-primary" onclick="openModal('printModal'); generatePrintPreview()">
+                    <i class="fas fa-eye"></i> Vista previa
+                </button>
+                <button class="btn btn-success" onclick="downloadPNG()">
+                    <i class="fas fa-download"></i> PNG
+                </button>
+                <button class="btn btn-accent" onclick="clearAll()">
+                    <i class="fas fa-trash"></i> Limpiar
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Layout Principal -->
+    <div class="main-layout">
+
+        <!-- Panel Izquierdo: Herramientas -->
+        <div class="panel glass left-panel custom-scroll">
+            <div class="panel-title"><i class="fas fa-tools"></i> Herramientas</div>
+
+            <div class="tool-grid">
+                <div class="tool-btn" onclick="openModal('textModal')">
+                    <i class="fas fa-font"></i> Texto
+                </div>
+                <div class="tool-btn" onclick="openModal('imageModal')">
+                    <i class="fas fa-image"></i> Imagen
+                </div>
+                <div class="tool-btn" onclick="addBarcode()">
+                    <i class="fas fa-barcode"></i> Código
+                </div>
+                <div class="tool-btn" onclick="addQR()">
+                    <i class="fas fa-qrcode"></i> QR
+                </div>
+                <div class="tool-btn" onclick="addShape('rect')">
+                    <i class="fas fa-square"></i> Rectángulo
+                </div>
+                <div class="tool-btn" onclick="addShape('circle')">
+                    <i class="fas fa-circle"></i> Círculo
+                </div>
+                <div class="tool-btn" onclick="addShape('line')">
+                    <i class="fas fa-minus"></i> Línea
+                </div>
+                <div class="tool-btn" onclick="addShape('triangle')">
+                    <i class="fas fa-play"></i> Triángulo
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <div class="panel-title"><i class="fas fa-layer-group"></i> Capas</div>
+            <div id="layersList">
+                <div class="no-selection">
+                    <i class="fas fa-layer-group"></i>
+                    <p>No hay elementos aún</p>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <div class="panel-title"><i class="fas fa-th-large"></i> Plantillas</div>
+            <div class="template-grid">
+                <div class="template-card" onclick="loadTemplate('basic')">
+                    <i class="fas fa-tag"></i> Básica
+                </div>
+                <div class="template-card" onclick="loadTemplate('price')">
+                    <i class="fas fa-dollar-sign"></i> Precio
+                </div>
+                <div class="template-card" onclick="loadTemplate('product')">
+                    <i class="fas fa-box"></i> Producto
+                </div>
+                <div class="template-card" onclick="loadTemplate('promo')">
+                    <i class="fas fa-percent"></i> Promoción
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Central: Canvas -->
+        <div class="panel glass center-panel" style="padding:8px;">
+            <div class="canvas-area" id="canvasArea">
+                <div class="canvas-grid"></div>
+                <div class="label-sheet landscape" id="labelSheet" style="background:#ffffff;">
+                    <!-- Elementos se agregan aquí -->
+                </div>
+                <div class="zoom-controls">
+                    <button class="zoom-btn" onclick="zoom(-0.1)"><i class="fas fa-minus"></i></button>
+                    <button class="zoom-btn" onclick="zoom(0.1)"><i class="fas fa-plus"></i></button>
+                    <button class="zoom-btn" onclick="resetZoom()"><i class="fas fa-expand"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Derecho: Propiedades -->
+        <div class="panel glass right-panel custom-scroll">
+            <div class="panel-title"><i class="fas fa-sliders-h"></i> Propiedades</div>
+
+            <div id="propertiesPanel">
+                <div class="no-selection">
+                    <i class="fas fa-mouse-pointer"></i>
+                    <p>Selecciona un elemento para editar sus propiedades</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        // ==================== ESTADO ====================
+        let elements = [];
+        let selectedId = null;
+        let nextId = 1;
+        let currentZoom = 1;
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+        let dragElement = null;
+        let isResizing = false;
+        let resizeHandle = null;
+        let resizeStart = { x: 0, y: 0, w: 0, h: 0, elX: 0, elY: 0 };
+        let isRotating = false;
+        let rotateStart = { angle: 0, centerX: 0, centerY: 0 };
+        let currentImageData = null;
+
+        const sheet = document.getElementById('labelSheet');
+        const canvasArea = document.getElementById('canvasArea');
+
+        // ==================== MODALES ====================
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        // ==================== TOAST ====================
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast' + (isError ? ' error' : '');
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        // ==================== CONFIGURAR PÁGINA ====================
+        function setOrientation(ori) {
+            const w = document.getElementById('pageWidth');
+            const h = document.getElementById('pageHeight');
+            const temp = w.value;
+            w.value = h.value;
+            h.value = temp;
+        }
+        function applyPageConfig() {
+            const w = (parseFloat(document.getElementById('pageWidth').value) || 21) * 37.8;
+            const h = (parseFloat(document.getElementById('pageHeight').value) || 13) * 37.8;
+            const bg = document.getElementById('pageBgColor').value;
+
+            sheet.style.width = w + 'px';
+            sheet.style.height = h + 'px';
+            sheet.style.background = bg;
+
+            closeModal('pageModal');
+            showToast('✅ Configuración aplicada');
+        }
+
+        // ==================== AGREGAR ELEMENTOS ====================
+        function createElement(type, data) {
+            const el = {
+                id: nextId++,
+                type: type,
+                x: 50 + (elements.length * 15) % 200,
+                y: 50 + (elements.length * 15) % 150,
+                width: data.width || 100,
+                height: data.height || 40,
+                rotation: 0,
+                visible: true,
+                ...data
+            };
+            elements.push(el);
+            renderElement(el);
+            selectElement(el.id);
+            updateLayers();
+            return el;
+        }
+
+        function renderElement(el) {
+            const div = document.createElement('div');
+            div.className = 'canvas-element';
+            div.id = 'el-' + el.id;
+            div.dataset.id = el.id;
+            div.style.left = el.x + 'px';
+            div.style.top = el.y + 'px';
+            div.style.width = el.width + 'px';
+            div.style.height = el.height + 'px';
+            div.style.transform = `rotate(${el.rotation}deg)`;
+            div.style.zIndex = el.id;
+            if (!el.visible) div.style.display = 'none';
+
+            // Contenido según tipo
+            if (el.type === 'text') {
+                div.innerHTML = `<div class="el-text" id="txt-${el.id}" style="
+                    font-size:${el.fontSize}px;
+                    color:${el.color};
+                    font-weight:${el.fontWeight};
+                    text-align:${el.textAlign};
+                    justify-content:${el.textAlign === 'center' ? 'center' : el.textAlign === 'right' ? 'flex-end' : 'flex-start'};
+                ">${el.content}</div>`;
+                // Auto-fit text after rendering
+                setTimeout(() => fitTextToContainer(el.id), 10);
+            } else if (el.type === 'image') {
+                div.innerHTML = `<img src="${el.src}" class="el-image" style="width:100%; height:100%; object-fit:contain;">`;
+            } else if (el.type === 'barcode') {
+                div.innerHTML = `<div class="el-barcode" style="width:100%; height:100%;"></div><div style="text-align:center; font-size:10px; color:#1a1a2e; margin-top:2px; font-family:monospace;">${el.code}</div>`;
+            } else if (el.type === 'qr') {
+                div.innerHTML = `<div class="el-qr" style="width:100%; height:100%;"><i class="fas fa-qrcode" style="font-size:${Math.min(el.width, el.height)*0.6}px;"></i></div>`;
+            } else if (el.type === 'shape') {
+                const s = el.shape;
+                let shapeStyle = `width:100%; height:100%; background:${el.fill};`;
+                if (s === 'circle') shapeStyle += 'border-radius:50%;';
+                if (s === 'line') shapeStyle = `width:100%; height:${el.strokeWidth||2}px; background:${el.fill};`;
+                div.innerHTML = `<div class="el-shape" style="${shapeStyle}"></div>`;
+            }
+
+            // Handles
+            div.innerHTML += `
+                <div class="resize-handle nw" data-handle="nw"></div>
+                <div class="resize-handle ne" data-handle="ne"></div>
+                <div class="resize-handle sw" data-handle="sw"></div>
+                <div class="resize-handle se" data-handle="se"></div>
+                <div class="resize-handle rot" data-handle="rot"></div>
+                <div class="delete-btn" onclick="deleteElement(${el.id}, event)"><i class="fas fa-times"></i></div>
+            `;
+
+            sheet.appendChild(div);
+            attachEvents(div);
+        }
+
+        function attachEvents(div) {
+            div.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('resize-handle')) {
+                    startResize(e, div);
+                } else if (e.target.classList.contains('delete-btn') || e.target.closest('.delete-btn')) {
+                    // handled inline
+                } else {
+                    startDrag(e, div);
+                }
+            });
+        }
+
+        // ==================== TEXTO ====================
+        function addTextElement() {
+            const content = document.getElementById('textContent').value.trim() || 'Texto';
+            const fontSize = (parseFloat(document.getElementById('textSize').value) || 0.6) * 37.8;
+            const color = document.getElementById('textColor').value;
+            const fontWeight = document.getElementById('textWeight').value;
+            const textAlign = document.getElementById('textAlign').value;
+
+            createElement('text', {
+                content, fontSize, color, fontWeight, textAlign,
+                width: Math.max(100, content.length * fontSize * 0.6),
+                height: fontSize + 16
+            });
+
+            document.getElementById('textContent').value = '';
+            closeModal('textModal');
+            showToast('✅ Texto agregado');
+        }
+
+        // ==================== IMAGEN ====================
+        function previewImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImageData = e.target.result;
+                const preview = document.getElementById('previewImg');
+                preview.src = currentImageData;
+                document.getElementById('imagePreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function addImageElement() {
+            if (!currentImageData) {
+                showToast('Selecciona una imagen primero', true);
+                return;
+            }
+            const w = (parseFloat(document.getElementById('imageWidth').value) || 4) * 37.8;
+            const h = (parseFloat(document.getElementById('imageHeight').value) || 0) * 37.8;
+
+            createElement('image', {
+                src: currentImageData,
+                width: w,
+                height: h || w * 0.75
+            });
+
+            currentImageData = null;
+            document.getElementById('imageFile').value = '';
+            document.getElementById('imagePreview').style.display = 'none';
+            closeModal('imageModal');
+            showToast('✅ Imagen agregada');
+        }
+
+        // ==================== CÓDIGO / QR ====================
+        function addBarcode() {
+            const code = prompt('Ingresa el código de barras:', '123456789');
+            if (!code) return;
+            createElement('barcode', {
+                code, width: 180, height: 50
+            });
+            showToast('✅ Código agregado');
+        }
+        function addQR() {
+            const text = prompt('Texto para el QR:', 'https://ejemplo.com');
+            if (!text) return;
+            createElement('qr', {
+                text, width: 100, height: 100
+            });
+            showToast('✅ QR agregado');
+        }
+
+        // ==================== FORMAS ====================
+        function addShape(shape) {
+            const fill = '#0ea5e9';
+            const w = shape === 'line' ? 120 : 80;
+            const h = shape === 'line' ? 4 : 80;
+            createElement('shape', {
+                shape, fill, width: w, height: h, strokeWidth: 2
+            });
+            showToast('✅ Forma agregada');
+        }
+
+        // ==================== DRAG ====================
+        function startDrag(e, div) {
+            e.preventDefault();
+            isDragging = true;
+            dragElement = div;
+            const rect = div.getBoundingClientRect();
+            const sheetRect = sheet.getBoundingClientRect();
+            dragOffset.x = (e.clientX - rect.left) / currentZoom;
+            dragOffset.y = (e.clientY - rect.top) / currentZoom;
+            selectElement(parseInt(div.dataset.id));
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging && dragElement) {
+                const sheetRect = sheet.getBoundingClientRect();
+                let x = (e.clientX - sheetRect.left) / currentZoom - dragOffset.x;
+                let y = (e.clientY - sheetRect.top) / currentZoom - dragOffset.y;
+
+                // Limitar a bordes
+                const el = elements.find(el => el.id === parseInt(dragElement.dataset.id));
+                if (el) {
+                    x = Math.max(0, Math.min(x, parseInt(sheet.style.width) - el.width));
+                    y = Math.max(0, Math.min(y, parseInt(sheet.style.height) - el.height));
+                    el.x = x; el.y = y;
+                }
+
+                dragElement.style.left = x + 'px';
+                dragElement.style.top = y + 'px';
+                updatePropertiesPanel();
+            }
+            if (isResizing && resizeHandle) {
+                handleResize(e);
+            }
+            if (isRotating && dragElement) {
+                handleRotate(e);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            dragElement = null;
+            isResizing = false;
+            resizeHandle = null;
+            isRotating = false;
+        });
+
+        // ==================== RESIZE ====================
+        function startResize(e, div) {
+            e.preventDefault();
+            e.stopPropagation();
+            isResizing = true;
+            resizeHandle = e.target.dataset.handle;
+            dragElement = div;
+            resizeStart.x = e.clientX;
+            resizeStart.y = e.clientY;
+            const id = parseInt(div.dataset.id);
+            const el = elements.find(x => x.id === id);
+            resizeStart.w = el.width;
+            resizeStart.h = el.height;
+            resizeStart.elX = el.x;
+            resizeStart.elY = el.y;
+        }
+
+        function handleResize(e) {
+            const dx = (e.clientX - resizeStart.x) / currentZoom;
+            const dy = (e.clientY - resizeStart.y) / currentZoom;
+            const id = parseInt(dragElement.dataset.id);
+            const el = elements.find(x => x.id === id);
+
+            if (resizeHandle.includes('e')) el.width = Math.max(20, resizeStart.w + dx);
+            if (resizeHandle.includes('s')) el.height = Math.max(10, resizeStart.h + dy);
+            if (resizeHandle.includes('w')) {
+                const newW = Math.max(20, resizeStart.w - dx);
+                el.x = resizeStart.elX + (resizeStart.w - newW);
+                el.width = newW;
+            }
+            if (resizeHandle.includes('n')) {
+                const newH = Math.max(10, resizeStart.h - dy);
+                el.y = resizeStart.elY + (resizeStart.h - newH);
+                el.height = newH;
+            }
+
+            dragElement.style.width = el.width + 'px';
+            dragElement.style.height = el.height + 'px';
+            dragElement.style.left = el.x + 'px';
+            dragElement.style.top = el.y + 'px';
+            // Re-fit text if it's a text element
+            if (el.type === 'text') {
+                setTimeout(() => fitTextToContainer(el.id), 10);
+            }
+            updatePropertiesPanel();
+        }
+
+        // ==================== ROTATE ====================
+        function startRotate(e, div) {
+            e.preventDefault();
+            isRotating = true;
+            dragElement = div;
+            const rect = div.getBoundingClientRect();
+            rotateStart.centerX = rect.left + rect.width / 2;
+            rotateStart.centerY = rect.top + rect.height / 2;
+            const id = parseInt(div.dataset.id);
+            const el = elements.find(x => x.id === id);
+            rotateStart.angle = el.rotation;
+        }
+
+        function handleRotate(e) {
+            const id = parseInt(dragElement.dataset.id);
+            const el = elements.find(x => x.id === id);
+            const angle = Math.atan2(e.clientY - rotateStart.centerY, e.clientX - rotateStart.centerX) * 180 / Math.PI + 90;
+            el.rotation = Math.round(angle);
+            dragElement.style.transform = `rotate(${el.rotation}deg)`;
+            updatePropertiesPanel();
+        }
+
+        // Sobrescribir mousedown para rotación
+        sheet.addEventListener('mousedown', (e) => {
+            if (e.target.classList.contains('resize-handle') && e.target.dataset.handle === 'rot') {
+                const div = e.target.closest('.canvas-element');
+                startRotate(e, div);
+            }
+        });
+
+        // ==================== SELECCIÓN ====================
+        function selectElement(id) {
+            selectedId = id;
+            document.querySelectorAll('.canvas-element').forEach(el => {
+                el.classList.toggle('selected', parseInt(el.dataset.id) === id);
+            });
+            updateLayers();
+            updatePropertiesPanel();
+        }
+
+        sheet.addEventListener('click', (e) => {
+            if (e.target === sheet || e.target.classList.contains('canvas-grid')) {
+                selectedId = null;
+                document.querySelectorAll('.canvas-element').forEach(el => el.classList.remove('selected'));
+                updateLayers();
+                updatePropertiesPanel();
+            }
+        });
+
+        // ==================== ELIMINAR ====================
+        function deleteElement(id, e) {
+            if (e) e.stopPropagation();
+            elements = elements.filter(el => el.id !== id);
+            const div = document.getElementById('el-' + id);
+            if (div) div.remove();
+            if (selectedId === id) selectedId = null;
+            updateLayers();
+            updatePropertiesPanel();
+            showToast('🗑️ Elemento eliminado');
+        }
+
+        // ==================== CAPAS ====================
+        function updateLayers() {
+            const list = document.getElementById('layersList');
+            if (elements.length === 0) {
+                list.innerHTML = `<div class="no-selection"><i class="fas fa-layer-group"></i><p>No hay elementos aún</p></div>`;
+                return;
+            }
+            list.innerHTML = elements.slice().reverse().map(el => {
+                const icon = el.type === 'text' ? 'fa-font' : el.type === 'image' ? 'fa-image' : 
+                             el.type === 'barcode' ? 'fa-barcode' : el.type === 'qr' ? 'fa-qrcode' : 'fa-shapes';
+                const name = el.type === 'text' ? (el.content?.substring(0, 15) || 'Texto') : 
+                             el.type === 'image' ? 'Imagen' : el.type === 'barcode' ? 'Código' : 
+                             el.type === 'qr' ? 'QR' : 'Forma';
+                return `
+                    <div class="layer-item ${selectedId === el.id ? 'active' : ''}" onclick="selectElement(${el.id})">
+                        <i class="fas ${icon}"></i>
+                        <span>${name}</span>
+                        <i class="fas ${el.visible ? 'fa-eye' : 'fa-eye-slash'} layer-visibility" onclick="toggleVisibility(${el.id}, event)"></i>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleVisibility(id, e) {
+            e.stopPropagation();
+            const el = elements.find(x => x.id === id);
+            if (el) {
+                el.visible = !el.visible;
+                const div = document.getElementById('el-' + id);
+                if (div) div.style.display = el.visible ? 'block' : 'none';
+                updateLayers();
+            }
+        }
+
+        // ==================== PROPIEDADES ====================
+        function updatePropertiesPanel() {
+            const panel = document.getElementById('propertiesPanel');
+            if (!selectedId) {
+                panel.innerHTML = `<div class="no-selection"><i class="fas fa-mouse-pointer"></i><p>Selecciona un elemento para editar sus propiedades</p></div>`;
+                return;
+            }
+            const el = elements.find(x => x.id === selectedId);
+            if (!el) return;
+
+            let html = `
+                <div class="prop-group">
+                    <label class="prop-label">Posición X (cm)</label>
+                    <input type="number" step="0.1" class="prop-input" value="${(el.x / 37.8).toFixed(1)}" onchange="updateProp(${el.id}, 'x', this.value)">
+                </div>
+                <div class="prop-group">
+                    <label class="prop-label">Posición Y (cm)</label>
+                    <input type="number" step="0.1" class="prop-input" value="${(el.y / 37.8).toFixed(1)}" onchange="updateProp(${el.id}, 'y', this.value)">
+                </div>
+                <div class="prop-group">
+                    <label class="prop-label">Ancho (cm)</label>
+                    <input type="number" step="0.1" class="prop-input" value="${(el.width / 37.8).toFixed(1)}" onchange="updateProp(${el.id}, 'width', this.value)">
+                </div>
+                <div class="prop-group">
+                    <label class="prop-label">Alto (cm)</label>
+                    <input type="number" step="0.1" class="prop-input" value="${(el.height / 37.8).toFixed(1)}" onchange="updateProp(${el.id}, 'height', this.value)">
+                </div>
+                <div class="prop-group">
+                    <label class="prop-label">Rotación (°)</label>
+                    <input type="range" class="prop-slider" min="-180" max="180" value="${el.rotation}" oninput="updateProp(${el.id}, 'rotation', this.value)">
+                    <div style="text-align:center; font-size:0.75rem; color:#94a3b8; margin-top:4px;">${el.rotation}°</div>
+                </div>
+            `;
+
+            if (el.type === 'text') {
+                html += `
+                    <div class="prop-group">
+                        <label class="prop-label">Contenido</label>
+                        <textarea class="prop-input" rows="2" onchange="updateProp(${el.id}, 'content', this.value)">${el.content}</textarea>
+                    </div>
+                    <div class="prop-group">
+                        <label class="prop-label">Tamaño fuente (cm)</label>
+                        <input type="number" step="0.1" class="prop-input" value="${(el.fontSize / 37.8).toFixed(1)}" onchange="updateProp(${el.id}, 'fontSize', this.value)">
+                    </div>
+                    <div class="prop-group">
+                        <label class="prop-label">Color</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" value="${el.color}" onchange="updateProp(${el.id}, 'color', this.value)">
+                            <input type="text" class="prop-input" value="${el.color}" style="flex:1;">
+                        </div>
+                    </div>
+                    <div class="prop-group">
+                        <label class="prop-label">Peso</label>
+                        <select class="prop-select" onchange="updateProp(${el.id}, 'fontWeight', this.value)">
+                            <option value="300" ${el.fontWeight==300?'selected':''}>Light</option>
+                            <option value="400" ${el.fontWeight==400?'selected':''}>Regular</option>
+                            <option value="600" ${el.fontWeight==600?'selected':''}>SemiBold</option>
+                            <option value="700" ${el.fontWeight==700?'selected':''}>Bold</option>
+                            <option value="900" ${el.fontWeight==900?'selected':''}>Black</option>
+                        </select>
+                    </div>
+                `;
+            } else if (el.type === 'shape') {
+                html += `
+                    <div class="prop-group">
+                        <label class="prop-label">Color de relleno</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" value="${el.fill}" onchange="updateProp(${el.id}, 'fill', this.value)">
+                            <input type="text" class="prop-input" value="${el.fill}" style="flex:1;">
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                <div class="section-divider"></div>
+                <button class="btn btn-danger" style="width:100%; justify-content:center;" onclick="deleteElement(${el.id})">
+                    <i class="fas fa-trash"></i> Eliminar elemento
+                </button>
+            `;
+
+            panel.innerHTML = html;
+        }
+
+        function updateProp(id, prop, value) {
+            const el = elements.find(x => x.id === id);
+            if (!el) return;
+
+            if (['x','y','width','height','fontSize'].includes(prop)) {
+                el[prop] = (parseFloat(value) || 0) * 37.8;
+            } else if (prop === 'rotation') {
+                el[prop] = parseFloat(value) || 0;
+            } else {
+                el[prop] = value;
+            }
+
+            const div = document.getElementById('el-' + id);
+            if (!div) return;
+
+            div.style.left = el.x + 'px';
+            div.style.top = el.y + 'px';
+            div.style.width = el.width + 'px';
+            div.style.height = el.height + 'px';
+            div.style.transform = `rotate(${el.rotation}deg)`;
+
+            if (el.type === 'text') {
+                const textDiv = div.querySelector('.el-text');
+                if (textDiv) {
+                    textDiv.textContent = el.content;
+                    textDiv.style.color = el.color;
+                    textDiv.style.fontWeight = el.fontWeight;
+                    textDiv.style.textAlign = el.textAlign;
+                    textDiv.style.justifyContent = el.textAlign === 'center' ? 'center' : el.textAlign === 'right' ? 'flex-end' : 'flex-start';
+                    // Re-fit text after property change
+                    setTimeout(() => fitTextToContainer(el.id), 10);
+                }
+            } else if (el.type === 'shape') {
+                const shape = div.querySelector('.el-shape');
+                if (shape) shape.style.background = el.fill;
+            }
+
+            updateLayers();
+            updatePropertiesPanel();
+        }
+
+        // ==================== AUTO-FIT TEXT ====================
+        function fitTextToContainer(id) {
+            const el = elements.find(x => x.id === id);
+            if (!el || el.type !== 'text') return;
+
+            const txtDiv = document.getElementById('txt-' + id);
+            const container = document.getElementById('el-' + id);
+            if (!txtDiv || !container) return;
+
+            // Reset font size to original
+            let fontSize = el.fontSize;
+            txtDiv.style.fontSize = fontSize + 'px';
+
+            // Reduce font size until text fits within container
+            const maxW = container.clientWidth - 8;  // padding allowance
+            const maxH = container.clientHeight - 8;
+
+            // Binary search for optimal font size
+            let minSize = 4;
+            let maxSize = fontSize;
+            let bestSize = minSize;
+
+            while (minSize <= maxSize) {
+                const mid = Math.floor((minSize + maxSize) / 2);
+                txtDiv.style.fontSize = mid + 'px';
+
+                if (txtDiv.scrollWidth <= maxW && txtDiv.scrollHeight <= maxH) {
+                    bestSize = mid;
+                    minSize = mid + 1;
+                } else {
+                    maxSize = mid - 1;
+                }
+            }
+
+            txtDiv.style.fontSize = bestSize + 'px';
+        }
+
+        // ==================== ZOOM ====================
+        function zoom(delta) {
+            currentZoom = Math.max(0.3, Math.min(2, currentZoom + delta));
+            sheet.style.transform = `scale(${currentZoom})`;
+        }
+        function resetZoom() {
+            currentZoom = 1;
+            sheet.style.transform = 'scale(1)';
+        }
+
+        // ==================== PLANTILLAS ====================
+        function loadTemplate(type) {
+            clearAll(false);
+            if (type === 'basic') {
+                createElement('text', { content: 'PRODUCTO', fontSize: 28, color: '#1a1a2e', fontWeight: 900, textAlign: 'center', width: 200, height: 40, x: 300, y: 30 });
+                createElement('text', { content: 'Descripción del producto aquí', fontSize: 14, color: '#64748b', fontWeight: 400, textAlign: 'center', width: 250, height: 30, x: 275, y: 80 });
+                createElement('barcode', { code: '750123456789', width: 200, height: 50, x: 300, y: 400 });
+            } else if (type === 'price') {
+                createElement('text', { content: '$ 199.00', fontSize: 48, color: '#ef4444', fontWeight: 900, textAlign: 'center', width: 250, height: 60, x: 275, y: 200 });
+                createElement('text', { content: 'PRECIO ESPECIAL', fontSize: 16, color: '#10b981', fontWeight: 700, textAlign: 'center', width: 200, height: 30, x: 300, y: 160 });
+                createElement('shape', { shape: 'rect', fill: '#fef3c7', width: 300, height: 120, x: 250, y: 150 });
+                // Reordenar: poner forma al fondo
+                const shapeEl = elements.pop();
+                elements.unshift(shapeEl);
+                renderAll();
+            } else if (type === 'product') {
+                createElement('text', { content: 'NOMBRE PRODUCTO', fontSize: 22, color: '#1a1a2e', fontWeight: 800, textAlign: 'left', width: 300, height: 35, x: 220, y: 30 });
+                createElement('text', { content: 'SKU: PRD-001', fontSize: 12, color: '#94a3b8', fontWeight: 400, textAlign: 'left', width: 150, height: 20, x: 220, y: 70 });
+                createElement('text', { content: '$ 249.99', fontSize: 32, color: '#0ea5e9', fontWeight: 900, textAlign: 'left', width: 150, height: 45, x: 220, y: 100 });
+                createElement('qr', { text: 'producto-001', width: 100, height: 100, x: 60, y: 30 });
+                createElement('barcode', { code: '7501234567890', width: 200, height: 45, x: 220, y: 400 });
+            } else if (type === 'promo') {
+                createElement('shape', { shape: 'rect', fill: '#ef4444', width: 800, height: 80, x: 0, y: 0 });
+                createElement('text', { content: '¡OFERTA!', fontSize: 36, color: '#ffffff', fontWeight: 900, textAlign: 'center', width: 200, height: 50, x: 300, y: 15 });
+                createElement('text', { content: '50% DE DESCUENTO', fontSize: 28, color: '#ef4444', fontWeight: 800, textAlign: 'center', width: 350, height: 45, x: 225, y: 120 });
+                createElement('text', { content: 'Válido hasta: 31/12/2026', fontSize: 14, color: '#64748b', fontWeight: 400, textAlign: 'center', width: 250, height: 25, x: 275, y: 180 });
+                createElement('shape', { shape: 'circle', fill: '#fbbf24', width: 120, height: 120, x: 340, y: 250 });
+                createElement('text', { content: '-50%', fontSize: 32, color: '#1a1a2e', fontWeight: 900, textAlign: 'center', width: 100, height: 40, x: 350, y: 290 });
+                const items = [elements[0], elements[1], elements[2], elements[3], elements[4], elements[5]];
+                elements = items;
+                renderAll();
+            }
+            showToast('✅ Plantilla cargada');
+        }
+
+        function renderAll() {
+            sheet.innerHTML = '';
+            elements.forEach(el => renderElement(el));
+            updateLayers();
+        }
+
+        // ==================== LIMPIAR ====================
+        function clearAll(confirmMsg = true) {
+            if (confirmMsg && !confirm('¿Eliminar todos los elementos?')) return;
+            elements = [];
+            sheet.innerHTML = '';
+            selectedId = null;
+            updateLayers();
+            updatePropertiesPanel();
+            if (confirmMsg) showToast('🗑️ Lienzo limpiado');
+        }
+
+        // ==================== VISTA PREVIA / EXPORTAR ====================
+        function generatePrintPreview() {
+            const container = document.getElementById('printPreviewContainer');
+            // Clonar el sheet
+            const clone = sheet.cloneNode(true);
+            clone.style.transform = 'none';
+            clone.style.position = 'relative';
+            clone.querySelectorAll('.resize-handle, .delete-btn').forEach(el => el.remove());
+            clone.querySelectorAll('.canvas-element').forEach(el => {
+                el.style.border = 'none';
+                el.style.cursor = 'default';
+            });
+            container.innerHTML = '';
+            container.appendChild(clone);
+        }
+
+        async function downloadPNG() {
+            // Ocultar handles temporalmente
+            document.querySelectorAll('.resize-handle, .delete-btn').forEach(el => el.style.display = 'none');
+
+            try {
+                const canvas = await html2canvas(sheet, {
+                    backgroundColor: null,
+                    scale: 2,
+                    useCORS: true,
+                    logging: false
+                });
+
+                const link = document.createElement('a');
+                link.download = 'etiqueta.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast('✅ Etiqueta descargada');
+            } catch (e) {
+                showToast('Error al exportar', true);
+                console.error(e);
+            } finally {
+                document.querySelectorAll('.resize-handle, .delete-btn').forEach(el => el.style.display = '');
+                // Restaurar visibilidad correcta
+                document.querySelectorAll('.canvas-element').forEach(div => {
+                    const id = parseInt(div.dataset.id);
+                    const el = elements.find(x => x.id === id);
+                    if (el && !el.visible) div.style.display = 'none';
+                });
+            }
+        }
+
+        // ==================== INICIALIZACIÓN ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize sheet with default cm values converted to px
+            sheet.style.width = (21 * 37.8) + 'px';
+            sheet.style.height = (13 * 37.8) + 'px';
+            showToast('🎨 Generador listo. Agrega elementos desde el panel izquierdo.');
+        });
+
+        // Atajos de teclado
+        document.addEventListener('keydown', (e) => {
+            if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                deleteElement(selectedId);
+            }
+        });
+    </script>
+</body>
+</html>
