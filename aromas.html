@@ -25,7 +25,7 @@
 
 :root {
   --primary: #1a1a1a; --secondary: #4a4a4a; --accent: #c9a96e; --accent-light: #e8d5a3;
-  --bg: #ffffff; --card-bg: #ffffff; --border: #ffffff;
+  --bg: transparent; --card-bg: transparent; --border: #c7ab30;
   --success: #4caf50; --danger: #e74c3c; --info: #2196f3;
   --shadow: 0 4px 20px rgba(0,0,0,0.08); --shadow-hover: 0 8px 30px rgba(0,0,0,0.12);
 }
@@ -40,15 +40,15 @@ body { font-family: 'Montserrat', sans-serif; background: var(--bg); color: var(
 .nav-tab { padding: 0.6rem 1.2rem; border: none; background: transparent; color: var(--secondary); font-family: 'Montserrat', sans-serif; font-weight: 500; cursor: pointer; border-radius: 8px; transition: all 0.3s ease; font-size: 0.9rem; }
 .nav-tab:hover { background: var(--bg); color: var(--primary); }
 .nav-tab.active { background: var(--primary); color: white; }
-.main-container { display: grid; grid-template-columns: 380px 1fr; gap: 2rem; padding: 2rem; max-width: 1700px; margin: 0 auto; }
-.sidebar { background: var(--card-bg); border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow); height: fit-content; position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow-y: auto; }
+.main-container { display: grid; grid-template-columns: 380px 1fr; gap: 2rem; padding: 2rem; max-width: 100%; margin: 0; align-items: start; width: 100%; }
+.sidebar { background: var(--card-bg); border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow); height: fit-content; position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow-y: auto; width: 380px; min-width: 380px; overflow-x: hidden; word-wrap: break-word; }
 .sidebar::-webkit-scrollbar { width: 6px; }
 .sidebar::-webkit-scrollbar-track { background: transparent; }
 .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 .sidebar-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--accent); }
 .form-group { margin-bottom: 1.2rem; }
 .form-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--secondary); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 1px; }
-.form-input, .form-textarea, .form-select { width: 100%; padding: 0.7rem 0.9rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Montserrat', sans-serif; font-size: 0.9rem; transition: all 0.3s ease; background: var(--bg); }
+.form-input, .form-textarea, .form-select { width: 100%; padding: 0.7rem 0.9rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Montserrat', sans-serif; font-size: 0.9rem; transition: all 0.3s ease; background: var(--bg); box-sizing: border-box; }
 .form-input:focus, .form-textarea:focus, .form-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.15); }
 .form-textarea { resize: vertical; min-height: 80px; }
 .color-picker-wrapper { display: flex; gap: 0.5rem; align-items: center; }
@@ -73,11 +73,11 @@ body { font-family: 'Montserrat', sans-serif; background: var(--bg); color: var(
 input[type="range"] { width: 100%; height: 6px; border-radius: 3px; background: var(--border); outline: none; -webkit-appearance: none; }
 input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
-.preview-area { display: flex; flex-direction: column; gap: 2rem; }
-.preview-card { background: var(--card-bg); border-radius: 16px; padding: 2rem; box-shadow: var(--shadow); }
+.preview-area { display: flex; flex-direction: column; gap: 2rem; min-width: 0; align-items: center; width: 100%; }
+.preview-card { background: var(--card-bg); border-radius: 16px; padding: 2rem; box-shadow: var(--shadow); width: 100%; max-width: 100%; }
 .preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
 .preview-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; }
-.label-container { display: flex; justify-content: center; align-items: center; min-height: 500px; background: linear-gradient(45deg, #e8e8e8 25%, transparent 25%), linear-gradient(-45deg, #e8e8e8 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e8e8e8 75%), linear-gradient(-45deg, transparent 75%, #e8e8e8 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; background-color: #f0f0f0; border-radius: 12px; padding: 2rem; overflow: auto; }
+.label-container { display: flex; justify-content: center; align-items: center; min-height: 500px; background: linear-gradient(45deg, #e8e8e8 25%, transparent 25%), linear-gradient(-45deg, #e8e8e8 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e8e8e8 75%), linear-gradient(-45deg, transparent 75%, #e8e8e8 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; background-color: #f0f0f0; border-radius: 12px; padding: 2rem; overflow: auto; transition: background 0.5s ease; }
 
 .label { background: white; border-radius: var(--border-radius, 4px); box-shadow: 0 2px 10px rgba(0,0,0,0.0); display: flex; flex-direction: column; position: relative; overflow: hidden; transition: all 0.3s ease; margin: 0 auto; width: var(--label-width, 60mm); height: var(--label-height, 80mm); padding: var(--label-padding, 3mm); }
 .label-top-line { position: absolute; top: 0; left: 0; right: 0; height: var(--top-line, 4px); background: var(--accent-color, #c9a96e); z-index: 2; }
@@ -107,8 +107,10 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18p
   /* Quiet zone física: margen blanco alrededor del QR */
   padding: 3px;
   box-sizing: border-box;
-}.label-qr table { border-collapse: collapse !important; width: 100% !important; height: 100% !important; }
-.label-qr td { padding: 0 !important; }
+  min-width: 20px;
+  min-height: 20px;
+}.label-qr table { border-collapse: collapse !important; width: 100% !important; height: 100% !important; border: none !important; table-layout: fixed !important; }
+.label-qr td { padding: 0 !important; margin: 0 !important; border: none !important; font-size: 1px !important; line-height: 1px !important; }
 .label-info { color: var(--secondary); line-height: 1.4; text-align: right; flex: 1; min-width: 0; overflow: hidden; }
 .label-batch { font-family: 'Roboto', monospace; color: var(--text-color, #1a1a1a); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -196,7 +198,137 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18p
 .template-btn.active { border-color: var(--accent); background: var(--accent); color: white; }
 .template-icon { font-size: 1.5rem; display: block; margin-bottom: 0.3rem; }
 .section-divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+/* ===== CONTROLES DE IMÁGENES ===== */
+.images-panel { margin-top: 1rem; }
+.image-item { background: var(--bg); border-radius: 12px; padding: 1rem; margin-bottom: 0.8rem; border: 1.5px solid var(--border); transition: all 0.3s ease; }
+.image-item:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+.image-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; }
+.image-item-name { font-weight: 600; font-size: 0.85rem; color: var(--primary); }
+.image-item-badge { background: var(--accent); color: white; font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 8px; font-weight: 600; }
+.image-preview-mini { width: 100%; height: 70px; background: linear-gradient(45deg, #e8e8e8 25%, transparent 25%), linear-gradient(-45deg, #e8e8e8 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e8e8e8 75%), linear-gradient(-45deg, transparent 75%, #e8e8e8 75%); background-size: 10px 10px; background-position: 0 0, 0 5px, 5px -5px, -5px 0px; background-color: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.6rem; position: relative; overflow: hidden; }
+.image-preview-mini img { max-width: 80%; max-height: 80%; object-fit: contain; transition: all 0.3s ease; }
+.image-upload-mini { border: 2px dashed var(--border); border-radius: 8px; padding: 0.8rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: var(--bg); }
+.image-upload-mini:hover { border-color: var(--accent); background: rgba(201, 169, 110, 0.05); }
+.image-upload-mini.has-image { border-style: solid; border-color: var(--success); background: rgba(76, 175, 80, 0.05); }
+.image-pos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.image-pos-input { padding: 0.4rem 0.6rem; border: 1.5px solid var(--border); border-radius: 6px; font-size: 0.8rem; font-family: 'Montserrat', sans-serif; width: 100%; }
+.image-pos-input:focus { outline: none; border-color: var(--accent); }
+.btn-add-image { width: 100%; padding: 0.7rem; border: 2px dashed var(--accent); border-radius: 10px; background: rgba(201, 169, 110, 0.05); color: var(--accent); font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease; font-family: 'Montserrat', sans-serif; margin-top: 0.5rem; }
+.btn-add-image:hover { background: rgba(201, 169, 110, 0.15); transform: translateY(-1px); }
+.btn-remove-image { background: var(--danger); color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.7rem; cursor: pointer; font-family: 'Montserrat', sans-serif; transition: all 0.2s ease; }
+.btn-remove-image:hover { background: #c0392b; }
+.label-image { position: absolute; pointer-events: none; z-index: 1; }
+.label-image img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+
+/* ===== MODO VINIL TRANSPARENTE ===== */
+.label.vinyl-mode {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.label.vinyl-mode .label-logo-area,
+.label.vinyl-mode .label-product,
+.label.vinyl-mode .label-instructions,
+.label.vinyl-mode .label-footer {
+  background: transparent !important;
+}
+/* Texto con contorno para resaltar sobre cualquier superficie */
+.label.vinyl-mode .label-logo {
+  text-shadow: 0 0 3px rgba(255,255,255,0.9), 0 0 6px rgba(255,255,255,0.7), 0 0 1px rgba(0,0,0,0.3);
+}
+.label.vinyl-mode .label-name {
+  text-shadow: 0 0 4px rgba(255,255,255,0.95), 0 0 8px rgba(255,255,255,0.8), 0 0 1px rgba(0,0,0,0.4);
+}
+.label.vinyl-mode .label-type {
+  text-shadow: 0 0 3px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.3);
+}
+.label.vinyl-mode .label-details {
+  text-shadow: 0 0 2px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2);
+}
+.label.vinyl-mode .label-logo-sub {
+  text-shadow: 0 0 2px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2);
+}
+.label.vinyl-mode .label-instructions {
+  text-shadow: 0 0 2px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2);
+}
+.label.vinyl-mode .label-batch {
+  text-shadow: 0 0 2px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2);
+}
+.label.vinyl-mode #previewOrigin {
+  text-shadow: 0 0 2px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2);
+}
+/* El QR SIEMPRE mantiene fondo blanco opaco - obligatorio para escaneo */
+.label.vinyl-mode .label-qr {
+  background: #ffffff !important;
+  box-shadow: 0 0 4px rgba(255,255,255,0.8);
+}
+/* Líneas decorativas con glow sutil */
+.label.vinyl-mode .label-top-line,
+.label.vinyl-mode .label-bottom-line {
+  box-shadow: 0 0 4px rgba(201,169,110,0.5);
+}
+.label.vinyl-mode .label-divider {
+  box-shadow: 0 0 3px rgba(201,169,110,0.4);
+}
+/* Contenedor de preview con fondo oscuro para simular vinil transparente sobre superficie oscura */
+.label-container.vinyl-preview {
+  background: 
+    linear-gradient(45deg, #2a2a2a 25%, transparent 25%),
+    linear-gradient(-45deg, #2a2a2a 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #2a2a2a 75%),
+    linear-gradient(-45deg, transparent 75%, #2a2a2a 75%) !important;
+  background-size: 20px 20px !important;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px !important;
+  background-color: #1a1a1a !important;
+}
+/* Indicador visual de modo vinil */
+.vinyl-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: linear-gradient(135deg, rgba(201,169,110,0.2), rgba(201,169,110,0.05));
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.vinyl-badge::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--accent);
+}
+
+
+/* QR nunca hereda sombras de texto */
+.label-qr, .label-qr *, .label-qr table, .label-qr td, .label-qr tr {
+  text-shadow: none !important;
+}
+
+
+/* Prevent sidebar content from breaking the grid */
+.sidebar * { max-width: 100%; box-sizing: border-box; }
+.sidebar .form-group { width: 100%; }
+.sidebar input, .sidebar textarea, .sidebar select { max-width: 100%; }
+.sidebar .template-grid { width: 100%; }
+.sidebar .font-control-group { width: 100%; }
+.sidebar .image-item { width: 100%; }
+.sidebar .export-buttons { width: 100%; }
+.sidebar .toggle-group { width: 100%; }
+
 </style>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<base target="_blank">
 </head>
 <body>
 <header class="header">
@@ -236,6 +368,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18p
         <button class="template-btn" onclick="applyTemplate('vela-votiva')"><span class="template-icon">🔶</span>Votiva<br>40×50mm</button>
         <button class="template-btn" onclick="applyTemplate('vela-rectangular')"><span class="template-icon">▭</span>Rectangular<br>45×30mm</button>
         <button class="template-btn" onclick="applyTemplate('vela-etiqueta')"><span class="template-icon">🏷️</span>Etiqueta<br>55×35mm</button>
+        <button class="template-btn" onclick="applyTemplate('vinil-transparente')" style="border-color:var(--accent);background:rgba(201,169,110,0.1);"><span class="template-icon">🎞️</span>Vinil<br>Transparente</button>
       </div>
     </div>
     <hr class="section-divider">
@@ -245,6 +378,8 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18p
       <input type="text" class="form-input" id="projectName" value="Vela Aromática de Parafina" oninput="updateLabel()">
     </div>
 
+    <!--id="projectName"productName-->
+
     <div class="form-group">
       <label class="form-label">Logo / Marca</label>
       <div class="image-upload-area" id="logoUploadArea" onclick="document.getElementById('logoInput').click()">
@@ -253,8 +388,42 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18p
         <img id="logoPreview" class="image-preview" style="display:none;">
       </div>
       <input type="file" id="logoInput" class="hidden-input" accept="image/*" onchange="handleLogoUpload(event)">
-      <input type="text" class="form-input" id="brandName" value="Esentia" style="margin-top:0.5rem; font-family: 'Adelia', cursive; font-size: 1.3rem;">
-      <input type="text" class="form-input" id="brandSub" value="Velas Artesanales" style="margin-top:0.5rem;">
+
+      <!-- Controles del Logo -->
+      <div id="logoControls" style="margin-top:0.8rem; display:none;">
+        <div class="range-group" style="margin-bottom:0.6rem;">
+          <div class="range-label">Tama&#241;o Logo (%) <span id="logoSizeVal">80</span></div>
+          <input type="range" id="logoSize" min="10" max="100" value="80" oninput="updateLogoControls()">
+        </div>
+        <div class="range-group" style="margin-bottom:0.6rem;">
+          <div class="range-label">Rotaci&#243;n Logo (&#176;) <span id="logoRotVal">0</span></div>
+          <input type="range" id="logoRot" min="-180" max="180" value="0" oninput="updateLogoControls()">
+        </div>
+        <div class="range-group" style="margin-bottom:0.6rem;">
+          <div class="range-label">Opacidad Logo (%) <span id="logoOpaVal">100</span></div>
+          <input type="range" id="logoOpa" min="0" max="100" value="100" oninput="updateLogoControls()">
+        </div>
+        <div class="image-pos-grid" style="margin-bottom:0.6rem;">
+          <div>
+            <label style="font-size:0.7rem;color:var(--secondary);">Pos. X (%)</label>
+            <input type="number" class="image-pos-input" id="logoPosX" value="50" min="0" max="100" oninput="updateLogoControls()">
+          </div>
+          <div>
+            <label style="font-size:0.7rem;color:var(--secondary);">Pos. Y (%)</label>
+            <input type="number" class="image-pos-input" id="logoPosY" value="15" min="0" max="100" oninput="updateLogoControls()">
+          </div>
+        </div>
+        <div class="toggle-group">
+          <span class="toggle-label">Mostrar logo (ocultar texto)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="showLogoImg" checked onchange="updateLogoControls()">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <input type="text" class="form-input" id="brandName" value="Esentia" style="margin-top:0.5rem; font-family: 'Adelia', cursive; font-size: 1.3rem;" oninput="updateLabel()">
+      <input type="text" class="form-input" id="brandSub" value="Velas Artesanales" style="margin-top:0.5rem;" oninput="updateLabel()">
     </div>
 
     <div class="form-group">
@@ -276,6 +445,166 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18p
       <input type="text" class="form-input" id="productName" value="Sin Aroma" oninput="updateLabel()">
     </div>
 
+<!-- 📦 AUTO-COMPLETAR DESDE CATÁLOGO (MEJORADO) -->
+<div class="form-group" style="margin-top: 15px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%); border-radius: 10px; border: 1px solid #e9ecef; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+    <label style="font-weight: bold; display: block; margin-bottom: 10px; font-size: 15px;">
+        📦 Auto-completar desde Catálogo 
+        <span style="font-size: 11px; color: #6c757d; font-weight: normal;">(Opcional)</span>
+    </label>
+
+    <!-- Estado de carga -->
+    <div id="catalogoStatus" style="display: none; margin-bottom: 10px; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;">
+        <span id="catalogoStatusIcon">⏳</span> <span id="catalogoStatusText">Cargando catálogos...</span>
+        <button type="button" onclick="cargarDatosProductos(true)" style="margin-left: 10px; padding: 2px 8px; font-size: 11px; border: 1px solid #c9a96e; background: #fff; color: #c9a96e; border-radius: 4px; cursor: pointer; display: none;" id="btnReintentarCatalogo">🔄 Reintentar</button>
+    </div>
+
+    <div style="margin-bottom: 10px;">
+        <label style="font-size: 12px; color: #555;">1️⃣ Categoría</label>
+        <select id="categoriaProducto" onchange="cargarProductos()" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc; width: 100%; font-size: 13px;" disabled>
+            <option value="">-- Seleccionar Categoría --</option>
+            <option value="ESENCIAS">🌸 Esencias y Aromas</option>
+            <option value="LIMPIEZA">🧼 Productos de Limpieza</option>
+            <option value="VELAS">🕯️ Velas</option>
+        </select>
+    </div>
+
+    <div style="margin-bottom: 10px;">
+        <label style="font-size: 12px; color: #555;">2️⃣ Buscar y Seleccionar Producto</label>
+        <input type="text" id="buscadorProductos" placeholder="🔍 Escribir para filtrar... ej: Lavanda, Sandía, Coco"
+               oninput="filtrarProductos()" disabled
+               style="padding: 8px; border-radius: 6px 6px 0 0; border: 1px solid #ccc; border-bottom: none; width: 100%; font-size: 13px; box-sizing: border-box;">
+        <select id="productoSeleccionado" onchange="aplicarProducto()" disabled
+                style="padding: 8px; border-radius: 0 0 6px 6px; border: 1px solid #ccc; width: 100%; font-size: 13px; box-sizing: border-box;">
+            <option value="">-- Esperando catálogo... --</option>
+        </select>
+    </div>
+
+    <div style="margin-bottom: 10px;" id="contenedorVariantes" hidden>
+        <label style="font-size: 12px; color: #555;">3️⃣ Variante / Tamaño</label>
+        <select id="varianteSeleccionada" onchange="aplicarVariante()"
+                style="padding: 8px; border-radius: 6px; border: 1px solid #c9a96e; width: 100%; font-size: 13px; background: #fffdf5;">
+            <option value="">-- Seleccionar variante --</option>
+        </select>
+    </div>
+
+    <div id="previewProducto" style="display: none; margin-top: 12px; padding: 10px; background: #fff; border-radius: 8px; border: 1px dashed #c9a96e;">
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <img id="previewImagen" src="" alt="Producto" 
+                 style="width: 70px; height: 70px; object-fit: contain; border-radius: 6px; background: #f5f5f5; border: 1px solid #eee;">
+            <div style="flex: 1;">
+                <div id="previewNombre" style="font-weight: bold; font-size: 14px; color: #1a1a1a;"></div>
+                <div id="previewCategoria" style="font-size: 11px; color: #888; margin-top: 2px;"></div>
+                <div id="previewBadges" style="margin-top: 5px; display: flex; gap: 4px; flex-wrap: wrap;"></div>
+                <div id="previewPrecio" style="font-size: 13px; color: #c9a96e; font-weight: bold; margin-top: 4px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer;">
+                <input type="checkbox" id="usarImagenProducto" onchange="toggleImagenProducto()">
+                🖼️ Usar imagen del producto
+            </label>
+         <!--  <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer;">
+                <input type="checkbox" id="usarQRProducto" onchange="toggleQRProducto()">
+                📱 QR con datos del producto
+            </label>-->
+
+            <div style="grid-column: span 2; margin-top: 8px;">
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; margin-bottom: 8px;">
+        <input type="checkbox" id="usarQRProducto" onchange="toggleQRProducto()">
+        📱 QR del Producto
+    </label>
+    
+    <div id="opcionesQR" style="display: none; padding: 10px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef; margin-top: 6px;">
+        <div style="font-size: 11px; font-weight: bold; color: #555; margin-bottom: 8px;">
+            Tipo de QR:
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; cursor: pointer; padding: 6px; border-radius: 4px; transition: all 0.2s;" 
+                   onmouseover="this.style.background='#fff'" onmouseout="this.style.background='transparent'">
+                <input type="radio" name="tipoQR" value="facebook" checked onchange="actualizarQR()">
+                <span>📘 Facebook (Página oficial)</span>
+            </label>
+            
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; cursor: pointer; padding: 6px; border-radius: 4px; transition: all 0.2s;"
+                   onmouseover="this.style.background='#fff'" onmouseout="this.style.background='transparent'">
+                <input type="radio" name="tipoQR" value="producto" onchange="actualizarQR()">
+                <span>🔗 Ficha del Producto <span style="color:#28a745; font-weight:bold;">(Recomendado)</span></span>
+                <span style="font-size:9px; background:#28a745; color:white; padding:1px 6px; border-radius:3px;">PROFESIONAL</span>
+            </label>
+            
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; cursor: pointer; padding: 6px; border-radius: 4px; transition: all 0.2s;"
+                   onmouseover="this.style.background='#fff'" onmouseout="this.style.background='transparent'">
+                <input type="radio" name="tipoQR" value="json" onchange="actualizarQR()">
+                <span>📦 Datos JSON (Información técnica)</span>
+                <span style="font-size:9px; background:#ffc107; color:#1a1a1a; padding:1px 6px; border-radius:3px;">SIN VERIFICAR</span>
+            </label>
+        </div>
+        
+        <div id="previewQRUrl" style="margin-top: 8px; padding: 6px; background: #fff; border: 1px dashed #c9a96e; border-radius: 4px; font-size: 10px; color: #666; word-break: break-all; max-height: 60px; overflow-y: auto;">
+            <strong>URL actual:</strong> <span id="previewQRUrlText">--</span>
+        </div>
+    </div>
+</div>
+        </div>
+        
+        <button type="button" id="btnAgregarImagen" onclick="agregarImagenProducto()"
+                style="width: 100%; padding: 10px; background: #c9a96e; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; transition: all 0.2s; margin-bottom: 10px;">
+            ➕ Agregar Imagen del Producto al Diseñador
+        </button>
+        
+        <div id="controlesImagen" style="display: none; padding: 12px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef;">
+            <div style="font-size: 11px; font-weight: bold; color: #555; margin-bottom: 8px;">🎛️ Ajustes de Imagen</div>
+            
+            <div style="margin-bottom: 8px;">
+                <label style="display: flex; justify-content: space-between; font-size: 11px; color: #666; margin-bottom: 4px;">
+                    <span>Tamaño</span><span id="tamanoImagenValor">30%</span>
+                </label>
+                <input type="range" id="tamanoImagen" min="5" max="80" value="30" oninput="actualizarImagen()" style="width: 100%; cursor: pointer;">
+            </div>
+            
+            <div style="margin-bottom: 8px;">
+                <label style="display: flex; justify-content: space-between; font-size: 11px; color: #666; margin-bottom: 4px;">
+                    <span>Posición X</span><span id="posXImagenValor">50%</span>
+                </label>
+                <input type="range" id="posXImagen" min="0" max="100" value="76" oninput="actualizarImagen()" style="width: 100%; cursor: pointer;">
+            </div>
+            
+            <div style="margin-bottom: 8px;">
+                <label style="display: flex; justify-content: space-between; font-size: 11px; color: #666; margin-bottom: 4px;">
+                    <span>Posición Y</span><span id="posYImagenValor">30%</span>
+                </label>
+                <input type="range" id="posYImagen" min="0" max="100" value="59" oninput="actualizarImagen()" style="width: 100%; cursor: pointer;">
+            </div>
+            
+            <div style="margin-bottom: 8px;">
+                <label style="display: flex; justify-content: space-between; font-size: 11px; color: #666; margin-bottom: 4px;">
+                    <span>Rotación</span><span id="rotacionImagenValor">0°</span>
+                </label>
+                <input type="range" id="rotacionImagen" min="0" max="360" value="0" oninput="actualizarImagen()" style="width: 100%; cursor: pointer;">
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px;">
+                <button type="button" onclick="resetearImagen()" style="padding: 6px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">🔄 Resetear</button>
+                <button type="button" onclick="centrarImagen()" style="padding: 6px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">🎯 Centrar</button>
+            </div>
+        </div>
+        
+        <small style="color: #6c757d; display: block; margin-top: 6px; font-size: 10px; text-align: center;">
+            💡 Activa el checkbox para mostrar/ocultar la imagen y ajusta los controles
+        </small>
+    </div>
+</div>
+
+    <h3 class="sidebar-title" style="margin-top:1.5rem;font-size:1rem;">🖼️ Imágenes</h3>
+    <div id="imagesPanel" class="images-panel">
+    </div>
+    <button class="btn-add-image" onclick="addNewImage()">➕ Agregar Imagen</button>
+    <input type="file" id="imageInputGlobal" class="hidden-input" accept="image/*" onchange="handleImageUpload(event)">
+
      <button class="btn btn-primary" onclick="saveProject()" style="margin-top:1.5rem;">💾 Guardar Proyecto</button>
      <button class="btn btn-accent" onclick="addToPrintQueue()">➕ Añadir a Cola</button>
      <div class="form-group"><label class="form-label">Color de Acento</label><div class="color-picker-wrapper"><input type="color" class="color-picker" id="accentColor" value="#c9a96e" oninput="updateLabel()"><span class="color-value" id="accentColorValue">#c9a96e</span></div></div>
@@ -294,29 +623,39 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18p
 
     <div class="form-group">
       <label class="form-label">Tipo / Categoría</label>
-      <input type="text" class="form-input" id="productType" value="Vela Aromática de Parafina">
+      <input type="text" class="form-input" id="productType" value="Vela Aromática de Parafina" oninput="updateLabel()">
     </div>
 
-    <div class="form-group">
-      <label class="form-label">Detalles (peso, tiempo, etc.)</label>
-      <input type="text" class="form-input" id="productDetails" value="180g · 40h de quemado">
-    </div>
+    <!-- 💰 PRECIO OPCIONAL -->
+<div class="form-group" style="margin-top: 8px;">
+    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+        <input type="checkbox" id="showPrice" onchange="updateLabel()" checked>
+        💰 Mostrar precio en la etiqueta
+    </label>
+    <input type="text" class="form-input" id="productPrice" value="" 
+           placeholder="Ej: ₡7,000 (se llena automáticamente al elegir variante)" 
+           oninput="updateLabel()" style="margin-top: 6px;">
+    <small style="color: #6c757d; font-size: 11px; display: block; margin-top: 4px;">
+        💡 Se actualiza automáticamente al elegir una variante. Puedes editarlo manualmente.
+    </small>
+</div>
 
     <div class="form-group">
       <label class="form-label">Instrucciones de Seguridad</label>
-      <textarea class="form-textarea" id="instructions">Quemar sobre superficie resistente al calor. No dejar sin supervisión. Mantener alejado de corrientes de aire, niños y mascotas. No quemar más de 4 horas seguidas. Detener cuando queden 1cm de cera.</textarea>
+      <textarea class="form-textarea" id="instructions" oninput="updateLabel()">Quemar sobre superficie resistente al calor. No dejar sin supervisión. Mantener alejado de corrientes de aire, niños y mascotas. No quemar más de 4 horas seguidas. Detener cuando queden 1cm de cera.</textarea>
     </div>
 
     <div class="form-group">
       <label class="form-label">URL para QR</label>
-      <input type="text" class="form-input" id="qrUrl" value="https://www.facebook.com/profile.php?id=61579078480913">
+      <input type="text" class="form-input" id="qrUrl" value="https://www.facebook.com/profile.php?id=61579078480913" oninput="updateLabel()">
     </div>
 
     <div class="form-group">
-      <label class="form-label">Info Legal / Lote</label>
-      <input type="text" class="form-input" id="batchInfo" value="Lote: 001 | Exp: 12/2026">
-      <input type="text" class="form-input" id="originInfo" value="Cera de Parafina · Esencias naturales · Hecho a mano" style="margin-top:0.5rem;">
-    </div>
+  <label class="form-label" style="display:flex;justify-content:space-between;align-items:center;">
+    Info Legal / Lote
+    <button type="button" class="btn btn-xs btn-secondary" onclick="generateBatchInfo()" title="Regenerar con fecha actual">↻ Actualizar</button>
+  </label>
+  <input type="text" class="form-input" id="batchInfo" value="" oninput="updateLabel()">
 
     <h3 class="sidebar-title" style="margin-top:2rem;font-size:1rem;">📐 Dimensiones</h3>
     <div class="form-group"><div class="range-group"><div class="range-label">Ancho (mm) <span id="labelWidthVal">60</span></div><input type="range" id="labelWidth" min="0" max="150" value="60" oninput="updateLabel()"></div></div>
@@ -325,7 +664,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18p
     <div class="form-group"><div class="range-group"><div class="range-label">Radio esquinas (px) <span id="borderRadiusVal">4</span></div><input type="range" id="borderRadius" min="0" max="360" value="4" oninput="updateLabel()"></div></div>
     <div class="form-group"><div class="range-group"><div class="range-label">Línea superior (px) <span id="topLineVal">4</span></div><input type="range" id="topLine" min="0" max="12" value="4" oninput="updateLabel()"></div></div>
     <div class="form-group"><div class="range-group"><div class="range-label">Línea inferior (px) <span id="bottomLineVal">0</span></div><input type="range" id="bottomLine" min="0" max="12" value="0" oninput="updateLabel()"></div></div>
-    <div class="form-group"><div class="range-group"><div class="range-label">Espaciado áreas (px) <span id="areaGapVal">6</span></div><input type="range" id="areaGap" min="0" max=100" value="6" oninput="updateLabel()"></div></div>
+    <div class="form-group"><div class="range-group"><div class="range-label">Espaciado áreas (px) <span id="areaGapVal">6</span></div><input type="range" id="areaGap" min="0" max="100" value="6" oninput="updateLabel()"></div></div>
 
     <h3 class="sidebar-title" style="margin-top:1.5rem;font-size:1rem;">🔤 Tamaños de Fuente</h3>
     <div class="font-control-group">
@@ -333,12 +672,12 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18p
       <div class="form-group"><div class="range-group"><div class="range-label">Submarca (px) <span id="fontBrandSubVal">8</span></div><input type="range" id="fontBrandSub" min="0" max="20" value="8" oninput="updateLabel()"></div></div>
     </div>
     <div class="font-control-group">
-      <div class="form-group"><div class="range-group"><div class="range-label">  (px) <span id="fontProductVal">22</span></div><input type="range" id="fontProduct" min="0" max="48" value="22" oninput="updateLabel()"></div></div>
+      <div class="form-group"><div class="range-group"><div class="range-label">Producto (px) <span id="fontProductVal">22</span></div><input type="range" id="fontProduct" min="0" max="48" value="22" oninput="updateLabel()"></div></div>
       <div class="form-group"><div class="range-group"><div class="range-label">Tipo (px) <span id="fontTypeVal">10</span></div><input type="range" id="fontType" min="0" max="24" value="10" oninput="updateLabel()"></div></div>
     </div>
     <div class="font-control-group">
       <div class="form-group"><div class="range-group"><div class="range-label">Detalles (px) <span id="fontDetailsVal">9</span></div><input type="range" id="fontDetails" min="0" max="20" value="9" oninput="updateLabel()"></div></div>
-      <div class="form-group"><div class="range-group"><div class="range-label">Instrucciones (px) <span id="fontInstrVal">7</span></div><input type="range" id="fontInstr" min="0" max="16" value="7" oninput="updateLabel()"></div></div>
+      <div class="form-group"><div class="range-group"><div class="range-label">Instrucciones (px) <span id="fontInstrVal">7</span></div><input type="range" id="fontInstr" min="0" max="16" value="9" oninput="updateLabel()"></div></div>
     </div>
     <div class="font-control-group">
       <div class="form-group"><div class="range-group"><div class="range-label">Lote (px) <span id="fontBatchVal">7</span></div><input type="range" id="fontBatch" min="0" max="14" value="7" oninput="updateLabel()"></div></div>
@@ -347,7 +686,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18p
     <div class="form-group"><div class="range-group"><div class="range-label">Tamaño QR (%) <span id="qrSizeVal">22</span></div><input type="range" id="qrSize" min="0" max="100" value="22" oninput="updateLabel()"></div></div>
 
     <h3 class="sidebar-title" style="margin-top:1.5rem;font-size:1rem;">🎨 Colores</h3>
-    <div class="form-group"><label class="form-label">Color de Acento</label><div class="color-picker-wrapper"><input type="color" class="color-picker" id="accentColor" value="#c9a96e" oninput="updateLabel()"><span class="color-value" id="accentColorValue">#c9a96e</span></div></div>
     <div class="form-group"><label class="form-label">Color de Texto</label><div class="color-picker-wrapper"><input type="color" class="color-picker" id="textColor" value="#1a1a1a" oninput="updateLabel()"><span class="color-value" id="textColorValue">#1a1a1a</span></div></div>
     <div class="form-group"><label class="form-label">Color de Fondo</label><div class="color-picker-wrapper"><input type="color" class="color-picker" id="bgColor" value="#ffffff" oninput="updateLabel()"><span class="color-value" id="bgColorValue">#ffffff</span></div></div>
     <div class="form-group"><label class="form-label">Color del QR</label><div class="color-picker-wrapper"><input type="color" class="color-picker" id="qrColor" value="#1a1a1a" oninput="updateLabel()"><span class="color-value" id="qrColorValue">#1a1a1a</span></div></div>
@@ -358,6 +696,23 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18p
     <div class="toggle-group"><span class="toggle-label">Código QR</span><label class="toggle-switch"><input type="checkbox" id="showQR" checked onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
     <div class="toggle-group"><span class="toggle-label">Instrucciones</span><label class="toggle-switch"><input type="checkbox" id="showInstructions" checked onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
     <div class="toggle-group"><span class="toggle-label">Información legal</span><label class="toggle-switch"><input type="checkbox" id="showFooter" checked onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
+
+    <hr class="section-divider" style="margin:1.5rem 0;">
+    <h3 class="sidebar-title" style="font-size:1rem;">🎞️ Modo Vinil Transparente</h3>
+    <div class="toggle-group" style="margin-bottom:0.8rem;">
+      <span class="toggle-label">Activar modo vinil<br><small style="color:var(--accent);font-weight:500;">Fondo transparente + texto con contorno</small></span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="vinylMode" onchange="updateLabel()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div style="background:rgba(201,169,110,0.08);border:1px solid var(--accent);border-radius:10px;padding:0.8rem;font-size:0.75rem;color:var(--secondary);line-height:1.5;">
+      <strong style="color:var(--accent);">💡 Consejos para vinil transparente:</strong><br>
+      • El <strong>QR siempre tendrá fondo blanco</strong> para garantizar el escaneo.<br>
+      • Los textos se resaltan con <strong>contorno blanco</strong> para legibilidad.<br>
+      • Usa <strong>colores oscuros</strong> para el texto (#1a1a1a, #000000).<br>
+      • Evita fondos de color en la etiqueta para transparencia total.
+    </div>
 
     <button class="btn btn-primary" onclick="saveProject()" style="margin-top:1.5rem;">💾 Guardar Proyecto</button>
     <button class="btn btn-accent" onclick="addToPrintQueue()">➕ Añadir a Cola</button>
@@ -375,14 +730,20 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18p
       <div class="preview-card">
         <div class="preview-header">
           <h2 class="preview-title">Vista Previa de Etiqueta</h2>
-          <span style="font-size:0.85rem;color:var(--secondary);" id="previewSize">60 × 80 mm</span>
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            <span class="vinyl-badge" id="vinylBadge" style="display:none;">🎞️ Vinil</span>
+            <span style="font-size:0.85rem;color:var(--secondary);" id="previewSize">60 × 80 mm</span>
+          </div>
         </div>
         <div class="label-container">
           <div class="label" id="labelPreview">
+            <div class="label-images-container" id="labelImagesContainer" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:hidden;"></div>
             <div class="label-top-line" id="labelTopLine"></div>
             <div class="label-bottom-line" id="labelBottomLine"></div>
             <div class="label-logo-area" id="labelLogoArea">
               <img id="previewLogoImg" class="label-logo-img" style="display:none;">
+              <!-- Agregar esto dentro del div con id="labelPreview" -->
+              <img id="previewProductImg" src="" style="display: none; position: absolute; pointer-events: none; max-width: 100%; max-height: 100%; object-fit: contain;" />
               <div class="label-logo" id="previewBrand">Esentia</div>
               <div class="label-logo-sub" id="previewBrandSub">Velas Artesanales</div>
             </div>
@@ -391,6 +752,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18p
               <div class="label-type" id="previewType">Vela Aromática de Soya</div>
               <div class="label-divider" id="labelDivider"></div>
               <div class="label-details" id="previewDetails">180g · 40h de quemado</div>
+              <div id="previewPrice" style="font-size: 11px; color: #c9a96e; font-weight: bold; margin-top: 2px;"></div>
             </div>
             <div class="label-instructions" id="previewInstructions">Quemar sobre superficie resistente al calor. No dejar sin supervisión.</div>
             <div class="label-footer" id="labelFooter">
@@ -423,7 +785,10 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18p
 
     <div id="section-print" class="section">
       <div class="preview-card">
-        <div class="preview-header"><h2 class="preview-title">Optimización de Impresión</h2></div>
+        <div class="preview-header">
+          <h2 class="preview-title">Optimización de Impresión</h2>
+          <span class="vinyl-badge" id="printVinylBadge" style="display:none;">🎞️ Modo Vinil Activo</span>
+        </div>
         <div class="sheet-controls">
           <div class="sheet-control-group"><label>Tamaño de Hoja</label><select id="paperSize" onchange="updateSheetPreview()"><option value="A4">A4 (210×297mm)</option><option value="Letter">Carta (216×279mm)</option><option value="Legal">Oficio (216×356mm)</option><option value="A3">A3 (297×420mm)</option><option value="A5">A5 (148×210mm)</option></select></div>
           <div class="sheet-control-group"><label>Margen Sup. (mm)</label><input type="number" id="marginTop" value="10" min="0" max="50" onchange="updateSheetPreview()"></div>
@@ -467,54 +832,1284 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18p
   </div>
 </div>
 
-<!-- MÓDULO DE FIREBASE -->
-<script type="module">
-  import { initAuth, saveProjectToFirestore, loadProjectsFromFirestore, deleteProjectFromFirestore, syncProjects, getConnectionStatus } from 'https://wil1979.github.io/esentia-factura/modules/firebaseStorage.js';
-  
-  window.firebaseStorage = { initAuth, saveProjectToFirestore, loadProjectsFromFirestore, deleteProjectFromFirestore, syncProjects, getConnectionStatus };
-  
-  document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      updateFirebaseStatus('connecting', 'Conectando a Firebase...');
-      await initAuth();
-      const status = getConnectionStatus();
-      if (status.authenticated) {
-        updateFirebaseStatus('connected', 'Conectado ✓');
-        try {
-          await syncProjects();
-          loadAllProjects();
-        } catch (e) { console.warn('Error en sincronización inicial:', e); }
-      } else {
-        updateFirebaseStatus('error', 'Error de conexión');
-      }
-    } catch (error) {
-      console.error('Error al inicializar Firebase:', error);
-      updateFirebaseStatus('error', 'Error de conexión');
-    }
-  });
-  
-  function updateFirebaseStatus(state, text) {
-    const icon = document.getElementById('firebaseIcon');
-    const textEl = document.getElementById('firebaseText');
-    if (!icon || !textEl) return;
-    textEl.textContent = text;
-    icon.style.background = state === 'connecting' ? '#ffc107' : state === 'connected' ? '#4caf50' : '#e74c3c';
-  }
-</script>
-
-<!-- LÓGICA PRINCIPAL DE LA APP -->
 <script>
+// ==========================================
+// 🔥 FIREBASE CONFIGURACIÓN
+// ==========================================
+// REEMPLAZA estos valores con los de tu proyecto Firebase
+// (Ve a Firebase Console → Configuración del proyecto → SDK)
+// Configuración global para evitar problemas de scope
+window.firebaseConfig = {
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_PROYECTO.firebaseapp.com",
+  projectId: "TU_PROYECTO",
+  storageBucket: "TU_PROYECTO.appspot.com",
+  messagingSenderId: "000000000",
+  appId: "1:000000000:web:xxxxxxxx"
+};
+
+// Inicializar Firebase solo cuando todo esté cargado
+let db = null;
+let auth = null;
+let userId = null;
+let firebaseReady = false;
+
+function initFirebase() {
+  try {
+    if (typeof firebase !== 'undefined' && window.firebaseConfig) {
+      firebase.initializeApp(window.firebaseConfig);
+      db = firebase.firestore();
+      auth = firebase.auth();
+
+      auth.signInAnonymously().then(() => {
+        console.log('✅ Firebase Auth anónima activa');
+      }).catch(err => {
+        console.warn('⚠️ Auth anónima falló:', err);
+      });
+
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          userId = user.uid;
+          firebaseReady = true;
+          updateFirebaseStatus('conectado');
+          console.log('🔥 Firebase listo. UID:', userId);
+        } else {
+          firebaseReady = false;
+          updateFirebaseStatus('desconectado');
+        }
+      });
+    } else {
+      console.warn('⚠️ Firebase SDK no cargado aún');
+      updateFirebaseStatus('desconectado');
+    }
+  } catch (e) {
+    console.error('❌ Error inicializando Firebase:', e);
+    updateFirebaseStatus('error');
+  }
+}
+
+// Esperar a que los scripts externos carguen
+if (document.readyState === 'loading') {
+  window.addEventListener('load', initFirebase);
+} else {
+  initFirebase();
+}
+
+function updateFirebaseStatus(estado) {
+  const icon = document.getElementById('firebaseIcon');
+  const text = document.getElementById('firebaseText');
+  if (!icon || !text) return;
+  if (estado === 'conectado') {
+    icon.style.background = '#28a745';
+    text.textContent = 'Firebase conectado';
+  } else if (estado === 'desconectado') {
+    icon.style.background = '#ffc107';
+    text.textContent = 'Esperando Firebase...';
+  } else if (estado === 'error') {
+    icon.style.background = '#dc3545';
+    text.textContent = 'Error Firebase';
+  }
+}
+
+// Objeto global que el código ya espera
+window.firebaseStorage = {
+  async saveProjectToFirestore(project) {
+    if (!db || !userId) throw new Error('Firebase no inicializado');
+    const docRef = db.collection('users').doc(userId).collection('projects').doc(String(project.id));
+    // No guardamos dataUrl de imágenes en Firestore (es muy grande)
+    // Guardamos solo metadatos; las imágenes quedan en localStorage
+    const projectForCloud = {
+      ...project,
+      logoDataUrl: null, // Las imágenes se mantienen local
+      images: project.images ? project.images.map(img => ({...img, dataUrl: null})) : []
+    };
+    await docRef.set(projectForCloud);
+    return true;
+  },
+
+  async loadProjectsFromFirestore() {
+    if (!db || !userId) {
+      console.warn('Firebase no listo, usando solo localStorage');
+      return [];
+    }
+    const snapshot = await db.collection('users').doc(userId).collection('projects').orderBy('lastModified', 'desc').get();
+    const cloudProjects = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      // Restaurar ID como número
+      data.id = parseInt(doc.id) || Date.now();
+      cloudProjects.push(data);
+    });
+    return cloudProjects;
+  },
+
+  async deleteProjectFromFirestore(id) {
+    if (!db || !userId) throw new Error('Firebase no inicializado');
+    await db.collection('users').doc(userId).collection('projects').doc(String(id)).delete();
+    return true;
+  },
+
+  async syncProjects() {
+    if (!db || !userId) {
+      console.warn('Firebase no disponible para sincronización');
+      return;
+    }
+    // Subir proyectos locales que no estén en la nube
+    const localProjects = JSON.parse(localStorage.getItem('aromaProjects') || '[]');
+    const batch = db.batch();
+    const colRef = db.collection('users').doc(userId).collection('projects');
+
+    for (const proj of localProjects) {
+      const ref = colRef.doc(String(proj.id));
+      const projectForCloud = {
+        ...proj,
+        logoDataUrl: null,
+        images: proj.images ? proj.images.map(img => ({...img, dataUrl: null})) : []
+      };
+      batch.set(ref, projectForCloud, { merge: true });
+    }
+    await batch.commit();
+    console.log('✅ Sincronización completada:', localProjects.length, 'proyectos');
+  }
+};
+
+// ==========================================
+// 🖼️ ESTADO Y DIBUJO DE IMAGEN DEL PRODUCTO
+// ==========================================
+window.estadoImagenProducto = {
+    activa: false,
+    url: '',
+    tamano: 30,
+    posX: 50,
+    posY: 30,
+    rotacion: 0
+};
+
+function normalizarURL(img) {
+    if (!img) return '';
+    if (img.startsWith('http')) return img;
+    const cleanPath = img.replace(/^\/+/, '');
+    return `https://wil1979.github.io/esentia-factura/${cleanPath}`;
+}
+
+function dibujarImagenProducto(ctx, canvas) {
+    if (!window.estadoImagenProducto.activa || !window.estadoImagenProducto.url || !ctx || !canvas) return;
+    
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+        const state = window.estadoImagenProducto;
+        const tamanoPorcentaje = state.tamano / 100;
+        const tamanoBase = Math.min(canvas.width, canvas.height);
+        const tamanoFinal = tamanoBase * tamanoPorcentaje;
+        
+        const posX = (canvas.width * state.posX / 100);
+        const posY = (canvas.height * state.posY / 100);
+        
+        ctx.save();
+        ctx.translate(posX, posY);
+        ctx.rotate(state.rotacion * Math.PI / 180);
+        ctx.drawImage(img, -tamanoFinal / 2, -tamanoFinal / 2, tamanoFinal, tamanoFinal);
+        ctx.restore();
+    };
+    img.src = window.estadoImagenProducto.url;
+}
+
+// ==========================================
+// 🗃️ DATOS GLOBALES DE PRODUCTOS
+// ==========================================
+let productosData = { ESENCIAS: [], LIMPIEZA: [], VELAS: [] };
+let productosFiltrados = [];
+let productoActual = null;
+let catalogoCargado = false;
+
+function setCatalogoStatus(estado, mensaje) {
+    const statusDiv = document.getElementById('catalogoStatus');
+    const icon = document.getElementById('catalogoStatusIcon');
+    const text = document.getElementById('catalogoStatusText');
+    const btn = document.getElementById('btnReintentarCatalogo');
+    const catSelect = document.getElementById('categoriaProducto');
+    
+    if (!statusDiv) return;
+    
+    statusDiv.style.display = 'block';
+    text.textContent = mensaje;
+    
+    if (estado === 'loading') {
+        statusDiv.style.background = '#fff3cd';
+        statusDiv.style.color = '#856404';
+        statusDiv.style.border = '1px solid #ffc107';
+        icon.textContent = '⏳';
+        btn.style.display = 'none';
+        if (catSelect) catSelect.disabled = true;
+    } else if (estado === 'ok') {
+        statusDiv.style.background = '#d4edda';
+        statusDiv.style.color = '#155724';
+        statusDiv.style.border = '1px solid #28a745';
+        icon.textContent = '✅';
+        btn.style.display = 'none';
+        if (catSelect) catSelect.disabled = false;
+        setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+    } else if (estado === 'error') {
+        statusDiv.style.background = '#f8d7da';
+        statusDiv.style.color = '#721c24';
+        statusDiv.style.border = '1px solid #dc3545';
+        icon.textContent = '❌';
+        btn.style.display = 'inline-block';
+        if (catSelect) catSelect.disabled = true;
+    }
+}
+
+async function cargarDatosProductos(forzar = false) {
+    if (catalogoCargado && !forzar) {
+        console.log('📦 Catálogo ya cargado, usando caché');
+        return;
+    }
+    
+    setCatalogoStatus('loading', 'Cargando catálogos desde GitHub...');
+    productosData = { ESENCIAS: [], LIMPIEZA: [], VELAS: [] };
+    
+    const urls = {
+        ESENCIAS: 'https://wil1979.github.io/esentia-factura/data/productos_esentia.json',
+        LIMPIEZA: 'https://wil1979.github.io/esentia-factura/data/productos_limpieza_completo.json',
+        VELAS: 'https://wil1979.github.io/esentia-factura/data/catalogo-velas.json'
+    };
+    
+    let errores = [];
+    let cargados = 0;
+    
+    // Cargar ESENCIAS
+    try {
+        const resE = await fetch(urls.ESENCIAS, { cache: 'no-store' });
+        if (!resE.ok) throw new Error(`HTTP ${resE.status}`);
+        const dataE = await resE.json();
+        Object.keys(dataE).forEach(cat => {
+            if (Array.isArray(dataE[cat])) {
+                dataE[cat].forEach(p => {
+                    productosData.ESENCIAS.push({ ...p, categoriaOrigen: cat, tipoCatalogo: 'ESENCIAS' });
+                });
+            }
+        });
+        cargados++;
+    } catch (e) {
+        console.error('❌ Error cargando ESENCIAS:', e);
+        errores.push('Esencias');
+    }
+    
+    // Cargar LIMPIEZA
+    try {
+        const resL = await fetch(urls.LIMPIEZA, { cache: 'no-store' });
+        if (!resL.ok) throw new Error(`HTTP ${resL.status}`);
+        const dataL = await resL.json();
+        if (Array.isArray(dataL)) {
+            dataL.forEach(p => productosData.LIMPIEZA.push({ ...p, tipoCatalogo: 'LIMPIEZA' }));
+        }
+        cargados++;
+    } catch (e) {
+        console.error('❌ Error cargando LIMPIEZA:', e);
+        errores.push('Limpieza');
+    }
+    
+    // Cargar VELAS
+    try {
+        const resV = await fetch(urls.VELAS, { cache: 'no-store' });
+        if (!resV.ok) throw new Error(`HTTP ${resV.status}`);
+        const dataV = await resV.json();
+        if (Array.isArray(dataV)) {
+            dataV.forEach(p => productosData.VELAS.push({ ...p, tipoCatalogo: 'VELAS' }));
+        }
+        cargados++;
+    } catch (e) {
+        console.error('❌ Error cargando VELAS:', e);
+        errores.push('Velas');
+    }
+    
+    console.log('📦 Resultado carga:', {
+        ESENCIAS: productosData.ESENCIAS.length,
+        LIMPIEZA: productosData.LIMPIEZA.length,
+        VELAS: productosData.VELAS.length,
+        errores: errores
+    });
+    
+    if (cargados === 0) {
+        setCatalogoStatus('error', `Error al cargar catálogos. ${errores.join(', ')} no disponibles. Verifica tu conexión o las URLs.`);
+        catalogoCargado = false;
+    } else if (errores.length > 0) {
+        setCatalogoStatus('ok', `✅ Catálogo parcial cargado: ${productosData.ESENCIAS.length + productosData.LIMPIEZA.length + productosData.VELAS.length} productos. Falló: ${errores.join(', ')}`);
+        catalogoCargado = true;
+    } else {
+        setCatalogoStatus('ok', `✅ ${productosData.ESENCIAS.length + productosData.LIMPIEZA.length + productosData.VELAS.length} productos cargados correctamente`);
+        catalogoCargado = true;
+    }
+}
+
+function cargarProductos() {
+    const categoria = document.getElementById('categoriaProducto').value;
+    const select = document.getElementById('productoSeleccionado');
+    const buscador = document.getElementById('buscadorProductos');
+    
+    if (!catalogoCargado) {
+        mostrarNotificacion('⏳ Espera a que el catálogo termine de cargar', 'warning');
+        return;
+    }
+    
+    select.innerHTML = '<option value="">-- Mostrar todos --</option>';
+    buscador.value = '';
+    
+    if (!categoria) {
+        select.disabled = true;
+        buscador.disabled = true;
+        return;
+    }
+    
+    productosFiltrados = productosData[categoria] || [];
+    select.disabled = false;
+    buscador.disabled = false;
+    renderizarProductos(productosFiltrados);
+}
+
+function filtrarProductos() {
+    const categoria = document.getElementById('categoriaProducto').value;
+    const texto = document.getElementById('buscadorProductos').value.toLowerCase().trim();
+    
+    if (!categoria || !catalogoCargado) return;
+    
+    const todos = productosData[categoria];
+    if (!texto) {
+        productosFiltrados = todos;
+    } else {
+        productosFiltrados = todos.filter(p => {
+            const nombre = (p.nombre || '').toLowerCase();
+            const nombreOrig = (p.nombreOriginal || '').toLowerCase();
+            const cat = (p.categoria || p.categoriaOrigen || '').toLowerCase();
+            return nombre.includes(texto) || nombreOrig.includes(texto) || cat.includes(texto);
+        });
+    }
+    renderizarProductos(productosFiltrados);
+}
+
+function renderizarProductos(lista) {
+    const select = document.getElementById('productoSeleccionado');
+    select.innerHTML = `<option value="">-- ${lista.length} productos encontrados --</option>`;
+    
+    lista.forEach((p, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        const nombre = p.nombre || p.nombreOriginal || 'Sin nombre';
+        const sub = p.categoriaOrigen ? ` (${p.categoriaOrigen})` : '';
+        const badges = [];
+        if (p.esNuevo) badges.push('🆕');
+        if (p.esBestseller) badges.push('🏆');
+        opt.textContent = `${badges.join('')}${nombre}${sub}`;
+        select.appendChild(opt);
+    });
+}
+
+function formatPrecio(p) {
+    if (!p) return '';
+    return `₡${Number(p).toLocaleString('es-CR')}`;
+}
+
+function aplicarProducto() {
+    const categoria = document.getElementById('categoriaProducto').value;
+    const idx = document.getElementById('productoSeleccionado').value;
+    const preview = document.getElementById('previewProducto');
+    const contVar = document.getElementById('contenedorVariantes');
+    
+    if (!categoria || idx === '') {
+        preview.style.display = 'none';
+        contVar.hidden = true;
+        productoActual = null;
+        return;
+    }
+    
+    const producto = productosFiltrados[parseInt(idx)];
+    productoActual = producto;
+    
+    const nombrePrincipal = producto.nombre || producto.nombreOriginal || 'Sin Nombre';
+    const elProductName = document.getElementById('productName');
+    const elProductProject = document.getElementById('projectName');
+    if (elProductName) elProductName.value = nombrePrincipal;
+    if (elProductProject) elProductProject.value = nombrePrincipal || '';
+
+    const tipo = producto.categoria || producto.categoriaOrigen || producto.tipo || '';
+    const elProductType = document.getElementById('productType');
+    if (elProductType && tipo) elProductType.value = tipo;
+    
+    const info = producto.info || producto.descripcion || producto.beneficios || '';
+    const elInstructions = document.getElementById('instructions');
+    if (elInstructions && info) elInstructions.value = info;
+    
+    const selectVar = document.getElementById('varianteSeleccionada');
+    selectVar.innerHTML = '<option value="">-- Seleccionar variante --</option>';
+    
+    if (producto.variantes && producto.variantes.length > 0) {
+        contVar.hidden = false;
+        producto.variantes.forEach((v, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = `${v.nombre} — ${formatPrecio(v.precio)}`;
+            opt.dataset.precio = v.precio;
+            opt.dataset.nombreVariante = v.nombre;
+            selectVar.appendChild(opt);
+        });
+        selectVar.value = '0';
+        aplicarVariante();
+    } else {
+        contVar.hidden = true;
+        const precio = producto.precioOferta || producto.precio;
+        if (precio) {
+            // ✅ AHORA: presentación en detalles, precio en campo separado
+            let detalles = [];
+            if (producto.peso) detalles.push(producto.peso);
+            if (producto.duracion) detalles.push(producto.duracion);
+            const elProductDetails = document.getElementById('productDetails');
+            if (elProductDetails) elProductDetails.value = detalles.join(' · ');
+            
+            // Precio en su propio campo
+            const elProductPrice = document.getElementById('productPrice');
+            if (elProductPrice) elProductPrice.value = formatPrecio(precio);
+        }
+    }
+    
+    // Preview imagen, badges, etc.
+    const imgURL = normalizarURL(producto.imagen);
+    const imgPreview = document.getElementById('previewImagen');
+    if (imgURL && imgPreview) {
+        imgPreview.src = imgURL;
+        imgPreview.onerror = () => {
+            imgPreview.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="70" height="70"><rect width="70" height="70" fill="%23eee"/><text x="50%" y="50%" text-anchor="middle" fill="%23999" font-size="10">Sin imagen</text></svg>';
+        };
+    }
+    
+    const elPreviewNombre = document.getElementById('previewNombre');
+    if (elPreviewNombre) elPreviewNombre.textContent = nombrePrincipal;
+    
+    const elPreviewCategoria = document.getElementById('previewCategoria');
+    if (elPreviewCategoria) elPreviewCategoria.textContent = tipo;
+    
+    const badgesDiv = document.getElementById('previewBadges');
+    if (badgesDiv) {
+        badgesDiv.innerHTML = '';
+        const badges = [];
+        if (producto.esNuevo) badges.push({ txt: '✨ NUEVO', color: '#28a745' });
+        if (producto.esBestseller) badges.push({ txt: '🏆 BESTSELLER', color: '#fd7e14' });
+        if (producto.calificacion && producto.calificacion >= 4.5) {
+            badges.push({ txt: `⭐ ${producto.calificacion}`, color: '#ffc107', textDark: true });
+        }
+        if (producto.stock > 0 && producto.stock < 10) {
+            badges.push({ txt: `📦 Stock: ${producto.stock}`, color: '#17a2b8' });
+        }
+        badges.forEach(b => {
+            const span = document.createElement('span');
+            span.textContent = b.txt;
+            span.style.cssText = `padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; background: ${b.color}; color: ${b.textDark ? '#1a1a1a' : '#fff'};`;
+            badgesDiv.appendChild(span);
+        });
+    }
+    
+    const precioPreview = producto.precioOferta || producto.precio;
+    let precioHTML = '';
+    if (producto.precioOriginal && producto.precioOferta && producto.precioOriginal > producto.precioOferta) {
+        precioHTML = `<s style="color:#999; font-weight:normal;">${formatPrecio(producto.precioOriginal)}</s> ${formatPrecio(producto.precioOferta)}`;
+    } else if (precioPreview) {
+        precioHTML = formatPrecio(precioPreview);
+    }
+    const elPreviewPrecio = document.getElementById('previewPrecio');
+    if (elPreviewPrecio) elPreviewPrecio.innerHTML = precioHTML;
+    
+    preview.style.display = 'block';
+    
+    document.getElementById('usarImagenProducto').checked = false;
+    document.getElementById('usarQRProducto').checked = false;
+    
+    if (typeof updateLabel === 'function') updateLabel();
+}
+
+function aplicarVariante() {
+    if (!productoActual) return;
+    const idx = document.getElementById('varianteSeleccionada').value;
+    if (idx === '') return;
+    
+    const variante = productoActual.variantes[idx];
+    
+    // ✅ CAMBIO CLAVE: En detalles ponemos la PRESENTACIÓN (nombre de variante), no el precio
+    let detalles = [];
+    if (productoActual.peso) detalles.push(productoActual.peso);
+    if (productoActual.duracion) detalles.push(productoActual.duracion);
+    detalles.push(variante.nombre); // ← Presentación en lugar de precio
+    
+    const elProductDetails = document.getElementById('productDetails');
+    if (elProductDetails) elProductDetails.value = detalles.join(' · ');
+    
+    // ✅ Precio en su propio campo opcional
+    const elProductPrice = document.getElementById('productPrice');
+    if (elProductPrice) elProductPrice.value = formatPrecio(variante.precio);
+    
+    const elPreviewPrecio = document.getElementById('previewPrecio');
+    if (elPreviewPrecio) elPreviewPrecio.innerHTML = formatPrecio(variante.precio);
+    
+    if (typeof updateLabel === 'function') updateLabel();
+}
+
+function toggleImagenProducto() {
+    const checkbox = document.getElementById('usarImagenProducto');
+    const controles = document.getElementById('controlesImagen');
+    
+    window.estadoImagenProducto.activa = checkbox.checked;
+    controles.style.display = checkbox.checked ? 'block' : 'none';
+    
+    if (checkbox.checked && !window.estadoImagenProducto.url && productoActual && productoActual.imagen) {
+        window.estadoImagenProducto.url = normalizarURL(productoActual.imagen);
+    }
+    
+    actualizarImagen();
+}
+
+function actualizarImagen() {
+    window.estadoImagenProducto.tamano = parseInt(document.getElementById('tamanoImagen').value);
+    window.estadoImagenProducto.posX = parseInt(document.getElementById('posXImagen').value);
+    window.estadoImagenProducto.posY = parseInt(document.getElementById('posYImagen').value);
+    window.estadoImagenProducto.rotacion = parseInt(document.getElementById('rotacionImagen').value);
+    
+    document.getElementById('tamanoImagenValor').textContent = window.estadoImagenProducto.tamano + '%';
+    document.getElementById('posXImagenValor').textContent = window.estadoImagenProducto.posX + '%';
+    document.getElementById('posYImagenValor').textContent = window.estadoImagenProducto.posY + '%';
+    document.getElementById('rotacionImagenValor').textContent = window.estadoImagenProducto.rotacion + '°';
+    
+    if (typeof updateLabel === 'function') updateLabel();
+}
+
+function resetearImagen() {
+    document.getElementById('tamanoImagen').value = 30;
+    document.getElementById('posXImagen').value = 50;
+    document.getElementById('posYImagen').value = 30;
+    document.getElementById('rotacionImagen').value = 0;
+    actualizarImagen();
+}
+
+function centrarImagen() {
+    document.getElementById('posXImagen').value = 50;
+    document.getElementById('posYImagen').value = 50;
+    actualizarImagen();
+}
+
+async function agregarImagenProducto() {
+    if (!productoActual || !productoActual.imagen) {
+        alert('⚠️ Primero selecciona un producto con imagen');
+        return;
+    }
+    
+    const url = normalizarURL(productoActual.imagen);
+    const btn = document.getElementById('btnAgregarImagen');
+    const estadoOriginal = btn.innerHTML;
+    btn.innerHTML = '⏳ Cargando...';
+    btn.disabled = true;
+    
+    const inputFile = document.querySelector('input[type="file"][accept*="image"]');
+    let exito = false;
+    
+    if (inputFile) {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const fileName = url.split('/').pop() || 'producto.png';
+            const file = new File([blob], fileName, { type: blob.type });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            inputFile.files = dataTransfer.files;
+            inputFile.dispatchEvent(new Event('change', { bubbles: true }));
+            exito = true;
+        } catch (e) {
+            console.warn('⚠️ No se pudo inyectar vía input file:', e);
+        }
+    }
+    
+    if (exito) {
+        btn.innerHTML = '✅ ¡Agregada!';
+        btn.style.background = '#28a745';
+        setTimeout(() => {
+            btn.innerHTML = estadoOriginal;
+            btn.style.background = '#c9a96e';
+            btn.disabled = false;
+        }, 2000);
+    } else {
+        btn.innerHTML = estadoOriginal;
+        btn.disabled = false;
+        window.estadoImagenProducto.url = url;
+        window.estadoImagenProducto.activa = true;
+        document.getElementById('usarImagenProducto').checked = true;
+        document.getElementById('controlesImagen').style.display = 'block';
+        actualizarImagen();
+        alert('🖼️ Imagen activada en la vista previa. Ajusta tamaño y posición con los controles.');
+    }
+}
+
+// ==========================================
+// 📱 SISTEMA DE QR MEJORADO (3 OPCIONES)
+// ==========================================
+
+function toggleQRProducto() {
+    const checked = document.getElementById('usarQRProducto').checked;
+    const opcionesQR = document.getElementById('opcionesQR');
+    const elQrUrl = document.getElementById('qrUrl');
+    
+    if (!checked) {
+        // Desactivar QR
+        opcionesQR.style.display = 'none';
+        if (elQrUrl) elQrUrl.value = '';
+        if (typeof updateLabel === 'function') updateLabel();
+        return;
+    }
+    
+    if (!productoActual) {
+        alert('⚠️ Primero selecciona un producto del catálogo');
+        document.getElementById('usarQRProducto').checked = false;
+        return;
+    }
+    
+    // Mostrar opciones de QR
+    opcionesQR.style.display = 'block';
+    actualizarQR();
+}
+
+function actualizarQR() {
+    if (!productoActual) return;
+    
+    const tipoQR = document.querySelector('input[name="tipoQR"]:checked')?.value || 'facebook';
+    const elQrUrl = document.getElementById('qrUrl');
+    const previewText = document.getElementById('previewQRUrlText');
+    
+    let contenidoQR = '';
+    let descripcion = '';
+    
+    switch(tipoQR) {
+        case 'facebook':
+            contenidoQR = 'https://www.facebook.com/profile.php?id=61579078480913';
+            descripcion = '📘 Página oficial de Facebook';
+            break;
+            
+        case 'producto':
+            // ✅ URL profesional con ID del producto
+            const productId = productoActual.id || productoActual.id;
+            contenidoQR = `https://wil1979.github.io/esentia-factura/producto.html?id=${productId}`;
+            descripcion = `🔗 Ficha del producto (ID: ${productId})`;
+            break;
+            
+        case 'json':
+            // Datos JSON del producto (sin verificar)
+            const variante = productoActual.variantes ? 
+                productoActual.variantes[document.getElementById('varianteSeleccionada')?.value || 0] : null;
+            
+            const datosQR = {
+                id: productoActual.id,
+                nombre: productoActual.nombre || productoActual.nombreOriginal,
+                categoria: productoActual.categoria || productoActual.categoriaOrigen,
+                precio: variante ? variante.precio : (productoActual.precioOferta || productoActual.precio),
+                variante: variante ? variante.nombre : null,
+                descripcion: productoActual.info || productoActual.descripcion
+            };
+            contenidoQR = JSON.stringify(datosQR);
+            descripcion = '📦 Datos JSON técnicos';
+            break;
+    }
+    
+    // Aplicar al campo QR
+    if (elQrUrl) elQrUrl.value = contenidoQR;
+    if (previewText) previewText.textContent = `${descripcion}\n${contenidoQR}`;
+    
+    // Actualizar vista previa
+    if (typeof updateLabel === 'function') updateLabel();
+    
+    // Notificación visual
+    mostrarNotificacionQR(descripcion);
+}
+
+function mostrarNotificacionQR(texto) {
+    // Crear notificación temporal pequeña
+    const notif = document.createElement('div');
+    notif.style.cssText = `
+        position: fixed; bottom: 20px; right: 20px; 
+        padding: 8px 12px; background: #28a745; color: white; 
+        border-radius: 6px; font-size: 11px; z-index: 10000;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        animation: fadeIn 0.3s ease-out;
+    `;
+    notif.textContent = `✅ QR: ${texto}`;
+    document.body.appendChild(notif);
+    
+    setTimeout(() => {
+        notif.style.opacity = '0';
+        notif.style.transition = 'opacity 0.3s';
+        setTimeout(() => notif.remove(), 300);
+    }, 2000);
+}
+
+// Agregar CSS para animación
+if (!document.getElementById('qrNotificationStyle')) {
+    const style = document.createElement('style');
+    style.id = 'qrNotificationStyle';
+    style.textContent = `
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// ==========================================
+// 🔄 FUNCIÓN updateLabel CORREGIDA Y BLINDADA
+// ==========================================
+function updateLabel() {
+  if (typeof qrcode !== 'function') {
+    console.warn('Librería qrcode no disponible');
+  }
+  
+  // 1. Canvas (Opcional: solo si existe en el HTML, evita el error null)
+  const canvas = document.getElementById('labelCanvas');
+  if (canvas) {
+    try {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      dibujarImagenProducto(ctx, canvas);
+    } catch (e) {
+      console.warn('⚠️ Error al dibujar en canvas:', e);
+    }
+  }
+
+  // 2. Elementos del DOM
+  const label = document.getElementById('labelPreview');
+  if (!label) return;
+
+  const widthMm = parseInt(document.getElementById('labelWidth')?.value || 60);
+  const heightMm = parseInt(document.getElementById('labelHeight')?.value || 80);
+  const paddingMm = parseFloat(document.getElementById('labelPadding')?.value || 3);
+  const borderRadius = parseInt(document.getElementById('borderRadius')?.value || 4);
+  const topLine = parseInt(document.getElementById('topLine')?.value || 4);
+  const bottomLine = parseInt(document.getElementById('bottomLine')?.value || 0);
+  const areaGap = parseInt(document.getElementById('areaGap')?.value || 6);
+  
+  const fontBrand = parseInt(document.getElementById('fontBrand')?.value || 16);
+  const fontBrandSub = parseInt(document.getElementById('fontBrandSub')?.value || 8);
+  const fontProduct = parseInt(document.getElementById('fontProduct')?.value || 22);
+  const fontType = parseInt(document.getElementById('fontType')?.value || 10);
+  const fontDetails = parseInt(document.getElementById('fontDetails')?.value || 9);
+  const fontInstr = parseInt(document.getElementById('fontInstr')?.value || 7);
+  const fontBatch = parseInt(document.getElementById('fontBatch')?.value || 7);
+  const fontOrigin = parseInt(document.getElementById('fontOrigin')?.value || 7);
+  const qrSizePercent = parseInt(document.getElementById('qrSize')?.value || 22);
+  
+  const brandFont = document.getElementById('brandFont')?.value || 'Playfair Display';
+  const productFont = document.getElementById('productFont')?.value || 'Playfair Display';
+  const accentColor = document.getElementById('accentColor')?.value || '#c9a96e';
+  const textColor = document.getElementById('textColor')?.value || '#1a1a1a';
+  const bgColor = document.getElementById('bgColor')?.value || '#ffffff';
+  const qrBgColor = document.getElementById('qrBgColor')?.value || '#ffffff';
+  
+  const showDivider = document.getElementById('showDivider')?.checked || false;
+  const showQR = document.getElementById('showQR')?.checked || false;
+  const showInstructions = document.getElementById('showInstructions')?.checked || false;
+  const showFooter = document.getElementById('showFooter')?.checked || false;
+  const vinylMode = document.getElementById('vinylMode')?.checked || false;
+
+  label.style.setProperty('--label-width', widthMm + 'mm');
+  label.style.setProperty('--label-height', heightMm + 'mm');
+  label.style.setProperty('--label-padding', paddingMm + 'mm');
+  label.style.setProperty('--border-radius', borderRadius + 'px');
+  label.style.setProperty('--top-line', topLine + 'px');
+  label.style.setProperty('--bottom-line', bottomLine + 'px');
+  label.style.setProperty('--area-gap', areaGap + 'px');
+  label.style.setProperty('--accent-color', accentColor);
+  label.style.setProperty('--text-color', textColor);
+  label.style.setProperty('--qr-size', qrSizePercent + '%');
+  label.style.setProperty('--qr-bg', qrBgColor);
+  label.style.setProperty('--brand-font', brandFont);
+  label.style.setProperty('--product-font', productFont);
+  label.style.borderRadius = borderRadius + 'px';
+
+  if (vinylMode) {
+    label.style.backgroundColor = 'transparent';
+    label.classList.add('vinyl-mode');
+  } else {
+    label.style.backgroundColor = bgColor;
+    label.classList.remove('vinyl-mode');
+  }
+
+  const topLineEl = document.getElementById('labelTopLine');
+  if (topLineEl) { topLineEl.style.height = topLine + 'px'; topLineEl.style.backgroundColor = accentColor; topLineEl.style.display = topLine > 0 ? 'block' : 'none'; }
+  
+  const bottomLineEl = document.getElementById('labelBottomLine');
+  if (bottomLineEl) { bottomLineEl.style.height = bottomLine + 'px'; bottomLineEl.style.backgroundColor = accentColor; bottomLineEl.style.display = bottomLine > 0 ? 'block' : 'none'; }
+
+  const textShadowVinyl = vinylMode ? '0 0 3px rgba(255,255,255,0.9), 0 0 6px rgba(255,255,255,0.7), 0 0 1px rgba(0,0,0,0.3)' : 'none';
+  const textShadowName = vinylMode ? '0 0 4px rgba(255,255,255,0.95), 0 0 8px rgba(255,255,255,0.8), 0 0 1px rgba(0,0,0,0.4)' : 'none';
+  const textShadowLight = vinylMode ? '0 0 2px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2)' : 'none';
+
+  const setStyle = (id, styles) => {
+    const el = document.getElementById(id);
+    if (el) Object.assign(el.style, styles);
+  };
+
+  setStyle('previewBrand', { fontSize: fontBrand + 'px', fontFamily: brandFont, color: textColor, textShadow: textShadowVinyl });
+  setStyle('previewBrandSub', { fontSize: fontBrandSub + 'px', textShadow: textShadowLight });
+  setStyle('previewProduct', { fontSize: fontProduct + 'px', fontFamily: productFont, color: textColor, textShadow: textShadowName });
+  setStyle('previewType', { fontSize: fontType + 'px', textShadow: textShadowLight });
+  setStyle('previewDetails', { fontSize: fontDetails + 'px', textShadow: textShadowLight });
+  setStyle('previewInstructions', { fontSize: fontInstr + 'px', textShadow: textShadowLight });
+  setStyle('previewBatch', { fontSize: fontBatch + 'px', color: textColor, textShadow: textShadowLight });
+  setStyle('previewOrigin', { fontSize: fontOrigin + 'px', textShadow: textShadowLight });
+
+  const qrEl = document.getElementById('previewQR');
+  if (qrEl) {
+    if (showQR) {
+      qrEl.style.display = 'flex';
+      qrEl.style.width = qrSizePercent + '%';
+      qrEl.style.aspectRatio = '1 / 1';
+      qrEl.style.backgroundColor = '#ffffff';
+      qrEl.style.padding = '3px';
+      qrEl.style.boxSizing = 'border-box';
+      try {
+        const qr = qrcode(0, 'H');
+        qr.addData(document.getElementById('qrUrl')?.value || 'https://example.com');
+        qr.make();
+        const moduleCount = qr.getModuleCount();
+        let qrHtml = '<table style="border-collapse:collapse;width:100%;height:100%;table-layout:fixed;">';
+        for (let row = 0; row < moduleCount; row++) {
+          qrHtml += '<tr style="height:' + (100 / moduleCount) + '%;">';
+          for (let col = 0; col < moduleCount; col++) {
+            const isDark = qr.isDark(row, col);
+            qrHtml += '<td style="width:' + (100 / moduleCount) + '%;background:' + (isDark ? '#000000' : '#ffffff') + ';padding:0;margin:0;border:none;">&nbsp;</td>';
+          }
+          qrHtml += '</tr>';
+        }
+        qrHtml += '</table>';
+        qrEl.innerHTML = qrHtml;
+      } catch (e) { 
+        qrEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:0.5rem;color:#999;">QR Error</div>'; 
+      }
+    } else { 
+      qrEl.style.display = 'none'; 
+    }
+  }
+
+  setStyle('labelDivider', { display: showDivider ? 'block' : 'none' });
+  setStyle('previewInstructions', { display: showInstructions ? 'block' : 'none' });
+  setStyle('labelFooter', { display: showFooter ? 'flex' : 'none' });
+
+  const setText = (id, val, fallback) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val || fallback;
+  };
+  setText('previewBrand', document.getElementById('brandName')?.value, 'Marca');
+  setText('previewBrandSub', document.getElementById('brandSub')?.value, '');
+  setText('previewProduct', document.getElementById('productName')?.value, 'Producto');
+  setText('previewType', document.getElementById('productType')?.value, '');
+  setText('previewDetails', document.getElementById('productDetails')?.value, '');
+  setText('previewInstructions', document.getElementById('instructions')?.value, '');
+  setText('previewBatch', document.getElementById('batchInfo')?.value, '');
+  setText('previewOrigin', document.getElementById('originInfo')?.value, '');
+
+  // 💰 PRECIO OPCIONAL
+const showPrice = document.getElementById('showPrice')?.checked || false;
+const previewPriceEl = document.getElementById('previewPrice');
+if (previewPriceEl) {
+    if (showPrice) {
+        const priceValue = document.getElementById('productPrice')?.value || '';
+        previewPriceEl.textContent = priceValue;
+        previewPriceEl.style.display = priceValue ? 'block' : 'none';
+        previewPriceEl.style.fontSize = (parseInt(document.getElementById('fontDetails')?.value || 9) + 1) + 'px';
+        previewPriceEl.style.color = accentColor;
+        previewPriceEl.style.textShadow = textShadowLight;
+    } else {
+        previewPriceEl.style.display = 'none';
+    }
+}
+
+  const logoImg = document.getElementById('previewLogoImg');
+  const brandText = document.getElementById('previewBrand');
+  const brandSub = document.getElementById('previewBrandSub');
+  if (typeof logoDataUrl !== 'undefined' && logoDataUrl && logoImg) {
+    logoImg.src = logoDataUrl;
+    const showLogoImg = document.getElementById('showLogoImg');
+    if (showLogoImg && showLogoImg.checked) {
+      logoImg.style.display = 'block';
+      if (brandText) brandText.style.display = 'none';
+      if (brandSub) brandSub.style.display = 'none';
+      logoImg.style.width = (document.getElementById('logoSize')?.value || 80) + '%';
+      logoImg.style.opacity = (document.getElementById('logoOpa')?.value || 100) / 100;
+      logoImg.style.position = 'absolute';
+      logoImg.style.left = (document.getElementById('logoPosX')?.value || 50) + '%';
+      logoImg.style.top = (document.getElementById('logoPosY')?.value || 50) + '%';
+      logoImg.style.transform = `translate(-50%, -50%) rotate(${document.getElementById('logoRot')?.value || 0}deg)`;
+    } else {
+      logoImg.style.display = 'none';
+      if (brandText) brandText.style.display = 'block';
+      if (brandSub) brandSub.style.display = 'block';
+    }
+  }
+
+  // ==========================================
+  // 🖼️ 3. IMAGEN DEL PRODUCTO (Inyección Inteligente en DOM)
+  // ==========================================
+  let previewProductImg = document.getElementById('previewProductImg');
+  
+  if (window.estadoImagenProducto && window.estadoImagenProducto.activa && window.estadoImagenProducto.url) {
+      if (!previewProductImg) {
+          previewProductImg = document.createElement('img');
+          previewProductImg.id = 'previewProductImg';
+          previewProductImg.style.pointerEvents = 'none';
+          previewProductImg.style.objectFit = 'contain';
+          previewProductImg.style.zIndex = '5';
+          label.appendChild(previewProductImg);
+      }
+      
+      previewProductImg.src = window.estadoImagenProducto.url;
+      previewProductImg.style.display = 'block';
+      previewProductImg.style.position = 'absolute';
+      previewProductImg.style.width = window.estadoImagenProducto.tamano + '%';
+      previewProductImg.style.left = window.estadoImagenProducto.posX + '%';
+      previewProductImg.style.top = window.estadoImagenProducto.posY + '%';
+      previewProductImg.style.transform = `translate(-50%, -50%) rotate(${window.estadoImagenProducto.rotacion}deg)`;
+  } else if (previewProductImg) {
+      previewProductImg.style.display = 'none';
+  }
+}
+
+/* =========================================================
+   FUNCIONES AUXILIARES FALTANTES (integradas del script adjunto)
+   ========================================================= */
+
+/**
+ * Asigna valor a un input de forma segura (sin error si no existe)
+ */
+function safeSetValue(id, value) {
+    const el = document.getElementById(id);
+    if (el && value !== undefined && value !== null) el.value = value;
+}
+
+/**
+ * Detecta si existe alguna función global para agregar imágenes al diseñador
+ */
+function detectarFuncionImagen() {
+    const candidatas = [
+        'agregarImagen', 'añadirImagen', 'addImage', 'agregarImagenURL',
+        'addImageFromURL', 'cargarImagen', 'insertarImagen', 'loadImage',
+        'addImageToCanvas', 'agregarImagenAlCanvas'
+    ];
+    for (const nombre of candidatas) {
+        if (typeof window[nombre] === 'function') {
+            return { nombre, fn: window[nombre] };
+        }
+    }
+    return null;
+}
+
+/**
+ * Intenta inyectar la imagen en el diseñador por múltiples estrategias
+ */
+async function inyectarImagenEnDisenador(url) {
+    // ESTRATEGIA 1: Buscar función global conocida
+    const funcionDetectada = detectarFuncionImagen();
+    if (funcionDetectada) {
+        try {
+            funcionDetectada.fn(url);
+            console.log(`✅ Imagen agregada vía ${funcionDetectada.nombre}()`);
+            return { exito: true, metodo: `Función detectada: ${funcionDetectada.nombre}()` };
+        } catch (e) {
+            console.warn('⚠️ Error llamando función detectada:', e);
+        }
+    }
+
+    // ESTRATEGIA 2: Buscar input file y simular carga vía fetch+File
+    const inputFile = document.querySelector('input[type="file"][accept*="image"]');
+    if (inputFile) {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const fileName = url.split('/').pop() || 'producto.png';
+            const file = new File([blob], fileName, { type: blob.type });
+
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            inputFile.files = dataTransfer.files;
+            inputFile.dispatchEvent(new Event('change', { bubbles: true }));
+
+            console.log('✅ Imagen inyectada vía input file simulado');
+            return { exito: true, metodo: 'Input file simulado (descarga automática)' };
+        } catch (e) {
+            console.warn('⚠️ No se pudo inyectar vía input file:', e);
+        }
+    }
+
+    // ESTRATEGIA 3: Fallback
+    return { exito: false, metodo: 'fallback', url: url };
+}
+
+/**
+ * Modal de fallback cuando no se puede inyectar la imagen automáticamente
+ */
+function abrirModalImagen(url) {
+    const modalAnterior = document.getElementById('modalImagenProducto');
+    if (modalAnterior) modalAnterior.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'modalImagenProducto';
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
+        z-index: 9999; padding: 20px;
+    `;
+
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 12px; padding: 20px; max-width: 500px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+            <h3 style="margin: 0 0 15px 0; color: #1a1a1a;">🖼️ Imagen del Producto</h3>
+            <div style="text-align: center; margin-bottom: 15px;">
+                <img src="${url}" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid #eee;" 
+                     onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22><rect width=%22300%22 height=%22200%22 fill=%22%23eee%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 fill=%22%23999%22>Imagen no disponible</text></svg>'">
+            </div>
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 11px; word-break: break-all; color: #555;">
+                <strong>URL:</strong> ${url}
+            </div>
+            <div style="display: grid; gap: 8px;">
+                <button onclick="navigator.clipboard.writeText('${url}'); mostrarNotificacion('📋 URL copiada al portapapeles', 'success');"
+                        style="padding: 10px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                    📋 Copiar URL
+                </button>
+                <a href="${url}" target="_blank" download 
+                   style="padding: 10px; background: #17a2b8; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; text-align: center; text-decoration: none; display: block;">
+                    📥 Descargar Imagen
+                </a>
+                <a href="${url}" target="_blank"
+                   style="padding: 10px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; text-align: center; text-decoration: none; display: block;">
+                    🔗 Abrir en Nueva Pestaña
+                </a>
+                <button onclick="document.getElementById('modalImagenProducto').remove()"
+                        style="padding: 10px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                    ❌ Cerrar
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+}
+
+/**
+ * Notificación flotante tipo toast
+ */
+function mostrarNotificacion(mensaje, tipo = 'info') {
+    const colores = {
+        success: '#28a745',
+        error: '#dc3545',
+        info: '#17a2b8',
+        warning: '#ffc107'
+    };
+
+    const notif = document.createElement('div');
+    notif.style.cssText = `
+        position: fixed; top: 20px; right: 20px; padding: 15px 20px;
+        background: ${colores[tipo]}; color: white; border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 10000;
+        font-size: 14px; max-width: 350px; white-space: pre-line;
+        animation: slideIn 0.3s ease-out;
+    `;
+    notif.textContent = mensaje;
+    document.body.appendChild(notif);
+
+    setTimeout(() => {
+        notif.style.opacity = '0';
+        notif.style.transition = 'opacity 0.3s';
+        setTimeout(() => notif.remove(), 300);
+    }, 3000);
+}
+
+/**
+ * Carga el estado de imagen desde un proyecto guardado
+ */
+function cargarEstadoImagen(estadoGuardado) {
+    if (estadoGuardado && estadoGuardado.imagenProducto) {
+        window.estadoImagenProducto = { ...estadoGuardado.imagenProducto };
+
+        const chk = document.getElementById('usarImagenProducto');
+        const ctrls = document.getElementById('controlesImagen');
+        if (chk) chk.checked = window.estadoImagenProducto.activa;
+        if (ctrls) ctrls.style.display = window.estadoImagenProducto.activa ? 'block' : 'none';
+
+        safeSetValue('tamanoImagen', window.estadoImagenProducto.tamano);
+        safeSetValue('posXImagen', window.estadoImagenProducto.posX);
+        safeSetValue('posYImagen', window.estadoImagenProducto.posY);
+        safeSetValue('rotacionImagen', window.estadoImagenProducto.rotacion);
+
+        actualizarImagen();
+    }
+}
+
+
+
 let currentProject = null;
 let printQueue = [];
 let projects = JSON.parse(localStorage.getItem('aromaProjects') || '[]');
 let logoDataUrl = null;
+let labelImages = [];
+let currentImageInputId = null;
 
-document.addEventListener('DOMContentLoaded', () => {
-  updateLabel();
-  loadAllProjects();
-  updateSheetPreview();
-});
+/* ===== PANEL DE IMÁGENES ===== */
+function initImagesPanel() {
+  renderImagesPanel();
+  updateLabelImages();
+}
 
+function renderImagesPanel() {
+  const panel = document.getElementById('imagesPanel');
+  if (!panel) return;
+  if (labelImages.length === 0) {
+    panel.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--secondary);font-size:0.8rem;">No hay imágenes. Agrega una nueva.</div>';
+    return;
+  }
+  let html = '';
+  labelImages.forEach(function(img, idx) {
+    html += '<div class="image-item" data-image-id="' + img.id + '">';
+    html += '<div class="image-item-header">';
+    html += '<span class="image-item-name">' + (img.name || 'Imagen ' + (idx + 1)) + '</span>';
+    html += '<span class="image-item-badge">IMG ' + (idx + 1) + '</span>';
+    if (labelImages.length > 1) {
+      html += '<button class="btn-remove-image" onclick="removeImage(' + img.id + ')" title="Eliminar">&#10005;</button>';
+    }
+    html += '</div>';
+    html += '<div class="image-preview-mini">';
+    if (img.dataUrl) {
+      html += '<img src="' + img.dataUrl + '" style="width:' + img.size + '%;transform:rotate(' + img.rotation + 'deg);opacity:' + (img.visible ? 1 : 0.3) + ';">';
+    } else {
+      html += '<span style="font-size:1.5rem;">&#128444;</span>';
+    }
+    html += '</div>';
+    html += '<div class="image-upload-mini ' + (img.dataUrl ? 'has-image' : '') + '" onclick="triggerImageUpload(' + img.id + ')">';
+    html += '<div style="font-size:0.75rem;color:var(--secondary);">' + (img.dataUrl ? 'Cambiar imagen' : 'Haz clic para subir imagen') + '</div>';
+    html += '</div>';
+    html += '<div class="range-group" style="margin-top:0.6rem;">';
+    html += '<div class="range-label">Tama&#241;o (%) <span id="imgSizeVal' + img.id + '">' + img.size + '</span></div>';
+    html += '<input type="range" min="5" max="100" value="' + img.size + '" oninput="updateImageProp(' + img.id + ', \'size\', this.value)">';
+    html += '</div>';
+    html += '<div class="range-group">';
+    html += '<div class="range-label">Rotaci&#243;n (&#176;) <span id="imgRotVal' + img.id + '">' + img.rotation + '</span></div>';
+    html += '<input type="range" min="-180" max="180" value="' + img.rotation + '" oninput="updateImageProp(' + img.id + ', \'rotation\', this.value)">';
+    html += '</div>';
+    html += '<div class="range-group">';
+    html += '<div class="range-label">Opacidad (%) <span id="imgOpaVal' + img.id + '">' + Math.round(img.opacity * 100) + '</span></div>';
+    html += '<input type="range" min="0" max="100" value="' + Math.round(img.opacity * 100) + '" oninput="updateImageProp(' + img.id + ', \'opacity\', this.value / 100)">';
+    html += '</div>';
+    html += '<div class="image-pos-grid" style="margin-top:0.5rem;">';
+    html += '<div><label style="font-size:0.7rem;color:var(--secondary);">Pos. X (%)</label>';
+    html += '<input type="number" class="image-pos-input" value="' + img.posX + '" min="0" max="100" oninput="updateImageProp(' + img.id + ', \'posX\', this.value)"></div>';
+    html += '<div><label style="font-size:0.7rem;color:var(--secondary);">Pos. Y (%)</label>';
+    html += '<input type="number" class="image-pos-input" value="' + img.posY + '" min="0" max="100" oninput="updateImageProp(' + img.id + ', \'posY\', this.value)"></div>';
+    html += '</div>';
+    html += '<div class="toggle-group" style="margin-top:0.5rem;">';
+    html += '<span class="toggle-label">Visible en etiqueta</span>';
+    html += '<label class="toggle-switch"><input type="checkbox" ' + (img.visible ? 'checked' : '') + ' onchange="updateImageProp(' + img.id + ', \'visible\', this.checked)"><span class="toggle-slider"></span></label>';
+    html += '</div>';
+    html += '</div>';
+  });
+  panel.innerHTML = html;
+}
+
+function addNewImage() {
+  var newId = Date.now() + Math.floor(Math.random() * 1000);
+  labelImages.push({ id: newId, dataUrl: null, name: 'Imagen ' + (labelImages.length + 1), size: 30, rotation: 0, posX: 50, posY: 50, opacity: 1, visible: true });
+  renderImagesPanel();
+  updateLabelImages();
+  showToast('Nueva imagen agregada', 'success');
+}
+
+function removeImage(id) {
+  showModal('Eliminar Imagen', '¿Eliminar esta imagen?', function() {
+    labelImages = labelImages.filter(function(img) { return img.id !== id; });
+    renderImagesPanel();
+    updateLabelImages();
+    showToast('Imagen eliminada', 'success');
+  });
+}
+
+function triggerImageUpload(imageId) {
+  currentImageInputId = imageId;
+  document.getElementById('imageInputGlobal').click();
+}
+
+function handleImageUpload(event) {
+  var file = event.target.files[0];
+  if (!file || currentImageInputId === null) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = labelImages.find(function(i) { return i.id === currentImageInputId; });
+    if (img) {
+      img.dataUrl = e.target.result;
+      img.name = file.name;
+      renderImagesPanel();
+      updateLabelImages();
+      showToast('Imagen cargada: ' + file.name, 'success');
+    }
+    currentImageInputId = null;
+    event.target.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateImageProp(id, prop, value) {
+  var img = labelImages.find(function(i) { return i.id === id; });
+  if (!img) return;
+  if (prop === 'size') img.size = parseInt(value);
+  else if (prop === 'rotation') img.rotation = parseInt(value);
+  else if (prop === 'posX') img.posX = parseFloat(value);
+  else if (prop === 'posY') img.posY = parseFloat(value);
+  else if (prop === 'opacity') img.opacity = parseFloat(value);
+  else if (prop === 'visible') img.visible = value;
+  var valEl = document.getElementById('img' + prop.charAt(0).toUpperCase() + prop.slice(1) + 'Val' + id);
+  if (valEl) {
+    if (prop === 'opacity') valEl.textContent = Math.round(value * 100);
+    else valEl.textContent = value;
+  }
+  updateLabelImages();
+}
+
+function getImagesConfig() {
+  return labelImages.map(function(img) {
+    return { id: img.id, name: img.name, size: img.size, rotation: img.rotation, posX: img.posX, posY: img.posY, opacity: img.opacity, visible: img.visible, dataUrl: img.dataUrl };
+  });
+}
+
+function loadImagesConfig(images) {
+  if (!images || !Array.isArray(images)) return;
+  labelImages = images.map(function(img) { return Object.assign({}, img); });
+  renderImagesPanel();
+  updateLabelImages();
+}
+
+/* Dibuja las imágenes genéricas dentro del contenedor de la etiqueta */
+function updateLabelImages() {
+  const container = document.getElementById('labelImagesContainer');
+  if (!container) return;
+  container.innerHTML = '';
+  labelImages.forEach(function(img) {
+    if (!img.visible || !img.dataUrl) return;
+    const el = document.createElement('img');
+    el.src = img.dataUrl;
+    el.style.position = 'absolute';
+    el.style.left = img.posX + '%';
+    el.style.top = img.posY + '%';
+    el.style.width = img.size + '%';
+    el.style.transform = 'translate(-50%, -50%) rotate(' + img.rotation + 'deg)';
+    el.style.opacity = img.opacity;
+    el.style.pointerEvents = 'none';
+    el.style.objectFit = 'contain';
+    container.appendChild(el);
+  });
+}
+
+/* ===== NAVEGACIÓN ===== */
 function showSection(section, btn) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -531,14 +2126,14 @@ function applyTemplate(template) {
     'vela-grande': { width: 90, height: 110, padding: 4, borderRadius: 5, topLine: 5, bottomLine: 3, areaGap: 8, fontBrand: 22, fontBrandSub: 9, fontProduct: 30, fontType: 12, fontDetails: 11, fontInstr: 8, fontBatch: 8, fontOrigin: 8, qrSize: 25, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Playfair Display', serif" },
     'vela-redonda': { width: 50, height: 50, padding: 2, borderRadius: 25, topLine: 0, bottomLine: 0, areaGap: 3, fontBrand: 14, fontBrandSub: 6, fontProduct: 16, fontType: 8, fontDetails: 7, fontInstr: 0, fontBatch: 6, fontOrigin: 6, qrSize: 30, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Cormorant Garamond', serif", showInstructions: false },
     'vela-luxury': { width: 80, height: 100, padding: 4, borderRadius: 0, topLine: 6, bottomLine: 6, areaGap: 8, fontBrand: 20, fontBrandSub: 8, fontProduct: 28, fontType: 11, fontDetails: 10, fontInstr: 7, fontBatch: 7, fontOrigin: 7, qrSize: 22, accentColor: '#8b6914', textColor: '#1a1a1a', bgColor: '#faf8f3', brandFont: "'Cinzel', serif", productFont: "'Cinzel', serif" },
-    'vela-minimal': { width: 60, height: 40, padding: 2, borderRadius: 0, topLine: 2, bottomLine: 0, areaGap: 3, fontBrand: 12, fontBrandSub: 6, fontProduct: 16, fontType: 8, fontDetails: 7, fontInstr: 0, fontBatch: 6, fontOrigin: 6, qrSize: 25, accentColor: '#1a1a1a', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Montserrat', sans-serif", productFont: "'Montserrat', sans-serif", showInstructions: false }
-    ,
+    'vela-minimal': { width: 60, height: 40, padding: 2, borderRadius: 0, topLine: 2, bottomLine: 0, areaGap: 3, fontBrand: 12, fontBrandSub: 6, fontProduct: 16, fontType: 8, fontDetails: 7, fontInstr: 0, fontBatch: 6, fontOrigin: 6, qrSize: 25, accentColor: '#1a1a1a', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Montserrat', sans-serif", productFont: "'Montserrat', sans-serif", showInstructions: false },
     'vela-mini': { width: 30, height: 40, padding: 1.5, borderRadius: 2, topLine: 2, bottomLine: 0, areaGap: 2, fontBrand: 10, fontBrandSub: 5, fontProduct: 12, fontType: 7, fontDetails: 6, fontInstr: 0, fontBatch: 5, fontOrigin: 5, qrSize: 28, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Montserrat', sans-serif" },
     'vela-micro': { width: 25, height: 35, padding: 1, borderRadius: 1, topLine: 1, bottomLine: 0, areaGap: 2, fontBrand: 9, fontBrandSub: 5, fontProduct: 11, fontType: 6, fontDetails: 6, fontInstr: 0, fontBatch: 5, fontOrigin: 5, qrSize: 30, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Montserrat', sans-serif" },
     'vela-tea-light': { width: 35, height: 25, padding: 1.5, borderRadius: 12, topLine: 0, bottomLine: 0, areaGap: 2, fontBrand: 10, fontBrandSub: 5, fontProduct: 12, fontType: 6, fontDetails: 6, fontInstr: 0, fontBatch: 5, fontOrigin: 5, qrSize: 32, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Cormorant Garamond', serif", showInstructions: false },
     'vela-votiva': { width: 40, height: 50, padding: 2, borderRadius: 3, topLine: 2, bottomLine: 1, areaGap: 3, fontBrand: 11, fontBrandSub: 6, fontProduct: 14, fontType: 7, fontDetails: 7, fontInstr: 0, fontBatch: 6, fontOrigin: 6, qrSize: 26, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Playfair Display', serif" },
     'vela-rectangular': { width: 45, height: 30, padding: 1.8, borderRadius: 2, topLine: 2, bottomLine: 0, areaGap: 3, fontBrand: 11, fontBrandSub: 6, fontProduct: 13, fontType: 7, fontDetails: 7, fontInstr: 0, fontBatch: 6, fontOrigin: 6, qrSize: 28, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Montserrat', sans-serif", productFont: "'Montserrat', sans-serif" },
-    'vela-etiqueta': { width: 55, height: 35, padding: 2, borderRadius: 2, topLine: 3, bottomLine: 0, areaGap: 4, fontBrand: 13, fontBrandSub: 7, fontProduct: 16, fontType: 8, fontDetails: 8, fontInstr: 6, fontBatch: 6, fontOrigin: 6, qrSize: 24, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Montserrat', sans-serif" }
+    'vela-etiqueta': { width: 55, height: 35, padding: 2, borderRadius: 2, topLine: 3, bottomLine: 0, areaGap: 4, fontBrand: 13, fontBrandSub: 7, fontProduct: 16, fontType: 8, fontDetails: 8, fontInstr: 6, fontBatch: 6, fontOrigin: 6, qrSize: 24, accentColor: '#c9a96e', textColor: '#1a1a1a', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Montserrat', sans-serif" },
+    'vinil-transparente': { width: 60, height: 80, padding: 3, borderRadius: 4, topLine: 4, bottomLine: 2, areaGap: 6, fontBrand: 18, fontBrandSub: 8, fontProduct: 24, fontType: 10, fontDetails: 9, fontInstr: 7, fontBatch: 7, fontOrigin: 7, qrSize: 22, accentColor: '#c9a96e', textColor: '#000000', bgColor: '#ffffff', brandFont: "'Adelia', cursive", productFont: "'Playfair Display', serif", vinylMode: true, showInstructions: true, showFooter: true, showQR: true, showDivider: true }
   };
   const t = templates[template];
   if (!t) return;
@@ -564,163 +2159,16 @@ function applyTemplate(template) {
   document.getElementById('brandFont').value = t.brandFont;
   document.getElementById('productFont').value = t.productFont;
   if (t.showInstructions !== undefined) document.getElementById('showInstructions').checked = t.showInstructions;
+  if (t.vinylMode !== undefined) document.getElementById('vinylMode').checked = t.vinylMode;
   updateLabel();
   showToast('Plantilla aplicada', 'success');
 }
 
-function updateLabel() {
-  const label = document.getElementById('labelPreview');
-  const widthMm = parseInt(document.getElementById('labelWidth').value);
-  const heightMm = parseInt(document.getElementById('labelHeight').value);
-  const paddingMm = parseFloat(document.getElementById('labelPadding').value);
-  const borderRadius = parseInt(document.getElementById('borderRadius').value);
-  const topLine = parseInt(document.getElementById('topLine').value);
-  const bottomLine = parseInt(document.getElementById('bottomLine').value);
-  const areaGap = parseInt(document.getElementById('areaGap').value);
-  const fontBrand = parseInt(document.getElementById('fontBrand').value);
-  const fontBrandSub = parseInt(document.getElementById('fontBrandSub').value);
-  const fontProduct = parseInt(document.getElementById('fontProduct').value);
-  const fontType = parseInt(document.getElementById('fontType').value);
-  const fontDetails = parseInt(document.getElementById('fontDetails').value);
-  const fontInstr = parseInt(document.getElementById('fontInstr').value);
-  const fontBatch = parseInt(document.getElementById('fontBatch').value);
-  const fontOrigin = parseInt(document.getElementById('fontOrigin').value);
-  const qrSizePercent = parseInt(document.getElementById('qrSize').value);
-  const brandFont = document.getElementById('brandFont').value;
-  const productFont = document.getElementById('productFont').value;
-  const accentColor = document.getElementById('accentColor').value;
-  const textColor = document.getElementById('textColor').value;
-  const bgColor = document.getElementById('bgColor').value;
-  const qrColor = document.getElementById('qrColor').value;
-  const qrBgColor = document.getElementById('qrBgColor').value;
-  const showDivider = document.getElementById('showDivider').checked;
-  const showQR = document.getElementById('showQR').checked;
-  const showInstructions = document.getElementById('showInstructions').checked;
-  const showFooter = document.getElementById('showFooter').checked;
-
-  document.getElementById('labelWidthVal').textContent = widthMm;
-  document.getElementById('labelHeightVal').textContent = heightMm;
-  document.getElementById('labelPaddingVal').textContent = paddingMm;
-  document.getElementById('borderRadiusVal').textContent = borderRadius;
-  document.getElementById('topLineVal').textContent = topLine;
-  document.getElementById('bottomLineVal').textContent = bottomLine;
-  document.getElementById('areaGapVal').textContent = areaGap;
-  document.getElementById('fontBrandVal').textContent = fontBrand;
-  document.getElementById('fontBrandSubVal').textContent = fontBrandSub;
-  document.getElementById('fontProductVal').textContent = fontProduct;
-  document.getElementById('fontTypeVal').textContent = fontType;
-  document.getElementById('fontDetailsVal').textContent = fontDetails;
-  document.getElementById('fontInstrVal').textContent = fontInstr;
-  document.getElementById('fontBatchVal').textContent = fontBatch;
-  document.getElementById('fontOriginVal').textContent = fontOrigin;
-  document.getElementById('qrSizeVal').textContent = qrSizePercent;
-  document.getElementById('accentColorValue').textContent = accentColor;
-  document.getElementById('textColorValue').textContent = textColor;
-  document.getElementById('bgColorValue').textContent = bgColor;
-  document.getElementById('qrColorValue').textContent = qrColor;
-  document.getElementById('qrBgColorValue').textContent = qrBgColor;
-  document.getElementById('previewSize').textContent = widthMm + ' × ' + heightMm + ' mm';
-
-  label.style.setProperty('--label-width', widthMm + 'mm');
-  label.style.setProperty('--label-height', heightMm + 'mm');
-  label.style.setProperty('--label-padding', paddingMm + 'mm');
-  label.style.setProperty('--border-radius', borderRadius + 'px');
-  label.style.setProperty('--top-line', topLine + 'px');
-  label.style.setProperty('--bottom-line', bottomLine + 'px');
-  label.style.setProperty('--area-gap', areaGap + 'px');
-  label.style.setProperty('--accent-color', accentColor);
-  label.style.setProperty('--text-color', textColor);
-  label.style.setProperty('--qr-size', qrSizePercent + '%');
-  label.style.setProperty('--qr-bg', qrBgColor);
-  label.style.setProperty('--brand-font', brandFont);
-  label.style.setProperty('--product-font', productFont);
-  label.style.backgroundColor = bgColor;
-  label.style.borderRadius = borderRadius + 'px';
-
-  const topLineEl = document.getElementById('labelTopLine');
-  topLineEl.style.height = topLine + 'px'; topLineEl.style.backgroundColor = accentColor; topLineEl.style.display = topLine > 0 ? 'block' : 'none';
-  const bottomLineEl = document.getElementById('labelBottomLine');
-  bottomLineEl.style.height = bottomLine + 'px'; bottomLineEl.style.backgroundColor = accentColor; bottomLineEl.style.display = bottomLine > 0 ? 'block' : 'none';
-
-  document.getElementById('previewBrand').style.fontSize = fontBrand + 'px';
-  document.getElementById('previewBrand').style.fontFamily = brandFont;
-  document.getElementById('previewBrandSub').style.fontSize = fontBrandSub + 'px';
-  document.getElementById('previewProduct').style.fontSize = fontProduct + 'px';
-  document.getElementById('previewProduct').style.fontFamily = productFont;
-  document.getElementById('previewType').style.fontSize = fontType + 'px';
-  document.getElementById('previewDetails').style.fontSize = fontDetails + 'px';
-  document.getElementById('previewInstructions').style.fontSize = fontInstr + 'px';
-  document.getElementById('previewBatch').style.fontSize = fontBatch + 'px';
-  document.getElementById('previewOrigin').style.fontSize = fontOrigin + 'px';
-
-  document.getElementById('previewBrand').style.color = textColor;
-  document.getElementById('previewProduct').style.color = textColor;
-  document.getElementById('previewBatch').style.color = textColor;
-
-  const qrEl = document.getElementById('previewQR');
-  if (showQR) {
-    qrEl.style.display = 'flex';
-    qrEl.style.width = qrSizePercent + '%';
-    // Fondo blanco opaco + quiet zone para vinil transparente
-    qrEl.style.backgroundColor = '#ffffff';
-    qrEl.style.padding = '3px';
-    qrEl.style.boxSizing = 'border-box';
-    try {
-      const qr = qrcode(0, 'H'); // 'H' = máxima corrección de errores (30%)
-      qr.addData(document.getElementById('qrUrl').value || 'https://example.com');
-      qr.make();
-      const moduleCount = qr.getModuleCount();
-      // Grid CSS que se estira al 100% del contenedor sin cortarse
-      let qrHtml = '<div style="display:grid;grid-template-columns:repeat(' + moduleCount + ',1fr);grid-template-rows:repeat(' + moduleCount + ',1fr);width:100%;height:100%;">';
-      for (let row = 0; row < moduleCount; row++) {
-        for (let col = 0; col < moduleCount; col++) {
-          const isDark = qr.isDark(row, col);
-          // Negro puro / blanco puro para máximo contraste en vinil
-          qrHtml += '<div style="background:' + (isDark ? '#000000' : '#ffffff') + ';"></div>';
-        }
-      }
-      qrHtml += '</div>';
-      qrEl.innerHTML = qrHtml;
-    } catch (e) { qrEl.innerHTML = '<span style="font-size:0.5rem;color:#999;">QR Error</span>'; }
-  } else { qrEl.style.display = 'none'; }
-
-  document.getElementById('labelDivider').style.display = showDivider ? 'block' : 'none';
-  document.getElementById('previewInstructions').style.display = showInstructions ? 'block' : 'none';
-  document.getElementById('labelFooter').style.display = showFooter ? 'flex' : 'none';
-
-  const logoArea = document.getElementById('labelLogoArea');
-  const productArea = document.getElementById('labelProduct');
-  const instrArea = document.getElementById('previewInstructions');
-  const footerArea = document.getElementById('labelFooter');
-  logoArea.style.padding = (areaGap * 0.5) + 'px 0';
-  productArea.style.padding = (areaGap * 0.5) + 'px 0';
-  instrArea.style.padding = (areaGap * 0.5) + 'px 0';
-  footerArea.style.paddingTop = areaGap + 'px';
-
-  document.getElementById('previewBrand').textContent = document.getElementById('brandName').value || 'Marca';
-  document.getElementById('previewBrandSub').textContent = document.getElementById('brandSub').value || '';
-  document.getElementById('previewProduct').textContent = document.getElementById('productName').value || 'Producto';
-  document.getElementById('previewType').textContent = document.getElementById('productType').value || '';
-  document.getElementById('previewDetails').textContent = document.getElementById('productDetails').value || '';
-  document.getElementById('previewInstructions').textContent = document.getElementById('instructions').value || '';
-  document.getElementById('previewBatch').textContent = document.getElementById('batchInfo').value || '';
-  document.getElementById('previewOrigin').textContent = document.getElementById('originInfo').value || '';
-
-  const logoImg = document.getElementById('previewLogoImg');
-  const brandText = document.getElementById('previewBrand');
-  const brandSub = document.getElementById('previewBrandSub');
-  if (logoDataUrl) {
-    logoImg.src = logoDataUrl; logoImg.style.display = 'block'; brandText.style.display = 'none'; brandSub.style.display = 'none';
-    logoImg.style.maxHeight = (heightMm * 0.15) + 'mm';
-  } else {
-    logoImg.style.display = 'none'; brandText.style.display = 'block'; brandSub.style.display = 'block';
-  }
-}
-
+/* ===== LOGO ===== */
 function handleLogoUpload(event) {
-  const file = event.target.files[0];
+  var file = event.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
+  var reader = new FileReader();
   reader.onload = function(e) {
     logoDataUrl = e.target.result;
     document.getElementById('logoPreview').src = logoDataUrl;
@@ -728,50 +2176,119 @@ function handleLogoUpload(event) {
     document.getElementById('logoIcon').style.display = 'none';
     document.getElementById('logoText').textContent = file.name;
     document.getElementById('logoUploadArea').classList.add('has-image');
+    document.getElementById('logoControls').style.display = 'block';
     updateLabel();
     showToast('Logo cargado correctamente', 'success');
   };
   reader.readAsDataURL(file);
 }
 
+function updateLogoControls() {
+  var size = document.getElementById('logoSize').value;
+  var rot = document.getElementById('logoRot').value;
+  var opa = document.getElementById('logoOpa').value;
+  var posX = document.getElementById('logoPosX').value;
+  var posY = document.getElementById('logoPosY').value;
+  var showImg = document.getElementById('showLogoImg').checked;
+
+  document.getElementById('logoSizeVal').textContent = size;
+  document.getElementById('logoRotVal').textContent = rot;
+  document.getElementById('logoOpaVal').textContent = opa;
+
+  var logoImg = document.getElementById('previewLogoImg');
+  var brandText = document.getElementById('previewBrand');
+  var brandSub = document.getElementById('previewBrandSub');
+
+  if (logoDataUrl && showImg) {
+    logoImg.style.display = 'block';
+    logoImg.style.width = size + '%';
+    logoImg.style.transform = 'rotate(' + rot + 'deg)';
+    logoImg.style.opacity = opa / 100;
+    logoImg.style.position = 'absolute';
+    logoImg.style.left = posX + '%';
+    logoImg.style.top = posY + '%';
+    logoImg.style.transform = 'translate(-50%, -50%) rotate(' + rot + 'deg)';
+    logoImg.style.maxHeight = 'none';
+    brandText.style.display = 'none';
+    brandSub.style.display = 'none';
+  } else if (logoDataUrl && !showImg) {
+    logoImg.style.display = 'none';
+    brandText.style.display = 'block';
+    brandSub.style.display = 'block';
+  }
+}
+
+/* ===== SERIALIZACIÓN ===== */
 function getCurrentConfig() {
   return {
-    width: document.getElementById('labelWidth').value, height: document.getElementById('labelHeight').value,
-    padding: document.getElementById('labelPadding').value, borderRadius: document.getElementById('borderRadius').value,
-    topLine: document.getElementById('topLine').value, bottomLine: document.getElementById('bottomLine').value,
-    areaGap: document.getElementById('areaGap').value, fontBrand: document.getElementById('fontBrand').value,
-    fontBrandSub: document.getElementById('fontBrandSub').value, fontProduct: document.getElementById('fontProduct').value,
-    fontType: document.getElementById('fontType').value, fontDetails: document.getElementById('fontDetails').value,
-    fontInstr: document.getElementById('fontInstr').value, fontBatch: document.getElementById('fontBatch').value,
-    fontOrigin: document.getElementById('fontOrigin').value, qrSize: document.getElementById('qrSize').value,
-    brandFont: document.getElementById('brandFont').value, productFont: document.getElementById('productFont').value,
-    accentColor: document.getElementById('accentColor').value, textColor: document.getElementById('textColor').value,
-    bgColor: document.getElementById('bgColor').value, qrColor: document.getElementById('qrColor').value,
-    qrBgColor: document.getElementById('qrBgColor').value, showDivider: document.getElementById('showDivider').checked,
-    showQR: document.getElementById('showQR').checked, showInstructions: document.getElementById('showInstructions').checked,
-    showFooter: document.getElementById('showFooter').checked
+    width: document.getElementById('labelWidth').value,
+    height: document.getElementById('labelHeight').value,
+    padding: document.getElementById('labelPadding').value,
+    borderRadius: document.getElementById('borderRadius').value,
+    topLine: document.getElementById('topLine').value,
+    bottomLine: document.getElementById('bottomLine').value,
+    areaGap: document.getElementById('areaGap').value,
+    fontBrand: document.getElementById('fontBrand').value,
+    fontBrandSub: document.getElementById('fontBrandSub').value,
+    fontProduct: document.getElementById('fontProduct').value,
+    fontType: document.getElementById('fontType').value,
+    fontDetails: document.getElementById('fontDetails').value,
+    fontInstr: document.getElementById('fontInstr').value,
+    fontBatch: document.getElementById('fontBatch').value,
+    fontOrigin: document.getElementById('fontOrigin').value,
+    qrSize: document.getElementById('qrSize').value,
+    brandFont: document.getElementById('brandFont').value,
+    productFont: document.getElementById('productFont').value,
+    accentColor: document.getElementById('accentColor').value,
+    textColor: document.getElementById('textColor').value,
+    bgColor: document.getElementById('bgColor').value,
+    qrColor: document.getElementById('qrColor').value,
+    qrBgColor: document.getElementById('qrBgColor').value,
+    showDivider: document.getElementById('showDivider').checked,
+    showQR: document.getElementById('showQR').checked,
+    showInstructions: document.getElementById('showInstructions').checked,
+    showFooter: document.getElementById('showFooter').checked,
+    vinylMode: document.getElementById('vinylMode') ? document.getElementById('vinylMode').checked : false,
+    images: getImagesConfig(),
+    imagenProducto: window.estadoImagenProducto ? { ...window.estadoImagenProducto } : null
   };
 }
 
 function getCurrentContent() {
   return {
-    brandName: document.getElementById('brandName').value, brandSub: document.getElementById('brandSub').value,
-    productName: document.getElementById('productName').value, productType: document.getElementById('productType').value,
-    productDetails: document.getElementById('productDetails').value, instructions: document.getElementById('instructions').value,
-    qrUrl: document.getElementById('qrUrl').value, batchInfo: document.getElementById('batchInfo').value,
+    brandName: document.getElementById('brandName').value,
+    brandSub: document.getElementById('brandSub').value,
+    productName: document.getElementById('productName').value,
+    productType: document.getElementById('productType').value,
+    productDetails: document.getElementById('productDetails').value,
+    instructions: document.getElementById('instructions').value,
+    qrUrl: document.getElementById('qrUrl').value,
+    batchInfo: document.getElementById('batchInfo').value,
     originInfo: document.getElementById('originInfo').value
   };
 }
 
+/* ===== PROYECTOS ===== */
 async function saveProject() {
   const project = {
-    id: Date.now(), name: document.getElementById('projectName').value || 'Sin nombre',
-    date: new Date().toLocaleDateString('es-ES'), config: getCurrentConfig(), content: getCurrentContent(),
-    logoDataUrl: logoDataUrl, lastModified: new Date().toISOString()
+    id: Date.now(),
+    name: document.getElementById('projectName').value || 'Sin nombre',
+    date: new Date().toLocaleDateString('es-ES'),
+    config: getCurrentConfig(),
+    content: getCurrentContent(),
+    logoDataUrl: logoDataUrl,
+    images: getImagesConfig(),
+    lastModified: new Date().toISOString()
   };
   const existingIdx = projects.findIndex(p => p.name === project.name);
-  if (existingIdx >= 0) { project.id = projects[existingIdx].id; projects[existingIdx] = project; showToast('Proyecto actualizado localmente', 'success'); }
-  else { projects.push(project); showToast('Proyecto guardado localmente', 'success'); }
+  if (existingIdx >= 0) {
+    project.id = projects[existingIdx].id;
+    projects[existingIdx] = project;
+    showToast('Proyecto actualizado localmente', 'success');
+  } else {
+    projects.push(project);
+    showToast('Proyecto guardado localmente', 'success');
+  }
   localStorage.setItem('aromaProjects', JSON.stringify(projects));
   loadAllProjects();
 
@@ -791,9 +2308,17 @@ async function loadAllProjects() {
   if (window.firebaseStorage) {
     try {
       const firestoreProjects = await window.firebaseStorage.loadProjectsFromFirestore();
-      if (firestoreProjects.length > 0) { projects = firestoreProjects; localStorage.setItem('aromaProjects', JSON.stringify(projects)); }
-    } catch (error) { console.warn('Error al cargar desde Firebase:', error); projects = JSON.parse(localStorage.getItem('aromaProjects') || '[]'); }
-  } else { projects = JSON.parse(localStorage.getItem('aromaProjects') || '[]'); }
+      if (firestoreProjects.length > 0) {
+        projects = firestoreProjects;
+        localStorage.setItem('aromaProjects', JSON.stringify(projects));
+      }
+    } catch (error) {
+      console.warn('Error al cargar desde Firebase:', error);
+      projects = JSON.parse(localStorage.getItem('aromaProjects') || '[]');
+    }
+  } else {
+    projects = JSON.parse(localStorage.getItem('aromaProjects') || '[]');
+  }
 
   if (projects.length === 0) {
     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📁</div><h3>No hay proyectos guardados</h3><p>Crea tu primera etiqueta en el Diseñador y guárdala aquí.</p></div>';
@@ -862,15 +2387,30 @@ async function loadProject(id) {
   document.getElementById('showQR').checked = project.config.showQR;
   document.getElementById('showInstructions').checked = project.config.showInstructions;
   document.getElementById('showFooter').checked = project.config.showFooter !== false;
+  document.getElementById('vinylMode').checked = project.config.vinylMode || false;
 
   logoDataUrl = project.logoDataUrl;
   if (logoDataUrl) {
-    document.getElementById('logoPreview').src = logoDataUrl; document.getElementById('logoPreview').style.display = 'block';
-    document.getElementById('logoIcon').style.display = 'none'; document.getElementById('logoText').textContent = 'Logo cargado';
+    document.getElementById('logoPreview').src = logoDataUrl;
+    document.getElementById('logoPreview').style.display = 'block';
+    document.getElementById('logoIcon').style.display = 'none';
+    document.getElementById('logoText').textContent = 'Logo cargado';
     document.getElementById('logoUploadArea').classList.add('has-image');
   } else {
-    document.getElementById('logoPreview').style.display = 'none'; document.getElementById('logoIcon').style.display = 'block';
-    document.getElementById('logoText').textContent = 'Haz clic para subir logo'; document.getElementById('logoUploadArea').classList.remove('has-image');
+    document.getElementById('logoPreview').style.display = 'none';
+    document.getElementById('logoIcon').style.display = 'block';
+    document.getElementById('logoText').textContent = 'Haz clic para subir logo';
+    document.getElementById('logoUploadArea').classList.remove('has-image');
+  }
+  if (project.images && project.images.length > 0) {
+    loadImagesConfig(project.images);
+  } else {
+    labelImages = [];
+    renderImagesPanel();
+    updateLabelImages();
+  }
+  if (project.config && project.config.imagenProducto) {
+    cargarEstadoImagen(project.config);
   }
   updateLabel();
   showSection('designer', document.querySelector('.nav-tab'));
@@ -888,68 +2428,108 @@ async function deleteProject(id) {
         await window.firebaseStorage.deleteProjectFromFirestore(id);
         showToast('✅ Eliminado de la nube', 'success');
       }
-    } catch (error) { console.warn('No se pudo eliminar de Firebase:', error); showToast('⚠️ Eliminado solo localmente', 'info'); }
+    } catch (error) {
+      console.warn('No se pudo eliminar de Firebase:', error);
+      showToast('⚠️ Eliminado solo localmente', 'info');
+    }
   });
 }
 
 function exportProjectJSON() {
-  const project = { name: document.getElementById('projectName').value || 'Sin nombre', date: new Date().toLocaleDateString('es-ES'), config: getCurrentConfig(), content: getCurrentContent(), logoDataUrl: logoDataUrl };
+  const project = {
+    name: document.getElementById('projectName').value || 'Sin nombre',
+    date: new Date().toLocaleDateString('es-ES'),
+    config: getCurrentConfig(),
+    content: getCurrentContent(),
+    logoDataUrl: logoDataUrl
+  };
   const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = project.name.replace(/[^a-z0-9]/gi, '_') + '.json'; a.click();
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = project.name.replace(/[^a-z0-9]/gi, '_') + '.json';
+  a.click();
   URL.revokeObjectURL(url);
   showToast('Proyecto exportado', 'success');
 }
 
 function importProjectJSON(event) {
-  const file = event.target.files[0]; if (!file) return;
+  const file = event.target.files[0];
+  if (!file) return;
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
-      const project = JSON.parse(e.target.result); project.id = Date.now(); project.date = project.date || new Date().toLocaleDateString('es-ES');
+      const project = JSON.parse(e.target.result);
+      project.id = Date.now();
+      project.date = project.date || new Date().toLocaleDateString('es-ES');
       const existingIdx = projects.findIndex(p => p.name === project.name);
-      if (existingIdx >= 0) projects[existingIdx] = project; else projects.push(project);
+      if (existingIdx >= 0) projects[existingIdx] = project;
+      else projects.push(project);
       localStorage.setItem('aromaProjects', JSON.stringify(projects));
       loadProject(project.id);
       showToast('Proyecto importado: ' + project.name, 'success');
-    } catch (err) { showToast('Error al importar: archivo inválido', 'danger'); }
+    } catch (err) {
+      showToast('Error al importar: archivo inválido', 'danger');
+    }
   };
-  reader.readAsText(file); event.target.value = '';
+  reader.readAsText(file);
+  event.target.value = '';
 }
 
 function exportAllProjectsJSON() {
-  if (projects.length === 0) { showToast('No hay proyectos para exportar', 'danger'); return; }
+  if (projects.length === 0) {
+    showToast('No hay proyectos para exportar', 'danger');
+    return;
+  }
   const blob = new Blob([JSON.stringify(projects, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'aromalabel_proyectos_' + new Date().toISOString().slice(0,10) + '.json'; a.click();
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'aromalabel_proyectos_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
   URL.revokeObjectURL(url);
   showToast(projects.length + ' proyectos exportados', 'success');
 }
 
 function importAllProjectsJSON(event) {
-  const file = event.target.files[0]; if (!file) return;
+  const file = event.target.files[0];
+  if (!file) return;
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
-      const imported = JSON.parse(e.target.result); if (!Array.isArray(imported)) throw new Error('Formato inválido');
+      const imported = JSON.parse(e.target.result);
+      if (!Array.isArray(imported)) throw new Error('Formato inválido');
       let count = 0;
       imported.forEach(p => {
         p.id = p.id || Date.now() + Math.random();
         const existingIdx = projects.findIndex(ep => ep.name === p.name);
-        if (existingIdx >= 0) projects[existingIdx] = p; else projects.push(p);
+        if (existingIdx >= 0) projects[existingIdx] = p;
+        else projects.push(p);
         count++;
       });
       localStorage.setItem('aromaProjects', JSON.stringify(projects));
       loadAllProjects();
       showToast(count + ' proyectos importados', 'success');
-    } catch (err) { showToast('Error al importar: ' + err.message, 'danger'); }
+    } catch (err) {
+      showToast('Error al importar: ' + err.message, 'danger');
+    }
   };
-  reader.readAsText(file); event.target.value = '';
+  reader.readAsText(file);
+  event.target.value = '';
 }
 
+/* ===== COLA DE IMPRESIÓN ===== */
 function addToPrintQueue() {
   const labelClone = document.getElementById('labelPreview').cloneNode(true);
-  const item = { id: Date.now(), name: document.getElementById('projectName').value || 'Sin nombre', config: getCurrentConfig(), content: getCurrentContent(), logoDataUrl: logoDataUrl, html: labelClone.outerHTML, qty: 1 };
+  const item = {
+    id: Date.now(),
+    name: document.getElementById('projectName').value || 'Sin nombre',
+    config: getCurrentConfig(),
+    content: getCurrentContent(),
+    logoDataUrl: logoDataUrl,
+    html: labelClone.outerHTML,
+    qty: 1
+  };
   printQueue.push(item);
   updatePrintQueueDisplay();
   updateSheetPreview();
@@ -976,24 +2556,59 @@ function updatePrintQueueDisplay() {
   container.innerHTML = html;
 }
 
-function updateQueueItemName(idx, name) { if (printQueue[idx]) { printQueue[idx].name = name; updateSheetPreview(); } }
-function updateQueueItemQty(idx, qty) { if (printQueue[idx]) { printQueue[idx].qty = Math.max(1, parseInt(qty) || 1); updateSheetPreview(); } }
-function duplicateQueueItem(idx) {
+function updateQueueItemName(idx, name) {
   if (printQueue[idx]) {
-    const copy = JSON.parse(JSON.stringify(printQueue[idx])); copy.id = Date.now(); copy.name = copy.name + ' (copia)';
-    printQueue.splice(idx + 1, 0, copy); updatePrintQueueDisplay(); updateSheetPreview(); showToast('Etiqueta duplicada', 'success');
+    printQueue[idx].name = name;
+    updateSheetPreview();
   }
 }
-function removeFromQueue(idx) { printQueue.splice(idx, 1); updatePrintQueueDisplay(); updateSheetPreview(); }
+
+function updateQueueItemQty(idx, qty) {
+  if (printQueue[idx]) {
+    printQueue[idx].qty = Math.max(1, parseInt(qty) || 1);
+    updateSheetPreview();
+  }
+}
+
+function duplicateQueueItem(idx) {
+  if (printQueue[idx]) {
+    const copy = JSON.parse(JSON.stringify(printQueue[idx]));
+    copy.id = Date.now();
+    copy.name = copy.name + ' (copia)';
+    printQueue.splice(idx + 1, 0, copy);
+    updatePrintQueueDisplay();
+    updateSheetPreview();
+    showToast('Etiqueta duplicada', 'success');
+  }
+}
+
+function removeFromQueue(idx) {
+  printQueue.splice(idx, 1);
+  updatePrintQueueDisplay();
+  updateSheetPreview();
+}
+
 function clearPrintQueue() {
   if (printQueue.length === 0) return;
   showModal('Vaciar Cola', '¿Estás seguro de vaciar la cola de impresión?', () => {
-    printQueue = []; updatePrintQueueDisplay(); updateSheetPreview(); showToast('Cola vaciada', 'success');
+    printQueue = [];
+    updatePrintQueueDisplay();
+    updateSheetPreview();
+    showToast('Cola vaciada', 'success');
   });
 }
-function getTotalLabelsCount() { return printQueue.reduce((sum, item) => sum + item.qty, 0); }
 
+function getTotalLabelsCount() {
+  return printQueue.reduce((sum, item) => sum + item.qty, 0);
+}
+
+/* ===== OPTIMIZACIÓN DE HOJA ===== */
 function updateSheetPreview() {
+  const printVinylBadge = document.getElementById('printVinylBadge');
+  if (printVinylBadge) {
+    const isVinyl = document.getElementById('vinylMode') && document.getElementById('vinylMode').checked;
+    printVinylBadge.style.display = isVinyl ? 'inline-flex' : 'none';
+  }
   const paperSize = document.getElementById('paperSize').value;
   const marginTop = parseInt(document.getElementById('marginTop').value);
   const marginLeft = parseInt(document.getElementById('marginLeft').value);
@@ -1051,21 +2666,29 @@ async function renderLabelForPrint(item) {
   label.style.setProperty('--text-color', c.textColor); label.style.setProperty('--qr-size', c.qrSize + '%');
   label.style.setProperty('--qr-bg', c.qrBgColor); label.style.setProperty('--brand-font', c.brandFont || "'Adelia', cursive");
   label.style.setProperty('--product-font', c.productFont || "'Playfair Display', serif");
-  label.style.backgroundColor = c.bgColor; label.style.borderRadius = c.borderRadius + 'px'; label.style.boxShadow = 'none';
+  // Modo vinil: fondo transparente para impresión
+  if (c.vinylMode) {
+    label.style.backgroundColor = 'transparent';
+    label.classList.add('vinyl-mode');
+  } else {
+    label.style.backgroundColor = c.bgColor;
+    label.classList.remove('vinyl-mode');
+  }
+  label.style.borderRadius = c.borderRadius + 'px'; label.style.boxShadow = 'none';
 
   const content = item.content;
   const brandEl = label.querySelector('.label-logo'); const brandSubEl = label.querySelector('.label-logo-sub');
   const productEl = label.querySelector('.label-name'); const typeEl = label.querySelector('.label-type');
   const detailsEl = label.querySelector('.label-details'); const instrEl = label.querySelector('.label-instructions');
   const batchEl = label.querySelector('.label-batch'); const originEl = label.querySelector('#previewOrigin');
-  if (brandEl) { brandEl.textContent = content.brandName || ''; brandEl.style.fontSize = c.fontBrand + 'px'; brandEl.style.fontFamily = c.brandFont; brandEl.style.color = c.textColor; }
-  if (brandSubEl) { brandSubEl.textContent = content.brandSub || ''; brandSubEl.style.fontSize = c.fontBrandSub + 'px'; }
-  if (productEl) { productEl.textContent = content.productName || ''; productEl.style.fontSize = c.fontProduct + 'px'; productEl.style.fontFamily = c.productFont; productEl.style.color = c.textColor; }
-  if (typeEl) { typeEl.textContent = content.productType || ''; typeEl.style.fontSize = c.fontType + 'px'; typeEl.style.color = c.accentColor; }
-  if (detailsEl) { detailsEl.textContent = content.productDetails || ''; detailsEl.style.fontSize = c.fontDetails + 'px'; }
-  if (instrEl) { instrEl.textContent = content.instructions || ''; instrEl.style.fontSize = c.fontInstr + 'px'; instrEl.style.display = c.showInstructions ? 'block' : 'none'; }
-  if (batchEl) { batchEl.textContent = content.batchInfo || ''; batchEl.style.fontSize = c.fontBatch + 'px'; batchEl.style.color = c.textColor; }
-  if (originEl) { originEl.textContent = content.originInfo || ''; originEl.style.fontSize = c.fontOrigin + 'px'; }
+  if (brandEl) { brandEl.textContent = content.brandName || ''; brandEl.style.fontSize = c.fontBrand + 'px'; brandEl.style.fontFamily = c.brandFont; brandEl.style.color = c.textColor; if (c.vinylMode) brandEl.style.textShadow = '0 0 3px rgba(255,255,255,0.9), 0 0 6px rgba(255,255,255,0.7), 0 0 1px rgba(0,0,0,0.3)'; else brandEl.style.textShadow = 'none'; }
+  if (brandSubEl) { brandSubEl.textContent = content.brandSub || ''; brandSubEl.style.fontSize = c.fontBrandSub + 'px'; if (c.vinylMode) brandSubEl.style.textShadow = '0 0 2px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2)'; else brandSubEl.style.textShadow = 'none'; }
+  if (productEl) { productEl.textContent = content.productName || ''; productEl.style.fontSize = c.fontProduct + 'px'; productEl.style.fontFamily = c.productFont; productEl.style.color = c.textColor; if (c.vinylMode) productEl.style.textShadow = '0 0 4px rgba(255,255,255,0.95), 0 0 8px rgba(255,255,255,0.8), 0 0 1px rgba(0,0,0,0.4)'; else productEl.style.textShadow = 'none'; }
+  if (typeEl) { typeEl.textContent = content.productType || ''; typeEl.style.fontSize = c.fontType + 'px'; typeEl.style.color = c.accentColor; if (c.vinylMode) typeEl.style.textShadow = '0 0 3px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.3)'; else typeEl.style.textShadow = 'none'; }
+  if (detailsEl) { detailsEl.textContent = content.productDetails || ''; detailsEl.style.fontSize = c.fontDetails + 'px'; if (c.vinylMode) detailsEl.style.textShadow = '0 0 2px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2)'; else detailsEl.style.textShadow = 'none'; }
+  if (instrEl) { instrEl.textContent = content.instructions || ''; instrEl.style.fontSize = c.fontInstr + 'px'; instrEl.style.display = c.showInstructions ? 'block' : 'none'; if (c.vinylMode) instrEl.style.textShadow = '0 0 2px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2)'; else instrEl.style.textShadow = 'none'; }
+  if (batchEl) { batchEl.textContent = content.batchInfo || ''; batchEl.style.fontSize = c.fontBatch + 'px'; batchEl.style.color = c.textColor; if (c.vinylMode) batchEl.style.textShadow = '0 0 2px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2)'; else batchEl.style.textShadow = 'none'; }
+  if (originEl) { originEl.textContent = content.originInfo || ''; originEl.style.fontSize = c.fontOrigin + 'px'; if (c.vinylMode) originEl.style.textShadow = '0 0 2px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2)'; else originEl.style.textShadow = 'none'; }
 
   const topLineEl = label.querySelector('.label-top-line');
   if (topLineEl) { topLineEl.style.height = c.topLine + 'px'; topLineEl.style.backgroundColor = c.accentColor; topLineEl.style.display = c.topLine > 0 ? 'block' : 'none'; }
@@ -1078,6 +2701,8 @@ async function renderLabelForPrint(item) {
   if (qrEl && c.showQR) {
     qrEl.style.display = 'flex';
     qrEl.style.width = c.qrSize + '%';
+    qrEl.style.height = 'auto';
+    qrEl.style.aspectRatio = '1 / 1';
     // Fondo blanco opaco + quiet zone para vinil transparente
     qrEl.style.backgroundColor = '#ffffff';
     qrEl.style.padding = '3px';
@@ -1087,18 +2712,22 @@ async function renderLabelForPrint(item) {
       qr.addData(content.qrUrl || 'https://example.com');
       qr.make();
       const moduleCount = qr.getModuleCount();
-      // Grid CSS que se estira al 100% del contenedor sin cortarse
-      let qrHtml = '<div style="display:grid;grid-template-columns:repeat(' + moduleCount + ',1fr);grid-template-rows:repeat(' + moduleCount + ',1fr);width:100%;height:100%;">';
+      // Generar QR como tabla HTML para máxima compatibilidad
+      let qrHtml = '<table style="border-collapse:collapse;width:100%;height:100%;table-layout:fixed;">';
       for (let row = 0; row < moduleCount; row++) {
+        qrHtml += '<tr style="height:' + (100 / moduleCount) + '%;">';
         for (let col = 0; col < moduleCount; col++) {
           const isDark = qr.isDark(row, col);
-          // Negro puro / blanco puro para máximo contraste en vinil
-          qrHtml += '<div style="background:' + (isDark ? '#000000' : '#ffffff') + ';"></div>';
+          qrHtml += '<td style="width:' + (100 / moduleCount) + '%;background:' + (isDark ? '#000000' : '#ffffff') + ';padding:0;margin:0;border:none;min-width:1px;min-height:1px;">&nbsp;</td>';
         }
+        qrHtml += '</tr>';
       }
-      qrHtml += '</div>';
+      qrHtml += '</table>';
       qrEl.innerHTML = qrHtml;
-    } catch (e) { qrEl.innerHTML = ''; }
+    } catch (e) { 
+      console.error('QR render error:', e);
+      qrEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:0.5rem;color:#999;text-align:center;padding:2px;">QR<br>Error</div>'; 
+    }
   } else if (qrEl) { qrEl.style.display = 'none'; }
 
   const logoImg = label.querySelector('.label-logo-img');
@@ -1117,7 +2746,7 @@ async function renderLabelForPrint(item) {
   if (footerEl) footerEl.style.paddingTop = c.areaGap + 'px';
 
   if (item.logoDataUrl && logoImg) { await new Promise(resolve => { if (logoImg.complete) resolve(); else { logoImg.onload = resolve; logoImg.onerror = resolve; } }); }
-  const canvas = await html2canvas(label, { scale: 4, backgroundColor: null, useCORS: true, logging: false });
+  const canvas = await html2canvas(label, { scale: 4, backgroundColor: c.vinylMode ? null : c.bgColor, useCORS: true, logging: false });
   document.body.removeChild(container);
   return canvas;
 }
@@ -1252,6 +2881,31 @@ function showModal(title, text, onConfirm) {
 function closeModal() { document.getElementById('modal').classList.remove('show'); }
 document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 document.addEventListener('keydown', function(e) { if (e.ctrlKey && e.key === 's') { e.preventDefault(); saveProject(); } if (e.key === 'Escape') closeModal(); });
+
+function generateBatchInfo() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const expYear = year + 2;
+  const batchText = `Lote: ${year}${month} | Exp: ${month}/${expYear}`;
+  
+  const input = document.getElementById('batchInfo');
+  if (input) {
+    input.value = batchText;
+    updateLabel();
+  }
+}
+
+
+
+// 1. Al cargar la página, generar el lote automáticamente
+document.addEventListener('DOMContentLoaded', function() {
+    cargarDatosProductos();
+    generateBatchInfo();
+    updateLabel();        // también fuerza el primer render de la etiqueta
+    initImagesPanel();    // inicializa el panel de imágenes si está vacío
+
+});
 </script>
 </body>
 </html>
