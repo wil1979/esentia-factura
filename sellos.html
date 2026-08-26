@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Esentia — Generador de Etiquetas con Cola de Impresión</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 15px;
+    color: #333;
+  }
+  .container {
+    max-width: 1800px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 280px 1fr 380px;
+    gap: 15px;
+    align-items: start;
+  }
+  .panel {
+    background: white;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  }
+  h1 { color: #667eea; margin-bottom: 6px; font-size: 18px; }
+  h2 { color: #764ba2; margin: 12px 0 8px; font-size: 13px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+  label { display: block; font-size: 10px; color: #666; margin: 4px 0 2px; font-weight: 600; }
+  input[type="text"], input[type="number"], input[type="url"], select, textarea {
+    width: 100%; padding: 6px 8px; border: 1px solid #ddd; border-radius: 6px;
+    font-size: 11px; transition: border 0.2s;
+  }
+  input:focus, select:focus { border-color: #667eea; outline: none; }
+  input[type="color"] { width: 100%; height: 30px; border: none; border-radius: 6px; cursor: pointer; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .row-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
+  .checkbox-row { display: flex; flex-wrap: wrap; gap: 5px; margin: 5px 0; }
+  .checkbox-row label {
+    display: flex; align-items: center; gap: 3px;
+    background: #f5f5f5; padding: 4px 8px; border-radius: 16px;
+    cursor: pointer; font-size: 10px; margin: 0;
+  }
+  .checkbox-row input { margin: 0; }
+  button {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white; border: none; padding: 8px 12px; border-radius: 6px;
+    cursor: pointer; font-weight: 600; font-size: 11px;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  button:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(102,126,234,0.4); }
+  button.secondary { background: #f0f0f0; color: #555; }
+  button.danger { background: #ff6b6b; }
+  button.success { background: linear-gradient(135deg, #51cf66, #37b24d); }
+  button.small { padding: 4px 7px; font-size: 9px; }
+  .btn-group { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  
+  /* Preview lateral compacta */
+  .preview-panel {
+    position: sticky;
+    top: 15px;
+  }
+  .preview-box {
+    width: 100%;
+    aspect-ratio: 1;
+    background: repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 15px 15px;
+    border-radius: 10px;
+    border: 2px dashed #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  #previewCanvas {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+  }
+  
+  /* Editor con scroll */
+  .editor-panel {
+    max-height: calc(100vh - 30px);
+    overflow-y: auto;
+  }
+  .editor-panel::-webkit-scrollbar { width: 5px; }
+  .editor-panel::-webkit-scrollbar-thumb { background: #667eea; border-radius: 3px; }
+  
+  /* Cola de impresión */
+  .queue-container { max-height: 300px; overflow-y: auto; }
+  .queue-item {
+    display: grid;
+    grid-template-columns: 50px 1fr auto;
+    gap: 6px;
+    align-items: center;
+    padding: 6px;
+    background: #f8f9ff;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .queue-item:hover { border-color: #667eea; }
+  .queue-thumb {
+    width: 50px; height: 50px; border-radius: 50%;
+    background: #ddd; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .queue-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .queue-info { min-width: 0; }
+  .queue-name { font-weight: 600; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .queue-sub { font-size: 9px; color: #888; }
+  .queue-qty {
+    display: flex; align-items: center; gap: 2px;
+  }
+  .queue-qty input {
+    width: 40px; text-align: center; padding: 2px;
+    border: 1px solid #ddd; border-radius: 4px; font-size: 11px;
+  }
+  .queue-actions { display: flex; flex-direction: column; gap: 2px; }
+  .queue-actions button { padding: 2px 5px; font-size: 8px; }
+  
+  .queue-summary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white; padding: 8px; border-radius: 8px;
+    margin-bottom: 8px; text-align: center;
+  }
+  .queue-summary .total { font-size: 20px; font-weight: bold; }
+  .queue-summary .label { font-size: 9px; opacity: 0.9; }
+  
+  /* Vista previa de hoja */
+  .sheet-preview {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin: 8px auto;
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .sheet-label {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .sheet-label:hover { transform: scale(1.1); z-index: 10; box-shadow: 0 3px 10px rgba(0,0,0,0.3); }
+  .sheet-label canvas { width: 100%; height: 100%; }
+  
+  /* Modo distribución */
+  .dist-modes { display: flex; gap: 4px; margin: 6px 0; }
+  .dist-modes button { flex: 1; font-size: 9px; padding: 6px; }
+  .dist-modes button.active { background: #764ba2; }
+  
+  .empty-queue {
+    text-align: center; padding: 20px 12px;
+    color: #999; font-size: 11px;
+  }
+  .empty-queue .icon { font-size: 30px; margin-bottom: 6px; }
+  
+  .stats {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    margin: 6px 0;
+  }
+  .stat {
+    background: #f5f5f5; padding: 6px; border-radius: 6px;
+    text-align: center;
+  }
+  .stat .val { font-size: 14px; font-weight: bold; color: #667eea; }
+  .stat .lbl { font-size: 8px; color: #888; }
+  
+  @media (max-width: 1400px) {
+    .container { grid-template-columns: 240px 1fr 340px; }
+  }
+  @media (max-width: 1100px) {
+    .container { grid-template-columns: 1fr; }
+    .preview-panel { position: relative; top: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- COLUMNA 1: VISTA PREVIA (siempre visible) -->
+  <div class="panel preview-panel">
+    <h1>👁️ Vista Previa</h1>
+    <div class="preview-box">
+      <canvas id="previewCanvas" width="573" height="573"></canvas>
+    </div>
+    <div class="btn-group">
+      <button onclick="updatePreview()"> Actualizar</button>
+      <button class="success" onclick="addToQueue()">➕ Agregar</button>
+    </div>
+  </div>
+  
+  <!-- COLUMNA 2: EDITOR (con scroll) -->
+  <div class="panel editor-panel">
+    <h1>🎨 Editor de Diseño</h1>
+    
+    <h2>📏 Tamaño</h2>
+    <div class="row">
+      <div><label>Tamaño (pulg)</label><input type="number" id="size" value="1.75" step="0.01"></div>
+      <div><label>Sangrado (mm)</label><input type="number" id="bleed" value="2"></div>
+    </div>
+    
+    <h2>🔲 Visibilidad</h2>
+    <div class="checkbox-row">
+      <label><input type="checkbox" id="showBg" checked> Fondo</label>
+      <label><input type="checkbox" id="showImg1" checked> Imagen 1</label>
+      <label><input type="checkbox" id="showImg2"> Imagen 2</label>
+      <label><input type="checkbox" id="showBrand" checked> Marca</label>
+      <label><input type="checkbox" id="showName" checked> Nombre</label>
+      <label><input type="checkbox" id="showSlogan" checked> Slogan</label>
+      <label><input type="checkbox" id="showBottom"> Texto Inf.</label>
+      <label><input type="checkbox" id="showQR"> QR</label>
+      <label><input type="checkbox" id="showCut"> Marcas corte</label>
+    </div>
+    
+    <h2>️ Imagen 1 (Fondo)</h2>
+    <input type="file" id="img1File" accept="image/*">
+    <div class="row-4">
+      <div><label>Escala %</label><input type="number" id="img1Scale" value="100"></div>
+      <div><label>Rotación °</label><input type="number" id="img1Rot" value="0"></div>
+      <div><label>Offset X</label><input type="number" id="img1X" value="0"></div>
+      <div><label>Offset Y</label><input type="number" id="img1Y" value="0"></div>
+    </div>
+    
+    <h2>🖼️ Imagen 2 (Extra)</h2>
+    <input type="file" id="img2File" accept="image/*">
+    <div class="row-4">
+      <div><label>Escala %</label><input type="number" id="img2Scale" value="100"></div>
+      <div><label>Rotación °</label><input type="number" id="img2Rot" value="0"></div>
+      <div><label>Opacidad %</label><input type="number" id="img2Op" value="100"></div>
+      <div><label>Offset Y</label><input type="number" id="img2Y" value="0"></div>
+    </div>
+    
+    <h2>📝 Marca (Arriba)</h2>
+    <div class="row-4">
+      <div><label>Texto</label><input type="text" id="brandText" value="ESENTIA"></div>
+      <div><label>Tamaño</label><input type="number" id="brandSize" value="18"></div>
+      <div><label>Color</label><input type="color" id="brandColor" value="#333333"></div>
+      <div><label>Offset V</label><input type="number" id="brandY" value="-180"></div>
+    </div>
+    
+    <h2> Nombre Circular</h2>
+    <div class="row-4">
+      <div><label>Texto</label><input type="text" id="nameText" value="Mi Fragancia"></div>
+      <div><label>Tamaño</label><input type="number" id="nameSize" value="22"></div>
+      <div><label>Color</label><input type="color" id="nameColor" value="#000000"></div>
+      <div><label>Radio</label><input type="number" id="nameRadius" value="260"></div>
+    </div>
+    <div class="row-3">
+      <div><label>Rotación °</label><input type="number" id="nameRot" value="-90"></div>
+      <div><label>Cobertura °</label><input type="number" id="nameCov" value="360"></div>
+    </div>
+    
+    <h2>💬 Slogan Circular</h2>
+    <div class="row-4">
+      <div><label>Texto</label><input type="text" id="sloganText" value="Hecho con amor"></div>
+      <div><label>Tamaño</label><input type="number" id="sloganSize" value="16"></div>
+      <div><label>Color</label><input type="color" id="sloganColor" value="#666666"></div>
+      <div><label>Radio</label><input type="number" id="sloganRadius" value="180"></div>
+    </div>
+    <div class="row-3">
+      <div><label>Rotación °</label><input type="number" id="sloganRot" value="90"></div>
+      <div><label>Cobertura °</label><input type="number" id="sloganCov" value="120"></div>
+      <div><label><input type="checkbox" id="sloganInvert"> Invertir</label></div>
+    </div>
+    
+    <h2>📌 Texto Inferior</h2>
+    <div class="row-4">
+      <div><label>Texto</label><input type="text" id="bottomText" value="100 ml"></div>
+      <div><label>Tamaño</label><input type="number" id="bottomSize" value="14"></div>
+      <div><label>Color</label><input type="color" id="bottomColor" value="#555555"></div>
+      <div><label>Offset V</label><input type="number" id="bottomY" value="200"></div>
+    </div>
+    
+    <h2>🔗 QR Personalizado</h2>
+    <div class="row-3">
+      <div><label>URL/Texto</label><input type="url" id="qrText" value="https://facebook.com"></div>
+      <div><label>Tamaño</label><input type="number" id="qrSize" value="60"></div>
+      <div><label>Offset V</label><input type="number" id="qrY" value="150"></div>
+    </div>
+    
+    <div class="btn-group">
+      <button class="secondary" onclick="clearDesign()">🗑️ Limpiar</button>
+    </div>
+  </div>
+  
+  <!-- COLUMNA 3: COLA + HOJA -->
+  <div>
+    <!-- Cola de impresión -->
+    <div class="panel" style="margin-bottom: 15px;">
+      <h1>🖨️ Cola de Impresión</h1>
+      
+      <div class="queue-summary">
+        <div class="label">TOTAL EN COLA</div>
+        <div class="total" id="totalLabels">0</div>
+        <div class="label">etiquetas</div>
+      </div>
+      
+      <div class="stats">
+        <div class="stat">
+          <div class="val" id="totalDesigns">0</div>
+          <div class="lbl">Diseños</div>
+        </div>
+        <div class="stat">
+          <div class="val" id="totalSheets">0</div>
+          <div class="lbl">Hojas est.</div>
+        </div>
+      </div>
+      
+      <h2>📋 Diseños en Cola</h2>
+      <div class="queue-container" id="queueContainer">
+        <div class="empty-queue">
+          <div class="icon"></div>
+          <div>No hay diseños en la cola</div>
+        </div>
+      </div>
+      
+      <div class="btn-group">
+        <button class="danger small" onclick="clearQueue()">🗑️ Vaciar</button>
+      </div>
+    </div>
+    
+    <!-- Hoja de impresión -->
+    <div class="panel">
+      <h1>📄 Hoja de Impresión</h1>
+      
+      <h2>Papel</h2>
+      <select id="paperType" onchange="updateSheet()">
+        <option value="A4">A4 (210×297mm)</option>
+        <option value="Carta">Carta (216×279mm)</option>
+        <option value="custom">Personalizado</option>
+      </select>
+      <div class="row" id="customPaper" style="display:none;">
+        <div><label>Ancho mm</label><input type="number" id="paperW" value="210"></div>
+        <div><label>Alto mm</label><input type="number" id="paperH" value="297"></div>
+      </div>
+      
+      <div class="row-4">
+        <div><label>Filas</label><input type="number" id="rows" value="4" onchange="updateSheet()"></div>
+        <div><label>Cols</label><input type="number" id="cols" value="3" onchange="updateSheet()"></div>
+        <div><label>Margen mm</label><input type="number" id="margin" value="10" onchange="updateSheet()"></div>
+        <div><label>Espacio mm</label><input type="number" id="gap" value="5" onchange="updateSheet()"></div>
+      </div>
+      
+      <div style="background:#e8f5e9;padding:8px;border-radius:6px;margin:8px 0;font-size:10px;">
+        ✅ Capacidad: <strong id="sheetCapacity">12</strong> etiquetas por hoja
+      </div>
+      
+      <h2>🎯 Modo de Distribución</h2>
+      <div class="dist-modes">
+        <button id="distSequential" class="active" onclick="setDistMode('sequential')">🔀 Secuencial</button>
+        <button id="distBlock" onclick="setDistMode('block')">📦 Bloques</button>
+        <button id="distMixed" onclick="setDistMode('mixed')">🎲 Mezclado</button>
+      </div>
+      <div style="font-size:9px;color:#888;margin-bottom:8px;" id="distDesc">
+        Alterna los diseños uno por uno
+      </div>
+      
+      <h2>👁️ Vista Previa de Hoja</h2>
+      <div id="sheetPreview" class="sheet-preview"></div>
+      
+      <div class="btn-group">
+        <button class="success" onclick="generatePDF()">📄 Generar PDF</button>
+        <button class="secondary" onclick="updateSheet()"> Actualizar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ ESTADO ============
+let printQueue = [];
+let distMode = 'sequential';
+let queueIdCounter = 0;
+
+// ============ CAPTURA DE IMÁGENES ============
+let img1Data = null, img2Data = null;
+
+document.getElementById('img1File').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => { img1Data = ev.target.result; updatePreview(); };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById('img2File').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => { img2Data = ev.target.result; updatePreview(); };
+  reader.readAsDataURL(file);
+});
+
+document.querySelectorAll('input, select').forEach(el => {
+  el.addEventListener('input', () => { if (el.type !== 'file') updatePreview(); });
+});
+
+// ============ OBTENER CONFIG ============
+function getDesignConfig() {
+  return {
+    size: parseFloat(document.getElementById('size').value),
+    bleed: parseFloat(document.getElementById('bleed').value),
+    showBg: document.getElementById('showBg').checked,
+    showImg1: document.getElementById('showImg1').checked,
+    showImg2: document.getElementById('showImg2').checked,
+    showBrand: document.getElementById('showBrand').checked,
+    showName: document.getElementById('showName').checked,
+    showSlogan: document.getElementById('showSlogan').checked,
+    showBottom: document.getElementById('showBottom').checked,
+    showQR: document.getElementById('showQR').checked,
+    showCut: document.getElementById('showCut').checked,
+    img1: { scale: +document.getElementById('img1Scale').value, rot: +document.getElementById('img1Rot').value, x: +document.getElementById('img1X').value, y: +document.getElementById('img1Y').value },
+    img2: { scale: +document.getElementById('img2Scale').value, rot: +document.getElementById('img2Rot').value, op: +document.getElementById('img2Op').value, y: +document.getElementById('img2Y').value },
+    brand: { text: document.getElementById('brandText').value, size: +document.getElementById('brandSize').value, color: document.getElementById('brandColor').value, y: +document.getElementById('brandY').value },
+    name: { text: document.getElementById('nameText').value, size: +document.getElementById('nameSize').value, color: document.getElementById('nameColor').value, radius: +document.getElementById('nameRadius').value, rot: +document.getElementById('nameRot').value, cov: +document.getElementById('nameCov').value },
+    slogan: { text: document.getElementById('sloganText').value, size: +document.getElementById('sloganSize').value, color: document.getElementById('sloganColor').value, radius: +document.getElementById('sloganRadius').value, rot: +document.getElementById('sloganRot').value, cov: +document.getElementById('sloganCov').value, invert: document.getElementById('sloganInvert').checked },
+    bottom: { text: document.getElementById('bottomText').value, size: +document.getElementById('bottomSize').value, color: document.getElementById('bottomColor').value, y: +document.getElementById('bottomY').value },
+    qr: { text: document.getElementById('qrText').value, size: +document.getElementById('qrSize').value, y: +document.getElementById('qrY').value }
+  };
+}
+
+// ============ DIBUJAR ETIQUETA ============
+async function drawLabel(canvas, config, img1, img2) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2, r = W/2 - 10;
+  
+  ctx.clearRect(0, 0, W, H);
+  
+  if (config.showBg) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI*2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.strokeStyle = '#ddd';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+  
+  if (config.showImg1 && img1) {
+    const img = await loadImage(img1);
+    const scale = config.img1.scale / 100;
+    const w = img.width * scale, h = img.height * scale;
+    ctx.save();
+    ctx.translate(cx + config.img1.x, cy + config.img1.y);
+    ctx.rotate(config.img1.rot * Math.PI/180);
+    ctx.beginPath();
+    ctx.arc(0, 0, r - 5, 0, Math.PI*2);
+    ctx.clip();
+    ctx.drawImage(img, -w/2, -h/2, w, h);
+    ctx.restore();
+  }
+  
+  if (config.showImg2 && img2) {
+    const img = await loadImage(img2);
+    const scale = config.img2.scale / 100;
+    const w = img.width * scale, h = img.height * scale;
+    ctx.save();
+    ctx.globalAlpha = config.img2.op / 100;
+    ctx.translate(cx, cy + config.img2.y);
+    ctx.rotate(config.img2.rot * Math.PI/180);
+    ctx.drawImage(img, -w/2, -h/2, w, h);
+    ctx.restore();
+  }
+  
+  if (config.showBrand && config.brand.text) {
+    ctx.font = `bold ${config.brand.size}px Arial`;
+    ctx.fillStyle = config.brand.color;
+    ctx.textAlign = 'center';
+    ctx.fillText(config.brand.text, cx, cy + config.brand.y);
+  }
+  
+  if (config.showName && config.name.text) {
+    drawCircularText(ctx, config.name.text, cx, cy, config.name.radius, config.name.size, config.name.color, config.name.rot, config.name.cov, false);
+  }
+  
+  if (config.showSlogan && config.slogan.text) {
+    drawCircularText(ctx, config.slogan.text, cx, cy, config.slogan.radius, config.slogan.size, config.slogan.color, config.slogan.rot, config.slogan.cov, config.slogan.invert);
+  }
+  
+  if (config.showBottom && config.bottom.text) {
+    ctx.font = `${config.bottom.size}px Arial`;
+    ctx.fillStyle = config.bottom.color;
+    ctx.textAlign = 'center';
+    ctx.fillText(config.bottom.text, cx, cy + config.bottom.y);
+  }
+  
+  if (config.showQR && config.qr.text) {
+    await drawQR(ctx, config.qr.text, cx, cy + config.qr.y, config.qr.size);
+  }
+  
+  if (config.showCut) {
+    ctx.strokeStyle = '#ff0000';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + 5, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+function drawCircularText(ctx, text, cx, cy, radius, size, color, rot, coverage, invert) {
+  ctx.font = `bold ${size}px Arial`;
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const chars = text.split('');
+  const totalAngle = (coverage * Math.PI) / 180;
+  const startAngle = (rot * Math.PI) / 180 - totalAngle/2;
+  const step = totalAngle / chars.length;
+  chars.forEach((ch, i) => {
+    const angle = startAngle + step * (i + 0.5);
+    const x = cx + Math.cos(angle) * radius;
+    const y = cy + Math.sin(angle) * radius;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle + (invert ? Math.PI : Math.PI/2));
+    ctx.fillText(ch, 0, 0);
+    ctx.restore();
+  });
+}
+
+async function drawQR(ctx, text, cx, cy, size) {
+  return new Promise((resolve) => {
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = size;
+    tempCanvas.height = size;
+    
+    try {
+      const qrContainer = document.createElement('div');
+      qrContainer.style.display = 'none';
+      document.body.appendChild(qrContainer);
+      
+      const qr = new QRCode(qrContainer, {
+        text: text,
+        width: size,
+        height: size,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      
+      setTimeout(() => {
+        const qrCanvas = qrContainer.querySelector('canvas');
+        if (qrCanvas) {
+          ctx.drawImage(qrCanvas, cx - size/2, cy - size/2, size, size);
+        } else {
+          const qrImg = qrContainer.querySelector('img');
+          if (qrImg) {
+            const img = new Image();
+            img.onload = () => {
+              ctx.drawImage(img, cx - size/2, cy - size/2, size, size);
+              document.body.removeChild(qrContainer);
+              resolve();
+            };
+            img.src = qrImg.src;
+            return;
+          }
+        }
+        document.body.removeChild(qrContainer);
+        resolve();
+      }, 150);
+    } catch(e) {
+      console.error('Error QR:', e);
+      resolve();
+    }
+  });
+}
+
+// ============ PREVIEW ============
+async function updatePreview() {
+  const canvas = document.getElementById('previewCanvas');
+  const config = getDesignConfig();
+  await drawLabel(canvas, config, img1Data, img2Data);
+}
+
+// ============ COLA DE IMPRESIÓN ============
+async function addToQueue() {
+  const config = getDesignConfig();
+  const name = config.name.text || config.brand.text || `Diseño ${queueIdCounter + 1}`;
+  
+  const thumbCanvas = document.createElement('canvas');
+  thumbCanvas.width = 573;
+  thumbCanvas.height = 573;
+  await drawLabel(thumbCanvas, config, img1Data, img2Data);
+  
+  const item = {
+    id: ++queueIdCounter,
+    design: config,
+    img1: img1Data,
+    img2: img2Data,
+    quantity: 1,
+    name: name,
+    thumb: thumbCanvas.toDataURL('image/png')
+  };
+  
+  printQueue.push(item);
+  renderQueue();
+  updateSheet();
+  
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.textContent = '✅ Agregado';
+  btn.style.background = '#51cf66';
+  setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1000);
+}
+
+function removeFromQueue(id) {
+  printQueue = printQueue.filter(i => i.id !== id);
+  renderQueue();
+  updateSheet();
+}
+
+function updateQuantity(id, qty) {
+  const item = printQueue.find(i => i.id === id);
+  if (item) {
+    item.quantity = Math.max(1, parseInt(qty) || 1);
+    updateStats();
+    updateSheet();
+  }
+}
+
+function clearQueue() {
+  if (printQueue.length === 0) return;
+  if (confirm('¿Vaciar toda la cola de impresión?')) {
+    printQueue = [];
+    renderQueue();
+    updateSheet();
+  }
+}
+
+function renderQueue() {
+  const container = document.getElementById('queueContainer');
+  if (printQueue.length === 0) {
+    container.innerHTML = `
+      <div class="empty-queue">
+        <div class="icon"></div>
+        <div>No hay diseños en la cola</div>
+      </div>`;
+    updateStats();
+    return;
+  }
+  
+  container.innerHTML = printQueue.map(item => `
+    <div class="queue-item" data-id="${item.id}">
+      <div class="queue-thumb">
+        <img src="${item.thumb}">
+      </div>
+      <div class="queue-info">
+        <div class="queue-name">${item.name}</div>
+        <div class="queue-sub">ID: ${item.id} · ${item.design.size}"</div>
+      </div>
+      <div class="queue-actions">
+        <div class="queue-qty">
+          <button class="small secondary" onclick="changeQty(${item.id}, -1)">−</button>
+          <input type="number" value="${item.quantity}" min="1" onchange="updateQuantity(${item.id}, this.value)">
+          <button class="small secondary" onclick="changeQty(${item.id}, 1)">+</button>
+        </div>
+        <button class="small danger" onclick="removeFromQueue(${item.id})">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+  
+  updateStats();
+}
+
+function changeQty(id, delta) {
+  const item = printQueue.find(i => i.id === id);
+  if (item) {
+    item.quantity = Math.max(1, item.quantity + delta);
+    renderQueue();
+    updateSheet();
+  }
+}
+
+function updateStats() {
+  const total = printQueue.reduce((s, i) => s + i.quantity, 0);
+  const designs = printQueue.length;
+  const capacity = getSheetCapacity();
+  const sheets = Math.ceil(total / capacity);
+  
+  document.getElementById('totalLabels').textContent = total;
+  document.getElementById('totalDesigns').textContent = designs;
+  document.getElementById('totalSheets').textContent = sheets;
+}
+
+function getSheetCapacity() {
+  const rows = +document.getElementById('rows').value;
+  const cols = +document.getElementById('cols').value;
+  return rows * cols;
+}
+
+function setDistMode(mode) {
+  distMode = mode;
+  document.querySelectorAll('.dist-modes button').forEach(b => b.classList.remove('active'));
+  document.getElementById('dist' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+  
+  const descs = {
+    sequential: 'Alterna los diseños uno por uno',
+    block: 'Agrupa todas las etiquetas del mismo diseño',
+    mixed: 'Distribuye aleatoriamente'
+  };
+  document.getElementById('distDesc').textContent = descs[mode];
+  updateSheet();
+}
+
+function buildSheetLayout() {
+  const capacity = getSheetCapacity();
+  const total = printQueue.reduce((s, i) => s + i.quantity, 0);
+  if (total === 0) return [];
+  
+  let items = [];
+  printQueue.forEach(q => {
+    for (let i = 0; i < q.quantity; i++) items.push(q);
+  });
+  
+  if (distMode === 'sequential') {
+    // Ya está en orden
+  } else if (distMode === 'block') {
+    items.sort((a, b) => a.id - b.id);
+  } else if (distMode === 'mixed') {
+    for (let i = items.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
+    }
+  }
+  
+  const sheets = [];
+  for (let i = 0; i < items.length; i += capacity) {
+    sheets.push(items.slice(i, i + capacity));
+  }
+  return sheets;
+}
+
+async function updateSheet() {
+  const container = document.getElementById('sheetPreview');
+  const paperType = document.getElementById('paperType').value;
+  let paperW, paperH;
+  
+  if (paperType === 'A4') { paperW = 210; paperH = 297; }
+  else if (paperType === 'Carta') { paperW = 216; paperH = 279; }
+  else { paperW = +document.getElementById('paperW').value; paperH = +document.getElementById('paperH').value; }
+  
+  document.getElementById('customPaper').style.display = paperType === 'custom' ? 'grid' : 'none';
+  document.getElementById('sheetCapacity').textContent = getSheetCapacity();
+  
+  const sheets = buildSheetLayout();
+  if (sheets.length === 0) {
+    container.innerHTML = '<div style="padding:30px;text-align:center;color:#999;">Agrega diseños a la cola</div>';
+    container.style.width = '100%';
+    container.style.aspectRatio = `${paperW}/${paperH}`;
+    return;
+  }
+  
+  const firstSheet = sheets[0];
+  const rows = +document.getElementById('rows').value;
+  const cols = +document.getElementById('cols').value;
+  const margin = +document.getElementById('margin').value;
+  const gap = +document.getElementById('gap').value;
+  
+  const previewW = 260;
+  const previewH = previewW * (paperH / paperW);
+  const cellW = (previewW - 2*margin*(previewW/paperW)) / cols;
+  const cellH = (previewH - 2*margin*(previewH/paperH)) / rows;
+  const labelSize = Math.min(cellW, cellH) - gap*(previewW/paperW);
+  
+  container.style.width = previewW + 'px';
+  container.style.height = previewH + 'px';
+  container.innerHTML = '';
+  
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const idx = r * cols + c;
+      const item = firstSheet[idx];
+      const x = margin*(previewW/paperW) + c * (cellW + gap*(previewW/paperW));
+      const y = margin*(previewH/paperH) + r * (cellH + gap*(previewH/paperH));
+      
+      const cell = document.createElement('div');
+      cell.className = 'sheet-label';
+      cell.style.left = x + 'px';
+      cell.style.top = y + 'px';
+      cell.style.width = labelSize + 'px';
+      cell.style.height = labelSize + 'px';
+      
+      if (item) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 573;
+        canvas.height = 573;
+        await drawLabel(canvas, item.design, item.img1, item.img2);
+        cell.appendChild(canvas);
+        cell.title = `${item.name} (#${item.id})`;
+      } else {
+        cell.style.border = '1px dashed #ddd';
+        cell.style.background = '#fafafa';
+      }
+      
+      container.appendChild(cell);
+    }
+  }
+  
+  if (sheets.length > 1) {
+    const info = document.createElement('div');
+    info.style.cssText = 'position:absolute;bottom:6px;right:6px;background:#667eea;color:white;padding:3px 8px;border-radius:10px;font-size:9px;';
+    info.textContent = `Hoja 1 de ${sheets.length}`;
+    container.appendChild(info);
+  }
+}
+
+async function generatePDF() {
+  if (printQueue.length === 0) {
+    alert('Agrega diseños a la cola primero');
+    return;
+  }
+  
+  const { jsPDF } = window.jspdf;
+  const paperType = document.getElementById('paperType').value;
+  let paperW, paperH;
+  
+  if (paperType === 'A4') { paperW = 210; paperH = 297; }
+  else if (paperType === 'Carta') { paperW = 216; paperH = 279; }
+  else { paperW = +document.getElementById('paperW').value; paperH = +document.getElementById('paperH').value; }
+  
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [paperW, paperH] });
+  const rows = +document.getElementById('rows').value;
+  const cols = +document.getElementById('cols').value;
+  const margin = +document.getElementById('margin').value;
+  const gap = +document.getElementById('gap').value;
+  const capacity = rows * cols;
+  
+  const sheets = buildSheetLayout();
+  
+  for (let s = 0; s < sheets.length; s++) {
+    if (s > 0) pdf.addPage();
+    const sheet = sheets[s];
+    
+    const cellW = (paperW - 2*margin) / cols;
+    const cellH = (paperH - 2*margin) / rows;
+    const labelSize = Math.min(cellW, cellH) - gap;
+    
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const idx = r * cols + c;
+        const item = sheet[idx];
+        if (!item) continue;
+        
+        const x = margin + c * cellW + (cellW - labelSize)/2;
+        const y = margin + r * cellH + (cellH - labelSize)/2;
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = 573;
+        canvas.height = 573;
+        await drawLabel(canvas, item.design, item.img1, item.img2);
+        
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', x, y, labelSize, labelSize);
+      }
+    }
+  }
+  
+  pdf.save(`etiquetas_esentia_${Date.now()}.pdf`);
+}
+
+function clearDesign() {
+  document.querySelectorAll('input[type="text"], input[type="url"]').forEach(i => i.value = '');
+  updatePreview();
+}
+
+document.getElementById('paperType').addEventListener('change', updateSheet);
+updatePreview();
+updateSheet();
+</script>
+
+</body>
+</html>
