@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+
+<html lang="es"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Administración · W & E · 19 años</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&display=swap" rel="stylesheet">
+
+<style>
+    :root{
+        --bg:#120d0f;
+        --bg2:#1b1114;
+        --panel:#211619;
+        --panel2:#291b1f;
+        --paper:#f4eee7;
+        --muted:#b9aaa3;
+        --accent:#d6aa91;
+        --accent2:#a97867;
+        --line:rgba(244,238,231,.12);
+        --success:#8fb99b;
+        --warning:#d6b77d;
+        --danger:#c78383;
+        --shadow:0 20px 60px rgba(0,0,0,.35);
+    }
+
+    *{
+        box-sizing:border-box;
+        margin:0;
+        padding:0;
+    }
+
+    html{
+        min-height:100%;
+        background:var(--bg);
+    }
+
+    body{
+        min-height:100vh;
+        background:
+            radial-gradient(circle at 50% 0%, #3a272b 0%, var(--bg) 45%, #0d090a 100%);
+        color:var(--paper);
+        font-family:"Cormorant Garamond",serif;
+        padding:30px 18px 60px;
+    }
+
+    button,
+    input,
+    textarea{
+        font:inherit;
+    }
+
+    button{
+        cursor:pointer;
+    }
+
+    .hidden{
+        display:none!important;
+    }
+
+    /* =========================
+       ACCESO
+    ========================= */
+
+    #password-overlay{
+        position:fixed;
+        inset:0;
+        z-index:1000;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:20px;
+        background:
+            radial-gradient(circle at center,rgba(80,50,55,.55),rgba(8,5,6,.97));
+        backdrop-filter:blur(8px);
+    }
+
+    .password-box{
+        width:min(430px,100%);
+        padding:42px 32px;
+        text-align:center;
+        background:rgba(33,22,25,.96);
+        border:1px solid var(--line);
+        border-radius:18px;
+        box-shadow:var(--shadow);
+    }
+
+    .password-symbol{
+        font-size:34px;
+        margin-bottom:14px;
+    }
+
+    .password-box h2{
+        font:500 30px "Playfair Display",serif;
+        margin-bottom:10px;
+    }
+
+    .password-box p{
+        color:var(--muted);
+        font-size:18px;
+        margin-bottom:18px;
+    }
+
+    .password-box input{
+        width:100%;
+        padding:13px 15px;
+        color:var(--paper);
+        background:#120d0f;
+        border:1px solid var(--line);
+        border-radius:9px;
+        outline:none;
+        text-align:center;
+    }
+
+    .password-box input:focus{
+        border-color:rgba(214,170,145,.65);
+    }
+
+    #error-msg{
+        color:#d89595!important;
+        font-family:Inter,sans-serif;
+        font-size:12px!important;
+        margin:12px 0 0!important;
+    }
+
+    /* =========================
+       CONTENEDOR
+    ========================= */
+
+    .admin-container{
+        width:min(1180px,100%);
+        margin:0 auto;
+    }
+
+    .admin-header{
+        text-align:center;
+        margin-bottom:32px;
+    }
+
+    .admin-header .eyebrow{
+        font:500 10px Inter,sans-serif;
+        letter-spacing:.32em;
+        color:var(--accent);
+        margin-bottom:12px;
+    }
+
+    .admin-header h1{
+        font:500 clamp(34px,5vw,58px)/1 "Playfair Display",serif;
+    }
+
+    .admin-header h1 em{
+        font-weight:400;
+    }
+
+    .admin-header p{
+        margin-top:12px;
+        color:var(--muted);
+        font-size:18px;
+    }
+
+    /* =========================
+       ESTADISTICAS
+    ========================= */
+
+    .stats{
+        display:grid;
+        grid-template-columns:repeat(4,1fr);
+        gap:12px;
+        margin-bottom:28px;
+    }
+
+    .stat-card{
+        padding:20px;
+        background:rgba(33,22,25,.82);
+        border:1px solid var(--line);
+        border-radius:14px;
+        text-align:center;
+    }
+
+    .stat-card span{
+        display:block;
+        font:500 10px Inter,sans-serif;
+        letter-spacing:.16em;
+        text-transform:uppercase;
+        color:var(--muted);
+        margin-bottom:8px;
+    }
+
+    .stat-card strong{
+        display:block;
+        font:500 32px "Playfair Display",serif;
+        color:var(--paper);
+    }
+
+    .stat-card.published strong{
+        color:var(--success);
+    }
+
+    .stat-card.scheduled strong{
+        color:var(--warning);
+    }
+
+    /* =========================
+       PANEL
+    ========================= */
+
+    .panel{
+        background:rgba(33,22,25,.88);
+        border:1px solid var(--line);
+        border-radius:18px;
+        box-shadow:var(--shadow);
+        margin-bottom:26px;
+        overflow:hidden;
+    }
+
+    .panel-header{
+        padding:22px 26px;
+        border-bottom:1px solid var(--line);
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:15px;
+    }
+
+    .panel-header h2{
+        font:500 25px "Playfair Display",serif;
+    }
+
+    .panel-header p{
+        color:var(--muted);
+        font-size:15px;
+    }
+
+    .panel-body{
+        padding:26px;
+    }
+
+    /* =========================
+       FORMULARIO
+    ========================= */
+
+    .form-grid{
+        display:grid;
+        grid-template-columns:1fr 2fr;
+        gap:16px;
+    }
+
+    .form-grid.three{
+        grid-template-columns:1fr 1fr 1fr;
+    }
+
+    .form-group{
+        margin-bottom:18px;
+    }
+
+    .form-group.full{
+        grid-column:1/-1;
+    }
+
+    .form-group label{
+        display:block;
+        margin-bottom:7px;
+        color:#d9ccc5;
+        font:500 11px Inter,sans-serif;
+        letter-spacing:.08em;
+        text-transform:uppercase;
+    }
+
+    .form-group input,
+    .form-group textarea{
+        width:100%;
+        padding:13px 14px;
+        color:var(--paper);
+        background:#120d0f;
+        border:1px solid var(--line);
+        border-radius:9px;
+        outline:none;
+        transition:border-color .2s,background .2s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus{
+        border-color:rgba(214,170,145,.6);
+        background:#160f11;
+    }
+
+    .form-group textarea{
+        min-height:270px;
+        resize:vertical;
+        line-height:1.55;
+    }
+
+    .help{
+        display:block;
+        margin-top:6px;
+        color:#887974;
+        font:11px Inter,sans-serif;
+        line-height:1.45;
+    }
+
+    .date-note{
+        color:var(--accent);
+        font:11px Inter,sans-serif;
+        margin-top:7px;
+    }
+
+    /* PUBLICAR */
+
+    .publish-box{
+        padding:17px;
+        margin:4px 0 20px;
+        background:rgba(143,185,155,.055);
+        border:1px solid rgba(143,185,155,.18);
+        border-radius:10px;
+    }
+
+    .publish-label{
+        display:flex;
+        align-items:flex-start;
+        gap:12px;
+        cursor:pointer;
+    }
+
+    .publish-label input{
+        width:19px;
+        height:19px;
+        margin-top:2px;
+        accent-color:var(--success);
+    }
+
+    .publish-title{
+        display:block;
+        font:500 14px Inter,sans-serif;
+        color:#dce9df;
+    }
+
+    .publish-description{
+        display:block;
+        margin-top:4px;
+        color:#8da194;
+        font:11px Inter,sans-serif;
+    }
+
+    /* BOTONES */
+
+    .actions{
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+        justify-content:flex-end;
+        padding-top:8px;
+    }
+
+    .btn{
+        border:1px solid transparent;
+        border-radius:9px;
+        padding:11px 18px;
+        color:var(--paper);
+        transition:.2s;
+    }
+
+    .btn:hover{
+        transform:translateY(-1px);
+    }
+
+    .btn-primary{
+        background:rgba(214,170,145,.16);
+        border-color:rgba(214,170,145,.42);
+    }
+
+    .btn-primary:hover{
+        background:rgba(214,170,145,.25);
+    }
+
+    .btn-secondary{
+        background:transparent;
+        border-color:var(--line);
+        color:var(--muted);
+    }
+
+    .btn-success{
+        background:rgba(143,185,155,.12);
+        border-color:rgba(143,185,155,.3);
+        color:#b8d6c1;
+    }
+
+    .btn-danger{
+        background:rgba(199,131,131,.1);
+        border-color:rgba(199,131,131,.25);
+        color:#d99b9b;
+    }
+
+    .btn-small{
+        padding:8px 11px;
+        font:11px Inter,sans-serif;
+    }
+
+    /* =========================
+       LISTA
+    ========================= */
+
+    .list{
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+    }
+
+    .chapter-card{
+        display:grid;
+        grid-template-columns:75px 1fr auto;
+        align-items:center;
+        gap:18px;
+        padding:17px;
+        background:rgba(18,13,15,.65);
+        border:1px solid var(--line);
+        border-radius:12px;
+        transition:.2s;
+    }
+
+    .chapter-card:hover{
+        border-color:rgba(214,170,145,.28);
+        background:rgba(24,16,19,.85);
+    }
+
+    .chapter-number{
+        width:58px;
+        height:58px;
+        display:grid;
+        place-items:center;
+        border:1px solid rgba(214,170,145,.25);
+        border-radius:50%;
+        color:var(--accent);
+        font:500 20px "Playfair Display",serif;
+    }
+
+    .chapter-info h3{
+        font:500 21px "Playfair Display",serif;
+        margin-bottom:5px;
+    }
+
+    .chapter-info p{
+        color:#94837d;
+        font:11px Inter,sans-serif;
+        line-height:1.6;
+    }
+
+    .chapter-info .status{
+        display:inline-block;
+        margin-left:7px;
+        padding:3px 7px;
+        border-radius:20px;
+        font:10px Inter,sans-serif;
+        letter-spacing:.05em;
+    }
+
+    .status-published{
+        color:#b9d8c2;
+        background:rgba(143,185,155,.1);
+        border:1px solid rgba(143,185,155,.18);
+    }
+
+    .status-scheduled{
+        color:#d7bc89;
+        background:rgba(214,183,125,.08);
+        border:1px solid rgba(214,183,125,.18);
+    }
+
+    .status-hidden{
+        color:#a89893;
+        background:rgba(255,255,255,.04);
+        border:1px solid var(--line);
+    }
+
+    .chapter-actions{
+        display:flex;
+        flex-wrap:wrap;
+        justify-content:flex-end;
+        gap:7px;
+    }
+
+    /* =========================
+       MENSAJES
+    ========================= */
+
+    .message{
+        padding:14px 16px;
+        border-radius:9px;
+        margin-bottom:18px;
+        font:12px Inter,sans-serif;
+        display:none;
+    }
+
+    .message.show{
+        display:block;
+    }
+
+    .message.success{
+        color:#b8d6c1;
+        background:rgba(143,185,155,.08);
+        border:1px solid rgba(143,185,155,.18);
+    }
+
+    .message.error{
+        color:#d99b9b;
+        background:rgba(199,131,131,.08);
+        border:1px solid rgba(199,131,131,.18);
+    }
+
+    .loader{
+        width:25px;
+        height:25px;
+        margin:15px auto 0;
+        border:2px solid rgba(255,255,255,.12);
+        border-top-color:var(--accent);
+        border-radius:50%;
+        animation:spin .8s linear infinite;
+        display:none;
+    }
+
+    .loader.show{
+        display:block;
+    }
+
+    @keyframes spin{
+        to{transform:rotate(360deg)}
+    }
+
+    .empty{
+        padding:35px 20px;
+        text-align:center;
+        color:#83736e;
+        font-size:18px;
+    }
+
+    /* =========================
+       VISTA PREVIA
+    ========================= */
+
+    .preview-modal{
+        position:fixed;
+        inset:0;
+        z-index:900;
+        display:none;
+        align-items:center;
+        justify-content:center;
+        padding:20px;
+        background:rgba(5,3,4,.82);
+        backdrop-filter:blur(8px);
+    }
+
+    .preview-modal.show{
+        display:flex;
+    }
+
+    .preview-box{
+        width:min(760px,100%);
+        max-height:90vh;
+        overflow:auto;
+        background:#1b1114;
+        border:1px solid var(--line);
+        border-radius:16px;
+        box-shadow:var(--shadow);
+    }
+
+    .preview-head{
+        padding:20px 24px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        border-bottom:1px solid var(--line);
+    }
+
+    .preview-head h2{
+        font:500 25px "Playfair Display",serif;
+    }
+
+    .preview-close{
+        width:35px;
+        height:35px;
+        border:1px solid var(--line);
+        border-radius:50%;
+        background:transparent;
+        color:var(--paper);
+        font-size:18px;
+    }
+
+    .preview-content{
+        padding:28px 26px 35px;
+    }
+
+    .preview-meta{
+        color:var(--accent);
+        font:10px Inter,sans-serif;
+        letter-spacing:.2em;
+        margin-bottom:12px;
+    }
+
+    .preview-title{
+        font:500 clamp(30px,5vw,48px)/1 "Playfair Display",serif;
+        margin-bottom:24px;
+    }
+
+    .preview-lines{
+        display:flex;
+        flex-direction:column;
+        gap:16px;
+    }
+
+    .preview-lines p{
+        color:#d5c8c1;
+        font-size:20px;
+        line-height:1.3;
+    }
+
+    /* =========================
+       RESPONSIVE
+    ========================= */
+
+    @media(max-width:850px){
+        .stats{
+            grid-template-columns:repeat(2,1fr);
+        }
+
+        .form-grid,
+        .form-grid.three{
+            grid-template-columns:1fr;
+        }
+
+        .chapter-card{
+            grid-template-columns:58px 1fr;
+        }
+
+        .chapter-actions{
+            grid-column:1/-1;
+            justify-content:flex-start;
+            padding-left:76px;
+        }
+    }
+
+    @media(max-width:600px){
+        body{
+            padding:18px 12px 40px;
+        }
+
+        .stats{
+            gap:8px;
+        }
+
+        .stat-card{
+            padding:14px 8px;
+        }
+
+        .stat-card strong{
+            font-size:26px;
+        }
+
+        .panel-header,
+        .panel-body{
+            padding:18px;
+        }
+
+        .actions{
+            justify-content:stretch;
+        }
+
+        .actions .btn{
+            flex:1;
+        }
+
+        .chapter-card{
+            gap:12px;
+        }
+
+        .chapter-info h3{
+            font-size:18px;
+        }
+
+        .chapter-actions{
+            padding-left:0;
+        }
+    }
+</style>
+
+</head>
+
+<body>
+
+<!-- ========================================================= ACCESO ========================================================= -->
+
+<div id="password-overlay"> <div class="password-box">
+
+    <div class="password-symbol">♡</div>
+
+    <h2>Panel privado</h2>
+
+    <p>
+        Administración de<br>
+        <strong>W & E · 19 años</strong>
+    </p>
+
+    <input
+        type="password"
+        id="admin-password"
+        placeholder="Contraseña"
+        autocomplete="off"
+    >
+
+    <button
+        class="btn btn-primary"
+        id="login-btn"
+        style="width:100%;margin-top:12px;"
+    >
+        Entrar
+    </button>
+
+    <p id="error-msg" class="hidden">
+        Contraseña incorrecta
+    </p>
+
+</div>
+
+</div>
+
+<!-- ========================================================= ADMIN ========================================================= -->
+
+<main class="admin-container" id="admin-panel" style="display:none;">
+
+<header class="admin-header">
+
+    <p class="eyebrow">NUESTRA HISTORIA · ADMINISTRACIÓN</p>
+
+    <h1>
+        W <em>&</em> E
+        <br>
+        <em>19 años</em>
+    </h1>
+
+    <p>
+        Cada capítulo se abre en el momento indicado.
+    </p>
+
+</header>
+
+
+<!-- =====================================================
+     ESTADISTICAS
+====================================================== -->
+
+<section class="stats">
+
+    <div class="stat-card">
+        <span>Capítulos</span>
+        <strong id="total-capitulos">0</strong>
+    </div>
+
+    <div class="stat-card">
+        <span>Meta</span>
+        <strong>31</strong>
+    </div>
+
+    <div class="stat-card published">
+        <span>Disponibles</span>
+        <strong id="total-publicados">0</strong>
+    </div>
+
+    <div class="stat-card scheduled">
+        <span>Programados</span>
+        <strong id="total-programados">0</strong>
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     MENSAJES
+====================================================== -->
+
+<div id="message" class="message"></div>
+
+
+<!-- =====================================================
+     FORMULARIO
+====================================================== -->
+
+<section class="panel">
+
+    <div class="panel-header">
+
+        <div>
+            <h2 id="form-title">
+                ➕ Nuevo capítulo
+            </h2>
+
+            <p>
+                Guarda aquí cada recuerdo de la historia.
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="panel-body">
+
+        <input
+            type="hidden"
+            id="cap-id"
+        >
+
+
+        <!-- NUMERO / TITULO -->
+
+        <div class="form-grid">
+
+            <div class="form-group">
+
+                <label for="cap-numero">
+                    Número del capítulo
+                </label>
+
+                <input
+                    type="number"
+                    id="cap-numero"
+                    min="1"
+                    max="31"
+                    placeholder="Ej: 4"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="cap-titulo">
+                    Título
+                </label>
+
+                <input
+                    type="text"
+                    id="cap-titulo"
+                    placeholder="Ej: El comienzo de todo"
+                >
+
+            </div>
+
+        </div>
+
+
+        <!-- FECHA -->
+
+        <div class="form-grid three">
+
+            <div class="form-group">
+
+                <label for="cap-fecha">
+                    Fecha de publicación
+                </label>
+
+                <input
+                    type="date"
+                    id="cap-fecha"
+                    min="2026-09-06"
+                    max="2026-10-06"
+                >
+
+                <div
+                    id="fecha-calculada"
+                    class="date-note"
+                ></div>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="cap-imagenes-rutas">
+                    Imágenes
+                </label>
+
+                <input
+                    type="text"
+                    id="cap-imagenes-rutas"
+                    placeholder="cap4-1.jpg, cap4-2.jpg"
+                >
+
+                <span class="help">
+                    Puedes escribir nombres de archivos
+                    o URLs completas.
+                </span>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="cap-audio-ruta">
+                    Audio
+                </label>
+
+                <input
+                    type="text"
+                    id="cap-audio-ruta"
+                    placeholder="cap4.m4a"
+                >
+
+                <span class="help">
+                    Nombre del archivo o URL completa.
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- TEXTO -->
+
+        <div class="form-group">
+
+            <label for="cap-texto">
+                Texto del capítulo
+            </label>
+
+            <textarea
+                id="cap-texto"
+                placeholder="Escribe una línea por cada momento...
+
+No sabía que aquel día...
+
+Y entonces...
+
+Cada línea será mostrada como una parte del recuerdo."
+></textarea>
+
+            <span class="help">
+                Cada renglón será tratado como una línea
+                independiente dentro del capítulo.
+            </span>
+
+        </div>
+
+
+        <!-- YOUTUBE -->
+
+        <div class="form-group">
+
+            <label for="cap-youtube">
+                ID de YouTube · opcional
+            </label>
+
+            <input
+                type="text"
+                id="cap-youtube"
+                placeholder="Ej: a7FdUd6ysL0"
+            >
+
+        </div>
+
+
+        <!-- PUBLICAR -->
+
+        <div class="publish-box">
+
+            <label class="publish-label">
+
+                <input
+                    type="checkbox"
+                    id="cap-publicado"
+                >
+
+                <span>
+
+                    <span class="publish-title">
+                        🌎 Publicar este capítulo en el libro
+                    </span>
+
+                    <span class="publish-description">
+                        El capítulo estará disponible únicamente
+                        cuando llegue su fecha de publicación.
+                    </span>
+
+                </span>
+
+            </label>
+
+        </div>
+
+
+        <!-- BOTONES -->
+
+        <div class="actions">
+
+            <button
+                class="btn btn-secondary"
+                id="nuevo-btn"
+                type="button"
+            >
+                ➕ Nuevo
+            </button>
+
+            <button
+                class="btn btn-secondary"
+                id="cancelar-btn"
+                type="button"
+            >
+                Cancelar
+            </button>
+
+            <button
+                class="btn btn-primary"
+                id="guardar-btn"
+                type="button"
+            >
+                💾 Guardar capítulo
+            </button>
+
+        </div>
+
+
+        <div
+            id="loader"
+            class="loader"
+        ></div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     CAPITULOS
+====================================================== -->
+
+<section class="panel">
+
+    <div class="panel-header">
+
+        <div>
+            <h2>📖 Capítulos de nuestra historia</h2>
+
+            <p>
+                Los capítulos se ordenan automáticamente por número.
+            </p>
+        </div>
+
+    </div>
+
+    <div class="panel-body">
+
+        <div
+            id="lista-capitulos-container"
+            class="list"
+        >
+            <div class="empty">
+                Cargando capítulos...
+            </div>
+        </div>
+
+    </div>
+
+</section>
+
+</main>
+
+<!-- ========================================================= MODAL VISTA PREVIA ========================================================= -->
+
+<div id="preview-modal" class="preview-modal" >
+
+<div class="preview-box">
+
+    <div class="preview-head">
+
+        <h2>Vista previa</h2>
+
+        <button
+            class="preview-close"
+            id="preview-close"
+            type="button"
+        >
+            ×
+        </button>
+
+    </div>
+
+    <div
+        id="preview-content"
+        class="preview-content"
+    ></div>
+
+</div>
+
+</div>
+
+<!-- ========================================================= JAVASCRIPT ========================================================= -->
+
+<script type="module"> import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js"; import { db } from "./js/firebase.js"; /* ===================================================== CONFIGURACION ====================================================== */ const PASSWORD = "we19anos"; const FECHA_INICIO = "2026-09-06"; const FECHA_FINAL = "2026-10-06"; let capitulos = []; let modoEdicion = false; /* ===================================================== ELEMENTOS ====================================================== */ const $ = id => document.getElementById(id); const passwordOverlay = $("password-overlay"); const adminPanel = $("admin-panel"); const passwordInput = $("admin-password"); const loginBtn = $("login-btn"); const errorMsg = $("error-msg"); const numeroInput = $("cap-numero"); const tituloInput = $("cap-titulo"); const fechaInput = $("cap-fecha"); const textoInput = $("cap-texto"); const imagenesInput = $("cap-imagenes-rutas"); const audioInput = $("cap-audio-ruta"); const youtubeInput = $("cap-youtube"); const publicadoInput = $("cap-publicado"); const idInput = $("cap-id"); const guardarBtn = $("guardar-btn"); const cancelarBtn = $("cancelar-btn"); const nuevoBtn = $("nuevo-btn"); const loader = $("loader"); const message = $("message"); const previewModal = $("preview-modal"); const previewContent = $("preview-content"); const previewClose = $("preview-close"); /* ===================================================== ACCESO ====================================================== */ function verificarPassword(){ if(passwordInput.value === PASSWORD){ passwordOverlay.style.display = "none"; adminPanel.style.display = "block"; cargarCapitulos(); }else{ errorMsg.classList.remove("hidden"); passwordInput.value = ""; passwordInput.focus(); } } loginBtn.addEventListener( "click", verificarPassword ); passwordInput.addEventListener( "keydown", event => { if(event.key === "Enter"){ verificarPassword(); } } ); /* ===================================================== MENSAJES ====================================================== */ function mostrarMensaje(texto,tipo="success"){ message.textContent = texto; message.className = `message show ${tipo}`; setTimeout(() => { message.classList.remove("show"); },4000); } /* ===================================================== FECHAS ====================================================== */ function fechaCapitulo(numero){ const base = new Date( `${FECHA_INICIO}T00:00:00` ); base.setDate( base.getDate() + (numero - 1) ); return base.toISOString().split("T")[0]; } function formatearFecha(fecha){ if(!fecha) return "Sin fecha"; const [y,m,d] = fecha.split("-"); return `${d}/${m}/${y}`; } function actualizarFechaPorNumero(){ const numero = parseInt( numeroInput.value ); if( numero >= 1 && numero <= 31 ){ const fecha = fechaCapitulo(numero); fechaInput.value = fecha; $("fecha-calculada").textContent = `📅 Día de entrega: ${formatearFecha(fecha)}`; }else{ $("fecha-calculada").textContent = ""; } } numeroInput.addEventListener( "input", actualizarFechaPorNumero ); /* ===================================================== CARGAR CAPITULOS ====================================================== */ async function cargarCapitulos(){ const container = $("lista-capitulos-container"); container.innerHTML = `<div class="empty"> Cargando capítulos desde Firebase... </div>`; try{ const ref = collection(db,"capitulos"); const q = query( ref, orderBy("numero","asc") ); const snapshot = await getDocs(q); capitulos = snapshot.docs.map(d => ({ id:d.id, ...d.data() })); actualizarEstadisticas(); renderizarLista(); }catch(error){ console.error( "Error cargando capítulos:", error ); container.innerHTML = `<div class="empty"> ❌ No se pudieron cargar los capítulos. <br><br> Revisa la consola del navegador. </div>`; mostrarMensaje( "No se pudieron cargar los capítulos.", "error" ); } } /* ===================================================== ESTADISTICAS ====================================================== */ function actualizarEstadisticas(){ $("total-capitulos").textContent = capitulos.length; const hoy = new Date(); hoy.setHours(0,0,0,0); const publicados = capitulos.filter(cap => { if(cap.publicado !== true){ return false; } if(!cap.fechaPublicacion){ return true; } return new Date( `${cap.fechaPublicacion}T00:00:00` ) <= hoy; }).length; const programados = capitulos.filter(cap => { if(!cap.fechaPublicacion){ return false; } const fecha = new Date( `${cap.fechaPublicacion}T00:00:00` ); return fecha > hoy; }).length; $("total-publicados").textContent = publicados; $("total-programados").textContent = programados; } /* ===================================================== ESTADO ====================================================== */ function obtenerEstado(cap){ const hoy = new Date(); hoy.setHours(0,0,0,0); if(!cap.publicado){ return { texto:"No publicado", clase:"status-hidden" }; } if(!cap.fechaPublicacion){ return { texto:"Publicado", clase:"status-published" }; } const fecha = new Date( `${cap.fechaPublicacion}T00:00:00` ); if(fecha <= hoy){ return { texto:"Disponible", clase:"status-published" }; } return { texto:`Se abre ${formatearFecha(cap.fechaPublicacion)}`, clase:"status-scheduled" }; } /* ===================================================== LISTA ====================================================== */ function renderizarLista(){ const container = $("lista-capitulos-container"); container.innerHTML = ""; if(!capitulos.length){ container.innerHTML = `<div class="empty"> Todavía no hay capítulos. <br> Comencemos a construir nuestra historia. </div>`; return; } capitulos.forEach(cap => { const estado = obtenerEstado(cap); const numero = String(cap.numero ?? "") .padStart(2,"0"); const imagenes = Array.isArray(cap.imagenes) ? cap.imagenes.length : 0; const lineas = Array.isArray(cap.lineas) ? cap.lineas.length : 0; const card = document.createElement("article"); card.className = "chapter-card"; card.innerHTML = ` <div class="chapter-number"> ${numero} </div> <div class="chapter-info"> <h3> ${escapeHTML( cap.titulo || "Sin título" )} <span class="status ${estado.clase}"> ${estado.texto} </span> </h3> <p> 📅 ${ cap.fechaPublicacion ? formatearFecha( cap.fechaPublicacion ) : "Sin fecha" } &nbsp; · &nbsp; ✍️ ${lineas} líneas &nbsp; · &nbsp; 🖼️ ${imagenes} imágenes &nbsp; · &nbsp; 🎵 ${cap.audio ? "Sí" : "No"} </p> </div> <div class="chapter-actions"> <button class="btn btn-small btn-secondary" data-action="preview" > 👁️ </button> <button class="btn btn-small btn-primary" data-action="edit" > ✏️ </button> <button class="btn btn-small ${ cap.publicado ? "btn-secondary" : "btn-success" }" data-action="publish" > ${ cap.publicado ? "🔒 Ocultar" : "🌎 Publicar" } </button> <button class="btn btn-small btn-danger" data-action="delete" > 🗑️ </button> </div> `; card.querySelector( '[data-action="preview"]' ).addEventListener( "click", () => vistaPrevia(cap) ); card.querySelector( '[data-action="edit"]' ).addEventListener( "click", () => editarCapitulo(cap) ); card.querySelector( '[data-action="publish"]' ).addEventListener( "click", () => cambiarPublicado(cap) ); card.querySelector( '[data-action="delete"]' ).addEventListener( "click", () => eliminarCapitulo(cap) ); container.appendChild(card); }); } /* ===================================================== NUEVO CAPITULO ====================================================== */ function nuevoCapitulo(){ limpiarFormulario(); const numeros = capitulos .map(c => Number(c.numero)) .filter(n => !isNaN(n)); const siguiente = numeros.length ? Math.max(...numeros) + 1 : 1; numeroInput.value = Math.min(siguiente,31); actualizarFechaPorNumero(); $("form-title").textContent = "➕ Nuevo capítulo"; tituloInput.focus(); window.scrollTo({ top:0, behavior:"smooth" }); } nuevoBtn.addEventListener( "click", nuevoCapitulo ); /* ===================================================== GUARDAR ====================================================== */ async function guardarCapitulo(){ const numero = parseInt(numeroInput.value); const titulo = tituloInput.value.trim(); const texto = textoInput.value; const fechaPublicacion = fechaInput.value; if( !numero || numero < 1 || numero > 31 ){ mostrarMensaje( "El número debe estar entre 1 y 31.", "error" ); return; } if(!titulo){ mostrarMensaje( "Escribe un título para el capítulo.", "error" ); return; } if(!texto.trim()){ mostrarMensaje( "Escribe el texto del capítulo.", "error" ); return; } if(!fechaPublicacion){ mostrarMensaje( "Selecciona la fecha de publicación.", "error" ); return; } /* EVITAR DUPLICADOS */ const duplicado = capitulos.find(cap => Number(cap.numero) === numero && cap.id !== idInput.value ); if(duplicado){ mostrarMensaje( `Ya existe el capítulo ${numero}.`, "error" ); return; } const lineas = texto .split(/\r?\n/) .map(linea => linea.trim()) .filter((linea,index,arr) => { /* * Conservamos las líneas vacías * intermedias, pero evitamos una * cantidad accidental de líneas al final. */ if(index === arr.length - 1){ return linea !== ""; } return true; }); const imagenes = imagenesInput.value .split(",") .map(item => item.trim()) .filter(Boolean) .map(item => { if( item.startsWith("http://") || item.startsWith("https://") || item.startsWith("assets/") ){ return item; } return `assets/imagenes/${item}`; }); const audioRaw = audioInput.value.trim(); const audio = audioRaw ? ( audioRaw.startsWith("http://") || audioRaw.startsWith("https://") || audioRaw.startsWith("assets/") ? audioRaw : `assets/audios/${audioRaw}` ) : ""; const data = { numero, titulo, lineas, imagenes, audio, youtubeId: youtubeInput.value.trim(), publicado: publicadoInput.checked, fechaPublicacion, actualizado: new Date().toISOString() }; loader.classList.add("show"); guardarBtn.disabled = true; try{ const id = idInput.value.trim(); if(id){ await updateDoc( doc(db,"capitulos",id), data ); mostrarMensaje( `Capítulo ${numero} actualizado correctamente.` ); }else{ const docId = `cap_${numero}`; await setDoc( doc( db, "capitulos", docId ), data ); mostrarMensaje( `Capítulo ${numero} guardado correctamente.` ); } limpiarFormulario(); await cargarCapitulos(); }catch(error){ console.error( "Error guardando capítulo:", error ); mostrarMensaje( "No se pudo guardar el capítulo. Revisa la consola.", "error" ); }finally{ loader.classList.remove("show"); guardarBtn.disabled = false; } } guardarBtn.addEventListener( "click", guardarCapitulo ); /* ===================================================== EDITAR ====================================================== */ function editarCapitulo(cap){ modoEdicion = true; idInput.value = cap.id; numeroInput.value = cap.numero ?? ""; tituloInput.value = cap.titulo ?? ""; fechaInput.value = cap.fechaPublicacion || fechaCapitulo( Number(cap.numero) ); textoInput.value = Array.isArray(cap.lineas) ? cap.lineas.join("\n") : ""; imagenesInput.value = Array.isArray(cap.imagenes) ? cap.imagenes.join(", ") : ""; audioInput.value = cap.audio || ""; youtubeInput.value = cap.youtubeId || ""; publicadoInput.checked = cap.publicado === true; $("form-title").textContent = `✏️ Editando capítulo ${cap.numero}`; actualizarFechaPorNumero(); guardarBtn.textContent = "💾 Guardar cambios"; window.scrollTo({ top:0, behavior:"smooth" }); } /* ===================================================== CAMBIAR PUBLICADO ====================================================== */ async function cambiarPublicado(cap){ const nuevoEstado = cap.publicado !== true; try{ await updateDoc( doc( db, "capitulos", cap.id ), { publicado:nuevoEstado, actualizado: new Date().toISOString() } ); mostrarMensaje( nuevoEstado ? `Capítulo ${cap.numero} marcado como publicado.` : `Capítulo ${cap.numero} ocultado.` ); await cargarCapitulos(); }catch(error){ console.error( "Error cambiando publicación:", error ); mostrarMensaje( "No se pudo cambiar el estado.", "error" ); } } /* ===================================================== ELIMINAR ====================================================== */ async function eliminarCapitulo(cap){ const confirmar = confirm( `¿Eliminar definitivamente el capítulo ${cap.numero}?\n\n${cap.titulo}` ); if(!confirmar){ return; } try{ await deleteDoc( doc( db, "capitulos", cap.id ) ); mostrarMensaje( `Capítulo ${cap.numero} eliminado.` ); if(idInput.value === cap.id){ limpiarFormulario(); } await cargarCapitulos(); }catch(error){ console.error( "Error eliminando capítulo:", error ); mostrarMensaje( "No se pudo eliminar el capítulo.", "error" ); } } /* ===================================================== LIMPIAR ====================================================== */ function limpiarFormulario(){ modoEdicion = false; idInput.value = ""; numeroInput.value = ""; tituloInput.value = ""; fechaInput.value = ""; textoInput.value = ""; imagenesInput.value = ""; audioInput.value = ""; youtubeInput.value = ""; publicadoInput.checked = false; $("form-title").textContent = "➕ Nuevo capítulo"; guardarBtn.textContent = "💾 Guardar capítulo"; $("fecha-calculada").textContent = ""; } cancelarBtn.addEventListener( "click", limpiarFormulario ); /* ===================================================== VISTA PREVIA ====================================================== */ function vistaPrevia(cap){ const lineas = Array.isArray(cap.lineas) ? cap.lineas : []; const htmlLineas = lineas .filter(linea => linea.trim() !== "") .map( linea => `<p>${escapeHTML(linea)}</p>` ) .join(""); previewContent.innerHTML = ` <div class="preview-meta"> CAPÍTULO ${String(cap.numero).padStart(2,"0")} · ${cap.fechaPublicacion ? formatearFecha( cap.fechaPublicacion ) : "SIN FECHA" } </div> <h2 class="preview-title"> ${escapeHTML( cap.titulo || "Sin título" )} </h2> <div class="preview-lines"> ${htmlLineas || "<p>Sin texto.</p>"} </div> `; previewModal.classList.add("show"); } previewClose.addEventListener( "click", () => previewModal.classList.remove("show") ); previewModal.addEventListener( "click", event => { if( event.target === previewModal ){ previewModal.classList.remove( "show" ); } } ); /* ===================================================== ESCAPE HTML ====================================================== */ function escapeHTML(value){ return String(value) .replace(/&/g,"&amp;") .replace(/</g,"&lt;") .replace(/>/g,"&gt;") .replace(/"/g,"&quot;") .replace(/'/g,"&#039;"); } /* ===================================================== INICIO ====================================================== */ limpiarFormulario(); </script>
+
+</body> </html>
