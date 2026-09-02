@@ -1,698 +1,687 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Esentia · Administración de Nuestra Historia</title>
-
-<style>
-*{
-  box-sizing:border-box;
-}
-
-html,
-body{
-  margin:0;
-  padding:0;
-  min-height:100%;
-  font-family:Arial,Helvetica,sans-serif;
-  background:#111;
-  color:#fff;
-}
-
-body{
-  min-height:100vh;
-}
-
-/* =========================================================
-   LOGIN
-========================================================= */
-
-#login-screen{
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-  background:
-    radial-gradient(circle at top,#30252b 0%,#151315 45%,#090909 100%);
-}
-
-.login-box{
-  width:100%;
-  max-width:400px;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:22px;
-  padding:35px 28px;
-  text-align:center;
-  box-shadow:0 25px 70px rgba(0,0,0,.45);
-  backdrop-filter:blur(12px);
-}
-
-.login-box h1{
-  margin:0 0 8px;
-  font-size:28px;
-}
-
-.login-box p{
-  margin:0 0 25px;
-  color:#bbb;
-}
-
-.login-box input{
-  width:100%;
-  padding:14px 16px;
-  border-radius:12px;
-  border:1px solid #444;
-  background:#111;
-  color:#fff;
-  font-size:16px;
-  outline:none;
-}
-
-.login-box button{
-  width:100%;
-  margin-top:14px;
-  padding:14px;
-  border:0;
-  border-radius:12px;
-  background:#fff;
-  color:#111;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.login-error{
-  min-height:20px;
-  margin-top:12px;
-  color:#ff8585;
-  font-size:14px;
-}
-
-/* =========================================================
-   APP
-========================================================= */
-
-#app{
-  display:none;
-  min-height:100vh;
-  background:#111;
-}
-
-header{
-  position:sticky;
-  top:0;
-  z-index:50;
-  background:rgba(15,15,15,.96);
-  border-bottom:1px solid #292929;
-  padding:16px 20px;
-  backdrop-filter:blur(12px);
-}
-
-.header-inner{
-  max-width:1400px;
-  margin:auto;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:15px;
-}
-
-.brand h1{
-  margin:0;
-  font-size:20px;
-}
-
-.brand small{
-  color:#999;
-}
-
-.logout-btn{
-  border:1px solid #444;
-  background:#1c1c1c;
-  color:#fff;
-  padding:9px 14px;
-  border-radius:10px;
-  cursor:pointer;
-}
-
-/* =========================================================
-   DASHBOARD
-========================================================= */
-
-.container{
-  max-width:1400px;
-  margin:auto;
-  padding:22px;
-}
-
-.stats{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:14px;
-  margin-bottom:22px;
-}
-
-.stat{
-  background:#191919;
-  border:1px solid #292929;
-  border-radius:16px;
-  padding:18px;
-}
-
-.stat-label{
-  color:#999;
-  font-size:13px;
-  margin-bottom:8px;
-}
-
-.stat-value{
-  font-size:28px;
-  font-weight:bold;
-}
-
-/* =========================================================
-   FORM
-========================================================= */
-
-.panel{
-  background:#171717;
-  border:1px solid #292929;
-  border-radius:18px;
-  padding:20px;
-  margin-bottom:22px;
-}
-
-.panel h2{
-  margin:0 0 18px;
-  font-size:20px;
-}
-
-.form-grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:14px;
-}
-
-.field{
-  display:flex;
-  flex-direction:column;
-  gap:7px;
-}
-
-.field.full{
-  grid-column:1/-1;
-}
-
-.field label{
-  font-size:13px;
-  color:#aaa;
-}
-
-.field input,
-.field textarea{
-  width:100%;
-  background:#0e0e0e;
-  border:1px solid #383838;
-  color:#fff;
-  border-radius:10px;
-  padding:11px 12px;
-  outline:none;
-  font:inherit;
-}
-
-.field textarea{
-  min-height:240px;
-  resize:vertical;
-}
-
-.field input:focus,
-.field textarea:focus{
-  border-color:#777;
-}
-
-.checkbox-row{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding-top:27px;
-}
-
-.checkbox-row input{
-  width:18px;
-  height:18px;
-}
-
-.actions{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  margin-top:18px;
-}
-
-.btn{
-  border:1px solid #3b3b3b;
-  background:#242424;
-  color:#fff;
-  padding:11px 16px;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:600;
-}
-
-.btn:hover{
-  background:#303030;
-}
-
-.btn.primary{
-  background:#fff;
-  color:#111;
-  border-color:#fff;
-}
-
-.btn.danger{
-  background:#351b1b;
-  border-color:#6b3030;
-}
-
-.btn.success{
-  background:#19351f;
-  border-color:#315f3b;
-}
-
-.btn:disabled{
-  opacity:.45;
-  cursor:not-allowed;
-}
-
-/* =========================================================
-   LISTA
-========================================================= */
-
-.chapter-list{
-  display:grid;
-  gap:12px;
-}
-
-.chapter-card{
-  background:#1a1a1a;
-  border:1px solid #2b2b2b;
-  border-radius:15px;
-  padding:15px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:15px;
-}
-
-.chapter-info{
-  min-width:0;
-}
-
-.chapter-number{
-  color:#aaa;
-  font-size:12px;
-  margin-bottom:4px;
-}
-
-.chapter-title{
-  font-weight:bold;
-  font-size:17px;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.chapter-meta{
-  color:#999;
-  font-size:12px;
-  margin-top:6px;
-}
-
-.chapter-actions{
-  display:flex;
-  flex-wrap:wrap;
-  gap:7px;
-  flex-shrink:0;
-}
-
-.badge{
-  display:inline-block;
-  padding:4px 8px;
-  border-radius:20px;
-  font-size:11px;
-  margin-left:5px;
-}
-
-.badge.published{
-  background:#19351f;
-  color:#a8e3b4;
-}
-
-.badge.scheduled{
-  background:#382f19;
-  color:#ead69a;
-}
-
-.badge.draft{
-  background:#303030;
-  color:#bbb;
-}
-
-/* =========================================================
-   PREVIEW MODAL
-========================================================= */
-
-#preview-modal{
-  position:fixed;
-  inset:0;
-  z-index:1000;
-  display:none;
-  background:rgba(0,0,0,.88);
-  overflow:auto;
-  padding:20px;
-}
-
-.preview-dialog{
-  width:100%;
-  max-width:1000px;
-  margin:0 auto;
-  background:#111;
-  border:1px solid #333;
-  border-radius:20px;
-  overflow:hidden;
-  box-shadow:0 30px 100px rgba(0,0,0,.7);
-}
-
-.preview-header{
-  padding:15px 18px;
-  border-bottom:1px solid #292929;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:15px;
-}
-
-.preview-header h2{
-  margin:0;
-  font-size:18px;
-}
-
-.preview-close{
-  border:1px solid #444;
-  background:#222;
-  color:#fff;
-  width:38px;
-  height:38px;
-  border-radius:10px;
-  cursor:pointer;
-  font-size:20px;
-}
-
-/* =========================================================
-   PREVIEW STAGE
-   BUILD 04B.1
-   Altura explícita para evitar escenario colapsado
-========================================================= */
-
-.preview-stage{
-  position:relative;
-  width:100%;
-  height:min(70vh,620px);
-  min-height:420px;
-  overflow:hidden;
-  background:#080808;
-  flex:none;
-}
-
-#preview-image{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
-  background:#111;
-}
-
-.preview-overlay{
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  background:
-    linear-gradient(
-      to bottom,
-      rgba(0,0,0,.60) 0%,
-      rgba(0,0,0,.05) 35%,
-      rgba(0,0,0,.15) 60%,
-      rgba(0,0,0,.82) 100%
-    );
-}
-
-.preview-content{
-  position:absolute;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-end;
-  padding:28px;
-  pointer-events:none;
-}
-
-.preview-number{
-  font-size:12px;
-  letter-spacing:2px;
-  text-transform:uppercase;
-  color:rgba(255,255,255,.72);
-  margin-bottom:7px;
-}
-
-.preview-title{
-  font-size:clamp(24px,4vw,42px);
-  line-height:1.1;
-  font-weight:700;
-  margin-bottom:22px;
-  text-shadow:0 3px 15px rgba(0,0,0,.7);
-}
-
-.preview-line{
-  font-size:clamp(18px,2.5vw,28px);
-  line-height:1.35;
-  min-height:76px;
-  max-width:850px;
-  text-shadow:0 3px 15px rgba(0,0,0,.9);
-}
-
-.preview-next-line{
-  margin-top:10px;
-  font-size:13px;
-  color:rgba(255,255,255,.48);
-  min-height:18px;
-}
-
-.preview-image-status{
-  position:absolute;
-  top:14px;
-  left:14px;
-  z-index:5;
-  max-width:70%;
-  background:rgba(0,0,0,.75);
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:9px;
-  padding:8px 10px;
-  font-size:11px;
-  color:#ddd;
-  backdrop-filter:blur(5px);
-  pointer-events:none;
-}
-
-.preview-controls{
-  padding:15px 18px;
-  border-top:1px solid #292929;
-  background:#151515;
-}
-
-.preview-buttons{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  flex-wrap:wrap;
-}
-
-.preview-buttons .btn{
-  min-width:45px;
-}
-
-.preview-audio{
-  margin-top:14px;
-  padding:12px;
-  border:1px solid #292929;
-  border-radius:12px;
-  background:#0d0d0d;
-}
-
-.audio-status{
-  font-size:12px;
-  color:#aaa;
-  margin-bottom:8px;
-  min-height:17px;
-  word-break:break-word;
-}
-
-#preview-audio-player{
-  width:100%;
-  display:block;
-}
-
-.preview-progress{
-  height:4px;
-  background:#2b2b2b;
-  border-radius:5px;
-  margin-top:14px;
-  overflow:hidden;
-}
-
-#preview-progress-bar{
-  width:0%;
-  height:100%;
-  background:#fff;
-  transition:width .2s linear;
-}
-
-.preview-footer{
-  padding:12px 18px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  color:#888;
-  font-size:12px;
-  border-top:1px solid #292929;
-}
-
-.preview-dots{
-  display:flex;
-  gap:5px;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-}
-
-.preview-dot{
-  width:6px;
-  height:6px;
-  border-radius:50%;
-  background:#444;
-}
-
-.preview-dot.active{
-  background:#fff;
-}
-
-/* =========================================================
-   MENSAJES
-========================================================= */
-
-.empty{
-  padding:30px;
-  text-align:center;
-  color:#777;
-  border:1px dashed #333;
-  border-radius:15px;
-}
-
-#toast{
-  position:fixed;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%) translateY(20px);
-  background:#fff;
-  color:#111;
-  padding:12px 18px;
-  border-radius:10px;
-  font-size:14px;
-  font-weight:bold;
-  opacity:0;
-  pointer-events:none;
-  transition:.25s;
-  z-index:3000;
-}
-
-#toast.show{
-  opacity:1;
-  transform:translateX(-50%) translateY(0);
-}
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media(max-width:850px){
-  .stats{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .chapter-card{
-    flex-direction:column;
-    align-items:flex-start;
-  }
-
-  .chapter-actions{
-    width:100%;
-  }
-}
-
-@media(max-width:650px){
-  .container{
-    padding:14px;
-  }
-
-  .form-grid{
-    grid-template-columns:1fr;
-  }
-
-  .field.full{
-    grid-column:auto;
-  }
-
-  .stats{
-    grid-template-columns:1fr 1fr;
-  }
-
-  .preview-stage{
-    height:65vh;
-    min-height:420px;
-  }
-
-  .preview-content{
-    padding:20px;
-  }
-
-  .preview-title{
-    margin-bottom:15px;
-  }
-
-  .preview-line{
-    min-height:95px;
-  }
-
-  #preview-modal{
-    padding:8px;
-  }
-
-  .preview-dialog{
-    border-radius:14px;
-  }
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administración · Nuestra Historia</title>
+
+  <style>
+    *{
+      box-sizing:border-box;
+    }
+
+    body{
+      margin:0;
+      font-family:Arial,Helvetica,sans-serif;
+      background:#111;
+      color:#fff;
+    }
+
+    button,
+    input,
+    textarea{
+      font:inherit;
+    }
+
+    button{
+      cursor:pointer;
+    }
+
+    .hidden{
+      display:none !important;
+    }
+
+    /* =========================
+       LOGIN
+    ========================= */
+
+    #login-screen{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:
+        radial-gradient(circle at top,#352026,#111 55%);
+    }
+
+    .login-box{
+      width:min(420px,100%);
+      background:#191919;
+      border:1px solid #333;
+      border-radius:20px;
+      padding:30px;
+      box-shadow:0 20px 70px rgba(0,0,0,.5);
+      text-align:center;
+    }
+
+    .login-box h1{
+      margin:0 0 8px;
+      font-size:28px;
+    }
+
+    .login-box p{
+      color:#aaa;
+      margin:0 0 25px;
+    }
+
+    .login-box input{
+      width:100%;
+      padding:14px;
+      border-radius:10px;
+      border:1px solid #444;
+      background:#0f0f0f;
+      color:#fff;
+      outline:none;
+      margin-bottom:12px;
+    }
+
+    .primary{
+      width:100%;
+      border:0;
+      border-radius:10px;
+      padding:14px 18px;
+      background:#d59a9a;
+      color:#181818;
+      font-weight:bold;
+    }
+
+    .error{
+      color:#ff8c8c;
+      min-height:20px;
+      margin-top:10px;
+    }
+
+    /* =========================
+       APP
+    ========================= */
+
+    #admin-app{
+      min-height:100vh;
+    }
+
+    header{
+      position:sticky;
+      top:0;
+      z-index:50;
+      background:rgba(17,17,17,.96);
+      border-bottom:1px solid #2c2c2c;
+      backdrop-filter:blur(10px);
+    }
+
+    .header-inner{
+      width:min(1200px,calc(100% - 30px));
+      margin:auto;
+      min-height:70px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:20px;
+    }
+
+    header h1{
+      margin:0;
+      font-size:21px;
+    }
+
+    header small{
+      color:#888;
+    }
+
+    .logout{
+      border:1px solid #444;
+      background:#222;
+      color:#ddd;
+      border-radius:8px;
+      padding:9px 13px;
+    }
+
+    main{
+      width:min(1200px,calc(100% - 30px));
+      margin:25px auto 50px;
+    }
+
+    /* =========================
+       STATS
+    ========================= */
+
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:15px;
+      margin-bottom:25px;
+    }
+
+    .stat{
+      background:#191919;
+      border:1px solid #303030;
+      border-radius:15px;
+      padding:18px;
+    }
+
+    .stat-label{
+      color:#888;
+      font-size:13px;
+      margin-bottom:6px;
+    }
+
+    .stat-value{
+      font-size:28px;
+      font-weight:bold;
+    }
+
+    /* =========================
+       FORM
+    ========================= */
+
+    .panel{
+      background:#191919;
+      border:1px solid #303030;
+      border-radius:18px;
+      padding:22px;
+      margin-bottom:25px;
+    }
+
+    .panel h2{
+      margin:0 0 18px;
+      font-size:21px;
+    }
+
+    .form-grid{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:15px;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:7px;
+    }
+
+    .field.full{
+      grid-column:1/-1;
+    }
+
+    label{
+      font-size:13px;
+      color:#aaa;
+    }
+
+    input,
+    textarea{
+      width:100%;
+      border:1px solid #3a3a3a;
+      background:#101010;
+      color:#fff;
+      border-radius:9px;
+      padding:11px 12px;
+      outline:none;
+    }
+
+    input:focus,
+    textarea:focus{
+      border-color:#c99191;
+    }
+
+    textarea{
+      min-height:260px;
+      resize:vertical;
+      line-height:1.5;
+    }
+
+    .hint{
+      color:#777;
+      font-size:12px;
+    }
+
+    .checkbox-row{
+      display:flex;
+      align-items:center;
+      gap:9px;
+      margin-top:10px;
+    }
+
+    .checkbox-row input{
+      width:auto;
+    }
+
+    .form-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:18px;
+    }
+
+    .btn{
+      border:0;
+      border-radius:9px;
+      padding:11px 16px;
+      font-weight:bold;
+    }
+
+    .btn-primary{
+      background:#d59a9a;
+      color:#171717;
+    }
+
+    .btn-secondary{
+      background:#292929;
+      color:#eee;
+      border:1px solid #444;
+    }
+
+    .btn-danger{
+      background:#512626;
+      color:#ffb0b0;
+      border:1px solid #713838;
+    }
+
+    /* =========================
+       CHAPTER LIST
+    ========================= */
+
+    .chapter-list{
+      display:grid;
+      gap:12px;
+    }
+
+    .chapter-card{
+      background:#141414;
+      border:1px solid #303030;
+      border-radius:13px;
+      padding:16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:15px;
+    }
+
+    .chapter-info{
+      min-width:0;
+    }
+
+    .chapter-info h3{
+      margin:0 0 5px;
+      font-size:17px;
+    }
+
+    .chapter-meta{
+      color:#888;
+      font-size:12px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+
+    .status{
+      display:inline-block;
+      padding:4px 8px;
+      border-radius:20px;
+      font-size:11px;
+      font-weight:bold;
+    }
+
+    .status.publicado{
+      background:#173d28;
+      color:#83e3a8;
+    }
+
+    .status.programado{
+      background:#40371a;
+      color:#f1d878;
+    }
+
+    .card-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:7px;
+      flex-shrink:0;
+    }
+
+    /* =========================
+       MODAL PREVIEW
+    ========================= */
+
+    #preview-modal{
+      position:fixed;
+      inset:0;
+      z-index:100;
+      background:rgba(0,0,0,.88);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+
+    .preview-window{
+      width:min(1000px,100%);
+      max-height:95vh;
+      overflow:auto;
+      background:#0d0d0d;
+      border:1px solid #343434;
+      border-radius:18px;
+      box-shadow:0 30px 100px rgba(0,0,0,.7);
+    }
+
+    .preview-header{
+      padding:15px 18px;
+      border-bottom:1px solid #2d2d2d;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:15px;
+    }
+
+    .preview-header h2{
+      margin:0;
+      font-size:18px;
+    }
+
+    .close-preview{
+      border:1px solid #444;
+      background:#222;
+      color:#fff;
+      width:38px;
+      height:38px;
+      border-radius:50%;
+      font-size:20px;
+    }
+
+    .preview-body{
+      padding:15px;
+    }
+
+    /* =========================
+       PREVIEW STAGE
+    ========================= */
+
+    .preview-stage{
+      position:relative;
+      width:100%;
+      height:min(70vh,620px);
+      min-height:420px;
+      overflow:hidden;
+      background:#080808;
+      flex:none;
+      border-radius:12px;
+    }
+
+    #preview-image{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      background:#111;
+    }
+
+    .preview-overlay{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(
+          to bottom,
+          rgba(0,0,0,.18),
+          transparent 35%,
+          rgba(0,0,0,.78)
+        );
+    }
+
+    .preview-content{
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-end;
+      padding:30px;
+      z-index:2;
+      pointer-events:none;
+    }
+
+    .preview-number{
+      color:#e7bcbc;
+      font-size:12px;
+      letter-spacing:2px;
+      text-transform:uppercase;
+      margin-bottom:6px;
+    }
+
+    .preview-title{
+      font-size:28px;
+      font-weight:bold;
+      margin-bottom:15px;
+      text-shadow:0 2px 8px #000;
+    }
+
+    .preview-line{
+      font-size:22px;
+      line-height:1.4;
+      max-width:850px;
+      text-shadow:0 2px 8px #000;
+    }
+
+    .preview-next-line,
+    .preview-prev-line{
+      margin-top:9px;
+      color:rgba(255,255,255,.55);
+      font-size:14px;
+      max-width:800px;
+    }
+
+    .preview-image-status{
+      position:absolute;
+      left:12px;
+      top:12px;
+      z-index:5;
+      background:rgba(0,0,0,.7);
+      color:#ddd;
+      padding:6px 9px;
+      border-radius:7px;
+      font-size:11px;
+      max-width:80%;
+    }
+
+    /* =========================
+       YOUTUBE
+    ========================= */
+
+    #youtube-container{
+      position:absolute;
+      inset:0;
+      z-index:4;
+      background:#000;
+      display:none;
+    }
+
+    #youtube-frame{
+      width:100%;
+      height:100%;
+      border:0;
+      display:block;
+    }
+
+    .youtube-topbar{
+      position:absolute;
+      top:12px;
+      left:12px;
+      right:12px;
+      z-index:6;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      pointer-events:none;
+    }
+
+    .youtube-topbar span{
+      background:rgba(0,0,0,.75);
+      border-radius:7px;
+      padding:7px 10px;
+      font-size:12px;
+    }
+
+    .youtube-topbar button{
+      pointer-events:auto;
+    }
+
+    .youtube-close{
+      border:1px solid #555;
+      background:rgba(0,0,0,.8);
+      color:#fff;
+      border-radius:7px;
+      padding:7px 10px;
+    }
+
+    /* =========================
+       PREVIEW CONTROLS
+    ========================= */
+
+    .preview-controls{
+      margin-top:13px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+    }
+
+    .preview-controls button{
+      border:1px solid #444;
+      background:#202020;
+      color:#fff;
+      border-radius:8px;
+      padding:9px 13px;
+    }
+
+    .preview-controls button.active{
+      background:#d59a9a;
+      color:#111;
+      border-color:#d59a9a;
+    }
+
+    .preview-controls button:disabled{
+      opacity:.35;
+      cursor:not-allowed;
+    }
+
+    .preview-audio-wrap{
+      margin-top:12px;
+      padding:12px;
+      border:1px solid #2e2e2e;
+      border-radius:10px;
+      background:#151515;
+    }
+
+    #preview-audio-player{
+      width:100%;
+    }
+
+    #preview-audio-status{
+      margin-bottom:8px;
+      color:#aaa;
+      font-size:12px;
+      line-height:1.4;
+    }
+
+    .preview-progress{
+      margin-top:12px;
+      height:4px;
+      background:#292929;
+      border-radius:10px;
+      overflow:hidden;
+    }
+
+    #preview-progress-bar{
+      width:0%;
+      height:100%;
+      background:#d59a9a;
+    }
+
+    .preview-foot{
+      margin-top:10px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      color:#777;
+      font-size:12px;
+      flex-wrap:wrap;
+    }
+
+    .preview-dots{
+      display:flex;
+      gap:5px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+
+    .preview-dot{
+      width:7px;
+      height:7px;
+      border-radius:50%;
+      background:#444;
+    }
+
+    .preview-dot.active{
+      background:#d59a9a;
+    }
+
+    /* =========================
+       RESPONSIVE
+    ========================= */
+
+    @media(max-width:760px){
+      .stats{
+        grid-template-columns:1fr;
+      }
+
+      .form-grid{
+        grid-template-columns:1fr;
+      }
+
+      .field.full{
+        grid-column:auto;
+      }
+
+      .chapter-card{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+
+      .card-actions{
+        width:100%;
+      }
+
+      .card-actions button{
+        flex:1;
+      }
+
+      .preview-stage{
+        min-height:400px;
+        height:65vh;
+      }
+
+      .preview-content{
+        padding:20px;
+      }
+
+      .preview-title{
+        font-size:22px;
+      }
+
+      .preview-line{
+        font-size:18px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<!-- =========================================================
+<!-- =====================================================
      LOGIN
-========================================================= -->
+===================================================== -->
 
 <section id="login-screen">
 
@@ -709,38 +698,41 @@ header{
       autocomplete="current-password"
     >
 
-    <button id="login-btn">
+    <button
+      id="login-button"
+      class="primary"
+      type="button"
+    >
       Entrar
     </button>
 
-    <div id="login-error" class="login-error"></div>
+    <div id="login-error" class="error"></div>
 
   </div>
 
 </section>
 
 
-<!-- =========================================================
-     APP
-========================================================= -->
+<!-- =====================================================
+     ADMIN APP
+===================================================== -->
 
-<div id="app">
+<section id="admin-app" class="hidden">
 
   <header>
 
     <div class="header-inner">
 
-      <div class="brand">
-
-        <h1>❤️ Nuestra Historia · Admin</h1>
-
-        <small>
-          BUILD 04B.1 · Vista previa de capítulos
-        </small>
-
+      <div>
+        <h1>❤️ Nuestra Historia · Administración</h1>
+        <small>31 capítulos · 6 septiembre → 6 octubre 2026</small>
       </div>
 
-      <button class="logout-btn" id="logout-btn">
+      <button
+        id="logout-button"
+        class="logout"
+        type="button"
+      >
         Salir
       </button>
 
@@ -749,45 +741,36 @@ header{
   </header>
 
 
-  <main class="container">
+  <main>
 
-    <!-- =====================================================
-         ESTADÍSTICAS
-    ====================================================== -->
+    <!-- STATS -->
 
     <section class="stats">
 
       <div class="stat">
         <div class="stat-label">Capítulos creados</div>
-        <div class="stat-value" id="stat-total">0</div>
+        <div id="stat-total" class="stat-value">0</div>
       </div>
 
       <div class="stat">
-        <div class="stat-label">Capítulos disponibles</div>
-        <div class="stat-value" id="stat-available">0</div>
+        <div class="stat-label">Publicados</div>
+        <div id="stat-available" class="stat-value">0</div>
       </div>
 
       <div class="stat">
         <div class="stat-label">Programados</div>
-        <div class="stat-value" id="stat-scheduled">0</div>
-      </div>
-
-      <div class="stat">
-        <div class="stat-label">Meta</div>
-        <div class="stat-value">31</div>
+        <div id="stat-scheduled" class="stat-value">0</div>
       </div>
 
     </section>
 
 
-    <!-- =====================================================
-         FORMULARIO
-    ====================================================== -->
+    <!-- FORMULARIO -->
 
     <section class="panel">
 
       <h2 id="form-title">
-        Nuevo capítulo
+        Crear / editar capítulo
       </h2>
 
       <form id="chapter-form">
@@ -797,7 +780,7 @@ header{
           <div class="field">
 
             <label for="numero">
-              Número del capítulo
+              Número de capítulo
             </label>
 
             <input
@@ -805,21 +788,6 @@ header{
               type="number"
               min="1"
               max="31"
-              required
-            >
-
-          </div>
-
-
-          <div class="field">
-
-            <label for="titulo">
-              Título
-            </label>
-
-            <input
-              id="titulo"
-              type="text"
               required
             >
 
@@ -838,19 +806,25 @@ header{
               required
             >
 
+            <div class="hint">
+              Se calcula automáticamente según el capítulo.
+            </div>
+
           </div>
 
 
-          <div class="checkbox-row">
+          <div class="field full">
+
+            <label for="titulo">
+              Título
+            </label>
 
             <input
-              id="publicado"
-              type="checkbox"
+              id="titulo"
+              type="text"
+              placeholder="Ej. El día que te conocí"
+              required
             >
-
-            <label for="publicado">
-              Capítulo publicado / activo
-            </label>
 
           </div>
 
@@ -858,14 +832,18 @@ header{
           <div class="field full">
 
             <label for="imagenes">
-              Imágenes · una ruta por línea
+              Imágenes
             </label>
 
-            <textarea
+            <input
               id="imagenes"
-              placeholder="assets/imagenes/cap1-1.jpg
-assets/imagenes/cap1-2.jpg"
-            ></textarea>
+              type="text"
+              placeholder="assets/imagenes/cap1-1.jpg, assets/imagenes/cap1-2.jpg"
+            >
+
+            <div class="hint">
+              Separa varias imágenes con coma.
+            </div>
 
           </div>
 
@@ -888,14 +866,18 @@ assets/imagenes/cap1-2.jpg"
           <div class="field">
 
             <label for="youtubeId">
-              YouTube ID opcional
+              YouTube ID
             </label>
 
             <input
               id="youtubeId"
               type="text"
-              placeholder="a7FdUd6ysL0"
+              placeholder="Ej. a7FdUd6ysL0"
             >
+
+            <div class="hint">
+              Solo el ID del video, no toda la URL.
+            </div>
 
           </div>
 
@@ -903,45 +885,61 @@ assets/imagenes/cap1-2.jpg"
           <div class="field full">
 
             <label for="lineas">
-              Texto del capítulo · una línea por párrafo
+              Texto del capítulo
             </label>
 
             <textarea
               id="lineas"
-              placeholder="No sabía que aquel día iba a cambiar mi vida.
-
-Solo sabía que gracias a un amigo nuestros caminos se cruzaron."
+              placeholder="Escribe una línea por cada escena..."
+              required
             ></textarea>
+
+            <div class="hint">
+              Una línea por escena. Las líneas vacías se conservan.
+            </div>
 
           </div>
 
         </div>
 
 
-        <div class="actions">
+        <div class="checkbox-row">
+
+          <input
+            id="publicado"
+            type="checkbox"
+          >
+
+          <label for="publicado">
+            Publicado
+          </label>
+
+        </div>
+
+
+        <div class="form-actions">
 
           <button
+            class="btn btn-primary"
             type="submit"
-            class="btn primary"
-            id="save-btn"
           >
             Guardar capítulo
           </button>
 
           <button
+            id="cancel-edit"
+            class="btn btn-secondary hidden"
             type="button"
-            class="btn"
-            id="new-btn"
           >
-            Nuevo / limpiar
+            Cancelar edición
           </button>
 
           <button
+            id="new-chapter"
+            class="btn btn-secondary"
             type="button"
-            class="btn"
-            id="preview-current-btn"
           >
-            👁️ Previsualizar
+            Nuevo capítulo
           </button>
 
         </div>
@@ -951,9 +949,7 @@ Solo sabía que gracias a un amigo nuestros caminos se cruzaron."
     </section>
 
 
-    <!-- =====================================================
-         LISTA
-    ====================================================== -->
+    <!-- LISTA -->
 
     <section class="panel">
 
@@ -961,39 +957,39 @@ Solo sabía que gracias a un amigo nuestros caminos se cruzaron."
         Capítulos
       </h2>
 
-      <div id="chapter-list" class="chapter-list">
-
-        <div class="empty">
-          Cargando capítulos...
-        </div>
-
-      </div>
+      <div
+        id="chapter-list"
+        class="chapter-list"
+      ></div>
 
     </section>
 
   </main>
 
-</div>
+</section>
 
 
-<!-- =========================================================
+<!-- =====================================================
      PREVIEW MODAL
-========================================================= -->
+===================================================== -->
 
-<div id="preview-modal">
+<div
+  id="preview-modal"
+  class="hidden"
+>
 
-  <div class="preview-dialog">
+  <div class="preview-window">
 
     <div class="preview-header">
 
-      <h2 id="preview-modal-title">
-        Vista previa
+      <h2>
+        Vista previa del capítulo
       </h2>
 
       <button
-        class="preview-close"
         id="preview-close"
-        title="Cerrar"
+        class="close-preview"
+        type="button"
       >
         ×
       </button>
@@ -1001,100 +997,133 @@ Solo sabía que gracias a un amigo nuestros caminos se cruzaron."
     </div>
 
 
-    <!-- =====================================================
-         ESCENA
-    ====================================================== -->
+    <div class="preview-body">
 
-    <div class="preview-stage">
+      <div class="preview-stage">
 
-      <!-- Imagen REAL -->
-      <img
-        id="preview-image"
-        src=""
-        alt="Imagen del capítulo"
-      >
+        <img
+          id="preview-image"
+          alt="Imagen del capítulo"
+        >
 
-      <div
-        id="preview-image-status"
-        class="preview-image-status"
-      >
-        🖼️ Preparando imagen...
+        <div
+          id="preview-image-status"
+          class="preview-image-status"
+        >
+          Preparando imagen...
+        </div>
+
+
+        <!-- YOUTUBE -->
+
+        <div id="youtube-container">
+
+          <iframe
+            id="youtube-frame"
+            title="Video de YouTube"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+          ></iframe>
+
+          <div class="youtube-topbar">
+
+            <span>
+              ▶ Reproducción mediante YouTube
+            </span>
+
+            <button
+              id="youtube-close"
+              class="youtube-close"
+              type="button"
+            >
+              Volver a imagen
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <div class="preview-overlay"></div>
+
+
+        <div class="preview-content">
+
+          <div
+            id="preview-number"
+            class="preview-number"
+          ></div>
+
+          <div
+            id="preview-title"
+            class="preview-title"
+          ></div>
+
+          <div
+            id="preview-prev-line"
+            class="preview-prev-line"
+          ></div>
+
+          <div
+            id="preview-line"
+            class="preview-line"
+          ></div>
+
+          <div
+            id="preview-next-line"
+            class="preview-next-line"
+          ></div>
+
+        </div>
+
       </div>
 
-      <div class="preview-overlay"></div>
 
+      <!-- CONTROLES DE ESCENA -->
 
-      <div class="preview-content">
-
-        <div
-          id="preview-number"
-          class="preview-number"
-        >
-          CAPÍTULO 01
-        </div>
-
-        <div
-          id="preview-title"
-          class="preview-title"
-        >
-          Título
-        </div>
-
-        <div
-          id="preview-line"
-          class="preview-line"
-        >
-          —
-        </div>
-
-        <div
-          id="preview-next-line"
-          class="preview-next-line"
-        ></div>
-
-      </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         CONTROLES
-    ====================================================== -->
-
-    <div class="preview-controls">
-
-      <div class="preview-buttons">
+      <div class="preview-controls">
 
         <button
-          class="btn"
           id="preview-prev"
-          title="Línea anterior"
+          type="button"
         >
-          ◀
+          ← Anterior
         </button>
 
         <button
-          class="btn primary"
+          id="preview-next"
+          type="button"
+        >
+          Siguiente →
+        </button>
+
+        <button
           id="preview-play"
-          title="Reproducir audio"
+          type="button"
         >
           ▶ Audio
         </button>
 
         <button
-          class="btn"
-          id="preview-next"
-          title="Siguiente línea"
+          id="preview-youtube"
+          type="button"
         >
-          ▶
+          ▶ YouTube
         </button>
 
         <button
-          class="btn"
-          id="preview-restart"
-          title="Reiniciar"
+          id="preview-open-youtube"
+          type="button"
+          disabled
         >
-          ↻
+          ↗ Abrir YouTube
+        </button>
+
+        <button
+          id="preview-restart"
+          type="button"
+        >
+          ↺ Reiniciar
         </button>
 
       </div>
@@ -1102,13 +1131,10 @@ Solo sabía que gracias a un amigo nuestros caminos se cruzaron."
 
       <!-- AUDIO -->
 
-      <div class="preview-audio">
+      <div class="preview-audio-wrap">
 
-        <div
-          id="preview-audio-status"
-          class="audio-status"
-        >
-          🎵 Audio: esperando...
+        <div id="preview-audio-status">
+          Audio no cargado.
         </div>
 
         <audio
@@ -1120,31 +1146,20 @@ Solo sabía que gracias a un amigo nuestros caminos se cruzaron."
       </div>
 
 
-      <!-- PROGRESO -->
-
       <div class="preview-progress">
 
         <div id="preview-progress-bar"></div>
 
       </div>
 
-    </div>
 
+      <div class="preview-foot">
 
-    <!-- =====================================================
-         FOOTER
-    ====================================================== -->
+        <span id="preview-foot-info"></span>
 
-    <div class="preview-footer">
+        <span id="preview-dots"></span>
 
-      <div id="preview-foot-info">
-        Línea 0 de 0
       </div>
-
-      <div
-        id="preview-dots"
-        class="preview-dots"
-      ></div>
 
     </div>
 
@@ -1153,1285 +1168,1208 @@ Solo sabía que gracias a un amigo nuestros caminos se cruzaron."
 </div>
 
 
-<div id="toast"></div>
-
-
-<!-- =========================================================
-     JAVASCRIPT
-========================================================= -->
-
 <script type="module">
 
-import { db } from "./js/firebase.js";
+  import { db } from "./js/firebase.js";
 
-import {
-  collection,
-  getDocs,
-  doc,
-  setDoc,
-  deleteDoc,
-  query,
-  orderBy
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
-
-/* =========================================================
-   CONFIGURACIÓN
-========================================================= */
-
-const PASSWORD = "we19anos";
-
-const TOTAL_CAPITULOS = 31;
+  import {
+    collection,
+    getDocs,
+    doc,
+    setDoc,
+    deleteDoc,
+    orderBy,
+    query
+  } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
-/* =========================================================
-   ESTADO
-========================================================= */
+  /* =====================================================
+     CONFIGURACIÓN
+  ===================================================== */
 
-let chapters = [];
+  const PASSWORD = "we19anos";
 
-let editingId = null;
+  const TOTAL_CAPITULOS = 31;
 
-let previewChapter = null;
-
-let previewLineIndex = 0;
-
-let previewImageIndex = 0;
+  const FECHA_INICIO = "2026-09-06";
 
 
-/* =========================================================
-   DOM
-========================================================= */
+  /* =====================================================
+     ELEMENTOS
+  ===================================================== */
 
-const loginScreen = document.getElementById("login-screen");
-const app = document.getElementById("app");
+  const loginScreen =
+    document.getElementById("login-screen");
 
-const passwordInput = document.getElementById("password");
-const loginBtn = document.getElementById("login-btn");
-const loginError = document.getElementById("login-error");
+  const adminApp =
+    document.getElementById("admin-app");
 
-const logoutBtn = document.getElementById("logout-btn");
+  const passwordInput =
+    document.getElementById("password");
 
-const form = document.getElementById("chapter-form");
+  const loginButton =
+    document.getElementById("login-button");
 
-const formTitle = document.getElementById("form-title");
+  const loginError =
+    document.getElementById("login-error");
 
-const numeroInput = document.getElementById("numero");
-const tituloInput = document.getElementById("titulo");
-const fechaInput = document.getElementById("fechaPublicacion");
-const publicadoInput = document.getElementById("publicado");
-const imagenesInput = document.getElementById("imagenes");
-const audioInput = document.getElementById("audio");
-const youtubeInput = document.getElementById("youtubeId");
-const lineasInput = document.getElementById("lineas");
-
-const chapterList = document.getElementById("chapter-list");
-
-const statTotal = document.getElementById("stat-total");
-const statAvailable = document.getElementById("stat-available");
-const statScheduled = document.getElementById("stat-scheduled");
-
-const previewModal = document.getElementById("preview-modal");
-
-const previewModalTitle =
-  document.getElementById("preview-modal-title");
-
-const previewImage =
-  document.getElementById("preview-image");
-
-const previewImageStatus =
-  document.getElementById("preview-image-status");
-
-const previewNumber =
-  document.getElementById("preview-number");
-
-const previewTitle =
-  document.getElementById("preview-title");
-
-const previewLine =
-  document.getElementById("preview-line");
-
-const previewNextLine =
-  document.getElementById("preview-next-line");
-
-const previewPrev =
-  document.getElementById("preview-prev");
-
-const previewNext =
-  document.getElementById("preview-next");
-
-const previewPlay =
-  document.getElementById("preview-play");
-
-const previewRestart =
-  document.getElementById("preview-restart");
-
-const previewAudio =
-  document.getElementById("preview-audio-player");
-
-const previewAudioStatus =
-  document.getElementById("preview-audio-status");
-
-const previewProgressBar =
-  document.getElementById("preview-progress-bar");
-
-const previewFootInfo =
-  document.getElementById("preview-foot-info");
-
-const previewDots =
-  document.getElementById("preview-dots");
-
-const toast =
-  document.getElementById("toast");
+  const logoutButton =
+    document.getElementById("logout-button");
 
 
-/* =========================================================
-   UTILIDADES
-========================================================= */
+  const chapterForm =
+    document.getElementById("chapter-form");
 
-function mostrarToast(mensaje){
+  const numeroInput =
+    document.getElementById("numero");
 
-  toast.textContent = mensaje;
+  const fechaInput =
+    document.getElementById("fechaPublicacion");
 
-  toast.classList.add("show");
+  const tituloInput =
+    document.getElementById("titulo");
 
-  setTimeout(() => {
-    toast.classList.remove("show");
-  }, 2500);
-}
+  const imagenesInput =
+    document.getElementById("imagenes");
+
+  const audioInput =
+    document.getElementById("audio");
+
+  const youtubeIdInput =
+    document.getElementById("youtubeId");
+
+  const lineasInput =
+    document.getElementById("lineas");
+
+  const publicadoInput =
+    document.getElementById("publicado");
+
+  const cancelEditButton =
+    document.getElementById("cancel-edit");
+
+  const newChapterButton =
+    document.getElementById("new-chapter");
 
 
-function obtenerFechaHoy(){
-
-  const hoy = new Date();
-
-  const year = hoy.getFullYear();
-
-  const month =
-    String(hoy.getMonth() + 1).padStart(2,"0");
-
-  const day =
-    String(hoy.getDate()).padStart(2,"0");
-
-  return `${year}-${month}-${day}`;
-}
+  const chapterList =
+    document.getElementById("chapter-list");
 
 
-function obtenerFechaCapitulo(numero){
+  const statTotal =
+    document.getElementById("stat-total");
 
-  const fechaInicio =
-    new Date("2026-09-06T00:00:00");
+  const statAvailable =
+    document.getElementById("stat-available");
 
-  fechaInicio.setDate(
-    fechaInicio.getDate() + (Number(numero) - 1)
+  const statScheduled =
+    document.getElementById("stat-scheduled");
+
+
+  /* =====================================================
+     PREVIEW
+  ===================================================== */
+
+  const previewModal =
+    document.getElementById("preview-modal");
+
+  const previewImage =
+    document.getElementById("preview-image");
+
+  const previewImageStatus =
+    document.getElementById("preview-image-status");
+
+  const previewNumber =
+    document.getElementById("preview-number");
+
+  const previewTitle =
+    document.getElementById("preview-title");
+
+  const previewLine =
+    document.getElementById("preview-line");
+
+  const previewNextLine =
+    document.getElementById("preview-next-line");
+
+  const previewPrevLine =
+    document.getElementById("preview-prev-line");
+
+  const previewPrev =
+    document.getElementById("preview-prev");
+
+  const previewNext =
+    document.getElementById("preview-next");
+
+  const previewPlay =
+    document.getElementById("preview-play");
+
+  const previewYoutube =
+    document.getElementById("preview-youtube");
+
+  const previewOpenYoutube =
+    document.getElementById("preview-open-youtube");
+
+  const previewRestart =
+    document.getElementById("preview-restart");
+
+  const previewClose =
+    document.getElementById("preview-close");
+
+  const previewAudio =
+    document.getElementById("preview-audio-player");
+
+  const previewAudioStatus =
+    document.getElementById("preview-audio-status");
+
+  const previewProgressBar =
+    document.getElementById("preview-progress-bar");
+
+  const previewFootInfo =
+    document.getElementById("preview-foot-info");
+
+  const previewDots =
+    document.getElementById("preview-dots");
+
+  const youtubeContainer =
+    document.getElementById("youtube-container");
+
+  const youtubeFrame =
+    document.getElementById("youtube-frame");
+
+  const youtubeClose =
+    document.getElementById("youtube-close");
+
+
+  /* =====================================================
+     ESTADO
+  ===================================================== */
+
+  let capitulos = [];
+
+  let editandoNumero = null;
+
+  let previewChapter = null;
+
+  let previewLineIndex = 0;
+
+  let previewImageIndex = 0;
+
+
+  /* =====================================================
+     LOGIN
+  ===================================================== */
+
+  function entrar(){
+
+    const password =
+      passwordInput.value.trim();
+
+    if(password === PASSWORD){
+
+      loginScreen.classList.add("hidden");
+
+      adminApp.classList.remove("hidden");
+
+      sessionStorage.setItem(
+        "historia_admin",
+        "true"
+      );
+
+      cargarCapitulos();
+
+    }else{
+
+      loginError.textContent =
+        "Contraseña incorrecta.";
+
+    }
+
+  }
+
+
+  loginButton.addEventListener(
+    "click",
+    entrar
   );
 
-  const year =
-    fechaInicio.getFullYear();
 
-  const month =
-    String(fechaInicio.getMonth() + 1).padStart(2,"0");
+  passwordInput.addEventListener(
+    "keydown",
+    event => {
 
-  const day =
-    String(fechaInicio.getDate()).padStart(2,"0");
+      if(event.key === "Enter"){
+        entrar();
+      }
 
-  return `${year}-${month}-${day}`;
-}
-
-
-/*
- * Convierte:
- *
- * assets/imagenes/cap1-1.jpg
- *
- * en una URL absoluta basada en la ubicación real
- * del admin.html.
- */
-function resolverRuta(ruta){
-
-  if(!ruta){
-    return "";
-  }
-
-  const limpio =
-    String(ruta).trim();
-
-  if(!limpio){
-    return "";
-  }
-
-  try{
-
-    return new URL(
-      limpio,
-      document.baseURI
-    ).href;
-
-  }catch(error){
-
-    console.error(
-      "BUILD 04B.1 — Error resolviendo ruta:",
-      ruta,
-      error
-    );
-
-    return limpio;
-  }
-}
+    }
+  );
 
 
-/* =========================================================
-   LOGIN
-========================================================= */
+  logoutButton.addEventListener(
+    "click",
+    () => {
 
-function entrar(){
+      sessionStorage.removeItem(
+        "historia_admin"
+      );
 
-  const password =
-    passwordInput.value.trim();
+      location.reload();
 
-  if(password === PASSWORD){
+    }
+  );
 
-    sessionStorage.setItem(
-      "historia_admin",
-      "1"
-    );
 
-    loginScreen.style.display = "none";
+  if(
+    sessionStorage.getItem(
+      "historia_admin"
+    ) === "true"
+  ){
 
-    app.style.display = "block";
+    loginScreen.classList.add("hidden");
+
+    adminApp.classList.remove("hidden");
 
     cargarCapitulos();
 
-  }else{
-
-    loginError.textContent =
-      "Contraseña incorrecta.";
-
   }
-}
 
 
-loginBtn.addEventListener(
-  "click",
-  entrar
-);
+  /* =====================================================
+     FECHAS
+  ===================================================== */
 
+  function fechaParaCapitulo(numero){
 
-passwordInput.addEventListener(
-  "keydown",
-  event => {
-
-    if(event.key === "Enter"){
-      entrar();
-    }
-
-  }
-);
-
-
-logoutBtn.addEventListener(
-  "click",
-  () => {
-
-    sessionStorage.removeItem(
-      "historia_admin"
-    );
-
-    location.reload();
-
-  }
-);
-
-
-/* =========================================================
-   SESIÓN AUTOMÁTICA
-========================================================= */
-
-if(
-  sessionStorage.getItem(
-    "historia_admin"
-  ) === "1"
-){
-
-  loginScreen.style.display = "none";
-
-  app.style.display = "block";
-
-  cargarCapitulos();
-
-}
-
-
-/* =========================================================
-   CARGAR CAPÍTULOS
-========================================================= */
-
-async function cargarCapitulos(){
-
-  chapterList.innerHTML =
-    `<div class="empty">
-      Cargando capítulos desde Firebase...
-    </div>`;
-
-  try{
-
-    const ref =
-      collection(db,"capitulos");
-
-    const q =
-      query(
-        ref,
-        orderBy("numero","asc")
+    const fecha =
+      new Date(
+        "2026-09-06T00:00:00"
       );
 
-    const snapshot =
-      await getDocs(q);
-
-    chapters =
-      snapshot.docs.map(
-        documento => ({
-          id:documento.id,
-          ...documento.data()
-        })
-      );
-
-    console.log(
-      "BUILD 04B.1 — Capítulos cargados:",
-      chapters
+    fecha.setDate(
+      fecha.getDate() + Number(numero) - 1
     );
 
-    actualizarEstadisticas();
+    const year =
+      fecha.getFullYear();
 
-    renderLista();
+    const month =
+      String(
+        fecha.getMonth() + 1
+      ).padStart(2,"0");
 
-  }catch(error){
+    const day =
+      String(
+        fecha.getDate()
+      ).padStart(2,"0");
 
-    console.error(
-      "BUILD 04B.1 — Error cargando capítulos:",
-      error
-    );
-
-    chapterList.innerHTML =
-      `<div class="empty">
-        ⚠️ Error cargando capítulos.<br><br>
-        ${error.message}
-      </div>`;
+    return `${year}-${month}-${day}`;
 
   }
 
-}
 
+  numeroInput.addEventListener(
+    "input",
+    () => {
 
-/* =========================================================
-   ESTADÍSTICAS
-========================================================= */
-
-function actualizarEstadisticas(){
-
-  const hoy =
-    obtenerFechaHoy();
-
-  const total =
-    chapters.length;
-
-  const disponibles =
-    chapters.filter(
-      cap =>
-        cap.publicado === true &&
-        cap.fechaPublicacion &&
-        cap.fechaPublicacion <= hoy
-    ).length;
-
-  const programados =
-    chapters.filter(
-      cap =>
-        cap.fechaPublicacion &&
-        cap.fechaPublicacion > hoy
-    ).length;
-
-  statTotal.textContent =
-    total;
-
-  statAvailable.textContent =
-    disponibles;
-
-  statScheduled.textContent =
-    programados;
-
-}
-
-
-/* =========================================================
-   LISTA
-========================================================= */
-
-function renderLista(){
-
-  if(!chapters.length){
-
-    chapterList.innerHTML =
-      `<div class="empty">
-        Todavía no hay capítulos guardados.
-      </div>`;
-
-    return;
-  }
-
-
-  const hoy =
-    obtenerFechaHoy();
-
-
-  chapterList.innerHTML =
-    chapters.map(cap => {
+      if(editandoNumero !== null){
+        return;
+      }
 
       const numero =
-        Number(cap.numero || 0);
-
-      const fecha =
-        cap.fechaPublicacion || "Sin fecha";
-
-      let estado = "";
+        Number(numeroInput.value);
 
       if(
-        cap.publicado === true &&
-        fecha <= hoy
+        numero >= 1 &&
+        numero <= TOTAL_CAPITULOS
       ){
 
-        estado =
-          `<span class="badge published">
-            PUBLICADO
-          </span>`;
-
-      }else if(
-        fecha > hoy
-      ){
-
-        estado =
-          `<span class="badge scheduled">
-            PROGRAMADO
-          </span>`;
-
-      }else{
-
-        estado =
-          `<span class="badge draft">
-            BORRADOR
-          </span>`;
+        fechaInput.value =
+          fechaParaCapitulo(numero);
 
       }
 
-
-      const imagenes =
-        Array.isArray(cap.imagenes)
-          ? cap.imagenes.length
-          : 0;
-
-      const lineas =
-        Array.isArray(cap.lineas)
-          ? cap.lineas.length
-          : 0;
+    }
+  );
 
 
-      return `
+  /* =====================================================
+     FIREBASE
+  ===================================================== */
 
-        <div class="chapter-card">
+  async function cargarCapitulos(){
 
-          <div class="chapter-info">
+    try{
 
-            <div class="chapter-number">
-              CAPÍTULO ${String(numero).padStart(2,"0")}
-              ${estado}
-            </div>
+      const ref =
+        collection(
+          db,
+          "capitulos"
+        );
 
-            <div class="chapter-title">
-              ${escaparHTML(
-                cap.titulo || "Sin título"
-              )}
-            </div>
+      const q =
+        query(
+          ref,
+          orderBy("numero","asc")
+        );
 
-            <div class="chapter-meta">
-              Fecha: ${fecha}
-              · ${lineas} líneas
-              · ${imagenes} imágenes
-              · ${cap.audio ? "🎵 Audio" : "Sin audio"}
-            </div>
+      const snapshot =
+        await getDocs(q);
 
-          </div>
+      capitulos =
+        snapshot.docs.map(
+          item => ({
+            id:item.id,
+            ...item.data()
+          })
+        );
 
+      renderStats();
 
-          <div class="chapter-actions">
+      renderLista();
 
-            <button
-              class="btn"
-              data-action="preview"
-              data-id="${cap.id}"
-            >
-              👁️ Preview
-            </button>
+    }catch(error){
 
-            <button
-              class="btn"
-              data-action="edit"
-              data-id="${cap.id}"
-            >
-              ✏️ Editar
-            </button>
-
-            <button
-              class="btn success"
-              data-action="publish"
-              data-id="${cap.id}"
-            >
-              ${cap.publicado ? "Despublicar" : "Publicar"}
-            </button>
-
-            <button
-              class="btn danger"
-              data-action="delete"
-              data-id="${cap.id}"
-            >
-              🗑️
-            </button>
-
-          </div>
-
-        </div>
-
-      `;
-
-    }).join("");
-
-
-  document
-    .querySelectorAll(
-      "#chapter-list button"
-    )
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          const id =
-            button.dataset.id;
-
-          const action =
-            button.dataset.action;
-
-          const chapter =
-            chapters.find(
-              cap => cap.id === id
-            );
-
-          if(!chapter){
-            return;
-          }
-
-
-          if(action === "preview"){
-            abrirPreview(chapter);
-          }
-
-          if(action === "edit"){
-            editarCapitulo(chapter);
-          }
-
-          if(action === "publish"){
-            cambiarPublicacion(chapter);
-          }
-
-          if(action === "delete"){
-            eliminarCapitulo(chapter);
-          }
-
-        }
+      console.error(
+        "Error cargando capítulos:",
+        error
       );
 
-    });
-
-}
-
-
-/* =========================================================
-   ESCAPAR HTML
-========================================================= */
-
-function escaparHTML(valor){
-
-  return String(valor)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-
-}
-
-
-/* =========================================================
-   FORMULARIO
-========================================================= */
-
-numeroInput.addEventListener(
-  "change",
-  () => {
-
-    if(
-      !editingId &&
-      numeroInput.value
-    ){
-
-      fechaInput.value =
-        obtenerFechaCapitulo(
-          numeroInput.value
-        );
+      chapterList.innerHTML =
+        `<div style="color:#ff8c8c">
+          Error cargando capítulos:
+          ${escapeHtml(error.message)}
+        </div>`;
 
     }
 
   }
-);
 
 
-/* =========================================================
-   NUEVO
-========================================================= */
+  /* =====================================================
+     STATS
+  ===================================================== */
 
-document
-  .getElementById("new-btn")
-  .addEventListener(
+  function renderStats(){
+
+    const total =
+      capitulos.length;
+
+    const publicados =
+      capitulos.filter(
+        cap => cap.publicado === true
+      ).length;
+
+    const programados =
+      total - publicados;
+
+    statTotal.textContent =
+      `${total}/${TOTAL_CAPITULOS}`;
+
+    statAvailable.textContent =
+      publicados;
+
+    statScheduled.textContent =
+      programados;
+
+  }
+
+
+  /* =====================================================
+     LISTA
+  ===================================================== */
+
+  function renderLista(){
+
+    if(!capitulos.length){
+
+      chapterList.innerHTML =
+        `<div style="color:#888">
+          Aún no hay capítulos.
+        </div>`;
+
+      return;
+
+    }
+
+
+    chapterList.innerHTML =
+      capitulos.map(
+        cap => {
+
+          const publicado =
+            cap.publicado === true;
+
+          const fecha =
+            cap.fechaPublicacion ||
+            "Sin fecha";
+
+          const lineas =
+            Array.isArray(cap.lineas)
+              ? cap.lineas.length
+              : 0;
+
+          const imagenes =
+            Array.isArray(cap.imagenes)
+              ? cap.imagenes.length
+              : 0;
+
+          return `
+
+            <div class="chapter-card">
+
+              <div class="chapter-info">
+
+                <h3>
+                  Capítulo ${cap.numero}
+                  · ${escapeHtml(cap.titulo || "")}
+                </h3>
+
+                <div class="chapter-meta">
+
+                  <span>
+                    📅 ${fecha}
+                  </span>
+
+                  <span>
+                    📝 ${lineas} líneas
+                  </span>
+
+                  <span>
+                    🖼️ ${imagenes} imágenes
+                  </span>
+
+                  ${
+                    cap.audio
+                      ? `<span>🎵 Audio</span>`
+                      : ""
+                  }
+
+                  ${
+                    cap.youtubeId
+                      ? `<span>▶ YouTube</span>`
+                      : ""
+                  }
+
+                  <span
+                    class="status ${
+                      publicado
+                        ? "publicado"
+                        : "programado"
+                    }"
+                  >
+                    ${
+                      publicado
+                        ? "PUBLICADO"
+                        : "PROGRAMADO"
+                    }
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              <div class="card-actions">
+
+                <button
+                  class="btn btn-secondary"
+                  data-action="preview"
+                  data-id="${cap.id}"
+                >
+                  👁 Vista previa
+                </button>
+
+                <button
+                  class="btn btn-secondary"
+                  data-action="edit"
+                  data-id="${cap.id}"
+                >
+                  ✏️ Editar
+                </button>
+
+                <button
+                  class="btn ${
+                    publicado
+                      ? "btn-danger"
+                      : "btn-primary"
+                  }"
+                  data-action="publish"
+                  data-id="${cap.id}"
+                >
+                  ${
+                    publicado
+                      ? "Despublicar"
+                      : "Publicar"
+                  }
+                </button>
+
+                <button
+                  class="btn btn-danger"
+                  data-action="delete"
+                  data-id="${cap.id}"
+                >
+                  🗑️
+                </button>
+
+              </div>
+
+            </div>
+
+          `;
+
+        }
+      ).join("");
+
+  }
+
+
+  chapterList.addEventListener(
+    "click",
+    event => {
+
+      const button =
+        event.target.closest(
+          "button[data-action]"
+        );
+
+      if(!button){
+        return;
+      }
+
+      const id =
+        button.dataset.id;
+
+      const action =
+        button.dataset.action;
+
+      const cap =
+        capitulos.find(
+          item => item.id === id
+        );
+
+      if(!cap){
+        return;
+      }
+
+
+      if(action === "preview"){
+        abrirPreview(cap);
+      }
+
+
+      if(action === "edit"){
+        cargarEnFormulario(cap);
+      }
+
+
+      if(action === "publish"){
+        alternarPublicado(cap);
+      }
+
+
+      if(action === "delete"){
+        eliminarCapitulo(cap);
+      }
+
+    }
+  );
+
+
+  /* =====================================================
+     FORMULARIO
+  ===================================================== */
+
+  function limpiarFormulario(){
+
+    editandoNumero = null;
+
+    chapterForm.reset();
+
+    fechaInput.value =
+      fechaParaCapitulo(1);
+
+    document.getElementById(
+      "form-title"
+    ).textContent =
+      "Crear / editar capítulo";
+
+    cancelEditButton.classList.add(
+      "hidden"
+    );
+
+  }
+
+
+  newChapterButton.addEventListener(
     "click",
     limpiarFormulario
   );
 
 
-function limpiarFormulario(){
-
-  editingId = null;
-
-  form.reset();
-
-  formTitle.textContent =
-    "Nuevo capítulo";
-
-  document
-    .getElementById("save-btn")
-    .textContent =
-      "Guardar capítulo";
-
-  fechaInput.value =
-    obtenerFechaCapitulo(1);
-
-}
+  cancelEditButton.addEventListener(
+    "click",
+    limpiarFormulario
+  );
 
 
-/* =========================================================
-   EDITAR
-========================================================= */
+  function cargarEnFormulario(cap){
 
-function editarCapitulo(cap){
+    editandoNumero =
+      Number(cap.numero);
 
-  editingId =
-    cap.id;
+    numeroInput.value =
+      cap.numero;
 
-  formTitle.textContent =
-    `Editar capítulo ${cap.numero}`;
+    tituloInput.value =
+      cap.titulo || "";
 
-  numeroInput.value =
-    cap.numero || "";
+    fechaInput.value =
+      cap.fechaPublicacion ||
+      fechaParaCapitulo(cap.numero);
 
-  tituloInput.value =
-    cap.titulo || "";
+    imagenesInput.value =
+      Array.isArray(cap.imagenes)
+        ? cap.imagenes.join(", ")
+        : "";
 
-  fechaInput.value =
-    cap.fechaPublicacion || "";
+    audioInput.value =
+      cap.audio || "";
 
-  publicadoInput.checked =
-    cap.publicado === true;
+    youtubeIdInput.value =
+      cap.youtubeId || "";
 
-  imagenesInput.value =
-    Array.isArray(cap.imagenes)
-      ? cap.imagenes.join("\n")
-      : "";
+    lineasInput.value =
+      Array.isArray(cap.lineas)
+        ? cap.lineas.join("\n")
+        : "";
 
-  audioInput.value =
-    cap.audio || "";
+    publicadoInput.checked =
+      cap.publicado === true;
 
-  youtubeInput.value =
-    cap.youtubeId || "";
+    document.getElementById(
+      "form-title"
+    ).textContent =
+      `Editando capítulo ${cap.numero}`;
 
-  lineasInput.value =
-    Array.isArray(cap.lineas)
-      ? cap.lineas.join("\n")
-      : "";
+    cancelEditButton.classList.remove(
+      "hidden"
+    );
 
-  document
-    .getElementById("save-btn")
-    .textContent =
-      "Actualizar capítulo";
+    window.scrollTo({
+      top:0,
+      behavior:"smooth"
+    });
 
-  window.scrollTo({
-    top:0,
-    behavior:"smooth"
-  });
-
-}
+  }
 
 
-/* =========================================================
-   GUARDAR
-========================================================= */
+  chapterForm.addEventListener(
+    "submit",
+    async event => {
 
-form.addEventListener(
-  "submit",
-  async event => {
-
-    event.preventDefault();
+      event.preventDefault();
 
 
-    const numero =
-      Number(numeroInput.value);
+      const numero =
+        Number(numeroInput.value);
 
-    if(
-      !numero ||
-      numero < 1 ||
-      numero > TOTAL_CAPITULOS
-    ){
+      if(
+        numero < 1 ||
+        numero > TOTAL_CAPITULOS
+      ){
 
-      mostrarToast(
-        "El número debe estar entre 1 y 31."
-      );
+        alert(
+          `El capítulo debe estar entre 1 y ${TOTAL_CAPITULOS}.`
+        );
 
+        return;
+
+      }
+
+
+      const imagenes =
+        imagenesInput.value
+          .split(",")
+          .map(item => item.trim())
+          .filter(Boolean);
+
+
+      const lineas =
+        lineasInput.value
+          .split("\n");
+
+
+      const cap = {
+
+        numero,
+
+        titulo:
+          tituloInput.value.trim(),
+
+        fechaPublicacion:
+          fechaInput.value,
+
+        imagenes,
+
+        audio:
+          audioInput.value.trim(),
+
+        youtubeId:
+          youtubeIdInput.value.trim(),
+
+        lineas,
+
+        publicado:
+          publicadoInput.checked,
+
+        actualizado:
+          new Date().toISOString()
+
+      };
+
+
+      try{
+
+        const id =
+          `cap_${numero}`;
+
+        await setDoc(
+          doc(db,"capitulos",id),
+          cap,
+          { merge:true }
+        );
+
+
+        alert(
+          `Capítulo ${numero} guardado correctamente.`
+        );
+
+
+        limpiarFormulario();
+
+        await cargarCapitulos();
+
+      }catch(error){
+
+        console.error(
+          "Error guardando capítulo:",
+          error
+        );
+
+        alert(
+          `No se pudo guardar:\n${error.message}`
+        );
+
+      }
+
+    }
+  );
+
+
+  /* =====================================================
+     PUBLICAR / DESPUBLICAR
+  ===================================================== */
+
+  async function alternarPublicado(cap){
+
+    const nuevoEstado =
+      cap.publicado !== true;
+
+
+    const mensaje =
+      nuevoEstado
+        ? `¿Publicar el capítulo ${cap.numero}?`
+        : `¿Despublicar el capítulo ${cap.numero}?`;
+
+
+    if(!confirm(mensaje)){
       return;
     }
 
 
-    const imagenes =
-      imagenesInput.value
-        .split("\n")
-        .map(x => x.trim())
-        .filter(Boolean);
-
-
-    const lineas =
-      lineasInput.value
-        .split("\n")
-        .map(x => x.trim())
-        .filter(Boolean);
-
-
-    const datos = {
-
-      numero,
-
-      titulo:
-        tituloInput.value.trim(),
-
-      fechaPublicacion:
-        fechaInput.value,
-
-      publicado:
-        publicadoInput.checked,
-
-      imagenes,
-
-      audio:
-        audioInput.value.trim(),
-
-      youtubeId:
-        youtubeInput.value.trim(),
-
-      lineas,
-
-      actualizado:
-        new Date().toISOString()
-
-    };
-
-
     try{
 
-      const id =
-        editingId ||
-        `cap_${numero}`;
-
-
       await setDoc(
-        doc(db,"capitulos",id),
-        datos,
-        { merge:true }
+        doc(db,"capitulos",cap.id),
+        {
+          publicado:nuevoEstado,
+          actualizado:
+            new Date().toISOString()
+        },
+        {merge:true}
       );
 
-
-      console.log(
-        "BUILD 04B.1 — Capítulo guardado:",
-        id,
-        datos
-      );
-
-
-      mostrarToast(
-        `Capítulo ${numero} guardado correctamente.`
-      );
-
-
-      limpiarFormulario();
 
       await cargarCapitulos();
 
     }catch(error){
 
       console.error(
-        "BUILD 04B.1 — Error guardando:",
+        "Error cambiando publicación:",
         error
       );
 
-      mostrarToast(
-        "Error: " + error.message
+      alert(
+        `No se pudo actualizar:\n${error.message}`
       );
 
     }
 
   }
-);
 
 
-/* =========================================================
-   PUBLICAR / DESPUBLICAR
-========================================================= */
+  /* =====================================================
+     ELIMINAR
+  ===================================================== */
 
-async function cambiarPublicacion(cap){
-
-  try{
-
-    const referencia =
-      doc(db,"capitulos",cap.id);
-
-    await setDoc(
-      referencia,
-      {
-        publicado:
-          cap.publicado !== true,
-
-        actualizado:
-          new Date().toISOString()
-      },
-      { merge:true }
-    );
-
-
-    mostrarToast(
-      cap.publicado
-        ? "Capítulo despublicado."
-        : "Capítulo publicado."
-    );
-
-
-    await cargarCapitulos();
-
-  }catch(error){
-
-    console.error(error);
-
-    mostrarToast(
-      "Error: " + error.message
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   ELIMINAR
-========================================================= */
-
-async function eliminarCapitulo(cap){
-
-  const confirmar =
-    confirm(
-      `¿Eliminar definitivamente el capítulo ${cap.numero}?`
-    );
-
-  if(!confirmar){
-    return;
-  }
-
-
-  try{
-
-    await deleteDoc(
-      doc(
-        db,
-        "capitulos",
-        cap.id
-      )
-    );
-
-
-    mostrarToast(
-      "Capítulo eliminado."
-    );
-
-
-    await cargarCapitulos();
-
-  }catch(error){
-
-    console.error(error);
-
-    mostrarToast(
-      "Error: " + error.message
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   PREVIEW
-========================================================= */
-
-function abrirPreview(cap){
-
-  console.log(
-    "BUILD 04B.1 — Abriendo preview:",
-    cap
-  );
-
-
-  previewChapter =
-    cap;
-
-  previewLineIndex =
-    0;
-
-  previewImageIndex =
-    0;
-
-
-  previewModalTitle.textContent =
-    `Preview · Capítulo ${cap.numero}`;
-
-
-  /*
-   * Detener audio anterior
-   */
-
-  try{
-
-    previewAudio.pause();
-
-  }catch(error){}
-
-
-  previewAudio.removeAttribute("src");
-
-  previewAudio.load();
-
-
-  previewAudioStatus.textContent =
-    cap.audio
-      ? `🎵 Audio encontrado en el capítulo: ${cap.audio}`
-      : "⚠️ Este capítulo no tiene audio.";
-
-
-  previewPlay.textContent =
-    cap.audio
-      ? "▶ Audio"
-      : "Sin audio";
-
-
-  previewModal.style.display =
-    "block";
-
-  document.body.style.overflow =
-    "hidden";
-
-
-  renderPreview();
-
-}
-
-
-/* =========================================================
-   RENDER PREVIEW
-========================================================= */
-
-function renderPreview(){
-
-  if(!previewChapter){
-    return;
-  }
-
-
-  const cap =
-    previewChapter;
-
-
-  const lineas =
-    Array.isArray(cap.lineas)
-      ? cap.lineas
-      : [];
-
-
-  const imagenes =
-    Array.isArray(cap.imagenes)
-      ? cap.imagenes.filter(Boolean)
-      : [];
-
-
-  /* ---------------------------------------------
-     TEXTO
-  --------------------------------------------- */
-
-  previewNumber.textContent =
-    `CAPÍTULO ${String(
-      cap.numero || 0
-    ).padStart(2,"0")}`;
-
-
-  previewTitle.textContent =
-    cap.titulo ||
-    "Sin título";
-
-
-  if(lineas.length){
-
-    previewLine.textContent =
-      lineas[previewLineIndex] ||
-      "—";
-
-
-    const siguiente =
-      lineas[previewLineIndex + 1];
-
-
-    previewNextLine.textContent =
-      siguiente
-        ? siguiente
-        : "";
-
-  }else{
-
-    previewLine.textContent =
-      "Este capítulo no tiene líneas.";
-
-    previewNextLine.textContent =
-      "";
-
-  }
-
-
-  /* ---------------------------------------------
-     IMAGEN
-  --------------------------------------------- */
-
-  if(imagenes.length){
+  async function eliminarCapitulo(cap){
 
     if(
-      previewImageIndex >=
-      imagenes.length
+      !confirm(
+        `¿Eliminar definitivamente el capítulo ${cap.numero}?`
+      )
     ){
 
-      previewImageIndex = 0;
+      return;
 
     }
 
 
-    const ruta =
-      imagenes[previewImageIndex];
+    try{
+
+      await deleteDoc(
+        doc(db,"capitulos",cap.id)
+      );
 
 
-    const url =
-      resolverRuta(ruta);
+      await cargarCapitulos();
 
+    }catch(error){
 
-    console.log(
-      "BUILD 04B.1 — Cargando imagen:",
-      ruta
-    );
+      console.error(
+        "Error eliminando capítulo:",
+        error
+      );
 
-    console.log(
-      "BUILD 04B.1 — URL imagen:",
-      url
-    );
+      alert(
+        `No se pudo eliminar:\n${error.message}`
+      );
 
-
-    previewImageStatus.textContent =
-      `🖼️ Cargando imagen ${previewImageIndex + 1}/${imagenes.length}: ${ruta}`;
-
-
-    /*
-     * Primero limpiamos la imagen.
-     */
-
-    previewImage.removeAttribute("src");
-
-
-    /*
-     * Después asignamos la nueva ruta.
-     */
-
-    previewImage.src =
-      url;
-
-  }else{
-
-    previewImage.removeAttribute("src");
-
-    previewImageStatus.textContent =
-      "⚠️ Este capítulo no tiene imágenes.";
+    }
 
   }
 
 
-  /* ---------------------------------------------
-     BOTONES
-  --------------------------------------------- */
+  /* =====================================================
+     PREVIEW
+  ===================================================== */
 
-  previewPrev.disabled =
-    lineas.length === 0 ||
-    previewLineIndex <= 0;
+  function abrirPreview(cap){
 
+    previewChapter =
+      cap;
 
-  previewNext.disabled =
-    lineas.length === 0 ||
-    previewLineIndex >= lineas.length - 1;
+    previewLineIndex =
+      0;
 
-
-  /* ---------------------------------------------
-     PROGRESO
-  --------------------------------------------- */
-
-  const porcentaje =
-    lineas.length
-      ? ((previewLineIndex + 1) / lineas.length) * 100
-      : 0;
+    previewImageIndex =
+      0;
 
 
-  previewProgressBar.style.width =
-    `${porcentaje}%`;
+    detenerAudio();
+
+    cerrarYoutube();
 
 
-  previewFootInfo.textContent =
-    lineas.length
-      ? `Línea ${previewLineIndex + 1} de ${lineas.length}`
-      : "Línea 0 de 0";
-
-
-  /* ---------------------------------------------
-     DOTS
-  --------------------------------------------- */
-
-  previewDots.innerHTML =
-    lineas.map(
-      (_,index) =>
-        `<span class="preview-dot ${
-          index === previewLineIndex
-            ? "active"
-            : ""
-        }"></span>`
-    ).join("");
-
-}
-
-
-/* =========================================================
-   EVENTOS DE IMAGEN
-========================================================= */
-
-previewImage.addEventListener(
-  "load",
-  () => {
-
-    console.log(
-      "BUILD 04B.1 — IMAGEN CARGADA:",
-      previewImage.src
+    previewModal.classList.remove(
+      "hidden"
     );
 
 
-    previewImageStatus.textContent =
-      "🖼️ IMAGEN CARGADA CORRECTAMENTE";
+    renderPreview();
 
   }
-);
 
 
-previewImage.addEventListener(
-  "error",
-  () => {
+  function cerrarPreview(){
 
-    console.error(
-      "BUILD 04B.1 — ERROR CARGANDO IMAGEN:",
-      previewImage.src
+    detenerAudio();
+
+    cerrarYoutube();
+
+    previewModal.classList.add(
+      "hidden"
     );
 
-
-    const ruta =
-      previewChapter &&
-      Array.isArray(previewChapter.imagenes)
-        ? previewChapter.imagenes[
-            previewImageIndex
-          ]
-        : "";
-
-
-    previewImageStatus.textContent =
-      `⚠️ NO SE ENCUENTRA LA IMAGEN: ${ruta || "ruta vacía"}`;
+    previewChapter =
+      null;
 
   }
-);
 
 
-/* =========================================================
-   NAVEGACIÓN PREVIEW
-========================================================= */
+  previewClose.addEventListener(
+    "click",
+    cerrarPreview
+  );
 
-previewPrev.addEventListener(
-  "click",
-  () => {
+
+  previewModal.addEventListener(
+    "click",
+    event => {
+
+      if(
+        event.target ===
+        previewModal
+      ){
+
+        cerrarPreview();
+
+      }
+
+    }
+  );
+
+
+  document.addEventListener(
+    "keydown",
+    event => {
+
+      if(
+        event.key === "Escape" &&
+        !previewModal.classList.contains(
+          "hidden"
+        )
+      ){
+
+        cerrarPreview();
+
+      }
+
+    }
+  );
+
+
+  /* =====================================================
+     RESOLVER RUTA
+  ===================================================== */
+
+  function resolverRuta(ruta){
+
+    if(!ruta){
+      return "";
+    }
+
+    const limpio =
+      String(ruta).trim();
+
+    if(!limpio){
+      return "";
+    }
+
+
+    try{
+
+      return new URL(
+        limpio,
+        document.baseURI
+      ).href;
+
+    }catch(error){
+
+      console.error(
+        "No se pudo resolver ruta:",
+        ruta,
+        error
+      );
+
+      return limpio;
+
+    }
+
+  }
+
+
+  /* =====================================================
+     RENDER PREVIEW
+  ===================================================== */
+
+  function renderPreview(){
 
     if(!previewChapter){
       return;
     }
 
 
-    if(previewLineIndex <= 0){
-      return;
-    }
+    const cap =
+      previewChapter;
 
 
-    previewLineIndex--;
-
-
-    const imagenes =
-      Array.isArray(
-        previewChapter.imagenes
-      )
-        ? previewChapter.imagenes.filter(Boolean)
+    const lineas =
+      Array.isArray(cap.lineas)
+        ? cap.lineas
         : [];
 
 
+    const imagenes =
+      Array.isArray(cap.imagenes)
+        ? cap.imagenes
+        : [];
+
+
+    /* -------------------------
+       CABECERA
+    ------------------------- */
+
+    previewNumber.textContent =
+      `Capítulo ${cap.numero}`;
+
+
+    previewTitle.textContent =
+      cap.titulo || "";
+
+
+    /* -------------------------
+       TEXTO
+    ------------------------- */
+
+    const lineaActual =
+      lineas[previewLineIndex] ?? "";
+
+
+    const lineaAnterior =
+      lineas[previewLineIndex - 1] ?? "";
+
+
+    const lineaSiguiente =
+      lineas[previewLineIndex + 1] ?? "";
+
+
+    previewLine.textContent =
+      lineaActual;
+
+
+    previewPrevLine.textContent =
+      lineaAnterior
+        ? `← ${lineaAnterior}`
+        : "";
+
+
+    previewNextLine.textContent =
+      lineaSiguiente
+        ? `${lineaSiguiente} →`
+        : "";
+
+
+    /* -------------------------
+       IMAGEN
+    ------------------------- */
+
     if(imagenes.length){
 
-      previewImageIndex =
-        (previewImageIndex - 1 + imagenes.length)
-        % imagenes.length;
+      if(
+        previewImageIndex >=
+        imagenes.length
+      ){
+
+        previewImageIndex =
+          imagenes.length - 1;
+
+      }
+
+
+      const ruta =
+        imagenes[
+          previewImageIndex
+        ];
+
+
+      const url =
+        resolverRuta(ruta);
+
+
+      previewImageStatus.textContent =
+        `🖼️ Cargando: ${ruta}`;
+
+
+      previewImage.src =
+        url;
+
+
+    }else{
+
+      previewImage.removeAttribute(
+        "src"
+      );
+
+      previewImageStatus.textContent =
+        "⚠️ Este capítulo no tiene imágenes.";
 
     }
 
 
-    renderPreview();
+    /* -------------------------
+       CONTROLES
+    ------------------------- */
+
+    previewPrev.disabled =
+      previewLineIndex <= 0;
+
+
+    previewNext.disabled =
+      previewLineIndex >=
+      lineas.length - 1;
+
+
+    previewFootInfo.textContent =
+      lineas.length
+        ? `Línea ${previewLineIndex + 1} de ${lineas.length}`
+        : "Sin líneas";
+
+
+    renderDots(lineas.length);
+
+
+    /* -------------------------
+       YOUTUBE
+    ------------------------- */
+
+    actualizarYoutubeControls();
 
   }
-);
 
 
-previewNext.addEventListener(
-  "click",
-  () => {
+  /* =====================================================
+     IMAGEN EVENTS
+  ===================================================== */
+
+  previewImage.addEventListener(
+    "load",
+    () => {
+
+      previewImageStatus.textContent =
+        "🖼️ Imagen cargada correctamente.";
+
+    }
+  );
+
+
+  previewImage.addEventListener(
+    "error",
+    () => {
+
+      previewImageStatus.textContent =
+        `❌ No se pudo cargar la imagen: ${
+          previewImage.src
+        }`;
+
+    }
+  );
+
+
+  /* =====================================================
+     CAMBIO DE LÍNEA
+  ===================================================== */
+
+  function cambiarLinea(delta){
 
     if(!previewChapter){
       return;
@@ -2446,9 +2384,13 @@ previewNext.addEventListener(
         : [];
 
 
+    const nuevoIndice =
+      previewLineIndex + delta;
+
+
     if(
-      previewLineIndex >=
-      lineas.length - 1
+      nuevoIndice < 0 ||
+      nuevoIndice >= lineas.length
     ){
 
       return;
@@ -2456,22 +2398,38 @@ previewNext.addEventListener(
     }
 
 
-    previewLineIndex++;
+    previewLineIndex =
+      nuevoIndice;
 
 
-    const imagenes =
+    if(
       Array.isArray(
         previewChapter.imagenes
-      )
-        ? previewChapter.imagenes.filter(Boolean)
-        : [];
+      ) &&
+      previewChapter.imagenes.length
+    ){
 
+      const totalLineas =
+        Math.max(
+          lineas.length,
+          1
+        );
 
-    if(imagenes.length){
+      const totalImagenes =
+        previewChapter.imagenes.length;
+
 
       previewImageIndex =
-        (previewImageIndex + 1)
-        % imagenes.length;
+        Math.min(
+          totalImagenes - 1,
+          Math.floor(
+            (
+              previewLineIndex /
+              totalLineas
+            ) *
+            totalImagenes
+          )
+        );
 
     }
 
@@ -2479,509 +2437,716 @@ previewNext.addEventListener(
     renderPreview();
 
   }
-);
 
 
-/* =========================================================
-   REINICIAR PREVIEW
-========================================================= */
+  previewPrev.addEventListener(
+    "click",
+    () => cambiarLinea(-1)
+  );
 
-previewRestart.addEventListener(
-  "click",
-  () => {
 
-    if(!previewChapter){
+  previewNext.addEventListener(
+    "click",
+    () => cambiarLinea(1)
+  );
+
+
+  /* =====================================================
+     DOTS
+  ===================================================== */
+
+  function renderDots(total){
+
+    if(!total){
+
+      previewDots.innerHTML =
+        "";
+
       return;
+
     }
 
 
-    previewLineIndex =
-      0;
+    previewDots.innerHTML =
+      Array.from(
+        {length:total},
+        (_,index) => `
 
-    previewImageIndex =
-      0;
+          <span
+            class="preview-dot ${
+              index === previewLineIndex
+                ? "active"
+                : ""
+            }"
+          ></span>
 
+        `
+      ).join("");
+
+  }
+
+
+  /* =====================================================
+     AUDIO
+  ===================================================== */
+
+  function detenerAudio(){
 
     try{
 
       previewAudio.pause();
 
-      previewAudio.currentTime =
-        0;
-
     }catch(error){}
 
 
-    renderPreview();
-
-    previewAudioStatus.textContent =
-      previewChapter.audio
-        ? `🎵 Audio listo: ${previewChapter.audio}`
-        : "⚠️ Este capítulo no tiene audio.";
-
-  }
-);
-
-
-/* =========================================================
-   AUDIO
-========================================================= */
-
-function cargarAudioPreview(){
-
-  if(!previewChapter){
-
-    return false;
-
-  }
-
-
-  const ruta =
-    String(
-      previewChapter.audio || ""
-    ).trim();
-
-
-  if(!ruta){
-
-    previewAudioStatus.textContent =
-      "⚠️ Este capítulo no tiene audio.";
-
-    return false;
-
-  }
-
-
-  const url =
-    resolverRuta(ruta);
-
-
-  console.log(
-    "BUILD 04B.1 — Cargando audio:",
-    ruta
-  );
-
-  console.log(
-    "BUILD 04B.1 — URL audio:",
-    url
-  );
-
-
-  /*
-   * Si ya es el mismo audio no necesitamos
-   * volver a cargarlo.
-   */
-
-  if(
-    previewAudio.dataset.loadedUrl !==
-    url
-  ){
-
-    previewAudio.dataset.loadedUrl =
-      url;
-
-    previewAudio.src =
-      url;
+    previewAudio.removeAttribute(
+      "src"
+    );
 
     previewAudio.load();
 
+    previewAudio.dataset.loadedUrl =
+      "";
+
+    previewProgressBar.style.width =
+      "0%";
+
+    previewAudioStatus.textContent =
+      "Audio no cargado.";
+
   }
 
 
-  previewAudioStatus.textContent =
-    `🎵 Cargando audio: ${ruta}`;
-
-
-  return true;
-
-}
-
-
-/* =========================================================
-   BOTÓN AUDIO
-========================================================= */
-
-previewPlay.addEventListener(
-  "click",
-  async () => {
+  function cargarAudioPreview(){
 
     if(!previewChapter){
 
-      return;
+      return false;
 
     }
 
 
-    const tieneAudio =
-      cargarAudioPreview();
+    const ruta =
+      String(
+        previewChapter.audio || ""
+      ).trim();
 
 
-    if(!tieneAudio){
-
-      return;
-
-    }
-
-
-    try{
-
-      await previewAudio.play();
-
-      previewPlay.textContent =
-        "⏸ Pausar";
+    if(!ruta){
 
       previewAudioStatus.textContent =
-        "▶️ AUDIO REPRODUCIÉNDOSE";
+        "⚠️ Este capítulo no tiene archivo de audio.";
 
-    }catch(error){
-
-      console.error(
-        "BUILD 04B.1 — Error reproduciendo audio:",
-        error
-      );
-
-
-      previewAudioStatus.textContent =
-        `⚠️ No se pudo reproducir automáticamente. Pulsa ▶ en el reproductor.`;
+      return false;
 
     }
 
-  }
-);
 
+    const url =
+      resolverRuta(ruta);
 
-/* =========================================================
-   EVENTOS DEL AUDIO
-========================================================= */
-
-previewAudio.addEventListener(
-  "loadedmetadata",
-  () => {
-
-    console.log(
-      "BUILD 04B.1 — AUDIO METADATA OK",
-      previewAudio.duration
-    );
-
-
-    previewAudioStatus.textContent =
-      `🎵 AUDIO CARGADO · Duración: ${formatearTiempo(
-        previewAudio.duration
-      )}`;
-
-  }
-);
-
-
-previewAudio.addEventListener(
-  "canplay",
-  () => {
-
-    console.log(
-      "BUILD 04B.1 — AUDIO LISTO PARA REPRODUCIR"
-    );
-
-  }
-);
-
-
-previewAudio.addEventListener(
-  "play",
-  () => {
-
-    previewPlay.textContent =
-      "⏸ Pausar";
-
-    previewAudioStatus.textContent =
-      "▶️ AUDIO REPRODUCIÉNDOSE";
-
-  }
-);
-
-
-previewAudio.addEventListener(
-  "pause",
-  () => {
-
-    previewPlay.textContent =
-      "▶ Audio";
-
-  }
-);
-
-
-previewAudio.addEventListener(
-  "ended",
-  () => {
-
-    previewPlay.textContent =
-      "▶ Audio";
-
-    previewAudioStatus.textContent =
-      "🎵 Audio finalizado.";
-
-  }
-);
-
-
-previewAudio.addEventListener(
-  "error",
-  () => {
-
-    const error =
-      previewAudio.error;
-
-
-    console.error(
-      "BUILD 04B.1 — ERROR AUDIO:",
-      error
-    );
-
-
-    let codigo =
-      error
-        ? error.code
-        : "desconocido";
-
-
-    previewAudioStatus.textContent =
-      `⚠️ ERROR AUDIO · código ${codigo} · Revisa la ruta del archivo.`;
-
-  }
-);
-
-
-previewAudio.addEventListener(
-  "timeupdate",
-  () => {
 
     if(
-      !previewAudio.duration ||
-      !isFinite(previewAudio.duration)
+      previewAudio.dataset.loadedUrl !==
+      url
     ){
 
-      return;
+      previewAudio.dataset.loadedUrl =
+        url;
+
+      previewAudio.src =
+        url;
+
+      previewAudio.load();
 
     }
 
 
-    const porcentaje =
-      (
-        previewAudio.currentTime /
-        previewAudio.duration
-      ) * 100;
+    previewAudioStatus.textContent =
+      `🎵 Intentando cargar audio: ${ruta}`;
 
 
-    previewProgressBar.style.width =
-      `${porcentaje}%`;
-
-  }
-);
-
-
-/* =========================================================
-   FORMATO TIEMPO
-========================================================= */
-
-function formatearTiempo(segundos){
-
-  if(
-    !segundos ||
-    !isFinite(segundos)
-  ){
-
-    return "—";
+    return true;
 
   }
 
 
-  const minutos =
-    Math.floor(segundos / 60);
-
-  const segundosRestantes =
-    Math.floor(segundos % 60)
-      .toString()
-      .padStart(2,"0");
-
-
-  return `${minutos}:${segundosRestantes}`;
-
-}
-
-
-/* =========================================================
-   CERRAR PREVIEW
-========================================================= */
-
-function cerrarPreview(){
-
-  try{
-
-    previewAudio.pause();
-
-  }catch(error){}
-
-
-  previewAudio.removeAttribute("src");
-
-  previewAudio.dataset.loadedUrl =
-    "";
-
-  previewAudio.load();
-
-
-  previewChapter =
-    null;
-
-
-  previewModal.style.display =
-    "none";
-
-
-  document.body.style.overflow =
-    "";
-
-}
-
-
-document
-  .getElementById("preview-close")
-  .addEventListener(
+  previewPlay.addEventListener(
     "click",
-    cerrarPreview
-  );
+    async () => {
+
+      if(!previewChapter){
+        return;
+      }
 
 
-previewModal.addEventListener(
-  "click",
-  event => {
-
-    if(
-      event.target ===
-      previewModal
-    ){
-
-      cerrarPreview();
-
-    }
-
-  }
-);
+      cerrarYoutube();
 
 
-document.addEventListener(
-  "keydown",
-  event => {
-
-    if(
-      event.key === "Escape" &&
-      previewModal.style.display === "block"
-    ){
-
-      cerrarPreview();
-
-    }
-
-  }
-);
+      const tieneAudio =
+        cargarAudioPreview();
 
 
-/* =========================================================
-   PREVIEW DEL FORMULARIO ACTUAL
-========================================================= */
+      if(!tieneAudio){
 
-document
-  .getElementById("preview-current-btn")
-  .addEventListener(
-    "click",
-    () => {
+        if(
+          previewChapter.youtubeId
+        ){
 
-      const numero =
-        Number(numeroInput.value);
+          abrirYoutube();
 
-
-      if(!numero){
-
-        mostrarToast(
-          "Indica primero el número del capítulo."
-        );
+        }
 
         return;
 
       }
 
 
-      const cap = {
+      try{
 
-        id:
-          editingId ||
-          `cap_${numero}`,
+        await previewAudio.play();
 
-        numero,
+      }catch(error){
 
-        titulo:
-          tituloInput.value.trim(),
-
-        fechaPublicacion:
-          fechaInput.value,
-
-        publicado:
-          publicadoInput.checked,
-
-        imagenes:
-          imagenesInput.value
-            .split("\n")
-            .map(x => x.trim())
-            .filter(Boolean),
-
-        audio:
-          audioInput.value.trim(),
-
-        youtubeId:
-          youtubeInput.value.trim(),
-
-        lineas:
-          lineasInput.value
-            .split("\n")
-            .map(x => x.trim())
-            .filter(Boolean)
-
-      };
+        console.error(
+          "Error reproduciendo audio:",
+          error
+        );
 
 
-      abrirPreview(cap);
+        previewAudioStatus.textContent =
+          "❌ El audio no pudo reproducirse. Puedes probar la opción YouTube.";
+
+
+        if(
+          previewChapter.youtubeId
+        ){
+
+          previewYoutube.classList.add(
+            "active"
+          );
+
+        }
+
+      }
 
     }
-);
+  );
 
 
-/* =========================================================
-   FECHA INICIAL
-========================================================= */
+  /* =====================================================
+     AUDIO EVENTS
+  ===================================================== */
 
-if(!fechaInput.value){
+  previewAudio.addEventListener(
+    "loadedmetadata",
+    () => {
 
-  fechaInput.value =
-    obtenerFechaCapitulo(1);
+      previewAudioStatus.textContent =
+        "🎵 Audio cargado. Listo para reproducir.";
 
-}
+    }
+  );
 
 
-/* =========================================================
-   LOG
-========================================================= */
+  previewAudio.addEventListener(
+    "canplay",
+    () => {
 
-console.log(
-  "BUILD 04B.1 — Admin iniciado."
-);
+      previewAudioStatus.textContent =
+        "🎵 Audio listo para reproducirse.";
 
-console.log(
-  "BUILD 04B.1 — Firebase importado desde ./js/firebase.js"
-);
+    }
+  );
 
-console.log(
-  "BUILD 04B.1 — Preview preparado para imagen y audio."
-);
+
+  previewAudio.addEventListener(
+    "play",
+    () => {
+
+      previewPlay.textContent =
+        "⏸ Audio";
+
+      previewPlay.classList.add(
+        "active"
+      );
+
+    }
+  );
+
+
+  previewAudio.addEventListener(
+    "pause",
+    () => {
+
+      previewPlay.textContent =
+        "▶ Audio";
+
+      previewPlay.classList.remove(
+        "active"
+      );
+
+    }
+  );
+
+
+  previewAudio.addEventListener(
+    "ended",
+    () => {
+
+      previewPlay.textContent =
+        "▶ Audio";
+
+      previewPlay.classList.remove(
+        "active"
+      );
+
+    }
+  );
+
+
+  previewAudio.addEventListener(
+    "timeupdate",
+    () => {
+
+      if(
+        !previewAudio.duration ||
+        !Number.isFinite(
+          previewAudio.duration
+        )
+      ){
+
+        previewProgressBar.style.width =
+          "0%";
+
+        return;
+
+      }
+
+
+      const porcentaje =
+        (
+          previewAudio.currentTime /
+          previewAudio.duration
+        ) * 100;
+
+
+      previewProgressBar.style.width =
+        `${porcentaje}%`;
+
+    }
+  );
+
+
+  previewAudio.addEventListener(
+    "error",
+    () => {
+
+      const error =
+        previewAudio.error;
+
+
+      let detalle =
+        "Error desconocido.";
+
+
+      if(error){
+
+        if(
+          error.code ===
+          MediaError.MEDIA_ERR_ABORTED
+        ){
+
+          detalle =
+            "La carga fue cancelada.";
+
+        }
+
+        if(
+          error.code ===
+          MediaError.MEDIA_ERR_NETWORK
+        ){
+
+          detalle =
+            "Error de red.";
+
+        }
+
+        if(
+          error.code ===
+          MediaError.MEDIA_ERR_DECODE
+        ){
+
+          detalle =
+            "El navegador no pudo decodificar el archivo.";
+
+        }
+
+        if(
+          error.code ===
+          MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED
+        ){
+
+          detalle =
+            "Formato o ruta de audio no compatible.";
+
+        }
+
+      }
+
+
+      console.error(
+        "BUILD 04B.2 — Error de audio:",
+        detalle,
+        previewAudio.src,
+        error
+      );
+
+
+      previewAudioStatus.innerHTML =
+        `
+          ❌ No se pudo reproducir el audio.<br>
+          ${detalle}<br>
+          ${
+            previewChapter &&
+            previewChapter.youtubeId
+              ? "Puedes probar <strong>YouTube</strong> como alternativa."
+              : "Este capítulo no tiene YouTube configurado."
+          }
+        `;
+
+    }
+  );
+
+
+  /* =====================================================
+     YOUTUBE
+  ===================================================== */
+
+  function obtenerYoutubeId(){
+
+    if(!previewChapter){
+      return "";
+    }
+
+
+    let id =
+      String(
+        previewChapter.youtubeId || ""
+      ).trim();
+
+
+    if(!id){
+      return "";
+    }
+
+
+    /*
+      Permite tanto:
+
+      a7FdUd6ysL0
+
+      como:
+
+      https://www.youtube.com/watch?v=a7FdUd6ysL0
+
+      como:
+
+      https://youtu.be/a7FdUd6ysL0
+    */
+
+    try{
+
+      if(
+        id.includes("youtube.com") ||
+        id.includes("youtu.be")
+      ){
+
+        const url =
+          new URL(id);
+
+
+        const videoParam =
+          url.searchParams.get(
+            "v"
+          );
+
+
+        if(videoParam){
+
+          id =
+            videoParam;
+
+        }else{
+
+          const partes =
+            url.pathname
+              .split("/")
+              .filter(Boolean);
+
+
+          if(partes.length){
+
+            id =
+              partes[partes.length - 1];
+
+          }
+
+        }
+
+      }
+
+    }catch(error){
+
+      /*
+        Si no es una URL completa,
+        se conserva como ID.
+      */
+
+    }
+
+
+    /*
+      Limpiar parámetros
+    */
+
+    id =
+      id
+        .replace(/^\/+/, "")
+        .split("?")[0]
+        .split("&")[0]
+        .trim();
+
+
+    return id;
+
+  }
+
+
+  function obtenerYoutubeEmbedUrl(){
+
+    const id =
+      obtenerYoutubeId();
+
+
+    if(!id){
+      return "";
+    }
+
+
+    return (
+      `https://www.youtube.com/embed/${encodeURIComponent(id)}` +
+      `?rel=0&modestbranding=1`
+    );
+
+  }
+
+
+  function obtenerYoutubeWatchUrl(){
+
+    const id =
+      obtenerYoutubeId();
+
+
+    if(!id){
+      return "";
+    }
+
+
+    return (
+      `https://www.youtube.com/watch?v=${encodeURIComponent(id)}`
+    );
+
+  }
+
+
+  function actualizarYoutubeControls(){
+
+    const id =
+      obtenerYoutubeId();
+
+
+    const disponible =
+      Boolean(id);
+
+
+    previewYoutube.disabled =
+      !disponible;
+
+
+    previewOpenYoutube.disabled =
+      !disponible;
+
+
+    if(!disponible){
+
+      previewYoutube.classList.remove(
+        "active"
+      );
+
+    }
+
+  }
+
+
+  function abrirYoutube(){
+
+    const embedUrl =
+      obtenerYoutubeEmbedUrl();
+
+
+    const watchUrl =
+      obtenerYoutubeWatchUrl();
+
+
+    if(!embedUrl){
+
+      previewAudioStatus.textContent =
+        "⚠️ No hay YouTube configurado para este capítulo.";
+
+      return;
+
+    }
+
+
+    try{
+
+      previewAudio.pause();
+
+    }catch(error){}
+
+
+    youtubeFrame.src =
+      embedUrl;
+
+
+    youtubeContainer.style.display =
+      "block";
+
+
+    previewYoutube.classList.add(
+      "active"
+    );
+
+
+    previewAudioStatus.innerHTML =
+      `
+        ▶️ YouTube cargado.<br>
+        Si el video no aparece, utiliza
+        <strong>↗ Abrir YouTube</strong>.
+      `;
+
+
+    previewOpenYoutube.dataset.url =
+      watchUrl;
+
+  }
+
+
+  function cerrarYoutube(){
+
+    youtubeContainer.style.display =
+      "none";
+
+
+    youtubeFrame.src =
+      "about:blank";
+
+
+    previewYoutube.classList.remove(
+      "active"
+    );
+
+  }
+
+
+  previewYoutube.addEventListener(
+    "click",
+    () => {
+
+      abrirYoutube();
+
+    }
+  );
+
+
+  youtubeClose.addEventListener(
+    "click",
+    () => {
+
+      cerrarYoutube();
+
+    }
+  );
+
+
+  previewOpenYoutube.addEventListener(
+    "click",
+    () => {
+
+      const url =
+        previewOpenYoutube.dataset.url;
+
+
+      if(!url){
+        return;
+      }
+
+
+      window.open(
+        url,
+        "_blank",
+        "noopener,noreferrer"
+      );
+
+    }
+  );
+
+
+  /* =====================================================
+     REINICIAR PREVIEW
+  ===================================================== */
+
+  previewRestart.addEventListener(
+    "click",
+    () => {
+
+      if(!previewChapter){
+        return;
+      }
+
+
+      previewLineIndex =
+        0;
+
+      previewImageIndex =
+        0;
+
+
+      detenerAudio();
+
+      cerrarYoutube();
+
+      renderPreview();
+
+    }
+  );
+
+
+  /* =====================================================
+     UTILIDAD
+  ===================================================== */
+
+  function escapeHtml(value){
+
+    return String(value)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+
+  }
 
 </script>
 
