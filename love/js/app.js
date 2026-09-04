@@ -1,17 +1,20 @@
 // ======================================================
-// BUILD 04E — LIBRO PÚBLICO
+// BUILD 04E.1 — LIBRO PÚBLICO
 // Desbloqueo por fecha + sincronización texto/audio
 // + cambio proporcional de imágenes
 // + transiciones visuales suaves
+// + INTRO CINEMATOGRÁFICA
 //
 // BASE ESTABLE:
-// BUILD 03 — Desbloqueo de capítulos por fecha
+// BUILD 04E
 //
 // NO SE MODIFICA:
 // - Firebase
 // - Fechas de publicación
 // - Orden de capítulos
 // - Sistema de capítulos disponibles
+// - Sincronización audio/texto
+// - Sistema de imágenes
 // ======================================================
 
 import { obtenerCapitulosPublicados } from "./firebase.js";
@@ -21,10 +24,6 @@ let chapterIndex = 0;
 let lineIndex = 0;
 let imageIndex = 0;
 let playing = false;
-
-// ======================================================
-// BUILD 04E — VARIABLES DE SINCRONIZACIÓN
-// ======================================================
 
 let syncTimes = [];
 let syncReady = false;
@@ -74,21 +73,6 @@ async function cargarCapitulos() {
 
     const hoy = obtenerFechaHoy();
 
-    /*
-      BUILD 03
-
-      Solo dejamos disponibles los capítulos cuya
-      fecha de publicación ya llegó.
-
-      Ejemplo:
-
-      hoy = 2026-09-07
-
-      Cap. 1 → 2026-09-06 → disponible
-      Cap. 2 → 2026-09-07 → disponible
-      Cap. 3 → 2026-09-08 → bloqueado
-    */
-
     chapters =
       todosLosCapitulos
         .filter(cap => {
@@ -126,10 +110,6 @@ async function cargarCapitulos() {
     );
 
 
-    // --------------------------------------------------
-    // NO HAY CAPÍTULOS DISPONIBLES
-    // --------------------------------------------------
-
     if (!chapters.length) {
 
       mostrarHistoriaAunNoDisponible();
@@ -138,10 +118,6 @@ async function cargarCapitulos() {
 
     }
 
-
-    // --------------------------------------------------
-    // INICIALIZAR
-    // --------------------------------------------------
 
     chapterIndex = 0;
     lineIndex = 0;
@@ -200,7 +176,7 @@ function mostrarHistoriaAunNoDisponible() {
 
 // ======================================================
 // BUILD 04E
-// PREPARAR AUDIO DEL CAPÍTULO
+// PREPARAR AUDIO
 // ======================================================
 
 function prepararAudioCapitulo() {
@@ -220,7 +196,6 @@ function prepararAudioCapitulo() {
   ocultarFallbackYouTube();
 
   audio.pause();
-
   audio.currentTime = 0;
 
   if (!c || !c.audio) {
@@ -235,7 +210,6 @@ function prepararAudioCapitulo() {
   }
 
   audio.src = c.audio;
-
   audio.load();
 
   actualizarBotonAudio();
@@ -244,13 +218,7 @@ function prepararAudioCapitulo() {
 
 
 // ======================================================
-// BUILD 04E
 // CONSTRUIR SINCRONIZACIÓN
-//
-// Cada línea recibe una parte de la duración total
-// proporcional a su longitud.
-//
-// Las líneas cortas no desaparecen demasiado rápido.
 // ======================================================
 
 function construirSincronizacion() {
@@ -282,16 +250,12 @@ function construirSincronizacion() {
 
   }
 
-
   const pesos =
     lineas.map(linea => {
 
       const texto =
-        String(linea || "")
-          .trim();
+        String(linea || "").trim();
 
-      // Peso mínimo para que incluso una línea
-      // muy corta tenga tiempo visible.
       return Math.max(
         texto.length,
         12
@@ -299,14 +263,12 @@ function construirSincronizacion() {
 
     });
 
-
   const pesoTotal =
     pesos.reduce(
       (total, peso) =>
         total + peso,
       0
     );
-
 
   let acumulado = 0;
 
@@ -327,9 +289,6 @@ function construirSincronizacion() {
 
     });
 
-
-  // Garantizamos que la última línea termine
-  // exactamente con el audio.
   if (syncTimes.length) {
 
     syncTimes[
@@ -337,7 +296,6 @@ function construirSincronizacion() {
     ].fin = duration;
 
   }
-
 
   syncReady = true;
 
@@ -350,8 +308,7 @@ function construirSincronizacion() {
 
 
 // ======================================================
-// BUILD 04E
-// OBTENER LÍNEA SEGÚN TIEMPO DEL AUDIO
+// OBTENER LÍNEA SEGÚN AUDIO
 // ======================================================
 
 function obtenerLineaPorTiempo(currentTime) {
@@ -377,22 +334,13 @@ function obtenerLineaPorTiempo(currentTime) {
 
   }
 
-
-  // Si estamos exactamente al final,
-  // mostramos la última línea.
-
   return syncTimes.length - 1;
 
 }
 
 
 // ======================================================
-// BUILD 04E
-// IMAGEN CORRESPONDIENTE A UNA LÍNEA
-//
-// Distribuye las imágenes a lo largo del texto.
-// Si hay una sola imagen, permanece durante todo
-// el capítulo.
+// IMAGEN PROPORCIONAL
 // ======================================================
 
 function obtenerImagenParaLinea(
@@ -410,7 +358,6 @@ function obtenerImagenParaLinea(
 
   }
 
-
   if (
     cantidadImagenes === 1 ||
     cantidadLineas <= 1
@@ -420,14 +367,12 @@ function obtenerImagenParaLinea(
 
   }
 
-
   const proporcion =
     lineaActual /
     Math.max(
       cantidadLineas - 1,
       1
     );
-
 
   return Math.min(
     Math.floor(
@@ -441,7 +386,6 @@ function obtenerImagenParaLinea(
 
 
 // ======================================================
-// BUILD 04E
 // TRANSICIÓN VISUAL
 // ======================================================
 
@@ -455,14 +399,11 @@ function aplicarTransicion(elemento, callback) {
 
   }
 
-
-  // Respeta usuarios que prefieren menos movimiento.
   const reducirMovimiento =
     window.matchMedia &&
     window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
-
 
   if (reducirMovimiento) {
 
@@ -472,27 +413,28 @@ function aplicarTransicion(elemento, callback) {
 
   }
 
-
   elemento.style.transition =
     "opacity .45s ease, transform .45s ease, filter .45s ease";
 
   elemento.style.opacity = "0";
+
   elemento.style.transform =
     "translateY(8px)";
+
   elemento.style.filter =
     "blur(2px)";
-
 
   setTimeout(() => {
 
     callback();
 
-
     requestAnimationFrame(() => {
 
       elemento.style.opacity = "1";
+
       elemento.style.transform =
         "translateY(0)";
+
       elemento.style.filter =
         "blur(0)";
 
@@ -504,8 +446,7 @@ function aplicarTransicion(elemento, callback) {
 
 
 // ======================================================
-// BUILD 04E
-// CAMBIAR LÍNEA SIN ANIMAR CUANDO NO ES NECESARIO
+// ACTUALIZAR LÍNEA DESDE AUDIO
 // ======================================================
 
 function actualizarLineaDesdeAudio(
@@ -522,7 +463,6 @@ function actualizarLineaDesdeAudio(
       ? c.lineas
       : [];
 
-
   if (
     nuevaLinea < 0 ||
     nuevaLinea >= lineas.length
@@ -531,7 +471,6 @@ function actualizarLineaDesdeAudio(
     return;
 
   }
-
 
   if (
     nuevaLinea === lineIndex &&
@@ -542,19 +481,15 @@ function actualizarLineaDesdeAudio(
 
   }
 
-
   const imagenes =
     Array.isArray(c.imagenes)
       ? c.imagenes
       : [];
 
-
   const anteriorLinea =
     lineIndex;
 
-
   lineIndex = nuevaLinea;
-
 
   const nuevaImagen =
     obtenerImagenParaLinea(
@@ -563,10 +498,8 @@ function actualizarLineaDesdeAudio(
       imagenes.length
     );
 
-
   const cambioImagen =
     nuevaImagen !== imageIndex;
-
 
   const aplicarContenido = () => {
 
@@ -575,7 +508,6 @@ function actualizarLineaDesdeAudio(
 
     $("nextLine").textContent =
       lineas[lineIndex + 1] || "";
-
 
     if (imagenes.length) {
 
@@ -592,14 +524,9 @@ function actualizarLineaDesdeAudio(
 
     }
 
-
     actualizarIndicadores();
 
   };
-
-
-  // Si solamente cambia el texto, hacemos
-  // transición en el texto.
 
   if (!cambioImagen) {
 
@@ -610,16 +537,12 @@ function actualizarLineaDesdeAudio(
 
   } else {
 
-    // Para cambio de imagen y texto,
-    // animamos la escena completa.
-
     aplicarTransicion(
       scene,
       aplicarContenido
     );
 
   }
-
 
   if (
     anteriorLinea !== lineIndex
@@ -637,7 +560,6 @@ function actualizarLineaDesdeAudio(
 
 
 // ======================================================
-// BUILD 04E
 // ACTUALIZAR INDICADORES
 // ======================================================
 
@@ -648,47 +570,32 @@ function actualizarIndicadores() {
 
   if (!c) return;
 
-
   const lineas =
     Array.isArray(c.lineas)
       ? c.lineas
       : [];
 
-
-  const imagenes =
-    Array.isArray(c.imagenes)
-      ? c.imagenes
-      : [];
-
-
   $("chapterNumber").textContent =
     `CAPÍTULO ${String(c.numero).padStart(2, "0")}`;
-
 
   $("chapterTitle").textContent =
     c.titulo || "";
 
-
   $("chapterCount").textContent =
     `${String(c.numero).padStart(2, "0")} / ${TOTAL_CAPITULOS}`;
 
-
   $("progress").style.width =
     `${(Number(c.numero) / TOTAL_CAPITULOS) * 100}%`;
-
 
   $("prev").disabled =
     chapterIndex === 0 &&
     lineIndex === 0;
 
-
   const esUltimaLinea =
     lineIndex === lineas.length - 1;
 
-
   const esUltimoCapitulo =
     chapterIndex === chapters.length - 1;
-
 
   $("next").disabled = false;
 
@@ -699,7 +606,6 @@ function actualizarIndicadores() {
     )
       ? "✓"
       : "→";
-
 
   $("dots").innerHTML =
     lineas
@@ -729,22 +635,15 @@ function render() {
 
   }
 
-
   const lineas =
     Array.isArray(c.lineas)
       ? c.lineas
       : [];
 
-
   const imagenes =
     Array.isArray(c.imagenes)
       ? c.imagenes
       : [];
-
-
-  // --------------------------------------------------
-  // SEGURIDAD DE ÍNDICES
-  // --------------------------------------------------
 
   if (lineIndex < 0) {
     lineIndex = 0;
@@ -760,7 +659,6 @@ function render() {
 
   }
 
-
   imageIndex =
     obtenerImagenParaLinea(
       lineIndex,
@@ -768,48 +666,23 @@ function render() {
       imagenes.length
     );
 
-
-  // --------------------------------------------------
-  // INFORMACIÓN DEL CAPÍTULO
-  // --------------------------------------------------
-
   $("chapterNumber").textContent =
     `CAPÍTULO ${String(c.numero).padStart(2, "0")}`;
 
   $("chapterTitle").textContent =
     c.titulo || "";
 
-
-  // --------------------------------------------------
-  // CONTADOR
-  // --------------------------------------------------
-
   $("chapterCount").textContent =
     `${String(c.numero).padStart(2, "0")} / ${TOTAL_CAPITULOS}`;
 
-
-  // --------------------------------------------------
-  // PROGRESO
-  // --------------------------------------------------
-
   $("progress").style.width =
     `${(Number(c.numero) / TOTAL_CAPITULOS) * 100}%`;
-
-
-  // --------------------------------------------------
-  // TEXTO
-  // --------------------------------------------------
 
   $("line").textContent =
     lineas[lineIndex] || "";
 
   $("nextLine").textContent =
     lineas[lineIndex + 1] || "";
-
-
-  // --------------------------------------------------
-  // IMAGEN
-  // --------------------------------------------------
 
   if (imagenes.length) {
 
@@ -823,26 +696,15 @@ function render() {
 
   }
 
-
-  // --------------------------------------------------
-  // BOTÓN ANTERIOR
-  // --------------------------------------------------
-
   $("prev").disabled =
     chapterIndex === 0 &&
     lineIndex === 0;
-
-
-  // --------------------------------------------------
-  // BOTÓN SIGUIENTE
-  // --------------------------------------------------
 
   const esUltimaLinea =
     lineIndex === lineas.length - 1;
 
   const esUltimoCapitulo =
     chapterIndex === chapters.length - 1;
-
 
   $("next").disabled = false;
 
@@ -854,11 +716,6 @@ function render() {
       ? "✓"
       : "→";
 
-
-  // --------------------------------------------------
-  // PUNTOS
-  // --------------------------------------------------
-
   $("dots").innerHTML =
     lineas
       .map(
@@ -866,11 +723,6 @@ function render() {
           `<i class="${i === lineIndex ? "active" : ""}"></i>`
       )
       .join("");
-
-
-  // --------------------------------------------------
-  // ANIMACIÓN EXISTENTE
-  // --------------------------------------------------
 
   scene.classList.remove("active");
 
@@ -891,22 +743,16 @@ function next() {
 
   if (!c) return;
 
-
   const lineas =
     Array.isArray(c.lineas)
       ? c.lineas
       : [];
-
 
   if (lineIndex < lineas.length - 1) {
 
     lineIndex++;
 
     render();
-
-
-    // Si el audio está preparado, llevamos
-    // el audio al comienzo de esta línea.
 
     if (
       syncReady &&
@@ -919,8 +765,6 @@ function next() {
     }
 
   } else {
-
-    // Pasar al siguiente capítulo
 
     if (
       chapterIndex <
@@ -940,8 +784,6 @@ function next() {
     } else {
 
       detenerAudio();
-
-      // Llegamos al último capítulo disponible
 
       reader.classList.add("hidden");
       ending.classList.remove("hidden");
@@ -965,19 +807,16 @@ function prev() {
 
   if (!c) return;
 
-
   const lineas =
     Array.isArray(c.lineas)
       ? c.lineas
       : [];
-
 
   if (lineIndex > 0) {
 
     lineIndex--;
 
     render();
-
 
     if (
       syncReady &&
@@ -1003,7 +842,6 @@ function prev() {
         ? previousChapter.lineas
         : [];
 
-
     lineIndex =
       Math.max(
         previousLines.length - 1,
@@ -1022,18 +860,197 @@ function prev() {
 
 
 // ======================================================
-// ABRIR LIBRO
+// BUILD 04E.1
+// INTRO
 // ======================================================
 
-async function openBook() {
+async function mostrarIntro() {
+
+  const intro =
+    $("storyIntro");
+
+  if (!intro) {
+
+    await cargarCapitulos();
+
+    return;
+
+  }
+
+  const countdown =
+    $("introCountdown");
+
+  const countdownNumber =
+    $("countdownNumber");
+
+  const introStart =
+    $("introStart");
+
+
+  // --------------------------------------------------
+  // OCULTAR LIBRO MIENTRAS DURA LA INTRO
+  // --------------------------------------------------
+
+  reader.classList.add("hidden");
+
+  ending.classList.add("hidden");
 
   cover.classList.add("hidden");
+
+
+  // --------------------------------------------------
+  // MOSTRAR INTRO
+  // --------------------------------------------------
+
+  intro.classList.remove("hidden");
+
+  intro.classList.remove("fade-out");
+
+
+  // --------------------------------------------------
+  // ESTADO INICIAL
+  // --------------------------------------------------
+
+  if (countdown) {
+    countdown.classList.add("hidden");
+  }
+
+  if (introStart) {
+    introStart.classList.add("hidden");
+  }
+
+  if (countdownNumber) {
+    countdownNumber.textContent = "3";
+  }
+
+
+  // --------------------------------------------------
+  // DEJAR RESPIRAR LA ESCENA
+  // --------------------------------------------------
+
+  await esperar(2800);
+
+
+  // --------------------------------------------------
+  // CONTADOR 3
+  // --------------------------------------------------
+
+  if (countdown) {
+    countdown.classList.remove("hidden");
+  }
+
+  if (countdownNumber) {
+    countdownNumber.textContent = "3";
+  }
+
+  await esperar(1000);
+
+
+  // --------------------------------------------------
+  // CONTADOR 2
+  // --------------------------------------------------
+
+  if (countdownNumber) {
+
+    countdownNumber.textContent = "2";
+
+    reiniciarAnimacion(
+      countdownNumber,
+      "countdownPulse .9s ease both"
+    );
+
+  }
+
+  await esperar(1000);
+
+
+  // --------------------------------------------------
+  // CONTADOR 1
+  // --------------------------------------------------
+
+  if (countdownNumber) {
+
+    countdownNumber.textContent = "1";
+
+    reiniciarAnimacion(
+      countdownNumber,
+      "countdownPulse .9s ease both"
+    );
+
+  }
+
+  await esperar(1000);
+
+
+  // --------------------------------------------------
+  // FRASE FINAL
+  // --------------------------------------------------
+
+  if (countdown) {
+    countdown.classList.add("hidden");
+  }
+
+  if (introStart) {
+    introStart.classList.remove("hidden");
+  }
+
+
+  await esperar(1800);
+
+
+  // --------------------------------------------------
+  // SALIDA
+  // --------------------------------------------------
+
+  intro.classList.add("fade-out");
+
+  await esperar(1400);
+
+  intro.classList.add("hidden");
+  intro.classList.remove("fade-out");
+
+
+  // --------------------------------------------------
+  // ENTRAR AL LIBRO
+  // --------------------------------------------------
 
   reader.classList.remove("hidden");
 
   await cargarCapitulos();
 
   window.scrollTo(0, 0);
+
+}
+
+
+// ======================================================
+// ESPERA
+// ======================================================
+
+function esperar(ms) {
+
+  return new Promise(
+    resolve =>
+      setTimeout(resolve, ms)
+  );
+
+}
+
+
+// ======================================================
+// REINICIAR ANIMACIÓN
+// ======================================================
+
+function reiniciarAnimacion(
+  elemento,
+  animacion
+) {
+
+  elemento.style.animation = "none";
+
+  void elemento.offsetWidth;
+
+  elemento.style.animation = animacion;
 
 }
 
@@ -1049,6 +1066,8 @@ function back() {
   reader.classList.add("hidden");
 
   ending.classList.add("hidden");
+
+  $("storyIntro")?.classList.add("hidden");
 
   cover.classList.remove("hidden");
 
@@ -1098,7 +1117,7 @@ function detenerAudio() {
 
 
 // ======================================================
-// BOTÓN DE AUDIO
+// BOTÓN AUDIO
 // ======================================================
 
 function actualizarBotonAudio() {
@@ -1108,10 +1127,8 @@ function actualizarBotonAudio() {
 
   if (!boton) return;
 
-
   const c =
     chapters[chapterIndex];
-
 
   if (!c || !c.audio) {
 
@@ -1124,7 +1141,6 @@ function actualizarBotonAudio() {
 
   }
 
-
   if (audioError) {
 
     boton.textContent = "♪";
@@ -1136,17 +1152,14 @@ function actualizarBotonAudio() {
 
   }
 
-
   if (playing) {
 
     boton.textContent = "Ⅱ";
-
     boton.title = "Pausar audio";
 
   } else {
 
     boton.textContent = "♪";
-
     boton.title = "Reproducir audio";
 
   }
@@ -1155,7 +1168,6 @@ function actualizarBotonAudio() {
 
 
 // ======================================================
-// BUILD 04E
 // AUDIO → TEXTO
 // ======================================================
 
@@ -1173,12 +1185,10 @@ function manejarTiempoAudio() {
 
   }
 
-
   const nuevaLinea =
     obtenerLineaPorTiempo(
       audio.currentTime
     );
-
 
   if (
     nuevaLinea >= 0 &&
@@ -1195,7 +1205,7 @@ function manejarTiempoAudio() {
 
 
 // ======================================================
-// AUDIO: METADATOS CARGADOS
+// EVENTOS AUDIO
 // ======================================================
 
 if (audio) {
@@ -1218,19 +1228,11 @@ if (audio) {
   );
 
 
-  // ====================================================
-  // AUDIO: CAMBIO DE TIEMPO
-  // ====================================================
-
   audio.addEventListener(
     "timeupdate",
     manejarTiempoAudio
   );
 
-
-  // ====================================================
-  // AUDIO: PLAY
-  // ====================================================
 
   audio.addEventListener(
     "play",
@@ -1244,10 +1246,6 @@ if (audio) {
   );
 
 
-  // ====================================================
-  // AUDIO: PAUSE
-  // ====================================================
-
   audio.addEventListener(
     "pause",
     () => {
@@ -1259,10 +1257,6 @@ if (audio) {
     }
   );
 
-
-  // ====================================================
-  // AUDIO: FIN
-  // ====================================================
 
   audio.addEventListener(
     "ended",
@@ -1280,7 +1274,6 @@ if (audio) {
             ? c.lineas
             : [];
 
-
         if (lineas.length) {
 
           actualizarLineaDesdeAudio(
@@ -1292,16 +1285,11 @@ if (audio) {
 
       }
 
-
       actualizarBotonAudio();
 
     }
   );
 
-
-  // ====================================================
-  // AUDIO: ERROR
-  // ====================================================
 
   audio.addEventListener(
     "error",
@@ -1326,18 +1314,13 @@ if (audio) {
 
 
 // ======================================================
-// BUILD 04E
 // YOUTUBE FALLBACK
-//
-// Si el audio falla y el capítulo tiene youtubeId,
-// aparece una opción alternativa.
 // ======================================================
 
 function mostrarFallbackYouTube() {
 
   const c =
     chapters[chapterIndex];
-
 
   if (
     !c ||
@@ -1348,7 +1331,6 @@ function mostrarFallbackYouTube() {
 
   }
 
-
   if (youtubeFallbackButton) {
 
     youtubeFallbackButton.style.display =
@@ -1358,41 +1340,31 @@ function mostrarFallbackYouTube() {
 
   }
 
-
   const soundBtn =
     $("soundBtn");
 
-
   if (!soundBtn) return;
-
 
   youtubeFallbackButton =
     document.createElement("button");
 
-
   youtubeFallbackButton.type =
     "button";
-
 
   youtubeFallbackButton.textContent =
     "▶ YouTube";
 
-
   youtubeFallbackButton.title =
     "Escuchar este capítulo en YouTube";
-
 
   youtubeFallbackButton.style.marginLeft =
     "8px";
 
-
   youtubeFallbackButton.style.cursor =
     "pointer";
 
-
   youtubeFallbackButton.onclick =
     abrirYouTubeFallback;
-
 
   soundBtn.parentNode.insertBefore(
     youtubeFallbackButton,
@@ -1403,7 +1375,7 @@ function mostrarFallbackYouTube() {
 
 
 // ======================================================
-// OCULTAR YOUTUBE FALLBACK
+// OCULTAR YOUTUBE
 // ======================================================
 
 function ocultarFallbackYouTube() {
@@ -1427,7 +1399,6 @@ function abrirYouTubeFallback() {
   const c =
     chapters[chapterIndex];
 
-
   if (
     !c ||
     !c.youtubeId
@@ -1437,10 +1408,8 @@ function abrirYouTubeFallback() {
 
   }
 
-
   const url =
     `https://www.youtube.com/watch?v=${encodeURIComponent(c.youtubeId)}`;
-
 
   window.open(
     url,
@@ -1452,14 +1421,13 @@ function abrirYouTubeFallback() {
 
 
 // ======================================================
-// EVENTO BOTÓN AUDIO
+// BOTÓN AUDIO
 // ======================================================
 
 $("soundBtn").onclick = () => {
 
   const c =
     chapters[chapterIndex];
-
 
   if (!c || !c.audio) {
 
@@ -1472,11 +1440,6 @@ $("soundBtn").onclick = () => {
 
   }
 
-
-  // --------------------------------------------------
-  // SI EL AUDIO CAMBIÓ DE CAPÍTULO
-  // --------------------------------------------------
-
   if (
     audioChapterIndex !== chapterIndex
   ) {
@@ -1484,11 +1447,6 @@ $("soundBtn").onclick = () => {
     prepararAudioCapitulo();
 
   }
-
-
-  // --------------------------------------------------
-  // PAUSAR
-  // --------------------------------------------------
 
   if (playing) {
 
@@ -1502,11 +1460,6 @@ $("soundBtn").onclick = () => {
 
   }
 
-
-  // --------------------------------------------------
-  // CONSTRUIR SINCRONIZACIÓN SI YA TENEMOS DURACIÓN
-  // --------------------------------------------------
-
   if (
     !syncReady &&
     Number.isFinite(audio.duration) &&
@@ -1517,11 +1470,6 @@ $("soundBtn").onclick = () => {
 
   }
 
-
-  // --------------------------------------------------
-  // REPRODUCIR
-  // --------------------------------------------------
-
   audio.play()
     .then(() => {
 
@@ -1530,9 +1478,6 @@ $("soundBtn").onclick = () => {
       audioError = false;
 
       actualizarBotonAudio();
-
-      // Ocultamos fallback mientras el audio
-      // local funciona correctamente.
 
       ocultarFallbackYouTube();
 
@@ -1562,20 +1507,16 @@ $("soundBtn").onclick = () => {
 // ======================================================
 
 $("openBook").onclick =
-  openBook;
-
+  mostrarIntro;
 
 $("next").onclick =
   next;
 
-
 $("prev").onclick =
   prev;
 
-
 $("backCover").onclick =
   back;
-
 
 $("restart").onclick =
   restart;
@@ -1597,7 +1538,6 @@ document.addEventListener(
 
     }
 
-
     if (
       e.key === "ArrowRight" ||
       e.key === " "
@@ -1606,29 +1546,21 @@ document.addEventListener(
       e.preventDefault();
 
       if (!$("next").disabled) {
-
         next();
-
       }
 
     }
-
 
     if (e.key === "ArrowLeft") {
 
       if (!$("prev").disabled) {
-
         prev();
-
       }
 
     }
 
-
     if (e.key === "Escape") {
-
       back();
-
     }
 
   }
@@ -1636,5 +1568,5 @@ document.addEventListener(
 
 
 // ======================================================
-// FIN BUILD 04E
+// FIN BUILD 04E.1
 // ======================================================
