@@ -28,3 +28,378 @@ h1{font:500 clamp(52px,9vw,104px)/.88 "Playfair Display",serif;margin:0;letter-s
 .ending{background:radial-gradient(circle at 50% 45%,#38272a 0,#171012 48%,#0c0809 100%);text-align:center}.ending>div:not(.grain){position:relative}.ending h2{font:500 clamp(38px,6vw,72px)/.95 "Playfair Display",serif;margin:0 0 24px}.ending>p:not(.eyebrow){color:#cfc0b9;font-size:20px;max-width:560px;line-height:1.35;margin:0 auto 34px}
 @keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}@keyframes lineIn{to{opacity:1;transform:none}}
 @media(max-width:650px){.topbar{padding:0 17px;grid-template-columns:1fr auto auto;gap:14px}.progress-wrap{display:none}.chapter-meta{left:7vw;top:14vh}.letter{left:7vw;top:36vh;width:84vw}.scene-overlay{background:linear-gradient(90deg,rgba(12,7,8,.86),rgba(12,7,8,.35))}.controls{left:7vw;bottom:7vh}.back-cover{right:16px;bottom:20px}.cover-copy{font-size:18px}}
+/* ======================================================
+   BUILD 04E.1 — INTRO CORREGIDA
+   ====================================================== */
+
+/*
+   IMPORTANTE:
+   La intro NO debe existir visualmente mientras la portada
+   está activa.
+*/
+
+.story-intro.hidden{
+  display:none !important;
+}
+
+.story-intro{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100svh;
+  z-index:1000;
+  overflow:hidden;
+  background:#120d0f;
+  display:grid;
+  place-items:center;
+  isolation:isolate;
+}
+
+/* ======================================================
+   IMAGEN
+   ====================================================== */
+
+.intro-image{
+  position:absolute;
+  inset:0;
+  z-index:-3;
+
+  background-image:url("../assets/imagenes/intro-caminos-we.png");
+  background-size:cover;
+  background-position:center;
+
+  transform:scale(1.04);
+
+  animation:introImageIn 2.2s ease both;
+}
+
+/* ======================================================
+   VELO
+   ====================================================== */
+
+.intro-overlay{
+  position:absolute;
+  inset:0;
+  z-index:-2;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(10,6,7,.62) 0%,
+      rgba(10,6,7,.28) 35%,
+      rgba(10,6,7,.30) 65%,
+      rgba(10,6,7,.68) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(8,5,6,.58) 0%,
+      rgba(8,5,6,.08) 35%,
+      rgba(8,5,6,.62) 100%
+    );
+}
+
+/* ======================================================
+   VIÑETA
+   ====================================================== */
+
+.intro-vignette{
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+
+  background:
+    radial-gradient(
+      circle at 50% 45%,
+      transparent 20%,
+      rgba(0,0,0,.12) 52%,
+      rgba(0,0,0,.72) 100%
+    );
+}
+
+/* ======================================================
+   CONTENIDO
+   ====================================================== */
+
+.intro-content{
+  position:relative;
+  width:min(850px,90vw);
+  padding:30px;
+  text-align:center;
+
+  animation:introContentIn 1.5s .2s ease both;
+}
+
+.intro-opening{
+  margin:0;
+
+  color:#f4eee7;
+
+  font:
+    400 clamp(25px,3.5vw,43px)/1.15
+    "Cormorant Garamond",serif;
+
+  text-shadow:
+    0 3px 25px rgba(0,0,0,.9);
+}
+
+.intro-opening span{
+  color:#d9ccc3;
+  font-size:.78em;
+}
+
+/* ======================================================
+   DIVISOR
+   ====================================================== */
+
+.intro-divider{
+  position:relative;
+
+  width:150px;
+  height:1px;
+
+  margin:30px auto 27px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(214,170,145,.9),
+      transparent
+    );
+}
+
+.intro-divider::after{
+  content:"";
+
+  position:absolute;
+
+  width:7px;
+  height:7px;
+
+  left:50%;
+  top:50%;
+
+  border-radius:50%;
+
+  transform:translate(-50%,-50%);
+
+  background:var(--accent);
+
+  box-shadow:
+    0 0 16px rgba(214,170,145,.55);
+}
+
+/* ======================================================
+   TÍTULO
+   ====================================================== */
+
+.intro-content h2{
+  margin:0;
+
+  color:#f7eee5;
+
+  font:
+    500 clamp(38px,5.8vw,70px)/.95
+    "Playfair Display",serif;
+
+  letter-spacing:-.025em;
+
+  text-shadow:
+    0 4px 30px rgba(0,0,0,.9);
+}
+
+.intro-sub{
+  margin:14px 0 0;
+
+  color:#dfb58e;
+
+  font:
+    italic 400 clamp(25px,3.5vw,42px)/1
+    "Playfair Display",serif;
+
+  text-shadow:
+    0 3px 22px rgba(0,0,0,.9);
+}
+
+/* ======================================================
+   CONTADOR
+   ====================================================== */
+
+.intro-countdown{
+  margin-top:42px;
+
+  width:100%;
+  height:80px;
+
+  display:grid;
+  place-items:center;
+}
+
+.intro-countdown span{
+  display:block;
+
+  color:#f4eee7;
+
+  font:
+    300 64px/1
+    "Cormorant Garamond",serif;
+
+  text-shadow:
+    0 0 20px rgba(255,255,255,.15),
+    0 4px 25px rgba(0,0,0,.9);
+
+  animation:
+    countdownPulse .9s ease both;
+}
+
+/* ======================================================
+   FRASE FINAL
+   ====================================================== */
+
+.intro-start{
+  margin:48px 0 0;
+
+  color:#f4eee7;
+
+  font:
+    italic 400 clamp(27px,4vw,44px)/1
+    "Playfair Display",serif;
+
+  text-shadow:
+    0 3px 25px rgba(0,0,0,.9);
+
+  animation:
+    introStartIn 1.3s ease both;
+}
+
+/* ======================================================
+   SALIDA
+   ====================================================== */
+
+.story-intro.fade-out{
+  animation:
+    introFadeOut 1.35s ease forwards;
+}
+
+/* ======================================================
+   ANIMACIONES
+   ====================================================== */
+
+@keyframes introImageIn{
+
+  from{
+    opacity:0;
+    transform:scale(1.10);
+  }
+
+  to{
+    opacity:1;
+    transform:scale(1.04);
+  }
+
+}
+
+@keyframes introContentIn{
+
+  from{
+    opacity:0;
+    transform:translateY(22px);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+
+}
+
+@keyframes countdownPulse{
+
+  0%{
+    opacity:0;
+    transform:scale(.65);
+  }
+
+  45%{
+    opacity:1;
+    transform:scale(1.12);
+  }
+
+  100%{
+    opacity:1;
+    transform:scale(1);
+  }
+
+}
+
+@keyframes introStartIn{
+
+  from{
+    opacity:0;
+    transform:translateY(14px);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+
+}
+
+@keyframes introFadeOut{
+
+  from{
+    opacity:1;
+  }
+
+  to{
+    opacity:0;
+  }
+
+}
+
+/* ======================================================
+   CELULAR
+   ====================================================== */
+
+@media(max-width:650px){
+
+  .intro-content{
+    width:94vw;
+    padding:20px;
+  }
+
+  .intro-opening{
+    font-size:27px;
+  }
+
+  .intro-content h2{
+    font-size:42px;
+  }
+
+  .intro-sub{
+    font-size:27px;
+  }
+
+  .intro-image{
+    background-position:center;
+  }
+
+}
+
+/* ======================================================
+   ACCESIBILIDAD
+   ====================================================== */
+
+@media(prefers-reduced-motion:reduce){
+
+  .intro-image,
+  .intro-content,
+  .intro-countdown span,
+  .intro-start,
+  .story-intro.fade-out{
+    animation:none!important;
+  }
+
+}
