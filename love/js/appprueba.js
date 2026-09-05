@@ -1,11 +1,6 @@
 // ======================================================
-// BUILD 04E.1 — LIBRO PÚBLICO (LIMPIO Y CORREGIDO)
-// Desbloqueo por fecha + sincronización texto/audio
-// + cambio proporcional de imágenes
-// + transiciones visuales suaves
-// + INTRO CINEMATOGRÁFICA
+// BUILD 04E.1 — LIBRO PÚBLICO (VERSIÓN DE PRUEBA Y DEPURACIÓN)
 // ======================================================
-
 import { obtenerCapitulosPublicados } from "./firebase.js";
 
 let chapters = [];
@@ -18,11 +13,14 @@ let syncTimes = [];
 let syncReady = false;
 let syncChapterIndex = -1;
 let audioChapterIndex = -1;
-
 let audioError = false;
 let youtubeFallbackButton = null;
 
 const TOTAL_CAPITULOS = 31;
+
+// 🚨 MODO PRUEBA: Pon esto en TRUE para ignorar las fechas y ver los capítulos YA.
+// Cuando confirmes que el audio y los botones funcionan, cámbialo a FALSE.
+const MODO_PRUEBA = true; 
 
 const $ = id => document.getElementById(id);
 
@@ -31,7 +29,6 @@ const reader = $("reader");
 const ending = $("ending");
 const scene = $("scene");
 const audio = $("audio");
-
 
 // ======================================================
 // FECHA ACTUAL
@@ -44,34 +41,42 @@ function obtenerFechaHoy() {
   return `${year}-${month}-${day}`;
 }
 
-
 // ======================================================
-// CARGAR CAPÍTULOS
+// CARGAR CAPÍTULOS (CON DEPURACIÓN)
 // ======================================================
 async function cargarCapitulos() {
   try {
     const todosLosCapitulos = await obtenerCapitulosPublicados();
-
-    console.log("BUILD 05C — Capítulos recibidos:", todosLosCapitulos);
-
-    // ==================================================
-    // MODO PRUEBA: Sin restricción de fecha (solo publicado === true)
-    // Para activar el bloqueo por fecha real, descomenta la línea del filtro.
-    // ==================================================
     const hoy = obtenerFechaHoy();
-    
-    chapters = todosLosCapitulos
-      .filter(cap => {
-        if (cap.publicado !== true) return false;
-        // Descomenta la siguiente línea para activar el bloqueo por fecha:
-        // if (cap.fechaPublicacion > hoy) return false;
-        return true;
-      })
-      .sort((a, b) => Number(a.numero) - Number(b.numero));
 
-    console.log("BUILD 03 — Capítulos disponibles:", chapters);
+    console.log("📅 Fecha de hoy:", hoy);
+    console.log("📚 Capítulos crudos de Firebase:", todosLosCapitulos);
+
+    chapters = todosLosCapitulos.filter(cap => {
+      if (MODO_PRUEBA) {
+        console.log(`✅ Capítulo ${cap.numero} forzado a visible (MODO PRUEBA)`);
+        return true; 
+      }
+      
+      if (cap.publicado !== true) {
+        console.log(`⏸️ Capítulo ${cap.numero} omitido: publicado !== true`);
+        return false;
+      }
+      if (!cap.fechaPublicacion) {
+        console.log(`⏸️ Capítulo ${cap.numero} omitido: sin fechaPublicacion`);
+        return false;
+      }
+      if (cap.fechaPublicacion > hoy) {
+        console.log(`⏸️ Capítulo ${cap.numero} omitido: fecha futura (${cap.fechaPublicacion} > ${hoy})`);
+        return false;
+      }
+      return true;
+    }).sort((a, b) => Number(a.numero) - Number(b.numero));
+
+    console.log("✅ Capítulos finales disponibles para mostrar:", chapters);
 
     if (!chapters.length) {
+      console.warn("⚠️ No hay capítulos disponibles. Mostrando mensaje de 'Muy pronto'.");
       mostrarHistoriaAunNoDisponible();
       return;
     }
@@ -84,10 +89,10 @@ async function cargarCapitulos() {
     render();
 
   } catch (error) {
-    console.error("BUILD 03 — Error cargando capítulos:", error);
+    console.error("❌ ERROR CRÍTICO cargando capítulos:", error);
+    alert("Hubo un error al conectar con Firebase. Revisa la consola (F12).");
   }
 }
-
 
 // ======================================================
 // MENSAJE ANTES DEL INICIO
@@ -98,22 +103,20 @@ function mostrarHistoriaAunNoDisponible() {
   $("chapterCount").textContent = `00 / ${TOTAL_CAPITULOS}`;
   $("progress").style.width = "0%";
   $("line").textContent = "Hay historias que merecen esperar el momento indicado para comenzar.";
-  $("nextLine").textContent = "El primer capítulo estará disponible pronto.";
+  $("nextLine").textContent = "Revisa la consola (F12) para ver por qué no hay capítulos.";
   $("sceneImage").style.backgroundImage = "none";
   $("prev").disabled = true;
   $("next").disabled = true;
   $("dots").innerHTML = "";
 }
 
-
 // ======================================================
 // PREPARAR AUDIO
 // ======================================================
 function prepararAudioCapitulo() {
   if (!audio) return;
-
   const c = chapters[chapterIndex];
-
+  
   syncTimes = [];
   syncReady = false;
   syncChapterIndex = chapterIndex;
@@ -122,22 +125,22 @@ function prepararAudioCapitulo() {
   playing = false;
 
   ocultarFallbackYouTube();
-
   audio.pause();
   audio.currentTime = 0;
 
-  if (!c || !c.audio) {
+  if (!c || !c.audio || c.audio.trim() === "") {
+    console.log("ℹ️ Este capítulo no tiene ruta de audio configurada.");
     audio.removeAttribute("src");
     audio.load();
     actualizarBotonAudio();
     return;
   }
 
+  console.log("🎵 Cargando audio:", c.audio);
   audio.src = c.audio;
   audio.load();
   actualizarBotonAudio();
 }
-
 
 // ======================================================
 // CONSTRUIR SINCRONIZACIÓN
@@ -174,16 +177,14 @@ function construirSincronizacion() {
   }
 
   syncReady = true;
-  console.log("BUILD 04E — Sincronización:", syncTimes);
+  console.log("✅ Sincronización de audio construida:", syncTimes);
 }
-
 
 // ======================================================
 // OBTENER LÍNEA SEGÚN AUDIO
 // ======================================================
 function obtenerLineaPorTiempo(currentTime) {
   if (!syncReady || !syncTimes.length) return -1;
-
   for (let i = 0; i < syncTimes.length; i++) {
     if (currentTime >= syncTimes[i].inicio && currentTime < syncTimes[i].fin) {
       return i;
@@ -192,33 +193,23 @@ function obtenerLineaPorTiempo(currentTime) {
   return syncTimes.length - 1;
 }
 
-
 // ======================================================
 // IMAGEN PROPORCIONAL
 // ======================================================
 function obtenerImagenParaLinea(lineaActual, cantidadLineas, cantidadImagenes) {
   if (!cantidadImagenes || cantidadImagenes <= 0) return 0;
   if (cantidadImagenes === 1 || cantidadLineas <= 1) return 0;
-
   const proporcion = lineaActual / Math.max(cantidadLineas - 1, 1);
   return Math.min(Math.floor(proporcion * cantidadImagenes), cantidadImagenes - 1);
 }
-
 
 // ======================================================
 // TRANSICIÓN VISUAL
 // ======================================================
 function aplicarTransicion(elemento, callback) {
-  if (!elemento) {
-    callback();
-    return;
-  }
-
+  if (!elemento) { callback(); return; }
   const reducirMovimiento = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (reducirMovimiento) {
-    callback();
-    return;
-  }
+  if (reducirMovimiento) { callback(); return; }
 
   elemento.style.transition = "opacity .45s ease, transform .45s ease, filter .45s ease";
   elemento.style.opacity = "0";
@@ -234,7 +225,6 @@ function aplicarTransicion(elemento, callback) {
     });
   }, 180);
 }
-
 
 // ======================================================
 // ACTUALIZAR LÍNEA DESDE AUDIO
@@ -257,7 +247,6 @@ function actualizarLineaDesdeAudio(nuevaLinea, forzar = false) {
   const aplicarContenido = () => {
     $("line").textContent = lineas[lineIndex] || "";
     $("nextLine").textContent = lineas[lineIndex + 1] || "";
-
     if (imagenes.length) {
       imageIndex = nuevaImagen;
       $("sceneImage").style.backgroundImage = `url("${imagenes[imageIndex]}")`;
@@ -280,14 +269,12 @@ function actualizarLineaDesdeAudio(nuevaLinea, forzar = false) {
   }
 }
 
-
 // ======================================================
 // ACTUALIZAR INDICADORES
 // ======================================================
 function actualizarIndicadores() {
   const c = chapters[chapterIndex];
   if (!c) return;
-
   const lineas = Array.isArray(c.lineas) ? c.lineas : [];
 
   $("chapterNumber").textContent = `CAPÍTULO ${String(c.numero).padStart(2, "0")}`;
@@ -305,7 +292,6 @@ function actualizarIndicadores() {
 
   $("dots").innerHTML = lineas.map((_, i) => `<i class="${i === lineIndex ? "active" : ""}"></i>`).join("");
 }
-
 
 // ======================================================
 // RENDER
@@ -341,13 +327,10 @@ function render() {
   }
 
   $("prev").disabled = chapterIndex === 0 && lineIndex === 0;
-
   const esUltimaLinea = lineIndex === lineas.length - 1;
   const esUltimoCapitulo = chapterIndex === chapters.length - 1;
-
   $("next").disabled = false;
   $("next").textContent = (esUltimaLinea && esUltimoCapitulo) ? "✓" : "→";
-
   $("dots").innerHTML = lineas.map((_, i) => `<i class="${i === lineIndex ? "active" : ""}"></i>`).join("");
 
   scene.classList.remove("active");
@@ -355,15 +338,15 @@ function render() {
   scene.classList.add("active");
 }
 
-
 // ======================================================
 // SIGUIENTE / ANTERIOR
 // ======================================================
 function next() {
   const c = chapters[chapterIndex];
   if (!c) return;
-
   const lineas = Array.isArray(c.lineas) ? c.lineas : [];
+  
+  console.log(`➡️ Botón Next: lineIndex ${lineIndex} de ${lineas.length}`);
 
   if (lineIndex < lineas.length - 1) {
     lineIndex++;
@@ -390,7 +373,6 @@ function next() {
 function prev() {
   const c = chapters[chapterIndex];
   if (!c) return;
-
   const lineas = Array.isArray(c.lineas) ? c.lineas : [];
 
   if (lineIndex > 0) {
@@ -402,21 +384,17 @@ function prev() {
   } else if (chapterIndex > 0) {
     detenerAudio();
     chapterIndex--;
-    
     const previousChapter = chapters[chapterIndex];
     const previousLines = Array.isArray(previousChapter.lineas) ? previousChapter.lineas : [];
-    
     lineIndex = Math.max(previousLines.length - 1, 0);
     imageIndex = 0;
-    
     prepararAudioCapitulo();
     render();
   }
 }
 
-
 // ======================================================
-// INTRO CINEMATOGRÁFICA
+// INTRO
 // ======================================================
 async function mostrarIntro() {
   const intro = $("storyIntro");
@@ -425,46 +403,38 @@ async function mostrarIntro() {
     return;
   }
 
-  const countdown = $("introCountdown");
-  const countdownNumber = $("countdownNumber");
-  const introStart = $("introStart");
-
   reader.classList.add("hidden");
   ending.classList.add("hidden");
   cover.classList.add("hidden");
 
-  intro.classList.remove("hidden");
-  intro.classList.remove("fade-out");
-
-  if (countdown) countdown.classList.add("hidden");
-  if (introStart) introStart.classList.add("hidden");
-  if (countdownNumber) countdownNumber.textContent = "3";
+  intro.classList.remove("hidden", "fade-out");
+  $("introCountdown")?.classList.add("hidden");
+  $("introStart")?.classList.add("hidden");
+  if ($("countdownNumber")) $("countdownNumber").textContent = "3";
 
   await esperar(2800);
-
-  if (countdown) countdown.classList.remove("hidden");
-  if (countdownNumber) countdownNumber.textContent = "3";
+  $("introCountdown")?.classList.remove("hidden");
+  if ($("countdownNumber")) $("countdownNumber").textContent = "3";
   await esperar(1000);
 
-  if (countdownNumber) {
-    countdownNumber.textContent = "2";
-    reiniciarAnimacion(countdownNumber, "countdownPulse .9s ease both");
+  if ($("countdownNumber")) {
+    $("countdownNumber").textContent = "2";
+    reiniciarAnimacion($("countdownNumber"), "countdownPulse .9s ease both");
   }
   await esperar(1000);
 
-  if (countdownNumber) {
-    countdownNumber.textContent = "1";
-    reiniciarAnimacion(countdownNumber, "countdownPulse .9s ease both");
+  if ($("countdownNumber")) {
+    $("countdownNumber").textContent = "1";
+    reiniciarAnimacion($("countdownNumber"), "countdownPulse .9s ease both");
   }
   await esperar(1000);
 
-  if (countdown) countdown.classList.add("hidden");
-  if (introStart) introStart.classList.remove("hidden");
+  $("introCountdown")?.classList.add("hidden");
+  $("introStart")?.classList.remove("hidden");
   await esperar(1800);
 
   intro.classList.add("fade-out");
   await esperar(1400);
-
   intro.classList.add("hidden");
   intro.classList.remove("fade-out");
 
@@ -473,19 +443,15 @@ async function mostrarIntro() {
   window.scrollTo(0, 0);
 }
 
-function esperar(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
+function esperar(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 function reiniciarAnimacion(elemento, animacion) {
   elemento.style.animation = "none";
   void elemento.offsetWidth;
   elemento.style.animation = animacion;
 }
 
-
 // ======================================================
-// CONTROLES DE NAVEGACIÓN Y AUDIO
+// CONTROLES
 // ======================================================
 function back() {
   detenerAudio();
@@ -517,38 +483,28 @@ function detenerAudio() {
 function actualizarBotonAudio() {
   const boton = $("soundBtn");
   if (!boton) return;
-
   const c = chapters[chapterIndex];
-  if (!c || !c.audio) {
+  if (!c || !c.audio || c.audio.trim() === "") {
     boton.textContent = "·";
-    boton.title = "Este capítulo no tiene audio disponible.";
+    boton.title = "Este capítulo no tiene audio configurado.";
     return;
   }
-
   if (audioError) {
     boton.textContent = "♪";
-    boton.title = "El audio no está disponible. Puedes usar YouTube.";
+    boton.title = "Error de audio. Usa YouTube.";
     return;
   }
-
-  if (playing) {
-    boton.textContent = "Ⅱ";
-    boton.title = "Pausar audio";
-  } else {
-    boton.textContent = "♪";
-    boton.title = "Reproducir audio";
-  }
+  boton.textContent = playing ? "Ⅱ" : "♪";
+  boton.title = playing ? "Pausar audio" : "Reproducir audio";
 }
 
 function manejarTiempoAudio() {
   if (!audio || !syncReady || audioChapterIndex !== chapterIndex) return;
-  
   const nuevaLinea = obtenerLineaPorTiempo(audio.currentTime);
   if (nuevaLinea >= 0 && nuevaLinea !== lineIndex) {
     actualizarLineaDesdeAudio(nuevaLinea);
   }
 }
-
 
 // ======================================================
 // EVENTOS DE AUDIO
@@ -558,40 +514,23 @@ if (audio) {
     if (audioChapterIndex !== chapterIndex) return;
     construirSincronizacion();
   });
-
   audio.addEventListener("timeupdate", manejarTiempoAudio);
-
-  audio.addEventListener("play", () => {
-    playing = true;
-    actualizarBotonAudio();
-  });
-
-  audio.addEventListener("pause", () => {
-    playing = false;
-    actualizarBotonAudio();
-  });
-
+  audio.addEventListener("play", () => { playing = true; actualizarBotonAudio(); });
+  audio.addEventListener("pause", () => { playing = false; actualizarBotonAudio(); });
   audio.addEventListener("ended", () => {
     playing = false;
     const c = chapters[chapterIndex];
-    if (c) {
-      const lineas = Array.isArray(c.lineas) ? c.lineas : [];
-      if (lineas.length) {
-        actualizarLineaDesdeAudio(lineas.length - 1, true);
-      }
-    }
+    if (c && Array.isArray(c.lineas).length) actualizarLineaDesdeAudio(c.lineas.length - 1, true);
     actualizarBotonAudio();
   });
-
   audio.addEventListener("error", () => {
     audioError = true;
     playing = false;
     actualizarBotonAudio();
     mostrarFallbackYouTube();
-    console.warn("BUILD 04E — No se pudo reproducir el audio.");
+    console.warn("❌ No se pudo reproducir el audio local.");
   });
 }
-
 
 // ======================================================
 // YOUTUBE FALLBACK
@@ -599,84 +538,57 @@ if (audio) {
 function mostrarFallbackYouTube() {
   const c = chapters[chapterIndex];
   if (!c || !c.youtubeId) return;
-
-  if (youtubeFallbackButton) {
-    youtubeFallbackButton.style.display = "inline-flex";
-    return;
-  }
-
+  if (youtubeFallbackButton) { youtubeFallbackButton.style.display = "inline-flex"; return; }
+  
   const soundBtn = $("soundBtn");
   if (!soundBtn) return;
-
   youtubeFallbackButton = document.createElement("button");
   youtubeFallbackButton.type = "button";
   youtubeFallbackButton.textContent = "▶ YouTube";
-  youtubeFallbackButton.title = "Escuchar este capítulo en YouTube";
+  youtubeFallbackButton.title = "Escuchar en YouTube";
   youtubeFallbackButton.style.marginLeft = "8px";
   youtubeFallbackButton.style.cursor = "pointer";
-  youtubeFallbackButton.onclick = abrirYouTubeFallback;
-
+  youtubeFallbackButton.onclick = () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.youtubeId)}`, "_blank");
   soundBtn.parentNode.insertBefore(youtubeFallbackButton, soundBtn.nextSibling);
 }
 
 function ocultarFallbackYouTube() {
-  if (youtubeFallbackButton) {
-    youtubeFallbackButton.style.display = "none";
-  }
+  if (youtubeFallbackButton) youtubeFallbackButton.style.display = "none";
 }
-
-function abrirYouTubeFallback() {
-  const c = chapters[chapterIndex];
-  if (!c || !c.youtubeId) return;
-
-  const url = `https://www.youtube.com/watch?v=${encodeURIComponent(c.youtubeId)}`;
-  window.open(url, "_blank", "noopener,noreferrer");
-}
-
 
 // ======================================================
-// EVENTOS PRINCIPALES (CORREGIDOS)
+// EVENTOS DE BOTONES
 // ======================================================
 $("openBook").onclick = mostrarIntro;
 
 $("soundBtn").onclick = () => {
   const c = chapters[chapterIndex];
-
-  if (!c || !c.audio) {
+  if (!c || !c.audio || c.audio.trim() === "") {
     $("soundBtn").textContent = "·";
-    $("soundBtn").title = "Este capítulo no tiene audio disponible.";
+    $("soundBtn").title = "Sin audio configurado.";
     return;
   }
-
-  if (audioChapterIndex !== chapterIndex) {
-    prepararAudioCapitulo();
-  }
-
+  if (audioChapterIndex !== chapterIndex) prepararAudioCapitulo();
   if (playing) {
     audio.pause();
     playing = false;
     actualizarBotonAudio();
     return;
   }
-
-  if (!syncReady && Number.isFinite(audio.duration) && audio.duration > 0) {
-    construirSincronizacion();
-  }
-
-  audio.play()
-    .then(() => {
-      playing = true;
-      audioError = false;
-      actualizarBotonAudio();
-      ocultarFallbackYouTube();
-    })
-    .catch(error => {
-      playing = false;
-      audioError = true;
-      actualizarBotonAudio();
-      mostrarFallbackYouTube();
-      console.warn("BUILD 04E — No se pudo reproducir el audio:", error);
-    });
+  if (!syncReady && Number.isFinite(audio.duration) && audio.duration > 0) construirSincronizacion();
+  
+  audio.play().then(() => {
+    playing = true;
+    audioError = false;
+    actualizarBotonAudio();
+    ocultarFallbackYouTube();
+  }).catch(error => {
+    playing = false;
+    audioError = true;
+    actualizarBotonAudio();
+    mostrarFallbackYouTube();
+    console.warn("Error al reproducir:", error);
+  });
 };
 
 $("next").onclick = next;
@@ -684,27 +596,14 @@ $("prev").onclick = prev;
 $("backCover").onclick = back;
 $("restart").onclick = restart;
 
-
-// ======================================================
-// TECLADO
-// ======================================================
 document.addEventListener("keydown", e => {
   if (reader.classList.contains("hidden")) return;
-
   if (e.key === "ArrowRight" || e.key === " ") {
     e.preventDefault();
     if (!$("next").disabled) next();
   }
-
   if (e.key === "ArrowLeft") {
     if (!$("prev").disabled) prev();
   }
-
-  if (e.key === "Escape") {
-    back();
-  }
+  if (e.key === "Escape") back();
 });
-
-// ======================================================
-// FIN BUILD 04E.1
-// ======================================================
