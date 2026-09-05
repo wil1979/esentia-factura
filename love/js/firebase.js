@@ -38,3 +38,41 @@ export async function obtenerCapitulosPublicados() {
     ...doc.data()
   }));
 }
+
+// ======================================================
+// BUILD 05C — MODO PRUEBA
+// OBTENER TODOS LOS CAPÍTULOS PUBLICADOS
+// SIN RESTRICCIÓN DE FECHA
+//
+// IMPORTANTE:
+// NO modifica fechas.
+// NO modifica Firestore.
+// NO reemplaza obtenerCapitulosPublicados().
+// Solo se utiliza para pruebas.
+// ======================================================
+
+export async function obtenerTodosLosCapitulosPublicados() {
+
+  const ref = collection(db, "capitulos");
+
+  const q = query(
+    ref,
+    where("publicado", "==", true),
+    orderBy("numero", "asc")
+  );
+
+  const snapshot = await getDocs(q);
+
+  const capitulos =
+    snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+  console.log(
+    "BUILD 05C — MODO PRUEBA — Todos los capítulos:",
+    capitulos
+  );
+
+  return capitulos;
+}
