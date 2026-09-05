@@ -1,0 +1,4037 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Admin - W & E 19 años</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cormorant Garamond', serif;
+            background:
+                radial-gradient(circle at top left, rgba(240,147,251,.15), transparent 35%),
+                radial-gradient(circle at bottom right, rgba(245,87,108,.12), transparent 35%),
+                #f4f4f9;
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        button,
+        input,
+        textarea {
+            font-family: inherit;
+        }
+
+        .admin-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: rgba(255,255,255,.97);
+            padding: 30px;
+            border-radius: 18px;
+            box-shadow: 0 15px 45px rgba(0,0,0,.10);
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            color: #f5576c;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* =========================
+           LOGIN
+        ========================= */
+
+        #password-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(25,20,25,.88);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5000;
+            backdrop-filter: blur(5px);
+        }
+
+        .password-box {
+            width: min(420px, calc(100% - 35px));
+            background: white;
+            padding: 40px 30px;
+            border-radius: 18px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,.3);
+        }
+
+        .password-box h2 {
+            color: #f5576c;
+            margin-bottom: 10px;
+        }
+
+        .password-box p {
+            color: #666;
+            font-size: 1.05rem;
+        }
+
+        .password-box input {
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin: 18px 0;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        /* =========================
+           BOTONES
+        ========================= */
+
+        .btn {
+            padding: 11px 20px;
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition:
+                transform .2s ease,
+                box-shadow .2s ease,
+                opacity .2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(0,0,0,.12);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: #f5576c;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ff4444;
+            color: white;
+            padding: 8px 14px;
+            font-size: .9rem;
+        }
+
+        .btn-edit {
+            background: #667eea;
+            color: white;
+            padding: 8px 14px;
+            font-size: .9rem;
+        }
+
+        .btn-dark {
+            background: #444;
+            color: white;
+        }
+
+        .btn-small {
+            padding: 8px 13px;
+            font-size: .9rem;
+        }
+
+        /* =========================
+           ESTADÍSTICAS
+        ========================= */
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            color: white;
+            padding: 17px;
+            border-radius: 12px;
+            text-align: center;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 7px 20px rgba(245,87,108,.15);
+        }
+
+        .stat-card:nth-child(2) {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .stat-card:nth-child(3) {
+            background: linear-gradient(135deg, #28a745, #55c777);
+        }
+
+        .stat-card:nth-child(4) {
+            background: linear-gradient(135deg, #ff9a44, #ff6b35);
+        }
+
+        .stat-card h3 {
+            font-size: .95rem;
+            margin-bottom: 4px;
+        }
+
+        .stat-card p {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        /* =========================
+           FORMULARIO
+        ========================= */
+
+        .form-section {
+            background: #fff9fb;
+            padding: 25px;
+            border-radius: 13px;
+            border: 2px solid #f093fb;
+            margin-bottom: 30px;
+        }
+
+        .form-section h2 {
+            color: #f5576c;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 17px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 700;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 11px 13px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: #f093fb;
+            box-shadow: 0 0 0 3px rgba(240,147,251,.12);
+        }
+
+        .form-group textarea {
+            min-height: 220px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .date-info {
+            margin-top: 6px;
+            font-size: .9rem;
+            color: #777;
+        }
+        /* BUILD 05A — selector local de imágenes */
+        .local-image-picker{
+            margin-top:12px;
+            padding:14px;
+            border:1px dashed #d8c9d5;
+            border-radius:10px;
+            background:#fff;
+        }
+        .local-image-picker input[type="file"]{
+            width:100%;
+            padding:10px;
+            border:1px solid #ddd;
+            border-radius:8px;
+            background:white;
+            cursor:pointer;
+        }
+        .local-image-help{
+            margin-top:7px;
+            font-size:.88rem;
+            color:#777;
+            line-height:1.35;
+        }
+        .local-images-preview{
+            display:grid;
+            grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
+            gap:10px;
+            margin-top:12px;
+        }
+        .local-image-card{
+            background:#fff;
+            border:1px solid #eee;
+            border-radius:9px;
+            overflow:hidden;
+        }
+        .local-image-card img{
+            width:100%;
+            height:95px;
+            object-fit:cover;
+            display:block;
+            background:#f4f4f4;
+        }
+        .local-image-card p{
+            padding:7px 8px;
+            font-size:.78rem;
+            color:#555;
+            word-break:break-word;
+            line-height:1.2;
+        }
+
+
+        .publish-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .publish-row input {
+            width: 18px;
+            height: 18px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        /* =========================
+           LISTA
+        ========================= */
+
+        .lista-capitulos {
+            margin-top: 30px;
+        }
+
+        .lista-capitulos h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .capitulo-item {
+            background: white;
+            border: 1px solid #eee;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.04);
+        }
+
+        .capitulo-info {
+            min-width: 0;
+        }
+
+        .capitulo-info h4 {
+            color: #f5576c;
+            margin-bottom: 5px;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .capitulo-info p {
+            font-size: .95rem;
+            color: #666;
+        }
+
+        .capitulo-actions {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .estado {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: .78rem;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .estado-publicado {
+            background: #d9f7df;
+            color: #218838;
+        }
+
+        .estado-programado {
+            background: #fff0cf;
+            color: #a66a00;
+        }
+
+        /* =========================
+           LOADER
+        ========================= */
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #f5576c;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* =========================
+           MODAL PREVIEW
+        ========================= */
+
+        #preview-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(15,12,18,.90);
+            z-index: 4000;
+            display: none;
+            overflow-y: auto;
+            padding: 25px;
+            backdrop-filter: blur(5px);
+        }
+
+        .preview-modal-content {
+            width: min(1050px, 100%);
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 25px 80px rgba(0,0,0,.35);
+        }
+
+        .preview-header {
+            padding: 18px 22px;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .preview-header h2 {
+            font-size: 1.35rem;
+        }
+
+        .preview-close {
+            border: none;
+            background: rgba(255,255,255,.2);
+            color: white;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            font-size: 1.4rem;
+            cursor: pointer;
+        }
+
+        .preview-body {
+            padding: 22px;
+        }
+
+        .preview-stage {
+            position: relative;
+            width: 100%;
+            min-height: 430px;
+            border-radius: 15px;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at center, #29242b, #111);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-stage img {
+            width: 100%;
+            height: 430px;
+            object-fit: contain;
+            display: none;
+
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            filter: blur(0);
+
+            transition:
+                opacity .45s ease,
+                transform .45s ease,
+                filter .45s ease;
+        }
+
+        .preview-stage img.visual-out {
+            opacity: 0;
+            transform: translateY(8px) scale(.985);
+            filter: blur(2px);
+        }
+
+        .preview-stage img.visual-in {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            filter: blur(0);
+        }
+
+        .preview-placeholder {
+            color: rgba(255,255,255,.6);
+            text-align: center;
+            padding: 40px;
+        }
+
+        /* =========================
+           TEXTO CON TRANSICIÓN
+        ========================= */
+
+        .preview-text-container {
+            min-height: 145px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 28px 20px 18px;
+            overflow: hidden;
+        }
+
+        .preview-text {
+            max-width: 850px;
+            text-align: center;
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.25rem, 3vw, 2rem);
+            line-height: 1.5;
+            color: #333;
+
+            opacity: 1;
+            transform: translateY(0);
+            filter: blur(0);
+
+            transition:
+                opacity .40s ease,
+                transform .40s ease,
+                filter .40s ease;
+        }
+
+        .preview-text.visual-out {
+            opacity: 0;
+            transform: translateY(10px);
+            filter: blur(2px);
+        }
+
+        .preview-text.visual-in {
+            opacity: 1;
+            transform: translateY(0);
+            filter: blur(0);
+        }
+
+        .preview-meta {
+            text-align: center;
+            color: #888;
+            font-size: .95rem;
+            margin-bottom: 15px;
+        }
+
+        .preview-controls {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 10px 0;
+        }
+
+        .preview-controls button {
+            min-width: 44px;
+        }
+
+        .sync-panel {
+            background: #f8f7fb;
+            border: 1px solid #e5e2ed;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .sync-panel h3 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .sync-info {
+            color: #777;
+            font-size: .92rem;
+            line-height: 1.4;
+        }
+
+        .sync-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .sync-status {
+            margin-top: 10px;
+            padding: 8px 10px;
+            border-radius: 7px;
+            background: white;
+            color: #666;
+            font-size: .9rem;
+        }
+
+        .preview-audio {
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .youtube-section {
+            margin-top: 18px;
+            border-top: 1px solid #eee;
+            padding-top: 18px;
+        }
+
+        .youtube-section h3 {
+            color: #f5576c;
+            margin-bottom: 10px;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .youtube-frame {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border: none;
+            border-radius: 10px;
+            background: #111;
+            display: none;
+        }
+
+        .youtube-link {
+            display: inline-block;
+            margin-top: 10px;
+            color: #d92323;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .diagnostics {
+            margin-top: 18px;
+            padding: 13px;
+            background: #f6f6f6;
+            border-radius: 9px;
+            font-family: monospace;
+            font-size: .82rem;
+            color: #555;
+            white-space: pre-wrap;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media (max-width: 800px) {
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .preview-stage,
+            .preview-stage img {
+                height: 330px;
+                min-height: 330px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .admin-container {
+                padding: 18px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .stat-card {
+                padding: 12px 7px;
+            }
+
+            .stat-card p {
+                font-size: 1.6rem;
+            }
+
+            .capitulo-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .capitulo-actions {
+                justify-content: flex-start;
+            }
+
+            #preview-modal {
+                padding: 8px;
+            }
+
+            .preview-body {
+                padding: 12px;
+            }
+
+            .preview-stage,
+            .preview-stage img {
+                height: 270px;
+                min-height: 270px;
+            }
+
+            .preview-text-container {
+                min-height: 120px;
+                padding: 20px 10px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .preview-stage img,
+            .preview-text,
+            .btn {
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- =========================================================
+     LOGIN
+========================================================= -->
+
+<div id="password-overlay">
+
+    <div class="password-box">
+
+        <h2>🔒 Acceso Restringido</h2>
+
+        <p>
+            Ingresa la contraseña de administrador
+        </p>
+
+        <input
+            type="password"
+            id="admin-password"
+            placeholder="Contraseña"
+            autocomplete="off"
+        >
+
+        <button
+            class="btn btn-primary"
+            onclick="verificarPassword()"
+        >
+            Entrar
+        </button>
+
+        <p
+            id="error-msg"
+            style="color:#d92323; margin-top:12px; display:none;"
+        >
+            Contraseña incorrecta
+        </p>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     PANEL ADMIN
+========================================================= -->
+
+<div
+    class="admin-container"
+    id="admin-panel"
+    style="display:none;"
+>
+
+    <h1>📖 Panel de Administración - W & E</h1>
+
+
+    <!-- ESTADÍSTICAS -->
+
+    <div class="stats">
+
+        <div class="stat-card">
+            <h3>Capítulos creados</h3>
+            <p id="total-capitulos">0</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Meta</h3>
+            <p>31</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Disponibles</h3>
+            <p id="capitulos-disponibles">0</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Programados</h3>
+            <p id="capitulos-programados">0</p>
+        </div>
+
+    </div>
+
+
+    <!-- FORMULARIO -->
+
+    <div class="form-section">
+
+        <h2 id="form-title">
+            ➕ Agregar Nuevo Capítulo
+        </h2>
+
+        <input
+            type="hidden"
+            id="cap-id"
+        >
+
+
+        <div class="form-row">
+
+            <div class="form-group">
+
+                <label for="cap-numero">
+                    Número del capítulo
+                </label>
+
+                <input
+                    type="number"
+                    id="cap-numero"
+                    min="1"
+                    max="31"
+                    placeholder="Ej. 1"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="cap-fecha">
+                    Fecha de publicación
+                </label>
+
+                <input
+                    type="date"
+                    id="cap-fecha"
+                >
+
+                <div class="date-info">
+                    La fecha se calcula automáticamente según el número.
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="cap-titulo">
+                Título
+            </label>
+
+            <input
+                type="text"
+                id="cap-titulo"
+                placeholder="Título del capítulo"
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="cap-texto">
+                Texto del capítulo
+            </label>
+
+            <textarea
+                id="cap-texto"
+                placeholder="Escribe una línea por cada frase o momento..."
+            ></textarea>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="cap-imagenes-rutas">
+                🖼️ Imágenes
+            </label>
+
+            <input
+                type="text"
+                id="cap-imagenes-rutas"
+                placeholder="cap1-1.jpg, cap1-2.jpg, cap1-3.jpg"
+            >
+
+            <div class="date-info">
+                Puedes escribir nombres manualmente, separados por comas,
+                o seleccionarlos desde tu computadora.
+            </div>
+
+            <div class="local-image-picker">
+                <input
+                    type="file"
+                    id="cap-imagenes-local"
+                    accept="image/*"
+                    multiple
+                >
+
+                <div class="local-image-help">
+                    💡 Selecciona una o varias imágenes. El sistema tomará
+                    automáticamente el nombre real del archivo y lo agregará
+                    a la lista. Las imágenes no se suben todavía a GitHub;
+                    esta función sirve para identificar y asignar sus nombres.
+                </div>
+
+                <div id="imagenes-local-preview" class="local-images-preview"></div>
+            </div>
+
+        </div>
+
+
+        <div class="form-row">
+
+            <div class="form-group">
+
+                <label for="cap-audio-ruta">
+                    🎵 Audio
+                </label>
+
+                <input
+                    type="text"
+                    id="cap-audio-ruta"
+                    placeholder="cap1.m4a"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="cap-youtube">
+                    📺 YouTube ID o enlace
+                </label>
+
+                <input
+                    type="text"
+                    id="cap-youtube"
+                    placeholder="ID o enlace completo de YouTube"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <div class="publish-row">
+
+                <input
+                    type="checkbox"
+                    id="cap-publicado"
+                >
+
+                <label
+                    for="cap-publicado"
+                    style="margin:0;"
+                >
+                    Publicar capítulo
+                </label>
+
+            </div>
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <button
+                class="btn btn-primary"
+                onclick="guardarCapitulo()"
+            >
+                💾 Guardar capítulo
+            </button>
+
+            <button
+                class="btn btn-secondary"
+                onclick="limpiarFormulario()"
+            >
+                🧹 Limpiar
+            </button>
+
+        </div>
+
+
+        <div
+            class="loader"
+            id="loader"
+        ></div>
+
+    </div>
+
+
+    <!-- LISTA -->
+
+    <div class="lista-capitulos">
+
+        <h2>
+            📚 Capítulos existentes
+        </h2>
+
+        <div id="lista-capitulos-container">
+
+            <p style="text-align:center;color:#999;">
+                Cargando...
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     MODAL PREVIEW
+========================================================= -->
+
+<div id="preview-modal">
+
+    <div class="preview-modal-content">
+
+        <div class="preview-header">
+
+            <h2 id="preview-title">
+                Vista previa
+            </h2>
+
+            <button
+                class="preview-close"
+                onclick="cerrarPreview()"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <div class="preview-body">
+
+            <!-- ESCENA -->
+
+            <div class="preview-stage">
+
+                <img
+                    id="preview-image"
+                    alt="Imagen del capítulo"
+                >
+
+                <div
+                    id="preview-placeholder"
+                    class="preview-placeholder"
+                >
+                    No hay imagen disponible.
+                </div>
+
+            </div>
+
+
+            <!-- TEXTO -->
+
+            <div class="preview-text-container">
+
+                <div
+                    id="preview-text"
+                    class="preview-text"
+                >
+                    Selecciona una línea.
+                </div>
+
+            </div>
+
+
+            <div
+                id="preview-meta"
+                class="preview-meta"
+            >
+                Línea 0 / 0
+            </div>
+
+
+            <!-- CONTROLES MANUALES -->
+
+            <div class="preview-controls">
+
+                <button
+                    class="btn btn-secondary"
+                    onclick="lineaAnterior()"
+                >
+                    ◀
+                </button>
+
+                <button
+                    class="btn btn-primary"
+                    onclick="reproducirAudioPreview()"
+                >
+                    ▶ Reproducir
+                </button>
+
+                <button
+                    class="btn btn-dark"
+                    onclick="pausarAudioPreview()"
+                >
+                    ⏸ Pausa
+                </button>
+
+                <button
+                    class="btn btn-secondary"
+                    onclick="lineaSiguiente()"
+                >
+                    ▶
+                </button>
+
+                <button
+                    class="btn btn-dark"
+                    onclick="reiniciarPreview()"
+                >
+                    🔄 Reiniciar
+                </button>
+
+            </div>
+
+
+            <!-- AUDIO -->
+
+            <audio
+                id="preview-audio"
+                class="preview-audio"
+                controls
+                preload="metadata"
+            ></audio>
+
+
+            <!-- SINCRONIZACIÓN -->
+
+            <div class="sync-panel">
+
+                <h3>
+                    🎬 Sincronización de texto
+                </h3>
+
+                <div class="sync-info">
+
+                    El texto se distribuye automáticamente utilizando
+                    la duración real del audio y el peso de cada línea.
+                    Mientras el audio avanza, la línea correspondiente
+                    cambia automáticamente.
+
+                </div>
+
+
+                <div class="sync-buttons">
+
+                    <button
+                        class="btn btn-success btn-small"
+                        onclick="alternarTextoAutomatico()"
+                        id="btn-auto-sync"
+                    >
+                        🔄 Sincronización automática
+                    </button>
+
+                    <button
+                        class="btn btn-secondary btn-small"
+                        onclick="iniciarTextoLento()"
+                    >
+                        🐢 Texto lento
+                    </button>
+
+                </div>
+
+
+                <div
+                    class="sync-status"
+                    id="sync-status"
+                >
+                    Sincronización preparada.
+                </div>
+
+            </div>
+
+
+            <!-- YOUTUBE -->
+
+            <div
+                class="youtube-section"
+                id="youtube-section"
+                style="display:none;"
+            >
+
+                <h3>
+                    📺 Alternativa YouTube
+                </h3>
+
+                <iframe
+                    id="youtube-frame"
+                    class="youtube-frame"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                ></iframe>
+
+                <br>
+
+                <a
+                    id="youtube-link"
+                    class="youtube-link"
+                    href="#"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    ▶ Abrir directamente en YouTube
+                </a>
+
+            </div>
+
+
+            <!-- DIAGNÓSTICO -->
+
+            <div
+                class="diagnostics"
+                id="preview-diagnostics"
+            >
+                Esperando capítulo...
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     FIREBASE
+========================================================= -->
+
+<script type="module">
+
+    import {
+        initializeApp
+    } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+
+
+    import {
+        getFirestore,
+        collection,
+        getDocs,
+        doc,
+        setDoc,
+        updateDoc,
+        deleteDoc,
+        query,
+        orderBy
+    } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+
+    const firebaseConfig = {
+
+        apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+
+        authDomain:
+            "esentiacreditos-8345f.firebaseapp.com",
+
+        projectId:
+            "esentiacreditos-8345f",
+
+        storageBucket:
+            "esentiacreditos-8345f.firebasestorage.app",
+
+        messagingSenderId:
+            "888658236080",
+
+        appId:
+            "1:888658236080:web:506e5e2085b5a452dba175"
+
+    };
+
+
+    try {
+
+        const app =
+            initializeApp(firebaseConfig);
+
+        window.db =
+            getFirestore(app);
+
+        window.firestoreFuncs = {
+
+            collection,
+            getDocs,
+            doc,
+            setDoc,
+            updateDoc,
+            deleteDoc,
+            query,
+            orderBy
+
+        };
+
+        console.log(
+            "✅ Firebase inicializado correctamente en Admin"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "❌ Error al inicializar Firebase:",
+            error
+        );
+
+    }
+
+</script>
+
+
+<!-- =========================================================
+     LÓGICA ADMIN
+========================================================= -->
+
+<script>
+
+    /* ========================================================
+       CONFIGURACIÓN
+    ======================================================== */
+
+    const PASSWORD = "we19anos";
+
+    const TOTAL_CAPITULOS = 31;
+
+    const FECHA_INICIO = "2026-09-06";
+
+
+    let capitulosExistentes = [];
+
+
+    /* ========================================================
+       PREVIEW
+    ======================================================== */
+
+    let previewChapter = null;
+
+    let previewLineIndex = 0;
+
+    let previewImageIndex = 0;
+
+    let previewSyncMode = false;
+
+    let previewSlowMode = false;
+
+    let previewSyncTimes = [];
+
+    let previewSlowTimer = null;
+
+    let previewVisualTimer = null;
+
+    /* BUILD 05A — archivos locales seleccionados durante esta sesión */
+    let imagenesLocalesSeleccionadas = [];
+
+
+
+    /* ========================================================
+       LOGIN
+    ======================================================== */
+
+    function verificarPassword() {
+
+        const password =
+            document.getElementById(
+                "admin-password"
+            ).value;
+
+        if (password === PASSWORD) {
+
+            document.getElementById(
+                "password-overlay"
+            ).style.display = "none";
+
+            document.getElementById(
+                "admin-panel"
+            ).style.display = "block";
+
+            setTimeout(() => {
+
+                if (window.db) {
+
+                    cargarCapitulos();
+
+                }
+
+            }, 300);
+
+        } else {
+
+            document.getElementById(
+                "error-msg"
+            ).style.display = "block";
+
+        }
+
+    }
+
+
+    document
+        .getElementById("admin-password")
+        .addEventListener("keypress", function(e) {
+
+            if (e.key === "Enter") {
+
+                verificarPassword();
+
+            }
+
+        });
+
+
+
+    /* ========================================================
+       BUILD 05A — SELECTOR LOCAL DE IMÁGENES
+    ======================================================== */
+
+    function actualizarPreviewImagenesLocales() {
+        const container = document.getElementById("imagenes-local-preview");
+        if (!container) return;
+
+        container.innerHTML = "";
+
+        imagenesLocalesSeleccionadas.forEach(file => {
+            const card = document.createElement("div");
+            card.className = "local-image-card";
+
+            const img = document.createElement("img");
+            img.alt = file.name;
+
+            const nombre = document.createElement("p");
+            nombre.textContent = file.name;
+
+            const reader = new FileReader();
+            reader.onload = e => { img.src = e.target.result; };
+            reader.readAsDataURL(file);
+
+            card.appendChild(img);
+            card.appendChild(nombre);
+            container.appendChild(card);
+        });
+    }
+
+    function agregarImagenesLocales(files) {
+        const rutasInput = document.getElementById("cap-imagenes-rutas");
+        if (!rutasInput) return;
+
+        const nuevos = Array.from(files || []).filter(
+            file => file && file.type && file.type.startsWith("image/")
+        );
+
+        nuevos.forEach(file => {
+            const existe = imagenesLocalesSeleccionadas.some(
+                f => f.name === file.name &&
+                     f.size === file.size &&
+                     f.lastModified === file.lastModified
+            );
+            if (!existe) imagenesLocalesSeleccionadas.push(file);
+        });
+
+        const rutas = rutasInput.value
+            .split(",")
+            .map(x => x.trim())
+            .filter(Boolean);
+
+        nuevos.forEach(file => {
+            const nombre = file.name.trim();
+            if (nombre && !rutas.some(r =>
+                r === nombre || r === `assets/imagenes/${nombre}`
+            )) {
+                rutas.push(nombre);
+            }
+        });
+
+        rutasInput.value = rutas.join(", ");
+        actualizarPreviewImagenesLocales();
+    }
+
+    const inputImagenesLocales =
+        document.getElementById("cap-imagenes-local");
+
+    if (inputImagenesLocales) {
+        inputImagenesLocales.addEventListener("change", function() {
+            agregarImagenesLocales(this.files);
+        });
+    }
+
+    /* ========================================================
+       FECHAS
+    ======================================================== */
+
+    function calcularFechaCapitulo(numero) {
+
+        const fecha =
+            new Date(
+                FECHA_INICIO + "T00:00:00"
+            );
+
+        fecha.setDate(
+            fecha.getDate() + (numero - 1)
+        );
+
+        const year =
+            fecha.getFullYear();
+
+        const month =
+            String(
+                fecha.getMonth() + 1
+            ).padStart(2, "0");
+
+        const day =
+            String(
+                fecha.getDate()
+            ).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+
+    }
+
+
+    function obtenerFechaHoy() {
+
+        const hoy = new Date();
+
+        const year =
+            hoy.getFullYear();
+
+        const month =
+            String(
+                hoy.getMonth() + 1
+            ).padStart(2, "0");
+
+        const day =
+            String(
+                hoy.getDate()
+            ).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+
+    }
+
+
+    function formatearFecha(fecha) {
+
+        if (!fecha) return "Sin fecha";
+
+        const partes =
+            fecha.split("-");
+
+        if (partes.length !== 3) {
+
+            return fecha;
+
+        }
+
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+
+    }
+
+
+    document
+        .getElementById("cap-numero")
+        .addEventListener("input", function() {
+
+            const numero =
+                parseInt(this.value);
+
+            if (
+                numero >= 1 &&
+                numero <= TOTAL_CAPITULOS
+            ) {
+
+                document.getElementById(
+                    "cap-fecha"
+                ).value =
+                    calcularFechaCapitulo(numero);
+
+            }
+
+        });
+
+
+    /* ========================================================
+       CARGAR CAPÍTULOS
+    ======================================================== */
+
+    async function cargarCapitulos() {
+
+        const container =
+            document.getElementById(
+                "lista-capitulos-container"
+            );
+
+        container.innerHTML =
+            `<p style="text-align:center;">
+                Cargando desde Firebase...
+            </p>`;
+
+        try {
+
+            const {
+                collection,
+                getDocs,
+                query,
+                orderBy
+            } = window.firestoreFuncs;
+
+
+            const q =
+                query(
+                    collection(
+                        window.db,
+                        "capitulos"
+                    ),
+                    orderBy(
+                        "numero",
+                        "asc"
+                    )
+                );
+
+
+            const snapshot =
+                await getDocs(q);
+
+
+            capitulosExistentes = [];
+
+
+            snapshot.forEach(d => {
+
+                capitulosExistentes.push({
+
+                    id: d.id,
+
+                    ...d.data()
+
+                });
+
+            });
+
+
+            actualizarEstadisticas();
+
+            renderizarLista();
+
+
+            console.log(
+                "✅ Capítulos cargados:",
+                capitulosExistentes
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "❌ Error al cargar:",
+                error
+            );
+
+            container.innerHTML =
+                `<p style="color:red;text-align:center;">
+                    Error al cargar los capítulos.
+                    Revisa la consola.
+                </p>`;
+
+        }
+
+    }
+
+
+    /* ========================================================
+       ESTADÍSTICAS
+    ======================================================== */
+
+    function actualizarEstadisticas() {
+
+        const hoy =
+            obtenerFechaHoy();
+
+
+        let disponibles = 0;
+
+        let programados = 0;
+
+
+        capitulosExistentes.forEach(cap => {
+
+            if (
+                cap.publicado === true &&
+                cap.fechaPublicacion &&
+                cap.fechaPublicacion <= hoy
+            ) {
+
+                disponibles++;
+
+            } else {
+
+                programados++;
+
+            }
+
+        });
+
+
+        document.getElementById(
+            "total-capitulos"
+        ).textContent =
+            capitulosExistentes.length;
+
+
+        document.getElementById(
+            "capitulos-disponibles"
+        ).textContent =
+            disponibles;
+
+
+        document.getElementById(
+            "capitulos-programados"
+        ).textContent =
+            programados;
+
+    }
+
+
+    /* ========================================================
+       RENDER LISTA
+    ======================================================== */
+
+    function renderizarLista() {
+
+        const container =
+            document.getElementById(
+                "lista-capitulos-container"
+            );
+
+
+        container.innerHTML = "";
+
+
+        if (
+            capitulosExistentes.length === 0
+        ) {
+
+            container.innerHTML =
+                `<p style="
+                    text-align:center;
+                    color:#999;
+                ">
+                    Aún no hay capítulos.
+                </p>`;
+
+            return;
+
+        }
+
+
+        const hoy =
+            obtenerFechaHoy();
+
+
+        capitulosExistentes.forEach(cap => {
+
+            const div =
+                document.createElement("div");
+
+
+            div.className =
+                "capitulo-item";
+
+
+            const disponible =
+                cap.publicado === true &&
+                cap.fechaPublicacion &&
+                cap.fechaPublicacion <= hoy;
+
+
+            const estadoHTML =
+                disponible
+
+                ? `<span class="estado estado-publicado">
+                        ● Disponible
+                   </span>`
+
+                : `<span class="estado estado-programado">
+                        ● Programado
+                   </span>`;
+
+
+            const imagenes =
+                Array.isArray(cap.imagenes)
+                    ? cap.imagenes.length
+                    : 0;
+
+
+            const lineas =
+                Array.isArray(cap.lineas)
+                    ? cap.lineas.length
+                    : 0;
+
+
+            div.innerHTML = `
+
+                <div class="capitulo-info">
+
+                    <h4>
+                        Capítulo ${cap.numero}:
+                        ${escapeHTML(cap.titulo || "")}
+                        ${estadoHTML}
+                    </h4>
+
+                    <p>
+
+                        📝 ${lineas} líneas
+
+                        &nbsp; | &nbsp;
+
+                        🖼️ ${imagenes} imágenes
+
+                        &nbsp; | &nbsp;
+
+                        🎵 ${cap.audio ? "Sí" : "No"}
+
+                        &nbsp; | &nbsp;
+
+                        📺 ${cap.youtubeId ? "Sí" : "No"}
+
+                        &nbsp; | &nbsp;
+
+                        📅 ${formatearFecha(
+                            cap.fechaPublicacion
+                        )}
+
+                    </p>
+
+                </div>
+
+
+                <div class="capitulo-actions">
+
+                    <button
+                        class="btn btn-success btn-small"
+                        onclick="abrirPreview('${cap.id}')"
+                    >
+                        👁️ Vista previa
+                    </button>
+
+                    <button
+                        class="btn btn-edit"
+                        onclick="editarCapituloPorId('${cap.id}')"
+                    >
+                        ✏️ Editar
+                    </button>
+
+                    <button
+                        class="btn btn-danger"
+                        onclick="eliminarCapitulo('${cap.id}', ${cap.numero})"
+                    >
+                        🗑️ Eliminar
+                    </button>
+
+                </div>
+
+            `;
+
+
+            container.appendChild(div);
+
+        });
+
+    }
+
+
+    /* ========================================================
+       ESCAPE HTML
+    ======================================================== */
+
+    function escapeHTML(text) {
+
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+    }
+
+
+    /* ========================================================
+       GUARDAR CAPÍTULO
+    ======================================================== */
+
+    async function guardarCapitulo() {
+
+        const id =
+            document.getElementById(
+                "cap-id"
+            ).value;
+
+
+        const numero =
+            parseInt(
+                document.getElementById(
+                    "cap-numero"
+                ).value
+            );
+
+
+        const titulo =
+            document.getElementById(
+                "cap-titulo"
+            ).value.trim();
+
+
+        const textoRaw =
+            document.getElementById(
+                "cap-texto"
+            ).value;
+
+
+        const fechaPublicacion =
+            document.getElementById(
+                "cap-fecha"
+            ).value;
+
+
+        const youtubeRaw =
+            document.getElementById("cap-youtube").value.trim();
+
+        const youtubeId =
+            youtubeRaw ? extraerYoutubeId(youtubeRaw) : "";
+
+        if (youtubeRaw && !youtubeId) {
+            alert(
+                "El valor de YouTube no es válido.\n\n" +
+                "Puedes utilizar el ID de 11 caracteres o pegar " +
+                "un enlace completo de YouTube."
+            );
+            return;
+        }
+
+
+        const imagenesRutasRaw =
+            document.getElementById(
+                "cap-imagenes-rutas"
+            ).value;
+
+
+        const audioRaw =
+            document.getElementById(
+                "cap-audio-ruta"
+            ).value.trim();
+
+
+        const publicado =
+            document.getElementById(
+                "cap-publicado"
+            ).checked;
+
+
+        if (
+            !numero ||
+            !titulo ||
+            !textoRaw.trim()
+        ) {
+
+            alert(
+                "Por favor completa número, título y texto."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            numero < 1 ||
+            numero > TOTAL_CAPITULOS
+        ) {
+
+            alert(
+                "El número debe estar entre 1 y 31."
+            );
+
+            return;
+
+        }
+
+
+        const imagenesUrls =
+            imagenesRutasRaw
+
+                .split(",")
+
+                .map(ruta => {
+
+                    const clean =
+                        ruta.trim();
+
+                    if (!clean) {
+                        return "";
+                    }
+
+                    return clean.startsWith(
+                        "assets/"
+                    )
+
+                        ? clean
+
+                        : `assets/imagenes/${clean}`;
+
+                })
+
+                .filter(Boolean);
+
+
+        const audioUrl =
+            audioRaw
+
+                ? (
+                    audioRaw.startsWith("assets/")
+
+                    ? audioRaw
+
+                    : `assets/audios/${audioRaw}`
+                )
+
+                : null;
+
+
+        const lineas =
+            textoRaw.split("\n");
+
+
+        const fechaFinal =
+            fechaPublicacion ||
+            calcularFechaCapitulo(numero);
+
+
+        document.getElementById(
+            "loader"
+        ).style.display =
+            "block";
+
+
+        try {
+
+            const capituloData = {
+
+                numero,
+
+                titulo,
+
+                lineas,
+
+                imagenes:
+                    imagenesUrls,
+
+                audio:
+                    audioUrl,
+
+                youtubeId:
+                    youtubeId || "",
+
+                fechaPublicacion:
+                    fechaFinal,
+
+                publicado:
+                    publicado,
+
+                actualizado:
+                    new Date().toISOString()
+
+            };
+
+
+            const {
+                doc,
+                setDoc,
+                updateDoc
+            } =
+                window.firestoreFuncs;
+
+
+            const docId =
+                id ||
+                `cap_${numero}`;
+
+
+            const docRef =
+                doc(
+                    window.db,
+                    "capitulos",
+                    docId
+                );
+
+
+            if (id) {
+
+                await updateDoc(
+                    docRef,
+                    capituloData
+                );
+
+            } else {
+
+                await setDoc(
+                    docRef,
+                    capituloData
+                );
+
+            }
+
+
+            alert(
+                `✅ Capítulo ${numero} guardado correctamente.`
+            );
+
+
+            limpiarFormulario();
+
+            await cargarCapitulos();
+
+
+        } catch (error) {
+
+            console.error(
+                "❌ Error al guardar:",
+                error
+            );
+
+            alert(
+                "❌ Hubo un error al guardar. Revisa la consola."
+            );
+
+
+        } finally {
+
+            document.getElementById(
+                "loader"
+            ).style.display =
+                "none";
+
+        }
+
+    }
+
+
+    /* ========================================================
+       EDITAR
+    ======================================================== */
+
+    function editarCapituloPorId(id) {
+
+        const cap =
+            capitulosExistentes.find(
+                item => item.id === id
+            );
+
+
+        if (!cap) {
+
+            alert(
+                "No se encontró el capítulo."
+            );
+
+            return;
+
+        }
+
+
+        editarCapitulo(cap);
+
+    }
+
+
+    function editarCapitulo(cap) {
+
+        imagenesLocalesSeleccionadas = [];
+
+        const inputImagenesLocales =
+            document.getElementById("cap-imagenes-local");
+
+        if (inputImagenesLocales) inputImagenesLocales.value = "";
+
+        const previewImagenesLocales =
+            document.getElementById("imagenes-local-preview");
+
+        if (previewImagenesLocales) previewImagenesLocales.innerHTML = "";
+
+
+        document.getElementById(
+            "cap-id"
+        ).value =
+            cap.id || "";
+
+
+        document.getElementById(
+            "cap-numero"
+        ).value =
+            cap.numero || "";
+
+
+        document.getElementById(
+            "cap-titulo"
+        ).value =
+            cap.titulo || "";
+
+
+        document.getElementById(
+            "cap-texto"
+        ).value =
+            Array.isArray(cap.lineas)
+
+                ? cap.lineas.join("\n")
+
+                : "";
+
+
+        document.getElementById(
+            "cap-youtube"
+        ).value =
+            extraerYoutubeId(cap.youtubeId || "");
+
+
+        const imgs =
+            Array.isArray(cap.imagenes)
+
+                ? cap.imagenes
+
+                    .map(ruta =>
+                        ruta.replace(
+                            "assets/imagenes/",
+                            ""
+                        )
+                    )
+
+                    .join(", ")
+
+                : "";
+
+
+        document.getElementById(
+            "cap-imagenes-rutas"
+        ).value =
+            imgs;
+
+
+        const audio =
+            cap.audio || "";
+
+
+        document.getElementById(
+            "cap-audio-ruta"
+        ).value =
+            audio.replace(
+                "assets/audios/",
+                ""
+            );
+
+
+        document.getElementById(
+            "cap-fecha"
+        ).value =
+            cap.fechaPublicacion ||
+            calcularFechaCapitulo(
+                cap.numero
+            );
+
+
+        document.getElementById(
+            "cap-publicado"
+        ).checked =
+            cap.publicado === true;
+
+
+        document.getElementById(
+            "form-title"
+        ).textContent =
+            `✏️ Editando Capítulo ${cap.numero}`;
+
+
+        document
+            .querySelector(".form-section")
+            .scrollIntoView({
+                behavior: "smooth"
+            });
+
+    }
+
+
+    /* ========================================================
+       ELIMINAR
+    ======================================================== */
+
+    async function eliminarCapitulo(
+        id,
+        numero
+    ) {
+
+        if (
+            !confirm(
+                `¿Estás seguro de eliminar el capítulo ${numero}?`
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        try {
+
+            const {
+                doc,
+                deleteDoc
+            } =
+                window.firestoreFuncs;
+
+
+            await deleteDoc(
+                doc(
+                    window.db,
+                    "capitulos",
+                    id
+                )
+            );
+
+
+            alert(
+                "✅ Capítulo eliminado."
+            );
+
+
+            await cargarCapitulos();
+
+
+        } catch (error) {
+
+            console.error(
+                "❌ Error al eliminar:",
+                error
+            );
+
+            alert(
+                "❌ No se pudo eliminar el capítulo."
+            );
+
+        }
+
+    }
+
+
+    /* ========================================================
+       LIMPIAR
+    ======================================================== */
+
+    function limpiarFormulario() {
+
+        imagenesLocalesSeleccionadas = [];
+
+        const inputImagenesLocales =
+            document.getElementById("cap-imagenes-local");
+
+        if (inputImagenesLocales) inputImagenesLocales.value = "";
+
+        const previewImagenesLocales =
+            document.getElementById("imagenes-local-preview");
+
+        if (previewImagenesLocales) previewImagenesLocales.innerHTML = "";
+
+
+        document.getElementById(
+            "cap-id"
+        ).value = "";
+
+
+        document.getElementById(
+            "cap-numero"
+        ).value = "";
+
+
+        document.getElementById(
+            "cap-titulo"
+        ).value = "";
+
+
+        document.getElementById(
+            "cap-texto"
+        ).value = "";
+
+
+        document.getElementById(
+            "cap-imagenes-rutas"
+        ).value = "";
+
+
+        document.getElementById(
+            "cap-audio-ruta"
+        ).value = "";
+
+
+        document.getElementById(
+            "cap-youtube"
+        ).value = "";
+
+
+        document.getElementById(
+            "cap-fecha"
+        ).value = "";
+
+
+        document.getElementById(
+            "cap-publicado"
+        ).checked = false;
+
+
+        document.getElementById(
+            "form-title"
+        ).textContent =
+            "➕ Agregar Nuevo Capítulo";
+
+    }
+
+
+    /* ========================================================
+       PREVIEW
+    ======================================================== */
+
+    function abrirPreview(id) {
+
+        const cap =
+            capitulosExistentes.find(
+                item => item.id === id
+            );
+
+
+        if (!cap) {
+
+            alert(
+                "No se encontró el capítulo."
+            );
+
+            return;
+
+        }
+
+
+        previewChapter = cap;
+
+        previewLineIndex = 0;
+
+        previewImageIndex = 0;
+
+        previewSyncMode = false;
+
+        previewSlowMode = false;
+
+        previewSyncTimes = [];
+
+
+        detenerTextoLento();
+
+
+        const modal =
+            document.getElementById(
+                "preview-modal"
+            );
+
+
+        modal.style.display =
+            "block";
+
+
+        document.body.style.overflow =
+            "hidden";
+
+
+        document.getElementById(
+            "preview-title"
+        ).textContent =
+            `Vista previa — Capítulo ${cap.numero}: ${cap.titulo || ""}`;
+
+
+        prepararAudioPreview();
+
+        prepararYouTubePreview();
+
+        renderPreview(false);
+
+        actualizarEstadoSync(
+            "Vista previa preparada. Pulsa ▶ para sincronizar con el audio."
+        );
+
+
+        document.getElementById(
+            "preview-diagnostics"
+        ).textContent =
+            construirDiagnostico();
+
+    }
+
+
+    function cerrarPreview() {
+
+        detenerTextoLento();
+
+
+        const audio =
+            document.getElementById(
+                "preview-audio"
+            );
+
+
+        try {
+
+            audio.pause();
+
+        } catch (_) {}
+
+
+        audio.removeAttribute(
+            "src"
+        );
+
+        audio.load();
+
+
+        previewChapter = null;
+
+        previewSyncMode = false;
+
+        previewSlowMode = false;
+
+        previewSyncTimes = [];
+
+
+        document.getElementById(
+            "preview-modal"
+        ).style.display =
+            "none";
+
+
+        document.body.style.overflow =
+            "";
+
+    }
+
+
+    /* ========================================================
+       AUDIO PREVIEW
+    ======================================================== */
+
+    function prepararAudioPreview() {
+
+        const audio =
+            document.getElementById(
+                "preview-audio"
+            );
+
+
+        audio.pause();
+
+        audio.currentTime = 0;
+
+
+        if (
+            previewChapter &&
+            previewChapter.audio
+        ) {
+
+            const src =
+                normalizarRutaAudio(
+                    previewChapter.audio
+                );
+
+
+            audio.src = src;
+
+            audio.load();
+
+
+        } else {
+
+            audio.removeAttribute(
+                "src"
+            );
+
+            audio.load();
+
+        }
+
+
+        audio.onloadedmetadata =
+            function() {
+
+                construirSincronizacion();
+
+                actualizarEstadoSync(
+                    `Audio detectado: ${formatearTiempo(audio.duration)}. Sincronización calculada.`
+                );
+
+                document.getElementById(
+                    "preview-diagnostics"
+                ).textContent =
+                    construirDiagnostico();
+
+            };
+
+
+        audio.onerror =
+            function() {
+
+                actualizarEstadoSync(
+                    "⚠️ El audio no pudo reproducirse. Puedes utilizar YouTube como alternativa."
+                );
+
+
+                document.getElementById(
+                    "preview-diagnostics"
+                ).textContent =
+                    construirDiagnostico();
+
+            };
+
+
+        audio.ontimeupdate =
+            function() {
+
+                if (
+                    !previewSyncMode ||
+                    !previewChapter
+                ) {
+
+                    return;
+
+                }
+
+
+                const nuevaLinea =
+                    obtenerLineaPorTiempo(
+                        audio.currentTime
+                    );
+
+
+                if (
+                    nuevaLinea !==
+                    previewLineIndex
+                ) {
+
+                    previewLineIndex =
+                        nuevaLinea;
+
+
+                    calcularImagenParaLinea();
+
+
+                    renderPreview(true);
+
+                }
+
+            };
+
+
+        audio.onplay =
+            function() {
+
+                previewSyncMode =
+                    true;
+
+                previewSlowMode =
+                    false;
+
+                detenerTextoLento();
+
+
+                document.getElementById(
+                    "btn-auto-sync"
+                ).textContent =
+                    "⏸ Sincronización activa";
+
+
+                actualizarEstadoSync(
+                    "🎵 Sincronización automática activa."
+                );
+
+            };
+
+
+        audio.onpause =
+            function() {
+
+                if (!audio.ended) {
+
+                    actualizarEstadoSync(
+                        "⏸ Audio pausado. El texto permanece en su posición."
+                    );
+
+                }
+
+            };
+
+
+        audio.onended =
+            function() {
+
+                if (
+                    previewChapter &&
+                    Array.isArray(
+                        previewChapter.lineas
+                    )
+                ) {
+
+                    previewLineIndex =
+                        Math.max(
+                            0,
+                            previewChapter.lineas.length - 1
+                        );
+
+                    calcularImagenParaLinea();
+
+                    renderPreview(true);
+
+                }
+
+
+                actualizarEstadoSync(
+                    "🏁 Reproducción terminada."
+                );
+
+            };
+
+    }
+
+
+    function normalizarRutaAudio(ruta) {
+
+        if (!ruta) {
+
+            return "";
+
+        }
+
+
+        if (
+            ruta.startsWith("http://") ||
+            ruta.startsWith("https://")
+        ) {
+
+            return ruta;
+
+        }
+
+
+        if (
+            ruta.startsWith("assets/")
+        ) {
+
+            return ruta;
+
+        }
+
+
+        return `assets/audios/${ruta}`;
+
+    }
+
+
+    /* ========================================================
+       SINCRONIZACIÓN
+    ======================================================== */
+
+    function construirSincronizacion() {
+
+        if (!previewChapter) {
+
+            return;
+
+        }
+
+
+        const lineas =
+            Array.isArray(
+                previewChapter.lineas
+            )
+
+                ? previewChapter.lineas
+
+                : [];
+
+
+        const audio =
+            document.getElementById(
+                "preview-audio"
+            );
+
+
+        const duration =
+            Number.isFinite(
+                audio.duration
+            )
+                ? audio.duration
+                : 0;
+
+
+        if (
+            !duration ||
+            !lineas.length
+        ) {
+
+            previewSyncTimes = [];
+
+            return;
+
+        }
+
+
+        const pesos =
+            lineas.map(linea => {
+
+                const texto =
+                    String(
+                        linea || ""
+                    ).trim();
+
+
+                return Math.max(
+                    12,
+                    texto.length
+                );
+
+            });
+
+
+        const totalPeso =
+            pesos.reduce(
+                (sum, peso) =>
+                    sum + peso,
+                0
+            );
+
+
+        previewSyncTimes = [];
+
+
+        let acumulado = 0;
+
+
+        for (
+            let i = 0;
+            i < pesos.length;
+            i++
+        ) {
+
+            previewSyncTimes.push(
+                duration *
+                (
+                    acumulado /
+                    totalPeso
+                )
+            );
+
+
+            acumulado +=
+                pesos[i];
+
+        }
+
+    }
+
+
+    function obtenerLineaPorTiempo(
+        tiempo
+    ) {
+
+        if (
+            !previewSyncTimes.length
+        ) {
+
+            return 0;
+
+        }
+
+
+        let indice = 0;
+
+
+        for (
+            let i = 0;
+            i < previewSyncTimes.length;
+            i++
+        ) {
+
+            if (
+                tiempo >=
+                previewSyncTimes[i]
+            ) {
+
+                indice = i;
+
+            } else {
+
+                break;
+
+            }
+
+        }
+
+
+        return indice;
+
+    }
+
+
+    function alternarTextoAutomatico() {
+
+        if (!previewChapter) {
+
+            return;
+
+        }
+
+
+        previewSyncMode =
+            !previewSyncMode;
+
+
+        previewSlowMode = false;
+
+        detenerTextoLento();
+
+
+        const audio =
+            document.getElementById(
+                "preview-audio"
+            );
+
+
+        if (previewSyncMode) {
+
+            construirSincronizacion();
+
+
+            document.getElementById(
+                "btn-auto-sync"
+            ).textContent =
+                "⏸ Sincronización activa";
+
+
+            actualizarEstadoSync(
+                "🔄 Sincronización automática activa."
+            );
+
+
+            if (
+                !audio.paused
+            ) {
+
+                const nuevaLinea =
+                    obtenerLineaPorTiempo(
+                        audio.currentTime
+                    );
+
+
+                previewLineIndex =
+                    nuevaLinea;
+
+
+                calcularImagenParaLinea();
+
+                renderPreview(true);
+
+            }
+
+        } else {
+
+            document.getElementById(
+                "btn-auto-sync"
+            ).textContent =
+                "🔄 Sincronización automática";
+
+
+            actualizarEstadoSync(
+                "Sincronización automática detenida."
+            );
+
+        }
+
+    }
+
+
+    function reproducirAudioPreview() {
+
+        const audio =
+            document.getElementById(
+                "preview-audio"
+            );
+
+
+        if (!audio.src) {
+
+            actualizarEstadoSync(
+                "⚠️ Este capítulo no tiene audio. Utiliza YouTube si está disponible."
+            );
+
+            return;
+
+        }
+
+
+        previewSyncMode = true;
+
+        previewSlowMode = false;
+
+        detenerTextoLento();
+
+
+        construirSincronizacion();
+
+
+        audio.play()
+            .then(() => {
+
+                actualizarEstadoSync(
+                    "🎵 Audio reproduciéndose con sincronización automática."
+                );
+
+            })
+            .catch(error => {
+
+                console.warn(
+                    "No se pudo reproducir audio:",
+                    error
+                );
+
+
+                actualizarEstadoSync(
+                    "⚠️ El navegador bloqueó la reproducción. Pulsa nuevamente ▶."
+                );
+
+            });
+
+    }
+
+
+    function pausarAudioPreview() {
+
+        const audio =
+            document.getElementById(
+                "preview-audio"
+            );
+
+
+        audio.pause();
+
+
+        actualizarEstadoSync(
+            "⏸ Audio pausado."
+        );
+
+    }
+
+
+    function reiniciarPreview() {
+
+        const audio =
+            document.getElementById(
+                "preview-audio"
+            );
+
+
+        detenerTextoLento();
+
+
+        previewSyncMode = true;
+
+        previewSlowMode = false;
+
+        previewLineIndex = 0;
+
+        previewImageIndex = 0;
+
+
+        audio.currentTime = 0;
+
+
+        renderPreview(true);
+
+
+        actualizarEstadoSync(
+            "🔄 Vista previa reiniciada."
+        );
+
+    }
+
+
+    /* ========================================================
+       TEXTO LENTO
+    ======================================================== */
+
+    function iniciarTextoLento() {
+
+        if (!previewChapter) {
+
+            return;
+
+        }
+
+
+        const lineas =
+            Array.isArray(
+                previewChapter.lineas
+            )
+                ? previewChapter.lineas
+                : [];
+
+
+        if (!lineas.length) {
+
+            return;
+
+        }
+
+
+        const audio =
+            document.getElementById(
+                "preview-audio"
+            );
+
+
+        audio.pause();
+
+
+        previewSyncMode = false;
+
+        previewSlowMode = true;
+
+
+        detenerTextoLento();
+
+
+        actualizarEstadoSync(
+            "🐢 Modo texto lento activo: una línea cada 5 segundos."
+        );
+
+
+        renderPreview(true);
+
+
+        previewSlowTimer =
+            setInterval(() => {
+
+                if (
+                    !previewChapter
+                ) {
+
+                    detenerTextoLento();
+
+                    return;
+
+                }
+
+
+                if (
+                    previewLineIndex <
+                    lineas.length - 1
+                ) {
+
+                    previewLineIndex++;
+
+                    calcularImagenParaLinea();
+
+                    renderPreview(true);
+
+                } else {
+
+                    detenerTextoLento();
+
+                    actualizarEstadoSync(
+                        "🏁 Texto lento terminado."
+                    );
+
+                }
+
+            }, 5000);
+
+    }
+
+
+    function detenerTextoLento() {
+
+        if (previewSlowTimer) {
+
+            clearInterval(
+                previewSlowTimer
+            );
+
+            previewSlowTimer = null;
+
+        }
+
+    }
+
+
+    /* ========================================================
+       LÍNEAS MANUALES
+    ======================================================== */
+
+    function lineaAnterior() {
+
+        if (!previewChapter) {
+
+            return;
+
+        }
+
+
+        const lineas =
+            Array.isArray(
+                previewChapter.lineas
+            )
+                ? previewChapter.lineas
+                : [];
+
+
+        if (!lineas.length) {
+
+            return;
+
+        }
+
+
+        previewLineIndex =
+            Math.max(
+                0,
+                previewLineIndex - 1
+            );
+
+
+        calcularImagenParaLinea();
+
+
+        const audio =
+            document.getElementById(
+                "preview-audio"
+            );
+
+
+        if (
+            previewSyncMode &&
+            previewSyncTimes.length
+        ) {
+
+            audio.currentTime =
+                previewSyncTimes[
+                    previewLineIndex
+                ];
+
+        }
+
+
+        renderPreview(true);
+
+    }
+
+
+    function lineaSiguiente() {
+
+        if (!previewChapter) {
+
+            return;
+
+        }
+
+
+        const lineas =
+            Array.isArray(
+                previewChapter.lineas
+            )
+                ? previewChapter.lineas
+                : [];
+
+
+        if (!lineas.length) {
+
+            return;
+
+        }
+
+
+        previewLineIndex =
+            Math.min(
+                lineas.length - 1,
+                previewLineIndex + 1
+            );
+
+
+        calcularImagenParaLinea();
+
+
+        const audio =
+            document.getElementById(
+                "preview-audio"
+            );
+
+
+        if (
+            previewSyncMode &&
+            previewSyncTimes.length
+        ) {
+
+            audio.currentTime =
+                previewSyncTimes[
+                    previewLineIndex
+                ];
+
+        }
+
+
+        renderPreview(true);
+
+    }
+
+
+    /* ========================================================
+       IMAGEN ASOCIADA A LÍNEA
+    ======================================================== */
+
+    function calcularImagenParaLinea() {
+
+        if (!previewChapter) {
+
+            return;
+
+        }
+
+
+        const imagenes =
+            Array.isArray(
+                previewChapter.imagenes
+            )
+                ? previewChapter.imagenes
+                : [];
+
+
+        const lineas =
+            Array.isArray(
+                previewChapter.lineas
+            )
+                ? previewChapter.lineas
+                : [];
+
+
+        if (
+            !imagenes.length ||
+            !lineas.length
+        ) {
+
+            previewImageIndex = 0;
+
+            return;
+
+        }
+
+
+        const progreso =
+            lineas.length <= 1
+
+                ? 0
+
+                : previewLineIndex /
+                  (
+                    lineas.length - 1
+                  );
+
+
+        previewImageIndex =
+            Math.min(
+                imagenes.length - 1,
+                Math.floor(
+                    progreso *
+                    imagenes.length
+                )
+            );
+
+    }
+
+
+    /* ========================================================
+       RENDER VISUAL
+    ======================================================== */
+
+    function renderPreview(
+        animate = true
+    ) {
+
+        if (!previewChapter) {
+
+            return;
+
+        }
+
+
+        const lineas =
+            Array.isArray(
+                previewChapter.lineas
+            )
+                ? previewChapter.lineas
+                : [];
+
+
+        const imagenes =
+            Array.isArray(
+                previewChapter.imagenes
+            )
+                ? previewChapter.imagenes
+                : [];
+
+
+        const textEl =
+            document.getElementById(
+                "preview-text"
+            );
+
+
+        const imageEl =
+            document.getElementById(
+                "preview-image"
+            );
+
+
+        const placeholder =
+            document.getElementById(
+                "preview-placeholder"
+            );
+
+
+        const meta =
+            document.getElementById(
+                "preview-meta"
+            );
+
+
+        const nuevaLinea =
+            lineas[
+                previewLineIndex
+            ] || "";
+
+
+        const nuevaImagen =
+            imagenes[
+                previewImageIndex
+            ] || "";
+
+
+        const cambiarImagen =
+            imageEl.dataset.currentSrc !==
+            nuevaImagen;
+
+
+        /* ---------------------------------
+           TEXTO
+        --------------------------------- */
+
+        if (
+            !animate ||
+            !textEl.textContent.trim()
+        ) {
+
+            textEl.textContent =
+                nuevaLinea;
+
+            textEl.classList.remove(
+                "visual-out",
+                "visual-in"
+            );
+
+        } else {
+
+            animarTexto(
+                nuevaLinea
+            );
+
+        }
+
+
+        /* ---------------------------------
+           IMAGEN
+        --------------------------------- */
+
+        if (nuevaImagen) {
+
+            placeholder.style.display =
+                "none";
+
+
+            imageEl.style.display =
+                "block";
+
+
+            if (
+                cambiarImagen
+            ) {
+
+                cambiarImagenSuavemente(
+                    imageEl,
+                    nuevaImagen
+                );
+
+            }
+
+        } else {
+
+            imageEl.style.display =
+                "none";
+
+            placeholder.style.display =
+                "block";
+
+            imageEl.dataset.currentSrc =
+                "";
+
+        }
+
+
+        meta.textContent =
+            `Línea ${lineas.length ? previewLineIndex + 1 : 0} / ${lineas.length}`;
+
+
+        document.getElementById(
+            "preview-diagnostics"
+        ).textContent =
+            construirDiagnostico();
+
+    }
+
+
+    /* ========================================================
+       TRANSICIÓN TEXTO
+    ======================================================== */
+
+    function animarTexto(
+        nuevoTexto
+    ) {
+
+        const textEl =
+            document.getElementById(
+                "preview-text"
+            );
+
+
+        if (
+            textEl.textContent ===
+            nuevoTexto
+        ) {
+
+            return;
+
+        }
+
+
+        clearTimeout(
+            previewVisualTimer
+        );
+
+
+        textEl.classList.remove(
+            "visual-in"
+        );
+
+
+        textEl.classList.add(
+            "visual-out"
+        );
+
+
+        previewVisualTimer =
+            setTimeout(() => {
+
+                textEl.textContent =
+                    nuevoTexto;
+
+
+                textEl.classList.remove(
+                    "visual-out"
+                );
+
+
+                requestAnimationFrame(() => {
+
+                    textEl.classList.add(
+                        "visual-in"
+                    );
+
+
+                    setTimeout(() => {
+
+                        textEl.classList.remove(
+                            "visual-in"
+                        );
+
+                    }, 450);
+
+                });
+
+            }, 190);
+
+    }
+
+
+    /* ========================================================
+       TRANSICIÓN IMAGEN
+    ======================================================== */
+
+    function cambiarImagenSuavemente(
+        imageEl,
+        nuevaImagen
+    ) {
+
+        imageEl.classList.remove(
+            "visual-in"
+        );
+
+
+        imageEl.classList.add(
+            "visual-out"
+        );
+
+
+        const nueva =
+            new Image();
+
+
+        nueva.onload =
+            function() {
+
+                setTimeout(() => {
+
+                    imageEl.src =
+                        nuevaImagen;
+
+                    imageEl.dataset.currentSrc =
+                        nuevaImagen;
+
+
+                    imageEl.classList.remove(
+                        "visual-out"
+                    );
+
+
+                    requestAnimationFrame(() => {
+
+                        imageEl.classList.add(
+                            "visual-in"
+                        );
+
+
+                        setTimeout(() => {
+
+                            imageEl.classList.remove(
+                                "visual-in"
+                            );
+
+                        }, 500);
+
+                    });
+
+                }, 180);
+
+            };
+
+
+        nueva.onerror =
+            function() {
+
+                imageEl.classList.remove(
+                    "visual-out"
+                );
+
+                imageEl.src =
+                    nuevaImagen;
+
+                imageEl.dataset.currentSrc =
+                    nuevaImagen;
+
+            };
+
+
+        nueva.src =
+            nuevaImagen;
+
+    }
+
+
+    /* ========================================================
+       YOUTUBE
+    ======================================================== */
+
+    function prepararYouTubePreview() {
+
+        const section =
+            document.getElementById(
+                "youtube-section"
+            );
+
+
+        const frame =
+            document.getElementById(
+                "youtube-frame"
+            );
+
+
+        const link =
+            document.getElementById(
+                "youtube-link"
+            );
+
+
+        frame.src = "";
+
+        frame.style.display =
+            "none";
+
+
+        link.href = "#";
+
+
+        if (
+            !previewChapter ||
+            !previewChapter.youtubeId
+        ) {
+
+            section.style.display =
+                "none";
+
+            return;
+
+        }
+
+
+        const id =
+            extraerYoutubeId(
+                previewChapter.youtubeId
+            );
+
+
+        if (!id) {
+
+            section.style.display =
+                "none";
+
+            return;
+
+        }
+
+
+        section.style.display =
+            "block";
+
+
+        frame.src =
+            `https://www.youtube.com/embed/${id}`;
+
+
+        frame.style.display =
+            "block";
+
+
+        link.href =
+            `https://www.youtube.com/watch?v=${id}`;
+
+    }
+
+
+    function extraerYoutubeId(
+        valor
+    ) {
+
+        if (!valor) {
+
+            return "";
+
+        }
+
+
+        const texto =
+            String(valor).trim();
+
+
+        if (
+            /^[A-Za-z0-9_-]{11}$/.test(
+                texto
+            )
+        ) {
+
+            return texto;
+
+        }
+
+
+        const match =
+            texto.match(
+                /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
+            );
+
+
+        return match
+            ? match[1]
+            : "";
+
+    }
+
+
+    /* ========================================================
+       DIAGNÓSTICO
+    ======================================================== */
+
+    function construirDiagnostico() {
+
+        if (!previewChapter) {
+
+            return "Sin capítulo.";
+
+        }
+
+
+        const audio =
+            document.getElementById(
+                "preview-audio"
+            );
+
+
+        const imagenes =
+            Array.isArray(
+                previewChapter.imagenes
+            )
+                ? previewChapter.imagenes
+                : [];
+
+
+        const lineas =
+            Array.isArray(
+                previewChapter.lineas
+            )
+                ? previewChapter.lineas
+                : [];
+
+
+        const duracion =
+            Number.isFinite(
+                audio.duration
+            )
+                ? formatearTiempo(
+                    audio.duration
+                )
+                : "no detectada";
+
+
+        return [
+
+            `Capítulo: ${previewChapter.numero}`,
+
+            `Líneas: ${lineas.length}`,
+
+            `Imágenes: ${imagenes.length}`,
+
+            `Audio: ${
+                previewChapter.audio
+                    ? "Sí"
+                    : "No"
+            }`,
+
+            `Duración audio: ${duracion}`,
+
+            `YouTube: ${
+                previewChapter.youtubeId
+                    ? "Sí"
+                    : "No"
+            }`,
+
+            `Línea actual: ${
+                lineas.length
+                    ? previewLineIndex + 1
+                    : 0
+            }`,
+
+            `Imagen actual: ${
+                imagenes.length
+                    ? previewImageIndex + 1
+                    : 0
+            }`
+
+        ].join("\n");
+
+    }
+
+
+    function formatearTiempo(
+        segundos
+    ) {
+
+        if (
+            !Number.isFinite(
+                segundos
+            )
+        ) {
+
+            return "0:00";
+
+        }
+
+
+        const minutos =
+            Math.floor(
+                segundos / 60
+            );
+
+
+        const secs =
+            Math.floor(
+                segundos % 60
+            );
+
+
+        return `${minutos}:${String(
+            secs
+        ).padStart(2, "0")}`;
+
+    }
+
+
+    function actualizarEstadoSync(
+        mensaje
+    ) {
+
+        const elemento =
+            document.getElementById(
+                "sync-status"
+            );
+
+
+        if (elemento) {
+
+            elemento.textContent =
+                mensaje;
+
+        }
+
+    }
+
+
+    /* ========================================================
+       CERRAR MODAL CON ESC
+    ======================================================== */
+
+    document.addEventListener(
+        "keydown",
+        function(e) {
+
+            if (
+                e.key === "Escape"
+            ) {
+
+                const modal =
+                    document.getElementById(
+                        "preview-modal"
+                    );
+
+
+                if (
+                    modal.style.display ===
+                    "block"
+                ) {
+
+                    cerrarPreview();
+
+                }
+
+            }
+
+        }
+    );
+
+</script>
+
+</body>
+</html>
