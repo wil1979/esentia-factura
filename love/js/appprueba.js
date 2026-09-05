@@ -71,10 +71,18 @@ async function cargarCapitulos() {
 
   try {
 
-    const todosLosCapitulos =
-      await obtenerCapitulosPublicados();
+    constantemente todosLosCapitulos =
+      const todosLosCapitulos =
 
-    const hoy = obtenerFechaHoy();
+  await obtenerTodosLosCapitulosPublicados();
+
+console.log(
+
+  "BUILD 05C — Capítulos recibidos:",
+
+  todosLosCapitulos
+
+);
 
    // ==================================================
 // BUILD 05C — MODO PRUEBA SIN RESTRICCIÓN DE FECHA
@@ -85,7 +93,6 @@ async function cargarCapitulos() {
 
 chapters =
   todosLosCapitulos
-    .filter(cap => cap.publicado === true)
     .sort(
       (a, b) =>
         Number(a.numero) - Number(b.numero)
@@ -1416,7 +1423,7 @@ function abrirYouTubeFallback() {
 // BOTÓN AUDIO
 // ======================================================
 
-$("soundBtn").onclick = () => {
+$("openBook").onclick =   mostrarIntro;
 
   const c =
     chapters[chapterIndex];
