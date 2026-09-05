@@ -17,7 +17,10 @@
 // - Sistema de imágenes
 // ======================================================
 
-import { obtenerCapitulosPublicados } from "./firebase.js";
+import {
+  obtenerCapitulosPublicados,
+  obtenerTodosLosCapitulosPublicados
+} from "./firebase.js";
 
 let chapters = [];
 let chapterIndex = 0;
