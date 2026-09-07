@@ -33,7 +33,7 @@ let audioChapterIndex = -1;
 let audioError = false;
 let youtubeFallbackButton = null;
 
-const TOTAL_CAPITULOS = 31;
+let TOTAL_CAPITULOS = 31; // Se actualiza automáticamente al cargar capítulos
 
 const $ = id => document.getElementById(id);
 
@@ -111,15 +111,16 @@ async function cargarCapitulos() {
 
 
     if (!chapters.length) {
+  mostrarHistoriaAunNoDisponible();
+  return;
+}
 
-      mostrarHistoriaAunNoDisponible();
+// Calcular el total dinámicamente según el último capítulo cargado
+TOTAL_CAPITULOS = Math.max(
+  ...chapters.map(c => Number(c.numero))
+);
 
-      return;
-
-    }
-
-
-    chapterIndex = 0;
+chapterIndex = 0;
     lineIndex = 0;
     imageIndex = 0;
 
