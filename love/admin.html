@@ -771,9 +771,9 @@
         </div>
 
         <div class="stat-card">
-            <h3>Meta</h3>
-            <p>31</p>
-        </div>
+    <h3>Meta</h3>
+    <p id="meta-capitulos">—</p>
+</div>
 
         <div class="stat-card">
             <h3>Disponibles</h3>
@@ -810,13 +810,7 @@
                     Número del capítulo
                 </label>
 
-                <input
-                    type="number"
-                    id="cap-numero"
-                    min="1"
-                    max="31"
-                    placeholder="Ej. 1"
-                >
+               <input type="number" id="cap-numero" min="1" placeholder="Ej. 1">
 
             </div>
 
@@ -1468,10 +1462,7 @@
             const numero =
                 parseInt(this.value);
 
-            if (
-                numero >= 1 &&
-                numero <= TOTAL_CAPITULOS
-            ) {
+           if (numero >= 1) {
 
                 document.getElementById(
                     "cap-fecha"
@@ -1622,6 +1613,11 @@
         ).textContent =
             programados;
 
+
+       const maxNumero = capitulosExistentes.length > 0
+    ? Math.max(...capitulosExistentes.map(c => Number(c.numero)))
+    : 0;
+    document.getElementById("meta-capitulos").textContent = maxNumero || "—";
     }
 
 
@@ -1866,18 +1862,10 @@
         }
 
 
-        if (
-            numero < 1 ||
-            numero > TOTAL_CAPITULOS
-        ) {
-
-            alert(
-                "El número debe estar entre 1 y 31."
-            );
-
-            return;
-
-        }
+        if (numero < 1) {
+    alert("El número debe ser mayor a 0.");
+    return;
+}
 
 
         const imagenesUrls =

@@ -20,6 +20,7 @@
 import { obtenerCapitulosPublicados } from "./firebase.js";
 
 let chapters = [];
+let allChapters = []; // Almacena TODOS los capítulos para construir el índice
 let chapterIndex = 0;
 let lineIndex = 0;
 let imageIndex = 0;
@@ -34,7 +35,7 @@ let audioError = false;
 let youtubeFallbackButton = null;
 
 let TOTAL_CAPITULOS = 31; // Se actualiza automáticamente al cargar capítulos
-
+const MODO_PRUEBA = true;
 const $ = id => document.getElementById(id);
 
 const cover = $("cover");
@@ -70,47 +71,63 @@ async function cargarCapitulos() {
 
     const todosLosCapitulos =
       await obtenerCapitulosPublicados();
+        // GUARDAMOS TODOS LOS CAPÍTULOS ORDENADOS PARA EL ÍNDICE
+        allChapters = todosLosCapitulos.sort((a, b) => Number(a.numero) - Number(b.numero));
+        
+        
+    const hoy =
+      obtenerFechaHoy();
 
-    const hoy = obtenerFechaHoy();
+    // ==================================================
+    // MODO PRUEBA
+    // ==================================================
+    // Se muestran todos los capítulos publicados,
+    // independientemente de su fecha.
+    //
+    // Para la versión definitiva:
+    // const MODO_PRUEBA = false;
+    // ==================================================
 
-    chapters =
-      todosLosCapitulos
-        .filter(cap => {
+    if (MODO_PRUEBA) {
 
-          if (cap.publicado !== true) {
-            return false;
-          }
+      chapters =
+        todosLosCapitulos
+          .filter(cap =>
+            cap.publicado === true
+          )
+          .sort(
+            (a, b) =>
+              Number(a.numero) -
+              Number(b.numero)
+          );
 
-          if (!cap.fechaPublicacion) {
-            return false;
-          }
+    } else {
 
-          return cap.fechaPublicacion <= hoy;
+      chapters =
+        todosLosCapitulos
+          .filter(cap => {
 
-        })
-        .sort(
-          (a, b) =>
-            Number(a.numero) - Number(b.numero)
-        );
+            if (cap.publicado !== true) {
+              return false;
+            }
 
+            if (!cap.fechaPublicacion) {
+              return false;
+            }
 
-    console.log(
-      "BUILD 03 — Fecha actual:",
-      hoy
-    );
+            return cap.fechaPublicacion <= hoy;
 
-    console.log(
-      "BUILD 03 — Capítulos publicados:",
-      todosLosCapitulos
-    );
+          })
+          .sort(
+            (a, b) =>
+              Number(a.numero) -
+              Number(b.numero)
+          );
 
-    console.log(
-      "BUILD 03 — Capítulos disponibles:",
-      chapters
-    );
+    }
 
 
-    if (!chapters.length) {
+   if (!chapters.length) {
   mostrarHistoriaAunNoDisponible();
   return;
 }
@@ -128,10 +145,13 @@ chapterIndex = 0;
 
     render();
 
+    // Asegurar estado correcto del botón
+    actualizarBotonAudio();
+
   } catch (error) {
 
     console.error(
-      "BUILD 03 — Error cargando capítulos:",
+      "Error cargando capítulos:",
       error
     );
 
@@ -1522,7 +1542,92 @@ $("backCover").onclick =
 $("restart").onclick =
   restart;
 
+// ======================================================
+// ÍNDICE DE CAPÍTULOS
+// ======================================================
+const indexModal = $("indexModal");
+const indexList = $("indexList");
 
+function abrirIndice() {
+    renderizarIndice();
+    indexModal.classList.remove("hidden");
+}
+
+function cerrarIndice() {
+    indexModal.classList.add("hidden");
+}
+
+function renderizarIndice() {
+    indexList.innerHTML = "";
+    const hoy = obtenerFechaHoy();
+
+    for (let i = 1; i <= TOTAL_CAPITULOS; i++) {
+        const cap = allChapters.find(c => Number(c.numero) === i);
+        const item = document.createElement("div");
+        item.className = "index-item";
+
+        if (!cap) {
+            // Capítulo aún no creado en Firebase
+            item.classList.add("locked");
+            item.innerHTML = `<span class="num">${String(i).padStart(2, "0")}</span><span class="status">🔒 Próximamente</span>`;
+        } else {
+            // Verificar si está desbloqueado por fecha o modo prueba
+            const estaDesbloqueado = MODO_PRUEBA || (cap.fechaPublicacion && cap.fechaPublicacion <= hoy);
+            
+            if (estaDesbloqueado) {
+                item.classList.add("unlocked");
+                item.innerHTML = `<span class="num">${String(i).padStart(2, "0")}</span><span class="status">Disponible</span>`;
+                item.onclick = () => {
+                    irACapitulo(i);
+                    cerrarIndice();
+                };
+            } else {
+                // Capítulo existe, pero es del futuro
+                item.classList.add("locked");
+                const fechaFormateada = cap.fechaPublicacion ? formatearFechaCorta(cap.fechaPublicacion) : "Próximamente";
+                item.innerHTML = `<span class="num">${String(i).padStart(2, "0")}</span><span class="status">🔒 ${fechaFormateada}</span>`;
+            }
+        }
+        indexList.appendChild(item);
+    }
+}
+
+function formatearFechaCorta(fecha) {
+    if (!fecha) return "";
+    const partes = fecha.split("-");
+    return partes.length === 3 ? `${partes[2]}/${partes[1]}` : fecha; // Muestra DD/MM
+}
+
+function irACapitulo(numero) {
+    // Buscamos el capítulo en el array FILTRADO (solo los desbloqueados)
+    const targetIndex = chapters.findIndex(c => Number(c.numero) === numero);
+    
+    if (targetIndex !== -1) {
+        detenerAudio();
+        chapterIndex = targetIndex;
+        lineIndex = 0;
+        imageIndex = 0;
+        prepararAudioCapitulo();
+        render();
+        window.scrollTo(0, 0);
+    }
+}
+
+// Event listeners para el índice
+$("indexBtn").onclick = abrirIndice;
+$("indexClose").onclick = cerrarIndice;
+
+// Cerrar al hacer clic fuera del contenido del modal
+indexModal.onclick = (e) => {
+    if (e.target === indexModal) cerrarIndice();
+};
+
+// Cerrar con tecla Escape
+document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !indexModal.classList.contains("hidden")) {
+        cerrarIndice();
+    }
+});
 // ======================================================
 // TECLADO
 // ======================================================
