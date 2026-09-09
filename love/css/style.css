@@ -549,3 +549,236 @@ h1{font:500 clamp(52px,9vw,104px)/.88 "Playfair Display",serif;margin:0;letter-s
     background: var(--line);
     border-radius: 3px;
 }
+.btn-warning {
+    background: #ff9800;
+    color: white;
+    padding: 8px 14px;
+    font-size: .9rem;
+}
+.btn-warning:hover {
+    background: #f57c00;
+}
+/* Botón PDF */
+.btn-pdf {
+    background: linear-gradient(135deg, #8e44ad, #c0392b);
+    color: white;
+    padding: 8px 14px;
+    font-size: .9rem;
+}
+.btn-pdf:hover {
+    background: linear-gradient(135deg, #9b59b6, #e74c3c);
+}
+.btn-pdf:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Contenedor oculto para renderizar el PDF */
+#pdf-render-host {
+    position: fixed;
+    left: -9999px;
+    top: 0;
+    width: 794px; /* Ancho A4 en px a 96dpi */
+    background: #120d0f;
+    font-family: 'Cormorant Garamond', serif;
+    color: #f4eee7;
+}
+
+.pdf-page {
+    width: 794px;
+    height: 1123px; /* Alto A4 */
+    position: relative;
+    overflow: hidden;
+    background: #120d0f;
+    page-break-after: always;
+}
+
+.pdf-page-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    filter: saturate(0.72) contrast(0.98) brightness(0.85);
+}
+
+.pdf-page-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        180deg,
+        rgba(12, 7, 8, 0.75) 0%,
+        rgba(12, 7, 8, 0.55) 50%,
+        rgba(12, 7, 8, 0.85) 100%
+    );
+}
+
+.pdf-page-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(0,0,0,0.6) 100%);
+}
+
+.pdf-page-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 80px 90px;
+    text-align: center;
+}
+
+.pdf-chapter-number {
+    font: 500 13px 'Playfair Display', serif;
+    letter-spacing: 0.3em;
+    color: #d6aa91;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+}
+
+.pdf-line {
+    font: 400 clamp(28px, 3.2vw, 42px)/1.25 'Cormorant Garamond', serif;
+    color: #f4eee7;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.8);
+    margin-bottom: 30px;
+    max-width: 600px;
+}
+
+.pdf-footer {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font: italic 400 14px 'Playfair Display', serif;
+    color: #8e7d78;
+    letter-spacing: 0.1em;
+}
+
+/* Página de portada del capítulo */
+.pdf-cover {
+    background: radial-gradient(circle at 50% 45%, #39272a 0%, #1b1114 42%, #0d090a 100%);
+    justify-content: center;
+    align-items: center;
+}
+
+.pdf-cover-title {
+    font: 500 clamp(48px, 6vw, 80px)/0.95 'Playfair Display', serif;
+    color: #f4eee7;
+    margin: 20px 0;
+    letter-spacing: -0.02em;
+    text-align: center;
+}
+
+.pdf-cover-divider {
+    width: 150px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(214,170,145,0.9), transparent);
+    margin: 30px auto;
+    position: relative;
+}
+
+.pdf-cover-divider::after {
+    content: "";
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    left: 50%;
+    top: 50%;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: #d6aa91;
+    box-shadow: 0 0 16px rgba(214,170,145,0.55);
+}
+.btn-pdf-completo {
+    background: linear-gradient(135deg, #8e44ad, #c0392b);
+    color: white;
+    padding: 11px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: .2s;
+    box-shadow: 0 5px 15px rgba(142, 68, 173, 0.25);
+}
+.btn-pdf-completo:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(142, 68, 173, 0.4);
+}
+.btn-pdf-completo:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Overlay de progreso mejorado */
+#pdf-loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(18, 13, 15, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #f4eee7;
+    font-family: 'Cormorant Garamond', serif;
+    backdrop-filter: blur(10px);
+}
+
+.pdf-progress-title {
+    font: 500 2rem 'Playfair Display', serif;
+    color: #f4eee7;
+    margin-bottom: 15px;
+}
+
+.pdf-progress-status {
+    font-size: 1.1rem;
+    color: #d6aa91;
+    margin-bottom: 25px;
+    text-align: center;
+    max-width: 500px;
+    line-height: 1.4;
+}
+
+.pdf-progress-bar-wrap {
+    width: min(400px, 80vw);
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.pdf-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #d6aa91, #f5576c);
+    transition: width 0.3s ease;
+    border-radius: 3px;
+}
+
+.pdf-progress-percent {
+    font: 500 1.2rem 'Playfair Display', serif;
+    color: #d6aa91;
+    margin-bottom: 25px;
+}
+
+.pdf-cancel-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #c9b9ae;
+    padding: 8px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: .2s;
+}
+.pdf-cancel-btn:hover {
+    background: rgba(255,255,255,0.05);
+    color: #f4eee7;
+}

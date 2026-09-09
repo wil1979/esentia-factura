@@ -9,7 +9,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <!-- Librerías para generar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -968,20 +970,13 @@
     <!-- LISTA -->
 
     <div class="lista-capitulos">
-
-        <h2>
-            📚 Capítulos existentes
-        </h2>
-
-        <div id="lista-capitulos-container">
-
-            <p style="text-align:center;color:#999;">
-                Cargando...
-            </p>
-
-        </div>
-
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+        <h2 style="margin:0;">📚 Capítulos existentes</h2>
+        <button class="btn btn-pdf-completo" onclick="generarPDFCompleto()" id="btn-pdf-completo">
+            📚 Generar PDF Completo
+        </button>
     </div>
+    <div id="lista-capitulos-container">
 
 </div>
 
@@ -1283,6 +1278,8 @@
 
     }
 
+
+
 </script>
 
 
@@ -1325,6 +1322,7 @@
     let previewSlowTimer = null;
 
     let previewVisualTimer = null;
+    let pdfCancelado = false;
 
 
     /* ========================================================
@@ -1734,30 +1732,15 @@
                 </div>
 
 
-                <div class="capitulo-actions">
-
-                    <button
-                        class="btn btn-success btn-small"
-                        onclick="abrirPreview('${cap.id}')"
-                    >
-                        👁️ Vista previa
-                    </button>
-
-                    <button
-                        class="btn btn-edit"
-                        onclick="editarCapituloPorId('${cap.id}')"
-                    >
-                        ✏️ Editar
-                    </button>
-
-                    <button
-                        class="btn btn-danger"
-                        onclick="eliminarCapitulo('${cap.id}', ${cap.numero})"
-                    >
-                        🗑️ Eliminar
-                    </button>
-
-                </div>
+               <div class="capitulo-actions">
+    <button class="btn btn-success btn-small" onclick="abrirPreview('${cap.id}')">👁️ Vista previa</button>
+    <button class="btn btn-edit" onclick="editarCapituloPorId('${cap.id}')">✏️ Editar</button>
+    <button class="btn ${cap.publicado ? 'btn-warning' : 'btn-success'} btn-small" onclick="togglePublicacion('${cap.id}', ${!cap.publicado})">
+        ${cap.publicado ? '🔴 Desactivar' : '🟢 Activar'}
+    </button>
+    <button class="btn btn-pdf btn-small" onclick="generarPDFCapitulo('${cap.id}')">📄 PDF</button>
+    <button class="btn btn-danger" onclick="eliminarCapitulo('${cap.id}', ${cap.numero})">🗑️ Eliminar</button>
+</div>
 
             `;
 
@@ -2218,7 +2201,26 @@
 
     }
 
-
+    async function togglePublicacion(id, nuevoEstado) {
+    try {
+        const { doc, updateDoc } = window.firestoreFuncs;
+        const docRef = doc(window.db, "capitulos", id);
+        
+        await updateDoc(docRef, {
+            publicado: nuevoEstado,
+            actualizado: new Date().toISOString()
+        });
+        
+        console.log(`✅ Capítulo actualizado. Publicado: ${nuevoEstado}`);
+        
+        // Recargar lista y estadísticas
+        await cargarCapitulos();
+        
+    } catch (error) {
+        console.error("❌ Error al actualizar publicación:", error);
+        alert("❌ No se pudo actualizar el estado del capítulo.");
+    }
+}
     /* ========================================================
        LIMPIAR
     ======================================================== */
@@ -3836,7 +3838,668 @@
         }
     );
 
-</script>
+    
+/* ========================================================
+   GENERAR PDF COMPLETO (TODOS LOS CAPÍTULOS)
+======================================================== */
 
+
+async function generarPDFCompleto() {
+    // Filtrar solo capítulos publicados
+    const capsHabilitados = capitulosExistentes
+        .filter(cap => cap.publicado === true)
+        .sort((a, b) => Number(a.numero) - Number(b.numero));
+
+    if (!capsHabilitados.length) {
+        return alert("No hay capítulos publicados para generar el PDF.");
+    }
+
+    const totalLineas = capsHabilitados.reduce((acc, c) => {
+        return acc + (Array.isArray(c.lineas) ? c.lineas.filter(l => l && l.trim()).length : 0);
+    }, 0);
+
+    const totalPaginas = totalLineas + capsHabilitados.length + 2; // +portada general + portada por cap + cierre
+
+    if (!confirm(
+        `¿Generar PDF COMPLETO con ${capsHabilitados.length} capítulos?\n\n` +
+        `📄 Aproximadamente ${totalPaginas} páginas\n` +
+        `⏱️ Tiempo estimado: ${Math.ceil(totalPaginas * 0.8)} segundos\n\n` +
+        `Podrás cancelar en cualquier momento.`
+    )) {
+        return;
+    }
+
+    pdfCancelado = false;
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'a4'
+    });
+
+    const pageWidth = 595;
+    const pageHeight = 842;
+    const host = document.getElementById('pdf-render-host');
+
+    // Crear overlay de progreso
+    const overlay = document.createElement('div');
+    overlay.id = 'pdf-loading-overlay';
+    overlay.innerHTML = `
+        <div class="pdf-progress-title">📚 Generando libro completo</div>
+        <div class="pdf-progress-status" id="pdf-status">Preparando portada general...</div>
+        <div class="pdf-progress-bar-wrap">
+            <div class="pdf-progress-bar" id="pdf-bar"></div>
+        </div>
+        <div class="pdf-progress-percent" id="pdf-percent">0%</div>
+        <button class="pdf-cancel-btn" onclick="cancelarPDF()">Cancelar</button>
+    `;
+    document.body.appendChild(overlay);
+
+    const statusEl = overlay.querySelector('#pdf-status');
+    const barEl = overlay.querySelector('#pdf-bar');
+    const percentEl = overlay.querySelector('#pdf-percent');
+
+    let paginaActual = 0;
+
+    const actualizarProgreso = (mensaje) => {
+        paginaActual++;
+        const pct = Math.min(100, Math.round((paginaActual / totalPaginas) * 100));
+        barEl.style.width = `${pct}%`;
+        percentEl.textContent = `${pct}%`;
+        if (mensaje) statusEl.textContent = mensaje;
+    };
+
+    try {
+        // ==========================================
+        // 1. PORTADA GENERAL
+        // ==========================================
+        statusEl.textContent = 'Creando portada general...';
+        host.innerHTML = `
+            <div class="pdf-page pdf-cover">
+                <div class="pdf-page-content">
+                    <div style="font:600 22px 'Playfair Display',serif; letter-spacing:.28em; margin-bottom:22px; color:#d6aa91;">
+                        W <span style="font-style:italic; margin:0 .12em;">&</span> E
+                    </div>
+                    <div class="pdf-cover-divider"></div>
+                    <h1 class="pdf-cover-title" style="font-size:72px;">Nuestra Historia</h1>
+                    <div class="pdf-cover-divider"></div>
+                    <div style="margin-top:40px; font:italic 400 22px 'Cormorant Garamond',serif; color:#cfc0b9; line-height:1.4; max-width:500px;">
+                        19 años de nosotros.<br>
+                        No es solamente un aniversario.<br>
+                        Es todo lo que hemos vivido para llegar hasta aquí.
+                    </div>
+                    <div style="margin-top:50px; font:500 13px 'Playfair Display',serif; color:#8e7d78; letter-spacing:.2em;">
+                        ${capsHabilitados.length} capítulos · ${totalLineas} recuerdos
+                    </div>
+                </div>
+            </div>
+        `;
+        await esperar(150);
+        const coverCanvas = await html2canvas(host.firstElementChild, {
+            scale: 2, useCORS: true, backgroundColor: '#120d0f', logging: false
+        });
+        pdf.addImage(coverCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageWidth, pageHeight);
+        actualizarProgreso('Portada general creada.');
+
+        // ==========================================
+        // 2. PRE-CARGAR TODAS LAS IMÁGENES
+        // ==========================================
+        statusEl.textContent = 'Precargando imágenes...';
+        const todasLasImagenes = new Set();
+        capsHabilitados.forEach(cap => {
+            (cap.imagenes || []).forEach(img => todasLasImagenes.add(img));
+        });
+
+        await Promise.all(Array.from(todasLasImagenes).map(url => precargarImagen(url)));
+
+        // ==========================================
+        // 3. ITERAR CAPÍTULOS
+        // ==========================================
+        for (let ci = 0; ci < capsHabilitados.length; ci++) {
+            if (pdfCancelado) break;
+
+            const cap = capsHabilitados[ci];
+            const lineas = Array.isArray(cap.lineas) ? cap.lineas.filter(l => l && l.trim()) : [];
+            const imagenes = Array.isArray(cap.imagenes) ? cap.imagenes : [];
+
+            if (!lineas.length) continue;
+
+            // ------------------------------------------
+            // PORTADA DEL CAPÍTULO
+            // ------------------------------------------
+            statusEl.textContent = `Capítulo ${cap.numero} de ${capsHabilitados.length}: creando portada...`;
+            host.innerHTML = `
+                <div class="pdf-page pdf-cover">
+                    <div class="pdf-page-content">
+                        <div class="pdf-chapter-number">CAPÍTULO ${String(cap.numero).padStart(2, '0')}</div>
+                        <div class="pdf-cover-divider"></div>
+                        <h1 class="pdf-cover-title">${escapeHTML(cap.titulo || '')}</h1>
+                        <div class="pdf-cover-divider"></div>
+                        <div style="margin-top:40px; font:italic 400 18px 'Playfair Display',serif; color:#d6aa91; letter-spacing:.15em;">
+                            W & E · 19 años
+                        </div>
+                    </div>
+                </div>
+            `;
+            await esperar(120);
+            const capCoverCanvas = await html2canvas(host.firstElementChild, {
+                scale: 2, useCORS: true, backgroundColor: '#120d0f', logging: false
+            });
+            pdf.addPage();
+            pdf.addImage(capCoverCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageWidth, pageHeight);
+            actualizarProgreso(`Capítulo ${cap.numero}: portada creada.`);
+
+            // ------------------------------------------
+            // PÁGINAS DE LÍNEAS
+            // ------------------------------------------
+            for (let i = 0; i < lineas.length; i++) {
+                if (pdfCancelado) break;
+
+                const imgIdx = imagenes.length
+                    ? Math.min(Math.floor((i / Math.max(lineas.length - 1, 1)) * imagenes.length), imagenes.length - 1)
+                    : -1;
+                const bgImage = imgIdx >= 0 ? imagenes[imgIdx] : null;
+
+                statusEl.textContent = `Capítulo ${cap.numero} · Página ${i + 1} de ${lineas.length}`;
+
+                host.innerHTML = `
+                    <div class="pdf-page">
+                        ${bgImage ? `<div class="pdf-page-bg" style="background-image: url('${bgImage}')"></div>` : ''}
+                        <div class="pdf-page-overlay"></div>
+                        <div class="pdf-page-vignette"></div>
+                        <div class="pdf-page-content">
+                            <div class="pdf-chapter-number">CAPÍTULO ${String(cap.numero).padStart(2, '0')}</div>
+                            <div class="pdf-line">${escapeHTML(lineas[i])}</div>
+                        </div>
+                        <div class="pdf-footer">— ${i + 1} —</div>
+                    </div>
+                `;
+
+                await esperar(80);
+                const canvas = await html2canvas(host.firstElementChild, {
+                    scale: 2, useCORS: true, backgroundColor: '#120d0f', logging: false
+                });
+                pdf.addPage();
+                pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageWidth, pageHeight);
+                actualizarProgreso();
+            }
+        }
+
+        // ==========================================
+        // 4. PÁGINA FINAL
+        // ==========================================
+        if (!pdfCancelado) {
+            statusEl.textContent = 'Creando página final...';
+            host.innerHTML = `
+                <div class="pdf-page pdf-cover">
+                    <div class="pdf-page-content">
+                        <div style="font:italic 400 32px 'Playfair Display',serif; color:#f4eee7; text-align:center; line-height:1.4; max-width:500px;">
+                            "Y todavía falta mucho por escribir"
+                        </div>
+                        <div class="pdf-cover-divider"></div>
+                        <div style="margin-top:30px; font:500 24px 'Playfair Display',serif; color:#d6aa91; letter-spacing:.2em;">
+                            W & E
+                        </div>
+                        <div style="margin-top:20px; font:italic 400 18px 'Cormorant Garamond',serif; color:#8e7d78; line-height:1.5;">
+                            19 años no son el final.<br>
+                            Son otro comienzo.<br><br>
+                            Esta historia seguirá creciendo<br>
+                            con cada recuerdo que decidamos guardar.
+                        </div>
+                    </div>
+                </div>
+            `;
+            await esperar(150);
+            const endCanvas = await html2canvas(host.firstElementChild, {
+                scale: 2, useCORS: true, backgroundColor: '#120d0f', logging: false
+            });
+            pdf.addPage();
+            pdf.addImage(endCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageWidth, pageHeight);
+            actualizarProgreso('Finalizado.');
+        }
+
+        // ==========================================
+        // 5. GUARDAR
+        // ==========================================
+        if (!pdfCancelado) {
+            const fecha = new Date().toISOString().split('T')[0];
+            pdf.save(`WE_19anos_LibroCompleto_${fecha}.pdf`);
+            alert(`✅ PDF completo generado:\n${capsHabilitados.length} capítulos\n${paginaActual} páginas`);
+        } else {
+            alert("⚠️ Generación cancelada por el usuario.");
+        }
+
+    } catch (error) {
+        console.error("❌ Error al generar PDF completo:", error);
+        alert("❌ Error al generar el PDF completo.\n\nPosibles causas:\n- Problemas de CORS con imágenes\n- Memoria insuficiente\n- Navegador bloqueó la operación");
+    } finally {
+        host.innerHTML = '';
+        overlay.remove();
+        pdfCancelado = false;
+    }
+}
+
+
+
+/* ========================================================
+   CANCELAR PDF
+======================================================== */
+function cancelarPDF() {
+    if (confirm("¿Cancelar la generación del PDF?")) {
+        pdfCancelado = true;
+    }
+}
+
+/* ========================================================
+   FUNCIÓN ESPERAR (para renderizado PDF)
+======================================================== */
+function esperar(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/* ========================================================
+   PRECARGAR IMAGEN
+======================================================== */
+function precargarImagen(url) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(url);
+        img.onerror = () => {
+            console.warn("⚠️ No se pudo precargar:", url);
+            resolve(url);
+        };
+        img.src = url;
+    });
+}
+
+/* ========================================================
+   GENERAR PDF DE UN CAPÍTULO (VERSIÓN MEJORADA)
+======================================================== */
+async function generarPDFCapitulo(id) {
+    const cap = capitulosExistentes.find(item => item.id === id);
+    if (!cap) return alert("No se encontró el capítulo.");
+
+    const lineas = Array.isArray(cap.lineas) ? cap.lineas.filter(l => l && l.trim()) : [];
+    const imagenes = Array.isArray(cap.imagenes) ? cap.imagenes : [];
+
+    if (!lineas.length) {
+        return alert("Este capítulo no tiene texto para generar el PDF.");
+    }
+
+    if (!confirm(`¿Generar PDF del Capítulo ${cap.numero}: "${cap.titulo}"?`)) {
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'a4',
+        compress: true
+    });
+
+    const pageWidth = 595;
+    const pageHeight = 842;
+    const host = document.getElementById('pdf-render-host');
+
+    // Overlay de carga
+    const overlay = crearOverlayProgreso('Preparando...');
+    document.body.appendChild(overlay);
+    const progressEl = overlay.querySelector('#pdf-progress');
+
+    try {
+        // Esperar a que las fuentes carguen
+        await esperarFuentes();
+
+        // PORTADA
+        progressEl.textContent = 'Creando portada...';
+        await crearPortadaPDF(host, cap, pdf, pageWidth, pageHeight);
+
+        // PÁGINAS DE CONTENIDO
+        for (let i = 0; i < lineas.length; i++) {
+            progressEl.textContent = `Página ${i + 2} de ${lineas.length + 1}...`;
+            
+            const imgIdx = imagenes.length
+                ? Math.min(Math.floor((i / Math.max(lineas.length - 1, 1)) * imagenes.length), imagenes.length - 1)
+                : -1;
+            const bgImage = imgIdx >= 0 ? imagenes[imgIdx] : null;
+
+            await crearPaginaContenido(host, cap, lineas[i], i + 1, bgImage, pdf, pageWidth, pageHeight);
+            await esperar(200); // Dar tiempo al render
+        }
+
+        // PÁGINA FINAL
+        progressEl.textContent = 'Finalizando...';
+        await crearPaginaFinal(host, pdf, pageWidth, pageHeight);
+
+        // Guardar
+        const nombreArchivo = `Capitulo_${String(cap.numero).padStart(2, '0')}_${(cap.titulo || 'sin_titulo').replace(/[^a-z0-9]/gi, '_').substring(0, 30)}.pdf`;
+        pdf.save(nombreArchivo);
+        alert(`✅ PDF generado: ${nombreArchivo}`);
+
+    } catch (error) {
+        console.error("❌ Error:", error);
+        alert("❌ Error al generar PDF. Revisa la consola.");
+    } finally {
+        host.innerHTML = '';
+        overlay.remove();
+    }
+}
+
+/* ========================================================
+   GENERAR PDF COMPLETO (VERSIÓN MEJORADA)
+======================================================== */
+
+
+async function generarPDFCompleto() {
+    const capsHabilitados = capitulosExistentes
+        .filter(cap => cap.publicado === true)
+        .sort((a, b) => Number(a.numero) - Number(b.numero));
+
+    if (!capsHabilitados.length) {
+        return alert("No hay capítulos publicados.");
+    }
+
+    const totalLineas = capsHabilitados.reduce((acc, c) => {
+        return acc + (Array.isArray(c.lineas) ? c.lineas.filter(l => l && l.trim()).length : 0);
+    }, 0);
+
+    const totalPaginas = totalLineas + capsHabilitados.length + 2;
+
+    if (!confirm(
+        `¿Generar PDF COMPLETO?\n\n` +
+        `📄 ~${totalPaginas} páginas\n` +
+        `📚 ${capsHabilitados.length} capítulos\n\n` +
+        `Puede tardar varios minutos.`
+    )) {
+        return;
+    }
+
+    pdfCancelado = false;
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'a4',
+        compress: true
+    });
+
+    const pageWidth = 595;
+    const pageHeight = 842;
+    const host = document.getElementById('pdf-render-host');
+
+    const overlay = crearOverlayProgresoCompleto(totalPaginas);
+    document.body.appendChild(overlay);
+
+    const statusEl = overlay.querySelector('#pdf-status');
+    const barEl = overlay.querySelector('#pdf-bar');
+    const percentEl = overlay.querySelector('#pdf-percent');
+
+    let paginaActual = 0;
+
+    const actualizarProgreso = (mensaje) => {
+        paginaActual++;
+        const pct = Math.min(100, Math.round((paginaActual / totalPaginas) * 100));
+        barEl.style.width = `${pct}%`;
+        percentEl.textContent = `${pct}%`;
+        if (mensaje) statusEl.textContent = mensaje;
+    };
+
+    try {
+        await esperarFuentes();
+
+        // PORTADA GENERAL
+        statusEl.textContent = 'Portada general...';
+        await crearPortadaGeneralPDF(host, capsHabilitados.length, totalLineas, pdf, pageWidth, pageHeight);
+        actualizarProgreso('Portada creada.');
+
+        // PRECARGAR IMÁGENES
+        statusEl.textContent = 'Precargando imágenes...';
+        const todasLasImagenes = new Set();
+        capsHabilitados.forEach(cap => {
+            (cap.imagenes || []).forEach(img => todasLasImagenes.add(img));
+        });
+        await Promise.all(Array.from(todasLasImagenes).map(url => precargarImagen(url)));
+
+        // CAPÍTULOS
+        for (let ci = 0; ci < capsHabilitados.length; ci++) {
+            if (pdfCancelado) break;
+
+            const cap = capsHabilitados[ci];
+            const lineas = Array.isArray(cap.lineas) ? cap.lineas.filter(l => l && l.trim()) : [];
+            const imagenes = Array.isArray(cap.imagenes) ? cap.imagenes : [];
+
+            if (!lineas.length) continue;
+
+            // Portada del capítulo
+            statusEl.textContent = `Capítulo ${cap.numero}: portada...`;
+            await crearPortadaPDF(host, cap, pdf, pageWidth, pageHeight);
+            actualizarProgreso(`Capítulo ${cap.numero}: portada.`);
+
+            // Líneas
+            for (let i = 0; i < lineas.length; i++) {
+                if (pdfCancelado) break;
+
+                const imgIdx = imagenes.length
+                    ? Math.min(Math.floor((i / Math.max(lineas.length - 1, 1)) * imagenes.length), imagenes.length - 1)
+                    : -1;
+                const bgImage = imgIdx >= 0 ? imagenes[imgIdx] : null;
+
+                statusEl.textContent = `Capítulo ${cap.numero} · Línea ${i + 1}`;
+                await crearPaginaContenido(host, cap, lineas[i], i + 1, bgImage, pdf, pageWidth, pageHeight);
+                actualizarProgreso();
+                await esperar(150);
+            }
+        }
+
+        // PÁGINA FINAL
+        if (!pdfCancelado) {
+            statusEl.textContent = 'Página final...';
+            await crearPaginaFinal(host, pdf, pageWidth, pageHeight);
+            actualizarProgreso('Finalizado.');
+        }
+
+        // Guardar
+        if (!pdfCancelado) {
+            const fecha = new Date().toISOString().split('T')[0];
+            pdf.save(`WE_19anos_LibroCompleto_${fecha}.pdf`);
+            alert(`✅ PDF completo generado:\n${capsHabilitados.length} capítulos\n${paginaActual} páginas`);
+        } else {
+            alert("⚠️ Generación cancelada.");
+        }
+
+    } catch (error) {
+        console.error("❌ Error:", error);
+        alert("❌ Error al generar PDF.");
+    } finally {
+        host.innerHTML = '';
+        overlay.remove();
+        pdfCancelado = false;
+    }
+}
+
+/* ========================================================
+   FUNCIONES AUXILIARES MEJORADAS
+======================================================== */
+
+function crearOverlayProgreso(mensaje) {
+    const overlay = document.createElement('div');
+    overlay.id = 'pdf-loading-overlay';
+    overlay.style.cssText = `
+        position: fixed; inset: 0; z-index: 9999;
+        background: rgba(18, 13, 15, 0.95);
+        display: flex; flex-direction: column;
+        justify-content: center; align-items: center;
+        color: #f4eee7; font-family: 'Cormorant Garamond', serif;
+        backdrop-filter: blur(10px);
+    `;
+    overlay.innerHTML = `
+        <div style="font-size: 2rem; margin-bottom: 20px; font-family: 'Playfair Display', serif;">📄 Generando PDF...</div>
+        <div id="pdf-progress" style="font-size: 1.1rem; color: #d6aa91;">${mensaje}</div>
+        <div class="loader" style="display:block; margin-top: 30px;"></div>
+    `;
+    return overlay;
+}
+
+function crearOverlayProgresoCompleto(total) {
+    const overlay = document.createElement('div');
+    overlay.id = 'pdf-loading-overlay';
+    overlay.innerHTML = `
+        <div style="font-size: 2rem; margin-bottom: 20px; font-family: 'Playfair Display', serif;">📚 Generando libro...</div>
+        <div id="pdf-status" style="font-size: 1.1rem; color: #d6aa91; margin-bottom: 25px; text-align: center;">Preparando...</div>
+        <div style="width: min(400px, 80vw); height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-bottom: 20px;">
+            <div id="pdf-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #d6aa91, #f5576c); transition: width 0.3s ease;"></div>
+        </div>
+        <div id="pdf-percent" style="font-size: 1.2rem; color: #d6aa91; margin-bottom: 25px; font-family: 'Playfair Display', serif;">0%</div>
+        <button onclick="cancelarPDF()" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #c9b9ae; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-family: inherit;">Cancelar</button>
+    `;
+    return overlay;
+}
+
+function esperarFuentes() {
+    return new Promise(resolve => {
+        if (document.fonts.ready) {
+            document.fonts.ready.then(resolve);
+        } else {
+            setTimeout(resolve, 1000);
+        }
+    });
+}
+
+async function capturarElementoComoCanvas(elemento) {
+    return await html2canvas(elemento, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#120d0f',
+        logging: false,
+        foreignObjectRendering: true,
+        imageTimeout: 0
+    });
+}
+
+async function crearPortadaPDF(host, cap, pdf, pageWidth, pageHeight) {
+    host.innerHTML = `
+        <div style="width: 595px; height: 842px; background: radial-gradient(circle at 50% 45%, #39272a 0%, #1b1114 42%, #0d090a 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 80px; box-sizing: border-box; font-family: 'Cormorant Garamond', serif;">
+            <div style="font: 600 22px 'Playfair Display', serif; letter-spacing: 0.28em; margin-bottom: 22px; color: #d6aa91;">
+                W <span style="font-style: italic; margin: 0 0.12em;">&</span> E
+            </div>
+            <div style="width: 150px; height: 1px; background: linear-gradient(90deg, transparent, rgba(214,170,145,0.9), transparent); margin: 30px auto; position: relative;">
+                <div style="position: absolute; width: 7px; height: 7px; left: 50%; top: 50%; border-radius: 50%; transform: translate(-50%, -50%); background: #d6aa91; box-shadow: 0 0 16px rgba(214,170,145,0.55);"></div>
+            </div>
+            <h1 style="font: 500 72px/0.95 'Playfair Display', serif; color: #f4eee7; margin: 20px 0; letter-spacing: -0.02em; text-align: center;">${escapeHTML(cap.titulo || '')}</h1>
+            <div style="width: 150px; height: 1px; background: linear-gradient(90deg, transparent, rgba(214,170,145,0.9), transparent); margin: 30px auto; position: relative;">
+                <div style="position: absolute; width: 7px; height: 7px; left: 50%; top: 50%; border-radius: 50%; transform: translate(-50%, -50%); background: #d6aa91; box-shadow: 0 0 16px rgba(214,170,145,0.55);"></div>
+            </div>
+            <div style="margin-top: 40px; font: italic 400 18px 'Playfair Display', serif; color: #d6aa91; letter-spacing: 0.15em;">
+                CAPÍTULO ${String(cap.numero).padStart(2, '0')} · 19 años
+            </div>
+        </div>
+    `;
+    
+    await esperar(300);
+    const canvas = await capturarElementoComoCanvas(host.firstElementChild);
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pageWidth, pageHeight);
+}
+
+async function crearPaginaContenido(host, cap, linea, numLinea, bgImage, pdf, pageWidth, pageHeight) {
+    host.innerHTML = `
+        <div style="width: 595px; height: 842px; position: relative; overflow: hidden; background: #120d0f; font-family: 'Cormorant Garamond', serif;">
+            ${bgImage ? `<div style="position: absolute; inset: 0; background-image: url('${bgImage}'); background-size: cover; background-position: center; filter: saturate(0.72) contrast(0.98) brightness(0.7);"></div>` : ''}
+            <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(12, 7, 8, 0.75) 0%, rgba(12, 7, 8, 0.55) 50%, rgba(12, 7, 8, 0.85) 100%);"></div>
+            <div style="position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(0,0,0,0.6) 100%);"></div>
+            <div style="position: relative; z-index: 2; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 80px 90px; box-sizing: border-box; text-align: center;">
+                <div style="font: 500 13px 'Playfair Display', serif; letter-spacing: 0.3em; color: #d6aa91; margin-bottom: 30px; text-transform: uppercase;">
+                    CAPÍTULO ${String(cap.numero).padStart(2, '0')}
+                </div>
+                <div style="font: 400 42px/1.25 'Cormorant Garamond', serif; color: #f4eee7; text-shadow: 0 2px 20px rgba(0,0,0,0.8); max-width: 500px;">
+                    ${escapeHTML(linea)}
+                </div>
+            </div>
+            <div style="position: absolute; bottom: 40px; left: 0; right: 0; text-align: center; font: italic 400 14px 'Playfair Display', serif; color: #8e7d78; letter-spacing: 0.1em; z-index: 2;">
+                — ${numLinea} —
+            </div>
+        </div>
+    `;
+    
+    await esperar(200);
+    const canvas = await capturarElementoComoCanvas(host.firstElementChild);
+    pdf.addPage();
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pageWidth, pageHeight);
+}
+
+async function crearPortadaGeneralPDF(host, totalCaps, totalLineas, pdf, pageWidth, pageHeight) {
+    host.innerHTML = `
+        <div style="width: 595px; height: 842px; background: radial-gradient(circle at 50% 45%, #39272a 0%, #1b1114 42%, #0d090a 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 80px; box-sizing: border-box; font-family: 'Cormorant Garamond', serif;">
+            <div style="font: 600 22px 'Playfair Display', serif; letter-spacing: 0.28em; margin-bottom: 22px; color: #d6aa91;">
+                W <span style="font-style: italic; margin: 0 0.12em;">&</span> E
+            </div>
+            <div style="width: 150px; height: 1px; background: linear-gradient(90deg, transparent, rgba(214,170,145,0.9), transparent); margin: 30px auto; position: relative;">
+                <div style="position: absolute; width: 7px; height: 7px; left: 50%; top: 50%; border-radius: 50%; transform: translate(-50%, -50%); background: #d6aa91; box-shadow: 0 0 16px rgba(214,170,145,0.55);"></div>
+            </div>
+            <h1 style="font: 500 72px/0.95 'Playfair Display', serif; color: #f4eee7; margin: 20px 0; letter-spacing: -0.02em; text-align: center;">Nuestra Historia</h1>
+            <div style="margin-top: 40px; font: italic 400 22px 'Cormorant Garamond', serif; color: #cfc0b9; line-height: 1.4; max-width: 500px; text-align: center;">
+                19 años de nosotros.<br>
+                No es solamente un aniversario.<br>
+                Es todo lo que hemos vivido para llegar hasta aquí.
+            </div>
+            <div style="margin-top: 50px; font: 500 13px 'Playfair Display', serif; color: #8e7d78; letter-spacing: 0.2em;">
+                ${totalCaps} capítulos · ${totalLineas} recuerdos
+            </div>
+        </div>
+    `;
+    
+    await esperar(300);
+    const canvas = await capturarElementoComoCanvas(host.firstElementChild);
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pageWidth, pageHeight);
+}
+
+async function crearPaginaFinal(host, pdf, pageWidth, pageHeight) {
+    host.innerHTML = `
+        <div style="width: 595px; height: 842px; background: radial-gradient(circle at 50% 45%, #38272a 0%, #171012 48%, #0c0809 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 80px; box-sizing: border-box; font-family: 'Cormorant Garamond', serif; text-align: center;">
+            <div style="font: italic 400 32px 'Playfair Display', serif; color: #f4eee7; line-height: 1.4; max-width: 500px; margin-bottom: 30px;">
+                "Y todavía falta mucho por escribir"
+            </div>
+            <div style="width: 150px; height: 1px; background: linear-gradient(90deg, transparent, rgba(214,170,145,0.9), transparent); margin: 30px auto; position: relative;">
+                <div style="position: absolute; width: 7px; height: 7px; left: 50%; top: 50%; border-radius: 50%; transform: translate(-50%, -50%); background: #d6aa91; box-shadow: 0 0 16px rgba(214,170,145,0.55);"></div>
+            </div>
+            <div style="margin-top: 30px; font: 500 24px 'Playfair Display', serif; color: #d6aa91; letter-spacing: 0.2em;">
+                W & E
+            </div>
+            <div style="margin-top: 20px; font: italic 400 18px 'Cormorant Garamond', serif; color: #8e7d78; line-height: 1.5;">
+                19 años no son el final.<br>
+                Son otro comienzo.<br><br>
+                Esta historia seguirá creciendo<br>
+                con cada recuerdo que decidamos guardar.
+            </div>
+        </div>
+    `;
+    
+    await esperar(300);
+    const canvas = await capturarElementoComoCanvas(host.firstElementChild);
+    pdf.addPage();
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pageWidth, pageHeight);
+}
+
+function cancelarPDF() {
+    if (confirm("¿Cancelar la generación?")) {
+        pdfCancelado = true;
+    }
+}
+
+function precargarImagen(url) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(url);
+        img.onerror = () => resolve(url);
+        img.src = url;
+    });
+}
+
+</script>
+<!-- Contenedor oculto para renderizar PDF -->
+<div id="pdf-render-host"></div>
 </body>
 </html>
