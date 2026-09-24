@@ -35,7 +35,7 @@ let audioError = false;
 let youtubeFallbackButton = null;
 
 let TOTAL_CAPITULOS = 31; // Se actualiza automáticamente al cargar capítulos
-const MODO_PRUEBA = true;
+const MODO_PRUEBA = false;
 const $ = id => document.getElementById(id);
 
 const cover = $("cover");
