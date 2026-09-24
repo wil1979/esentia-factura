@@ -14,8 +14,8 @@
 
         body {
             font-family: 'Cormorant Garamond', serif;
-            background: #f4f4f9;
-            color: #333;
+            background: #ffffff;
+            color: #111111;
             padding: 20px;
         }
 
@@ -23,22 +23,23 @@
         .control-panel {
             max-width: 900px;
             margin: 0 auto 30px;
-            background: white;
+            background: #ffffff;
             padding: 30px;
             border-radius: 18px;
             box-shadow: 0 15px 45px rgba(0,0,0,.10);
+            border: 1px solid #e5e0da;
         }
 
         h1 {
             font-family: 'Playfair Display', serif;
-            color: #f5576c;
+            color: #b3123f;
             text-align: center;
             margin-bottom: 10px;
         }
 
         .subtitle {
             text-align: center;
-            color: #777;
+            color: #666;
             margin-bottom: 25px;
         }
 
@@ -61,9 +62,9 @@
         }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .btn-primary { background: #f5576c; color: white; }
-        .btn-success { background: #28a745; color: white; }
-        .btn-secondary { background: #667eea; color: white; }
+        .btn-primary { background: #b3123f; color: white; }
+        .btn-success { background: #1f7a3d; color: white; }
+        .btn-secondary { background: #4a5fd0; color: white; }
         .btn-dark { background: #444; color: white; }
 
         .btn-group {
@@ -76,7 +77,7 @@
 
         .loader {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #f5576c;
+            border-top: 4px solid #b3123f;
             border-radius: 50%;
             width: 30px;
             height: 30px;
@@ -90,22 +91,22 @@
         }
 
         .info-box {
-            background: #f0f7ff;
-            border: 2px solid #667eea;
+            background: #f0f4ff;
+            border: 2px solid #4a5fd0;
             border-radius: 10px;
             padding: 15px;
             margin: 20px 0;
-            color: #333;
+            color: #222;
             line-height: 1.6;
             font-size: 0.95rem;
         }
 
-        .info-box strong { color: #667eea; }
+        .info-box strong { color: #4a5fd0; }
 
         .alert-warning {
-            background: #fff3cd;
+            background: #fff8e1;
             border: 1px solid #ffeaa7;
-            color: #856404;
+            color: #7a5b00;
             padding: 12px 16px;
             border-radius: 8px;
             margin: 15px 0;
@@ -148,6 +149,7 @@
                 overflow: hidden;
                 page-break-after: always;
                 page-break-inside: avoid;
+                background: #ffffff;
             }
             .page:last-child {
                 page-break-after: auto;
@@ -161,38 +163,40 @@
                 height: 100%;
                 object-fit: cover;
                 object-position: center;
-                filter: saturate(0.65) contrast(0.95) brightness(0.55);
+                filter: grayscale(0.15) brightness(1.08);
                 z-index: 0;
             }
 
-            /* Fondo degradado cuando no hay imagen */
+            /* Fondo blanco puro cuando no hay imagen */
             .page-bg-fallback {
                 position: absolute;
                 inset: 0;
-                background: radial-gradient(circle at 50% 45%, #39272a 0%, #1b1114 42%, #0d090a 100%);
+                background: #ffffff;
                 z-index: 0;
             }
 
-            /* Overlay oscuro sobre la imagen */
+            /* Velo blanco semitransparente: mantiene el fondo claro
+               y deja la foto apenas visible para que el texto negro sea legible */
             .page-overlay {
                 position: absolute;
                 inset: 0;
                 background:
                     linear-gradient(180deg,
-                        rgba(12,7,8,0.70) 0%,
-                        rgba(12,7,8,0.45) 35%,
-                        rgba(12,7,8,0.45) 65%,
-                        rgba(12,7,8,0.80) 100%
+                        rgba(255,255,255,0.94) 0%,
+                        rgba(255,255,255,0.88) 35%,
+                        rgba(255,255,255,0.88) 65%,
+                        rgba(255,255,255,0.96) 100%
                     );
                 z-index: 1;
             }
 
-            /* Viñeta */
-            .page-vignette {
+            /* Marco decorativo sutil */
+            .page-frame {
                 position: absolute;
-                inset: 0;
-                background: radial-gradient(circle at 50% 50%, transparent 25%, rgba(0,0,0,0.55) 100%);
+                top: 12mm; left: 12mm; right: 12mm; bottom: 12mm;
+                border: 1px solid rgba(179,18,63,0.35);
                 z-index: 2;
+                pointer-events: none;
             }
 
             /* Contenido */
@@ -205,81 +209,76 @@
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
-                padding: 50px 60px;
+                padding: 40mm 25mm 35mm;
                 text-align: center;
-                color: #f4eee7;
+                color: #111111;
                 font-family: 'Cormorant Garamond', serif;
             }
 
             /* Número de capítulo */
             .ch-number {
-                font: 500 11px 'Inter', sans-serif;
+                font: 600 12px 'Inter', sans-serif;
                 letter-spacing: 0.35em;
-                color: #d6aa91;
+                color: #b3123f;
                 text-transform: uppercase;
-                margin-bottom: 12px;
+                margin-bottom: 14px;
             }
 
             /* Título del capítulo */
             .ch-title {
-                font: 500 36px/1.1 'Playfair Display', serif;
-                color: #f4eee7;
-                margin-bottom: 8px;
+                font: 600 38px/1.15 'Playfair Display', serif;
+                color: #111111;
+                margin-bottom: 10px;
                 letter-spacing: -0.01em;
-                max-width: 450px;
+                max-width: 460px;
             }
 
             /* Divisor */
             .ch-divider {
-                width: 100px;
+                width: 110px;
                 height: 1px;
-                background: linear-gradient(90deg, transparent, rgba(214,170,145,0.8), transparent);
-                margin: 18px auto;
+                background: linear-gradient(90deg, transparent, rgba(179,18,63,0.7), transparent);
+                margin: 18px auto 22px;
                 position: relative;
             }
             .ch-divider::after {
                 content: "";
                 position: absolute;
-                width: 5px; height: 5px;
+                width: 6px; height: 6px;
                 left: 50%; top: 50%;
                 border-radius: 50%;
                 transform: translate(-50%, -50%);
-                background: #d6aa91;
-                box-shadow: 0 0 10px rgba(214,170,145,0.5);
+                background: #b3123f;
             }
 
             /* Texto del capítulo (todas las líneas) */
             .ch-text {
-                font: 400 20px/1.65 'Cormorant Garamond', serif;
-                color: #f0e8e0;
-                max-width: 480px;
-                text-shadow: 0 1px 12px rgba(0,0,0,0.7);
+                font: 400 22px/1.7 'Cormorant Garamond', serif;
+                color: #1a1a1a;
+                max-width: 500px;
+                text-align: center;
             }
             .ch-text .line {
-                margin-bottom: 6px;
+                margin-bottom: 8px;
             }
 
             /* Pie de página */
             .ch-footer {
                 position: absolute;
-                bottom: 30px;
+                bottom: 22mm;
                 left: 0; right: 0;
                 text-align: center;
                 z-index: 3;
-                font: italic 400 11px 'Playfair Display', serif;
-                color: #8e7d78;
-                letter-spacing: 0.15em;
+                font: italic 500 12px 'Playfair Display', serif;
+                color: #7a6a63;
+                letter-spacing: 0.18em;
             }
 
             /* =================== PORTADA GENERAL =================== */
-            .cover-general .page-bg-fallback {
-                background: radial-gradient(circle at 50% 45%, #39272a 0%, #1b1114 42%, #0d090a 100%);
-            }
-
             .cover-monogram {
-                font: 600 20px 'Playfair Display', serif;
+                font: 600 22px 'Playfair Display', serif;
                 letter-spacing: 0.28em;
-                color: #d6aa91;
+                color: #b3123f;
                 margin-bottom: 18px;
             }
             .cover-monogram em {
@@ -288,57 +287,57 @@
             }
 
             .cover-title-main {
-                font: 500 58px/0.95 'Playfair Display', serif;
-                color: #f4eee7;
+                font: 600 60px/1.0 'Playfair Display', serif;
+                color: #111111;
                 letter-spacing: -0.02em;
                 margin: 10px 0;
             }
 
             .cover-subtitle {
-                font: italic 400 19px/1.5 'Cormorant Garamond', serif;
-                color: #cfc0b9;
-                max-width: 420px;
-                margin-top: 25px;
+                font: italic 400 21px/1.6 'Cormorant Garamond', serif;
+                color: #333333;
+                max-width: 440px;
+                margin-top: 28px;
             }
 
             .cover-stats {
-                font: 500 11px 'Inter', sans-serif;
-                color: #8e7d78;
-                letter-spacing: 0.2em;
-                margin-top: 40px;
+                font: 600 12px 'Inter', sans-serif;
+                color: #7a6a63;
+                letter-spacing: 0.22em;
+                margin-top: 42px;
             }
 
             /* =================== PÁGINA FINAL =================== */
             .ending-quote {
-                font: italic 400 28px/1.3 'Playfair Display', serif;
-                color: #f4eee7;
-                max-width: 440px;
+                font: italic 500 30px/1.35 'Playfair Display', serif;
+                color: #111111;
+                max-width: 460px;
                 margin-bottom: 25px;
             }
 
             .ending-brand {
-                font: 500 22px 'Playfair Display', serif;
-                color: #d6aa91;
+                font: 600 24px 'Playfair Display', serif;
+                color: #b3123f;
                 letter-spacing: 0.2em;
                 margin-top: 20px;
             }
 
             .ending-msg {
-                font: italic 400 16px/1.6 'Cormorant Garamond', serif;
-                color: #8e7d78;
-                max-width: 400px;
-                margin-top: 15px;
+                font: italic 400 18px/1.7 'Cormorant Garamond', serif;
+                color: #444444;
+                max-width: 420px;
+                margin-top: 18px;
             }
 
-            /* =================== TAMAÑOS ADAPTATIVOS =================== */
-            .text-sm .ch-text { font-size: 16px; line-height: 1.55; }
-            .text-sm .ch-title { font-size: 30px; }
+            /* =================== TAMAÑOS ADAPTATIVOS (respaldo CSS) =================== */
+            .text-sm .ch-text { font-size: 19px; line-height: 1.62; }
+            .text-sm .ch-title { font-size: 32px; }
 
-            .text-xs .ch-text { font-size: 14px; line-height: 1.5; }
-            .text-xs .ch-title { font-size: 26px; }
+            .text-xs .ch-text { font-size: 16px; line-height: 1.55; }
+            .text-xs .ch-title { font-size: 28px; }
 
-            .text-xxs .ch-text { font-size: 12px; line-height: 1.45; }
-            .text-xxs .ch-title { font-size: 22px; }
+            .text-xxs .ch-text { font-size: 14px; line-height: 1.5; }
+            .text-xxs .ch-title { font-size: 24px; }
         }
     </style>
 </head>
@@ -347,7 +346,7 @@
 <!-- ========================= PANEL DE CONTROL ========================= -->
 <div class="control-panel">
     <h1>📄 Generador de PDF</h1>
-    <p class="subtitle">Un capítulo = Una página · Con imagen de fondo</p>
+    <p class="subtitle">Un capítulo = Una página · Fondo blanco y texto negro</p>
 
     <div class="info-box">
         <strong>📋 Instrucciones:</strong>
@@ -363,7 +362,7 @@
     </div>
 
     <div class="alert-warning">
-        ⚠️ <strong>Importante:</strong> Las imágenes de fondo solo se muestran si activas "Gráficos de fondo" en las opciones de impresión. Si no las activas, se usará un fondo degradado elegante.
+        ⚠️ <strong>Importante:</strong> Activa "Gráficos de fondo" en las opciones de impresión para que aparezca la foto del capítulo (con velo blanco). Si no, la página quedará con fondo blanco puro.
     </div>
 
     <div class="btn-group" id="btnGroup">
@@ -428,19 +427,32 @@
             .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
 
-    // Determinar clase de tamaño según cantidad de líneas
-    function claseTamano(lineas) {
-        if (lineas <= 12) return "";
-        if (lineas <= 20) return "text-sm";
-        if (lineas <= 30) return "text-xs";
-        return "text-xxs";
-    }
+    /* ========================================================
+       IMAGEN DEL CAPÍTULO  ←  CORREGIDO
+       --------------------------------------------------------
+       Antes se usaba SIEMPRE la imagen del medio del arreglo
+       (Math.floor(imagenes.length / 2)), lo que causaba que
+       la foto no correspondiera al texto del capítulo.
 
-    // Obtener la mejor imagen para el capítulo (la del medio)
-    function obtenerImagenCapitulo(imagenes) {
-        if (!Array.isArray(imagenes) || imagenes.length === 0) return null;
-        const idx = Math.floor(imagenes.length / 2);
-        return imagenes[idx];
+       Ahora la prioridad es:
+         1. cap.imagenPortada   (campo opcional que puedes agregar
+                                 en Firestore con la URL exacta)
+         2. cap.imagenes[cap.imagenSeleccionada]  (índice elegido)
+         3. La PRIMERA imagen del capítulo (coincide con el orden
+            del texto, ya que líneas e imágenes se guardan en
+            el mismo orden)
+    ======================================================== */
+    function obtenerImagenCapitulo(cap) {
+        if (!cap) return null;
+        if (cap.imagenPortada && typeof cap.imagenPortada === "string") return cap.imagenPortada;
+        const imagenes = Array.isArray(cap.imagenes) ? cap.imagenes.filter(i => i && String(i).trim()) : [];
+        if (!imagenes.length) return null;
+        if (Number.isInteger(cap.imagenSeleccionada) &&
+            cap.imagenSeleccionada >= 0 &&
+            cap.imagenSeleccionada < imagenes.length) {
+            return imagenes[cap.imagenSeleccionada];
+        }
+        return imagenes[0];
     }
 
     /* ========================================================
@@ -544,17 +556,16 @@
             const totalLineas = capitulos.reduce((acc, c) =>
                 acc + (Array.isArray(c.lineas) ? c.lineas.filter(l => l && l.trim()).length : 0), 0);
 
-            // Buscar una imagen de portada (del primer capítulo)
-            const imgPortada = obtenerImagenCapitulo(capitulos[0]?.imagenes);
+            const imgPortada = obtenerImagenCapitulo(capitulos[0]);
 
             html += `
                 <div class="page cover-general">
                     ${imgPortada
-                        ? `<img class="page-bg-img" src="${imgPortada}" alt="">`
+                        ? `<img class="page-bg-img" src="${imgPortada}" alt="Portada">`
                         : `<div class="page-bg-fallback"></div>`
                     }
                     <div class="page-overlay"></div>
-                    <div class="page-vignette"></div>
+                    <div class="page-frame"></div>
                     <div class="page-content">
                         <div class="cover-monogram">W <em>&</em> E</div>
                         <div class="ch-divider"></div>
@@ -581,22 +592,20 @@
                 : [];
             if (!lineas.length) continue;
 
-            const imagen = obtenerImagenCapitulo(cap.imagenes);
-            const tamano = claseTamano(lineas);
+            const imagen = obtenerImagenCapitulo(cap);
 
-            // Construir bloques de texto
             const textoHTML = lineas
                 .map(l => `<div class="line">${escapeHTML(l)}</div>`)
                 .join("");
 
             html += `
-                <div class="page ${tamano}">
+                <div class="page" data-num="${escapeHTML(String(cap.numero))}">
                     ${imagen
-                        ? `<img class="page-bg-img" src="${imagen}" alt="">`
+                        ? `<img class="page-bg-img" src="${imagen}" alt="Capítulo ${escapeHTML(String(cap.numero))}">`
                         : `<div class="page-bg-fallback"></div>`
                     }
                     <div class="page-overlay"></div>
-                    <div class="page-vignette"></div>
+                    <div class="page-frame"></div>
                     <div class="page-content">
                         <div class="ch-number">Capítulo ${String(cap.numero).padStart(2, '0')}</div>
                         <h2 class="ch-title">${escapeHTML(cap.titulo || '')}</h2>
@@ -616,7 +625,7 @@
                 <div class="page">
                     <div class="page-bg-fallback"></div>
                     <div class="page-overlay"></div>
-                    <div class="page-vignette"></div>
+                    <div class="page-frame"></div>
                     <div class="page-content">
                         <div class="ending-quote">
                             "Y todavía falta mucho por escribir"
@@ -636,19 +645,74 @@
         }
 
         doc.innerHTML = html;
+
+        // Ajustar el texto de cada página para que quepa en la hoja A4
+        setTimeout(() => ajustarPaginasAlTamanio(), 100);
+    }
+
+    /* ========================================================
+       AJUSTE AUTOMÁTICO DEL TEXTO AL TAMAÑO DE LA HOJA
+       --------------------------------------------------------
+       Mide cada página renderizada y, si el contenido se
+       desborda de la altura A4, reduce gradualmente el
+       tamaño de la fuente hasta que quepa (mínimo legible:
+       13px de texto y 22px de título). Así cada página se
+       ajusta a su contenido real.
+    ======================================================== */
+    function ajustarPaginasAlTamanio() {
+        const doc = document.getElementById("printDocument");
+
+        // Mostrar temporalmente para poder medir
+        doc.style.display = "block";
+        doc.style.position = "absolute";
+        doc.style.left = "-9999px";
+        doc.style.top = "0";
+
+        const TAMANOS = [
+            { texto: 22, titulo: 38, interlinea: 1.70 },
+            { texto: 20, titulo: 36, interlinea: 1.65 },
+            { texto: 19, titulo: 32, interlinea: 1.62 },
+            { texto: 16, titulo: 28, interlinea: 1.55 },
+            { texto: 14, titulo: 24, interlinea: 1.50 },
+            { texto: 13, titulo: 22, interlinea: 1.45 }
+        ];
+
+        const paginas = doc.querySelectorAll(".page");
+        paginas.forEach(pagina => {
+            const contenido = pagina.querySelector(".page-content");
+            if (!contenido) return;
+            const texto = pagina.querySelector(".ch-text");
+            const titulo = pagina.querySelector(".ch-title");
+            if (!texto) return;
+
+            for (const t of TAMANOS) {
+                texto.style.fontSize = t.texto + "px";
+                texto.style.lineHeight = t.interlinea;
+                if (titulo) titulo.style.fontSize = t.titulo + "px";
+
+                // Forzar reflujo y medir desbordamiento
+                const desborde = contenido.scrollHeight - contenido.clientHeight;
+                if (desborde <= 0) break; // Ya cabe
+            }
+        });
+
+        // Ocultar de nuevo (solo se mostrará al imprimir)
+        doc.style.display = "none";
+        doc.style.position = "";
+        doc.style.left = "";
+        doc.style.top = "";
     }
 
     /* ========================================================
        BOTÓN IMPRIMIR
     ======================================================== */
     function mostrarBotonImprimir() {
-        // Eliminar botón anterior si existe
         const existente = document.getElementById("btnImprimir");
         if (existente) existente.remove();
 
         const btn = document.createElement("button");
         btn.id = "btnImprimir";
-        btn.className = "btn btn-success";
+        btn.className = "btn btn-dark";
         btn.innerHTML = "🖨️ Guardar como PDF";
         btn.onclick = () => window.print();
         document.getElementById("btnGroup").appendChild(btn);
