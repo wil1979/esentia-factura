@@ -14,310 +14,301 @@
 
         body {
             font-family: 'Cormorant Garamond', serif;
-            background: #ffffff;
-            color: #111111;
+            background: #f4f4f9;
+            color: #333;
             padding: 20px;
         }
 
-        /* ========================= PANEL DE CONTROL ========================= */
         .control-panel {
             max-width: 900px;
             margin: 0 auto 30px;
-            background: #ffffff;
+            background: white;
             padding: 30px;
             border-radius: 18px;
             box-shadow: 0 15px 45px rgba(0,0,0,.10);
-            border: 1px solid #e5e0da;
         }
 
-        h1 {
-            font-family: 'Playfair Display', serif;
-            color: #b3123f;
-            text-align: center;
-            margin-bottom: 10px;
-        }
-
-        .subtitle { text-align: center; color: #666; margin-bottom: 25px; }
+        h1 { font-family: 'Playfair Display', serif; color: #f5576c; text-align: center; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #777; margin-bottom: 25px; }
 
         .btn {
-            padding: 11px 20px;
-            border: none;
-            border-radius: 9px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: .2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-family: inherit;
+            padding: 11px 20px; border: none; border-radius: 9px; cursor: pointer;
+            font-size: 1rem; font-weight: 600; transition: .2s; display: inline-flex;
+            align-items: center; gap: 8px; font-family: inherit;
         }
         .btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(0,0,0,.12); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .btn-primary { background: #b3123f; color: white; }
-        .btn-success { background: #1f7a3d; color: white; }
-        .btn-dark { background: #444; color: white; }
+        .btn-primary { background: #f5576c; color: white; }
+        .btn-success { background: #28a745; color: white; }
 
         .btn-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
 
         .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #b3123f;
-            border-radius: 50%;
-            width: 30px; height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-            display: none;
+            border: 4px solid #f3f3f3; border-top: 4px solid #f5576c; border-radius: 50%;
+            width: 30px; height: 30px; animation: spin 1s linear infinite;
+            margin: 20px auto; display: none;
         }
-        @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .info-box {
-            background: #f0f4ff;
-            border: 2px solid #4a5fd0;
-            border-radius: 10px;
-            padding: 15px;
-            margin: 20px 0;
-            color: #222;
-            line-height: 1.6;
-            font-size: 0.95rem;
+            background: #f0f7ff; border: 2px solid #667eea; border-radius: 10px;
+            padding: 15px; margin: 20px 0; color: #333; line-height: 1.6; font-size: 0.95rem;
         }
-        .info-box strong { color: #4a5fd0; }
+        .info-box strong { color: #667eea; }
 
         .alert-warning {
-            background: #fff8e1;
-            border: 1px solid #ffeaa7;
-            color: #7a5b00;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin: 15px 0;
-            font-size: 0.95rem;
+            background: #fff3cd; border: 1px solid #ffeaa7; color: #856404;
+            padding: 12px 16px; border-radius: 8px; margin: 15px 0; font-size: 0.95rem;
         }
-
-        /* Tabla de verificación capítulo → imagen */
-        #verificacion {
-            max-width: 900px;
-            margin: 0 auto 30px;
-            background: #fff;
-            border: 1px solid #e5e0da;
-            border-radius: 12px;
-            padding: 20px;
+        
+        .alert-error {
+            background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;
+            padding: 12px 16px; border-radius: 8px; margin: 15px 0; font-size: 0.95rem;
             display: none;
         }
-        #verificacion h3 {
-            font-family: 'Playfair Display', serif;
-            color: #b3123f;
-            margin-bottom: 12px;
-            font-size: 1.1rem;
-        }
-        #verificacion table { width: 100%; border-collapse: collapse; font-size: 0.88rem; font-family: 'Inter', sans-serif; }
-        #verificacion th, #verificacion td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eee; }
-        #verificacion th { color: #666; font-weight: 600; }
-        .img-ok { color: #1f7a3d; font-weight: 600; }
-        .img-error { color: #b3123f; font-weight: 600; }
-        .img-nombre { word-break: break-all; color: #444; font-size: 0.8rem; }
 
-        /* ========================= DOCUMENTO IMPRIMIBLE ========================= */
         .print-document { display: none; }
 
         @media print {
             @page { size: A4 portrait; margin: 0; }
 
             body {
-                padding: 0;
-                background: white;
+                padding: 0; background: white;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
             }
 
-            .control-panel, #verificacion { display: none !important; }
-
+            .control-panel { display: none !important; }
             .print-document { display: block !important; }
 
             .page {
-                width: 210mm;
-                height: 297mm;
-                max-height: 297mm;
-                position: relative;
-                overflow: hidden !important;
-                break-inside: avoid;
-                page-break-after: always;
-                page-break-inside: avoid;
-                background: #ffffff;
+                width: 210mm; height: 297mm; position: relative; overflow: hidden;
+                page-break-after: always; page-break-inside: avoid;
             }
             .page:last-child { page-break-after: auto; }
 
             .page-bg-img {
-                position: absolute;
-                top: 0; left: 0;
-                width: 100%; height: 100%;
-                object-fit: cover;
-                object-position: center;
-                filter: grayscale(0.15) brightness(1.08);
+                position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                object-fit: cover; object-position: center;
+                display: block;
                 z-index: 0;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
-            .page-bg-fallback { position: absolute; inset: 0; background: #ffffff; z-index: 0; }
+            .page-bg-fallback {
+                position: absolute; inset: 0;
+                background: radial-gradient(circle at 50% 45%, #fdf8f2 0%, #f5ece3 45%, #e9dcd0 100%);
+                z-index: 0;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
 
             .page-overlay {
-                position: absolute;
-                inset: 0;
-                background: linear-gradient(180deg,
-                    rgba(255,255,255,0.94) 0%,
-                    rgba(255,255,255,0.88) 35%,
-                    rgba(255,255,255,0.88) 65%,
-                    rgba(255,255,255,0.96) 100%);
+                position: absolute; inset: 0;
+                background: linear-gradient(180deg, rgba(255,251,246,0.82) 0%, rgba(255,251,246,0.60) 35%, rgba(255,251,246,0.60) 65%, rgba(255,251,246,0.88) 100%);
                 z-index: 1;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
-            .page-frame {
-                position: absolute;
-                top: 10mm; left: 10mm; right: 10mm; bottom: 10mm;
-                border: 1px solid rgba(179,18,63,0.35);
+            .page-vignette {
+                position: absolute; inset: 0;
+                background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(120,90,70,0.18) 100%);
                 z-index: 2;
-                pointer-events: none;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
             .page-content {
-                position: relative;
-                z-index: 3;
-                width: 100%;
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                padding: 24mm 22mm 26mm;
-                text-align: center;
-                color: #111111;
+                position: relative; z-index: 3; width: 100%; height: 100%;
+                display: flex; flex-direction: column; justify-content: center; align-items: center;
+                padding: 50px 60px; text-align: center; color: #2b211b;
                 font-family: 'Cormorant Garamond', serif;
-                overflow: hidden;
             }
 
+            .page-logo-main {
+                position: absolute; top: 35px; left: 50%; transform: translateX(-50%);
+                width: 100px; height: auto; z-index: 4;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .page-logo-mini {
+                position: absolute; bottom: 75px; right: 40px;
+                width: 35px; height: auto; z-index: 4; opacity: 0.85;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .page-indicator {
+                position: absolute; top: 35px; right: 40px;
+                font: 500 11px 'Inter', sans-serif; letter-spacing: 0.25em;
+                color: #a06834; z-index: 4;
+            }
+            .page-indicator-note { font-size: 9px; opacity: 0.7; }
+
             .ch-number {
-                font: 600 12px 'Inter', sans-serif;
-                letter-spacing: 0.35em;
-                color: #b3123f;
-                text-transform: uppercase;
-                margin-bottom: 14px;
+                font: 500 11px 'Inter', sans-serif; letter-spacing: 0.35em;
+                color: #a06834; text-transform: uppercase; margin-bottom: 12px; margin-top: 20px;
             }
 
             .ch-title {
-                font: 600 38px/1.15 'Playfair Display', serif;
-                color: #111111;
-                margin-bottom: 10px;
-                max-width: 460px;
+                font: 500 40px/1.1 'Playfair Display', serif; color: #231a15;
+                margin-bottom: 8px; letter-spacing: -0.01em; max-width: 450px;
             }
 
             .ch-divider {
-                width: 110px; height: 1px;
-                background: linear-gradient(90deg, transparent, rgba(179,18,63,0.7), transparent);
-                margin: 18px auto 22px;
-                position: relative;
+                width: 100px; height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(160,104,52,0.55), transparent);
+                margin: 18px auto; position: relative;
             }
             .ch-divider::after {
-                content: "";
-                position: absolute;
-                width: 6px; height: 6px;
-                left: 50%; top: 50%;
-                border-radius: 50%;
-                transform: translate(-50%, -50%);
-                background: #b3123f;
+                content: ""; position: absolute; width: 5px; height: 5px;
+                left: 50%; top: 50%; border-radius: 50%; transform: translate(-50%, -50%);
+                background: #a06834; box-shadow: 0 0 10px rgba(160,104,52,0.3);
             }
 
             .ch-text {
-                font: 400 22px/1.65 'Cormorant Garamond', serif;
-                color: #1a1a1a;
-                max-width: 500px;
+                font: 400 23px/1.58 'Cormorant Garamond', serif; color: #3d2f26;
+                max-width: 520px; text-shadow: 0 1px 8px rgba(255,255,255,0.4);
             }
-            .ch-text .line { margin-bottom: 8px; }
+            .ch-text .line { margin-bottom: 6px; }
 
             .ch-footer {
-                position: absolute;
-                bottom: 14mm;
-                left: 0; right: 0;
-                text-align: center;
-                z-index: 3;
-                font: italic 500 12px 'Playfair Display', serif;
-                color: #7a6a63;
-                letter-spacing: 0.18em;
+                position: absolute; bottom: 30px; left: 0; right: 0; text-align: center;
+                z-index: 3; font: italic 400 11px 'Playfair Display', serif;
+                color: #8a7a6f; letter-spacing: 0.15em;
             }
 
             .cover-monogram {
-                font: 600 22px 'Playfair Display', serif;
-                letter-spacing: 0.28em;
-                color: #b3123f;
-                margin-bottom: 18px;
+                font: 600 22px 'Playfair Display', serif; letter-spacing: 0.28em;
+                color: #a06834; margin-bottom: 18px; margin-top: 60px;
             }
             .cover-monogram em { font-style: italic; margin: 0 0.12em; }
 
             .cover-title-main {
-                font: 600 60px/1.0 'Playfair Display', serif;
-                color: #111111;
-                letter-spacing: -0.02em;
-                margin: 10px 0;
+                font: 500 64px/0.95 'Playfair Display', serif; color: #231a15;
+                letter-spacing: -0.02em; margin: 10px 0;
             }
 
             .cover-subtitle {
-                font: italic 400 21px/1.6 'Cormorant Garamond', serif;
-                color: #333333;
-                max-width: 440px;
-                margin-top: 28px;
+                font: italic 400 21px/1.5 'Cormorant Garamond', serif;
+                color: #5c4b40; max-width: 420px; margin-top: 25px;
+            }
+
+            .cover-quote {
+                font: italic 400 20px/1.6 'Cormorant Garamond', serif; color: #5c4b40;
+                max-width: 480px; margin: 30px auto 20px; padding: 20px;
+                border-left: 3px solid rgba(160,104,52,0.4);
+                background: rgba(255,255,255,0.6); border-radius: 8px;
             }
 
             .cover-stats {
-                font: 600 12px 'Inter', sans-serif;
-                color: #7a6a63;
-                letter-spacing: 0.22em;
-                margin-top: 42px;
+                font: 500 11px 'Inter', sans-serif; color: #8a7a6f;
+                letter-spacing: 0.2em; margin-top: 30px;
             }
 
+            .cover-footer-text {
+                font: 500 14px 'Inter', sans-serif; color: #8a7a6f;
+                letter-spacing: 0.1em; margin-top: 25px; max-width: 400px; line-height: 1.5;
+            }
+
+            .index-title {
+                font: 500 36px/1 'Playfair Display', serif; color: #231a15;
+                letter-spacing: -0.01em; margin-bottom: 40px; margin-top: 60px;
+            }
+            .index-grid {
+                display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 25px;
+                max-width: 560px; font: 400 17px/1.4 'Cormorant Garamond', serif;
+                color: #3d2f26; text-align: left;
+            }
+            .index-item {
+                display: flex; gap: 10px; border-bottom: 1px dashed rgba(160,104,52,0.25);
+                padding-bottom: 4px;
+            }
+            .index-item-num {
+                font: 500 13px 'Inter', sans-serif; color: #a06834;
+                letter-spacing: 0.1em; min-width: 28px;
+            }
+            .index-item-title {
+                font: italic 400 17px 'Cormorant Garamond', serif; color: #3d2f26;
+            }
+
+            .decision-box {
+                max-width: 480px; padding: 30px 40px; background: rgba(255,255,255,0.7);
+                border: 1px solid rgba(160,104,52,0.3); border-radius: 12px; backdrop-filter: blur(2px);
+            }
+            .decision-title {
+                font: 600 28px/1.2 'Playfair Display', serif; color: #231a15; margin-bottom: 20px;
+            }
+            .decision-question {
+                font: italic 400 22px/1.5 'Cormorant Garamond', serif; color: #5c4b40; margin-bottom: 15px;
+            }
+            .decision-subtitle {
+                font: 400 18px/1.5 'Cormorant Garamond', serif; color: #3d2f26; margin-bottom: 30px;
+            }
+            .decision-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
+            .decision-btn {
+                padding: 14px 22px; border: 1px solid rgba(160,104,52,0.5); border-radius: 30px;
+                font: 500 14px 'Inter', sans-serif; letter-spacing: 0.1em; color: #3d2f26;
+                background: rgba(255,255,255,0.8); display: flex; flex-direction: column;
+                align-items: center; gap: 4px; min-width: 140px;
+            }
+            .decision-btn-label { font: 600 10px 'Inter', sans-serif; color: #a06834; letter-spacing: 0.2em; }
+            .decision-btn-text { font: italic 500 14px 'Cormorant Garamond', serif; color: #231a15; }
+
             .ending-quote {
-                font: italic 500 30px/1.35 'Playfair Display', serif;
-                color: #111111;
-                max-width: 460px;
-                margin-bottom: 25px;
+                font: italic 400 32px/1.3 'Playfair Display', serif;
+                color: #231a15; max-width: 440px; margin-bottom: 25px; letter-spacing: 0.05em;
             }
             .ending-brand {
-                font: 600 24px 'Playfair Display', serif;
-                color: #b3123f;
-                letter-spacing: 0.2em;
-                margin-top: 20px;
+                font: 500 24px 'Playfair Display', serif; color: #a06834;
+                letter-spacing: 0.2em; margin-top: 20px;
             }
             .ending-msg {
-                font: italic 400 18px/1.7 'Cormorant Garamond', serif;
-                color: #444444;
-                max-width: 420px;
-                margin-top: 18px;
+                font: italic 400 17px/1.6 'Cormorant Garamond', serif;
+                color: #5c4b40; max-width: 400px; margin-top: 15px;
             }
+
+            .text-sm .ch-text { font-size: 19px; line-height: 1.52; }
+            .text-sm .ch-title { font-size: 34px; }
+            .text-xs .ch-text { font-size: 16px; line-height: 1.48; }
+            .text-xs .ch-title { font-size: 30px; }
+            .text-xxs .ch-text { font-size: 14px; line-height: 1.45; }
+            .text-xxs .ch-title { font-size: 26px; }
         }
     </style>
 </head>
 <body>
 
-<!-- ========================= PANEL DE CONTROL ========================= -->
 <div class="control-panel">
     <h1>📄 Generador de PDF</h1>
-    <p class="subtitle">Un capítulo = Una página · Fondo blanco y texto negro</p>
+    <p class="subtitle">Un capítulo = Una página · Con imagen de fondo, logos y estructura fiel al original</p>
 
     <div class="info-box">
         <strong>📋 Instrucciones:</strong>
         <ol style="margin-top: 10px; padding-left: 20px;">
-            <li>Selecciona qué generar y espera a que cargue el contenido</li>
-            <li>Revisa la <strong>tabla de verificación</strong> de abajo (capítulo → imagen)</li>
+            <li>Selecciona qué generar</li>
+            <li>Espera a que el sistema pre-cargue las imágenes</li>
             <li>Haz clic en <strong>"🖨️ Guardar como PDF"</strong></li>
-            <li>En el diálogo: Destino → <strong>Guardar como PDF</strong> · Márgenes → <strong>Ninguno</strong></li>
-            <li>✅ Activar <strong>"Gráficos de fondo"</strong> y guardar</li>
+            <li>En el diálogo: Destino → <strong>Guardar como PDF</strong></li>
+            <li>Márgenes → <strong>Ninguno</strong></li>
+            <li>✅ Activar <strong>"Gráficos de fondo"</strong></li>
+            <li>Guardar</li>
         </ol>
     </div>
 
     <div class="alert-warning">
-        ⚠️ <strong>Importante:</strong> El botón de PDF se habilita solo cuando <strong>todas las imágenes terminaron de cargar</strong>, así no salen páginas vacías ni fotos cortadas.
+        ℹ️ <strong>Nota:</strong> El sistema detecta automáticamente si la ruta en Firebase ya incluye <code>assets/</code> para evitar duplicarla (ej: <code>assets/imagenes/cap28.JPG</code> se corregirá a una sola carpeta <code>assets/</code>).
     </div>
 
+    <div id="errorBox" class="alert-error"></div>
+
     <div class="btn-group" id="btnGroup">
-        <button class="btn btn-primary" id="btnUnCap" onclick="generarCapituloIndividual()">📖 Un capítulo</button>
+        <button class="btn btn-primary" id="btnCapitulo" onclick="generarCapituloIndividual()">📖 Un capítulo</button>
         <button class="btn btn-success" id="btnLibro" onclick="generarLibroCompleto()">📚 Libro completo</button>
     </div>
 
@@ -325,16 +316,11 @@
     <div id="status" style="text-align: center; color: #555; margin-top: 15px;"></div>
 </div>
 
-<!-- ========================= VERIFICACIÓN ========================= -->
-<div id="verificacion"></div>
-
-<!-- ========================= DOCUMENTO IMPRIMIBLE ========================= -->
 <div class="print-document" id="printDocument"></div>
 
-<!-- ========================= FIREBASE ========================= -->
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
@@ -355,15 +341,39 @@
     }
 </script>
 
-<!-- ========================= LÓGICA ========================= -->
 <script>
+    const LOGO_URL = "https://wil1979.github.io/esentia-factura/love/assets/logo-we.svg"; 
+    const LOGO_MINI_URL = "https://wil1979.github.io/esentia-factura/love/assets/logo-we-mini.svg";
+    const ASSETS_BASE_URL = "https://wil1979.github.io/esentia-factura/love/assets/";
+    const ANO_INICIO = 1901;
+
     let todosLosCapitulos = [];
-    let estadoImagenes = {};   // url -> "ok" | "error"
+    let failedImages = [];
+
+    // ========================= FUNCIÓN CORREGIDA: Construir URL de Imagen =========================
+    function construirURLImagen(valor) {
+        if (!valor || typeof valor !== "string") return null;
+        const trimmed = valor.trim();
+        if (!trimmed) return null;
+        
+        // Si ya es una URL completa, la devolvemos tal cual
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+            return trimmed;
+        }
+        
+        // Limpiamos slashes o puntos iniciales (ej: "./", "/", etc.)
+        let nombreLimpio = trimmed.replace(/^\.?\/*/, "");
+        
+        // CORRECCIÓN CLAVE: Si la ruta ya incluye "assets/" al inicio, lo quitamos para evitar duplicación
+        if (nombreLimpio.toLowerCase().startsWith("assets/")) {
+            nombreLimpio = nombreLimpio.substring(7); // elimina "assets/"
+        }
+        
+        return ASSETS_BASE_URL + nombreLimpio;
+    }
 
     async function cargarCapitulos() {
-        if (!window.firestoreFuncs) {
-            throw new Error("Firebase no está listo. Espera unos segundos y reintenta.");
-        }
+        if (!window.firestoreFuncs) throw new Error("Firebase no está listo.");
         const { collection, getDocs, query, orderBy } = window.firestoreFuncs;
         const q = query(collection(window.db, "capitulos"), orderBy("numero", "asc"));
         const snapshot = await getDocs(q);
@@ -373,258 +383,241 @@
     }
 
     function escapeHTML(text) {
-        return String(text)
-            .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
 
-    /* ========================================================
-       NORMALIZAR URL DE IMAGEN
-       Convierte rutas gs://bucket/path a URL https de descarga
-       directa de Firebase Storage (las rutas gs:// NO cargan
-       en un <img>). También limpia espacios.
-    ======================================================== */
-    function normalizarURLImagen(url) {
-        if (!url || typeof url !== "string") return null;
-        url = url.trim();
-        if (!url) return null;
-        const m = url.match(/^gs:\/\/([^/]+)\/(.+)$/);
-        if (m) {
-            return "https://firebasestorage.googleapis.com/v0/b/" +
-                   encodeURIComponent(m[1]) + "/o/" +
-                   encodeURIComponent(m[2]) + "?alt=media";
-        }
-        return url;
+    function claseTamano(lineas) {
+        if (lineas <= 12) return "";
+        if (lineas <= 20) return "text-sm";
+        if (lineas <= 30) return "text-xs";
+        return "text-xxs";
     }
 
-    function nombreArchivo(url) {
-        try {
-            const sinQuery = url.split("?")[0];
-            return decodeURIComponent(sinQuery.split("/").pop()) || url;
-        } catch { return url; }
+    function obtenerImagenCapitulo(imagenes) {
+        if (!Array.isArray(imagenes) || imagenes.length === 0) return null;
+        const seleccionada = imagenes[Math.floor(imagenes.length / 2)];
+        return construirURLImagen(seleccionada);
     }
 
-    /* ========================================================
-       IMAGEN DEL CAPÍTULO
-       Prioridad:
-         1. cap.imagenPortada (URL exacta en Firestore, opcional)
-         2. cap.imagenSeleccionada (índice numérico, opcional)
-         3. La PRIMERA imagen del arreglo (mismo orden que el texto)
-    ======================================================== */
-    function obtenerImagenCapitulo(cap) {
-        if (!cap) return null;
-        if (cap.imagenPortada && typeof cap.imagenPortada === "string" && cap.imagenPortada.trim()) {
-            return normalizarURLImagen(cap.imagenPortada);
-        }
-        const imagenes = (Array.isArray(cap.imagenes) ? cap.imagenes : [])
-            .map(normalizarURLImagen).filter(Boolean);
-        if (!imagenes.length) return null;
-        if (Number.isInteger(cap.imagenSeleccionada) &&
-            cap.imagenSeleccionada >= 0 &&
-            cap.imagenSeleccionada < imagenes.length) {
-            return imagenes[cap.imagenSeleccionada];
-        }
-        return imagenes[0];
-    }
-
-    /* ========================================================
-       PRECARGAR IMÁGENES
-       Espera a que cada imagen termine de cargar (o falle) ANTES
-       de habilitar el botón de imprimir. Esto evita que el PDF
-       salga con páginas sin foto o fotos a medias.
-    ======================================================== */
-    function precargarImagen(url) {
-        return new Promise(resolve => {
-            const img = new Image();
-            img.onload = () => { estadoImagenes[url] = "ok"; resolve({ url, ok: true }); };
-            img.onerror = () => { estadoImagenes[url] = "error"; resolve({ url, ok: false }); };
-            // Timeout de seguridad: no bloquear más de 20 s por imagen
-            setTimeout(() => resolve({ url, ok: estadoImagenes[url] === "ok" }), 20000);
-            img.src = url;
+    async function precargarImagenes(urls) {
+        failedImages = [];
+        const uniqueUrls = [...new Set(urls)].filter(Boolean);
+        const promises = uniqueUrls.map(url => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.onload = () => {
+                    if (img.decode) {
+                        img.decode().then(() => resolve(url)).catch(() => resolve(url));
+                    } else {
+                        resolve(url);
+                    }
+                };
+                img.onerror = () => {
+                    console.error(`❌ ERROR: No se pudo cargar:`, url);
+                    failedImages.push(url);
+                    resolve(url);
+                };
+                img.src = url;
+            });
         });
+        await Promise.all(promises);
     }
 
-    async function precargarTodas(urls) {
-        estadoImagenes = {};
-        const unicas = [...new Set(urls.filter(Boolean))];
-        let cargadas = 0;
-        const status = document.getElementById("status");
-        await Promise.all(unicas.map(u => precargarImagen(u).then(r => {
-            cargadas++;
-            status.textContent = `Cargando imágenes... ${cargadas}/${unicas.length}`;
-            return r;
-        })));
-        const fallidas = unicas.filter(u => estadoImagenes[u] === "error");
-        return { total: unicas.length, fallidas };
+    function mostrarErrorSiHay() {
+        const errorBox = document.getElementById("errorBox");
+        if (failedImages.length > 0) {
+            errorBox.style.display = "block";
+            errorBox.innerHTML = `⚠️ <strong>Advertencia:</strong> No se pudieron cargar ${failedImages.length} imagen(es). Revisa la consola (F12) para ver las URLs exactas.`;
+        } else {
+            errorBox.style.display = "none";
+        }
     }
 
-    /* ========================================================
-       TABLA DE VERIFICACIÓN capítulo → imagen
-    ======================================================== */
-    function mostrarVerificacion(pares) {
-        const box = document.getElementById("verificacion");
-        if (!pares.length) { box.style.display = "none"; return; }
-        let filas = pares.map(p => `
-            <tr>
-                <td><strong>Cap. ${escapeHTML(p.numero)}</strong></td>
-                <td>${escapeHTML(p.titulo)}</td>
-                <td class="${p.ok === null ? '' : (p.ok ? 'img-ok' : 'img-error')}">
-                    ${p.ok === null ? "— (sin imagen, fondo blanco)" : (p.ok ? "✅ cargada" : "❌ error al cargar")}
-                </td>
-                <td class="img-nombre">${p.imagen ? escapeHTML(nombreArchivo(p.imagen)) : ""}</td>
-            </tr>`).join("");
-        box.innerHTML = `
-            <h3>🔍 Verificación: capítulo → imagen</h3>
-            <table>
-                <thead><tr><th>Capítulo</th><th>Título</th><th>Estado</th><th>Archivo</th></tr></thead>
-                <tbody>${filas}</tbody>
-            </table>`;
-        box.style.display = "block";
-    }
-
-    /* ========================================================
-       GENERAR UN CAPÍTULO
-    ======================================================== */
     async function generarCapituloIndividual() {
         const loader = document.getElementById("loader");
         const status = document.getElementById("status");
+        const btnCapitulo = document.getElementById("btnCapitulo");
+        const btnLibro = document.getElementById("btnLibro");
+        
         loader.style.display = "block";
         status.textContent = "Cargando capítulos...";
+        btnCapitulo.disabled = true;
+        btnLibro.disabled = true;
+        document.getElementById("errorBox").style.display = "none";
 
         try {
             await cargarCapitulos();
-
-            const opciones = todosLosCapitulos
-                .map(c => `  ${c.numero}. ${c.titulo || "Sin título"}`)
-                .join("\n");
-
+            const opciones = todosLosCapitulos.map(c => `  ${c.numero}. ${c.titulo || "Sin título"}`).join("\n");
             const numeroStr = prompt(`Ingresa el número del capítulo:\n\n${opciones}`);
-            if (!numeroStr) { loader.style.display = "none"; return; }
+            
+            if (!numeroStr) { loader.style.display = "none"; btnCapitulo.disabled = false; btnLibro.disabled = false; return; }
 
-            const numero = parseInt(numeroStr);
-            const cap = todosLosCapitulos.find(c => Number(c.numero) === numero);
-
+            const cap = todosLosCapitulos.find(c => Number(c.numero) === parseInt(numeroStr));
             if (!cap) {
                 alert("❌ Capítulo no encontrado.");
-                loader.style.display = "none";
-                return;
+                loader.style.display = "none"; btnCapitulo.disabled = false; btnLibro.disabled = false; return;
             }
 
-            status.textContent = "Construyendo capítulo...";
-            await construirDocumento([cap], false);
-
+            status.textContent = `Construyendo y pre-cargando imágenes del capítulo ${cap.numero}...`;
+            construirDocumento([cap], false);
+            
+            const imagenesArray = Array.isArray(cap.imagenes) ? cap.imagenes : (typeof cap.imagenes === 'string' ? [cap.imagenes] : []);
+            const urlsConstruidas = imagenesArray.map(construirURLImagen).filter(Boolean);
+            if (urlsConstruidas.length > 0) await precargarImagenes(urlsConstruidas);
+            
+            mostrarErrorSiHay();
+            mostrarBotonImprimir();
+            status.textContent = "✅ Listo. Haz clic en el botón para guardar como PDF.";
         } catch (error) {
             console.error(error);
             alert("❌ Error: " + error.message);
             status.textContent = "❌ Error.";
         } finally {
             loader.style.display = "none";
+            btnCapitulo.disabled = false;
+            btnLibro.disabled = false;
         }
     }
 
-    /* ========================================================
-       GENERAR LIBRO COMPLETO
-    ======================================================== */
     async function generarLibroCompleto() {
         const loader = document.getElementById("loader");
         const status = document.getElementById("status");
+        const btnCapitulo = document.getElementById("btnCapitulo");
+        const btnLibro = document.getElementById("btnLibro");
+
         loader.style.display = "block";
         status.textContent = "Cargando capítulos publicados...";
+        btnCapitulo.disabled = true;
+        btnLibro.disabled = true;
+        document.getElementById("errorBox").style.display = "none";
 
         try {
             await cargarCapitulos();
-
-            const publicados = todosLosCapitulos
-                .filter(c => c.publicado === true)
-                .sort((a, b) => Number(a.numero) - Number(b.numero));
+            const publicados = todosLosCapitulos.filter(c => c.publicado === true).sort((a, b) => Number(a.numero) - Number(b.numero));
 
             if (!publicados.length) {
                 alert("No hay capítulos publicados.");
-                loader.style.display = "none";
-                return;
+                loader.style.display = "none"; btnCapitulo.disabled = false; btnLibro.disabled = false; return;
             }
 
             if (!confirm(`¿Generar libro completo con ${publicados.length} capítulos?\n\nCada capítulo = 1 página.`)) {
-                loader.style.display = "none";
-                return;
+                loader.style.display = "none"; btnCapitulo.disabled = false; btnLibro.disabled = false; return;
             }
 
-            status.textContent = "Construyendo páginas...";
-            await construirDocumento(publicados, true);
+            status.textContent = `Construyendo y pre-cargando ${publicados.length} páginas...`;
+            construirDocumento(publicados, true);
+            
+            const imagenesArray = publicados.flatMap(c => Array.isArray(c.imagenes) ? c.imagenes : (typeof c.imagenes === 'string' ? [c.imagenes] : [])).filter(Boolean);
+            const urlsConstruidas = imagenesArray.map(construirURLImagen).filter(Boolean);
+            if (urlsConstruidas.length > 0) await precargarImagenes(urlsConstruidas);
 
+            mostrarErrorSiHay();
+            mostrarBotonImprimir();
+            status.textContent = "✅ Listo. Haz clic en el botón para guardar como PDF.";
         } catch (error) {
             console.error(error);
             alert("❌ Error: " + error.message);
             status.textContent = "❌ Error.";
         } finally {
             loader.style.display = "none";
+            btnCapitulo.disabled = false;
+            btnLibro.disabled = false;
         }
     }
 
-    /* ========================================================
-       CONSTRUIR DOCUMENTO (async: precarga imágenes y ajusta)
-    ======================================================== */
-    async function construirDocumento(capitulos, esLibroCompleto) {
+    function construirDocumento(capitulos, esLibroCompleto) {
         const doc = document.getElementById("printDocument");
-        const status = document.getElementById("status");
         doc.innerHTML = "";
-
-        // Mapeo para la tabla de verificación
-        const pares = capitulos.map(c => ({
-            numero: c.numero,
-            titulo: c.titulo || "Sin título",
-            imagen: obtenerImagenCapitulo(c),
-            ok: null
-        }));
-
         let html = "";
+        const totalCapitulos = capitulos.length;
 
         if (esLibroCompleto) {
-            const totalLineas = capitulos.reduce((acc, c) =>
-                acc + (Array.isArray(c.lineas) ? c.lineas.filter(l => l && l.trim()).length : 0), 0);
-            const imgPortada = pares[0].imagen;
+            const imgPortada = obtenerImagenCapitulo(capitulos[0]?.imagenes);
 
             html += `
                 <div class="page cover-general">
-                    ${imgPortada ? `<img class="page-bg-img" src="${imgPortada}" alt="Portada">` : `<div class="page-bg-fallback"></div>`}
+                    ${imgPortada ? `<img class="page-bg-img" src="${imgPortada}" alt="" crossorigin="anonymous" loading="eager">` : `<div class="page-bg-fallback"></div>`}
                     <div class="page-overlay"></div>
-                    <div class="page-frame"></div>
-                    <div class="page-content">
+                    <div class="page-vignette"></div>
+                    <img class="page-logo-main" src="${LOGO_URL}" alt="Logo Principal" crossorigin="anonymous">
+                    <div class="page-content cover-content">
                         <div class="cover-monogram">W <em>&</em> E</div>
                         <div class="ch-divider"></div>
-                        <h1 class="cover-title-main">Nuestra Historia</h1>
-                        <div class="ch-divider"></div>
+                        <h1 class="cover-title-main">NUESTRA HISTORIA</h1>
                         <div class="cover-subtitle">
                             19 años de nosotros.<br>
                             No es solamente un aniversario.<br>
-                            Es todo lo que hemos vivido<br>para llegar hasta aquí.
+                            Es todo lo que hemos vivido para llegar hasta aquí.
                         </div>
-                        <div class="cover-stats">${capitulos.length} capítulos · ${totalLineas} recuerdos · una sola historia</div>
+                        <div class="cover-quote">
+                            Nuestro amor es el corazón.<br>
+                            Nuestra historia son los caminos que lo rodean.<br>
+                            Lo que hemos vivido nos transformó.<br>
+                            Y aquello que nos une permanece en el centro.
+                        </div>
+                        <div class="cover-stats">
+                            ${totalCapitulos} páginas · ${totalCapitulos} recuerdos · una sola historia
+                        </div>
+                        <div class="cover-footer-text">
+                            Dos caminos, una historia, un amor que se transforma<br>
+                            sin dejar de ser infinito. ❤️🦋∞
+                        </div>
                     </div>
                     <div class="ch-footer">W & E · 19 años</div>
-                </div>`;
+                </div>
+            `;
+
+            const indiceHTML = capitulos.map(c => `
+                <div class="index-item">
+                    <span class="index-item-num">${String(c.numero).padStart(2, '0')}</span>
+                    <span class="index-item-title">${escapeHTML(c.titulo || "Sin título")}</span>
+                </div>
+            `).join("");
+
+            html += `
+                <div class="page">
+                    <div class="page-bg-fallback"></div>
+                    <div class="page-overlay"></div>
+                    <div class="page-vignette"></div>
+                    <img class="page-logo-main" src="${LOGO_URL}" alt="Logo Principal" crossorigin="anonymous">
+                    <div class="page-content">
+                        <h2 class="index-title">Índice de Capítulos</h2>
+                        <div class="index-grid">${indiceHTML}</div>
+                    </div>
+                    <div class="ch-footer">W & E · 19 años</div>
+                </div>
+            `;
         }
 
         for (const cap of capitulos) {
-            const lineas = (Array.isArray(cap.lineas) ? cap.lineas : []).filter(l => l && l.trim());
+            const lineas = Array.isArray(cap.lineas) ? cap.lineas.filter(l => l && l.trim()) : [];
             if (!lineas.length) continue;
 
-            const imagen = obtenerImagenCapitulo(cap);
+            const imagen = obtenerImagenCapitulo(cap.imagenes);
+            const tamano = claseTamano(lineas);
             const textoHTML = lineas.map(l => `<div class="line">${escapeHTML(l)}</div>`).join("");
 
             html += `
-                <div class="page" data-num="${escapeHTML(String(cap.numero))}">
-                    ${imagen ? `<img class="page-bg-img" src="${imagen}" alt="Capítulo ${escapeHTML(String(cap.numero))}">` : `<div class="page-bg-fallback"></div>`}
+                <div class="page ${tamano}">
+                    ${imagen ? `<img class="page-bg-img" src="${imagen}" alt="" crossorigin="anonymous" loading="eager">` : `<div class="page-bg-fallback"></div>`}
                     <div class="page-overlay"></div>
-                    <div class="page-frame"></div>
+                    <div class="page-vignette"></div>
+                    <img class="page-logo-main" src="${LOGO_URL}" alt="Logo Principal" crossorigin="anonymous">
+                    <div class="page-indicator">
+                        ${ANO_INICIO} / ${String(cap.numero).padStart(2, '0')}
+                        <span class="page-indicator-note">♪</span>
+                    </div>
+                    <img class="page-logo-mini" src="${LOGO_MINI_URL}" alt="Logo Miniatura" crossorigin="anonymous">
                     <div class="page-content">
-                        <div class="ch-number">Capítulo ${String(cap.numero).padStart(2, '0')}</div>
+                        <div class="ch-number">CAPÍTULO ${String(cap.numero).padStart(2, '0')}</div>
                         <h2 class="ch-title">${escapeHTML(cap.titulo || '')}</h2>
                         <div class="ch-divider"></div>
                         <div class="ch-text">${textoHTML}</div>
                     </div>
                     <div class="ch-footer">W & E · 19 años</div>
-                </div>`;
+                </div>
+            `;
         }
 
         if (esLibroCompleto) {
@@ -632,111 +625,99 @@
                 <div class="page">
                     <div class="page-bg-fallback"></div>
                     <div class="page-overlay"></div>
-                    <div class="page-frame"></div>
+                    <div class="page-vignette"></div>
+                    <img class="page-logo-main" src="${LOGO_URL}" alt="Logo Principal" crossorigin="anonymous">
                     <div class="page-content">
-                        <div class="ending-quote">"Y todavía falta mucho por escribir"</div>
-                        <div class="ch-divider"></div>
-                        <div class="ending-brand">W & E</div>
-                        <div class="ending-msg">
-                            19 años no son el final.<br>
-                            Son otro comienzo.<br><br>
-                            Esta historia seguirá creciendo<br>
-                            con cada recuerdo que decidamos guardar.
+                        <div class="decision-box">
+                            <div class="decision-title">UNA DECISIÓN IMPORTANTE</div>
+                            <div class="decision-question">¿Continuarías este camino sin mirar atrás?</div>
+                            <div class="decision-subtitle">
+                                Esta elección definirá el resto de la historia.<br>
+                                No habrá vuelta atrás.
+                            </div>
+                            <div class="decision-buttons">
+                                <div class="decision-btn">
+                                    <span class="decision-btn-label">SÍ</span>
+                                    <span class="decision-btn-text">Continuar adelante</span>
+                                </div>
+                                <div class="decision-btn">
+                                    <span class="decision-btn-label">NO</span>
+                                    <span class="decision-btn-text">Tomar otro camino</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="ch-footer">W & E · 19 años</div>
-                </div>`;
+                </div>
+            `;
+
+            html += `
+                <div class="page ending-page">
+                    <div class="page-bg-fallback"></div>
+                    <div class="page-overlay"></div>
+                    <div class="page-vignette"></div>
+                    <img class="page-logo-main" src="${LOGO_URL}" alt="Logo Principal" crossorigin="anonymous">
+                    <img class="page-logo-mini" src="${LOGO_MINI_URL}" alt="Logo Miniatura" crossorigin="anonymous">
+                    <div class="page-content">
+                        <div class="ending-quote">"Y TODAVÍA FALTA MUCHO POR ESCRIBIR"</div>
+                        <div class="ch-divider"></div>
+                        <div class="ending-brand">W & E</div>
+                        <div class="ending-msg">
+                            19 años no son el final. Son otro comienzo.<br><br>
+                            Esta historia seguirá creciendo con cada recuerdo<br>
+                            que decidamos guardar.
+                        </div>
+                    </div>
+                    <div class="ch-footer">W & E · 19 años</div>
+                </div>
+            `;
         }
 
         doc.innerHTML = html;
-
-        // ---- 1) PRECARGAR imágenes antes de habilitar el PDF ----
-        status.textContent = "Cargando imágenes...";
-        const { fallidas } = await precargarTodas(pares.map(p => p.imagen));
-        pares.forEach(p => {
-            if (p.imagen && estadoImagenes[p.imagen]) p.ok = estadoImagenes[p.imagen] === "ok";
-        });
-        mostrarVerificacion(pares);
-
-        // ---- 2) AJUSTAR texto al tamaño exacto de la hoja ----
-        status.textContent = "Ajustando texto a la hoja...";
-        await document.fonts.ready; // esperar fuentes para medir bien
-        ajustarPaginasAlTamanio();
-
-        // ---- 3) Listo ----
-        mostrarBotonImprimir();
-        status.textContent = fallidas.length
-            ? `⚠️ Listo, pero ${fallidas.length} imagen(es) fallaron. Revisa la tabla de verificación.`
-            : "✅ Listo: imágenes cargadas y texto ajustado. Haz clic en el botón para guardar como PDF.";
     }
 
-    /* ========================================================
-       AJUSTE EXACTO DEL TEXTO A LA HOJA A4
-       --------------------------------------------------------
-       Mide el contenido a tamaño base y calcula un factor de
-       escala real (clientHeight / scrollHeight). Aplica ese
-       factor directamente a las fuentes, con un margen de
-       seguridad del 4% para que NADA se desborde a otra hoja.
-       Mínimo: 11px (texto) / 18px (título).
-    ======================================================== */
-    function ajustarPaginasAlTamanio() {
-        const doc = document.getElementById("printDocument");
-
-        // Mostrar fuera de pantalla solo para medir
-        const prevDisplay = doc.style.display;
-        doc.style.cssText += ";display:block;position:absolute;left:-99999px;top:0;visibility:hidden;";
-
-        const BASE_TEXTO = 22, BASE_TITULO = 38, MARGEN_SEGURIDAD = 0.96;
-
-        doc.querySelectorAll(".page").forEach(pagina => {
-            const contenido = pagina.querySelector(".page-content");
-            const texto = pagina.querySelector(".ch-text");
-            const titulo = pagina.querySelector(".ch-title");
-            if (!contenido || !texto) return;
-
-            // Tamaño base
-            texto.style.fontSize = BASE_TEXTO + "px";
-            if (titulo) titulo.style.fontSize = BASE_TITULO + "px";
-
-            const disponible = contenido.clientHeight;
-            const necesario = contenido.scrollHeight;
-
-            if (necesario > disponible) {
-                const factor = (disponible / necesario) * MARGEN_SEGURIDAD;
-                const nuevoTexto = Math.max(11, Math.floor(BASE_TEXTO * factor));
-                texto.style.fontSize = nuevoTexto + "px";
-                if (titulo) {
-                    const nuevoTitulo = Math.max(18, Math.floor(BASE_TITULO * factor));
-                    titulo.style.fontSize = nuevoTitulo + "px";
-                }
-                // Segunda pasada por si el título grande seguía desbordando
-                if (contenido.scrollHeight > contenido.clientHeight) {
-                    const factor2 = (contenido.clientHeight / contenido.scrollHeight) * MARGEN_SEGURIDAD;
-                    texto.style.fontSize = Math.max(11, Math.floor(nuevoTexto * factor2)) + "px";
-                    if (titulo) titulo.style.fontSize = Math.max(18, Math.floor(BASE_TITULO * factor * factor2)) + "px";
-                }
-            }
-        });
-
-        doc.style.display = prevDisplay || "none";
-        doc.style.position = "";
-        doc.style.left = "";
-        doc.style.top = "";
-        doc.style.visibility = "";
-    }
-
-    /* ========================================================
-       BOTÓN IMPRIMIR
-    ======================================================== */
     function mostrarBotonImprimir() {
         const existente = document.getElementById("btnImprimir");
         if (existente) existente.remove();
 
         const btn = document.createElement("button");
         btn.id = "btnImprimir";
-        btn.className = "btn btn-dark";
+        btn.className = "btn btn-success";
         btn.innerHTML = "🖨️ Guardar como PDF";
-        btn.onclick = () => window.print();
+        
+        btn.onclick = async () => {
+            btn.disabled = true;
+            btn.innerHTML = "⏳ Preparando renderizado final...";
+            
+            const imgs = document.querySelectorAll('.page-bg-img, .page-logo-main, .page-logo-mini');
+            
+            const loadPromises = Array.from(imgs).map(img => {
+                return new Promise(resolve => {
+                    if (img.complete && img.naturalHeight !== 0) resolve();
+                    else {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                    }
+                });
+            });
+            await Promise.all(loadPromises);
+
+            const decodePromises = Array.from(imgs).map(img => {
+                if (img.decode) return img.decode().catch(() => {});
+                return Promise.resolve();
+            });
+            await Promise.all(decodePromises);
+
+            btn.innerHTML = "🖨️ Guardar como PDF";
+            btn.disabled = false;
+            
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    window.print();
+                });
+            });
+        };
+        
         document.getElementById("btnGroup").appendChild(btn);
     }
 </script>
