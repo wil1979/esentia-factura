@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📄 Generador de PDF - W & E 19 años</title>
+    <title> Generador de PDF - W & E 19 años</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,6 +41,7 @@
 
         .btn-primary { background: #f5576c; color: white; }
         .btn-success { background: #28a745; color: white; }
+        .btn-secondary { background: #667eea; color: white; }
 
         .btn-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
 
@@ -68,7 +69,338 @@
             display: none;
         }
 
-        .print-document { display: none; }
+        /* ========================= VISTA PREVIA ========================= */
+        .preview-container {
+            display: none;
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 18px;
+            box-shadow: 0 15px 45px rgba(0,0,0,.10);
+        }
+
+        .preview-container.active { display: block; }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .preview-title {
+            font-family: 'Playfair Display', serif;
+            color: #f5576c;
+            font-size: 1.5rem;
+        }
+
+        .preview-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .preview-counter {
+            font: 500 14px 'Inter', sans-serif;
+            color: #666;
+            padding: 8px 15px;
+            background: #f0f0f0;
+            border-radius: 20px;
+        }
+
+        .preview-nav-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: .2s;
+            background: #667eea;
+            color: white;
+        }
+        .preview-nav-btn:hover:not(:disabled) { background: #5568d3; transform: translateY(-1px); }
+        .preview-nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .preview-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .preview-viewport {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            background: #e8e8e8;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+            overflow: auto;
+            max-height: 75vh;
+        }
+
+        .preview-page-wrapper {
+            position: relative;
+            margin: 0 auto 25px;
+            display: none;
+            background: white;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+            overflow: hidden;
+            transform-origin: top left;
+        }
+
+        .preview-page-wrapper.active { display: block; }
+
+        .preview-page-wrapper .page {
+            width: 210mm; height: 297mm; position: relative; overflow: hidden;
+            transform-origin: top left;
+        }
+
+        .preview-page-wrapper .page-bg-img {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; object-position: center;
+            display: block;
+            z-index: 0;
+            filter: blur(2px) saturate(0.7) contrast(0.85) brightness(1.1);
+        }
+
+        .preview-page-wrapper .page-bg-fallback {
+            position: absolute; inset: 0;
+            background: radial-gradient(circle at 50% 45%, #fdf8f2 0%, #f5ece3 45%, #e9dcd0 100%);
+            z-index: 0;
+        }
+
+        .preview-page-wrapper .page-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(180deg,
+                rgba(255,251,246,0.92) 0%,
+                rgba(255,251,246,0.82) 30%,
+                rgba(255,251,246,0.82) 70%,
+                rgba(255,251,246,0.94) 100%);
+            z-index: 1;
+        }
+
+        .preview-page-wrapper .page-vignette {
+            position: absolute; inset: 0;
+            background: radial-gradient(circle at 50% 50%, transparent 25%, rgba(120,90,70,0.22) 100%);
+            z-index: 2;
+        }
+
+        .preview-page-wrapper .page-content {
+            position: relative; z-index: 3; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 50px 60px; text-align: center; color: #2b211b;
+            font-family: 'Cormorant Garamond', serif;
+        }
+
+        .preview-page-wrapper .ch-text {
+            font: 400 23px/1.58 'Cormorant Garamond', serif;
+            color: #2a1f18;
+            max-width: 520px;
+            background: rgba(255, 251, 246, 0.55);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 28px 35px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9), 0 2px 8px rgba(255, 255, 255, 0.6);
+        }
+        .preview-page-wrapper .ch-text .line { margin-bottom: 6px; }
+
+        .preview-page-wrapper .ch-title {
+            font: 600 42px/1.1 'Playfair Display', serif;
+            color: #1a1210;
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+            max-width: 450px;
+            text-shadow: 0 2px 4px rgba(255, 255, 255, 0.95), 0 4px 12px rgba(255, 255, 255, 0.7);
+        }
+
+        /* ✅ LOGO PRINCIPAL REDUCIDO - Vista Previa */
+        .preview-page-wrapper .page-logo-main {
+            position: absolute; 
+            top: 25px; 
+            left: 30px;
+            width: 120px;  /* ANTES: 240px - AHORA: 120px (50% más pequeño) */
+            height: auto; 
+            z-index: 4;
+            opacity: 0.9;
+            filter: drop-shadow(0 2px 6px rgba(255,255,255,0.8));
+            transition: all 0.3s ease;
+        }
+
+        /* ✅ LOGO MÁS PEQUEÑO cuando hay mucho texto */
+        .preview-page-wrapper .text-sm .page-logo-main,
+        .preview-page-wrapper .text-xs .page-logo-main,
+        .preview-page-wrapper .text-xxs .page-logo-main {
+            width: 80px;  /* Aún más pequeño cuando hay mucho texto */
+            opacity: 0.7;  /* Más transparente */
+            top: 20px;
+            left: 20px;
+        }
+
+        .preview-page-wrapper .page-logo-mini {
+            position: absolute; bottom: 75px; right: 40px;
+            width: 35px; height: auto; z-index: 4; opacity: 0.9;
+            filter: drop-shadow(0 1px 3px rgba(255,255,255,0.8));
+        }
+
+        .preview-page-wrapper .page-indicator {
+            position: absolute; top: 35px; right: 40px;
+            font: 500 11px 'Inter', sans-serif; letter-spacing: 0.25em;
+            color: #a06834; z-index: 4;
+            background: rgba(255,251,246,0.7);
+            padding: 6px 12px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+        }
+        .preview-page-wrapper .page-indicator-note { font-size: 9px; opacity: 0.7; }
+
+        .preview-page-wrapper .ch-number {
+            font: 600 11px 'Inter', sans-serif; letter-spacing: 0.35em;
+            color: #a06834; text-transform: uppercase; margin-bottom: 12px; margin-top: 20px;
+            background: rgba(255,251,246,0.7);
+            padding: 6px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+            display: inline-block;
+        }
+
+        .preview-page-wrapper .ch-divider {
+            width: 100px; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(160,104,52,0.6), transparent);
+            margin: 18px auto; position: relative;
+        }
+        .preview-page-wrapper .ch-divider::after {
+            content: ""; position: absolute; width: 5px; height: 5px;
+            left: 50%; top: 50%; border-radius: 50%; transform: translate(-50%, -50%);
+            background: #a06834; box-shadow: 0 0 10px rgba(160,104,52,0.4);
+        }
+
+        .preview-page-wrapper .ch-footer {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            z-index: 3; font: italic 400 11px 'Playfair Display', serif;
+            color: #8a7a6f; letter-spacing: 0.15em;
+            background: rgba(255,251,246,0.6);
+            padding: 6px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+            width: auto;
+        }
+
+        .preview-page-wrapper .cover-monogram {
+            font: 600 22px 'Playfair Display', serif; letter-spacing: 0.28em;
+            color: #a06834; margin-bottom: 18px; margin-top: 60px;
+            text-shadow: 0 2px 4px rgba(255,255,255,0.8);
+        }
+        .preview-page-wrapper .cover-monogram em { font-style: italic; margin: 0 0.12em; }
+
+        .preview-page-wrapper .cover-title-main {
+            font: 700 68px/0.95 'Playfair Display', serif; color: #1a1210;
+            letter-spacing: -0.02em; margin: 10px 0;
+            text-shadow: 0 3px 8px rgba(255,255,255,0.9), 0 6px 20px rgba(255,255,255,0.6);
+        }
+
+        .preview-page-wrapper .cover-subtitle {
+            font: italic 500 22px/1.5 'Cormorant Garamond', serif;
+            color: #3d2f26; max-width: 420px; margin-top: 25px;
+            text-shadow: 0 2px 4px rgba(255,255,255,0.8);
+        }
+
+        .preview-page-wrapper .cover-quote {
+            font: italic 500 21px/1.6 'Cormorant Garamond', serif;
+            color: #2a1f18;
+            max-width: 480px; margin: 30px auto 20px; padding: 25px 30px;
+            border-left: 3px solid rgba(160,104,52,0.5);
+            background: rgba(255,251,246,0.75);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            text-shadow: 0 1px 2px rgba(255,255,255,0.7);
+        }
+
+        .preview-page-wrapper .cover-stats {
+            font: 600 11px 'Inter', sans-serif; color: #6b5a4e;
+            letter-spacing: 0.2em; margin-top: 30px;
+            background: rgba(255,251,246,0.7);
+            padding: 8px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .preview-page-wrapper .cover-footer-text {
+            font: 500 14px 'Inter', sans-serif; color: #6b5a4e;
+            letter-spacing: 0.1em; margin-top: 25px; max-width: 400px; line-height: 1.5;
+            text-shadow: 0 1px 2px rgba(255,255,255,0.7);
+        }
+
+        .preview-page-wrapper .index-title {
+            font: 600 38px/1 'Playfair Display', serif; color: #1a1210;
+            letter-spacing: -0.01em; margin-bottom: 40px; margin-top: 60px;
+            text-shadow: 0 2px 4px rgba(255,255,255,0.8);
+        }
+        .preview-page-wrapper .index-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 25px;
+            max-width: 560px; font: 400 17px/1.4 'Cormorant Garamond', serif;
+            color: #3d2f26; text-align: left;
+            background: rgba(255,251,246,0.6);
+            padding: 25px 30px;
+            border-radius: 12px;
+            backdrop-filter: blur(6px);
+        }
+        .preview-page-wrapper .index-item {
+            display: flex; gap: 10px; border-bottom: 1px dashed rgba(160,104,52,0.3);
+            padding-bottom: 4px;
+        }
+        .preview-page-wrapper .index-item-num {
+            font: 600 13px 'Inter', sans-serif; color: #a06834;
+            letter-spacing: 0.1em; min-width: 28px;
+        }
+        .preview-page-wrapper .index-item-title {
+            font: italic 500 17px 'Cormorant Garamond', serif; color: #2a1f18;
+        }
+
+        .preview-page-wrapper .ending-quote {
+            font: italic 600 34px/1.3 'Playfair Display', serif;
+            color: #1a1210; max-width: 440px; margin-bottom: 25px; letter-spacing: 0.05em;
+            text-shadow: 0 2px 6px rgba(255,255,255,0.9), 0 4px 12px rgba(255,255,255,0.6);
+        }
+        .preview-page-wrapper .ending-brand {
+            font: 600 26px 'Playfair Display', serif; color: #a06834;
+            letter-spacing: 0.2em; margin-top: 20px;
+            text-shadow: 0 2px 4px rgba(255,255,255,0.8);
+        }
+        .preview-page-wrapper .ending-msg {
+            font: italic 500 18px/1.6 'Cormorant Garamond', serif;
+            color: #3d2f26; max-width: 400px; margin-top: 15px;
+            text-shadow: 0 1px 3px rgba(255,255,255,0.8);
+        }
+
+        .preview-page-wrapper .text-sm .ch-text { font-size: 19px; line-height: 1.52; max-width: 600px; }
+        .preview-page-wrapper .text-sm .ch-title { font-size: 34px; max-width: 560px; }
+        .preview-page-wrapper .text-xs .ch-text { font-size: 16px; line-height: 1.48; max-width: 640px; }
+        .preview-page-wrapper .text-xs .ch-title { font-size: 30px; max-width: 620px; }
+        .preview-page-wrapper .text-xxs .ch-text { font-size: 14px; line-height: 1.45; max-width: 660px; padding: 22px 28px; }
+        .preview-page-wrapper .text-xxs .ch-title { font-size: 26px; max-width: 660px; }
+
+        /* ========================= DOCUMENTO IMPRIMIBLE ========================= */
+        .print-document { 
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
 
         @media print {
             @page { size: A4 portrait; margin: 0; }
@@ -80,8 +412,17 @@
                 color-adjust: exact !important;
             }
 
-            .control-panel { display: none !important; }
-            .print-document { display: block !important; }
+            .control-panel, .preview-container { display: none !important; }
+            
+            .print-document { 
+                position: static !important;
+                left: auto !important;
+                top: auto !important;
+                width: auto !important;
+                height: auto !important;
+                overflow: visible !important;
+                display: block !important;
+            }
 
             .page {
                 width: 210mm; height: 297mm; position: relative; overflow: hidden;
@@ -94,6 +435,7 @@
                 object-fit: cover; object-position: center;
                 display: block;
                 z-index: 0;
+                filter: blur(2px) saturate(0.7) contrast(0.85) brightness(1.1);
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
@@ -108,7 +450,11 @@
 
             .page-overlay {
                 position: absolute; inset: 0;
-                background: linear-gradient(180deg, rgba(255,251,246,0.82) 0%, rgba(255,251,246,0.60) 35%, rgba(255,251,246,0.60) 65%, rgba(255,251,246,0.88) 100%);
+                background: linear-gradient(180deg, 
+                    rgba(255,251,246,0.92) 0%, 
+                    rgba(255,251,246,0.82) 30%, 
+                    rgba(255,251,246,0.82) 70%, 
+                    rgba(255,251,246,0.94) 100%);
                 z-index: 1;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
@@ -116,7 +462,7 @@
 
             .page-vignette {
                 position: absolute; inset: 0;
-                background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(120,90,70,0.18) 100%);
+                background: radial-gradient(circle at 50% 50%, transparent 25%, rgba(120,90,70,0.22) 100%);
                 z-index: 2;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
@@ -129,139 +475,215 @@
                 font-family: 'Cormorant Garamond', serif;
             }
 
+            .ch-text {
+                font: 400 23px/1.58 'Cormorant Garamond', serif; 
+                color: #2a1f18;
+                max-width: 520px;
+                background: rgba(255, 251, 246, 0.55);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                padding: 28px 35px;
+                border-radius: 16px;
+                border: 1px solid rgba(255, 255, 255, 0.6);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+                text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9), 0 2px 8px rgba(255, 255, 255, 0.6);
+            }
+            .ch-text .line { margin-bottom: 6px; }
+
+            .ch-title {
+                font: 600 42px/1.1 'Playfair Display', serif; 
+                color: #1a1210;
+                margin-bottom: 8px; 
+                letter-spacing: -0.01em; 
+                max-width: 450px;
+                text-shadow: 0 2px 4px rgba(255, 255, 255, 0.95), 0 4px 12px rgba(255, 255, 255, 0.7);
+            }
+
+            /* ✅ LOGO PRINCIPAL REDUCIDO - Impresión */
             .page-logo-main {
-                position: absolute; top: 35px; left: 50%; transform: translateX(-50%);
-                width: 100px; height: auto; z-index: 4;
+                position: absolute; 
+                top: 25px; 
+                left: 30px;
+                width: 90px;  /* ANTES: 140px - AHORA: 90px (35% más pequeño) */
+                height: auto; 
+                z-index: 4;
+                opacity: 0.9;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+                filter: drop-shadow(0 2px 6px rgba(255,255,255,0.8));
+                transition: all 0.3s ease;
+            }
+
+            /* ✅ LOGO MÁS PEQUEÑO cuando hay mucho texto */
+            .text-sm .page-logo-main,
+            .text-xs .page-logo-main,
+            .text-xxs .page-logo-main {
+                width: 60px;  /* Muy pequeño cuando hay mucho texto */
+                opacity: 0.65;  /* Más transparente */
+                top: 15px;
+                left: 15px;
             }
 
             .page-logo-mini {
                 position: absolute; bottom: 75px; right: 40px;
-                width: 35px; height: auto; z-index: 4; opacity: 0.85;
+                width: 35px; height: auto; z-index: 4; opacity: 0.9;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+                filter: drop-shadow(0 1px 3px rgba(255,255,255,0.8));
             }
 
             .page-indicator {
                 position: absolute; top: 35px; right: 40px;
                 font: 500 11px 'Inter', sans-serif; letter-spacing: 0.25em;
                 color: #a06834; z-index: 4;
+                background: rgba(255,251,246,0.7);
+                padding: 6px 12px;
+                border-radius: 20px;
+                backdrop-filter: blur(4px);
             }
             .page-indicator-note { font-size: 9px; opacity: 0.7; }
 
             .ch-number {
-                font: 500 11px 'Inter', sans-serif; letter-spacing: 0.35em;
+                font: 600 11px 'Inter', sans-serif; letter-spacing: 0.35em;
                 color: #a06834; text-transform: uppercase; margin-bottom: 12px; margin-top: 20px;
-            }
-
-            .ch-title {
-                font: 500 40px/1.1 'Playfair Display', serif; color: #231a15;
-                margin-bottom: 8px; letter-spacing: -0.01em; max-width: 450px;
+                background: rgba(255,251,246,0.7);
+                padding: 6px 16px;
+                border-radius: 20px;
+                backdrop-filter: blur(4px);
+                display: inline-block;
             }
 
             .ch-divider {
                 width: 100px; height: 1px;
-                background: linear-gradient(90deg, transparent, rgba(160,104,52,0.55), transparent);
+                background: linear-gradient(90deg, transparent, rgba(160,104,52,0.6), transparent);
                 margin: 18px auto; position: relative;
             }
             .ch-divider::after {
                 content: ""; position: absolute; width: 5px; height: 5px;
                 left: 50%; top: 50%; border-radius: 50%; transform: translate(-50%, -50%);
-                background: #a06834; box-shadow: 0 0 10px rgba(160,104,52,0.3);
+                background: #a06834; box-shadow: 0 0 10px rgba(160,104,52,0.4);
             }
-
-            .ch-text {
-                font: 400 23px/1.58 'Cormorant Garamond', serif; color: #3d2f26;
-                max-width: 520px; text-shadow: 0 1px 8px rgba(255,255,255,0.4);
-            }
-            .ch-text .line { margin-bottom: 6px; }
 
             .ch-footer {
-                position: absolute; bottom: 30px; left: 0; right: 0; text-align: center;
+                position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
                 z-index: 3; font: italic 400 11px 'Playfair Display', serif;
                 color: #8a7a6f; letter-spacing: 0.15em;
+                background: rgba(255,251,246,0.6);
+                padding: 6px 20px;
+                border-radius: 20px;
+                backdrop-filter: blur(4px);
+                width: auto;
             }
 
             .cover-monogram {
                 font: 600 22px 'Playfair Display', serif; letter-spacing: 0.28em;
                 color: #a06834; margin-bottom: 18px; margin-top: 60px;
+                text-shadow: 0 2px 4px rgba(255,255,255,0.8);
             }
             .cover-monogram em { font-style: italic; margin: 0 0.12em; }
 
             .cover-title-main {
-                font: 500 64px/0.95 'Playfair Display', serif; color: #231a15;
+                font: 700 68px/0.95 'Playfair Display', serif; color: #1a1210;
                 letter-spacing: -0.02em; margin: 10px 0;
+                text-shadow: 0 3px 8px rgba(255,255,255,0.9), 0 6px 20px rgba(255,255,255,0.6);
             }
 
             .cover-subtitle {
-                font: italic 400 21px/1.5 'Cormorant Garamond', serif;
-                color: #5c4b40; max-width: 420px; margin-top: 25px;
+                font: italic 500 22px/1.5 'Cormorant Garamond', serif;
+                color: #3d2f26; max-width: 420px; margin-top: 25px;
+                text-shadow: 0 2px 4px rgba(255,255,255,0.8);
             }
 
             .cover-quote {
-                font: italic 400 20px/1.6 'Cormorant Garamond', serif; color: #5c4b40;
-                max-width: 480px; margin: 30px auto 20px; padding: 20px;
-                border-left: 3px solid rgba(160,104,52,0.4);
-                background: rgba(255,255,255,0.6); border-radius: 8px;
+                font: italic 500 21px/1.6 'Cormorant Garamond', serif; 
+                color: #2a1f18;
+                max-width: 480px; margin: 30px auto 20px; padding: 25px 30px;
+                border-left: 3px solid rgba(160,104,52,0.5);
+                background: rgba(255,251,246,0.75);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+                text-shadow: 0 1px 2px rgba(255,255,255,0.7);
             }
 
             .cover-stats {
-                font: 500 11px 'Inter', sans-serif; color: #8a7a6f;
+                font: 600 11px 'Inter', sans-serif; color: #6b5a4e;
                 letter-spacing: 0.2em; margin-top: 30px;
+                background: rgba(255,251,246,0.7);
+                padding: 8px 20px;
+                border-radius: 20px;
+                backdrop-filter: blur(4px);
             }
 
             .cover-footer-text {
-                font: 500 14px 'Inter', sans-serif; color: #8a7a6f;
+                font: 500 14px 'Inter', sans-serif; color: #6b5a4e;
                 letter-spacing: 0.1em; margin-top: 25px; max-width: 400px; line-height: 1.5;
+                text-shadow: 0 1px 2px rgba(255,255,255,0.7);
             }
 
             .index-title {
-                font: 500 36px/1 'Playfair Display', serif; color: #231a15;
+                font: 600 38px/1 'Playfair Display', serif; color: #1a1210;
                 letter-spacing: -0.01em; margin-bottom: 40px; margin-top: 60px;
+                text-shadow: 0 2px 4px rgba(255,255,255,0.8);
             }
             .index-grid {
                 display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 25px;
                 max-width: 560px; font: 400 17px/1.4 'Cormorant Garamond', serif;
                 color: #3d2f26; text-align: left;
+                background: rgba(255,251,246,0.6);
+                padding: 25px 30px;
+                border-radius: 12px;
+                backdrop-filter: blur(6px);
             }
             .index-item {
-                display: flex; gap: 10px; border-bottom: 1px dashed rgba(160,104,52,0.25);
+                display: flex; gap: 10px; border-bottom: 1px dashed rgba(160,104,52,0.3);
                 padding-bottom: 4px;
             }
             .index-item-num {
-                font: 500 13px 'Inter', sans-serif; color: #a06834;
+                font: 600 13px 'Inter', sans-serif; color: #a06834;
                 letter-spacing: 0.1em; min-width: 28px;
             }
             .index-item-title {
-                font: italic 400 17px 'Cormorant Garamond', serif; color: #3d2f26;
+                font: italic 500 17px 'Cormorant Garamond', serif; color: #2a1f18;
             }
 
             .ending-quote {
-                font: italic 400 32px/1.3 'Playfair Display', serif;
-                color: #231a15; max-width: 440px; margin-bottom: 25px; letter-spacing: 0.05em;
+                font: italic 600 34px/1.3 'Playfair Display', serif;
+                color: #1a1210; max-width: 440px; margin-bottom: 25px; letter-spacing: 0.05em;
+                text-shadow: 0 2px 6px rgba(255,255,255,0.9), 0 4px 12px rgba(255,255,255,0.6);
             }
             .ending-brand {
-                font: 500 24px 'Playfair Display', serif; color: #a06834;
+                font: 600 26px 'Playfair Display', serif; color: #a06834;
                 letter-spacing: 0.2em; margin-top: 20px;
+                text-shadow: 0 2px 4px rgba(255,255,255,0.8);
             }
             .ending-msg {
-                font: italic 400 17px/1.6 'Cormorant Garamond', serif;
-                color: #5c4b40; max-width: 400px; margin-top: 15px;
+                font: italic 500 18px/1.6 'Cormorant Garamond', serif;
+                color: #3d2f26; max-width: 400px; margin-top: 15px;
+                text-shadow: 0 1px 3px rgba(255,255,255,0.8);
             }
 
-            .text-sm .ch-text { font-size: 19px; line-height: 1.52; }
-            .text-sm .ch-title { font-size: 34px; }
-            .text-xs .ch-text { font-size: 16px; line-height: 1.48; }
-            .text-xs .ch-title { font-size: 30px; }
-            .text-xxs .ch-text { font-size: 14px; line-height: 1.45; }
-            .text-xxs .ch-title { font-size: 26px; }
+            .text-sm .ch-text { font-size: 19px; line-height: 1.52; max-width: 600px; }
+            .text-sm .ch-title { font-size: 34px; max-width: 560px; }
+            .text-xs .ch-text { font-size: 16px; line-height: 1.48; max-width: 640px; }
+            .text-xs .ch-title { font-size: 30px; max-width: 620px; }
+            .text-xxs .ch-text { font-size: 14px; line-height: 1.45; max-width: 660px; padding: 22px 28px; }
+            .text-xxs .ch-title { font-size: 26px; max-width: 660px; }
+        }
+
+        @media (max-width: 768px) {
+            .preview-viewport {
+                max-width: 100%;
+                padding: 10px;
+            }
         }
     </style>
+<base target="_blank">
 </head>
 <body>
 
-<div class="control-panel">
+<div class="control-panel" id="controlPanel">
     <h1>📄 Generador de PDF</h1>
     <p class="subtitle">Un capítulo = Una página · Con imagen de fondo, logos e índice</p>
 
@@ -269,7 +691,7 @@
         <strong>📋 Instrucciones:</strong>
         <ol style="margin-top: 10px; padding-left: 20px;">
             <li>Selecciona qué generar</li>
-            <li>Espera a que el sistema pre-cargue las imágenes</li>
+            <li>Revisa la vista previa para verificar que todo esté correcto</li>
             <li>Haz clic en <strong>"🖨️ Guardar como PDF"</strong></li>
             <li>En el diálogo: Destino → <strong>Guardar como PDF</strong></li>
             <li>Márgenes → <strong>Ninguno</strong></li>
@@ -279,18 +701,39 @@
     </div>
 
     <div class="alert-warning">
-        ℹ️ <strong>Nota:</strong> El sistema detecta automáticamente si la ruta en Firebase ya incluye <code>assets/</code> para evitar duplicarla.
+        ℹ️ <strong>Mejoras visuales:</strong> Logo adaptativo - se reduce automáticamente cuando hay mucho texto para no interferir con la lectura.
     </div>
 
     <div id="errorBox" class="alert-error"></div>
 
     <div class="btn-group" id="btnGroup">
         <button class="btn btn-primary" id="btnCapitulo" onclick="generarCapituloIndividual()">📖 Un capítulo</button>
-        <button class="btn btn-success" id="btnLibro" onclick="generarLibroCompleto()"> Libro completo</button>
+        <button class="btn btn-success" id="btnLibro" onclick="generarLibroCompleto()">📚 Libro completo</button>
     </div>
 
     <div class="loader" id="loader"></div>
     <div id="status" style="text-align: center; color: #555; margin-top: 15px;"></div>
+</div>
+
+<!-- ========================= VISTA PREVIA ========================= -->
+<div class="preview-container" id="previewContainer">
+    <div class="preview-header">
+        <div class="preview-title">👁️ Vista Previa del Documento</div>
+        <div class="preview-controls">
+            <button class="preview-nav-btn" id="btnPrev" onclick="cambiarPagina(-1)">← Anterior</button>
+            <div class="preview-counter" id="previewCounter">Página 1 de 1</div>
+            <button class="preview-nav-btn" id="btnNext" onclick="cambiarPagina(1)">Siguiente →</button>
+        </div>
+    </div>
+
+    <div class="preview-viewport" id="previewViewport">
+        <div id="previewPages"></div>
+    </div>
+
+    <div class="preview-actions">
+        <button class="btn btn-secondary" onclick="volverAlInicio()">↩️ Volver al inicio</button>
+        <button class="btn btn-success" id="btnImprimirPreview" onclick="imprimirDesdePreview()">🖨️ Guardar como PDF</button>
+    </div>
 </div>
 
 <div class="print-document" id="printDocument"></div>
@@ -319,29 +762,29 @@
 </script>
 
 <script>
-    const LOGO_URL = "https://wil1979.github.io/esentia-factura/love/assets/logo-we.svg"; 
-    const LOGO_MINI_URL = "https://wil1979.github.io/esentia-factura/love/assets/logo-we-mini.svg";
-    const ASSETS_BASE_URL = "https://wil1979.github.io/esentia-factura/love/assets/";
-    const ANO_INICIO = 1901;
+   const LOGO_URL = "https://wil1979.github.io/esentia-factura/love/assets/logo-we.svg"; 
+   const LOGO_MINI_URL = "https://wil1979.github.io/esentia-factura/love/assets/logo-we-mini.svg";
+   const ASSETS_BASE_URL = "https://wil1979.github.io/esentia-factura/love/assets/";
+   const ANO_INICIO = 1901;
+   const PORTADA_IMG_URL = "https://wil1979.github.io/esentia-factura/love/assets/imagenes/intro-caminos-we.png"; 
 
     let todosLosCapitulos = [];
     let failedImages = [];
+    let paginaActual = 0;
+    let totalPaginas = 0;
+
+    function esMovil() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+            || window.innerWidth <= 768;
+    }
 
     function construirURLImagen(valor) {
         if (!valor || typeof valor !== "string") return null;
         const trimmed = valor.trim();
         if (!trimmed) return null;
-        
-        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-            return trimmed;
-        }
-        
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
         let nombreLimpio = trimmed.replace(/^\.?\/*/, "");
-        
-        if (nombreLimpio.toLowerCase().startsWith("assets/")) {
-            nombreLimpio = nombreLimpio.substring(7);
-        }
-        
+        if (nombreLimpio.toLowerCase().startsWith("assets/")) nombreLimpio = nombreLimpio.substring(7);
         return ASSETS_BASE_URL + nombreLimpio;
     }
 
@@ -368,32 +811,19 @@
 
     function obtenerImagenCapitulo(imagenes) {
         if (!Array.isArray(imagenes) || imagenes.length === 0) return null;
-        const seleccionada = imagenes[Math.floor(imagenes.length / 2)];
-        return construirURLImagen(seleccionada);
+        return construirURLImagen(imagenes[Math.floor(imagenes.length / 2)]);
     }
 
     async function precargarImagenes(urls) {
         failedImages = [];
         const uniqueUrls = [...new Set(urls)].filter(Boolean);
-        const promises = uniqueUrls.map(url => {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.crossOrigin = "anonymous";
-                img.onload = () => {
-                    if (img.decode) {
-                        img.decode().then(() => resolve(url)).catch(() => resolve(url));
-                    } else {
-                        resolve(url);
-                    }
-                };
-                img.onerror = () => {
-                    console.error(`❌ ERROR: No se pudo cargar:`, url);
-                    failedImages.push(url);
-                    resolve(url);
-                };
-                img.src = url;
-            });
-        });
+        const promises = uniqueUrls.map(url => new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => { if (img.decode) img.decode().then(() => resolve(url)).catch(() => resolve(url)); else resolve(url); };
+            img.onerror = () => { console.error(`❌ ERROR:`, url); failedImages.push(url); resolve(url); };
+            img.src = url;
+        }));
         await Promise.all(promises);
     }
 
@@ -401,10 +831,8 @@
         const errorBox = document.getElementById("errorBox");
         if (failedImages.length > 0) {
             errorBox.style.display = "block";
-            errorBox.innerHTML = `⚠️ <strong>Advertencia:</strong> No se pudieron cargar ${failedImages.length} imagen(es). Revisa la consola (F12) para ver las URLs exactas.`;
-        } else {
-            errorBox.style.display = "none";
-        }
+            errorBox.innerHTML = `⚠️ <strong>Advertencia:</strong> No se pudieron cargar ${failedImages.length} imagen(es). Revisa la consola (F12).`;
+        } else { errorBox.style.display = "none"; }
     }
 
     async function generarCapituloIndividual() {
@@ -415,41 +843,31 @@
         
         loader.style.display = "block";
         status.textContent = "Cargando capítulos...";
-        btnCapitulo.disabled = true;
-        btnLibro.disabled = true;
+        btnCapitulo.disabled = true; btnLibro.disabled = true;
         document.getElementById("errorBox").style.display = "none";
 
         try {
             await cargarCapitulos();
             const opciones = todosLosCapitulos.map(c => `  ${c.numero}. ${c.titulo || "Sin título"}`).join("\n");
             const numeroStr = prompt(`Ingresa el número del capítulo:\n\n${opciones}`);
-            
             if (!numeroStr) { loader.style.display = "none"; btnCapitulo.disabled = false; btnLibro.disabled = false; return; }
-
             const cap = todosLosCapitulos.find(c => Number(c.numero) === parseInt(numeroStr));
-            if (!cap) {
-                alert("❌ Capítulo no encontrado.");
-                loader.style.display = "none"; btnCapitulo.disabled = false; btnLibro.disabled = false; return;
-            }
-
+            if (!cap) { alert("❌ Capítulo no encontrado."); loader.style.display = "none"; btnCapitulo.disabled = false; btnLibro.disabled = false; return; }
             status.textContent = `Construyendo y pre-cargando imágenes del capítulo ${cap.numero}...`;
             construirDocumento([cap], false);
-            
             const imagenesArray = Array.isArray(cap.imagenes) ? cap.imagenes : (typeof cap.imagenes === 'string' ? [cap.imagenes] : []);
             const urlsConstruidas = imagenesArray.map(construirURLImagen).filter(Boolean);
             if (urlsConstruidas.length > 0) await precargarImagenes(urlsConstruidas);
-            
             mostrarErrorSiHay();
-            mostrarBotonImprimir();
-            status.textContent = "✅ Listo. Haz clic en el botón para guardar como PDF.";
+            mostrarVistaPrevia();
+            status.textContent = "✅ Vista previa lista. Revisa y guarda como PDF.";
         } catch (error) {
             console.error(error);
-            alert(" Error: " + error.message);
+            alert("❌ Error: " + error.message);
             status.textContent = "❌ Error.";
         } finally {
             loader.style.display = "none";
-            btnCapitulo.disabled = false;
-            btnLibro.disabled = false;
+            btnCapitulo.disabled = false; btnLibro.disabled = false;
         }
     }
 
@@ -461,41 +879,29 @@
 
         loader.style.display = "block";
         status.textContent = "Cargando capítulos publicados...";
-        btnCapitulo.disabled = true;
-        btnLibro.disabled = true;
+        btnCapitulo.disabled = true; btnLibro.disabled = true;
         document.getElementById("errorBox").style.display = "none";
 
         try {
             await cargarCapitulos();
             const publicados = todosLosCapitulos.filter(c => c.publicado === true).sort((a, b) => Number(a.numero) - Number(b.numero));
-
-            if (!publicados.length) {
-                alert("No hay capítulos publicados.");
-                loader.style.display = "none"; btnCapitulo.disabled = false; btnLibro.disabled = false; return;
-            }
-
-            if (!confirm(`¿Generar libro completo con ${publicados.length} capítulos?\n\nCada capítulo = 1 página.`)) {
-                loader.style.display = "none"; btnCapitulo.disabled = false; btnLibro.disabled = false; return;
-            }
-
+            if (!publicados.length) { alert("No hay capítulos publicados."); loader.style.display = "none"; btnCapitulo.disabled = false; btnLibro.disabled = false; return; }
+            if (!confirm(`¿Generar libro completo con ${publicados.length} capítulos?\n\nCada capítulo = 1 página.`)) { loader.style.display = "none"; btnCapitulo.disabled = false; btnLibro.disabled = false; return; }
             status.textContent = `Construyendo y pre-cargando ${publicados.length} páginas...`;
             construirDocumento(publicados, true);
-            
             const imagenesArray = publicados.flatMap(c => Array.isArray(c.imagenes) ? c.imagenes : (typeof c.imagenes === 'string' ? [c.imagenes] : [])).filter(Boolean);
             const urlsConstruidas = imagenesArray.map(construirURLImagen).filter(Boolean);
             if (urlsConstruidas.length > 0) await precargarImagenes(urlsConstruidas);
-
             mostrarErrorSiHay();
-            mostrarBotonImprimir();
-            status.textContent = "✅ Listo. Haz clic en el botón para guardar como PDF.";
+            mostrarVistaPrevia();
+            status.textContent = "✅ Vista previa lista. Revisa y guarda como PDF.";
         } catch (error) {
             console.error(error);
-            alert(" Error: " + error.message);
+            alert("❌ Error: " + error.message);
             status.textContent = "❌ Error.";
         } finally {
             loader.style.display = "none";
-            btnCapitulo.disabled = false;
-            btnLibro.disabled = false;
+            btnCapitulo.disabled = false; btnLibro.disabled = false;
         }
     }
 
@@ -506,8 +912,7 @@
         const totalCapitulos = capitulos.length;
 
         if (esLibroCompleto) {
-            const imgPortada = obtenerImagenCapitulo(capitulos[0]?.imagenes);
-
+            const imgPortada = construirURLImagen(PORTADA_IMG_URL);
             html += `
                 <div class="page cover-general">
                     ${imgPortada ? `<img class="page-bg-img" src="${imgPortada}" alt="" crossorigin="anonymous" loading="eager">` : `<div class="page-bg-fallback"></div>`}
@@ -529,13 +934,8 @@
                             Lo que hemos vivido nos transformó.<br>
                             Y aquello que nos une permanece en el centro.
                         </div>
-                        <div class="cover-stats">
-                            ${totalCapitulos} páginas · ${totalCapitulos} recuerdos · una sola historia
-                        </div>
-                        <div class="cover-footer-text">
-                            Dos caminos, una historia, un amor que se transforma<br>
-                            sin dejar de ser infinito. ❤️🦋∞
-                        </div>
+                        <div class="cover-stats">${totalCapitulos} páginas · ${totalCapitulos} recuerdos · una sola historia</div>
+                        <div class="cover-footer-text">Dos caminos, una historia, un amor que se transforma<br>sin dejar de ser infinito. ❤️∞</div>
                     </div>
                     <div class="ch-footer">W & E · 19 años</div>
                 </div>
@@ -547,7 +947,6 @@
                     <span class="index-item-title">${escapeHTML(c.titulo || "Sin título")}</span>
                 </div>
             `).join("");
-
             html += `
                 <div class="page">
                     <div class="page-bg-fallback"></div>
@@ -566,21 +965,16 @@
         for (const cap of capitulos) {
             const lineas = Array.isArray(cap.lineas) ? cap.lineas.filter(l => l && l.trim()) : [];
             if (!lineas.length) continue;
-
             const imagen = obtenerImagenCapitulo(cap.imagenes);
             const tamano = claseTamano(lineas);
             const textoHTML = lineas.map(l => `<div class="line">${escapeHTML(l)}</div>`).join("");
-
             html += `
                 <div class="page ${tamano}">
                     ${imagen ? `<img class="page-bg-img" src="${imagen}" alt="" crossorigin="anonymous" loading="eager">` : `<div class="page-bg-fallback"></div>`}
                     <div class="page-overlay"></div>
                     <div class="page-vignette"></div>
                     <img class="page-logo-main" src="${LOGO_URL}" alt="Logo Principal" crossorigin="anonymous">
-                    <div class="page-indicator">
-                        ${ANO_INICIO} / ${String(cap.numero).padStart(2, '0')}
-                        <span class="page-indicator-note">♪</span>
-                    </div>
+                    <div class="page-indicator">${ANO_INICIO} / ${String(cap.numero).padStart(2, '0')}<span class="page-indicator-note">♪</span></div>
                     <img class="page-logo-mini" src="${LOGO_MINI_URL}" alt="Logo Miniatura" crossorigin="anonymous">
                     <div class="page-content">
                         <div class="ch-number">CAPÍTULO ${String(cap.numero).padStart(2, '0')}</div>
@@ -605,63 +999,113 @@
                         <div class="ending-quote">"Y TODAVÍA FALTA MUCHO POR ESCRIBIR"</div>
                         <div class="ch-divider"></div>
                         <div class="ending-brand">W & E</div>
-                        <div class="ending-msg">
-                            19 años no son el final. Son otro comienzo.<br><br>
-                            Esta historia seguirá creciendo con cada recuerdo<br>
-                            que decidamos guardar.
-                        </div>
+                        <div class="ending-msg">19 años no son el final. Son otro comienzo.<br><br>Esta historia seguirá creciendo con cada recuerdo<br>que decidamos guardar.</div>
                     </div>
                     <div class="ch-footer">W & E · 19 años</div>
                 </div>
             `;
         }
-
         doc.innerHTML = html;
     }
 
-    function mostrarBotonImprimir() {
-        const existente = document.getElementById("btnImprimir");
-        if (existente) existente.remove();
+    function ajustarEscalaVistaPrevia() {
+        const viewport = document.getElementById("previewViewport");
+        const wrappers = document.querySelectorAll('.preview-page-wrapper');
+        if (!viewport || !wrappers.length) return;
 
-        const btn = document.createElement("button");
-        btn.id = "btnImprimir";
-        btn.className = "btn btn-success";
+        const probe = document.createElement('div');
+        probe.style.cssText = 'width:210mm;height:297mm;visibility:hidden;position:absolute;left:-9999px;top:0;pointer-events:none;';
+        document.body.appendChild(probe);
+        const anchoReal = probe.offsetWidth;
+        const altoReal = probe.offsetHeight;
+        probe.remove();
+        if (!anchoReal || !altoReal) return;
+
+        const disponible = viewport.clientWidth - 40;
+        const escala = Math.min(disponible / anchoReal, 1);
+
+        wrappers.forEach(w => {
+            w.style.width = (anchoReal * escala) + 'px';
+            w.style.height = (altoReal * escala) + 'px';
+            const page = w.querySelector('.page');
+            if (page) page.style.transform = 'scale(' + escala + ')';
+        });
+    }
+
+    window.addEventListener('resize', () => {
+        const pc = document.getElementById("previewContainer");
+        if (pc && pc.classList.contains('active')) ajustarEscalaVistaPrevia();
+    });
+
+    function mostrarVistaPrevia() {
+        const printDoc = document.getElementById("printDocument");
+        const previewContainer = document.getElementById("previewContainer");
+        const previewPages = document.getElementById("previewPages");
+        const controlPanel = document.getElementById("controlPanel");
+        const viewport = document.getElementById("previewViewport");
+        
+        controlPanel.style.display = "none";
+        previewContainer.classList.add("active");
+        
+        const pages = printDoc.querySelectorAll('.page');
+        totalPaginas = pages.length;
+        paginaActual = 0;
+        
+        previewPages.innerHTML = "";
+        
+        pages.forEach((page, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'preview-page-wrapper';
+            wrapper.innerHTML = page.outerHTML;
+            previewPages.appendChild(wrapper);
+        });
+
+        ajustarEscalaVistaPrevia();
+        actualizarVistaPrevia();
+        
+        setTimeout(() => { viewport.scrollTop = 0; }, 100);
+    }
+
+    function cambiarPagina(direccion) {
+        const nuevaPagina = paginaActual + direccion;
+        if (nuevaPagina >= 0 && nuevaPagina < totalPaginas) { 
+            paginaActual = nuevaPagina; 
+            actualizarVistaPrevia();
+            document.getElementById("previewViewport").scrollTop = 0;
+        }
+    }
+
+    function actualizarVistaPrevia() {
+        const wrappers = document.querySelectorAll('.preview-page-wrapper');
+        wrappers.forEach((wrapper, index) => wrapper.classList.toggle('active', index === paginaActual));
+        document.getElementById("previewCounter").textContent = `Página ${paginaActual + 1} de ${totalPaginas}`;
+        document.getElementById("btnPrev").disabled = paginaActual === 0;
+        document.getElementById("btnNext").disabled = paginaActual === totalPaginas - 1;
+    }
+
+    function volverAlInicio() {
+        document.getElementById("previewContainer").classList.remove("active");
+        document.getElementById("controlPanel").style.display = "block";
+        document.getElementById("status").textContent = "";
+    }
+
+    async function imprimirDesdePreview() {
+        const btn = document.getElementById("btnImprimirPreview");
+        btn.disabled = true;
+        const esMovilDevice = esMovil();
+        btn.innerHTML = esMovilDevice ? " Preparando (móvil)..." : "⏳ Preparando renderizado final...";
+        const imgs = document.querySelectorAll('.print-document .page-bg-img, .print-document .page-logo-main, .print-document .page-logo-mini');
+        const loadPromises = Array.from(imgs).map(img => new Promise(resolve => {
+            if (img.complete && img.naturalHeight !== 0) resolve();
+            else { img.onload = resolve; img.onerror = resolve; }
+        }));
+        await Promise.all(loadPromises);
+        const decodePromises = Array.from(imgs).map(img => img.decode ? img.decode().catch(() => {}) : Promise.resolve());
+        await Promise.all(decodePromises);
         btn.innerHTML = "🖨️ Guardar como PDF";
-        
-        btn.onclick = async () => {
-            btn.disabled = true;
-            btn.innerHTML = "⏳ Preparando renderizado final...";
-            
-            const imgs = document.querySelectorAll('.page-bg-img, .page-logo-main, .page-logo-mini');
-            
-            const loadPromises = Array.from(imgs).map(img => {
-                return new Promise(resolve => {
-                    if (img.complete && img.naturalHeight !== 0) resolve();
-                    else {
-                        img.onload = resolve;
-                        img.onerror = resolve;
-                    }
-                });
-            });
-            await Promise.all(loadPromises);
-
-            const decodePromises = Array.from(imgs).map(img => {
-                if (img.decode) return img.decode().catch(() => {});
-                return Promise.resolve();
-            });
-            await Promise.all(decodePromises);
-
-            btn.innerHTML = "️ Guardar como PDF";
-            btn.disabled = false;
-            
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    window.print();
-                });
-            });
-        };
-        
-        document.getElementById("btnGroup").appendChild(btn);
+        btn.disabled = false;
+        const delay = esMovilDevice ? 1500 : 300;
+        setTimeout(() => { requestAnimationFrame(() => { requestAnimationFrame(() => { window.print(); }); }); }, delay);
     }
 </script>
 
