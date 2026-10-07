@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Crear nuevo recuerdo · W & E</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Playfair+Display:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- Firebase SDKs (compat para simplicidad) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<!-- Google API (Drive) -->
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<style>
+:root{
+  --bg:#faf6f1; --bg-deep:#f0e6d8; --paper:#2a1810; --ink:#3d2817;
+  --muted:#8b6f52; --accent:#b8864f; --accent-soft:#d4a574;
+  --line:rgba(139,111,82,.18);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:
+  radial-gradient(circle at 30% 20%,rgba(212,165,116,.15) 0%,transparent 50%),
+  radial-gradient(circle at 70% 80%,rgba(201,139,107,.12) 0%,transparent 50%),
+  linear-gradient(180deg,#faf6f1 0%,#f5ede3 50%,#f0e6d8 100%);
+  color:var(--paper);font-family:"Cormorant Garamond",serif}
+.wrap{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+header{text-align:center;margin-bottom:30px}
+header .eyebrow{font:500 11px Inter,sans-serif;letter-spacing:.34em;color:var(--accent);text-transform:uppercase;margin:0 0 14px}
+header h1{font:500 clamp(34px,5vw,52px)/1 "Playfair Display",serif;margin:0 0 12px;letter-spacing:-.02em}
+header p{color:var(--muted);font-size:18px;margin:0;max-width:520px;margin-inline:auto;line-height:1.5}
+.back-link{display:inline-flex;align-items:center;gap:8px;color:var(--muted);text-decoration:none;font:500 13px Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;margin-bottom:24px;transition:.2s}
+.back-link:hover{color:var(--accent)}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:28px;box-shadow:0 20px 50px rgba(42,24,16,.08)}
+.field{margin-bottom:22px}
+.field label{display:block;font:500 12px Inter,sans-serif;letter-spacing:.14em;color:var(--accent);text-transform:uppercase;margin-bottom:8px}
+.field input,.field textarea{width:100%;background:rgba(214,170,145,.06);border:1px solid var(--line);border-radius:10px;padding:13px 15px;color:var(--ink);font:400 16px "Cormorant Garamond",serif;transition:.25s}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--accent);background:rgba(214,170,145,.1)}
+.field textarea{min-height:180px;resize:vertical;line-height:1.6}
+.field small{display:block;color:var(--muted);font:400 12px Inter,sans-serif;margin-top:6px;letter-spacing:.04em}
+.drop{position:relative;border:1.5px dashed var(--accent-soft);border-radius:12px;padding:26px;text-align:center;background:rgba(214,170,145,.05);cursor:pointer;transition:.25s}
+.drop:hover,.drop.drag{background:rgba(214,170,145,.14);border-color:var(--accent)}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.drop .ico{font-size:30px;margin-bottom:8px}
+.drop .txt{color:var(--ink);font:500 15px "Playfair Display",serif}
+.drop .sub{color:var(--muted);font:400 12px Inter,sans-serif;margin-top:4px;letter-spacing:.05em}
+.preview{margin-top:14px;display:none;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.preview img{display:block;width:100%;max-height:260px;object-fit:cover}
+.preview .meta{padding:10px 14px;background:var(--bg-deep);font:400 12px Inter,sans-serif;color:var(--muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:15px 28px;border-radius:50px;border:1.5px solid var(--accent);background:rgba(184,134,79,.08);color:var(--paper);font:500 15px "Playfair Display",serif;letter-spacing:.08em;cursor:pointer;transition:.3s}
+.btn:hover:not(:disabled){background:var(--accent);color:#fff;transform:translateY(-2px);box-shadow:0 8px 25px rgba(184,134,79,.3)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.primary:hover:not(:disabled){background:#a07540}
+.actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
+.msg{margin-top:18px;padding:14px 16px;border-radius:10px;font:500 14px Inter,sans-serif;display:none}
+.msg.info{display:block;background:rgba(184,134,79,.12);border:1px solid rgba(184,134,79,.3);color:var(--ink)}
+.msg.ok{display:block;background:rgba(100,170,100,.15);border:1px solid rgba(100,170,100,.35);color:#2f6b2f}
+.msg.err{display:block;background:rgba(200,100,100,.15);border:1px solid rgba(200,100,100,.35);color:#8a2a2a}
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--accent-soft),transparent);margin:28px 0;position:relative}
+.divider::after{content:"";position:absolute;width:6px;height:6px;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--accent);border-radius:50%;box-shadow:0 0 10px rgba(184,134,79,.5)}
+footer{text-align:center;color:var(--muted);font:400 12px Inter,sans-serif;margin-top:30px;letter-spacing:.08em}
+@media(max-width:600px){.wrap{padding:24px 14px 60px}.card{padding:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="index.html" class="back-link">← Volver a la historia</a>
+
+  <header>
+    <div class="eyebrow">W & E · Nuevo recuerdo</div>
+    <h1>Crear un nuevo capítulo</h1>
+    <p>Añade tu recuerdo a nuestra historia. Será revisado antes de publicarse.</p>
+  </header>
+
+  <form id="form" class="card" autocomplete="off">
+    <div class="field">
+      <label for="nombre">Nombre del capítulo</label>
+      <input id="nombre" name="nombre" type="text" required maxlength="80" placeholder="Ej: El día que todo cambió" />
+    </div>
+
+    <div class="field">
+      <label for="contenido">Contenido (una línea por viñeta)</label>
+      <textarea id="contenido" name="contenido" required placeholder="Escribe cada frase en una línea distinta.&#10;Cada línea será una viñeta del capítulo."></textarea>
+      <small>💡 Separa las frases con Enter. Mínimo 1 línea.</small>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="field">
+      <label>Imagen del capítulo</label>
+      <label class="drop" id="drop">
+        <input type="file" id="file" accept="image/*" />
+        <div class="ico">🖼️</div>
+        <div class="txt">Arrastra una imagen o haz clic para seleccionar</div>
+        <div class="sub">JPG, PNG o WEBP · Se subirá a Google Drive</div>
+      </label>
+      <div class="preview" id="preview">
+        <img id="previewImg" alt="preview" />
+        <div class="meta">
+          <span id="fileName">—</span>
+          <span id="fileSize">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="youtube">Enlace de YouTube (audio/video del capítulo)</label>
+      <input id="youtube" name="youtube" type="url" required placeholder="https://www.youtube.com/watch?v=..." />
+      <small>Pega la URL completa. Se extraerá el ID automáticamente.</small>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="btn primary" id="submitBtn">
+        <span id="submitLabel">Guardar recuerdo</span>
+      </button>
+      <button type="button" class="btn" id="resetBtn">Limpiar</button>
+    </div>
+
+    <div class="msg" id="msg"></div>
+  </form>
+
+  <footer>W & E · 19 años · Nuestros recuerdos, una sola historia</footer>
+</div>
+
+<script>
+/* =========================================================
+ *  CONFIG — Rellena con tus credenciales
+ * ========================================================= */
+const FIREBASE_CONFIG = {
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_PROYECTO.firebaseapp.com",
+  projectId: "TU_PROYECTO_ID",
+  // ...puedes añadir más si quieres
+};
+
+// Google Drive — carpeta donde se subirán las imágenes
+const DRIVE_FOLDER_ID = "TU_DRIVE_FOLDER_ID";
+
+// Google API — OAuth Client ID (tipo Web application)
+const GOOGLE_CLIENT_ID = "TU_CLIENT_ID.apps.googleusercontent.com";
+const GOOGLE_API_KEY   = "TU_GOOGLE_API_KEY";
+const SCOPES = "https://www.googleapis.com/auth/drive.file";
+
+/* =========================================================
+ *  FIREBASE
+ * ========================================================= */
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.firestore();
+
+/* =========================================================
+ *  GOOGLE DRIVE — carga gapi + token client
+ * ========================================================= */
+let tokenClient = null;
+let gapiInited  = false;
+let gisInited   = false;
+
+function startGapi(){
+  gapi.load("client", async () => {
+    await gapi.client.init({
+      apiKey: GOOGLE_API_KEY,
+      discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
+    });
+    gapiInited = true;
+    maybeEnableSubmit();
+  });
+}
+function startGis(){
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: SCOPES,
+    callback: (resp) => {
+      if (resp.error) {
+        showMsg("No se pudo autorizar Google Drive: " + resp.error, "err");
+        return;
+      }
+      gisInited = true;
+      maybeEnableSubmit();
+      // Si había un submit pendiente, continuar
+      if (pendingSubmit) { pendingSubmit = false; doSubmit(); }
+    },
+  });
+}
+if (typeof gapi !== "undefined") startGapi();
+if (typeof google !== "undefined" && google.accounts) startGis();
+
+/* =========================================================
+ *  ESTADO DEL FORM
+ * ========================================================= */
+const form       = document.getElementById("form");
+const fileInput  = document.getElementById("file");
+const drop       = document.getElementById("drop");
+const preview    = document.getElementById("preview");
+const previewImg = document.getElementById("previewImg");
+const fileName   = document.getElementById("fileName");
+const fileSize   = document.getElementById("fileSize");
+const msg        = document.getElementById("msg");
+const submitBtn  = document.getElementById("submitBtn");
+const submitLabel= document.getElementById("submitLabel");
+const resetBtn   = document.getElementById("resetBtn");
+
+let selectedFile = null;
+let pendingSubmit = false;
+
+/* =========================================================
+ *  PREVIEW IMAGEN
+ * ========================================================= */
+fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
+["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => {
+  e.preventDefault(); drop.classList.add("drag");
+}));
+["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => {
+  e.preventDefault(); drop.classList.remove("drag");
+}));
+drop.addEventListener("drop", e => {
+  const f = e.dataTransfer.files[0];
+  if (f) { fileInput.files = e.dataTransfer.files; handleFile(f); }
+});
+
+function handleFile(f){
+  if (!f) return;
+  if (!f.type.startsWith("image/")) { showMsg("El archivo debe ser una imagen.", "err"); return; }
+  if (f.size > 10 * 1024 * 1024)  { showMsg("Máximo 10 MB.", "err"); return; }
+  selectedFile = f;
+  const reader = new FileReader();
+  reader.onload = e => {
+    previewImg.src = e.target.result;
+    preview.style.display = "block";
+    fileName.textContent = f.name;
+    fileSize.textContent = (f.size/1024).toFixed(1) + " KB";
+  };
+  reader.readAsDataURL(f);
+}
+
+/* =========================================================
+ *  HELPERS
+ * ========================================================= */
+function showMsg(text, type="info"){
+  msg.className = "msg " + type;
+  msg.textContent = text;
+}
+function clearMsg(){ msg.className = "msg"; msg.textContent = ""; }
+function setLoading(on){
+  submitBtn.disabled = on;
+  submitLabel.innerHTML = on ? '<span class="spinner"></span> Guardando…' : "Guardar recuerdo";
+}
+function extractYoutubeId(url){
+  if (!url) return null;
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+function maybeEnableSubmit(){
+  // Nada que bloquear visualmente; el submit pedirá auth si hace falta
+}
+
+/* =========================================================
+ *  SUBIR A GOOGLE DRIVE
+ * ========================================================= */
+async function uploadToDrive(file){
+  return new Promise((resolve, reject) => {
+    const metadata = {
+      name: `cap_${Date.now()}_${file.name}`,
+      mimeType: file.type,
+      parents: [DRIVE_FOLDER_ID],
+    };
+    const form = new FormData();
+    form.append("metadata", new Blob([JSON.stringify(metadata)], {type:"application/json"}));
+    form.append("file", file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart");
+    xhr.setRequestHeader("Authorization", "Bearer " + gapi.client.getToken().access_token);
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const data = JSON.parse(xhr.responseText);
+        resolve({
+          id: data.id,
+          name: data.name,
+          // Enlace directo de visualización
+          webContentLink: data.webContentLink || `https://drive.google.com/uc?id=${data.id}&export=download`,
+          // Enlace "preview" (útil para mostrar en el lector)
+          thumbnailLink: `https://drive.google.com/thumbnail?id=${data.id}&sz=w1600`,
+          webViewLink: `https://drive.google.com/file/d/${data.id}/view`,
+        });
+      } else {
+        reject(new Error("Drive upload failed: " + xhr.status + " " + xhr.responseText));
+      }
+    };
+    xhr.onerror = () => reject(new Error("Error de red subiendo a Drive"));
+    xhr.send(form);
+  });
+}
+
+/* =========================================================
+ *  SUBMIT
+ * ========================================================= */
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  clearMsg();
+
+  const nombre    = document.getElementById("nombre").value.trim();
+  const contenido = document.getElementById("contenido").value;
+  const youtube   = document.getElementById("youtube").value.trim();
+
+  if (!nombre)    return showMsg("Falta el nombre del capítulo.", "err");
+  if (!contenido) return showMsg("Falta el contenido.", "err");
+  if (!youtube)   return showMsg("Falta el enlace de YouTube.", "err");
+
+  const youtubeId = extractYoutubeId(youtube);
+  if (!youtubeId) return showMsg("El enlace de YouTube no parece válido.", "err");
+  if (!selectedFile) return showMsg("Falta la imagen del capítulo.", "err");
+
+  // 1) Autorización Google Drive si hace falta
+  if (!gapiInited || !gisInited || !gapi.client.getToken()) {
+    pendingSubmit = true;
+    showMsg("Autorizando Google Drive…", "info");
+    tokenClient.requestAccessToken({ prompt: "consent" });
+    return;
+  }
+
+  await doSubmit();
+});
+
+async function doSubmit(){
+  setLoading(true);
+  try {
+    showMsg("Subiendo imagen a Google Drive…", "info");
+    const drive = await uploadToDrive(selectedFile);
+
+    const lineas = document.getElementById("contenido").value
+      .split(/\r?\n/)
+      .map(l => l.trim())
+      .filter(Boolean);
+
+    const doc = {
+      nombre: document.getElementById("nombre").value.trim(),
+      lineas,
+      youtubeUrl: document.getElementById("youtube").value.trim(),
+      youtubeId,
+      imagen: {
+        driveId: drive.id,
+        driveName: drive.name,
+        webContentLink: drive.webContentLink,
+        webViewLink: drive.webViewLink,
+        thumbnailLink: drive.thumbnailLink,
+        mimeType: selectedFile.type,
+        sizeBytes: selectedFile.size,
+      },
+      estado: "pendiente",        // tu admin lo revisa y lo pasa a "publicado"
+      creadoEn: firebase.firestore.FieldValue.serverTimestamp(),
+      autor: "anonimo",           // sin login admin
+      version: "1.0",
+    };
+
+    showMsg("Guardando en Firestore…", "info");
+    const ref = await db.collection("new_caps").add(doc);
+
+    showMsg(`✅ Recuerdo guardado. ID: ${ref.id}`, "ok");
+    form.reset();
+    preview.style.display = "none";
+    selectedFile = null;
+  } catch (err) {
+    console.error(err);
+    showMsg("❌ Error: " + (err.message || err), "err");
+  } finally {
+    setLoading(false);
+  }
+}
+
+resetBtn.addEventListener("click", () => {
+  form.reset();
+  preview.style.display = "none";
+  selectedFile = null;
+  clearMsg();
+});
+</script>
+</body>
+</html>
