@@ -2,9 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Facturación - EWE Esentia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Facturación EWE Esentia + Escáner</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <!-- Librería para escanear códigos de barras/QR -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         :root {
             --primary: #2d5016;
@@ -15,6 +17,7 @@
             --text: #1a1a1a;
             --text-light: #666666;
             --border: #e0d5c7;
+            --whatsapp: #25D366;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -32,135 +35,85 @@
         /* Header */
         .header {
             background: var(--surface);
-            padding: 15px 30px;
+            padding: 12px 20px;
             border-bottom: 2px solid var(--accent);
             display: flex;
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            flex-shrink: 0;
         }
 
         .header h1 {
             font-family: 'Playfair Display', serif;
             color: var(--primary);
-            font-size: 1.5rem;
+            font-size: 1.3rem;
         }
-
-        .header-status {
-            font-size: 0.85rem;
-            color: var(--text-light);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #28a745;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
         /* Layout Principal */
         .main-container {
             display: grid;
-            grid-template-columns: 1fr 400px;
+            grid-template-columns: 1fr 380px;
             flex: 1;
             overflow: hidden;
         }
 
-        /* Panel Izquierdo: Clientes y Productos */
         .left-panel {
-            padding: 20px;
+            padding: 15px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
         }
 
         .card {
             background: var(--surface);
             border-radius: 12px;
-            padding: 20px;
+            padding: 15px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
             border: 1px solid var(--border);
         }
 
         .card-title {
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             color: var(--primary);
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
         /* Buscadores */
-        .search-box {
-            position: relative;
-        }
-
+        .search-box { position: relative; }
         .search-box input {
             width: 100%;
-            padding: 12px 15px 12px 40px;
+            padding: 10px 15px 10px 38px;
             border: 2px solid var(--border);
             border-radius: 8px;
-            font-size: 0.95rem;
-            transition: all 0.3s;
+            font-size: 0.9rem;
         }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-light);
-        }
+        .search-box input:focus { outline: none; border-color: var(--accent); }
+        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
 
         .search-results {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            max-height: 250px;
-            overflow-y: auto;
-            z-index: 100;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            display: none;
-            margin-top: 5px;
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 8px; max-height: 200px; overflow-y: auto;
+            z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: none; margin-top: 5px;
         }
-
-        .result-item {
-            padding: 12px 15px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            transition: background 0.2s;
-        }
-
+        .result-item { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
         .result-item:hover { background: #f9f5f0; }
-        .result-item:last-child { border-bottom: none; }
-
-        .result-name { font-weight: 600; font-size: 0.95rem; }
-        .result-meta { font-size: 0.8rem; color: var(--text-light); margin-top: 2px; }
+        .result-name { font-weight: 600; font-size: 0.9rem; }
+        .result-meta { font-size: 0.8rem; color: var(--text-light); }
 
         /* Grid de Productos */
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            max-height: 400px;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            max-height: 45vh;
             overflow-y: auto;
         }
 
@@ -168,39 +121,15 @@
             background: #fafafa;
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 15px;
+            padding: 12px;
             cursor: pointer;
             transition: all 0.2s;
-            position: relative;
         }
-
-        .product-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-
-        .product-category {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--accent);
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .product-name {
-            font-weight: 600;
-            font-size: 0.9rem;
-            margin-bottom: 8px;
-            line-height: 1.3;
-        }
-
-        .product-price {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
+        .product-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .product-category { font-size: 0.65rem; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 4px; }
+        .product-name { font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; line-height: 1.2; }
+        .product-price { font-size: 1rem; font-weight: 700; color: var(--primary); }
+        .product-code { font-size: 0.7rem; color: #999; margin-top: 4px; font-family: monospace; }
 
         /* Panel Derecho: Factura */
         .right-panel {
@@ -211,253 +140,114 @@
             height: 100%;
         }
 
-        .invoice-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
-            background: #fafafa;
+        .invoice-header { padding: 15px; border-bottom: 1px solid var(--border); background: #fafafa; }
+        .client-info-box {
+            margin-top: 8px; padding: 10px; background: white;
+            border-radius: 6px; border: 1px solid var(--border); font-size: 0.85rem;
         }
 
-        .client-info {
-            margin-top: 10px;
-            padding: 10px;
-            background: white;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-        }
-
-        .client-info strong { color: var(--primary); }
-
-        .cart-items {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-        }
-
+        .cart-items { flex: 1; overflow-y: auto; padding: 15px; }
         .cart-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background: #fafafa;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border: 1px solid transparent;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; background: #fafafa; border-radius: 8px; margin-bottom: 8px;
         }
-
-        .cart-item:hover { border-color: var(--border); }
-
         .cart-item-info { flex: 1; }
-        .cart-item-name { font-weight: 600; font-size: 0.9rem; }
-        .cart-item-price { font-size: 0.85rem; color: var(--text-light); }
-
-        .cart-item-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
+        .cart-item-name { font-weight: 600; font-size: 0.85rem; }
+        .cart-item-price { font-size: 0.8rem; color: var(--text-light); }
+        .cart-item-controls { display: flex; align-items: center; gap: 8px; }
         .qty-btn {
-            width: 28px;
-            height: 28px;
-            border: 1px solid var(--border);
-            background: white;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 700;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 26px; height: 26px; border: 1px solid var(--border);
+            background: white; border-radius: 6px; cursor: pointer;
+            font-weight: 700; color: var(--primary); display: flex; align-items: center; justify-content: center;
         }
+        .qty-display { font-weight: 600; min-width: 20px; text-align: center; font-size: 0.9rem; }
+        .remove-btn { color: #dc3545; cursor: pointer; margin-left: 8px; font-size: 1.2rem; }
 
-        .qty-btn:hover { background: var(--bg); }
-        .qty-display { font-weight: 600; min-width: 20px; text-align: center; }
+        .invoice-footer { padding: 15px; border-top: 2px solid var(--border); background: #fafafa; }
+        .total-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem; }
+        .total-row.grand-total { font-size: 1.2rem; font-weight: 700; color: var(--primary); margin-top: 8px; padding-top: 8px; border-top: 2px dashed var(--border); }
 
-        .remove-btn {
-            color: #dc3545;
-            cursor: pointer;
-            margin-left: 10px;
-            font-size: 1.2rem;
-            line-height: 1;
-        }
-
-        .invoice-footer {
-            padding: 20px;
-            border-top: 2px solid var(--border);
-            background: #fafafa;
-        }
-
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 0.95rem;
-        }
-
-        .total-row.grand-total {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 2px dashed var(--border);
-        }
-
-        .action-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 15px;
-        }
+        .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+        .action-buttons-full { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 8px; }
 
         .btn {
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            padding: 10px; border: none; border-radius: 8px; font-weight: 600;
+            cursor: pointer; font-size: 0.9rem; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
         }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
+        .btn-primary { background: var(--primary); color: white; }
         .btn-primary:hover { background: var(--primary-light); }
-
-        .btn-accent {
-            background: var(--accent);
-            color: white;
-        }
+        .btn-accent { background: var(--accent); color: white; }
         .btn-accent:hover { background: #c49833; }
-
-        .btn-secondary {
-            background: #e9ecef;
-            color: var(--text);
-        }
+        .btn-secondary { background: #e9ecef; color: var(--text); }
         .btn-secondary:hover { background: #dee2e6; }
+        .btn-whatsapp { background: var(--whatsapp); color: white; }
+        .btn-whatsapp:hover { background: #128C7E; }
+        .btn-scan { background: #2d5016; color: white; border: 2px solid var(--accent); }
 
-        /* ==========================================
-           ESTILOS DE IMPRESIÓN (TÍQUET TÉRMICO)
-           ========================================== */
-        #ticket-print {
-            display: none;
+        /* Modal del Escáner */
+        .scanner-modal {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9); z-index: 9999;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        .scanner-modal.active { display: flex; }
+        .scanner-container {
+            width: 90%; max-width: 400px; background: white;
+            border-radius: 12px; overflow: hidden;
+        }
+        .scanner-header {
+            padding: 15px; background: var(--primary); color: white;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .scanner-close { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+        #reader { width: 100%; }
+        .scanner-instructions {
+            padding: 15px; text-align: center; color: var(--text-light); font-size: 0.9rem;
+            background: #f9f9f9;
         }
 
+        /* Estilos de Impresión (Tíquet) */
+        #ticket-print { display: none; }
         @media print {
-            @page {
-                size: 58mm auto; /* Cambiar a 80mm si la impresora es de 80mm */
-                margin: 0;
-            }
-
-            body * {
-                visibility: hidden;
-            }
-
-            #ticket-print, #ticket-print * {
-                visibility: visible;
-            }
-
+            @page { size: 58mm auto; margin: 0; }
+            body * { visibility: hidden; }
+            #ticket-print, #ticket-print * { visibility: visible; }
             #ticket-print {
-                display: block;
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 58mm; /* O 80mm */
-                padding: 5mm;
-                font-family: 'Courier New', Courier, monospace;
-                font-size: 12px;
-                line-height: 1.4;
-                color: black;
+                display: block; position: absolute; left: 0; top: 0;
+                width: 58mm; padding: 5mm; font-family: 'Courier New', monospace;
+                font-size: 11px; line-height: 1.3; color: black;
             }
-
-            .ticket-header {
-                text-align: center;
-                margin-bottom: 10px;
-                border-bottom: 1px dashed black;
-                padding-bottom: 10px;
-            }
-
-            .ticket-header h2 {
-                font-size: 16px;
-                margin-bottom: 5px;
-            }
-
-            .ticket-info {
-                margin-bottom: 10px;
-                font-size: 11px;
-            }
-
-            .ticket-items {
-                border-top: 1px dashed black;
-                border-bottom: 1px dashed black;
-                padding: 10px 0;
-                margin-bottom: 10px;
-            }
-
-            .ticket-item {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 5px;
-            }
-
-            .ticket-item-desc {
-                flex: 1;
-                padding-right: 5px;
-            }
-
-            .ticket-totals {
-                text-align: right;
-                margin-bottom: 15px;
-            }
-
-            .ticket-total-line {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 3px;
-            }
-
-            .ticket-total-line.final {
-                font-size: 14px;
-                font-weight: bold;
-                border-top: 1px solid black;
-                padding-top: 5px;
-                margin-top: 5px;
-            }
-
-            .ticket-footer {
-                text-align: center;
-                font-size: 11px;
-                margin-top: 10px;
-            }
+            .ticket-header { text-align: center; margin-bottom: 8px; border-bottom: 1px dashed black; padding-bottom: 8px; }
+            .ticket-header h2 { font-size: 14px; margin-bottom: 3px; }
+            .ticket-info { margin-bottom: 8px; font-size: 10px; }
+            .ticket-items { border-top: 1px dashed black; border-bottom: 1px dashed black; padding: 8px 0; margin-bottom: 8px; }
+            .ticket-item { display: flex; justify-content: space-between; margin-bottom: 4px; }
+            .ticket-totals { text-align: right; margin-bottom: 10px; }
+            .ticket-total-line { display: flex; justify-content: space-between; margin-bottom: 2px; }
+            .ticket-total-line.final { font-size: 13px; font-weight: bold; border-top: 1px solid black; padding-top: 4px; margin-top: 4px; }
+            .ticket-footer { text-align: center; font-size: 10px; margin-top: 8px; }
         }
 
-        /* Loading Overlay */
+        /* Loading */
         .loading-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.9);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.3s;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.95); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 9999;
         }
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
+            width: 40px; height: 40px; border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary); border-radius: 50%;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Responsive Mobile */
+        @media (max-width: 768px) {
+            .main-container { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+            .right-panel { border-left: none; border-top: 2px solid var(--border); }
+            .products-grid { grid-template-columns: repeat(2, 1fr); }
+        }
     </style>
 </head>
 <body>
@@ -470,13 +260,8 @@
 
     <!-- Header -->
     <div class="header">
-        <h1>🧾 Sistema de Facturación EWE Esentia</h1>
-        <div class="header-status">
-            <div class="status-dot"></div>
-            <span id="connectionStatus">Conectado</span>
-            <span>|</span>
-            <span id="currentDate"></span>
-        </div>
+        <h1>🧾 EWE Esentia</h1>
+        <div style="font-size: 0.85rem; color: var(--text-light);" id="currentDate"></div>
     </div>
 
     <!-- Main Content -->
@@ -485,119 +270,105 @@
         <div class="left-panel">
             <!-- Client Selection -->
             <div class="card">
-                <div class="card-title">👤 Seleccionar Cliente</div>
+                <div class="card-title">👤 Cliente</div>
                 <div class="search-box">
                     <span class="search-icon">🔍</span>
-                    <input type="text" id="clientSearch" placeholder="Buscar por nombre, cédula o teléfono..." oninput="searchClients(this.value)">
+                    <input type="text" id="clientSearch" placeholder="Nombre, cédula o teléfono..." oninput="searchClients(this.value)">
                     <div class="search-results" id="clientResults"></div>
                 </div>
-                <div class="client-info" id="selectedClientInfo" style="display: none; margin-top: 15px;">
+                <div class="client-info-box" id="selectedClientInfo" style="display: none; margin-top: 10px;">
                     <div><strong>Nombre:</strong> <span id="clientNameDisplay"></span></div>
                     <div><strong>Cédula:</strong> <span id="clientIdDisplay"></span></div>
-                    <div><strong>Teléfono:</strong> <span id="clientPhoneDisplay"></span></div>
-                    <button class="btn btn-secondary" style="margin-top: 10px; width: 100%; padding: 8px;" onclick="clearClient()">Cambiar Cliente</button>
+                    <div><strong>Tel:</strong> <span id="clientPhoneDisplay"></span></div>
+                    <button class="btn btn-secondary" style="margin-top: 8px; width: 100%; padding: 6px; font-size: 0.8rem;" onclick="clearClient()">Cambiar</button>
                 </div>
             </div>
 
             <!-- Product Catalog -->
             <div class="card" style="flex: 1; display: flex; flex-direction: column;">
-                <div class="card-title">📦 Catálogo de Productos</div>
-                <div class="search-box" style="margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div class="card-title" style="margin-bottom: 0;">📦 Productos</div>
+                    <button class="btn btn-scan" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openScanner()">
+                        📷 Escanear
+                    </button>
+                </div>
+                <div class="search-box" style="margin-bottom: 12px;">
                     <span class="search-icon">🔍</span>
-                    <input type="text" id="productSearch" placeholder="Buscar producto por nombre o código..." oninput="filterProducts(this.value)">
+                    <input type="text" id="productSearch" placeholder="Buscar por nombre o código..." oninput="filterProducts(this.value)">
                 </div>
-                <div class="products-grid" id="productsGrid">
-                    <!-- Products will be injected here -->
-                </div>
+                <div class="products-grid" id="productsGrid"></div>
             </div>
         </div>
 
         <!-- Right Panel: Invoice -->
         <div class="right-panel">
             <div class="invoice-header">
-                <div class="card-title" style="margin-bottom: 5px;">🧾 Factura en Curso</div>
-                <div style="font-size: 0.85rem; color: var(--text-light);">N° <span id="invoiceNumber">FAC-0000</span></div>
-                <div class="client-info" id="invoiceClientInfo" style="margin-top: 10px; font-size: 0.9rem;">
-                    <em>Seleccione un cliente para comenzar</em>
+                <div class="card-title" style="margin-bottom: 4px;">🧾 Factura <span id="invoiceNumber" style="font-weight: 400; font-size: 0.85rem; color: #666;"></span></div>
+                <div class="client-info-box" id="invoiceClientInfo" style="margin-top: 0; font-size: 0.85rem; background: transparent; border: none; padding: 0;">
+                    <em>Seleccione un cliente</em>
                 </div>
             </div>
 
             <div class="cart-items" id="cartItems">
-                <div style="text-align: center; color: var(--text-light); padding: 40px 20px;">
-                    El carrito está vacío.<br>Agregue productos del catálogo.
+                <div style="text-align: center; color: var(--text-light); padding: 40px 20px; font-size: 0.9rem;">
+                    Carrito vacío.<br>Agregue productos o escanee un código.
                 </div>
             </div>
 
             <div class="invoice-footer">
-                <div class="total-row">
-                    <span>Subtotal:</span>
-                    <span id="subtotalAmount">₡0.00</span>
-                </div>
-                <div class="total-row">
-                    <span>IVA (1%):</span> <!-- Ajustar según régimen tributario real -->
-                    <span id="taxAmount">₡0.00</span>
-                </div>
-                <div class="total-row grand-total">
-                    <span>TOTAL:</span>
-                    <span id="totalAmount">₡0.00</span>
-                </div>
+                <div class="total-row"><span>Subtotal:</span><span id="subtotalAmount">₡0.00</span></div>
+                <div class="total-row"><span>IVA (1%):</span><span id="taxAmount">₡0.00</span></div>
+                <div class="total-row grand-total"><span>TOTAL:</span><span id="totalAmount">₡0.00</span></div>
 
                 <div class="action-buttons">
-                    <button class="btn btn-secondary" onclick="clearCart()">
-                        🗑️ Limpiar
-                    </button>
-                    <button class="btn btn-accent" onclick="printTicket()">
-                        🖨️ Imprimir
-                    </button>
+                    <button class="btn btn-secondary" onclick="clearCart()">🗑️ Limpiar</button>
+                    <button class="btn btn-accent" onclick="printTicket()">🖨️ Imprimir</button>
                 </div>
-                <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="saveInvoice()">
-                    💾 Guardar Factura en Firebase
-                </button>
+                <div class="action-buttons-full">
+                    <button class="btn btn-whatsapp" onclick="sendWhatsApp()">📱 Enviar por WhatsApp</button>
+                    <button class="btn btn-primary" onclick="saveInvoice()">💾 Guardar en Firebase</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Ticket de Impresión (Oculto en pantalla, visible al imprimir) -->
+    <!-- Modal del Escáner -->
+    <div class="scanner-modal" id="scannerModal">
+        <div class="scanner-container">
+            <div class="scanner-header">
+                <span>📷 Escáner de Código de Barras</span>
+                <button class="scanner-close" onclick="closeScanner()">&times;</button>
+            </div>
+            <div id="reader"></div>
+            <div class="scanner-instructions">
+                Apunte la cámara al código de barras del producto.<br>
+                <small>El sistema buscará automáticamente por el campo "id" o "codigo".</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ticket de Impresión -->
     <div id="ticket-print">
         <div class="ticket-header">
             <h2>EWE ESENTIA</h2>
             <div>Aromaterapia • Candelas • Difusores</div>
-            <div style="font-size: 10px; margin-top: 5px;">San José, Costa Rica</div>
-            <div style="font-size: 10px;">Tel: 7295-2454</div>
+            <div style="font-size: 9px; margin-top: 4px;">San José, Costa Rica | Tel: 7295-2454</div>
         </div>
-        
         <div class="ticket-info">
             <div>Fecha: <span id="ticketDate"></span></div>
             <div>Factura: <span id="ticketInvoiceNum"></span></div>
             <div>Cliente: <span id="ticketClientName"></span></div>
             <div>Cédula: <span id="ticketClientId"></span></div>
         </div>
-
-        <div class="ticket-items" id="ticketItems">
-            <!-- Items injected here -->
-        </div>
-
+        <div class="ticket-items" id="ticketItems"></div>
         <div class="ticket-totals">
-            <div class="ticket-total-line">
-                <span>Subtotal:</span>
-                <span id="ticketSubtotal"></span>
-            </div>
-            <div class="ticket-total-line">
-                <span>IVA (1%):</span>
-                <span id="ticketTax"></span>
-            </div>
-            <div class="ticket-total-line final">
-                <span>TOTAL:</span>
-                <span id="ticketTotal"></span>
-            </div>
+            <div class="ticket-total-line"><span>Subtotal:</span><span id="ticketSubtotal"></span></div>
+            <div class="ticket-total-line"><span>IVA (1%):</span><span id="ticketTax"></span></div>
+            <div class="ticket-total-line final"><span>TOTAL:</span><span id="ticketTotal"></span></div>
         </div>
-
         <div class="ticket-footer">
             <div>¡Gracias por su compra!</div>
-            <div style="margin-top: 5px; font-size: 10px;">Cada pedido es preparado con cariño.</div>
-            <div style="margin-top: 10px; border-top: 1px dashed black; padding-top: 5px;">
-                SINPE Móvil: 7295-2454
-            </div>
+            <div style="margin-top: 8px; border-top: 1px dashed black; padding-top: 6px;">SINPE Móvil: 7295-2454</div>
         </div>
     </div>
 
@@ -607,7 +378,7 @@
 
     <script>
         // ==========================================
-        // 1. CONFIGURACIÓN Y ESTADO
+        // 1. CONFIGURACIÓN
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
@@ -634,6 +405,7 @@
         let currentClient = null;
         let cart = [];
         let invoiceCounter = 1000;
+        let html5QrcodeScanner = null;
 
         // ==========================================
         // 2. INICIALIZACIÓN
@@ -643,14 +415,9 @@
             document.getElementById('invoiceNumber').textContent = `FAC-${invoiceCounter}`;
             
             try {
-                await Promise.all([
-                    loadClients(),
-                    loadProducts()
-                ]);
+                await Promise.all([loadClients(), loadProducts()]);
                 document.getElementById('loadingOverlay').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('loadingOverlay').style.display = 'none';
-                }, 300);
+                setTimeout(() => { document.getElementById('loadingOverlay').style.display = 'none'; }, 300);
             } catch (error) {
                 console.error("Error inicial:", error);
                 alert("Error cargando datos. Verifique su conexión.");
@@ -661,8 +428,7 @@
         // 3. CARGA DE DATOS
         // ==========================================
         async function loadClients() {
-            // Nota: Si la colección se llama diferente a 'clientes', cambiar aquí
-            const snapshot = await db.collection('clientesBD').get();
+            const snapshot = await db.collection('clientes').get();
             allClients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         }
 
@@ -676,13 +442,13 @@
             const promises = urls.map(async item => {
                 const response = await fetch(item.url);
                 const data = await response.json();
-                // Normalizar datos (manejar diferentes estructuras de JSON)
                 return (Array.isArray(data) ? data : []).map(p => ({
-                    id: p.id || p.codigo || p.sku || Math.random().toString(36).substr(2, 9),
+                    // Prioriza el campo 'id' del JSON, luego 'codigo', luego genera uno
+                    id: String(p.id || p.codigo || p.sku || Math.random().toString(36).substr(2, 9)),
                     nombre: p.nombre || p.name || p.descripcion || 'Producto sin nombre',
                     precio: parseFloat(p.precio || p.price || p.precioVenta || 0),
                     categoria: item.cat,
-                    codigo: p.codigo || p.sku || p.id || ''
+                    codigo: String(p.codigo || p.sku || p.id || '')
                 }));
             });
 
@@ -696,10 +462,7 @@
         // ==========================================
         function searchClients(query) {
             const resultsDiv = document.getElementById('clientResults');
-            if (query.length < 2) {
-                resultsDiv.style.display = 'none';
-                return;
-            }
+            if (query.length < 2) { resultsDiv.style.display = 'none'; return; }
 
             const filtered = allClients.filter(c => {
                 const nombre = (c.nombre || '').toLowerCase();
@@ -729,14 +492,11 @@
 
             document.getElementById('clientSearch').value = '';
             document.getElementById('clientResults').style.display = 'none';
-            
-            // Mostrar info seleccionada
             document.getElementById('selectedClientInfo').style.display = 'block';
             document.getElementById('clientNameDisplay').textContent = currentClient.nombre || 'N/A';
             document.getElementById('clientIdDisplay').textContent = currentClient.cedula || currentClient.id || 'N/A';
             document.getElementById('clientPhoneDisplay').textContent = currentClient.telefono || 'N/A';
 
-            // Actualizar panel de factura
             document.getElementById('invoiceClientInfo').innerHTML = `
                 <strong>${currentClient.nombre || 'Cliente'}</strong><br>
                 <span style="font-size: 0.8rem; color: #666;">CC: ${currentClient.cedula || currentClient.id}</span>
@@ -746,7 +506,7 @@
         function clearClient() {
             currentClient = null;
             document.getElementById('selectedClientInfo').style.display = 'none';
-            document.getElementById('invoiceClientInfo').innerHTML = '<em>Seleccione un cliente para comenzar</em>';
+            document.getElementById('invoiceClientInfo').innerHTML = '<em>Seleccione un cliente</em>';
         }
 
         // ==========================================
@@ -758,25 +518,23 @@
                 grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #999; padding: 20px;">No se encontraron productos</div>';
                 return;
             }
-
             grid.innerHTML = products.map(p => `
                 <div class="product-card" onclick="addToCart('${p.id}')">
                     <div class="product-category">${p.categoria}</div>
                     <div class="product-name">${p.nombre}</div>
                     <div class="product-price">₡${formatMoney(p.precio)}</div>
+                    ${p.codigo ? `<div class="product-code">COD: ${p.codigo}</div>` : ''}
                 </div>
             `).join('');
         }
 
         function filterProducts(query) {
-            if (!query) {
-                renderProducts(allProducts);
-                return;
-            }
+            if (!query) { renderProducts(allProducts); return; }
             const q = query.toLowerCase();
             const filtered = allProducts.filter(p => 
                 p.nombre.toLowerCase().includes(q) || 
-                p.codigo.toLowerCase().includes(q)
+                String(p.id).toLowerCase().includes(q) ||
+                String(p.codigo).toLowerCase().includes(q)
             );
             renderProducts(filtered);
         }
@@ -786,22 +544,23 @@
             if (!product) return;
 
             const existingItem = cart.find(item => item.id === productId);
-            if (existingItem) {
-                existingItem.cantidad++;
-            } else {
-                cart.push({ ...product, cantidad: 1 });
-            }
+            if (existingItem) { existingItem.cantidad++; } 
+            else { cart.push({ ...product, cantidad: 1 }); }
+            
             renderCart();
+            // Feedback visual sutil
+            const btn = event?.target?.closest('.product-card');
+            if(btn) {
+                btn.style.borderColor = '#28a745';
+                setTimeout(() => btn.style.borderColor = '', 300);
+            }
         }
 
         function updateQuantity(productId, change) {
             const item = cart.find(i => i.id === productId);
             if (!item) return;
-
             item.cantidad += change;
-            if (item.cantidad <= 0) {
-                cart = cart.filter(i => i.id !== productId);
-            }
+            if (item.cantidad <= 0) cart = cart.filter(i => i.id !== productId);
             renderCart();
         }
 
@@ -812,18 +571,14 @@
 
         function clearCart() {
             if (cart.length === 0) return;
-            if (confirm('¿Está seguro de limpiar el carrito?')) {
-                cart = [];
-                renderCart();
-            }
+            if (confirm('¿Limpiar el carrito?')) { cart = []; renderCart(); }
         }
 
         function renderCart() {
             const container = document.getElementById('cartItems');
             if (cart.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: var(--text-light); padding: 40px 20px;">El carrito está vacío.<br>Agregue productos del catálogo.</div>';
-                updateTotals();
-                return;
+                container.innerHTML = '<div style="text-align: center; color: var(--text-light); padding: 40px 20px; font-size: 0.9rem;">Carrito vacío.<br>Agregue productos o escanee un código.</div>';
+                updateTotals(); return;
             }
 
             container.innerHTML = cart.map(item => `
@@ -840,13 +595,12 @@
                     </div>
                 </div>
             `).join('');
-
             updateTotals();
         }
 
         function updateTotals() {
             const subtotal = cart.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-            const tax = subtotal * 0.01; // 1% IVA (ajustar según necesidad real, ej: 0.13 para 13%)
+            const tax = subtotal * 0.01; // Cambiar a 0.13 si es 13%
             const total = subtotal + tax;
 
             document.getElementById('subtotalAmount').textContent = `₡${formatMoney(subtotal)}`;
@@ -859,19 +613,83 @@
         }
 
         // ==========================================
-        // 6. IMPRESIÓN Y GUARDADO
+        // 6. ESCÁNER DE CÓDIGO DE BARRAS
         // ==========================================
-        function printTicket() {
-            if (cart.length === 0) {
-                alert('El carrito está vacío');
-                return;
-            }
-            if (!currentClient) {
-                alert('Por favor seleccione un cliente primero');
-                return;
+        function openScanner() {
+            document.getElementById('scannerModal').classList.add('active');
+            
+            // Inicializar escáner solo si no existe
+            if (!html5QrcodeScanner) {
+                html5QrcodeScanner = new Html5Qrcode("reader");
             }
 
-            // Preparar datos del ticket
+            const config = { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 };
+            
+            html5QrcodeScanner.start(
+                { facingMode: "environment" }, // Usa la cámara trasera del móvil
+                config,
+                onScanSuccess,
+                onScanFailure
+            ).catch(err => {
+                console.error("Error al iniciar cámara:", err);
+                alert("No se pudo acceder a la cámara. Asegúrese de dar permisos y usar HTTPS.");
+                closeScanner();
+            });
+        }
+
+        function closeScanner() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    document.getElementById('scannerModal').classList.remove('active');
+                }).catch(err => console.error("Error al detener:", err));
+            } else {
+                document.getElementById('scannerModal').classList.remove('active');
+            }
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            // Buscar producto por el campo 'id' o 'codigo' del JSON
+            // Convertimos a string para asegurar comparación exacta
+            const searchCode = String(decodedText).trim();
+            
+            const product = allProducts.find(p => 
+                String(p.id) === searchCode || 
+                String(p.codigo) === searchCode
+            );
+
+            if (product) {
+                addToCart(product.id);
+                
+                // Feedback de éxito
+                alert(`✅ Agregado: ${product.nombre}\nCódigo: ${searchCode}`);
+                
+                // Opcional: Detener escáner después de un éxito para evitar dobles lecturas
+                // closeScanner(); 
+                
+                // Opcional: Pausar brevemente para evitar lecturas múltiples del mismo código
+                html5QrcodeScanner.pause();
+                setTimeout(() => {
+                    html5QrcodeScanner.resume();
+                }, 1500); // Pausa de 1.5 segundos
+                
+            } else {
+                alert(`❌ Producto no encontrado.\nCódigo escaneado: ${searchCode}\n\nVerifique que el campo 'id' o 'codigo' en el JSON coincida.`);
+            }
+        }
+
+        function onScanFailure(error) {
+            // Errores de escaneo son comunes (cuando no hay código en el frame), 
+            // no necesitamos mostrarlos al usuario para no saturar.
+            // console.warn(`Code scan error = ${error}`);
+        }
+
+        // ==========================================
+        // 7. IMPRESIÓN Y WHATSAPP
+        // ==========================================
+        function printTicket() {
+            if (cart.length === 0) { alert('El carrito está vacío'); return; }
+            if (!currentClient) { alert('Seleccione un cliente primero'); return; }
+
             const now = new Date();
             document.getElementById('ticketDate').textContent = now.toLocaleString('es-CR');
             document.getElementById('ticketInvoiceNum').textContent = document.getElementById('invoiceNumber').textContent;
@@ -884,7 +702,7 @@
 
             document.getElementById('ticketItems').innerHTML = cart.map(item => `
                 <div class="ticket-item">
-                    <div class="ticket-item-desc">
+                    <div style="flex: 1; padding-right: 5px;">
                         ${item.cantidad} x ${item.nombre}
                     </div>
                     <div>₡${formatMoney(item.precio * item.cantidad)}</div>
@@ -895,15 +713,58 @@
             document.getElementById('ticketTax').textContent = `₡${formatMoney(tax)}`;
             document.getElementById('ticketTotal').textContent = `₡${formatMoney(total)}`;
 
-            // Disparar impresión
             window.print();
         }
 
-        async function saveInvoice() {
-            if (cart.length === 0) {
-                alert('El carrito está vacío');
-                return;
+        function sendWhatsApp() {
+            if (cart.length === 0) { alert('El carrito está vacío'); return; }
+            
+            // Si no hay cliente seleccionado o no tiene teléfono, permitir ingreso manual o usar uno genérico
+            let phone = "";
+            let clientName = "Cliente";
+            
+            if (currentClient && currentClient.telefono) {
+                // Limpiar el número: quitar espacios, guiones, y asegurar que tenga el código de país 506
+                phone = String(currentClient.telefono).replace(/\D/g, '');
+                if (phone.length === 8) phone = '506' + phone; // Agregar 506 si solo son 8 dígitos
+                clientName = currentClient.nombre || "Cliente";
+            } else {
+                phone = prompt("Ingrese el número de WhatsApp del cliente (ej: 88888888):");
+                if (!phone) return;
+                phone = String(phone).replace(/\D/g, '');
+                if (phone.length === 8) phone = '506' + phone;
             }
+
+            const subtotal = cart.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+            const tax = subtotal * 0.01;
+            const total = subtotal + tax;
+            const invoiceNum = document.getElementById('invoiceNumber').textContent;
+
+            // Construir mensaje de WhatsApp
+            let message = `🌿 *FACTURA EWE ESENTIA* 🌿\n`;
+            message += `📄 Factura: ${invoiceNum}\n`;
+            message += `👤 Cliente: ${clientName}\n`;
+            message += `📅 Fecha: ${new Date().toLocaleDateString('es-CR')}\n`;
+            message += `━━━━━━━━━━━━━━━━━━\n`;
+            
+            cart.forEach(item => {
+                const itemTotal = formatMoney(item.precio * item.cantidad);
+                message += `▪️ ${item.cantidad} x ${item.nombre}\n   ₡${itemTotal}\n`;
+            });
+            
+            message += `━━━━━━━━━━━━━━━━━━\n`;
+            message += `Subtotal: ₡${formatMoney(subtotal)}\n`;
+            message += `IVA (1%): ₡${formatMoney(tax)}\n`;
+            message += `💰 *TOTAL: ₡${formatMoney(total)}*\n\n`;
+            message += `¡Gracias por su compra! 🙏\n`;
+            message += `💳 SINPE Móvil: 7295-2454`;
+
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        }
+
+        async function saveInvoice() {
+            if (cart.length === 0) { alert('El carrito está vacío'); return; }
 
             try {
                 const subtotal = cart.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
@@ -915,6 +776,7 @@
                     fecha: firebase.firestore.FieldValue.serverTimestamp(),
                     clienteId: currentClient ? currentClient.id : 'contado',
                     clienteNombre: currentClient ? currentClient.nombre : 'Cliente Contado',
+                    clienteTelefono: currentClient ? currentClient.telefono : '',
                     items: cart,
                     subtotal: subtotal,
                     impuesto: tax,
@@ -923,17 +785,13 @@
                 };
 
                 await db.collection('facturas').add(invoiceData);
-                
-                alert('✅ Factura guardada exitosamente');
+                alert('✅ Factura guardada exitosamente en Firebase');
                 
                 // Resetear para siguiente factura
                 cart = [];
                 renderCart();
                 invoiceCounter++;
                 document.getElementById('invoiceNumber').textContent = `FAC-${invoiceCounter}`;
-                
-                // Opcional: limpiar cliente si es rotativo
-                // clearClient();
                 
             } catch (error) {
                 console.error("Error guardando factura:", error);
