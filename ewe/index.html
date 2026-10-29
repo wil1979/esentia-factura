@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Etiquetas EWE Esentia - Editor Avanzado</title>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Editor de etiquetas <span class="heading-accent">EWE Esentia</span></h1>
+
+        <p class="page-intro">Diseña, personaliza y prepara tus etiquetas para impresión.</p>
+
+        <div class="main-layout">
+            <!-- Panel Izquierdo: Cliente y Configuración Básica -->
+            <div class="panel">
+                <div class="panel-title">🔍 Cliente y Cantidad</div>
+
+                <div class="search-box">
+                    <input type="text" id="clientSearch" placeholder="Buscar cliente..." oninput="searchClients(this.value)">
+                    <div class="search-results" id="searchResults"></div>
+                </div>
+
+                <button class="btn btn-outline client-add-toggle" type="button" onclick="toggleNewClientForm()" aria-expanded="false" aria-controls="newClientForm">＋ Agregar nuevo cliente</button>
+                <form id="newClientForm" class="new-client-form" hidden onsubmit="saveNewClient(event)">
+                    <h3>Datos del cliente</h3>
+                    <div class="control-group">
+                        <label for="newClientName">Nombre completo</label>
+                        <input type="text" id="newClientName" maxlength="120" required autocomplete="name" placeholder="Nombre y apellidos">
+                    </div>
+                    <div class="control-group">
+                        <label for="newClientCedula">Cédula</label>
+                        <input type="text" id="newClientCedula" maxlength="30" required inputmode="numeric" autocomplete="off" placeholder="Número de identificación">
+                    </div>
+                    <div class="control-group">
+                        <label for="newClientPhone">Teléfono</label>
+                        <input type="tel" id="newClientPhone" maxlength="30" required autocomplete="tel" placeholder="Número de teléfono">
+                    </div>
+                    <button class="btn btn-primary" id="saveClientButton" type="submit">Guardar cliente</button>
+                    <p id="newClientStatus" class="client-form-status" role="status" aria-live="polite"></p>
+                </form>
+
+                <div class="control-group">
+                    <label>Cliente Seleccionado</label>
+                    <input type="text" id="selectedClient" readonly placeholder="Busque y seleccione">
+                </div>
+
+                <div class="control-group">
+                    <label>Cantidad de Etiquetas</label>
+                    <input type="number" id="labelQuantity" value="1" min="1" max="1000">
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="panel-title">📐 Tamaño de Etiqueta</div>
+
+                <div class="info-box">
+                    <strong>Tamaño predeterminado:</strong> 1.75 pulgadas (44.45 mm)
+                </div>
+
+                <div class="control-group">
+                    <label>Tamaño en Pulgadas</label>
+                    <input type="number" id="labelSizeInches" value="1.75" step="0.01" min="0.5" max="4" onchange="updateLabelSizeFromInches()">
+                </div>
+
+                <div class="control-group">
+                    <label>Tamaño en Milímetros</label>
+                    <input type="number" id="labelSizeMm" value="44.45" step="0.1" onchange="updateLabelSizeFromMm()">
+                </div>
+
+                <div class="control-group">
+                    <label>Diámetro Visual (px)</label>
+                    <input type="range" id="labelSizePx" min="200" max="500" value="400" oninput="updateLabelSizePx(this.value)">
+                    <div class="range-value" id="labelSizePxValue">400 px</div>
+                </div>
+            </div>
+
+            <!-- Panel Central: Preview -->
+            <div class="preview-container">
+                <div class="size-indicator">
+                    ⌀ <span id="currentSizeDisplay">1.75"</span> | <span id="currentSizeMm">44.45 mm</span>
+                </div>
+
+                <div class="label-wrapper" id="labelWrapper">
+                    <svg class="label-svg" viewBox="0 0 400 400" id="labelSvg">
+                        <!-- Círculo principal -->
+                        <circle class="label-circle" cx="200" cy="200" r="190"/>
+
+                        <!-- Texto del borde circular -->
+                        <defs>
+                            <path id="borderPath" d="M 200, 200 m -170, 0 a 170,170 0 1,1 340,0 a 170,170 0 1,1 -340,0"/>
+                        </defs>
+
+                        <!-- Texto circular editable -->
+                        <text class="border-text-path" id="borderText">
+                            <textPath href="#borderPath" id="borderTextPath" startOffset="0%">
+                                ✦ EWE ESENTIA ✦ AROMATERAPIA NATURAL ✦ FRAGANCIAS QUE ENAMORAN ✦
+                            </textPath>
+                        </text>
+
+                        <!-- Decoraciones de hojas (simplificadas) -->
+                        <g class="leaf-decoration" transform="translate(50, 100)">
+                            <ellipse cx="0" cy="0" rx="25" ry="12" fill="#a8c5a0" transform="rotate(-30)"/>
+                            <ellipse cx="10" cy="30" rx="20" ry="10" fill="#b8d4b0" transform="rotate(20)"/>
+                            <ellipse cx="-10" cy="60" rx="22" ry="11" fill="#9ab892" transform="rotate(-25)"/>
+                        </g>
+
+                        <g class="leaf-decoration" transform="translate(350, 100) scale(-1, 1)">
+                            <ellipse cx="0" cy="0" rx="25" ry="12" fill="#a8c5a0" transform="rotate(-30)"/>
+                            <ellipse cx="10" cy="30" rx="20" ry="10" fill="#b8d4b0" transform="rotate(20)"/>
+                            <ellipse cx="-10" cy="60" rx="22" ry="11" fill="#9ab892" transform="rotate(-25)"/>
+                        </g>
+
+                        <!-- Corazón dorado -->
+                        <text x="200" y="60" text-anchor="middle" font-size="24" fill="#d4a843">💛</text>
+
+                        <!-- Textos principales -->
+                        <text x="200" y="112" class="label-text-client" id="textClient" font-size="11">EMILY JIMENA CALDERON GUTIERREZ</text>
+                        <text x="200" y="150" class="label-text-main" id="textMain" font-size="42">Gracias</text>
+                        <text x="200" y="175" class="label-text-sub" id="textSub" font-size="34">♥ por tu compra ♥</text>
+
+                        <text x="200" y="210" class="label-text-message" id="textMessage" font-size="10">
+                            Cada pedido es preparado con cariño
+                        </text>
+                        <text x="200" y="225" class="label-text-message" id="textMessage2" font-size="10">
+                            Tu apoyo significa mucho para nosotros
+                        </text>
+
+                        <text x="200" y="250" class="label-text-sinpe" id="textSinpeLabel" font-size="9">SINPE Móvil</text>
+                        <text x="200" y="270" class="label-text-sinpe" id="textSinpe" font-size="18">7295-2454</text>
+
+                        <text x="200" y="295" class="label-text-brand" id="textBrand" font-size="16">EWE Esentia</text>
+
+                        <text x="200" y="315" class="label-text-message" id="textProducts" font-size="9">
+                            Aromaterapia • Candelas • Difusores
+                        </text>
+
+
+                        <text x="200" y="365" class="label-text-footer" id="textFooter" font-size="6">
+                             WiilCM
+                        </text>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Panel Derecho: Edición de Textos y Borde -->
+            <div class="panel">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('texts')">Textos</button>
+                    <button class="tab" onclick="switchTab('border')">Borde</button>
+                    <button class="tab" onclick="switchTab('colors')">Colores</button>
+                </div>
+
+                <!-- Tab Textos -->
+                <div id="tab-texts" class="tab-content active">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span>📝 Textos Principales</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="control-group">
+                                <label>Título Principal</label>
+                                <input type="text" id="editMainText" value="Gracias por tu compra" oninput="updateTexts()">
+                            </div>
+                            <div class="control-row">
+                                <div class="control-group">
+                                    <label>Tamaño "Gracias" (px)</label>
+                                    <input type="number" id="sizeMain" value="42" min="20" max="80" oninput="updateTextSizes()">
+                                </div>
+                                <div class="control-group">
+                                    <label>Tamaño Subtítulo (px)</label>
+                                    <input type="number" id="sizeSub" value="34" min="15" max="60" oninput="updateTextSizes()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span>💬 Mensaje</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="control-group">
+                                <label>Línea 1</label>
+                                <input type="text" id="editMessage1" value="Cada pedido es preparado con cariño" oninput="updateTexts()">
+                            </div>
+                            <div class="control-group">
+                                <label>Línea 2</label>
+                                <input type="text" id="editMessage2" value="Tu apoyo significa mucho para nosotros" oninput="updateTexts()">
+                            </div>
+                            <div class="control-group">
+                                <label>Tamaño Mensaje (px)</label>
+                                <input type="number" id="sizeMessage" value="10" min="6" max="20" oninput="updateTextSizes()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span>📱 SINPE y Marca</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="control-group">
+                                <label>Número SINPE</label>
+                                <input type="text" id="editSinpe" value="7295-2454" oninput="updateTexts()">
+                            </div>
+                            <div class="control-row">
+                                <div class="control-group">
+                                    <label>Tamaño SINPE (px)</label>
+                                    <input type="number" id="sizeSinpe" value="18" min="10" max="30" oninput="updateTextSizes()">
+                                </div>
+                                <div class="control-group">
+                                    <label>Tamaño Marca (px)</label>
+                                    <input type="number" id="sizeBrand" value="16" min="10" max="30" oninput="updateTextSizes()">
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Nombre de Marca</label>
+                                <input type="text" id="editBrand" value="EWE Esentia" oninput="updateTexts()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span>👤 Cliente</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="control-group">
+                                <label>Tamaño Nombre Cliente (px)</label>
+                                <input type="number" id="sizeClient" value="11" min="8" max="20" oninput="updateTextSizes()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Borde -->
+                <div id="tab-border" class="tab-content">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span>🔄 Texto del Borde Circular</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="control-group">
+                                <label>Texto del Borde</label>
+                                <textarea id="editBorderText" rows="3" oninput="updateBorderText()">✦ EWE ESENTIA  AROMATERAPIA NATURAL ✦ Fragancias que Enamoran ✦</textarea>
+                            </div>
+
+                            <div class="control-group">
+                                <label>Tamaño del Texto (px)</label>
+                                <input type="range" id="borderTextSize" min="8" max="20" value="11" oninput="updateBorderSize()">
+                                <div class="range-value" id="borderTextSizeValue">11 px</div>
+                            </div>
+
+                            <div class="control-group">
+                                <label>Radio del Borde (ajustar al tamaño)</label>
+                                <input type="range" id="borderRadius" min="100" max="190" value="170" oninput="updateBorderRadius()">
+                                <div class="range-value" id="borderRadiusValue">170 px</div>
+                            </div>
+
+                            <div class="control-group">
+                                <label>Rotación (0-360°)</label>
+                                <input type="range" id="borderRotation" min="0" max="360" value="0" oninput="updateBorderRotation()">
+                                <div class="range-value" id="borderRotationValue">0°</div>
+                            </div>
+
+                            <div class="control-group">
+                                <label>Posición Inicial (startOffset)</label>
+                                <input type="range" id="borderStartOffset" min="0" max="100" value="0" step="0.5" oninput="updateBorderOffset()">
+                                <div class="range-value" id="borderStartOffsetValue">0%</div>
+                            </div>
+
+                            <div class="control-group">
+                                <label>Espaciado entre letras</label>
+                                <input type="range" id="borderLetterSpacing" min="0" max="10" value="2" step="0.5" oninput="updateBorderSpacing()">
+                                <div class="range-value" id="borderLetterSpacingValue">2 px</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Colores -->
+                <div id="tab-colors" class="tab-content">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span>🎨 Colores del Borde</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="control-group">
+                                <label>Color del Texto del Borde</label>
+                                <input type="color" id="borderColor" value="#6b8f5e" oninput="updateBorderColor()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span>🎨 Colores de Textos</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="control-group">
+                                <label>Color Título Principal</label>
+                                <input type="color" id="colorMain" value="#2d5016" oninput="updateColors()">
+                            </div>
+                            <div class="control-group">
+                                <label>Color Mensajes</label>
+                                <input type="color" id="colorMessage" value="#444444" oninput="updateColors()">
+                            </div>
+                            <div class="control-group">
+                                <label>Color SINPE</label>
+                                <input type="color" id="colorSinpe" value="#1a1a1a" oninput="updateColors()">
+                            </div>
+                            <div class="control-group">
+                                <label>Color Marca</label>
+                                <input type="color" id="colorBrand" value="#2d5016" oninput="updateColors()">
+                            </div>
+                            <div class="control-group">
+                                <label>Color Cliente</label>
+                                <input type="color" id="colorClient" value="#1a1a1a" oninput="updateColors()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="addToQueue()">
+                    <span>➕</span> Agregar a Cola de Impresión
+                </button>
+                <div class="control-group paper-size-control">
+                    <label for="printPaperSize">Tamaño de hoja</label>
+                    <select id="printPaperSize">
+                        <option value="letter">Carta (8.5 × 11 in)</option>
+                        <option value="a4">A4 (210 × 297 mm)</option>
+                    </select>
+                </div>
+                <div class="print-actions">
+                    <button class="btn btn-secondary" type="button" onclick="createPDF()">Crear PDF</button>
+                    <button class="btn btn-outline" type="button" onclick="printLabel()">Imprimir etiqueta</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="app.js" defer></script>
+</body>
+</html>
