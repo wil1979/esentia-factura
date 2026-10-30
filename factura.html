@@ -1703,33 +1703,63 @@ async function confirmRestock() {
 }
 
 // ==========================================
-// FACTURACIÓN CON TRANSACCIÓN Y DESCUENTO DE STOCK
+// FACTURACIÓN CON TRANSACCIÓN CORREGIDA
 // ==========================================
 async function saveInvoice() {
     if (cart.length === 0) { alert('El carrito está vacío'); return; }
     if (!currentClient) { alert('Seleccione un cliente'); return; }
 
-    // Validación final de stock
-    const stockIssues = [];
-    for (const item of cart) {
-        const product = allProducts.find(p => p.id === item.id);
-        if (!product) continue;
-        const stock = await getOrCreateStock(product);
-        const totalInCart = cart.filter(i => i.id === item.id).reduce((sum, i) => sum + i.cantidad, 0);
-        if (totalInCart > stock.cantidad) {
-            stockIssues.push(`${product.nombre}: necesita ${totalInCart}, disponible ${stock.cantidad}`);
-        }
-    }
-
-    if (stockIssues.length > 0) {
-        alert('⚠️ No se puede facturar. Stock insuficiente:\n\n' + stockIssues.join('\n'));
-        return;
-    }
-
     try {
         // Usar transacción para garantizar consistencia
         await db.runTransaction(async (transaction) => {
-            // 1. Crear la factura
+            
+            // ============================================
+            // FASE 1: TODAS LAS LECTURAS PRIMERO
+            // ============================================
+            const stockReads = [];
+            const productsInCart = [];
+
+            for (const item of cart) {
+                const product = allProducts.find(p => p.id === item.id);
+                if (!product) continue;
+
+                const stockId = normalizeString(product.nombre);
+                const stockRef = db.collection('stock').doc(stockId);
+                const stockDoc = await transaction.get(stockRef);
+
+                stockReads.push({
+                    product: product,
+                    item: item,
+                    stockRef: stockRef,
+                    stockDoc: stockDoc,
+                    stockId: stockId
+                });
+
+                productsInCart.push({ product, item, stockDoc });
+            }
+
+            // ============================================
+            // FASE 2: VALIDAR STOCK (después de todas las lecturas)
+            // ============================================
+            for (const { product, item, stockDoc } of productsInCart) {
+                const currentStock = stockDoc.exists ? (stockDoc.data().cantidad || 0) : 0;
+                const totalInCart = cart
+                    .filter(i => {
+                        const p = allProducts.find(prod => prod.id === i.id);
+                        return p && normalizeString(p.nombre) === normalizeString(product.nombre);
+                    })
+                    .reduce((sum, i) => sum + i.cantidad, 0);
+
+                if (totalInCart > currentStock) {
+                    throw new Error(`Stock insuficiente para "${product.nombre}": necesita ${totalInCart}, disponible ${currentStock}`);
+                }
+            }
+
+            // ============================================
+            // FASE 3: TODAS LAS ESCRITURAS DESPUÉS
+            // ============================================
+            
+            // 3.1 Crear la factura
             const invoiceRef = db.collection('facturas').doc();
             const invoiceData = {
                 numero: currentInvoiceNumber,
@@ -1746,30 +1776,17 @@ async function saveInvoice() {
             };
             transaction.set(invoiceRef, invoiceData);
 
-            // 2. Descontar stock de cada producto
-            for (const item of cart) {
-                const product = allProducts.find(p => p.id === item.id);
-                if (!product) continue;
-
-                const stockId = normalizeString(product.nombre);
-                const stockRef = db.collection('stock').doc(stockId);
-                const stockDoc = await transaction.get(stockRef);
-
-                let currentStock = 0;
-                let stockData = {};
-
-                if (stockDoc.exists) {
-                    currentStock = stockDoc.data().cantidad || 0;
-                    stockData = stockDoc.data();
-                } else {
-                    // Si no existe, crear con cantidad 0 (no debería pasar por la validación anterior)
-                    stockData = {
-                        nombre: product.nombre,
-                        categoria: product.categoria,
-                        precioVenta: product.precioBase,
-                        cantidad: 0
-                    };
-                }
+            // 3.2 Actualizar stock y registrar movimientos (SOLO ESCRITURAS)
+            for (const { product, item, stockRef, stockDoc, stockId } of stockReads) {
+                const currentStock = stockDoc.exists ? (stockDoc.data().cantidad || 0) : 0;
+                const stockData = stockDoc.exists ? stockDoc.data() : {
+                    nombre: product.nombre,
+                    categoria: product.categoria,
+                    precioVenta: product.precioBase,
+                    cantidad: 0,
+                    costoUnitario: 0,
+                    ultimaCompra: '-'
+                };
 
                 const newCantidad = Math.max(0, currentStock - item.cantidad);
 
@@ -1796,6 +1813,7 @@ async function saveInvoice() {
             }
         });
 
+        // Si llegamos aquí, la transacción fue exitosa
         alert('✅ Factura guardada y stock actualizado exitosamente');
         cart = [];
         renderCart();
@@ -1804,13 +1822,19 @@ async function saveInvoice() {
         currentInvoiceNumber = generateInvoiceNumber();
         document.getElementById('invoiceNumber').textContent = currentInvoiceNumber;
 
-        // Recargar stock
+        // Recargar stock y actualizar UI
         await loadStock();
         renderProducts(allProducts);
         checkLowStockAlerts();
+        
     } catch (error) {
         console.error("Error guardando factura:", error);
-        alert('Error al guardar la factura: ' + error.message);
+        // Mostrar mensaje claro si es error de stock
+        if (error.message.includes('Stock insuficiente')) {
+            alert('⚠️ ' + error.message);
+        } else {
+            alert('Error al guardar la factura: ' + error.message);
+        }
     }
 }
 
