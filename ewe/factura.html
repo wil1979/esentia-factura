@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Facturación EWE Esentia + Variantes y Descuentos</title>
+    <title>Facturación EWE Esentia + Crédito y Abonos</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         :root {
             --primary: #2d5016; --primary-light: #3d6b20; --accent: #d4a843;
             --bg: #f5f0eb; --surface: #ffffff; --text: #1a1a1a;
-            --text-light: #666666; --border: #e0d5c7; --whatsapp: #25D366; --danger: #dc3545;
+            --text-light: #666666; --border: #e0d5c7; --whatsapp: #25D366; 
+            --danger: #dc3545; --warning: #ffc107; --success: #28a745; --info: #17a2b8;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -37,26 +38,31 @@
         .product-name { font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; line-height: 1.2; }
         .product-price { font-size: 1rem; font-weight: 700; color: var(--primary); }
         .product-code { font-size: 0.7rem; color: #999; margin-top: 4px; font-family: monospace; }
+        
         .right-panel { background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; height: 100%; }
         .invoice-header { padding: 15px; border-bottom: 1px solid var(--border); background: #fafafa; }
-        .client-info-box { margin-top: 8px; padding: 10px; background: white; border-radius: 6px; border: 1px solid var(--border); font-size: 0.85rem; }
+        .client-info-box { margin-top: 8px; padding: 10px; background: white; border-radius: 6px; border: 1px solid var(--border); font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
+        .client-details { flex: 1; }
+        .client-actions { display: flex; flex-direction: column; gap: 5px; }
+        
         .cart-items { flex: 1; overflow-y: auto; padding: 15px; }
         .cart-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px; background: #fafafa; border-radius: 8px; margin-bottom: 8px; border: 1px solid transparent; }
         .cart-item:hover { border-color: var(--accent); }
         .cart-item-info { flex: 1; }
         .cart-item-name { font-weight: 600; font-size: 0.85rem; }
-        .cart-item-variant { font-size: 0.75rem; color: var(--accent); font-weight: 600; }
         .cart-item-price { font-size: 0.8rem; color: var(--text-light); }
         .cart-item-discount { font-size: 0.75rem; color: var(--danger); font-weight: 600; }
         .cart-item-controls { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
         .qty-btn { width: 26px; height: 26px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-weight: 700; color: var(--primary); display: flex; align-items: center; justify-content: center; }
         .qty-display { font-weight: 600; min-width: 20px; text-align: center; font-size: 0.9rem; }
         .remove-btn { color: var(--danger); cursor: pointer; margin-left: 8px; font-size: 1.2rem; }
+        
         .invoice-footer { padding: 15px; border-top: 2px solid var(--border); background: #fafafa; }
         .total-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem; }
         .total-row.grand-total { font-size: 1.2rem; font-weight: 700; color: var(--primary); margin-top: 8px; padding-top: 8px; border-top: 2px dashed var(--border); }
         .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
         .action-buttons-full { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 8px; }
+        
         .btn { padding: 10px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-primary:hover { background: var(--primary-light); }
@@ -67,11 +73,19 @@
         .btn-whatsapp { background: var(--whatsapp); color: white; }
         .btn-whatsapp:hover { background: #128C7E; }
         .btn-scan { background: #2d5016; color: white; border: 2px solid var(--accent); }
-        
+        .btn-sm { padding: 6px 10px; font-size: 0.8rem; }
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: #f0fdf4; }
+        .btn-warning { background: var(--warning); color: #000; }
+        .btn-warning:hover { background: #e0a800; }
+        .btn-info { background: var(--info); color: white; }
+        .btn-info:hover { background: #138496; }
+
         /* Modales */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         .modal-overlay.active { display: flex; }
         .modal-content { background: white; border-radius: 12px; width: 90%; max-width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .modal-content.wide { max-width: 600px; }
         .modal-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fafafa; border-radius: 12px 12px 0 0; }
         .modal-header h3 { font-family: 'Playfair Display', serif; color: var(--primary); font-size: 1.1rem; }
         .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-light); }
@@ -83,6 +97,35 @@
         .price-preview { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin-top: 15px; text-align: center; }
         .price-preview .original { text-decoration: line-through; color: var(--text-light); font-size: 0.9rem; }
         .price-preview .final { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+
+        /* Estilos específicos del Historial */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .stat-card { background: #f9f5f0; border: 1px solid var(--border); padding: 15px 10px; border-radius: 8px; text-align: center; }
+        .stat-value { font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+        .stat-label { font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; }
+        .history-list { max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+        .history-item { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid var(--border); transition: background 0.2s; }
+        .history-item:hover { background: #f9f5f0; }
+        .history-item:last-child { border-bottom: none; }
+        .history-date { font-size: 0.8rem; color: var(--text-light); }
+        .history-invoice { font-weight: 600; font-size: 0.9rem; color: var(--text); }
+        .history-total { font-weight: 700; color: var(--primary); }
+        .history-status { font-size: 0.75rem; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+        .status-pagada { background: #dcfce7; color: #166534; }
+        .status-pendiente { background: #fee2e2; color: #991b1b; }
+        .status-parcial { background: #fef3c7; color: #92400e; }
+        .history-actions { display: flex; gap: 5px; margin-top: 5px; }
+        
+        /* Badge de saldo pendiente */
+        .pending-badge {
+            background: var(--danger);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-left: 8px;
+        }
 
         #ticket-print { display: none; }
         @media print {
@@ -105,10 +148,12 @@
         .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .error-banner { background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 10px; display: none; }
+        
         @media (max-width: 768px) {
             .main-container { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
             .right-panel { border-left: none; border-top: 2px solid var(--border); }
             .products-grid { grid-template-columns: repeat(2, 1fr); }
+            .stats-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -120,7 +165,7 @@
     </div>
 
     <div class="header">
-        <h1>🧾 EWE Esentia</h1>
+        <h1> EWE Esentia</h1>
         <div style="font-size: 0.85rem; color: var(--text-light);" id="currentDate"></div>
     </div>
 
@@ -133,11 +178,20 @@
                     <input type="text" id="clientSearch" placeholder="Nombre, cédula o teléfono..." oninput="searchClients(this.value)">
                     <div class="search-results" id="clientResults"></div>
                 </div>
-                <div class="client-info-box" id="selectedClientInfo" style="display: none; margin-top: 10px;">
-                    <div><strong>Nombre:</strong> <span id="clientNameDisplay"></span></div>
-                    <div><strong>Cédula:</strong> <span id="clientIdDisplay"></span></div>
-                    <div><strong>Tel:</strong> <span id="clientPhoneDisplay"></span></div>
-                    <button class="btn btn-secondary" style="margin-top: 8px; width: 100%; padding: 6px; font-size: 0.8rem;" onclick="clearClient()">Cambiar</button>
+                <button class="btn btn-primary btn-sm" style="width: 100%; margin-top: 10px;" onclick="openNewClientModal()">
+                    ➕ Agregar Nuevo Cliente
+                </button>
+                
+                <div class="client-info-box" id="selectedClientInfo" style="display: none; margin-top: 10px; flex-direction: column; align-items: flex-start;">
+                    <div class="client-details" style="width: 100%; margin-bottom: 10px;">
+                        <div><strong>Nombre:</strong> <span id="clientNameDisplay"></span></div>
+                        <div><strong>Cédula:</strong> <span id="clientIdDisplay"></span></div>
+                        <div><strong>Tel:</strong> <span id="clientPhoneDisplay"></span></div>
+                    </div>
+                    <div class="client-actions" style="width: 100%; flex-direction: row; gap: 8px;">
+                        <button class="btn btn-outline btn-sm" style="flex: 1;" onclick="openHistoryModal()">📊 Ver Historial</button>
+                        <button class="btn btn-secondary btn-sm" style="flex: 1;" onclick="clearClient()">Cambiar</button>
+                    </div>
                 </div>
             </div>
 
@@ -178,8 +232,118 @@
                 </div>
                 <div class="action-buttons-full">
                     <button class="btn btn-whatsapp" onclick="sendWhatsApp()">📱 Enviar por WhatsApp</button>
-                    <button class="btn btn-primary" onclick="saveInvoice()">💾 Guardar en Firebase</button>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                        <button class="btn btn-warning" onclick="saveInvoice('pendiente')">💳 Crédito (Pendiente)</button>
+                        <button class="btn btn-primary" onclick="saveInvoice('pagada')">💵 Pago Contado</button>
+                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA AGREGAR NUEVO CLIENTE -->
+    <div class="modal-overlay" id="newClientModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>➕ Nuevo Cliente</h3>
+                <button class="modal-close" onclick="closeNewClientModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Nombre Completo *</label>
+                    <input type="text" id="newClientName" placeholder="Ej: María Rodríguez">
+                </div>
+                <div class="form-group">
+                    <label>Cédula / Identificación</label>
+                    <input type="text" id="newClientId" placeholder="Ej: 102340567">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono / WhatsApp</label>
+                    <input type="text" id="newClientPhone" placeholder="Ej: 8888-8888">
+                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 12px;" onclick="saveNewClient()">
+                    💾 Guardar y Seleccionar Cliente
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE HISTORIAL DEL CLIENTE -->
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal-content wide">
+            <div class="modal-header">
+                <h3>📊 Historial de <span id="historyClientName">Cliente</span></h3>
+                <button class="modal-close" onclick="closeHistoryModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statTotalSpent">₡0.00</div>
+                        <div class="stat-label">Total Gastado</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statInvoiceCount">0</div>
+                        <div class="stat-label">Facturas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statPendingBalance">₡0.00</div>
+                        <div class="stat-label">Saldo Pendiente</div>
+                    </div>
+                </div>
+                
+                <h4 style="margin-bottom: 10px; color: var(--primary); font-size: 0.95rem;">Últimas Facturas</h4>
+                <div class="history-list" id="historyList">
+                    <div style="text-align: center; padding: 20px; color: var(--text-light);">Cargando historial...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE ABONO/PAGO -->
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💵 Registrar Abono</h3>
+                <button class="modal-close" onclick="closePaymentModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="paymentInvoiceId">
+                <div style="background: #f9f5f0; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 5px;">Factura:</div>
+                    <div style="font-weight: 700; color: var(--primary); font-size: 1.1rem;" id="paymentInvoiceNum"></div>
+                    <div style="margin-top: 10px; display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-light);">Total Factura:</span>
+                        <span style="font-weight: 700;" id="paymentTotal"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                        <span style="color: var(--text-light);">Saldo Pendiente:</span>
+                        <span style="font-weight: 700; color: var(--danger);" id="paymentPending"></span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Monto del Abono *</label>
+                    <input type="number" id="paymentAmount" placeholder="0.00" step="0.01" min="0.01">
+                </div>
+                
+                <div class="form-group">
+                    <label>Método de Pago</label>
+                    <select id="paymentMethod">
+                        <option value="efectivo">💵 Efectivo</option>
+                        <option value="sinpe">📱 SINPE Móvil</option>
+                        <option value="transferencia"> Transferencia</option>
+                        <option value="tarjeta">💳 Tarjeta</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Nota (opcional)</label>
+                    <input type="text" id="paymentNote" placeholder="Ej: Abono parcial">
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="registerPayment()">
+                    ✅ Registrar Abono
+                </button>
             </div>
         </div>
     </div>
@@ -193,30 +357,25 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="modalProductId">
-                
                 <div class="form-group" id="variantGroup" style="display: none;">
                     <label>Seleccionar Tamaño / Variante</label>
                     <select id="modalVariantSelect" onchange="updateModalPricePreview()">
                         <!-- Opciones se llenan dinámicamente -->
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label>Cantidad</label>
                     <input type="number" id="modalQuantity" value="1" min="1" onchange="updateModalPricePreview()">
                 </div>
-
                 <div class="form-group">
                     <label>Descuento (%)</label>
-                    <input type="number" id="modalDiscount" value="7,1429" min="0" max="100" step="0.1" onchange="updateModalPricePreview()">
+                    <input type="number" id="modalDiscount" value="0" min="0" max="100" step="0.1" onchange="updateModalPricePreview()">
                 </div>
-
                 <div class="price-preview">
                     <div class="original" id="modalOriginalPrice">₡0.00 c/u</div>
                     <div class="final" id="modalFinalPrice">₡0.00</div>
                     <div style="font-size: 0.8rem; color: var(--text-light); margin-top: 5px;" id="modalDiscountText"></div>
                 </div>
-
                 <button class="btn btn-primary" style="width: 100%; margin-top: 20px; padding: 12px;" onclick="confirmAddToCart()">
                     ✅ Agregar al Carrito
                 </button>
@@ -228,7 +387,7 @@
     <div class="modal-overlay" id="scannerModal">
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header" style="background: var(--primary); color: white;">
-                <h3 style="color: white;">📷 Escáner de Código</h3>
+                <h3 style="color: white;"> Escáner de Código</h3>
                 <button class="modal-close" style="color: white;" onclick="closeScanner()">&times;</button>
             </div>
             <div id="reader"></div>
@@ -250,12 +409,15 @@
             <div>Factura: <span id="ticketInvoiceNum"></span></div>
             <div>Cliente: <span id="ticketClientName"></span></div>
             <div>Cédula: <span id="ticketClientId"></span></div>
+            <div id="ticketPaymentStatus" style="margin-top: 5px; font-weight: bold;"></div>
         </div>
         <div class="ticket-items" id="ticketItems"></div>
         <div class="ticket-totals">
             <div class="ticket-total-line"><span>Subtotal:</span><span id="ticketSubtotal"></span></div>
             <div class="ticket-total-line"><span>IVA (13%):</span><span id="ticketTax"></span></div>
             <div class="ticket-total-line final"><span>TOTAL:</span><span id="ticketTotal"></span></div>
+            <div class="ticket-total-line" id="ticketPaidAmount" style="display:none;"><span>Abonado:</span><span id="ticketPaid"></span></div>
+            <div class="ticket-total-line" id="ticketBalance" style="display:none;"><span>Saldo Pendiente:</span><span id="ticketPending"></span></div>
         </div>
         <div class="ticket-footer">
             <div>¡Gracias por su compra!</div>
@@ -343,7 +505,7 @@
                             nombre: p.nombre || p.nombreOriginal || 'Producto sin nombre',
                             precioBase: parseFloat(precioBase),
                             categoria: p.categoriaDetectada || item.catDefault,
-                            variantes: p.variantes || [] // ✅ GUARDAMOS LAS VARIANTES
+                            variantes: p.variantes || []
                         };
                     });
                     allProducts = allProducts.concat(mapped);
@@ -358,6 +520,52 @@
                 document.getElementById('loadErrorBanner').innerHTML = `⚠️ No se pudieron cargar: <strong>${errors.join(', ')}</strong>.`;
             }
             renderProducts(allProducts);
+        }
+
+        // ==========================================
+        // NUEVO CLIENTE
+        // ==========================================
+        function openNewClientModal() {
+            document.getElementById('newClientName').value = '';
+            document.getElementById('newClientId').value = '';
+            document.getElementById('newClientPhone').value = '';
+            document.getElementById('newClientModal').classList.add('active');
+        }
+
+        function closeNewClientModal() {
+            document.getElementById('newClientModal').classList.remove('active');
+        }
+
+        async function saveNewClient() {
+            const nombre = document.getElementById('newClientName').value.trim();
+            const cedula = document.getElementById('newClientId').value.trim();
+            const telefono = document.getElementById('newClientPhone').value.trim();
+
+            if (!nombre) {
+                alert('El nombre del cliente es obligatorio');
+                return;
+            }
+
+            try {
+                const newClientData = {
+                    nombre: nombre,
+                    cedula: cedula || 'N/A',
+                    telefono: telefono || 'N/A',
+                    fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                const docRef = await db.collection('clientesBD').add(newClientData);
+                const newClient = { id: docRef.id, ...newClientData };
+                
+                allClients.push(newClient);
+                selectClient(newClient.id);
+                
+                closeNewClientModal();
+                alert('✅ Cliente agregado exitosamente');
+            } catch (error) {
+                console.error("Error guardando cliente:", error);
+                alert('Error al guardar el cliente. Intente nuevamente.');
+            }
         }
 
         function searchClients(query) {
@@ -387,7 +595,7 @@
             if (!currentClient) return;
             document.getElementById('clientSearch').value = '';
             document.getElementById('clientResults').style.display = 'none';
-            document.getElementById('selectedClientInfo').style.display = 'block';
+            document.getElementById('selectedClientInfo').style.display = 'flex';
             document.getElementById('clientNameDisplay').textContent = currentClient.nombre || 'N/A';
             document.getElementById('clientIdDisplay').textContent = currentClient.cedula || currentClient.id || 'N/A';
             document.getElementById('clientPhoneDisplay').textContent = currentClient.telefono || 'N/A';
@@ -398,6 +606,248 @@
             currentClient = null;
             document.getElementById('selectedClientInfo').style.display = 'none';
             document.getElementById('invoiceClientInfo').innerHTML = '<em>Seleccione un cliente</em>';
+        }
+
+        // ==========================================
+        // HISTORIAL DE CLIENTES CON ABONOS
+        // ==========================================
+        async function openHistoryModal() {
+            if (!currentClient) return;
+            
+            document.getElementById('historyClientName').textContent = currentClient.nombre || 'Cliente';
+            document.getElementById('historyModal').classList.add('active');
+            document.getElementById('historyList').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-light);">Cargando historial...</div>';
+
+            try {
+                const snapshot = await db.collection('facturas').where('clienteId', '==', currentClient.id).get();
+                let facturas = [];
+                snapshot.forEach(doc => facturas.push({ id: doc.id, ...doc.data() }));
+
+                facturas.sort((a, b) => {
+                    const dateA = a.fecha?.toDate ? a.fecha.toDate() : new Date(a.fecha);
+                    const dateB = b.fecha?.toDate ? b.fecha.toDate() : new Date(b.fecha);
+                    return dateB - dateA;
+                });
+
+                // Calcular estadísticas
+                let totalGastado = 0;
+                let totalPendiente = 0;
+                let facturasCount = facturas.length;
+
+                facturas.forEach(f => {
+                    totalGastado += (f.total || 0);
+                    const saldo = (f.saldoPendiente !== undefined) ? f.saldoPendiente : (f.estado === 'pagada' ? 0 : f.total);
+                    totalPendiente += saldo;
+                });
+
+                document.getElementById('statTotalSpent').textContent = `₡${formatMoney(totalGastado)}`;
+                document.getElementById('statInvoiceCount').textContent = facturasCount;
+                document.getElementById('statPendingBalance').textContent = `₡${formatMoney(totalPendiente)}`;
+
+                // Renderizar lista
+                const listContainer = document.getElementById('historyList');
+                if (facturas.length === 0) {
+                    listContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-light);">Este cliente aún no tiene facturas registradas.</div>';
+                } else {
+                    listContainer.innerHTML = facturas.slice(0, 20).map(f => {
+                        const dateObj = f.fecha?.toDate ? f.fecha.toDate() : new Date(f.fecha);
+                        const dateStr = dateObj.toLocaleDateString('es-CR', { day: '2-digit', month: 'short', year: 'numeric' });
+                        
+                        // Calcular saldo pendiente
+                        const saldoPendiente = (f.saldoPendiente !== undefined) ? f.saldoPendiente : (f.estado === 'pagada' ? 0 : f.total);
+                        const estado = saldoPendiente === 0 ? 'pagada' : (saldoPendiente < f.total ? 'parcial' : 'pendiente');
+                        
+                        let statusClass = 'status-pagada';
+                        let statusText = 'Pagada';
+                        if (estado === 'pendiente') {
+                            statusClass = 'status-pendiente';
+                            statusText = 'Pendiente';
+                        } else if (estado === 'parcial') {
+                            statusClass = 'status-parcial';
+                            statusText = 'Parcial';
+                        }
+
+                        const pendingBadge = saldoPendiente > 0 ? `<span class="pending-badge">Saldo: ₡${formatMoney(saldoPendiente)}</span>` : '';
+                        
+                        return `
+                        <div class="history-item">
+                            <div style="flex: 1;">
+                                <div class="history-invoice">${f.numero || 'S/N'} ${pendingBadge}</div>
+                                <div class="history-date">${dateStr}</div>
+                                <div class="history-actions">
+                                    <button class="btn btn-sm btn-outline" onclick="resendInvoice('${f.id}')">📤 Reenviar</button>
+                                    ${saldoPendiente > 0 ? `<button class="btn btn-sm btn-primary" onclick="openPaymentModal('${f.id}')">💵 Abonar</button>` : ''}
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="history-total">₡${formatMoney(f.total || 0)}</div>
+                                <span class="history-status ${statusClass}">${statusText}</span>
+                            </div>
+                        </div>`;
+                    }).join('');
+                }
+            } catch (error) {
+                console.error("Error cargando historial:", error);
+                document.getElementById('historyList').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">Error al cargar el historial.</div>';
+            }
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.remove('active');
+        }
+
+        // ==========================================
+        // SISTEMA DE PAGOS Y ABONOS
+        // ==========================================
+        function openPaymentModal(invoiceId) {
+            const invoice = window.currentInvoices?.find(f => f.id === invoiceId);
+            if (!invoice) return;
+
+            const saldoPendiente = (invoice.saldoPendiente !== undefined) ? invoice.saldoPendiente : invoice.total;
+            
+            document.getElementById('paymentInvoiceId').value = invoiceId;
+            document.getElementById('paymentInvoiceNum').textContent = invoice.numero || 'S/N';
+            document.getElementById('paymentTotal').textContent = `₡${formatMoney(invoice.total)}`;
+            document.getElementById('paymentPending').textContent = `₡${formatMoney(saldoPendiente)}`;
+            document.getElementById('paymentAmount').value = '';
+            document.getElementById('paymentAmount').max = saldoPendiente;
+            document.getElementById('paymentNote').value = '';
+            
+            document.getElementById('paymentModal').classList.add('active');
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('active');
+        }
+
+        async function registerPayment() {
+            const invoiceId = document.getElementById('paymentInvoiceId').value;
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+            const method = document.getElementById('paymentMethod').value;
+            const note = document.getElementById('paymentNote').value.trim();
+
+            if (!amount || amount <= 0) {
+                alert('Ingrese un monto válido');
+                return;
+            }
+
+            try {
+                const invoiceRef = db.collection('facturas').doc(invoiceId);
+                const invoiceDoc = await invoiceRef.get();
+                
+                if (!invoiceDoc.exists) {
+                    alert('Factura no encontrada');
+                    return;
+                }
+
+                const invoiceData = invoiceDoc.data();
+                const saldoActual = (invoiceData.saldoPendiente !== undefined) ? invoiceData.saldoPendiente : 
+                                   (invoiceData.estado === 'pagada' ? 0 : invoiceData.total);
+                
+                if (amount > saldoActual) {
+                    alert(`El monto del abono no puede superar el saldo pendiente de ₡${formatMoney(saldoActual)}`);
+                    return;
+                }
+
+                const nuevoSaldo = saldoActual - amount;
+                const nuevoEstado = nuevoSaldo === 0 ? 'pagada' : 'parcial';
+
+                // Registrar el abono en el historial de pagos de la factura
+                const paymentRecord = {
+                    monto: amount,
+                    metodo: method,
+                    nota: note,
+                    fecha: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                const pagosExistentes = invoiceData.pagos || [];
+                pagosExistentes.push(paymentRecord);
+
+                await invoiceRef.update({
+                    saldoPendiente: nuevoSaldo,
+                    estado: nuevoEstado,
+                    pagos: pagosExistentes,
+                    ultimoPago: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert(`✅ Abono de ₡${formatMoney(amount)} registrado exitosamente\nSaldo restante: ₡${formatMoney(nuevoSaldo)}`);
+                closePaymentModal();
+                openHistoryModal(); // Recargar historial
+                
+            } catch (error) {
+                console.error("Error registrando pago:", error);
+                alert('Error al registrar el abono. Intente nuevamente.');
+            }
+        }
+
+        // ==========================================
+        // REENVIAR FACTURA
+        // ==========================================
+        async function resendInvoice(invoiceId) {
+            try {
+                const invoiceDoc = await db.collection('facturas').doc(invoiceId).get();
+                if (!invoiceDoc.exists) {
+                    alert('Factura no encontrada');
+                    return;
+                }
+
+                const invoice = invoiceDoc.data();
+                
+                // Construir mensaje
+                let message = `🌿 *FACTURA EWE ESENTIA* 🌿\n`;
+                message += `📄 Factura: ${invoice.numero}\n`;
+                message += `👤 Cliente: ${invoice.clienteNombre}\n`;
+                message += `📅 Fecha: ${invoice.fecha?.toDate ? invoice.fecha.toDate().toLocaleDateString('es-CR') : 'N/A'}\n`;
+                message += `━━━━━━━━━━━━━━━━━━\n`;
+                
+                if (invoice.items) {
+                    invoice.items.forEach(item => {
+                        const desc = item.descuentoPct > 0 ? `${item.nombre} (-${item.descuentoPct}%)` : item.nombre;
+                        message += `▪️ ${item.cantidad} x ${desc}\n   ₡${formatMoney(item.precioFinalUnitario * item.cantidad)}\n`;
+                    });
+                }
+                
+                message += `━━━━━━━━━━━━━━━━━━\n`;
+                message += `Subtotal: ₡${formatMoney(invoice.subtotal || 0)}\n`;
+                message += `IVA (13%): ₡${formatMoney(invoice.impuesto || 0)}\n`;
+                message += `💰 *TOTAL: ₡${formatMoney(invoice.total || 0)}*\n`;
+                
+                const saldoPendiente = (invoice.saldoPendiente !== undefined) ? invoice.saldoPendiente : 
+                                      (invoice.estado === 'pagada' ? 0 : invoice.total);
+                
+                if (saldoPendiente > 0) {
+                    message += `\n️ *SALDO PENDIENTE: ₡${formatMoney(saldoPendiente)}*\n`;
+                }
+                
+                message += `\n¡Gracias por su compra! 🙏\n💳 SINPE Móvil: 7295-2454`;
+
+                // Obtener teléfono del cliente
+                let phone = '';
+                if (invoice.clienteId && invoice.clienteId !== 'contado') {
+                    const clientDoc = await db.collection('clientesBD').doc(invoice.clienteId).get();
+                    if (clientDoc.exists) {
+                        const clientData = clientDoc.data();
+                        phone = clientData.telefono || '';
+                    }
+                }
+
+                if (phone) {
+                    phone = String(phone).replace(/\D/g, '');
+                    if (phone.length === 8) phone = '506' + phone;
+                    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+                } else {
+                    // Si no hay teléfono, copiar al portapapeles
+                    navigator.clipboard.writeText(message).then(() => {
+                        alert('📋 Mensaje copiado al portapapeles\n\nPuede pegarlo en WhatsApp manualmente.');
+                    }).catch(() => {
+                        prompt('Copie el siguiente mensaje:', message);
+                    });
+                }
+                
+            } catch (error) {
+                console.error("Error reenviando factura:", error);
+                alert('Error al reenviar la factura.');
+            }
         }
 
         function renderProducts(products) {
@@ -428,7 +878,7 @@
         }
 
         // ==========================================
-        // LÓGICA DEL MODAL DE PRODUCTO (VARIANTES + DESCUENTO)
+        // MODAL DE PRODUCTO
         // ==========================================
         function openProductModal(productId) {
             const product = allProducts.find(p => p.id === productId);
@@ -445,7 +895,6 @@
 
             if (product.variantes && product.variantes.length > 0) {
                 variantGroup.style.display = 'block';
-                // Agregar opción por defecto si existe precio base, o la primera variante
                 if (product.precioBase > 0) {
                     const opt = document.createElement('option');
                     opt.value = 'base';
@@ -460,7 +909,6 @@
                     opt.dataset.price = v.precio;
                     variantSelect.appendChild(opt);
                 });
-                // Seleccionar el primero por defecto
                 variantSelect.selectedIndex = 0;
             } else {
                 variantGroup.style.display = 'none';
@@ -536,14 +984,6 @@
         // ==========================================
         // CARRITO Y TOTALES
         // ==========================================
-        function updateQuantity(productId, change) {
-            // Nota: Como ahora el ID puede repetirse si son variantes diferentes, 
-            // es mejor buscar por índice o crear un ID único de carrito. 
-            // Para simplificar, buscaremos el último que coincida o manejaremos por índice.
-            // Mejora: Usar un identificador único temporal para el item del carrito.
-        }
-        
-        // Reemplazamos la lógica del carrito para usar un cartItemId único
         function renderCart() {
             const container = document.getElementById('cartItems');
             if (cart.length === 0) {
@@ -586,9 +1026,8 @@
         }
 
         function updateTotals() {
-            // El precioFinalUnitario YA tiene el descuento aplicado, pero aún incluye el IVA.
             const totalConIva = cart.reduce((sum, item) => sum + (item.precioFinalUnitario * item.cantidad), 0);
-            const subtotalReal = totalConIva / 1.13; // Desglose contable correcto
+            const subtotalReal = totalConIva / 1.13;
             const ivaReal = totalConIva - subtotalReal;
 
             currentSubtotal = subtotalReal;
@@ -634,10 +1073,8 @@
             const product = allProducts.find(p => String(p.id) === searchCode);
 
             if (product) {
-                closeScanner(); // Cerrar escáner para mostrar el modal
-                setTimeout(() => {
-                    openProductModal(product.id); // Abrir modal para elegir variante y descuento
-                }, 300);
+                closeScanner();
+                setTimeout(() => { openProductModal(product.id); }, 300);
             } else {
                 alert(`❌ Producto no encontrado.\nCódigo: ${searchCode}`);
             }
@@ -647,8 +1084,9 @@
         // ==========================================
         // IMPRESIÓN Y WHATSAPP
         // ==========================================
-        function printTicket() {
+        function printTicket(pagoParcial = false, montoAbonado = 0) {
             if (cart.length === 0 || !currentClient) { alert('Carrito vacío o cliente no seleccionado'); return; }
+            
             document.getElementById('ticketDate').textContent = new Date().toLocaleString('es-CR');
             document.getElementById('ticketInvoiceNum').textContent = document.getElementById('invoiceNumber').textContent;
             document.getElementById('ticketClientName').textContent = currentClient.nombre || 'Cliente Contado';
@@ -665,6 +1103,20 @@
             document.getElementById('ticketSubtotal').textContent = `₡${formatMoney(currentSubtotal)}`;
             document.getElementById('ticketTax').textContent = `₡${formatMoney(currentIva)}`;
             document.getElementById('ticketTotal').textContent = `₡${formatMoney(currentTotal)}`;
+            
+            // Mostrar info de pago si es crédito
+            if (pagoParcial || montoAbonado > 0) {
+                document.getElementById('ticketPaymentStatus').textContent = '💳 CRÉDITO';
+                document.getElementById('ticketPaidAmount').style.display = 'flex';
+                document.getElementById('ticketPaid').textContent = `₡${formatMoney(montoAbonado)}`;
+                document.getElementById('ticketBalance').style.display = 'flex';
+                document.getElementById('ticketPending').textContent = `₡${formatMoney(currentTotal - montoAbonado)}`;
+            } else {
+                document.getElementById('ticketPaymentStatus').textContent = '💵 CONTADO';
+                document.getElementById('ticketPaidAmount').style.display = 'none';
+                document.getElementById('ticketBalance').style.display = 'none';
+            }
+            
             window.print();
         }
 
@@ -681,35 +1133,82 @@
                 if (phone.length === 8) phone = '506' + phone;
             }
 
-            let message = `🌿 *FACTURA EWE ESENTIA* 🌿\n📄 Factura: ${document.getElementById('invoiceNumber').textContent}\n👤 Cliente: ${clientName}\n📅 Fecha: ${new Date().toLocaleDateString('es-CR')}\n━━━━━━━━━━━━━━━━━━\n`;
+            let message = `🌿 *FACTURA EWE ESENTIA* \n📄 Factura: ${document.getElementById('invoiceNumber').textContent}\n👤 Cliente: ${clientName}\n📅 Fecha: ${new Date().toLocaleDateString('es-CR')}\n━━━━━━━━━━━━━━━━━━\n`;
             cart.forEach(item => {
                 const desc = item.descuentoPct > 0 ? `${item.nombre} (-${item.descuentoPct}%)` : item.nombre;
                 message += `▪️ ${item.cantidad} x ${desc}\n   ₡${formatMoney(item.precioFinalUnitario * item.cantidad)}\n`;
             });
-            message += `━━━━━━━━━━━━━━━━━━\nSubtotal: ₡${formatMoney(currentSubtotal)}\nIVA (13%): ₡${formatMoney(currentIva)}\n💰 *TOTAL: ₡${formatMoney(currentTotal)}*\n\n¡Gracias por su compra! 🙏\n💳 SINPE Móvil: 7295-2454`;
+            message += `━━━━━━━━━━━━━━━━━━\nSubtotal: ₡${formatMoney(currentSubtotal)}\nIVA (13%): ₡${formatMoney(currentIva)}\n💰 *TOTAL: ${formatMoney(currentTotal)}*\n\n¡Gracias por su compra! 🙏\n💳 SINPE Móvil: 7295-2454`;
 
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
         }
 
-        async function saveInvoice() {
+        // ==========================================
+        // GUARDAR FACTURA CON ESTADO DE PAGO
+        // ==========================================
+        async function saveInvoice(estado = 'pagada') {
             if (cart.length === 0) { alert('El carrito está vacío'); return; }
+            if (!currentClient) { 
+                alert('Por favor seleccione un cliente'); 
+                return; 
+            }
+            
+            let montoAbonado = currentTotal;
+            let saldoPendiente = 0;
+            
+            if (estado === 'pendiente') {
+                // Preguntar si va a hacer un abono inicial
+                const abonoInicial = confirm('¿Desea registrar un abono inicial?');
+                if (abonoInicial) {
+                    const monto = prompt(`Monto del abono inicial (Total: ₡${formatMoney(currentTotal)}):`, currentTotal);
+                    if (monto !== null) {
+                        montoAbonado = parseFloat(monto) || 0;
+                        if (montoAbonado > currentTotal) {
+                            alert('El abono no puede ser mayor al total');
+                            return;
+                        }
+                        saldoPendiente = currentTotal - montoAbonado;
+                        if (saldoPendiente > 0) estado = 'parcial';
+                    }
+                } else {
+                    saldoPendiente = currentTotal;
+                }
+            }
+
             try {
                 const invoiceData = {
                     numero: document.getElementById('invoiceNumber').textContent,
                     fecha: firebase.firestore.FieldValue.serverTimestamp(),
-                    clienteId: currentClient ? currentClient.id : 'contado',
-                    clienteNombre: currentClient ? currentClient.nombre : 'Cliente Contado',
+                    clienteId: currentClient.id,
+                    clienteNombre: currentClient.nombre || 'Cliente',
                     items: cart,
                     subtotal: currentSubtotal,
                     impuesto: currentIva,
                     total: currentTotal,
-                    estado: 'pagada'
+                    estado: estado,
+                    saldoPendiente: saldoPendiente,
+                    abonoInicial: montoAbonado,
+                    pagos: estado === 'pagada' ? [{
+                        monto: currentTotal,
+                        metodo: 'contado',
+                        fecha: firebase.firestore.FieldValue.serverTimestamp()
+                    }] : []
                 };
+
                 await db.collection('facturas').add(invoiceData);
-                alert('✅ Factura guardada exitosamente');
-                cart = []; renderCart();
+                
+                const mensaje = estado === 'pagada' ? '✅ Factura guardada como PAGADA' : 
+                               `✅ Factura guardada como CRÉDITO\nSaldo pendiente: ₡${formatMoney(saldoPendiente)}`;
+                alert(mensaje);
+                
+                // Imprimir tíquet con info de pago
+                printTicket(estado !== 'pagada', montoAbonado);
+                
+                cart = []; 
+                renderCart();
                 invoiceCounter++;
                 document.getElementById('invoiceNumber').textContent = `FAC-${invoiceCounter}`;
+                
             } catch (error) {
                 console.error("Error guardando:", error);
                 alert('Error al guardar la factura.');
