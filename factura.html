@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Facturación EWE Esentia + Historial</title>
+    <title>Facturación EWE Esentia + Inventario</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
@@ -11,11 +11,16 @@
             --primary: #2d5016; --primary-light: #3d6b20; --accent: #d4a843;
             --bg: #f5f0eb; --surface: #ffffff; --text: #1a1a1a;
             --text-light: #666666; --border: #e0d5c7; --whatsapp: #25D366; --danger: #dc3545;
+            --warning: #f59e0b; --info: #3b82f6; --success: #10b981;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .header { background: var(--surface); padding: 12px 20px; border-bottom: 2px solid var(--accent); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .header h1 { font-family: 'Playfair Display', serif; color: var(--primary); font-size: 1.3rem; }
+        .header-nav { display: flex; gap: 8px; }
+        .nav-btn { padding: 6px 12px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--text-light); transition: all 0.2s; }
+        .nav-btn:hover { background: var(--bg); }
+        .nav-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
         .main-container { display: grid; grid-template-columns: 1fr 380px; flex: 1; overflow: hidden; }
         .left-panel { padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
         .card { background: var(--surface); border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid var(--border); }
@@ -33,17 +38,22 @@
         .product-card { background: #fafafa; border: 1px solid var(--border); border-radius: 8px; padding: 12px; cursor: pointer; transition: all 0.2s; position: relative; }
         .product-card:hover { border-color: var(--accent); transform: translateY(-2px); }
         .product-card.has-variants::after { content: '📦 Variantes'; position: absolute; top: 8px; right: 8px; font-size: 0.65rem; background: var(--accent); color: white; padding: 2px 6px; border-radius: 4px; }
+        .product-card.out-of-stock { opacity: 0.5; border-color: var(--danger); }
+        .product-card.out-of-stock::before { content: 'AGOTADO'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--danger); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; z-index: 2; }
+        .product-card.low-stock { border-color: var(--warning); }
         .product-category { font-size: 0.65rem; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 4px; }
         .product-name { font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; line-height: 1.2; }
         .product-price { font-size: 1rem; font-weight: 700; color: var(--primary); }
         .product-code { font-size: 0.7rem; color: #999; margin-top: 4px; font-family: monospace; }
-        
+        .stock-badge { position: absolute; top: 8px; left: 8px; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+        .stock-ok { background: #dcfce7; color: #166534; }
+        .stock-low { background: #fef3c7; color: #92400e; }
+        .stock-out { background: #fee2e2; color: #991b1b; }
         .right-panel { background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; height: 100%; }
         .invoice-header { padding: 15px; border-bottom: 1px solid var(--border); background: #fafafa; }
         .client-info-box { margin-top: 8px; padding: 10px; background: white; border-radius: 6px; border: 1px solid var(--border); font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
         .client-details { flex: 1; }
         .client-actions { display: flex; flex-direction: column; gap: 5px; }
-        
         .cart-items { flex: 1; overflow-y: auto; padding: 15px; }
         .cart-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px; background: #fafafa; border-radius: 8px; margin-bottom: 8px; border: 1px solid transparent; }
         .cart-item:hover { border-color: var(--accent); }
@@ -51,17 +61,17 @@
         .cart-item-name { font-weight: 600; font-size: 0.85rem; }
         .cart-item-price { font-size: 0.8rem; color: var(--text-light); }
         .cart-item-discount { font-size: 0.75rem; color: var(--danger); font-weight: 600; }
+        .cart-item-stock-warning { font-size: 0.7rem; color: var(--warning); font-weight: 600; margin-top: 2px; }
         .cart-item-controls { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
         .qty-btn { width: 26px; height: 26px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; font-weight: 700; color: var(--primary); display: flex; align-items: center; justify-content: center; }
+        .qty-btn:disabled { opacity: 0.3; cursor: not-allowed; }
         .qty-display { font-weight: 600; min-width: 20px; text-align: center; font-size: 0.9rem; }
         .remove-btn { color: var(--danger); cursor: pointer; margin-left: 8px; font-size: 1.2rem; }
-        
         .invoice-footer { padding: 15px; border-top: 2px solid var(--border); background: #fafafa; }
         .total-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem; }
         .total-row.grand-total { font-size: 1.2rem; font-weight: 700; color: var(--primary); margin-top: 8px; padding-top: 8px; border-top: 2px dashed var(--border); }
         .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
         .action-buttons-full { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 8px; }
-        
         .btn { padding: 10px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-primary:hover { background: var(--primary-light); }
@@ -75,37 +85,92 @@
         .btn-sm { padding: 6px 10px; font-size: 0.8rem; }
         .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
         .btn-outline:hover { background: #f0fdf4; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-info { background: var(--info); color: white; }
+        .btn-info:hover { background: #2563eb; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #059669; }
 
         /* Modales */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         .modal-overlay.active { display: flex; }
         .modal-content { background: white; border-radius: 12px; width: 90%; max-width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .modal-content.wide { max-width: 600px; }
+        .modal-content.xl { max-width: 900px; }
         .modal-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fafafa; border-radius: 12px 12px 0 0; }
         .modal-header h3 { font-family: 'Playfair Display', serif; color: var(--primary); font-size: 1.1rem; }
         .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-light); }
         .modal-body { padding: 20px; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-light); margin-bottom: 5px; }
-        .form-group select, .form-group input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; font-family: 'Inter', sans-serif; }
-        .form-group select:focus, .form-group input:focus { outline: none; border-color: var(--accent); }
+        .form-group select, .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; font-family: 'Inter', sans-serif; }
+        .form-group select:focus, .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); }
         .price-preview { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin-top: 15px; text-align: center; }
         .price-preview .original { text-decoration: line-through; color: var(--text-light); font-size: 0.9rem; }
         .price-preview .final { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+        .price-preview.warning { background: #fef3c7; border-color: #fbbf24; }
+        .price-preview.warning .final { color: var(--warning); }
 
-        /* Estilos específicos del Historial */
+        /* Stock Info en Modal */
+        .stock-info-bar { display: flex; align-items: center; gap: 10px; padding: 10px; background: #f9f5f0; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem; }
+        .stock-info-bar .stock-icon { font-size: 1.5rem; }
+        .stock-info-bar .stock-text { flex: 1; }
+        .stock-info-bar .stock-text strong { color: var(--primary); }
+
+        /* Historial */
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
         .stat-card { background: #f9f5f0; border: 1px solid var(--border); padding: 15px 10px; border-radius: 8px; text-align: center; }
         .stat-value { font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
         .stat-label { font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value.pending { color: var(--warning); }
+        .stat-value.debt { color: var(--danger); }
         .history-list { max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
-        .history-item { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid var(--border); transition: background 0.2s; }
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border); transition: background 0.2s; }
         .history-item:hover { background: #f9f5f0; }
         .history-item:last-child { border-bottom: none; }
+        .history-item.has-debt { border-left: 4px solid var(--danger); }
+        .history-item.partial { border-left: 4px solid var(--warning); }
+        .history-item.paid { border-left: 4px solid var(--success); }
+        .history-info { flex: 1; }
         .history-date { font-size: 0.8rem; color: var(--text-light); }
         .history-invoice { font-weight: 600; font-size: 0.9rem; color: var(--text); }
+        .history-totals { text-align: right; margin-right: 10px; }
         .history-total { font-weight: 700; color: var(--primary); }
-        .history-status { font-size: 0.75rem; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: #dcfce7; color: #166534; }
+        .history-balance { font-size: 0.8rem; color: var(--danger); font-weight: 600; }
+        .history-actions { display: flex; flex-direction: column; gap: 4px; }
+        .history-status { font-size: 0.7rem; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; font-weight: 600; display: inline-block; margin-top: 4px; }
+        .status-pagada { background: #dcfce7; color: #166534; }
+        .status-parcial { background: #fef3c7; color: #92400e; }
+        .status-pendiente { background: #fee2e2; color: #991b1b; }
+
+        /* Inventario */
+        .inventory-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+        .inventory-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .inventory-table th { background: #f9f5f0; padding: 10px; text-align: left; font-weight: 600; color: var(--primary); border-bottom: 2px solid var(--border); }
+        .inventory-table td { padding: 10px; border-bottom: 1px solid var(--border); }
+        .inventory-table tr:hover { background: #fafafa; }
+        .inventory-table .stock-cell { font-weight: 700; }
+        .stock-cell.ok { color: var(--success); }
+        .stock-cell.low { color: var(--warning); }
+        .stock-cell.out { color: var(--danger); }
+        .restock-input { width: 70px; padding: 6px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.85rem; }
+        .filter-tabs { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        .filter-tab { padding: 6px 12px; border: 1px solid var(--border); border-radius: 20px; background: white; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s; }
+        .filter-tab:hover { background: var(--bg); }
+        .filter-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* Modal de abono */
+        .payment-summary { background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
+        .payment-summary .row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem; }
+        .payment-summary .row.total { font-weight: 700; font-size: 1rem; border-top: 1px dashed #f59e0b; padding-top: 6px; margin-top: 6px; color: var(--danger); }
+        .payment-methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
+        .payment-method { padding: 10px; border: 2px solid var(--border); border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; font-weight: 600; }
+        .payment-method:hover { border-color: var(--accent); }
+        .payment-method.selected { border-color: var(--primary); background: #f0fdf4; color: var(--primary); }
+        .payment-method .icon { font-size: 1.5rem; display: block; margin-bottom: 4px; }
 
         #ticket-print { display: none; }
         @media print {
@@ -128,12 +193,14 @@
         .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .error-banner { background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 10px; display: none; }
-        
+        .success-banner { background: #dcfce7; color: #166534; padding: 10px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 10px; display: none; }
+        .warning-banner { background: #fef3c7; color: #92400e; padding: 10px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 10px; display: none; }
         @media (max-width: 768px) {
             .main-container { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
             .right-panel { border-left: none; border-top: 2px solid var(--border); }
             .products-grid { grid-template-columns: repeat(2, 1fr); }
             .stats-grid { grid-template-columns: 1fr; }
+            .inventory-stats { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
@@ -141,15 +208,20 @@
 
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
-        <p style="margin-top: 15px; color: var(--primary); font-weight: 600;">Cargando catálogos y clientes...</p>
+        <p style="margin-top: 15px; color: var(--primary); font-weight: 600;">Cargando catálogos, stock y clientes...</p>
     </div>
 
     <div class="header">
         <h1>🧾 EWE Esentia</h1>
+        <div class="header-nav">
+            <button class="nav-btn active" onclick="switchView('pos')">🧾 Facturación</button>
+            <button class="nav-btn" onclick="switchView('inventory')">📦 Inventario</button>
+        </div>
         <div style="font-size: 0.85rem; color: var(--text-light);" id="currentDate"></div>
     </div>
 
-    <div class="main-container">
+    <!-- VISTA POS (Facturación) -->
+    <div class="main-container" id="view-pos">
         <div class="left-panel">
             <div class="card">
                 <div class="card-title">👤 Cliente</div>
@@ -158,6 +230,7 @@
                     <input type="text" id="clientSearch" placeholder="Nombre, cédula o teléfono..." oninput="searchClients(this.value)">
                     <div class="search-results" id="clientResults"></div>
                 </div>
+                <button class="btn btn-primary btn-sm" style="width: 100%; margin-top: 10px;" onclick="openNewClientModal()">➕ Agregar Nuevo Cliente</button>
                 <div class="client-info-box" id="selectedClientInfo" style="display: none; margin-top: 10px; flex-direction: column; align-items: flex-start;">
                     <div class="client-details" style="width: 100%; margin-bottom: 10px;">
                         <div><strong>Nombre:</strong> <span id="clientNameDisplay"></span></div>
@@ -173,6 +246,7 @@
 
             <div class="card" style="flex: 1; display: flex; flex-direction: column;">
                 <div id="loadErrorBanner" class="error-banner"></div>
+                <div id="stockWarningBanner" class="warning-banner"></div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <div class="card-title" style="margin-bottom: 0;">📦 Productos</div>
                     <button class="btn btn-scan" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openScanner()">📷 Escanear</button>
@@ -208,13 +282,116 @@
                 </div>
                 <div class="action-buttons-full">
                     <button class="btn btn-whatsapp" onclick="sendWhatsApp()">📱 Enviar por WhatsApp</button>
-                    <button class="btn btn-primary" onclick="saveInvoice()">💾 Guardar en Firebase</button>
+                    <button class="btn btn-primary" onclick="saveInvoice()">💾 Guardar y Descontar Stock</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DE HISTORIAL DEL CLIENTE -->
+    <!-- VISTA INVENTARIO -->
+    <div class="main-container" id="view-inventory" style="display: none;">
+        <div class="left-panel" style="grid-column: 1 / -1;">
+            <div class="card">
+                <div class="card-title">📦 Gestión de Inventario</div>
+                <div class="inventory-stats" id="inventoryStats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="invTotalProducts">0</div>
+                        <div class="stat-label">Productos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="invInStock">0</div>
+                        <div class="stat-label">En Stock</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value pending" id="invLowStock">0</div>
+                        <div class="stat-label">Stock Bajo</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value debt" id="invOutOfStock">0</div>
+                        <div class="stat-label">Agotados</div>
+                    </div>
+                </div>
+
+                <div class="filter-tabs">
+                    <div class="filter-tab active" onclick="filterInventory('all', this)">Todos</div>
+                    <div class="filter-tab" onclick="filterInventory('ok', this)">✅ En Stock</div>
+                    <div class="filter-tab" onclick="filterInventory('low', this)">⚠️ Stock Bajo (≤5)</div>
+                    <div class="filter-tab" onclick="filterInventory('out', this)">❌ Agotados</div>
+                </div>
+
+                <!-- Dentro del div id="view-inventory", después de la tabla de inventario -->
+<div class="card" style="margin-top: 20px;">
+    <div class="card-title"> Kardex - Movimientos de Stock</div>
+    
+    <div class="filter-tabs">
+        <div class="filter-tab active" onclick="filterMovements('all', this)">Todos</div>
+        <div class="filter-tab" onclick="filterMovements('entrada', this)"> Entradas</div>
+        <div class="filter-tab" onclick="filterMovements('salida', this)">📤 Salidas</div>
+    </div>
+
+    <div style="overflow-x: auto; max-height: 400px;">
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Producto</th>
+                    <th>Tipo</th>
+                    <th>Cantidad</th>
+                    <th>Referencia</th>
+                    <th>Precio</th>
+                </tr>
+            </thead>
+            <tbody id="movementsTableBody">
+                <tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-light);">Cargando movimientos...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+                <div class="search-box" style="margin-bottom: 15px;">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="inventorySearch" placeholder="Buscar producto en inventario..." oninput="filterInventoryTable(this.value)">
+                </div>
+
+                <div style="overflow-x: auto; max-height: 500px;">
+                    <table class="inventory-table" id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th>Costo Unit.</th>
+                                <th>Última Compra</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody">
+                            <tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-light);">Cargando inventario...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL NUEVO CLIENTE -->
+    <div class="modal-overlay" id="newClientModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>➕ Nuevo Cliente</h3>
+                <button class="modal-close" onclick="closeNewClientModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group"><label>Nombre Completo *</label><input type="text" id="newClientName" placeholder="Ej: María Rodríguez"></div>
+                <div class="form-group"><label>Cédula / Identificación</label><input type="text" id="newClientId" placeholder="Ej: 102340567"></div>
+                <div class="form-group"><label>Teléfono / WhatsApp</label><input type="text" id="newClientPhone" placeholder="Ej: 8888-8888"></div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 12px;" onclick="saveNewClient()">💾 Guardar y Seleccionar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL HISTORIAL -->
     <div class="modal-overlay" id="historyModal">
         <div class="modal-content wide">
             <div class="modal-header">
@@ -223,20 +400,10 @@
             </div>
             <div class="modal-body">
                 <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value" id="statTotalSpent">₡0.00</div>
-                        <div class="stat-label">Total Gastado</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="statInvoiceCount">0</div>
-                        <div class="stat-label">Facturas</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="statAvgTicket">₡0.00</div>
-                        <div class="stat-label">Ticket Promedio</div>
-                    </div>
+                    <div class="stat-card"><div class="stat-value" id="statTotalSpent">₡0.00</div><div class="stat-label">Total Gastado</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statInvoiceCount">0</div><div class="stat-label">Facturas</div></div>
+                    <div class="stat-card"><div class="stat-value debt" id="statTotalDebt">₡0.00</div><div class="stat-label">Saldo Pendiente</div></div>
                 </div>
-                
                 <h4 style="margin-bottom: 10px; color: var(--primary); font-size: 0.95rem;">Últimas Compras</h4>
                 <div class="history-list" id="historyList">
                     <div style="text-align: center; padding: 20px; color: var(--text-light);">Cargando historial...</div>
@@ -245,7 +412,40 @@
         </div>
     </div>
 
-    <!-- MODAL DE SELECCIÓN DE VARIANTE Y DESCUENTO -->
+    <!-- MODAL ABONO -->
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💰 Registrar Abono</h3>
+                <button class="modal-close" onclick="closePaymentModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="payment-summary">
+                    <div class="row"><span>Factura:</span><span id="payInvoiceNum">-</span></div>
+                    <div class="row"><span>Total:</span><span id="payTotal">₡0.00</span></div>
+                    <div class="row"><span>Abonado:</span><span id="payPaid">₡0.00</span></div>
+                    <div class="row total"><span>Saldo Pendiente:</span><span id="payBalance">₡0.00</span></div>
+                </div>
+                <div class="form-group">
+                    <label>Método de Pago *</label>
+                    <div class="payment-methods">
+                        <div class="payment-method" data-method="Efectivo" onclick="selectPaymentMethod(this)"><span class="icon">💵</span>Efectivo</div>
+                        <div class="payment-method" data-method="SINPE" onclick="selectPaymentMethod(this)"><span class="icon">📱</span>SINPE</div>
+                        <div class="payment-method" data-method="Transferencia" onclick="selectPaymentMethod(this)"><span class="icon">🏦</span>Transferencia</div>
+                    </div>
+                </div>
+                <div class="form-group"><label>Monto del Abono *</label><input type="number" id="paymentAmount" step="0.01" min="0" placeholder="0.00" oninput="updatePaymentPreview()"></div>
+                <div class="form-group"><label>Nota / Referencia (opcional)</label><input type="text" id="paymentNote" placeholder="Ej: Últimos 4 dígitos de transferencia"></div>
+                <div class="price-preview" id="paymentPreview" style="display: none;">
+                    <div style="font-size: 0.85rem; color: var(--text-light);">Nuevo saldo después del abono:</div>
+                    <div class="final" id="newBalancePreview">₡0.00</div>
+                </div>
+                <button class="btn btn-success" style="width: 100%; margin-top: 20px; padding: 12px;" onclick="confirmPayment()">✅ Confirmar Abono</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PRODUCTO -->
     <div class="modal-overlay" id="productModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -254,33 +454,39 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="modalProductId">
+                
+                <!-- Barra de información de stock -->
+                <div class="stock-info-bar" id="modalStockBar">
+                    <span class="stock-icon" id="modalStockIcon">📦</span>
+                    <div class="stock-text">
+                        <div>Stock disponible: <strong id="modalStockQty">0</strong> unidades</div>
+                        <div style="font-size: 0.75rem; color: var(--text-light);" id="modalStockText">Verificando...</div>
+                    </div>
+                </div>
+
                 <div class="form-group" id="variantGroup" style="display: none;">
                     <label>Seleccionar Tamaño / Variante</label>
-                    <select id="modalVariantSelect" onchange="updateModalPricePreview()">
-                        <!-- Opciones se llenan dinámicamente -->
-                    </select>
+                    <select id="modalVariantSelect" onchange="updateModalPricePreview()"></select>
                 </div>
                 <div class="form-group">
-                    <label>Cantidad</label>
-                    <input type="number" id="modalQuantity" value="1" min="1" onchange="updateModalPricePreview()">
+                    <label>Cantidad (máx: <span id="maxQtyLabel">0</span>)</label>
+                    <input type="number" id="modalQuantity" value="1" min="1" onchange="updateModalPricePreview()" oninput="validateQuantity()">
                 </div>
                 <div class="form-group">
                     <label>Descuento (%)</label>
                     <input type="number" id="modalDiscount" value="0" min="0" max="100" step="0.1" onchange="updateModalPricePreview()">
                 </div>
-                <div class="price-preview">
+                <div class="price-preview" id="modalPricePreview">
                     <div class="original" id="modalOriginalPrice">₡0.00 c/u</div>
                     <div class="final" id="modalFinalPrice">₡0.00</div>
                     <div style="font-size: 0.8rem; color: var(--text-light); margin-top: 5px;" id="modalDiscountText"></div>
                 </div>
-                <button class="btn btn-primary" style="width: 100%; margin-top: 20px; padding: 12px;" onclick="confirmAddToCart()">
-                    ✅ Agregar al Carrito
-                </button>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 20px; padding: 12px;" onclick="confirmAddToCart()">✅ Agregar al Carrito</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DEL ESCÁNER -->
+    <!-- MODAL ESCÁNER -->
     <div class="modal-overlay" id="scannerModal">
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header" style="background: var(--primary); color: white;">
@@ -294,7 +500,38 @@
         </div>
     </div>
 
-    <!-- TICKET DE IMPRESIÓN -->
+    <!-- MODAL REABASTECER -->
+    <div class="modal-overlay" id="restockModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📦 Reabastecer Stock</h3>
+                <button class="modal-close" onclick="closeRestockModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="restockProductId">
+                <div style="background: #f9f5f0; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="font-size: 0.85rem; color: var(--text-light);">Producto:</div>
+                    <div style="font-weight: 700; color: var(--primary);" id="restockProductName">-</div>
+                    <div style="font-size: 0.85rem; margin-top: 5px;">Stock actual: <strong id="restockCurrentStock">0</strong> unidades</div>
+                </div>
+                <div class="form-group">
+                    <label>Cantidad a Agregar *</label>
+                    <input type="number" id="restockQuantity" min="1" value="1" placeholder="Ej: 10">
+                </div>
+                <div class="form-group">
+                    <label>Costo Unitario (opcional)</label>
+                    <input type="number" id="restockCost" step="0.01" placeholder="Ej: 3400">
+                </div>
+                <div class="form-group">
+                    <label>Nota (opcional)</label>
+                    <input type="text" id="restockNote" placeholder="Ej: Compra a proveedor X">
+                </div>
+                <button class="btn btn-success" style="width: 100%; margin-top: 10px; padding: 12px;" onclick="confirmRestock()">✅ Confirmar Reabastecimiento</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TICKET -->
     <div id="ticket-print">
         <div class="ticket-header">
             <h2>EWE ESENTIA</h2>
@@ -318,6 +555,93 @@
             <div style="margin-top: 8px; border-top: 1px dashed black; padding-top: 6px;">SINPE Móvil: 7295-2454</div>
         </div>
     </div>
+
+    <!-- MODAL DETALLE DE FACTURA -->
+<div class="modal-overlay" id="invoiceDetailModal">
+    <div class="modal-content wide">
+        <div class="modal-header">
+            <h3> Detalle de Factura <span id="detailInvoiceNum"></span></h3>
+            <button class="modal-close" onclick="closeInvoiceDetailModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="background: #f9f5f0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem;">
+                    <div><strong>Fecha:</strong> <span id="detailDate"></span></div>
+                    <div><strong>Cliente:</strong> <span id="detailClient"></span></div>
+                    <div><strong>Estado:</strong> <span id="detailStatus"></span></div>
+                    <div><strong>Total:</strong> <span id="detailTotal" style="font-weight: 700; color: var(--primary);"></span></div>
+                </div>
+            </div>
+
+            <h4 style="margin-bottom: 10px; color: var(--primary);">📦 Productos Comprados</h4>
+            <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <thead>
+                        <tr style="background: #f9f5f0;">
+                            <th style="padding: 10px; text-align: left; border-bottom: 1px solid var(--border);">Producto</th>
+                            <th style="padding: 10px; text-align: center; border-bottom: 1px solid var(--border);">Cant.</th>
+                            <th style="padding: 10px; text-align: right; border-bottom: 1px solid var(--border);">Precio Unit.</th>
+                            <th style="padding: 10px; text-align: center; border-bottom: 1px solid var(--border);">Desc.</th>
+                            <th style="padding: 10px; text-align: right; border-bottom: 1px solid var(--border);">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailProductsTable">
+                        <!-- Productos se llenan dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem;">
+                    <span>Subtotal (sin IVA):</span>
+                    <span id="detailSubtotal"></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem;">
+                    <span>IVA (13%):</span>
+                    <span id="detailTax"></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 700; color: var(--primary); border-top: 2px dashed #bbf7d0; padding-top: 8px; margin-top: 8px;">
+                    <span>TOTAL:</span>
+                    <span id="detailTotalFinal"></span>
+                </div>
+            </div>
+
+            <div id="detailPaymentsSection" style="display: none;">
+                <h4 style="margin-bottom: 10px; color: var(--primary);"> Historial de Pagos</h4>
+                <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 15px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                        <thead>
+                            <tr style="background: #f9f5f0;">
+                                <th style="padding: 10px; text-align: left; border-bottom: 1px solid var(--border);">Fecha</th>
+                                <th style="padding: 10px; text-align: left; border-bottom: 1px solid var(--border);">Método</th>
+                                <th style="padding: 10px; text-align: left; border-bottom: 1px solid var(--border);">Nota</th>
+                                <th style="padding: 10px; text-align: right; border-bottom: 1px solid var(--border);">Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailPaymentsTable">
+                            <!-- Pagos se llenan dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+                <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-light);">Total Abonado:</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: var(--success);" id="detailTotalPaid"></div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.85rem; color: var(--text-light);">Saldo Pendiente:</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: var(--danger);" id="detailBalance"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-whatsapp" style="flex: 1;" onclick="resendInvoiceFromDetail()">📱 Reenviar por WhatsApp</button>
+                <button class="btn btn-success" id="detailPaymentBtn" style="flex: 1; display: none;" onclick="openPaymentModalFromDetail()">💰 Registrar Abono</button>
+            </div>
+        </div>
+    </div>
+</div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -345,22 +669,109 @@
 
         let allProducts = [];
         let allClients = [];
+        let allStock = new Map(); // Map<productId, stockData>
         let currentClient = null;
         let cart = [];
-        let invoiceCounter = 1000;
+        // ✅ DESPUÉS
+        let currentInvoiceNumber = generateInvoiceNumber();
         let html5QrcodeScanner = null;
         let currentSubtotal = 0, currentIva = 0, currentTotal = 0;
+        let currentPaymentInvoice = null;
+        let selectedPaymentMethod = null;
+        let currentInventoryFilter = 'all';
+        let currentMovementFilter = 'all';
+        let currentDetailInvoice = null;
+        let stockMovements = [];
+        const LOW_STOCK_THRESHOLD = 5;
 
         document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('currentDate').textContent = new Date().toLocaleDateString('es-CR');
-            document.getElementById('invoiceNumber').textContent = `FAC-${invoiceCounter}`;
+            document.getElementById('invoiceNumber').textContent = `FAC-${currentInvoiceNumber}`;
             try {
-                await loadClients();
-                await loadProducts();
+                await Promise.all([loadClients(), loadStock(), loadProducts()]);
                 document.getElementById('loadingOverlay').style.opacity = '0';
                 setTimeout(() => { document.getElementById('loadingOverlay').style.display = 'none'; }, 300);
+                checkLowStockAlerts();
             } catch (error) { console.error("Error crítico:", error); }
         });
+
+        // ==========================================
+        // CARGA DE STOCK DESDE FIREBASE
+        // ==========================================
+        async function loadStock() {
+            try {
+                const snapshot = await db.collection('stock').get();
+                allStock.clear();
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    // Usar el ID del documento como clave (ej: "applecinnamonbliss")
+                    allStock.set(doc.id.toLowerCase(), {
+                        id: doc.id,
+                        cantidad: parseInt(data.cantidad) || 0,
+                        costoUnitario: parseFloat(data.costoUnitario) || 0,
+                        nombre: data.nombre || '',
+                        ultimaActualizacion: data.ultimaActualizacion || '',
+                        ultimaCompra: data.ultimaCompra || ''
+                    });
+                });
+                console.log(`✅ Stock cargado: ${allStock.size} productos`);
+            } catch (error) {
+                console.error("❌ Error cargando stock:", error);
+            }
+        }
+
+        // Buscar stock por producto - intenta múltiples estrategias de mapeo
+        function getStockForProduct(product) {
+            // Estrategia 1: Buscar por ID del documento = String(product.id)
+            let stock = allStock.get(String(product.id).toLowerCase());
+            if (stock) return stock;
+
+            // Estrategia 2: Buscar por nombre normalizado (lowercase, sin espacios, sin caracteres especiales)
+            const normalizedName = normalizeString(product.nombre);
+            for (const [key, value] of allStock.entries()) {
+                if (normalizeString(value.nombre) === normalizedName || key === normalizedName) {
+                    return value;
+                }
+            }
+
+            // Estrategia 3: Buscar por nombre que contenga el otro
+            for (const [key, value] of allStock.entries()) {
+                const stockNameNorm = normalizeString(value.nombre);
+                if (stockNameNorm.includes(normalizedName) || normalizedName.includes(stockNameNorm)) {
+                    return value;
+                }
+            }
+
+            return null;
+        }
+
+        function normalizeString(str) {
+            return String(str || '').toLowerCase()
+                .replace(/[^a-z0-9]/g, '')
+                .replace(/\s+/g, '');
+        }
+
+        function getStockStatus(stock) {
+            if (!stock) return { status: 'unknown', label: 'Sin registro', class: '' };
+            if (stock.cantidad <= 0) return { status: 'out', label: 'Agotado', class: 'stock-out' };
+            if (stock.cantidad <= LOW_STOCK_THRESHOLD) return { status: 'low', label: `Stock bajo: ${stock.cantidad}`, class: 'stock-low' };
+            return { status: 'ok', label: `Disponible: ${stock.cantidad}`, class: 'stock-ok' };
+        }
+
+        function checkLowStockAlerts() {
+            let lowStockCount = 0;
+            let outOfStockCount = 0;
+            allStock.forEach(stock => {
+                if (stock.cantidad <= 0) outOfStockCount++;
+                else if (stock.cantidad <= LOW_STOCK_THRESHOLD) lowStockCount++;
+            });
+
+            const banner = document.getElementById('stockWarningBanner');
+            if (outOfStockCount > 0 || lowStockCount > 0) {
+                banner.style.display = 'block';
+                banner.innerHTML = `⚠️ <strong>Alerta de Inventario:</strong> ${outOfStockCount} producto(s) agotado(s) y ${lowStockCount} con stock bajo. <a href="#" onclick="switchView('inventory'); return false;" style="color: inherit; text-decoration: underline;">Ver inventario</a>`;
+            }
+        }
 
         async function loadClients() {
             const snapshot = await db.collection('clientesBD').get();
@@ -374,24 +785,19 @@
                 { url: ProductManager.URLS.VELAS, catDefault: 'Velas' }
             ];
             let errors = [];
-
             for (const item of urls) {
                 try {
                     const response = await fetch(item.url);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const data = await response.json();
                     let productsToProcess = [];
-
                     if (Array.isArray(data)) {
                         productsToProcess = data.map(p => ({ ...p, categoriaDetectada: item.catDefault }));
                     } else {
                         for (const [categoria, items] of Object.entries(data)) {
-                            if (Array.isArray(items)) {
-                                items.forEach(p => { p.categoriaDetectada = categoria; productsToProcess.push(p); });
-                            }
+                            if (Array.isArray(items)) items.forEach(p => { p.categoriaDetectada = categoria; productsToProcess.push(p); });
                         }
                     }
-
                     const mapped = productsToProcess.map(p => {
                         const precioBase = (p.precioOferta && p.precioOferta > 0) ? p.precioOferta : (p.precioOriginal || 0);
                         return {
@@ -408,12 +814,177 @@
                     errors.push(item.catDefault);
                 }
             }
-
             if (errors.length > 0) {
                 document.getElementById('loadErrorBanner').style.display = 'block';
                 document.getElementById('loadErrorBanner').innerHTML = `⚠️ No se pudieron cargar: <strong>${errors.join(', ')}</strong>.`;
             }
             renderProducts(allProducts);
+        }
+
+        // Variable global para almacenar la factura actual en detalle
+
+
+// Función para abrir el modal de detalle
+async function openInvoiceDetailModal(invoiceId) {
+    try {
+        const doc = await db.collection('facturas').doc(invoiceId).get();
+        if (!doc.exists) {
+            alert('Factura no encontrada');
+            return;
+        }
+
+        currentDetailInvoice = { id: doc.id, ...doc.data() };
+        const factura = currentDetailInvoice;
+
+        // Información general
+        document.getElementById('detailInvoiceNum').textContent = factura.numero || 'S/N';
+        
+        const dateObj = factura.fecha?.toDate ? factura.fecha.toDate() : new Date(factura.fecha);
+        document.getElementById('detailDate').textContent = dateObj.toLocaleString('es-CR');
+        document.getElementById('detailClient').textContent = factura.clienteNombre || 'Cliente Contado';
+
+        // Calcular abonos y saldo
+        const abonos = factura.abonos || [];
+        const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
+        const totalFactura = parseFloat(factura.total) || 0;
+        const saldoPendiente = Math.max(0, totalFactura - totalAbonado);
+
+        // Estado
+        let estado, estadoClass;
+        if (saldoPendiente <= 0 && totalFactura > 0) {
+            estado = '✅ Pagada';
+            estadoClass = 'status-pagada';
+        } else if (totalAbonado > 0) {
+            estado = '⚠️ Pago Parcial';
+            estadoClass = 'status-parcial';
+        } else {
+            estado = ' Pendiente';
+            estadoClass = 'status-pendiente';
+        }
+        document.getElementById('detailStatus').innerHTML = `<span class="history-status ${estadoClass}">${estado}</span>`;
+        document.getElementById('detailTotal').textContent = `₡${formatMoney(totalFactura)}`;
+
+        // Productos
+        const productsTable = document.getElementById('detailProductsTable');
+        if (factura.items && factura.items.length > 0) {
+            productsTable.innerHTML = factura.items.map(item => {
+                const itemTotal = item.precioFinalUnitario * item.cantidad;
+                const discountText = item.descuentoPct > 0 ? `${item.descuentoPct}%` : '-';
+                
+                return `
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 10px;">
+                            <div style="font-weight: 600;">${item.nombre}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-light);">ID: ${item.id}</div>
+                        </td>
+                        <td style="padding: 10px; text-align: center;">${item.cantidad}</td>
+                        <td style="padding: 10px; text-align: right;">₡${formatMoney(item.precioUnitario)}</td>
+                        <td style="padding: 10px; text-align: center; color: ${item.descuentoPct > 0 ? 'var(--danger)' : 'var(--text-light)'};">${discountText}</td>
+                        <td style="padding: 10px; text-align: right; font-weight: 600;">₡${formatMoney(itemTotal)}</td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            productsTable.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-light);">No hay productos registrados</td></tr>';
+        }
+
+        // Totales
+        document.getElementById('detailSubtotal').textContent = `₡${formatMoney(factura.subtotal || 0)}`;
+        document.getElementById('detailTax').textContent = `₡${formatMoney(factura.impuesto || 0)}`;
+        document.getElementById('detailTotalFinal').textContent = `₡${formatMoney(totalFactura)}`;
+
+        // Sección de pagos (solo si hay abonos o saldo pendiente)
+        const paymentsSection = document.getElementById('detailPaymentsSection');
+        if (abonos.length > 0 || saldoPendiente > 0) {
+            paymentsSection.style.display = 'block';
+            
+            if (abonos.length > 0) {
+                const paymentsTable = document.getElementById('detailPaymentsTable');
+                paymentsTable.innerHTML = abonos.map(a => {
+                    const aDate = a.fecha?.toDate ? a.fecha.toDate() : new Date(a.fecha);
+                    return `
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 10px;">${aDate.toLocaleDateString('es-CR')}</td>
+                            <td style="padding: 10px;">${a.metodo}</td>
+                            <td style="padding: 10px; font-size: 0.8rem; color: var(--text-light);">${a.nota || '-'}</td>
+                            <td style="padding: 10px; text-align: right; font-weight: 600; color: var(--success);">₡${formatMoney(a.monto)}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                document.getElementById('detailPaymentsTable').innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: var(--text-light);">Sin pagos registrados</td></tr>';
+            }
+
+            document.getElementById('detailTotalPaid').textContent = `₡${formatMoney(totalAbonado)}`;
+            document.getElementById('detailBalance').textContent = `₡${formatMoney(saldoPendiente)}`;
+
+            // Mostrar botón de abono solo si hay saldo pendiente
+            document.getElementById('detailPaymentBtn').style.display = saldoPendiente > 0 ? 'flex' : 'none';
+        } else {
+            paymentsSection.style.display = 'none';
+            document.getElementById('detailPaymentBtn').style.display = 'none';
+        }
+
+        document.getElementById('invoiceDetailModal').classList.add('active');
+    } catch (error) {
+        console.error("Error abriendo detalle de factura:", error);
+        alert('Error al cargar el detalle de la factura.');
+    }
+}
+
+function closeInvoiceDetailModal() {
+    document.getElementById('invoiceDetailModal').classList.remove('active');
+    currentDetailInvoice = null;
+}
+
+function resendInvoiceFromDetail() {
+    if (currentDetailInvoice) {
+        resendInvoice(currentDetailInvoice.id);
+    }
+}
+
+function openPaymentModalFromDetail() {
+    if (currentDetailInvoice) {
+        closeInvoiceDetailModal();
+        setTimeout(() => {
+            openPaymentModal(currentDetailInvoice.id);
+        }, 300);
+    }
+}
+
+       
+
+        // ==========================================
+        // CLIENTES
+        // ==========================================
+        function openNewClientModal() {
+            document.getElementById('newClientName').value = '';
+            document.getElementById('newClientId').value = '';
+            document.getElementById('newClientPhone').value = '';
+            document.getElementById('newClientModal').classList.add('active');
+        }
+        function closeNewClientModal() { document.getElementById('newClientModal').classList.remove('active'); }
+
+        async function saveNewClient() {
+            const nombre = document.getElementById('newClientName').value.trim();
+            const cedula = document.getElementById('newClientId').value.trim();
+            const telefono = document.getElementById('newClientPhone').value.trim();
+            if (!nombre) { alert('El nombre del cliente es obligatorio'); return; }
+            try {
+                const newClientData = {
+                    nombre, cedula: cedula || 'N/A', telefono: telefono || 'N/A',
+                    fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                const docRef = await db.collection('clientesBD').add(newClientData);
+                const newClient = { id: docRef.id, ...newClientData };
+                allClients.push(newClient);
+                selectClient(newClient.id);
+                closeNewClientModal();
+                alert('✅ Cliente agregado exitosamente');
+            } catch (error) {
+                console.error("Error guardando cliente:", error);
+                alert('Error al guardar el cliente.');
+            }
         }
 
         function searchClients(query) {
@@ -457,71 +1028,212 @@
         }
 
         // ==========================================
-        // NUEVO: SISTEMA DE HISTORIAL DE CLIENTES
+        // HISTORIAL
         // ==========================================
         async function openHistoryModal() {
             if (!currentClient) return;
-            
             document.getElementById('historyClientName').textContent = currentClient.nombre || 'Cliente';
             document.getElementById('historyModal').classList.add('active');
             document.getElementById('historyList').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-light);">Cargando historial...</div>';
 
             try {
-                // Obtenemos todas las facturas de este cliente
                 const snapshot = await db.collection('facturas').where('clienteId', '==', currentClient.id).get();
                 let facturas = [];
                 snapshot.forEach(doc => facturas.push({ id: doc.id, ...doc.data() }));
-
-                // Ordenamos por fecha descendente en JS (evita problemas de índices de Firestore)
                 facturas.sort((a, b) => {
                     const dateA = a.fecha?.toDate ? a.fecha.toDate() : new Date(a.fecha);
                     const dateB = b.fecha?.toDate ? b.fecha.toDate() : new Date(b.fecha);
                     return dateB - dateA;
                 });
 
-                // Calculamos estadísticas
-                const totalGastado = facturas.reduce((sum, f) => sum + (f.total || 0), 0);
-                const totalFacturas = facturas.length;
-                const promedio = totalFacturas > 0 ? (totalGastado / totalFacturas) : 0;
-
-                // Actualizamos las tarjetas de resumen
-                document.getElementById('statTotalSpent').textContent = `₡${formatMoney(totalGastado)}`;
-                document.getElementById('statInvoiceCount').textContent = totalFacturas;
-                document.getElementById('statAvgTicket').textContent = `₡${formatMoney(promedio)}`;
-
-                // Renderizamos la lista
+                let totalGastado = 0, totalDebt = 0;
                 const listContainer = document.getElementById('historyList');
+                
                 if (facturas.length === 0) {
                     listContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-light);">Este cliente aún no tiene facturas registradas.</div>';
                 } else {
-                    listContainer.innerHTML = facturas.slice(0, 20).map(f => { // Mostramos las últimas 20
+                    listContainer.innerHTML = facturas.map(f => {
+                        const abonos = f.abonos || [];
+                        const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
+                        const totalFactura = parseFloat(f.total) || 0;
+                        const saldoPendiente = Math.max(0, totalFactura - totalAbonado);
+                        totalGastado += totalFactura;
+                        if (saldoPendiente > 0) totalDebt += saldoPendiente;
+
+                        let estado, estadoClass, itemClass;
+                        if (saldoPendiente <= 0 && totalFactura > 0) { estado = 'Pagada'; estadoClass = 'status-pagada'; itemClass = 'paid'; }
+                        else if (totalAbonado > 0) { estado = 'Parcial'; estadoClass = 'status-parcial'; itemClass = 'partial'; }
+                        else { estado = 'Pendiente'; estadoClass = 'status-pendiente'; itemClass = 'has-debt'; }
+
                         const dateObj = f.fecha?.toDate ? f.fecha.toDate() : new Date(f.fecha);
                         const dateStr = dateObj.toLocaleDateString('es-CR', { day: '2-digit', month: 'short', year: 'numeric' });
-                        const statusClass = f.estado === 'pagada' ? 'background: #dcfce7; color: #166534;' : 'background: #fee2e2; color: #991b1b;';
-                        
-                        return `
-                        <div class="history-item">
-                            <div>
-                                <div class="history-invoice">${f.numero || 'S/N'}</div>
-                                <div class="history-date">${dateStr}</div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div class="history-total">₡${formatMoney(f.total || 0)}</div>
-                                <div class="history-status" style="${statusClass}">${f.estado || 'pendiente'}</div>
-                            </div>
-                        </div>`;
+
+                       return `
+<div class="history-item ${itemClass}" style="cursor: pointer;" onclick="openInvoiceDetailModal('${f.id}')">
+    <div class="history-info">
+        <div class="history-invoice">${f.numero || 'S/N'} 👁️</div>
+        <div class="history-date">${dateStr}</div>
+        <span class="history-status ${estadoClass}">${estado}</span>
+        ${totalAbonado > 0 ? `<div style="font-size: 0.75rem; color: var(--success); margin-top: 2px;">Abonado: ₡${formatMoney(totalAbonado)}</div>` : ''}
+    </div>
+    <div class="history-totals">
+        <div class="history-total">₡${formatMoney(totalFactura)}</div>
+        ${saldoPendiente > 0 ? `<div class="history-balance">Saldo: ₡${formatMoney(saldoPendiente)}</div>` : ''}
+    </div>
+    <div class="history-actions" onclick="event.stopPropagation();">
+        <button class="btn btn-whatsapp btn-sm" onclick="resendInvoice('${f.id}')">📱</button>
+        ${saldoPendiente > 0 ? `<button class="btn btn-success btn-sm" onclick="openPaymentModal('${f.id}')">💰</button>` : ''}
+    </div>
+</div>`;
                     }).join('');
                 }
+
+                document.getElementById('statTotalSpent').textContent = `₡${formatMoney(totalGastado)}`;
+                document.getElementById('statInvoiceCount').textContent = facturas.length;
+                document.getElementById('statTotalDebt').textContent = `₡${formatMoney(totalDebt)}`;
             } catch (error) {
                 console.error("Error cargando historial:", error);
                 document.getElementById('historyList').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">Error al cargar el historial.</div>';
             }
         }
+        function closeHistoryModal() { document.getElementById('historyModal').classList.remove('active'); }
 
-        function closeHistoryModal() {
-            document.getElementById('historyModal').classList.remove('active');
+        // ==========================================
+        // ABONOS
+        // ==========================================
+        async function openPaymentModal(invoiceId) {
+            try {
+                const doc = await db.collection('facturas').doc(invoiceId).get();
+                if (!doc.exists) { alert('Factura no encontrada'); return; }
+                currentPaymentInvoice = { id: doc.id, ...doc.data() };
+                const abonos = currentPaymentInvoice.abonos || [];
+                const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
+                const saldo = Math.max(0, (parseFloat(currentPaymentInvoice.total) || 0) - totalAbonado);
+
+                document.getElementById('payInvoiceNum').textContent = currentPaymentInvoice.numero || 'S/N';
+                document.getElementById('payTotal').textContent = `₡${formatMoney(parseFloat(currentPaymentInvoice.total) || 0)}`;
+                document.getElementById('payPaid').textContent = `₡${formatMoney(totalAbonado)}`;
+                document.getElementById('payBalance').textContent = `₡${formatMoney(saldo)}`;
+                document.getElementById('paymentAmount').value = '';
+                document.getElementById('paymentAmount').max = saldo;
+                document.getElementById('paymentNote').value = '';
+                document.getElementById('paymentPreview').style.display = 'none';
+                document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('selected'));
+                selectedPaymentMethod = null;
+                document.getElementById('paymentModal').classList.add('active');
+            } catch (error) {
+                console.error("Error abriendo modal de pago:", error);
+                alert('Error al cargar la factura.');
+            }
+        }
+        function closePaymentModal() { document.getElementById('paymentModal').classList.remove('active'); currentPaymentInvoice = null; selectedPaymentMethod = null; }
+        function selectPaymentMethod(element) {
+            document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedPaymentMethod = element.dataset.method;
+        }
+        function updatePaymentPreview() {
+            const amount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+            const abonos = currentPaymentInvoice.abonos || [];
+            const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
+            const saldo = Math.max(0, (parseFloat(currentPaymentInvoice.total) || 0) - totalAbonado);
+            const newBalance = Math.max(0, saldo - amount);
+            const preview = document.getElementById('paymentPreview');
+            if (amount > 0) {
+                preview.style.display = 'block';
+                document.getElementById('newBalancePreview').textContent = `₡${formatMoney(newBalance)}`;
+            } else { preview.style.display = 'none'; }
+        }
+        async function confirmPayment() {
+            if (!selectedPaymentMethod) { alert('Seleccione un método de pago'); return; }
+            const amount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+            if (amount <= 0) { alert('Ingrese un monto válido'); return; }
+            const abonos = currentPaymentInvoice.abonos || [];
+            const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
+            const saldo = Math.max(0, (parseFloat(currentPaymentInvoice.total) || 0) - totalAbonado);
+            if (amount > saldo) {
+                if (!confirm(`El monto (₡${formatMoney(amount)}) excede el saldo pendiente (₡${formatMoney(saldo)}). ¿Desea continuar?`)) return;
+            }
+            const note = document.getElementById('paymentNote').value.trim();
+            try {
+                // ✅ DESPUÉS (CORRECTO)
+const newAbono = {
+    monto: amount,
+    metodo: selectedPaymentMethod,
+    nota: note || '-',
+    fecha: new Date()  // ✅ Usa Date de JavaScript
+};
+
+await db.collection('facturas').doc(currentPaymentInvoice.id).update({
+    abonos: firebase.firestore.FieldValue.arrayUnion(newAbono)
+});
+                alert(`✅ Abono de ₡${formatMoney(amount)} registrado exitosamente`);
+                closePaymentModal();
+                openHistoryModal();
+            } catch (error) {
+                console.error("Error registrando abono:", error);
+                alert('Error al registrar el abono.');
+            }
         }
 
+        async function resendInvoice(invoiceId) {
+            try {
+                const doc = await db.collection('facturas').doc(invoiceId).get();
+                if (!doc.exists) { alert('Factura no encontrada'); return; }
+                const factura = { id: doc.id, ...doc.data() };
+                let phone = '';
+                let clientName = factura.clienteNombre || 'Cliente';
+                const clienteLocal = allClients.find(c => c.id === factura.clienteId);
+                if (clienteLocal && clienteLocal.telefono) {
+                    phone = String(clienteLocal.telefono).replace(/\D/g, '');
+                    if (phone.length === 8) phone = '506' + phone;
+                } else if (factura.clienteTelefono) {
+                    phone = String(factura.clienteTelefono).replace(/\D/g, '');
+                    if (phone.length === 8) phone = '506' + phone;
+                }
+                if (!phone) {
+                    phone = prompt(`Ingrese el número de WhatsApp para reenviar la factura ${factura.numero}:`);
+                    if (!phone) return;
+                    phone = String(phone).replace(/\D/g, '');
+                    if (phone.length === 8) phone = '506' + phone;
+                }
+
+                const abonos = factura.abonos || [];
+                const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
+                const totalFactura = parseFloat(factura.total) || 0;
+                const saldoPendiente = Math.max(0, totalFactura - totalAbonado);
+
+                let message = `🌿 *FACTURA EWE ESENTIA* 🌿\n📄 Factura: ${factura.numero || 'S/N'}\n👤 Cliente: ${clientName}\n`;
+                const dateObj = factura.fecha?.toDate ? factura.fecha.toDate() : new Date(factura.fecha);
+                message += `📅 Fecha: ${dateObj.toLocaleDateString('es-CR')}\n━━━━━━━━━━━━━━━━━━\n`;
+                if (factura.items && factura.items.length > 0) {
+                    factura.items.forEach(item => {
+                        const desc = item.descuentoPct > 0 ? `${item.nombre} (-${item.descuentoPct}%)` : item.nombre;
+                        message += `▪️ ${item.cantidad} x ${desc}\n   ₡${formatMoney(item.precioFinalUnitario * item.cantidad)}\n`;
+                    });
+                }
+                message += `━━━━━━━━━━━━━━━━━━\nSubtotal: ₡${formatMoney(factura.subtotal || 0)}\nIVA (13%): ₡${formatMoney(factura.impuesto || 0)}\n💰 *TOTAL: ₡${formatMoney(totalFactura)}*\n\n`;
+                if (abonos.length > 0) {
+                    message += `💳 *PAGOS REALIZADOS:*\n`;
+                    abonos.forEach((a, idx) => {
+                        const aDate = a.fecha?.toDate ? a.fecha.toDate() : new Date(a.fecha);
+                        message += `  ${idx + 1}. ₡${formatMoney(a.monto)} - ${a.metodo} (${aDate.toLocaleDateString('es-CR')})\n`;
+                    });
+                    message += `\nTotal Abonado: ₡${formatMoney(totalAbonado)}\n`;
+                    if (saldoPendiente > 0) message += `⚠️ *SALDO PENDIENTE: ₡${formatMoney(saldoPendiente)}*\n\n`;
+                    else message += `✅ *FACTURA PAGADA*\n\n`;
+                }
+                message += `¡Gracias por su compra! 🙏\n💳 SINPE Móvil: 7295-2454`;
+                window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+            } catch (error) {
+                console.error("Error reenviando factura:", error);
+                alert('Error al reenviar la factura.');
+            }
+        }
+
+        // ==========================================
+        // PRODUCTOS Y CARRITO CON VALIDACIÓN DE STOCK
+        // ==========================================
         function renderProducts(products) {
             const grid = document.getElementById('productsGrid');
             if (products.length === 0) {
@@ -530,8 +1242,15 @@
             }
             grid.innerHTML = products.map(p => {
                 const hasVariants = p.variantes && p.variantes.length > 0;
+                const stock = getStockForProduct(p);
+                const stockStatus = getStockStatus(stock);
+                const isOutOfStock = stock && stock.cantidad <= 0;
+                const isLowStock = stock && stock.cantidad > 0 && stock.cantidad <= LOW_STOCK_THRESHOLD;
+
                 return `
-                <div class="product-card ${hasVariants ? 'has-variants' : ''}" onclick="openProductModal('${p.id}')">
+                <div class="product-card ${hasVariants ? 'has-variants' : ''} ${isOutOfStock ? 'out-of-stock' : ''} ${isLowStock ? 'low-stock' : ''}" 
+                     onclick="${isOutOfStock ? `alert('⚠️ Producto agotado. No se puede agregar al carrito.'); return false;` : `openProductModal('${p.id}')`}">
+                    <div class="stock-badge ${stockStatus.class}">${stockStatus.label}</div>
                     <div class="product-category">${p.categoria}</div>
                     <div class="product-name">${p.nombre}</div>
                     <div class="product-price">Desde ₡${formatMoney(p.precioBase)}</div>
@@ -549,9 +1268,6 @@
             renderProducts(filtered);
         }
 
-        // ==========================================
-        // LÓGICA DEL MODAL DE PRODUCTO
-        // ==========================================
         function openProductModal(productId) {
             const product = allProducts.find(p => p.id === productId);
             if (!product) return;
@@ -560,6 +1276,46 @@
             document.getElementById('modalProductName').textContent = product.nombre;
             document.getElementById('modalQuantity').value = 1;
             document.getElementById('modalDiscount').value = 0;
+
+            // Actualizar información de stock
+            const stock = getStockForProduct(product);
+            const stockBar = document.getElementById('modalStockBar');
+            const stockIcon = document.getElementById('modalStockIcon');
+            const stockQty = document.getElementById('modalStockQty');
+            const stockText = document.getElementById('modalStockText');
+            const maxQtyLabel = document.getElementById('maxQtyLabel');
+            const pricePreview = document.getElementById('modalPricePreview');
+
+            if (stock) {
+                stockQty.textContent = stock.cantidad;
+                maxQtyLabel.textContent = stock.cantidad;
+                document.getElementById('modalQuantity').max = stock.cantidad;
+                
+                if (stock.cantidad <= 0) {
+                    stockIcon.textContent = '❌';
+                    stockText.textContent = 'Producto agotado. No se puede agregar al carrito.';
+                    stockBar.style.background = '#fee2e2';
+                    pricePreview.classList.add('warning');
+                } else if (stock.cantidad <= LOW_STOCK_THRESHOLD) {
+                    stockIcon.textContent = '⚠️';
+                    stockText.textContent = `¡Últimas ${stock.cantidad} unidades disponibles!`;
+                    stockBar.style.background = '#fef3c7';
+                    pricePreview.classList.remove('warning');
+                } else {
+                    stockIcon.textContent = '✅';
+                    stockText.textContent = 'Stock suficiente disponible';
+                    stockBar.style.background = '#dcfce7';
+                    pricePreview.classList.remove('warning');
+                }
+            } else {
+                stockQty.textContent = '?';
+                maxQtyLabel.textContent = '∞';
+                document.getElementById('modalQuantity').max = 999;
+                stockIcon.textContent = 'ℹ️';
+                stockText.textContent = 'Sin registro en inventario. Se permitirá la venta.';
+                stockBar.style.background = '#f0f9ff';
+                pricePreview.classList.remove('warning');
+            }
 
             const variantGroup = document.getElementById('variantGroup');
             const variantSelect = document.getElementById('modalVariantSelect');
@@ -590,130 +1346,561 @@
             document.getElementById('productModal').classList.add('active');
         }
 
-        function closeProductModal() {
-            document.getElementById('productModal').classList.remove('active');
+        function validateQuantity() {
+            const qtyInput = document.getElementById('modalQuantity');
+            const maxQty = parseInt(qtyInput.max) || 999;
+            const qty = parseInt(qtyInput.value) || 1;
+            if (qty > maxQty) {
+                qtyInput.value = maxQty;
+                alert(`⚠️ Stock máximo disponible: ${maxQty} unidades`);
+            }
+            if (qty < 1) qtyInput.value = 1;
+            updateModalPricePreview();
         }
+
+        function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
 
         function updateModalPricePreview() {
             const productId = document.getElementById('modalProductId').value;
             const product = allProducts.find(p => p.id === productId);
-            
             let basePrice = product.precioBase;
             const variantSelect = document.getElementById('modalVariantSelect');
-            
             if (variantSelect.style.display !== 'none' && variantSelect.value !== 'base') {
                 basePrice = parseFloat(variantSelect.options[variantSelect.selectedIndex].dataset.price);
             }
-
             const qty = parseInt(document.getElementById('modalQuantity').value) || 1;
             const discountPct = parseFloat(document.getElementById('modalDiscount').value) || 0;
-
             const priceWithDiscount = basePrice * (1 - (discountPct / 100));
             const totalFinal = priceWithDiscount * qty;
-
             document.getElementById('modalOriginalPrice').textContent = `₡${formatMoney(basePrice)} c/u`;
             document.getElementById('modalFinalPrice').textContent = `₡${formatMoney(totalFinal)}`;
-            
-            if (discountPct > 0) {
-                document.getElementById('modalDiscountText').textContent = `Descuento aplicado: ${discountPct}% (-₡${formatMoney(basePrice * qty - totalFinal)})`;
-            } else {
-                document.getElementById('modalDiscountText').textContent = '';
-            }
+            document.getElementById('modalDiscountText').textContent = discountPct > 0 ? `Descuento aplicado: ${discountPct}% (-₡${formatMoney(basePrice * qty - totalFinal)})` : '';
         }
+
+        // Genera número de factura en formato DDMMYYYYHHMM
+// Ejemplo: 311020261430 = 31/10/2026 a las 14:30
+function generateInvoiceNumber() {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${day}${month}${year}${hours}${minutes}`;
+}
 
         function confirmAddToCart() {
             const productId = document.getElementById('modalProductId').value;
             const product = allProducts.find(p => p.id === productId);
+            const stock = getStockForProduct(product);
             
+            // Validar stock antes de agregar
+            if (stock && stock.cantidad <= 0) {
+                alert('❌ Producto agotado. No se puede agregar al carrito.');
+                return;
+            }
+
             let basePrice = product.precioBase;
             let variantName = '';
             const variantSelect = document.getElementById('modalVariantSelect');
-            
             if (variantSelect.style.display !== 'none' && variantSelect.value !== 'base') {
                 basePrice = parseFloat(variantSelect.options[variantSelect.selectedIndex].dataset.price);
                 variantName = variantSelect.value;
             }
-
             const qty = parseInt(document.getElementById('modalQuantity').value) || 1;
+            
+            // Validar que no exceda el stock disponible (considerando lo que ya está en el carrito)
+            const currentInCart = cart.filter(item => item.id === product.id && (!variantName || item.nombre.includes(variantName)))
+                                      .reduce((sum, item) => sum + item.cantidad, 0);
+            const totalRequested = currentInCart + qty;
+            
+            if (stock && totalRequested > stock.cantidad) {
+                alert(`⚠️ Stock insuficiente.\n\nDisponible: ${stock.cantidad}\nEn carrito: ${currentInCart}\nSolicitado: ${qty}\n\nMáximo permitido: ${stock.cantidad - currentInCart}`);
+                return;
+            }
+
             const discountPct = parseFloat(document.getElementById('modalDiscount').value) || 0;
             const finalPriceUnit = basePrice * (1 - (discountPct / 100));
-
             const displayName = variantName ? `${product.nombre} (${variantName})` : product.nombre;
 
             cart.push({
-                id: product.id,
-                nombre: displayName,
-                precioUnitario: basePrice,
-                descuentoPct: discountPct,
-                precioFinalUnitario: finalPriceUnit,
-                cantidad: qty
+                id: product.id, nombre: displayName,
+                precioUnitario: basePrice, descuentoPct: discountPct,
+                precioFinalUnitario: finalPriceUnit, cantidad: qty,
+                stockId: stock ? stock.id : null // Guardar referencia al stock
             });
-
             closeProductModal();
             renderCart();
         }
 
-        // ==========================================
-        // CARRITO Y TOTALES
-        // ==========================================
         function renderCart() {
             const container = document.getElementById('cartItems');
             if (cart.length === 0) {
                 container.innerHTML = '<div style="text-align: center; color: var(--text-light); padding: 40px 20px; font-size: 0.9rem;">Carrito vacío.<br>Agregue productos o escanee un código.</div>';
                 updateTotals(); return;
             }
-
-            container.innerHTML = cart.map((item, index) => `
+            container.innerHTML = cart.map((item, index) => {
+                const product = allProducts.find(p => p.id === item.id);
+                const stock = product ? getStockForProduct(product) : null;
+                const stockWarning = stock && item.cantidad >= stock.cantidad ? 
+                    `<div class="cart-item-stock-warning">⚠️ Últimas unidades</div>` : '';
+                
+                return `
                 <div class="cart-item">
                     <div class="cart-item-info">
                         <div class="cart-item-name">${item.nombre}</div>
                         ${item.descuentoPct > 0 ? `<div class="cart-item-discount">🏷️ -${item.descuentoPct}% descuento</div>` : ''}
                         <div class="cart-item-price">₡${formatMoney(item.precioFinalUnitario)} c/u</div>
+                        ${stockWarning}
                     </div>
                     <div class="cart-item-controls">
                         <button class="qty-btn" onclick="updateCartItemQty(${index}, -1)">-</button>
                         <span class="qty-display">${item.cantidad}</span>
-                        <button class="qty-btn" onclick="updateCartItemQty(${index}, 1)">+</button>
+                        <button class="qty-btn" onclick="updateCartItemQty(${index}, 1)" ${stock && item.cantidad >= stock.cantidad ? 'disabled' : ''}>+</button>
                         <span class="remove-btn" onclick="removeFromCart(${index})">&times;</span>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
             updateTotals();
         }
 
         function updateCartItemQty(index, change) {
-            cart[index].cantidad += change;
-            if (cart[index].cantidad <= 0) cart.splice(index, 1);
+            const item = cart[index];
+            const product = allProducts.find(p => p.id === item.id);
+            const stock = product ? getStockForProduct(product) : null;
+            
+            const newQty = item.cantidad + change;
+            if (stock && newQty > stock.cantidad) {
+                alert(`⚠️ Stock máximo disponible: ${stock.cantidad} unidades`);
+                return;
+            }
+            if (newQty <= 0) {
+                cart.splice(index, 1);
+            } else {
+                cart[index].cantidad = newQty;
+            }
             renderCart();
         }
 
-        function removeFromCart(index) {
-            cart.splice(index, 1);
-            renderCart();
-        }
-
-        function clearCart() {
-            if (cart.length === 0) return;
-            if (confirm('¿Limpiar el carrito?')) { cart = []; renderCart(); }
-        }
+        function removeFromCart(index) { cart.splice(index, 1); renderCart(); }
+        function clearCart() { if (cart.length === 0) return; if (confirm('¿Limpiar el carrito?')) { cart = []; renderCart(); } }
 
         function updateTotals() {
             const totalConIva = cart.reduce((sum, item) => sum + (item.precioFinalUnitario * item.cantidad), 0);
             const subtotalReal = totalConIva / 1.13;
             const ivaReal = totalConIva - subtotalReal;
-
-            currentSubtotal = subtotalReal;
-            currentIva = ivaReal;
-            currentTotal = totalConIva;
-
+            currentSubtotal = subtotalReal; currentIva = ivaReal; currentTotal = totalConIva;
             document.getElementById('subtotalAmount').textContent = `₡${formatMoney(subtotalReal)}`;
             document.getElementById('taxAmount').textContent = `₡${formatMoney(ivaReal)}`;
             document.getElementById('totalAmount').textContent = `₡${formatMoney(totalConIva)}`;
         }
 
-        function formatMoney(amount) {
-            return amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        function formatMoney(amount) { return amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'); }
+
+       
+        // ==========================================
+        // GESTIÓN DE INVENTARIO
+        // ==========================================
+        function renderInventoryTable(filter = 'all', searchQuery = '') {
+            const tbody = document.getElementById('inventoryTableBody');
+            const q = searchQuery.toLowerCase();
+            
+            let totalProducts = 0, inStock = 0, lowStock = 0, outOfStock = 0;
+            const rows = [];
+
+            allProducts.forEach(p => {
+                const stock = getStockForProduct(p);
+                const stockQty = stock ? stock.cantidad : 0;
+                const stockStatus = getStockStatus(stock);
+                
+                totalProducts++;
+                if (stockQty <= 0) outOfStock++;
+                else if (stockQty <= LOW_STOCK_THRESHOLD) lowStock++;
+                else inStock++;
+
+                // Aplicar filtros
+                if (filter === 'ok' && stockStatus.status !== 'ok') return;
+                if (filter === 'low' && stockStatus.status !== 'low') return;
+                if (filter === 'out' && stockStatus.status !== 'out') return;
+                if (q && !p.nombre.toLowerCase().includes(q) && !p.categoria.toLowerCase().includes(q)) return;
+
+                const stockCellClass = stockStatus.status === 'ok' ? 'ok' : (stockStatus.status === 'low' ? 'low' : 'out');
+                const lastPurchase = stock && stock.ultimaCompra ? new Date(stock.ultimaCompra).toLocaleDateString('es-CR') : '-';
+
+                rows.push(`
+                    <tr>
+                        <td><strong>${p.nombre}</strong><br><small style="color: #999;">ID: ${p.id}</small></td>
+                        <td>${p.categoria}</td>
+                        <td>₡${formatMoney(p.precioBase)}</td>
+                        <td class="stock-cell ${stockCellClass}">${stockQty} ${stockStatus.status === 'out' ? '❌' : (stockStatus.status === 'low' ? '⚠️' : '✅')}</td>
+                        <td>₡${stock ? formatMoney(stock.costoUnitario) : '-'}</td>
+                        <td>${lastPurchase}</td>
+                        <td>
+                            <button class="btn btn-success btn-sm" onclick="openRestockModal('${p.id}')" ${stockQty <= 0 ? '' : ''}>📦 Reabastecer</button>
+                        </td>
+                    </tr>
+                `);
+            });
+
+            // Actualizar estadísticas
+            document.getElementById('invTotalProducts').textContent = totalProducts;
+            document.getElementById('invInStock').textContent = inStock;
+            document.getElementById('invLowStock').textContent = lowStock;
+            document.getElementById('invOutOfStock').textContent = outOfStock;
+
+            tbody.innerHTML = rows.length > 0 ? rows.join('') : 
+                '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-light);">No hay productos que coincidan con los filtros.</td></tr>';
         }
+
+        function filterInventory(filter, element) {
+            currentInventoryFilter = filter;
+            document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+            element.classList.add('active');
+            renderInventoryTable(filter, document.getElementById('inventorySearch').value);
+        }
+
+        function filterInventoryTable(query) {
+            renderInventoryTable(currentInventoryFilter, query);
+        }
+
+        function openRestockModal(productId) {
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) return;
+            const stock = getStockForProduct(product);
+            
+            document.getElementById('restockProductId').value = productId;
+            document.getElementById('restockProductName').textContent = product.nombre;
+            document.getElementById('restockCurrentStock').textContent = stock ? stock.cantidad : 0;
+            document.getElementById('restockQuantity').value = 1;
+            document.getElementById('restockCost').value = stock ? stock.costoUnitario : '';
+            document.getElementById('restockNote').value = '';
+            document.getElementById('restockModal').classList.add('active');
+        }
+
+        function closeRestockModal() { document.getElementById('restockModal').classList.remove('active'); }
+
+       // ==========================================
+// GESTIÓN DE INVENTARIO MEJORADA CON TRANSACCIONES
+// ==========================================
+
+// Variable global para movimientos de stock
+
+
+// Función mejorada para obtener/crear stock
+async function getOrCreateStock(product) {
+    const stockId = normalizeString(product.nombre);
+    const stockRef = db.collection('stock').doc(stockId);
+    const stockDoc = await stockRef.get();
+
+    if (!stockDoc.exists) {
+        // Crear registro de stock si no existe
+        const newStock = {
+            cantidad: 0,
+            nombre: product.nombre,
+            costoUnitario: 0,
+            ultimaActualizacion: new Date().toISOString(),
+            ultimaCompra: '-',
+            categoria: product.categoria,
+            precioVenta: product.precioBase
+        };
+        await stockRef.set(newStock);
+        return { id: stockId, ...newStock };
+    }
+
+    return { id: stockId, ...stockDoc.data() };
+}
+
+// Función para registrar movimiento de stock (kardex)
+async function registerStockMovement(productId, productName, type, quantity, reference, notes = '') {
+    const movement = {
+        productId: productId,
+        productName: productName,
+        type: type, // 'entrada' o 'salida'
+        quantity: quantity,
+        reference: reference, // Número de factura o nota de compra
+        notes: notes,
+        fecha: firebase.firestore.FieldValue.serverTimestamp(),
+        fechaLocal: new Date().toISOString()
+    };
+
+    await db.collection('stock_movements').add(movement);
+    stockMovements.unshift(movement);
+}
+
+// ==========================================
+// REABASTECIMIENTO MEJORADO CON TRANSACCIÓN
+// ==========================================
+async function confirmRestock() {
+    const productId = document.getElementById('restockProductId').value;
+    const product = allProducts.find(p => p.id === productId);
+    if (!product) return;
+
+    const quantity = parseInt(document.getElementById('restockQuantity').value) || 0;
+    const cost = parseFloat(document.getElementById('restockCost').value) || 0;
+    const note = document.getElementById('restockNote').value.trim();
+
+    if (quantity <= 0) { alert('Ingrese una cantidad válida'); return; }
+
+    try {
+        // Usar transacción para evitar condiciones de carrera
+        await db.runTransaction(async (transaction) => {
+            const stockId = normalizeString(product.nombre);
+            const stockRef = db.collection('stock').doc(stockId);
+            const stockDoc = await transaction.get(stockRef);
+
+            let currentStock = 0;
+            let stockData = {};
+
+            if (stockDoc.exists) {
+                currentStock = stockDoc.data().cantidad || 0;
+                stockData = stockDoc.data();
+            } else {
+                stockData = {
+                    nombre: product.nombre,
+                    categoria: product.categoria,
+                    precioVenta: product.precioBase,
+                    ultimaCompra: '-'
+                };
+            }
+
+            const newCantidad = currentStock + quantity;
+            const today = new Date().toISOString().split('T')[0];
+
+            // Actualizar stock
+            transaction.set(stockRef, {
+                ...stockData,
+                cantidad: newCantidad,
+                costoUnitario: cost > 0 ? cost : (stockData.costoUnitario || 0),
+                ultimaActualizacion: new Date().toISOString(),
+                ultimaCompra: today
+            }, { merge: true });
+
+            // Registrar movimiento
+            const movementRef = db.collection('stock_movements').doc();
+            transaction.set(movementRef, {
+                productId: product.id,
+                productName: product.nombre,
+                type: 'entrada',
+                quantity: quantity,
+                reference: `Reabastecimiento manual`,
+                notes: note || 'Compra a proveedor',
+                costoUnitario: cost,
+                fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                fechaLocal: new Date().toISOString()
+            });
+        });
+
+        alert(`✅ Stock actualizado: ${product.nombre}\nNueva cantidad: ${quantity} unidades agregadas`);
+        closeRestockModal();
+        await loadStock();
+        renderInventoryTable(currentInventoryFilter, document.getElementById('inventorySearch').value);
+        renderProducts(allProducts);
+        checkLowStockAlerts();
+    } catch (error) {
+        console.error("Error reabasteciendo:", error);
+        alert('Error al actualizar el stock: ' + error.message);
+    }
+}
+
+// ==========================================
+// FACTURACIÓN CON TRANSACCIÓN Y DESCUENTO DE STOCK
+// ==========================================
+async function saveInvoice() {
+    if (cart.length === 0) { alert('El carrito está vacío'); return; }
+    if (!currentClient) { alert('Seleccione un cliente'); return; }
+
+    // Validación final de stock
+    const stockIssues = [];
+    for (const item of cart) {
+        const product = allProducts.find(p => p.id === item.id);
+        if (!product) continue;
+        const stock = await getOrCreateStock(product);
+        const totalInCart = cart.filter(i => i.id === item.id).reduce((sum, i) => sum + i.cantidad, 0);
+        if (totalInCart > stock.cantidad) {
+            stockIssues.push(`${product.nombre}: necesita ${totalInCart}, disponible ${stock.cantidad}`);
+        }
+    }
+
+    if (stockIssues.length > 0) {
+        alert('⚠️ No se puede facturar. Stock insuficiente:\n\n' + stockIssues.join('\n'));
+        return;
+    }
+
+    try {
+        // Usar transacción para garantizar consistencia
+        await db.runTransaction(async (transaction) => {
+            // 1. Crear la factura
+            const invoiceRef = db.collection('facturas').doc();
+            const invoiceData = {
+                numero: currentInvoiceNumber,
+                fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                clienteId: currentClient ? currentClient.id : 'contado',
+                clienteNombre: currentClient ? currentClient.nombre : 'Cliente Contado',
+                clienteTelefono: currentClient ? currentClient.telefono : '',
+                items: cart,
+                subtotal: currentSubtotal,
+                impuesto: currentIva,
+                total: currentTotal,
+                abonos: [],
+                estado: 'pagada'
+            };
+            transaction.set(invoiceRef, invoiceData);
+
+            // 2. Descontar stock de cada producto
+            for (const item of cart) {
+                const product = allProducts.find(p => p.id === item.id);
+                if (!product) continue;
+
+                const stockId = normalizeString(product.nombre);
+                const stockRef = db.collection('stock').doc(stockId);
+                const stockDoc = await transaction.get(stockRef);
+
+                let currentStock = 0;
+                let stockData = {};
+
+                if (stockDoc.exists) {
+                    currentStock = stockDoc.data().cantidad || 0;
+                    stockData = stockDoc.data();
+                } else {
+                    // Si no existe, crear con cantidad 0 (no debería pasar por la validación anterior)
+                    stockData = {
+                        nombre: product.nombre,
+                        categoria: product.categoria,
+                        precioVenta: product.precioBase,
+                        cantidad: 0
+                    };
+                }
+
+                const newCantidad = Math.max(0, currentStock - item.cantidad);
+
+                // Actualizar stock
+                transaction.set(stockRef, {
+                    ...stockData,
+                    cantidad: newCantidad,
+                    ultimaActualizacion: new Date().toISOString()
+                }, { merge: true });
+
+                // Registrar movimiento de salida
+                const movementRef = db.collection('stock_movements').doc();
+                transaction.set(movementRef, {
+                    productId: product.id,
+                    productName: product.nombre,
+                    type: 'salida',
+                    quantity: item.cantidad,
+                    reference: currentInvoiceNumber,
+                    notes: `Venta a ${currentClient.nombre || 'Cliente Contado'}`,
+                    precioVenta: item.precioFinalUnitario,
+                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                    fechaLocal: new Date().toISOString()
+                });
+            }
+        });
+
+        alert('✅ Factura guardada y stock actualizado exitosamente');
+        cart = [];
+        renderCart();
+
+        // Generar nuevo número de factura
+        currentInvoiceNumber = generateInvoiceNumber();
+        document.getElementById('invoiceNumber').textContent = currentInvoiceNumber;
+
+        // Recargar stock
+        await loadStock();
+        renderProducts(allProducts);
+        checkLowStockAlerts();
+    } catch (error) {
+        console.error("Error guardando factura:", error);
+        alert('Error al guardar la factura: ' + error.message);
+    }
+}
+
+// ==========================================
+// VISTA DE KARDEX / MOVIMIENTOS DE STOCK
+// ==========================================
+async function loadStockMovements() {
+    try {
+        const snapshot = await db.collection('stock_movements')
+            .orderBy('fecha', 'desc')
+            .limit(100)
+            .get();
+        
+        stockMovements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderMovementsTable();
+    } catch (error) {
+        console.error("Error cargando movimientos:", error);
+    }
+}
+
+function renderMovementsTable(filter = 'all') {
+    const tbody = document.getElementById('movementsTableBody');
+    if (!tbody) return;
+
+    const filtered = filter === 'all' ? stockMovements : 
+                     stockMovements.filter(m => m.type === filter);
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-light);">No hay movimientos registrados</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(m => {
+        const dateObj = m.fecha?.toDate ? m.fecha.toDate() : new Date(m.fechaLocal);
+        const dateStr = dateObj.toLocaleString('es-CR');
+        const typeIcon = m.type === 'entrada' ? '📥' : '';
+        const typeClass = m.type === 'entrada' ? 'color: var(--success);' : 'color: var(--danger);';
+        const typeLabel = m.type === 'entrada' ? 'ENTRADA' : 'SALIDA';
+
+        return `
+            <tr>
+                <td style="padding: 10px;">${dateStr}</td>
+                <td style="padding: 10px;">
+                    <strong>${m.productName}</strong>
+                    <br><small style="color: #999;">ID: ${m.productId}</small>
+                </td>
+                <td style="padding: 10px; ${typeClass} font-weight: 700;">
+                    ${typeIcon} ${typeLabel}
+                </td>
+                <td style="padding: 10px; text-align: center; font-weight: 700;">
+                    ${m.type === 'entrada' ? '+' : '-'}${m.quantity}
+                </td>
+                <td style="padding: 10px;">
+                    ${m.reference || '-'}
+                    ${m.notes ? `<br><small style="color: #999;">${m.notes}</small>` : ''}
+                </td>
+                <td style="padding: 10px; text-align: right;">
+                    ${m.precioVenta ? `₡${formatMoney(m.precioVenta)}` : (m.costoUnitario ? `₡${formatMoney(m.costoUnitario)}` : '-')}
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+
+function filterMovements(filter, element) {
+    currentMovementFilter = filter;
+    console.log(`🔍 Filtro aplicado: ${filter}. Movimientos totales en memoria:`, stockMovements.length);
+    
+    // Actualizar estilo visual de las pestañas
+    const tabs = element.parentElement.querySelectorAll('.filter-tab');
+    tabs.forEach(tab => tab.classList.remove('active'));
+    element.classList.add('active');
+    
+    // Volver a dibujar la tabla con el filtro seleccionado
+    renderMovementsTable(filter);
+}
+
+// Agregar pestaña de movimientos en la vista de inventario
+function switchView(view) {
+    document.getElementById('view-pos').style.display = view === 'pos' ? 'grid' : 'none';
+    document.getElementById('view-inventory').style.display = view === 'inventory' ? 'grid' : 'none';
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    if (view === 'inventory') {
+        renderInventoryTable();
+        loadStockMovements(); // Cargar movimientos al entrar a inventario
+    }
+}
 
         // ==========================================
         // ESCÁNER
@@ -729,7 +1916,6 @@
                 closeScanner();
             });
         }
-
         function closeScanner() {
             if (html5QrcodeScanner) {
                 html5QrcodeScanner.stop().then(() => {
@@ -739,19 +1925,22 @@
                 document.getElementById('scannerModal').classList.remove('active');
             }
         }
-
         function onScanSuccess(decodedText, decodedResult) {
             const searchCode = String(decodedText).trim();
             const product = allProducts.find(p => String(p.id) === searchCode);
-
             if (product) {
+                const stock = getStockForProduct(product);
+                if (stock && stock.cantidad <= 0) {
+                    alert(`❌ Producto agotado: ${product.nombre}\nStock: 0 unidades`);
+                    return;
+                }
                 closeScanner();
                 setTimeout(() => { openProductModal(product.id); }, 300);
             } else {
                 alert(`❌ Producto no encontrado.\nCódigo: ${searchCode}`);
             }
         }
-        function onScanFailure(error) { /* Ignorar */ }
+        function onScanFailure(error) { }
 
         // ==========================================
         // IMPRESIÓN Y WHATSAPP
@@ -762,15 +1951,10 @@
             document.getElementById('ticketInvoiceNum').textContent = document.getElementById('invoiceNumber').textContent;
             document.getElementById('ticketClientName').textContent = currentClient.nombre || 'Cliente Contado';
             document.getElementById('ticketClientId').textContent = currentClient.cedula || currentClient.id || 'N/A';
-
             document.getElementById('ticketItems').innerHTML = cart.map(item => {
                 const desc = item.descuentoPct > 0 ? `${item.cantidad} x ${item.nombre} (-${item.descuentoPct}%)` : `${item.cantidad} x ${item.nombre}`;
-                return `<div class="ticket-item">
-                    <div class="ticket-item-desc">${desc}</div>
-                    <div>₡${formatMoney(item.precioFinalUnitario * item.cantidad)}</div>
-                </div>`;
+                return `<div class="ticket-item"><div class="ticket-item-desc">${desc}</div><div>₡${formatMoney(item.precioFinalUnitario * item.cantidad)}</div></div>`;
             }).join('');
-
             document.getElementById('ticketSubtotal').textContent = `₡${formatMoney(currentSubtotal)}`;
             document.getElementById('ticketTax').textContent = `₡${formatMoney(currentIva)}`;
             document.getElementById('ticketTotal').textContent = `₡${formatMoney(currentTotal)}`;
@@ -781,7 +1965,6 @@
             if (cart.length === 0) { alert('El carrito está vacío'); return; }
             let phone = currentClient && currentClient.telefono ? String(currentClient.telefono).replace(/\D/g, '') : '';
             let clientName = currentClient ? (currentClient.nombre || "Cliente") : "Cliente";
-            
             if (phone.length === 8) phone = '506' + phone;
             if (!phone) {
                 phone = prompt("Ingrese el número de WhatsApp (ej: 88888888):");
@@ -789,40 +1972,13 @@
                 phone = String(phone).replace(/\D/g, '');
                 if (phone.length === 8) phone = '506' + phone;
             }
-
             let message = `🌿 *FACTURA EWE ESENTIA* 🌿\n📄 Factura: ${document.getElementById('invoiceNumber').textContent}\n👤 Cliente: ${clientName}\n📅 Fecha: ${new Date().toLocaleDateString('es-CR')}\n━━━━━━━━━━━━━━━━━━\n`;
             cart.forEach(item => {
                 const desc = item.descuentoPct > 0 ? `${item.nombre} (-${item.descuentoPct}%)` : item.nombre;
                 message += `▪️ ${item.cantidad} x ${desc}\n   ₡${formatMoney(item.precioFinalUnitario * item.cantidad)}\n`;
             });
             message += `━━━━━━━━━━━━━━━━━━\nSubtotal: ₡${formatMoney(currentSubtotal)}\nIVA (13%): ₡${formatMoney(currentIva)}\n💰 *TOTAL: ₡${formatMoney(currentTotal)}*\n\n¡Gracias por su compra! 🙏\n💳 SINPE Móvil: 7295-2454`;
-
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
-        }
-
-        async function saveInvoice() {
-            if (cart.length === 0) { alert('El carrito está vacío'); return; }
-            try {
-                const invoiceData = {
-                    numero: document.getElementById('invoiceNumber').textContent,
-                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
-                    clienteId: currentClient ? currentClient.id : 'contado',
-                    clienteNombre: currentClient ? currentClient.nombre : 'Cliente Contado',
-                    items: cart,
-                    subtotal: currentSubtotal,
-                    impuesto: currentIva,
-                    total: currentTotal,
-                    estado: 'pagada'
-                };
-                await db.collection('facturas').add(invoiceData);
-                alert('✅ Factura guardada exitosamente');
-                cart = []; renderCart();
-                invoiceCounter++;
-                document.getElementById('invoiceNumber').textContent = `FAC-${invoiceCounter}`;
-            } catch (error) {
-                console.error("Error guardando:", error);
-                alert('Error al guardar la factura.');
-            }
         }
 
         document.addEventListener('click', function(e) {
