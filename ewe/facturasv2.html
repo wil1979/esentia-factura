@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Facturación EWE Esentia + Inventario</title>
+    <title>Facturación EWE Esentia + Inventario + Cuentas por Cobrar</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
@@ -94,7 +94,6 @@
         .btn-success { background: var(--success); color: white; }
         .btn-success:hover { background: #059669; }
 
-        /* Modales */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         .modal-overlay.active { display: flex; }
         .modal-content { background: white; border-radius: 12px; width: 90%; max-width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
@@ -114,13 +113,11 @@
         .price-preview.warning { background: #fef3c7; border-color: #fbbf24; }
         .price-preview.warning .final { color: var(--warning); }
 
-        /* Stock Info en Modal */
         .stock-info-bar { display: flex; align-items: center; gap: 10px; padding: 10px; background: #f9f5f0; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem; }
         .stock-info-bar .stock-icon { font-size: 1.5rem; }
         .stock-info-bar .stock-text { flex: 1; }
         .stock-info-bar .stock-text strong { color: var(--primary); }
 
-        /* Historial */
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
         .stat-card { background: #f9f5f0; border: 1px solid var(--border); padding: 15px 10px; border-radius: 8px; text-align: center; }
         .stat-value { font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
@@ -146,7 +143,6 @@
         .status-parcial { background: #fef3c7; color: #92400e; }
         .status-pendiente { background: #fee2e2; color: #991b1b; }
 
-        /* Inventario */
         .inventory-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
         .inventory-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         .inventory-table th { background: #f9f5f0; padding: 10px; text-align: left; font-weight: 600; color: var(--primary); border-bottom: 2px solid var(--border); }
@@ -156,13 +152,11 @@
         .stock-cell.ok { color: var(--success); }
         .stock-cell.low { color: var(--warning); }
         .stock-cell.out { color: var(--danger); }
-        .restock-input { width: 70px; padding: 6px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.85rem; }
         .filter-tabs { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
         .filter-tab { padding: 6px 12px; border: 1px solid var(--border); border-radius: 20px; background: white; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s; }
         .filter-tab:hover { background: var(--bg); }
         .filter-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* Modal de abono */
         .payment-summary { background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
         .payment-summary .row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem; }
         .payment-summary .row.total { font-weight: 700; font-size: 1rem; border-top: 1px dashed #f59e0b; padding-top: 6px; margin-top: 6px; color: var(--danger); }
@@ -171,6 +165,96 @@
         .payment-method:hover { border-color: var(--accent); }
         .payment-method.selected { border-color: var(--primary); background: #f0fdf4; color: var(--primary); }
         .payment-method .icon { font-size: 1.5rem; display: block; margin-bottom: 4px; }
+
+        /* ESTILOS NUEVOS PARA CUENTAS POR COBRAR */
+        .receivable-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .receivable-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .receivable-card.urgent { border-left: 5px solid var(--danger); }
+        .receivable-card.warning { border-left: 5px solid var(--warning); }
+        .receivable-card.normal { border-left: 5px solid var(--info); }
+        
+        .receivable-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .receivable-client {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text);
+        }
+        .receivable-invoice {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+        .receivable-amount {
+            text-align: right;
+        }
+        .receivable-balance {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--danger);
+        }
+        .receivable-total {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+        .receivable-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 10px;
+            border-top: 1px dashed var(--border);
+            margin-top: 10px;
+        }
+        .receivable-date {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+        .receivable-days {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+        .days-urgent { background: #fee2e2; color: #991b1b; }
+        .days-warning { background: #fef3c7; color: #92400e; }
+        .days-normal { background: #dbeafe; color: #1e40af; }
+        
+        .receivable-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .receivable-actions .btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.8rem;
+        }
+
+        .receivable-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .receivable-stats .stat-card.debt { color: var(--danger); }
+        .receivable-stats .stat-card.urgent-stat { background: #fee2e2; border-color: #fca5a5; }
+        .receivable-stats .stat-card.urgent-stat .stat-value { color: var(--danger); }
 
         #ticket-print { display: none; }
         @media print {
@@ -201,6 +285,9 @@
             .products-grid { grid-template-columns: repeat(2, 1fr); }
             .stats-grid { grid-template-columns: 1fr; }
             .inventory-stats { grid-template-columns: repeat(2, 1fr); }
+            .receivable-stats { grid-template-columns: repeat(2, 1fr); }
+            .header { flex-wrap: wrap; gap: 8px; }
+            .header-nav { order: 3; width: 100%; justify-content: center; }
         }
     </style>
 </head>
@@ -214,8 +301,9 @@
     <div class="header">
         <h1>🧾 EWE Esentia</h1>
         <div class="header-nav">
-            <button class="nav-btn active" onclick="switchView('pos')">🧾 Facturación</button>
-            <button class="nav-btn" onclick="switchView('inventory')">📦 Inventario</button>
+            <button class="nav-btn active" onclick="switchView('pos', event)">🧾 Facturación</button>
+            <button class="nav-btn" onclick="switchView('inventory', event)">📦 Inventario</button>
+            <button class="nav-btn" onclick="switchView('receivables', event)">💰 Cuentas por Cobrar</button>
         </div>
         <div style="font-size: 0.85rem; color: var(--text-light);" id="currentDate"></div>
     </div>
@@ -319,35 +407,6 @@
                     <div class="filter-tab" onclick="filterInventory('out', this)">❌ Agotados</div>
                 </div>
 
-                <!-- Dentro del div id="view-inventory", después de la tabla de inventario -->
-<div class="card" style="margin-top: 20px;">
-    <div class="card-title"> Kardex - Movimientos de Stock</div>
-    
-    <div class="filter-tabs">
-        <div class="filter-tab active" onclick="filterMovements('all', this)">Todos</div>
-        <div class="filter-tab" onclick="filterMovements('entrada', this)"> Entradas</div>
-        <div class="filter-tab" onclick="filterMovements('salida', this)">📤 Salidas</div>
-    </div>
-
-    <div style="overflow-x: auto; max-height: 400px;">
-        <table class="inventory-table">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Producto</th>
-                    <th>Tipo</th>
-                    <th>Cantidad</th>
-                    <th>Referencia</th>
-                    <th>Precio</th>
-                </tr>
-            </thead>
-            <tbody id="movementsTableBody">
-                <tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-light);">Cargando movimientos...</td></tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
                 <div class="search-box" style="margin-bottom: 15px;">
                     <span class="search-icon">🔍</span>
                     <input type="text" id="inventorySearch" placeholder="Buscar producto en inventario..." oninput="filterInventoryTable(this.value)">
@@ -370,6 +429,80 @@
                             <tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-light);">Cargando inventario...</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <div class="card-title">📊 Kardex - Movimientos de Stock</div>
+                <div class="filter-tabs">
+                    <div class="filter-tab active" onclick="filterMovements('all', this)">Todos</div>
+                    <div class="filter-tab" onclick="filterMovements('entrada', this)">📥 Entradas</div>
+                    <div class="filter-tab" onclick="filterMovements('salida', this)">📤 Salidas</div>
+                </div>
+                <div style="overflow-x: auto; max-height: 400px;">
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Producto</th>
+                                <th>Tipo</th>
+                                <th>Cantidad</th>
+                                <th>Referencia</th>
+                                <th>Precio</th>
+                            </tr>
+                        </thead>
+                        <tbody id="movementsTableBody">
+                            <tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-light);">Cargando movimientos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NUEVA VISTA: CUENTAS POR COBRAR -->
+    <div class="main-container" id="view-receivables" style="display: none;">
+        <div class="left-panel" style="grid-column: 1 / -1;">
+            <div class="card">
+                <div class="card-title">💰 Cuentas por Cobrar - Facturas Pendientes</div>
+                
+                <div class="receivable-stats" id="receivableStats">
+                    <div class="stat-card debt">
+                        <div class="stat-value" id="recTotalDebt">₡0.00</div>
+                        <div class="stat-label">Total por Cobrar</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="recTotalInvoices">0</div>
+                        <div class="stat-label">Facturas Pendientes</div>
+                    </div>
+                    <div class="stat-card urgent-stat">
+                        <div class="stat-value" id="recUrgentCount">0</div>
+                        <div class="stat-label">Urgentes (>60 días)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="recTopClient">-</div>
+                        <div class="stat-label">Mayor Deudor</div>
+                    </div>
+                </div>
+
+                <div class="filter-tabs">
+                    <div class="filter-tab active" onclick="filterReceivables('all', this)">Todas</div>
+                    <div class="filter-tab" onclick="filterReceivables('urgent', this)">🔴 Urgentes (>60 días)</div>
+                    <div class="filter-tab" onclick="filterReceivables('warning', this)">🟡 Moderadas (30-60 días)</div>
+                    <div class="filter-tab" onclick="filterReceivables('normal', this)">🔵 Recientes (<30 días)</div>
+                    <div class="filter-tab" onclick="filterReceivables('high', this)">💎 Monto alto (>₡50,000)</div>
+                </div>
+
+                <div class="search-box" style="margin-bottom: 15px;">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="receivableSearch" placeholder="Buscar por cliente o número de factura..." oninput="filterReceivablesTable(this.value)">
+                </div>
+
+                <div id="receivablesList" style="max-height: 600px; overflow-y: auto;">
+                    <div style="text-align: center; padding: 40px; color: var(--text-light);">
+                        <div class="spinner" style="margin: 0 auto 15px;"></div>
+                        Cargando facturas pendientes...
+                    </div>
                 </div>
             </div>
         </div>
@@ -454,8 +587,6 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="modalProductId">
-                
-                <!-- Barra de información de stock -->
                 <div class="stock-info-bar" id="modalStockBar">
                     <span class="stock-icon" id="modalStockIcon">📦</span>
                     <div class="stock-text">
@@ -463,7 +594,6 @@
                         <div style="font-size: 0.75rem; color: var(--text-light);" id="modalStockText">Verificando...</div>
                     </div>
                 </div>
-
                 <div class="form-group" id="variantGroup" style="display: none;">
                     <label>Seleccionar Tamaño / Variante</label>
                     <select id="modalVariantSelect" onchange="updateModalPricePreview()"></select>
@@ -531,6 +661,86 @@
         </div>
     </div>
 
+    <!-- MODAL DETALLE DE FACTURA -->
+    <div class="modal-overlay" id="invoiceDetailModal">
+        <div class="modal-content wide">
+            <div class="modal-header">
+                <h3>📋 Detalle de Factura <span id="detailInvoiceNum"></span></h3>
+                <button class="modal-close" onclick="closeInvoiceDetailModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background: #f9f5f0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem;">
+                        <div><strong>Fecha:</strong> <span id="detailDate"></span></div>
+                        <div><strong>Cliente:</strong> <span id="detailClient"></span></div>
+                        <div><strong>Estado:</strong> <span id="detailStatus"></span></div>
+                        <div><strong>Total:</strong> <span id="detailTotal" style="font-weight: 700; color: var(--primary);"></span></div>
+                    </div>
+                </div>
+
+                <h4 style="margin-bottom: 10px; color: var(--primary);">📦 Productos Comprados</h4>
+                <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                        <thead>
+                            <tr style="background: #f9f5f0;">
+                                <th style="padding: 10px; text-align: left; border-bottom: 1px solid var(--border);">Producto</th>
+                                <th style="padding: 10px; text-align: center; border-bottom: 1px solid var(--border);">Cant.</th>
+                                <th style="padding: 10px; text-align: right; border-bottom: 1px solid var(--border);">Precio Unit.</th>
+                                <th style="padding: 10px; text-align: center; border-bottom: 1px solid var(--border);">Desc.</th>
+                                <th style="padding: 10px; text-align: right; border-bottom: 1px solid var(--border);">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailProductsTable"></tbody>
+                    </table>
+                </div>
+
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem;">
+                        <span>Subtotal (sin IVA):</span><span id="detailSubtotal"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem;">
+                        <span>IVA (13%):</span><span id="detailTax"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 700; color: var(--primary); border-top: 2px dashed #bbf7d0; padding-top: 8px; margin-top: 8px;">
+                        <span>TOTAL:</span><span id="detailTotalFinal"></span>
+                    </div>
+                </div>
+
+                <div id="detailPaymentsSection" style="display: none;">
+                    <h4 style="margin-bottom: 10px; color: var(--primary);">📋 Historial de Pagos</h4>
+                    <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 15px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                            <thead>
+                                <tr style="background: #f9f5f0;">
+                                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid var(--border);">Fecha</th>
+                                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid var(--border);">Método</th>
+                                    <th style="padding: 10px; text-align: left; border-bottom: 1px solid var(--border);">Nota</th>
+                                    <th style="padding: 10px; text-align: right; border-bottom: 1px solid var(--border);">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailPaymentsTable"></tbody>
+                        </table>
+                    </div>
+                    <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 0.85rem; color: var(--text-light);">Total Abonado:</div>
+                            <div style="font-size: 1.1rem; font-weight: 700; color: var(--success);" id="detailTotalPaid"></div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.85rem; color: var(--text-light);">Saldo Pendiente:</div>
+                            <div style="font-size: 1.1rem; font-weight: 700; color: var(--danger);" id="detailBalance"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-whatsapp" style="flex: 1;" onclick="resendInvoiceFromDetail()">📱 Reenviar por WhatsApp</button>
+                    <button class="btn btn-success" id="detailPaymentBtn" style="flex: 1; display: none;" onclick="openPaymentModalFromDetail()">💰 Registrar Abono</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- TICKET -->
     <div id="ticket-print">
         <div class="ticket-header">
@@ -555,93 +765,6 @@
             <div style="margin-top: 8px; border-top: 1px dashed black; padding-top: 6px;">SINPE Móvil: 7295-2454</div>
         </div>
     </div>
-
-    <!-- MODAL DETALLE DE FACTURA -->
-<div class="modal-overlay" id="invoiceDetailModal">
-    <div class="modal-content wide">
-        <div class="modal-header">
-            <h3> Detalle de Factura <span id="detailInvoiceNum"></span></h3>
-            <button class="modal-close" onclick="closeInvoiceDetailModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div style="background: #f9f5f0; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem;">
-                    <div><strong>Fecha:</strong> <span id="detailDate"></span></div>
-                    <div><strong>Cliente:</strong> <span id="detailClient"></span></div>
-                    <div><strong>Estado:</strong> <span id="detailStatus"></span></div>
-                    <div><strong>Total:</strong> <span id="detailTotal" style="font-weight: 700; color: var(--primary);"></span></div>
-                </div>
-            </div>
-
-            <h4 style="margin-bottom: 10px; color: var(--primary);">📦 Productos Comprados</h4>
-            <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
-                    <thead>
-                        <tr style="background: #f9f5f0;">
-                            <th style="padding: 10px; text-align: left; border-bottom: 1px solid var(--border);">Producto</th>
-                            <th style="padding: 10px; text-align: center; border-bottom: 1px solid var(--border);">Cant.</th>
-                            <th style="padding: 10px; text-align: right; border-bottom: 1px solid var(--border);">Precio Unit.</th>
-                            <th style="padding: 10px; text-align: center; border-bottom: 1px solid var(--border);">Desc.</th>
-                            <th style="padding: 10px; text-align: right; border-bottom: 1px solid var(--border);">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody id="detailProductsTable">
-                        <!-- Productos se llenan dinámicamente -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem;">
-                    <span>Subtotal (sin IVA):</span>
-                    <span id="detailSubtotal"></span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem;">
-                    <span>IVA (13%):</span>
-                    <span id="detailTax"></span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 700; color: var(--primary); border-top: 2px dashed #bbf7d0; padding-top: 8px; margin-top: 8px;">
-                    <span>TOTAL:</span>
-                    <span id="detailTotalFinal"></span>
-                </div>
-            </div>
-
-            <div id="detailPaymentsSection" style="display: none;">
-                <h4 style="margin-bottom: 10px; color: var(--primary);"> Historial de Pagos</h4>
-                <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 15px;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
-                        <thead>
-                            <tr style="background: #f9f5f0;">
-                                <th style="padding: 10px; text-align: left; border-bottom: 1px solid var(--border);">Fecha</th>
-                                <th style="padding: 10px; text-align: left; border-bottom: 1px solid var(--border);">Método</th>
-                                <th style="padding: 10px; text-align: left; border-bottom: 1px solid var(--border);">Nota</th>
-                                <th style="padding: 10px; text-align: right; border-bottom: 1px solid var(--border);">Monto</th>
-                            </tr>
-                        </thead>
-                        <tbody id="detailPaymentsTable">
-                            <!-- Pagos se llenan dinámicamente -->
-                        </tbody>
-                    </table>
-                </div>
-                <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="font-size: 0.85rem; color: var(--text-light);">Total Abonado:</div>
-                        <div style="font-size: 1.1rem; font-weight: 700; color: var(--success);" id="detailTotalPaid"></div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 0.85rem; color: var(--text-light);">Saldo Pendiente:</div>
-                        <div style="font-size: 1.1rem; font-weight: 700; color: var(--danger);" id="detailBalance"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button class="btn btn-whatsapp" style="flex: 1;" onclick="resendInvoiceFromDetail()">📱 Reenviar por WhatsApp</button>
-                <button class="btn btn-success" id="detailPaymentBtn" style="flex: 1; display: none;" onclick="openPaymentModalFromDetail()">💰 Registrar Abono</button>
-            </div>
-        </div>
-    </div>
-</div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -669,24 +792,24 @@
 
         let allProducts = [];
         let allClients = [];
-        let allStock = new Map(); // Map<productId, stockData>
+        let allStock = new Map();
         let currentClient = null;
         let cart = [];
-        // ✅ DESPUÉS
         let currentInvoiceNumber = generateInvoiceNumber();
         let html5QrcodeScanner = null;
         let currentSubtotal = 0, currentIva = 0, currentTotal = 0;
         let currentPaymentInvoice = null;
         let selectedPaymentMethod = null;
         let currentInventoryFilter = 'all';
-        let currentMovementFilter = 'all';
         let currentDetailInvoice = null;
         let stockMovements = [];
+        let allReceivables = []; // NUEVO: Facturas pendientes de cobro
+        let currentReceivableFilter = 'all';
         const LOW_STOCK_THRESHOLD = 5;
 
         document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('currentDate').textContent = new Date().toLocaleDateString('es-CR');
-            document.getElementById('invoiceNumber').textContent = `FAC-${currentInvoiceNumber}`;
+            document.getElementById('invoiceNumber').textContent = currentInvoiceNumber;
             try {
                 await Promise.all([loadClients(), loadStock(), loadProducts()]);
                 document.getElementById('loadingOverlay').style.opacity = '0';
@@ -696,7 +819,7 @@
         });
 
         // ==========================================
-        // CARGA DE STOCK DESDE FIREBASE
+        // CARGA DE STOCK
         // ==========================================
         async function loadStock() {
             try {
@@ -704,7 +827,6 @@
                 allStock.clear();
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    // Usar el ID del documento como clave (ej: "applecinnamonbliss")
                     allStock.set(doc.id.toLowerCase(), {
                         id: doc.id,
                         cantidad: parseInt(data.cantidad) || 0,
@@ -720,35 +842,22 @@
             }
         }
 
-        // Buscar stock por producto - intenta múltiples estrategias de mapeo
         function getStockForProduct(product) {
-            // Estrategia 1: Buscar por ID del documento = String(product.id)
             let stock = allStock.get(String(product.id).toLowerCase());
             if (stock) return stock;
-
-            // Estrategia 2: Buscar por nombre normalizado (lowercase, sin espacios, sin caracteres especiales)
             const normalizedName = normalizeString(product.nombre);
             for (const [key, value] of allStock.entries()) {
-                if (normalizeString(value.nombre) === normalizedName || key === normalizedName) {
-                    return value;
-                }
+                if (normalizeString(value.nombre) === normalizedName || key === normalizedName) return value;
             }
-
-            // Estrategia 3: Buscar por nombre que contenga el otro
             for (const [key, value] of allStock.entries()) {
                 const stockNameNorm = normalizeString(value.nombre);
-                if (stockNameNorm.includes(normalizedName) || normalizedName.includes(stockNameNorm)) {
-                    return value;
-                }
+                if (stockNameNorm.includes(normalizedName) || normalizedName.includes(stockNameNorm)) return value;
             }
-
             return null;
         }
 
         function normalizeString(str) {
-            return String(str || '').toLowerCase()
-                .replace(/[^a-z0-9]/g, '')
-                .replace(/\s+/g, '');
+            return String(str || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
         }
 
         function getStockStatus(stock) {
@@ -759,17 +868,15 @@
         }
 
         function checkLowStockAlerts() {
-            let lowStockCount = 0;
-            let outOfStockCount = 0;
+            let lowStockCount = 0, outOfStockCount = 0;
             allStock.forEach(stock => {
                 if (stock.cantidad <= 0) outOfStockCount++;
                 else if (stock.cantidad <= LOW_STOCK_THRESHOLD) lowStockCount++;
             });
-
             const banner = document.getElementById('stockWarningBanner');
             if (outOfStockCount > 0 || lowStockCount > 0) {
                 banner.style.display = 'block';
-                banner.innerHTML = `⚠️ <strong>Alerta de Inventario:</strong> ${outOfStockCount} producto(s) agotado(s) y ${lowStockCount} con stock bajo. <a href="#" onclick="switchView('inventory'); return false;" style="color: inherit; text-decoration: underline;">Ver inventario</a>`;
+                banner.innerHTML = `⚠️ <strong>Alerta de Inventario:</strong> ${outOfStockCount} producto(s) agotado(s) y ${lowStockCount} con stock bajo. <a href="#" onclick="switchView('inventory', event); return false;" style="color: inherit; text-decoration: underline;">Ver inventario</a>`;
             }
         }
 
@@ -821,138 +928,255 @@
             renderProducts(allProducts);
         }
 
-        // Variable global para almacenar la factura actual en detalle
-
-
-// Función para abrir el modal de detalle
-async function openInvoiceDetailModal(invoiceId) {
-    try {
-        const doc = await db.collection('facturas').doc(invoiceId).get();
-        if (!doc.exists) {
-            alert('Factura no encontrada');
-            return;
-        }
-
-        currentDetailInvoice = { id: doc.id, ...doc.data() };
-        const factura = currentDetailInvoice;
-
-        // Información general
-        document.getElementById('detailInvoiceNum').textContent = factura.numero || 'S/N';
-        
-        const dateObj = factura.fecha?.toDate ? factura.fecha.toDate() : new Date(factura.fecha);
-        document.getElementById('detailDate').textContent = dateObj.toLocaleString('es-CR');
-        document.getElementById('detailClient').textContent = factura.clienteNombre || 'Cliente Contado';
-
-        // Calcular abonos y saldo
-        const abonos = factura.abonos || [];
-        const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
-        const totalFactura = parseFloat(factura.total) || 0;
-        const saldoPendiente = Math.max(0, totalFactura - totalAbonado);
-
-        // Estado
-        let estado, estadoClass;
-        if (saldoPendiente <= 0 && totalFactura > 0) {
-            estado = '✅ Pagada';
-            estadoClass = 'status-pagada';
-        } else if (totalAbonado > 0) {
-            estado = '⚠️ Pago Parcial';
-            estadoClass = 'status-parcial';
-        } else {
-            estado = ' Pendiente';
-            estadoClass = 'status-pendiente';
-        }
-        document.getElementById('detailStatus').innerHTML = `<span class="history-status ${estadoClass}">${estado}</span>`;
-        document.getElementById('detailTotal').textContent = `₡${formatMoney(totalFactura)}`;
-
-        // Productos
-        const productsTable = document.getElementById('detailProductsTable');
-        if (factura.items && factura.items.length > 0) {
-            productsTable.innerHTML = factura.items.map(item => {
-                const itemTotal = item.precioFinalUnitario * item.cantidad;
-                const discountText = item.descuentoPct > 0 ? `${item.descuentoPct}%` : '-';
-                
-                return `
-                    <tr style="border-bottom: 1px solid var(--border);">
-                        <td style="padding: 10px;">
-                            <div style="font-weight: 600;">${item.nombre}</div>
-                            <div style="font-size: 0.75rem; color: var(--text-light);">ID: ${item.id}</div>
-                        </td>
-                        <td style="padding: 10px; text-align: center;">${item.cantidad}</td>
-                        <td style="padding: 10px; text-align: right;">₡${formatMoney(item.precioUnitario)}</td>
-                        <td style="padding: 10px; text-align: center; color: ${item.descuentoPct > 0 ? 'var(--danger)' : 'var(--text-light)'};">${discountText}</td>
-                        <td style="padding: 10px; text-align: right; font-weight: 600;">₡${formatMoney(itemTotal)}</td>
-                    </tr>
-                `;
-            }).join('');
-        } else {
-            productsTable.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-light);">No hay productos registrados</td></tr>';
-        }
-
-        // Totales
-        document.getElementById('detailSubtotal').textContent = `₡${formatMoney(factura.subtotal || 0)}`;
-        document.getElementById('detailTax').textContent = `₡${formatMoney(factura.impuesto || 0)}`;
-        document.getElementById('detailTotalFinal').textContent = `₡${formatMoney(totalFactura)}`;
-
-        // Sección de pagos (solo si hay abonos o saldo pendiente)
-        const paymentsSection = document.getElementById('detailPaymentsSection');
-        if (abonos.length > 0 || saldoPendiente > 0) {
-            paymentsSection.style.display = 'block';
+        // ==========================================
+        // NAVEGACIÓN DE VISTAS
+        // ==========================================
+        function switchView(view, event) {
+            document.getElementById('view-pos').style.display = view === 'pos' ? 'grid' : 'none';
+            document.getElementById('view-inventory').style.display = view === 'inventory' ? 'grid' : 'none';
+            document.getElementById('view-receivables').style.display = view === 'receivables' ? 'grid' : 'none';
             
-            if (abonos.length > 0) {
-                const paymentsTable = document.getElementById('detailPaymentsTable');
-                paymentsTable.innerHTML = abonos.map(a => {
-                    const aDate = a.fecha?.toDate ? a.fecha.toDate() : new Date(a.fecha);
-                    return `
-                        <tr style="border-bottom: 1px solid var(--border);">
-                            <td style="padding: 10px;">${aDate.toLocaleDateString('es-CR')}</td>
-                            <td style="padding: 10px;">${a.metodo}</td>
-                            <td style="padding: 10px; font-size: 0.8rem; color: var(--text-light);">${a.nota || '-'}</td>
-                            <td style="padding: 10px; text-align: right; font-weight: 600; color: var(--success);">₡${formatMoney(a.monto)}</td>
-                        </tr>
-                    `;
-                }).join('');
-            } else {
-                document.getElementById('detailPaymentsTable').innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: var(--text-light);">Sin pagos registrados</td></tr>';
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            if (event && event.target) event.target.classList.add('active');
+            
+            if (view === 'inventory') {
+                renderInventoryTable();
+                loadStockMovements();
+            } else if (view === 'receivables') {
+                loadReceivables(); // NUEVO: Cargar facturas pendientes
+            }
+        }
+
+        // ==========================================
+        // NUEVO: SISTEMA DE CUENTAS POR COBRAR
+        // ==========================================
+        async function loadReceivables() {
+            const container = document.getElementById('receivablesList');
+            container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-light);"><div class="spinner" style="margin: 0 auto 15px;"></div>Cargando facturas pendientes...</div>';
+
+            try {
+                // Obtener todas las facturas
+                const snapshot = await db.collection('facturas').get();
+                const allInvoices = [];
+                snapshot.forEach(doc => allInvoices.push({ id: doc.id, ...doc.data() }));
+
+                // Filtrar solo las que tienen saldo pendiente
+                const receivables = [];
+                const clientDebtMap = new Map();
+
+                for (const inv of allInvoices) {
+                    const abonos = inv.abonos || [];
+                    const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
+                    const totalFactura = parseFloat(inv.total) || 0;
+                    const saldoPendiente = Math.max(0, totalFactura - totalAbonado);
+
+                    if (saldoPendiente > 0) {
+                        const dateObj = inv.fecha?.toDate ? inv.fecha.toDate() : new Date(inv.fecha);
+                        const today = new Date();
+                        const diffTime = Math.abs(today - dateObj);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                        // Determinar urgencia
+                        let urgency = 'normal';
+                        if (diffDays > 60) urgency = 'urgent';
+                        else if (diffDays > 30) urgency = 'warning';
+
+                        receivables.push({
+                            id: inv.id,
+                            numero: inv.numero,
+                            clienteId: inv.clienteId,
+                            clienteNombre: inv.clienteNombre || 'Cliente Contado',
+                            clienteTelefono: inv.clienteTelefono,
+                            total: totalFactura,
+                            abonado: totalAbonado,
+                            saldo: saldoPendiente,
+                            fecha: dateObj,
+                            dias: diffDays,
+                            urgencia: urgency,
+                            items: inv.items
+                        });
+
+                        // Acumular deuda por cliente
+                        const currentDebt = clientDebtMap.get(inv.clienteId) || { nombre: inv.clienteNombre || 'Cliente', total: 0 };
+                        clientDebtMap.set(inv.clienteId, { ...currentDebt, total: currentDebt.total + saldoPendiente });
+                    }
+                }
+
+                // Ordenar: primero urgentes, luego por saldo mayor
+                receivables.sort((a, b) => {
+                    const urgencyOrder = { urgent: 0, warning: 1, normal: 2 };
+                    if (urgencyOrder[a.urgencia] !== urgencyOrder[b.urgencia]) {
+                        return urgencyOrder[a.urgencia] - urgencyOrder[b.urgencia];
+                    }
+                    return b.saldo - a.saldo;
+                });
+
+                allReceivables = receivables;
+
+                // Calcular estadísticas
+                const totalDebt = receivables.reduce((sum, r) => sum + r.saldo, 0);
+                const urgentCount = receivables.filter(r => r.urgencia === 'urgent').length;
+                
+                // Encontrar mayor deudor
+                let topClient = '-';
+                let topDebt = 0;
+                clientDebtMap.forEach((data, clientId) => {
+                    if (data.total > topDebt) {
+                        topDebt = data.total;
+                        topClient = data.nombre.split(' ')[0]; // Solo primer nombre para espacio
+                    }
+                });
+
+                document.getElementById('recTotalDebt').textContent = `₡${formatMoney(totalDebt)}`;
+                document.getElementById('recTotalInvoices').textContent = receivables.length;
+                document.getElementById('recUrgentCount').textContent = urgentCount;
+                document.getElementById('recTopClient').textContent = topClient;
+
+                renderReceivablesList(receivables);
+
+            } catch (error) {
+                console.error("Error cargando cuentas por cobrar:", error);
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--danger);">Error al cargar las facturas pendientes.</div>';
+            }
+        }
+
+        function renderReceivablesList(receivables) {
+            const container = document.getElementById('receivablesList');
+
+            if (receivables.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: var(--success);"><div style="font-size: 4rem; margin-bottom: 15px;">🎉</div><h3 style="color: var(--primary); margin-bottom: 10px;">¡Excelente!</h3><p>No hay facturas pendientes de cobro.</p></div>';
+                return;
             }
 
-            document.getElementById('detailTotalPaid').textContent = `₡${formatMoney(totalAbonado)}`;
-            document.getElementById('detailBalance').textContent = `₡${formatMoney(saldoPendiente)}`;
+            container.innerHTML = receivables.map(r => {
+                const urgencyClass = r.urgencia === 'urgent' ? 'urgent' : (r.urgencia === 'warning' ? 'warning' : 'normal');
+                const daysClass = r.urgencia === 'urgent' ? 'days-urgent' : (r.urgencia === 'warning' ? 'days-warning' : 'days-normal');
+                const daysText = r.dias === 0 ? 'Hoy' : (r.dias === 1 ? '1 día' : `${r.dias} días`);
+                const urgencyLabel = r.urgencia === 'urgent' ? '🔴 URGENTE' : (r.urgencia === 'warning' ? '🟡 Moderada' : '🔵 Reciente');
+                const dateStr = r.fecha.toLocaleDateString('es-CR', { day: '2-digit', month: 'short', year: 'numeric' });
 
-            // Mostrar botón de abono solo si hay saldo pendiente
-            document.getElementById('detailPaymentBtn').style.display = saldoPendiente > 0 ? 'flex' : 'none';
-        } else {
-            paymentsSection.style.display = 'none';
-            document.getElementById('detailPaymentBtn').style.display = 'none';
+                return `
+                <div class="receivable-card ${urgencyClass}" onclick="openInvoiceDetailModal('${r.id}')">
+                    <div class="receivable-header">
+                        <div>
+                            <div class="receivable-client">${r.clienteNombre}</div>
+                            <div class="receivable-invoice">Factura: ${r.numero || 'S/N'} • ${dateStr}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 4px;">${urgencyLabel}</div>
+                        </div>
+                        <div class="receivable-amount">
+                            <div class="receivable-balance">₡${formatMoney(r.saldo)}</div>
+                            <div class="receivable-total">de ₡${formatMoney(r.total)}</div>
+                        </div>
+                    </div>
+                    <div class="receivable-footer">
+                        <div class="receivable-date">📅 ${dateStr}</div>
+                        <div class="receivable-days ${daysClass}">⏰ ${daysText} de antigüedad</div>
+                    </div>
+                    <div class="receivable-actions" onclick="event.stopPropagation();">
+                        <button class="btn btn-info btn-sm" onclick="openInvoiceDetailModal('${r.id}')">👁️ Ver Detalle</button>
+                        <button class="btn btn-success btn-sm" onclick="openPaymentModal('${r.id}')">💰 Abonar</button>
+                        <button class="btn btn-whatsapp btn-sm" onclick="sendReminder('${r.id}')">📱 Recordar</button>
+                    </div>
+                </div>`;
+            }).join('');
         }
 
-        document.getElementById('invoiceDetailModal').classList.add('active');
-    } catch (error) {
-        console.error("Error abriendo detalle de factura:", error);
-        alert('Error al cargar el detalle de la factura.');
-    }
-}
+        function filterReceivables(filter, element) {
+            currentReceivableFilter = filter;
+            document.querySelectorAll('#view-receivables .filter-tab').forEach(tab => tab.classList.remove('active'));
+            element.classList.add('active');
+            applyReceivablesFilters();
+        }
 
-function closeInvoiceDetailModal() {
-    document.getElementById('invoiceDetailModal').classList.remove('active');
-    currentDetailInvoice = null;
-}
+        function filterReceivablesTable(query) {
+            applyReceivablesFilters(query);
+        }
 
-function resendInvoiceFromDetail() {
-    if (currentDetailInvoice) {
-        resendInvoice(currentDetailInvoice.id);
-    }
-}
+        function applyReceivablesFilters(searchQuery = '') {
+            const q = searchQuery.toLowerCase();
+            let filtered = allReceivables;
 
-function openPaymentModalFromDetail() {
-    if (currentDetailInvoice) {
-        closeInvoiceDetailModal();
-        setTimeout(() => {
-            openPaymentModal(currentDetailInvoice.id);
-        }, 300);
-    }
-}
+            // Aplicar filtro de categoría
+            if (currentReceivableFilter === 'urgent') {
+                filtered = filtered.filter(r => r.urgencia === 'urgent');
+            } else if (currentReceivableFilter === 'warning') {
+                filtered = filtered.filter(r => r.urgencia === 'warning');
+            } else if (currentReceivableFilter === 'normal') {
+                filtered = filtered.filter(r => r.urgencia === 'normal');
+            } else if (currentReceivableFilter === 'high') {
+                filtered = filtered.filter(r => r.saldo > 50000);
+            }
 
-       
+            // Aplicar búsqueda
+            if (q) {
+                filtered = filtered.filter(r => 
+                    r.clienteNombre.toLowerCase().includes(q) || 
+                    (r.numero && r.numero.toLowerCase().includes(q))
+                );
+            }
+
+            renderReceivablesList(filtered);
+        }
+
+        // NUEVO: Enviar recordatorio por WhatsApp
+        async function sendReminder(invoiceId) {
+            try {
+                const doc = await db.collection('facturas').doc(invoiceId).get();
+                if (!doc.exists) { alert('Factura no encontrada'); return; }
+                
+                const factura = { id: doc.id, ...doc.data() };
+                const abonos = factura.abonos || [];
+                const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
+                const saldoPendiente = Math.max(0, (parseFloat(factura.total) || 0) - totalAbonado);
+
+                let phone = '';
+                const clienteLocal = allClients.find(c => c.id === factura.clienteId);
+                if (clienteLocal && clienteLocal.telefono) {
+                    phone = String(clienteLocal.telefono).replace(/\D/g, '');
+                    if (phone.length === 8) phone = '506' + phone;
+                } else if (factura.clienteTelefono) {
+                    phone = String(factura.clienteTelefono).replace(/\D/g, '');
+                    if (phone.length === 8) phone = '506' + phone;
+                }
+
+                if (!phone) {
+                    phone = prompt(`Ingrese el número de WhatsApp para enviar recordatorio:`);
+                    if (!phone) return;
+                    phone = String(phone).replace(/\D/g, '');
+                    if (phone.length === 8) phone = '506' + phone;
+                }
+
+                const dateObj = factura.fecha?.toDate ? factura.fecha.toDate() : new Date(factura.fecha);
+                const dateStr = dateObj.toLocaleDateString('es-CR');
+
+                // Calcular días
+                const today = new Date();
+                const diffTime = Math.abs(today - dateObj);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                let message = `🌿 *RECORDATORIO DE PAGO* 🌿\n\n`;
+                message += `Estimado/a ${factura.clienteNombre || 'Cliente'},\n\n`;
+                message += `Le recordamos amablemente que tiene un saldo pendiente en nuestra tienda EWE Esentia:\n\n`;
+                message += `📄 Factura: ${factura.numero || 'S/N'}\n`;
+                message += `📅 Fecha: ${dateStr} (${diffDays} días)\n`;
+                message += `💰 *Saldo Pendiente: ₡${formatMoney(saldoPendiente)}*\n\n`;
+                
+                if (abonos.length > 0) {
+                    message += `Total abonado: ₡${formatMoney(totalAbonado)}\n`;
+                }
+                
+                message += `\nLe agradecemos realizar el pago a la brevedad posible.\n\n`;
+                message += `💳 *Datos para el pago:*\n`;
+                message += `SINPE Móvil: 7295-2454\n`;
+                message += `EWE Esentia\n\n`;
+                message += `¡Gracias por su preferencia! 🙏`;
+
+                window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+            } catch (error) {
+                console.error("Error enviando recordatorio:", error);
+                alert('Error al enviar el recordatorio.');
+            }
+        }
 
         // ==========================================
         // CLIENTES
@@ -1068,23 +1292,23 @@ function openPaymentModalFromDetail() {
                         const dateObj = f.fecha?.toDate ? f.fecha.toDate() : new Date(f.fecha);
                         const dateStr = dateObj.toLocaleDateString('es-CR', { day: '2-digit', month: 'short', year: 'numeric' });
 
-                       return `
-<div class="history-item ${itemClass}" style="cursor: pointer;" onclick="openInvoiceDetailModal('${f.id}')">
-    <div class="history-info">
-        <div class="history-invoice">${f.numero || 'S/N'} 👁️</div>
-        <div class="history-date">${dateStr}</div>
-        <span class="history-status ${estadoClass}">${estado}</span>
-        ${totalAbonado > 0 ? `<div style="font-size: 0.75rem; color: var(--success); margin-top: 2px;">Abonado: ₡${formatMoney(totalAbonado)}</div>` : ''}
-    </div>
-    <div class="history-totals">
-        <div class="history-total">₡${formatMoney(totalFactura)}</div>
-        ${saldoPendiente > 0 ? `<div class="history-balance">Saldo: ₡${formatMoney(saldoPendiente)}</div>` : ''}
-    </div>
-    <div class="history-actions" onclick="event.stopPropagation();">
-        <button class="btn btn-whatsapp btn-sm" onclick="resendInvoice('${f.id}')">📱</button>
-        ${saldoPendiente > 0 ? `<button class="btn btn-success btn-sm" onclick="openPaymentModal('${f.id}')">💰</button>` : ''}
-    </div>
-</div>`;
+                        return `
+                        <div class="history-item ${itemClass}" style="cursor: pointer;" onclick="openInvoiceDetailModal('${f.id}')">
+                            <div class="history-info">
+                                <div class="history-invoice">${f.numero || 'S/N'} 👁️</div>
+                                <div class="history-date">${dateStr}</div>
+                                <span class="history-status ${estadoClass}">${estado}</span>
+                                ${totalAbonado > 0 ? `<div style="font-size: 0.75rem; color: var(--success); margin-top: 2px;">Abonado: ₡${formatMoney(totalAbonado)}</div>` : ''}
+                            </div>
+                            <div class="history-totals">
+                                <div class="history-total">₡${formatMoney(totalFactura)}</div>
+                                ${saldoPendiente > 0 ? `<div class="history-balance">Saldo: ₡${formatMoney(saldoPendiente)}</div>` : ''}
+                            </div>
+                            <div class="history-actions" onclick="event.stopPropagation();">
+                                <button class="btn btn-whatsapp btn-sm" onclick="resendInvoice('${f.id}')">📱</button>
+                                ${saldoPendiente > 0 ? `<button class="btn btn-success btn-sm" onclick="openPaymentModal('${f.id}')">💰</button>` : ''}
+                            </div>
+                        </div>`;
                     }).join('');
                 }
 
@@ -1156,20 +1380,23 @@ function openPaymentModalFromDetail() {
             }
             const note = document.getElementById('paymentNote').value.trim();
             try {
-                // ✅ DESPUÉS (CORRECTO)
-const newAbono = {
-    monto: amount,
-    metodo: selectedPaymentMethod,
-    nota: note || '-',
-    fecha: new Date()  // ✅ Usa Date de JavaScript
-};
-
-await db.collection('facturas').doc(currentPaymentInvoice.id).update({
-    abonos: firebase.firestore.FieldValue.arrayUnion(newAbono)
-});
+                const newAbono = {
+                    monto: amount,
+                    metodo: selectedPaymentMethod,
+                    nota: note || '-',
+                    fecha: new Date()
+                };
+                await db.collection('facturas').doc(currentPaymentInvoice.id).update({
+                    abonos: firebase.firestore.FieldValue.arrayUnion(newAbono)
+                });
                 alert(`✅ Abono de ₡${formatMoney(amount)} registrado exitosamente`);
                 closePaymentModal();
-                openHistoryModal();
+                // Si estamos en vista de cuentas por cobrar, recargar
+                if (document.getElementById('view-receivables').style.display !== 'none') {
+                    loadReceivables();
+                } else {
+                    openHistoryModal();
+                }
             } catch (error) {
                 console.error("Error registrando abono:", error);
                 alert('Error al registrar el abono.');
@@ -1232,7 +1459,100 @@ await db.collection('facturas').doc(currentPaymentInvoice.id).update({
         }
 
         // ==========================================
-        // PRODUCTOS Y CARRITO CON VALIDACIÓN DE STOCK
+        // DETALLE DE FACTURA
+        // ==========================================
+        async function openInvoiceDetailModal(invoiceId) {
+            try {
+                const doc = await db.collection('facturas').doc(invoiceId).get();
+                if (!doc.exists) { alert('Factura no encontrada'); return; }
+                currentDetailInvoice = { id: doc.id, ...doc.data() };
+                const factura = currentDetailInvoice;
+
+                document.getElementById('detailInvoiceNum').textContent = factura.numero || 'S/N';
+                const dateObj = factura.fecha?.toDate ? factura.fecha.toDate() : new Date(factura.fecha);
+                document.getElementById('detailDate').textContent = dateObj.toLocaleString('es-CR');
+                document.getElementById('detailClient').textContent = factura.clienteNombre || 'Cliente Contado';
+
+                const abonos = factura.abonos || [];
+                const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
+                const totalFactura = parseFloat(factura.total) || 0;
+                const saldoPendiente = Math.max(0, totalFactura - totalAbonado);
+
+                let estado, estadoClass;
+                if (saldoPendiente <= 0 && totalFactura > 0) { estado = '✅ Pagada'; estadoClass = 'status-pagada'; }
+                else if (totalAbonado > 0) { estado = '⚠️ Pago Parcial'; estadoClass = 'status-parcial'; }
+                else { estado = '⏳ Pendiente'; estadoClass = 'status-pendiente'; }
+                document.getElementById('detailStatus').innerHTML = `<span class="history-status ${estadoClass}">${estado}</span>`;
+                document.getElementById('detailTotal').textContent = `₡${formatMoney(totalFactura)}`;
+
+                const productsTable = document.getElementById('detailProductsTable');
+                if (factura.items && factura.items.length > 0) {
+                    productsTable.innerHTML = factura.items.map(item => {
+                        const itemTotal = item.precioFinalUnitario * item.cantidad;
+                        const discountText = item.descuentoPct > 0 ? `${item.descuentoPct}%` : '-';
+                        return `
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 10px;">
+                                    <div style="font-weight: 600;">${item.nombre}</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-light);">ID: ${item.id}</div>
+                                </td>
+                                <td style="padding: 10px; text-align: center;">${item.cantidad}</td>
+                                <td style="padding: 10px; text-align: right;">₡${formatMoney(item.precioUnitario)}</td>
+                                <td style="padding: 10px; text-align: center; color: ${item.descuentoPct > 0 ? 'var(--danger)' : 'var(--text-light)'};">${discountText}</td>
+                                <td style="padding: 10px; text-align: right; font-weight: 600;">₡${formatMoney(itemTotal)}</td>
+                            </tr>`;
+                    }).join('');
+                } else {
+                    productsTable.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-light);">No hay productos registrados</td></tr>';
+                }
+
+                document.getElementById('detailSubtotal').textContent = `₡${formatMoney(factura.subtotal || 0)}`;
+                document.getElementById('detailTax').textContent = `₡${formatMoney(factura.impuesto || 0)}`;
+                document.getElementById('detailTotalFinal').textContent = `₡${formatMoney(totalFactura)}`;
+
+                const paymentsSection = document.getElementById('detailPaymentsSection');
+                if (abonos.length > 0 || saldoPendiente > 0) {
+                    paymentsSection.style.display = 'block';
+                    if (abonos.length > 0) {
+                        const paymentsTable = document.getElementById('detailPaymentsTable');
+                        paymentsTable.innerHTML = abonos.map(a => {
+                            const aDate = a.fecha?.toDate ? a.fecha.toDate() : new Date(a.fecha);
+                            return `
+                                <tr style="border-bottom: 1px solid var(--border);">
+                                    <td style="padding: 10px;">${aDate.toLocaleDateString('es-CR')}</td>
+                                    <td style="padding: 10px;">${a.metodo}</td>
+                                    <td style="padding: 10px; font-size: 0.8rem; color: var(--text-light);">${a.nota || '-'}</td>
+                                    <td style="padding: 10px; text-align: right; font-weight: 600; color: var(--success);">₡${formatMoney(a.monto)}</td>
+                                </tr>`;
+                        }).join('');
+                    } else {
+                        document.getElementById('detailPaymentsTable').innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: var(--text-light);">Sin pagos registrados</td></tr>';
+                    }
+                    document.getElementById('detailTotalPaid').textContent = `₡${formatMoney(totalAbonado)}`;
+                    document.getElementById('detailBalance').textContent = `₡${formatMoney(saldoPendiente)}`;
+                    document.getElementById('detailPaymentBtn').style.display = saldoPendiente > 0 ? 'flex' : 'none';
+                } else {
+                    paymentsSection.style.display = 'none';
+                    document.getElementById('detailPaymentBtn').style.display = 'none';
+                }
+
+                document.getElementById('invoiceDetailModal').classList.add('active');
+            } catch (error) {
+                console.error("Error abriendo detalle de factura:", error);
+                alert('Error al cargar el detalle de la factura.');
+            }
+        }
+        function closeInvoiceDetailModal() { document.getElementById('invoiceDetailModal').classList.remove('active'); currentDetailInvoice = null; }
+        function resendInvoiceFromDetail() { if (currentDetailInvoice) resendInvoice(currentDetailInvoice.id); }
+        function openPaymentModalFromDetail() {
+            if (currentDetailInvoice) {
+                closeInvoiceDetailModal();
+                setTimeout(() => openPaymentModal(currentDetailInvoice.id), 300);
+            }
+        }
+
+        // ==========================================
+        // PRODUCTOS Y CARRITO
         // ==========================================
         function renderProducts(products) {
             const grid = document.getElementById('productsGrid');
@@ -1246,10 +1566,9 @@ await db.collection('facturas').doc(currentPaymentInvoice.id).update({
                 const stockStatus = getStockStatus(stock);
                 const isOutOfStock = stock && stock.cantidad <= 0;
                 const isLowStock = stock && stock.cantidad > 0 && stock.cantidad <= LOW_STOCK_THRESHOLD;
-
                 return `
                 <div class="product-card ${hasVariants ? 'has-variants' : ''} ${isOutOfStock ? 'out-of-stock' : ''} ${isLowStock ? 'low-stock' : ''}" 
-                     onclick="${isOutOfStock ? `alert('⚠️ Producto agotado. No se puede agregar al carrito.'); return false;` : `openProductModal('${p.id}')`}">
+                     onclick="${isOutOfStock ? `alert('⚠️ Producto agotado.'); return false;` : `openProductModal('${p.id}')`}">
                     <div class="stock-badge ${stockStatus.class}">${stockStatus.label}</div>
                     <div class="product-category">${p.categoria}</div>
                     <div class="product-name">${p.nombre}</div>
@@ -1271,13 +1590,11 @@ await db.collection('facturas').doc(currentPaymentInvoice.id).update({
         function openProductModal(productId) {
             const product = allProducts.find(p => p.id === productId);
             if (!product) return;
-
             document.getElementById('modalProductId').value = product.id;
             document.getElementById('modalProductName').textContent = product.nombre;
             document.getElementById('modalQuantity').value = 1;
             document.getElementById('modalDiscount').value = 0;
 
-            // Actualizar información de stock
             const stock = getStockForProduct(product);
             const stockBar = document.getElementById('modalStockBar');
             const stockIcon = document.getElementById('modalStockIcon');
@@ -1290,20 +1607,19 @@ await db.collection('facturas').doc(currentPaymentInvoice.id).update({
                 stockQty.textContent = stock.cantidad;
                 maxQtyLabel.textContent = stock.cantidad;
                 document.getElementById('modalQuantity').max = stock.cantidad;
-                
                 if (stock.cantidad <= 0) {
                     stockIcon.textContent = '❌';
-                    stockText.textContent = 'Producto agotado. No se puede agregar al carrito.';
+                    stockText.textContent = 'Producto agotado.';
                     stockBar.style.background = '#fee2e2';
                     pricePreview.classList.add('warning');
                 } else if (stock.cantidad <= LOW_STOCK_THRESHOLD) {
                     stockIcon.textContent = '⚠️';
-                    stockText.textContent = `¡Últimas ${stock.cantidad} unidades disponibles!`;
+                    stockText.textContent = `¡Últimas ${stock.cantidad} unidades!`;
                     stockBar.style.background = '#fef3c7';
                     pricePreview.classList.remove('warning');
                 } else {
                     stockIcon.textContent = '✅';
-                    stockText.textContent = 'Stock suficiente disponible';
+                    stockText.textContent = 'Stock suficiente';
                     stockBar.style.background = '#dcfce7';
                     pricePreview.classList.remove('warning');
                 }
@@ -1312,7 +1628,7 @@ await db.collection('facturas').doc(currentPaymentInvoice.id).update({
                 maxQtyLabel.textContent = '∞';
                 document.getElementById('modalQuantity').max = 999;
                 stockIcon.textContent = 'ℹ️';
-                stockText.textContent = 'Sin registro en inventario. Se permitirá la venta.';
+                stockText.textContent = 'Sin registro en inventario.';
                 stockBar.style.background = '#f0f9ff';
                 pricePreview.classList.remove('warning');
             }
@@ -1320,7 +1636,6 @@ await db.collection('facturas').doc(currentPaymentInvoice.id).update({
             const variantGroup = document.getElementById('variantGroup');
             const variantSelect = document.getElementById('modalVariantSelect');
             variantSelect.innerHTML = '';
-
             if (product.variantes && product.variantes.length > 0) {
                 variantGroup.style.display = 'block';
                 if (product.precioBase > 0) {
@@ -1341,7 +1656,6 @@ await db.collection('facturas').doc(currentPaymentInvoice.id).update({
             } else {
                 variantGroup.style.display = 'none';
             }
-
             updateModalPricePreview();
             document.getElementById('productModal').classList.add('active');
         }
@@ -1350,10 +1664,7 @@ await db.collection('facturas').doc(currentPaymentInvoice.id).update({
             const qtyInput = document.getElementById('modalQuantity');
             const maxQty = parseInt(qtyInput.max) || 999;
             const qty = parseInt(qtyInput.value) || 1;
-            if (qty > maxQty) {
-                qtyInput.value = maxQty;
-                alert(`⚠️ Stock máximo disponible: ${maxQty} unidades`);
-            }
+            if (qty > maxQty) { qtyInput.value = maxQty; alert(`⚠️ Stock máximo: ${maxQty} unidades`); }
             if (qty < 1) qtyInput.value = 1;
             updateModalPricePreview();
         }
@@ -1374,31 +1685,24 @@ await db.collection('facturas').doc(currentPaymentInvoice.id).update({
             const totalFinal = priceWithDiscount * qty;
             document.getElementById('modalOriginalPrice').textContent = `₡${formatMoney(basePrice)} c/u`;
             document.getElementById('modalFinalPrice').textContent = `₡${formatMoney(totalFinal)}`;
-            document.getElementById('modalDiscountText').textContent = discountPct > 0 ? `Descuento aplicado: ${discountPct}% (-₡${formatMoney(basePrice * qty - totalFinal)})` : '';
+            document.getElementById('modalDiscountText').textContent = discountPct > 0 ? `Descuento: ${discountPct}% (-₡${formatMoney(basePrice * qty - totalFinal)})` : '';
         }
 
-        // Genera número de factura en formato DDMMYYYYHHMM
-// Ejemplo: 311020261430 = 31/10/2026 a las 14:30
-function generateInvoiceNumber() {
-    const now = new Date();
-    const day = String(now.getDate()).padStart(2, '0');
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const year = now.getFullYear();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    return `${day}${month}${year}${hours}${minutes}`;
-}
+        function generateInvoiceNumber() {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            return `${day}${month}${year}${hours}${minutes}`;
+        }
 
         function confirmAddToCart() {
             const productId = document.getElementById('modalProductId').value;
             const product = allProducts.find(p => p.id === productId);
             const stock = getStockForProduct(product);
-            
-            // Validar stock antes de agregar
-            if (stock && stock.cantidad <= 0) {
-                alert('❌ Producto agotado. No se puede agregar al carrito.');
-                return;
-            }
+            if (stock && stock.cantidad <= 0) { alert('❌ Producto agotado.'); return; }
 
             let basePrice = product.precioBase;
             let variantName = '';
@@ -1408,26 +1712,21 @@ function generateInvoiceNumber() {
                 variantName = variantSelect.value;
             }
             const qty = parseInt(document.getElementById('modalQuantity').value) || 1;
-            
-            // Validar que no exceda el stock disponible (considerando lo que ya está en el carrito)
             const currentInCart = cart.filter(item => item.id === product.id && (!variantName || item.nombre.includes(variantName)))
                                       .reduce((sum, item) => sum + item.cantidad, 0);
             const totalRequested = currentInCart + qty;
-            
             if (stock && totalRequested > stock.cantidad) {
-                alert(`⚠️ Stock insuficiente.\n\nDisponible: ${stock.cantidad}\nEn carrito: ${currentInCart}\nSolicitado: ${qty}\n\nMáximo permitido: ${stock.cantidad - currentInCart}`);
+                alert(`⚠️ Stock insuficiente.\nDisponible: ${stock.cantidad}\nEn carrito: ${currentInCart}\nSolicitado: ${qty}\nMáximo: ${stock.cantidad - currentInCart}`);
                 return;
             }
-
             const discountPct = parseFloat(document.getElementById('modalDiscount').value) || 0;
             const finalPriceUnit = basePrice * (1 - (discountPct / 100));
             const displayName = variantName ? `${product.nombre} (${variantName})` : product.nombre;
-
             cart.push({
                 id: product.id, nombre: displayName,
                 precioUnitario: basePrice, descuentoPct: discountPct,
                 precioFinalUnitario: finalPriceUnit, cantidad: qty,
-                stockId: stock ? stock.id : null // Guardar referencia al stock
+                stockId: stock ? stock.id : null
             });
             closeProductModal();
             renderCart();
@@ -1442,9 +1741,7 @@ function generateInvoiceNumber() {
             container.innerHTML = cart.map((item, index) => {
                 const product = allProducts.find(p => p.id === item.id);
                 const stock = product ? getStockForProduct(product) : null;
-                const stockWarning = stock && item.cantidad >= stock.cantidad ? 
-                    `<div class="cart-item-stock-warning">⚠️ Últimas unidades</div>` : '';
-                
+                const stockWarning = stock && item.cantidad >= stock.cantidad ? '<div class="cart-item-stock-warning">⚠️ Últimas unidades</div>' : '';
                 return `
                 <div class="cart-item">
                     <div class="cart-item-info">
@@ -1468,17 +1765,10 @@ function generateInvoiceNumber() {
             const item = cart[index];
             const product = allProducts.find(p => p.id === item.id);
             const stock = product ? getStockForProduct(product) : null;
-            
             const newQty = item.cantidad + change;
-            if (stock && newQty > stock.cantidad) {
-                alert(`⚠️ Stock máximo disponible: ${stock.cantidad} unidades`);
-                return;
-            }
-            if (newQty <= 0) {
-                cart.splice(index, 1);
-            } else {
-                cart[index].cantidad = newQty;
-            }
+            if (stock && newQty > stock.cantidad) { alert(`⚠️ Stock máximo: ${stock.cantidad} unidades`); return; }
+            if (newQty <= 0) cart.splice(index, 1);
+            else cart[index].cantidad = newQty;
             renderCart();
         }
 
@@ -1497,36 +1787,106 @@ function generateInvoiceNumber() {
 
         function formatMoney(amount) { return amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'); }
 
-       
         // ==========================================
-        // GESTIÓN DE INVENTARIO
+        // GUARDAR FACTURA CON TRANSACCIÓN
+        // ==========================================
+        async function saveInvoice() {
+            if (cart.length === 0) { alert('El carrito está vacío'); return; }
+            if (!currentClient) { alert('Seleccione un cliente'); return; }
+
+            try {
+                await db.runTransaction(async (transaction) => {
+                    const stockReads = [];
+                    const productsInCart = [];
+                    for (const item of cart) {
+                        const product = allProducts.find(p => p.id === item.id);
+                        if (!product) continue;
+                        const stockId = normalizeString(product.nombre);
+                        const stockRef = db.collection('stock').doc(stockId);
+                        const stockDoc = await transaction.get(stockRef);
+                        stockReads.push({ product, item, stockRef, stockDoc, stockId });
+                        productsInCart.push({ product, item, stockDoc });
+                    }
+
+                    for (const { product, item, stockDoc } of productsInCart) {
+                        const currentStock = stockDoc.exists ? (stockDoc.data().cantidad || 0) : 0;
+                        const totalInCart = cart.filter(i => {
+                            const p = allProducts.find(prod => prod.id === i.id);
+                            return p && normalizeString(p.nombre) === normalizeString(product.nombre);
+                        }).reduce((sum, i) => sum + i.cantidad, 0);
+                        if (totalInCart > currentStock) {
+                            throw new Error(`Stock insuficiente para "${product.nombre}": necesita ${totalInCart}, disponible ${currentStock}`);
+                        }
+                    }
+
+                    const invoiceRef = db.collection('facturas').doc();
+                    const invoiceData = {
+                        numero: currentInvoiceNumber,
+                        fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                        clienteId: currentClient ? currentClient.id : 'contado',
+                        clienteNombre: currentClient ? currentClient.nombre : 'Cliente Contado',
+                        clienteTelefono: currentClient ? currentClient.telefono : '',
+                        items: cart, subtotal: currentSubtotal, impuesto: currentIva, total: currentTotal,
+                        abonos: [], estado: 'pagada'
+                    };
+                    transaction.set(invoiceRef, invoiceData);
+
+                    for (const { product, item, stockRef, stockDoc, stockId } of stockReads) {
+                        const currentStock = stockDoc.exists ? (stockDoc.data().cantidad || 0) : 0;
+                        const stockData = stockDoc.exists ? stockDoc.data() : {
+                            nombre: product.nombre, categoria: product.categoria,
+                            precioVenta: product.precioBase, cantidad: 0, costoUnitario: 0, ultimaCompra: '-'
+                        };
+                        const newCantidad = Math.max(0, currentStock - item.cantidad);
+                        transaction.set(stockRef, { ...stockData, cantidad: newCantidad, ultimaActualizacion: new Date().toISOString() }, { merge: true });
+                        const movementRef = db.collection('stock_movements').doc();
+                        transaction.set(movementRef, {
+                            productId: product.id, productName: product.nombre, type: 'salida',
+                            quantity: item.cantidad, reference: currentInvoiceNumber,
+                            notes: `Venta a ${currentClient.nombre || 'Cliente Contado'}`,
+                            precioVenta: item.precioFinalUnitario,
+                            fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                            fechaLocal: new Date().toISOString()
+                        });
+                    }
+                });
+
+                alert('✅ Factura guardada y stock actualizado');
+                cart = []; renderCart();
+                currentInvoiceNumber = generateInvoiceNumber();
+                document.getElementById('invoiceNumber').textContent = currentInvoiceNumber;
+                await loadStock();
+                renderProducts(allProducts);
+                checkLowStockAlerts();
+            } catch (error) {
+                console.error("Error guardando factura:", error);
+                if (error.message.includes('Stock insuficiente')) alert('⚠️ ' + error.message);
+                else alert('Error al guardar: ' + error.message);
+            }
+        }
+
+        // ==========================================
+        // INVENTARIO
         // ==========================================
         function renderInventoryTable(filter = 'all', searchQuery = '') {
             const tbody = document.getElementById('inventoryTableBody');
             const q = searchQuery.toLowerCase();
-            
             let totalProducts = 0, inStock = 0, lowStock = 0, outOfStock = 0;
             const rows = [];
-
             allProducts.forEach(p => {
                 const stock = getStockForProduct(p);
                 const stockQty = stock ? stock.cantidad : 0;
                 const stockStatus = getStockStatus(stock);
-                
                 totalProducts++;
                 if (stockQty <= 0) outOfStock++;
                 else if (stockQty <= LOW_STOCK_THRESHOLD) lowStock++;
                 else inStock++;
-
-                // Aplicar filtros
                 if (filter === 'ok' && stockStatus.status !== 'ok') return;
                 if (filter === 'low' && stockStatus.status !== 'low') return;
                 if (filter === 'out' && stockStatus.status !== 'out') return;
                 if (q && !p.nombre.toLowerCase().includes(q) && !p.categoria.toLowerCase().includes(q)) return;
-
                 const stockCellClass = stockStatus.status === 'ok' ? 'ok' : (stockStatus.status === 'low' ? 'low' : 'out');
                 const lastPurchase = stock && stock.ultimaCompra ? new Date(stock.ultimaCompra).toLocaleDateString('es-CR') : '-';
-
                 rows.push(`
                     <tr>
                         <td><strong>${p.nombre}</strong><br><small style="color: #999;">ID: ${p.id}</small></td>
@@ -1535,39 +1895,29 @@ function generateInvoiceNumber() {
                         <td class="stock-cell ${stockCellClass}">${stockQty} ${stockStatus.status === 'out' ? '❌' : (stockStatus.status === 'low' ? '⚠️' : '✅')}</td>
                         <td>₡${stock ? formatMoney(stock.costoUnitario) : '-'}</td>
                         <td>${lastPurchase}</td>
-                        <td>
-                            <button class="btn btn-success btn-sm" onclick="openRestockModal('${p.id}')" ${stockQty <= 0 ? '' : ''}>📦 Reabastecer</button>
-                        </td>
-                    </tr>
-                `);
+                        <td><button class="btn btn-success btn-sm" onclick="openRestockModal('${p.id}')">📦 Reabastecer</button></td>
+                    </tr>`);
             });
-
-            // Actualizar estadísticas
             document.getElementById('invTotalProducts').textContent = totalProducts;
             document.getElementById('invInStock').textContent = inStock;
             document.getElementById('invLowStock').textContent = lowStock;
             document.getElementById('invOutOfStock').textContent = outOfStock;
-
-            tbody.innerHTML = rows.length > 0 ? rows.join('') : 
-                '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-light);">No hay productos que coincidan con los filtros.</td></tr>';
+            tbody.innerHTML = rows.length > 0 ? rows.join('') : '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-light);">No hay productos.</td></tr>';
         }
 
         function filterInventory(filter, element) {
             currentInventoryFilter = filter;
-            document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('#view-inventory .filter-tab').forEach(tab => tab.classList.remove('active'));
             element.classList.add('active');
             renderInventoryTable(filter, document.getElementById('inventorySearch').value);
         }
 
-        function filterInventoryTable(query) {
-            renderInventoryTable(currentInventoryFilter, query);
-        }
+        function filterInventoryTable(query) { renderInventoryTable(currentInventoryFilter, query); }
 
         function openRestockModal(productId) {
             const product = allProducts.find(p => p.id === productId);
             if (!product) return;
             const stock = getStockForProduct(product);
-            
             document.getElementById('restockProductId').value = productId;
             document.getElementById('restockProductName').textContent = product.nombre;
             document.getElementById('restockCurrentStock').textContent = stock ? stock.cantidad : 0;
@@ -1576,331 +1926,94 @@ function generateInvoiceNumber() {
             document.getElementById('restockNote').value = '';
             document.getElementById('restockModal').classList.add('active');
         }
-
         function closeRestockModal() { document.getElementById('restockModal').classList.remove('active'); }
 
-       // ==========================================
-// GESTIÓN DE INVENTARIO MEJORADA CON TRANSACCIONES
-// ==========================================
-
-// Variable global para movimientos de stock
-
-
-// Función mejorada para obtener/crear stock
-async function getOrCreateStock(product) {
-    const stockId = normalizeString(product.nombre);
-    const stockRef = db.collection('stock').doc(stockId);
-    const stockDoc = await stockRef.get();
-
-    if (!stockDoc.exists) {
-        // Crear registro de stock si no existe
-        const newStock = {
-            cantidad: 0,
-            nombre: product.nombre,
-            costoUnitario: 0,
-            ultimaActualizacion: new Date().toISOString(),
-            ultimaCompra: '-',
-            categoria: product.categoria,
-            precioVenta: product.precioBase
-        };
-        await stockRef.set(newStock);
-        return { id: stockId, ...newStock };
-    }
-
-    return { id: stockId, ...stockDoc.data() };
-}
-
-// Función para registrar movimiento de stock (kardex)
-async function registerStockMovement(productId, productName, type, quantity, reference, notes = '') {
-    const movement = {
-        productId: productId,
-        productName: productName,
-        type: type, // 'entrada' o 'salida'
-        quantity: quantity,
-        reference: reference, // Número de factura o nota de compra
-        notes: notes,
-        fecha: firebase.firestore.FieldValue.serverTimestamp(),
-        fechaLocal: new Date().toISOString()
-    };
-
-    await db.collection('stock_movements').add(movement);
-    stockMovements.unshift(movement);
-}
-
-// ==========================================
-// REABASTECIMIENTO MEJORADO CON TRANSACCIÓN
-// ==========================================
-async function confirmRestock() {
-    const productId = document.getElementById('restockProductId').value;
-    const product = allProducts.find(p => p.id === productId);
-    if (!product) return;
-
-    const quantity = parseInt(document.getElementById('restockQuantity').value) || 0;
-    const cost = parseFloat(document.getElementById('restockCost').value) || 0;
-    const note = document.getElementById('restockNote').value.trim();
-
-    if (quantity <= 0) { alert('Ingrese una cantidad válida'); return; }
-
-    try {
-        // Usar transacción para evitar condiciones de carrera
-        await db.runTransaction(async (transaction) => {
-            const stockId = normalizeString(product.nombre);
-            const stockRef = db.collection('stock').doc(stockId);
-            const stockDoc = await transaction.get(stockRef);
-
-            let currentStock = 0;
-            let stockData = {};
-
-            if (stockDoc.exists) {
-                currentStock = stockDoc.data().cantidad || 0;
-                stockData = stockDoc.data();
-            } else {
-                stockData = {
-                    nombre: product.nombre,
-                    categoria: product.categoria,
-                    precioVenta: product.precioBase,
-                    ultimaCompra: '-'
-                };
-            }
-
-            const newCantidad = currentStock + quantity;
-            const today = new Date().toISOString().split('T')[0];
-
-            // Actualizar stock
-            transaction.set(stockRef, {
-                ...stockData,
-                cantidad: newCantidad,
-                costoUnitario: cost > 0 ? cost : (stockData.costoUnitario || 0),
-                ultimaActualizacion: new Date().toISOString(),
-                ultimaCompra: today
-            }, { merge: true });
-
-            // Registrar movimiento
-            const movementRef = db.collection('stock_movements').doc();
-            transaction.set(movementRef, {
-                productId: product.id,
-                productName: product.nombre,
-                type: 'entrada',
-                quantity: quantity,
-                reference: `Reabastecimiento manual`,
-                notes: note || 'Compra a proveedor',
-                costoUnitario: cost,
-                fecha: firebase.firestore.FieldValue.serverTimestamp(),
-                fechaLocal: new Date().toISOString()
-            });
-        });
-
-        alert(`✅ Stock actualizado: ${product.nombre}\nNueva cantidad: ${quantity} unidades agregadas`);
-        closeRestockModal();
-        await loadStock();
-        renderInventoryTable(currentInventoryFilter, document.getElementById('inventorySearch').value);
-        renderProducts(allProducts);
-        checkLowStockAlerts();
-    } catch (error) {
-        console.error("Error reabasteciendo:", error);
-        alert('Error al actualizar el stock: ' + error.message);
-    }
-}
-
-// ==========================================
-// FACTURACIÓN CON TRANSACCIÓN Y DESCUENTO DE STOCK
-// ==========================================
-async function saveInvoice() {
-    if (cart.length === 0) { alert('El carrito está vacío'); return; }
-    if (!currentClient) { alert('Seleccione un cliente'); return; }
-
-    // Validación final de stock
-    const stockIssues = [];
-    for (const item of cart) {
-        const product = allProducts.find(p => p.id === item.id);
-        if (!product) continue;
-        const stock = await getOrCreateStock(product);
-        const totalInCart = cart.filter(i => i.id === item.id).reduce((sum, i) => sum + i.cantidad, 0);
-        if (totalInCart > stock.cantidad) {
-            stockIssues.push(`${product.nombre}: necesita ${totalInCart}, disponible ${stock.cantidad}`);
-        }
-    }
-
-    if (stockIssues.length > 0) {
-        alert('⚠️ No se puede facturar. Stock insuficiente:\n\n' + stockIssues.join('\n'));
-        return;
-    }
-
-    try {
-        // Usar transacción para garantizar consistencia
-        await db.runTransaction(async (transaction) => {
-            // 1. Crear la factura
-            const invoiceRef = db.collection('facturas').doc();
-            const invoiceData = {
-                numero: currentInvoiceNumber,
-                fecha: firebase.firestore.FieldValue.serverTimestamp(),
-                clienteId: currentClient ? currentClient.id : 'contado',
-                clienteNombre: currentClient ? currentClient.nombre : 'Cliente Contado',
-                clienteTelefono: currentClient ? currentClient.telefono : '',
-                items: cart,
-                subtotal: currentSubtotal,
-                impuesto: currentIva,
-                total: currentTotal,
-                abonos: [],
-                estado: 'pagada'
-            };
-            transaction.set(invoiceRef, invoiceData);
-
-            // 2. Descontar stock de cada producto
-            for (const item of cart) {
-                const product = allProducts.find(p => p.id === item.id);
-                if (!product) continue;
-
-                const stockId = normalizeString(product.nombre);
-                const stockRef = db.collection('stock').doc(stockId);
-                const stockDoc = await transaction.get(stockRef);
-
-                let currentStock = 0;
-                let stockData = {};
-
-                if (stockDoc.exists) {
-                    currentStock = stockDoc.data().cantidad || 0;
-                    stockData = stockDoc.data();
-                } else {
-                    // Si no existe, crear con cantidad 0 (no debería pasar por la validación anterior)
-                    stockData = {
-                        nombre: product.nombre,
-                        categoria: product.categoria,
-                        precioVenta: product.precioBase,
-                        cantidad: 0
-                    };
-                }
-
-                const newCantidad = Math.max(0, currentStock - item.cantidad);
-
-                // Actualizar stock
-                transaction.set(stockRef, {
-                    ...stockData,
-                    cantidad: newCantidad,
-                    ultimaActualizacion: new Date().toISOString()
-                }, { merge: true });
-
-                // Registrar movimiento de salida
-                const movementRef = db.collection('stock_movements').doc();
-                transaction.set(movementRef, {
-                    productId: product.id,
-                    productName: product.nombre,
-                    type: 'salida',
-                    quantity: item.cantidad,
-                    reference: currentInvoiceNumber,
-                    notes: `Venta a ${currentClient.nombre || 'Cliente Contado'}`,
-                    precioVenta: item.precioFinalUnitario,
-                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
-                    fechaLocal: new Date().toISOString()
+        async function confirmRestock() {
+            const productId = document.getElementById('restockProductId').value;
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) return;
+            const quantity = parseInt(document.getElementById('restockQuantity').value) || 0;
+            const cost = parseFloat(document.getElementById('restockCost').value) || 0;
+            const note = document.getElementById('restockNote').value.trim();
+            if (quantity <= 0) { alert('Ingrese una cantidad válida'); return; }
+            try {
+                await db.runTransaction(async (transaction) => {
+                    const stockId = normalizeString(product.nombre);
+                    const stockRef = db.collection('stock').doc(stockId);
+                    const stockDoc = await transaction.get(stockRef);
+                    let currentStock = 0, stockData = {};
+                    if (stockDoc.exists) {
+                        currentStock = stockDoc.data().cantidad || 0;
+                        stockData = stockDoc.data();
+                    } else {
+                        stockData = { nombre: product.nombre, categoria: product.categoria, precioVenta: product.precioBase, ultimaCompra: '-' };
+                    }
+                    const newCantidad = currentStock + quantity;
+                    const today = new Date().toISOString().split('T')[0];
+                    transaction.set(stockRef, { ...stockData, cantidad: newCantidad, costoUnitario: cost > 0 ? cost : (stockData.costoUnitario || 0), ultimaActualizacion: new Date().toISOString(), ultimaCompra: today }, { merge: true });
+                    const movementRef = db.collection('stock_movements').doc();
+                    transaction.set(movementRef, {
+                        productId: product.id, productName: product.nombre, type: 'entrada',
+                        quantity: quantity, reference: 'Reabastecimiento manual',
+                        notes: note || 'Compra a proveedor', costoUnitario: cost,
+                        fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                        fechaLocal: new Date().toISOString()
+                    });
                 });
+                alert(`✅ Stock actualizado: ${product.nombre}\n+${quantity} unidades`);
+                closeRestockModal();
+                await loadStock();
+                renderInventoryTable(currentInventoryFilter, document.getElementById('inventorySearch').value);
+                renderProducts(allProducts);
+                checkLowStockAlerts();
+            } catch (error) {
+                console.error("Error reabasteciendo:", error);
+                alert('Error al actualizar el stock: ' + error.message);
             }
-        });
+        }
 
-        alert('✅ Factura guardada y stock actualizado exitosamente');
-        cart = [];
-        renderCart();
+        async function loadStockMovements() {
+            try {
+                const snapshot = await db.collection('stock_movements').orderBy('fecha', 'desc').limit(100).get();
+                stockMovements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderMovementsTable();
+            } catch (error) { console.error("Error cargando movimientos:", error); }
+        }
 
-        // Generar nuevo número de factura
-        currentInvoiceNumber = generateInvoiceNumber();
-        document.getElementById('invoiceNumber').textContent = currentInvoiceNumber;
+        function renderMovementsTable(filter = 'all') {
+            const tbody = document.getElementById('movementsTableBody');
+            if (!tbody) return;
+            const filtered = filter === 'all' ? stockMovements : stockMovements.filter(m => m.type === filter);
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-light);">No hay movimientos registrados</td></tr>';
+                return;
+            }
+            tbody.innerHTML = filtered.map(m => {
+                const dateObj = m.fecha?.toDate ? m.fecha.toDate() : new Date(m.fechaLocal);
+                const dateStr = dateObj.toLocaleString('es-CR');
+                const typeIcon = m.type === 'entrada' ? '📥' : '📤';
+                const typeClass = m.type === 'entrada' ? 'color: var(--success);' : 'color: var(--danger);';
+                const typeLabel = m.type === 'entrada' ? 'ENTRADA' : 'SALIDA';
+                return `
+                    <tr>
+                        <td style="padding: 10px;">${dateStr}</td>
+                        <td style="padding: 10px;"><strong>${m.productName}</strong><br><small style="color: #999;">ID: ${m.productId}</small></td>
+                        <td style="padding: 10px; ${typeClass} font-weight: 700;">${typeIcon} ${typeLabel}</td>
+                        <td style="padding: 10px; text-align: center; font-weight: 700;">${m.type === 'entrada' ? '+' : '-'}${m.quantity}</td>
+                        <td style="padding: 10px;">${m.reference || '-'}${m.notes ? `<br><small style="color: #999;">${m.notes}</small>` : ''}</td>
+                        <td style="padding: 10px; text-align: right;">${m.precioVenta ? `₡${formatMoney(m.precioVenta)}` : (m.costoUnitario ? `₡${formatMoney(m.costoUnitario)}` : '-')}</td>
+                    </tr>`;
+            }).join('');
+        }
 
-        // Recargar stock
-        await loadStock();
-        renderProducts(allProducts);
-        checkLowStockAlerts();
-    } catch (error) {
-        console.error("Error guardando factura:", error);
-        alert('Error al guardar la factura: ' + error.message);
-    }
-}
-
-// ==========================================
-// VISTA DE KARDEX / MOVIMIENTOS DE STOCK
-// ==========================================
-async function loadStockMovements() {
-    try {
-        const snapshot = await db.collection('stock_movements')
-            .orderBy('fecha', 'desc')
-            .limit(100)
-            .get();
-        
-        stockMovements = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderMovementsTable();
-    } catch (error) {
-        console.error("Error cargando movimientos:", error);
-    }
-}
-
-function renderMovementsTable(filter = 'all') {
-    const tbody = document.getElementById('movementsTableBody');
-    if (!tbody) return;
-
-    const filtered = filter === 'all' ? stockMovements : 
-                     stockMovements.filter(m => m.type === filter);
-
-    if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-light);">No hay movimientos registrados</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = filtered.map(m => {
-        const dateObj = m.fecha?.toDate ? m.fecha.toDate() : new Date(m.fechaLocal);
-        const dateStr = dateObj.toLocaleString('es-CR');
-        const typeIcon = m.type === 'entrada' ? '📥' : '';
-        const typeClass = m.type === 'entrada' ? 'color: var(--success);' : 'color: var(--danger);';
-        const typeLabel = m.type === 'entrada' ? 'ENTRADA' : 'SALIDA';
-
-        return `
-            <tr>
-                <td style="padding: 10px;">${dateStr}</td>
-                <td style="padding: 10px;">
-                    <strong>${m.productName}</strong>
-                    <br><small style="color: #999;">ID: ${m.productId}</small>
-                </td>
-                <td style="padding: 10px; ${typeClass} font-weight: 700;">
-                    ${typeIcon} ${typeLabel}
-                </td>
-                <td style="padding: 10px; text-align: center; font-weight: 700;">
-                    ${m.type === 'entrada' ? '+' : '-'}${m.quantity}
-                </td>
-                <td style="padding: 10px;">
-                    ${m.reference || '-'}
-                    ${m.notes ? `<br><small style="color: #999;">${m.notes}</small>` : ''}
-                </td>
-                <td style="padding: 10px; text-align: right;">
-                    ${m.precioVenta ? `₡${formatMoney(m.precioVenta)}` : (m.costoUnitario ? `₡${formatMoney(m.costoUnitario)}` : '-')}
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
-
-
-function filterMovements(filter, element) {
-    currentMovementFilter = filter;
-    console.log(`🔍 Filtro aplicado: ${filter}. Movimientos totales en memoria:`, stockMovements.length);
-    
-    // Actualizar estilo visual de las pestañas
-    const tabs = element.parentElement.querySelectorAll('.filter-tab');
-    tabs.forEach(tab => tab.classList.remove('active'));
-    element.classList.add('active');
-    
-    // Volver a dibujar la tabla con el filtro seleccionado
-    renderMovementsTable(filter);
-}
-
-// Agregar pestaña de movimientos en la vista de inventario
-function switchView(view) {
-    document.getElementById('view-pos').style.display = view === 'pos' ? 'grid' : 'none';
-    document.getElementById('view-inventory').style.display = view === 'inventory' ? 'grid' : 'none';
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    if (view === 'inventory') {
-        renderInventoryTable();
-        loadStockMovements(); // Cargar movimientos al entrar a inventario
-    }
-}
+        let currentMovementFilter = 'all';
+        function filterMovements(filter, element) {
+            currentMovementFilter = filter;
+            const tabs = element.parentElement.querySelectorAll('.filter-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            element.classList.add('active');
+            renderMovementsTable(filter);
+        }
 
         // ==========================================
         // ESCÁNER
@@ -1910,35 +2023,23 @@ function switchView(view) {
             if (!html5QrcodeScanner) html5QrcodeScanner = new Html5Qrcode("reader");
             const config = { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 };
             html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
-            .catch(err => {
-                console.error("Error cámara:", err);
-                alert("No se pudo acceder a la cámara. Use HTTPS y permita los permisos.");
-                closeScanner();
-            });
+            .catch(err => { console.error("Error cámara:", err); alert("No se pudo acceder a la cámara."); closeScanner(); });
         }
         function closeScanner() {
             if (html5QrcodeScanner) {
-                html5QrcodeScanner.stop().then(() => {
-                    document.getElementById('scannerModal').classList.remove('active');
-                }).catch(err => console.error("Error al detener:", err));
-            } else {
-                document.getElementById('scannerModal').classList.remove('active');
-            }
+                html5QrcodeScanner.stop().then(() => { document.getElementById('scannerModal').classList.remove('active'); })
+                .catch(err => console.error("Error al detener:", err));
+            } else { document.getElementById('scannerModal').classList.remove('active'); }
         }
         function onScanSuccess(decodedText, decodedResult) {
             const searchCode = String(decodedText).trim();
             const product = allProducts.find(p => String(p.id) === searchCode);
             if (product) {
                 const stock = getStockForProduct(product);
-                if (stock && stock.cantidad <= 0) {
-                    alert(`❌ Producto agotado: ${product.nombre}\nStock: 0 unidades`);
-                    return;
-                }
+                if (stock && stock.cantidad <= 0) { alert(`❌ Producto agotado: ${product.nombre}`); return; }
                 closeScanner();
                 setTimeout(() => { openProductModal(product.id); }, 300);
-            } else {
-                alert(`❌ Producto no encontrado.\nCódigo: ${searchCode}`);
-            }
+            } else { alert(`❌ Producto no encontrado.\nCódigo: ${searchCode}`); }
         }
         function onScanFailure(error) { }
 
@@ -1967,7 +2068,7 @@ function switchView(view) {
             let clientName = currentClient ? (currentClient.nombre || "Cliente") : "Cliente";
             if (phone.length === 8) phone = '506' + phone;
             if (!phone) {
-                phone = prompt("Ingrese el número de WhatsApp (ej: 88888888):");
+                phone = prompt("Ingrese el número de WhatsApp:");
                 if (!phone) return;
                 phone = String(phone).replace(/\D/g, '');
                 if (phone.length === 8) phone = '506' + phone;

@@ -117,7 +117,7 @@
                         <text x="200" y="60" text-anchor="middle" font-size="24" fill="#d4a843">💛</text>
 
                         <!-- Textos principales -->
-                        <text x="200" y="112" class="label-text-client" id="textClient" font-size="11">EMILY JIMENA CALDERON GUTIERREZ</text>
+                        <text x="200" y="112" class="label-text-client" id="textClient" font-size="11">ESENTA-FRAGANCIAS QUE ENAMORAN</text>
                         <text x="200" y="150" class="label-text-main" id="textMain" font-size="42">Gracias</text>
                         <text x="200" y="175" class="label-text-sub" id="textSub" font-size="34">♥ por tu compra ♥</text>
 
@@ -128,7 +128,7 @@
                             Tu apoyo significa mucho para nosotros
                         </text>
 
-                        <text x="200" y="250" class="label-text-sinpe" id="textSinpeLabel" font-size="9">SINPE Móvil</text>
+                        <text x="200" y="250" class="label-text-sinpe" id="textSinpeLabel" font-size="9">SINPE Móvil Wilber Gonzalo Calderón M.</text>
                         <text x="200" y="270" class="label-text-sinpe" id="textSinpe" font-size="18">7295-2454</text>
 
                         <text x="200" y="295" class="label-text-brand" id="textBrand" font-size="16">EWE Esentia</text>
@@ -250,7 +250,7 @@
                         <div class="section-content">
                             <div class="control-group">
                                 <label>Texto del Borde</label>
-                                <textarea id="editBorderText" rows="3" oninput="updateBorderText()">✦ EWE ESENTIA  AROMATERAPIA NATURAL ✦ Fragancias que Enamoran ✦</textarea>
+                                <textarea id="editBorderText" rows="3" oninput="updateBorderText()">✦ EWE ESENTIA  AROMATERAPIA ✦ Fragancias que Enamoran ✦</textarea>
                             </div>
 
                             <div class="control-group">
@@ -298,6 +298,10 @@
                                 <label>Color del Texto del Borde</label>
                                 <input type="color" id="borderColor" value="#6b8f5e" oninput="updateBorderColor()">
                             </div>
+                            <div class="control-group">
+                                <label>Color del Contorno Circular</label>
+                                <input type="color" id="labelCircleColor" value="#e8dfd5" oninput="updateColors()">
+                            </div>
                         </div>
                     </div>
 
@@ -341,6 +345,30 @@
                         <option value="a4">A4 (210 × 297 mm)</option>
                     </select>
                 </div>
+                <div class="print-layout-controls">
+                    <div class="control-row">
+                        <div class="control-group">
+                            <label for="printMargin">Margen de hoja (in)</label>
+                            <input type="number" id="printMargin" min="0" max="1" step="0.01" value="0.25">
+                        </div>
+                        <div class="control-group">
+                            <label for="printGap">Separación (in)</label>
+                            <input type="number" id="printGap" min="0" max="0.5" step="0.01" value="0.04">
+                        </div>
+                    </div>
+                    <label class="print-check"><input type="checkbox" id="printCutBorder"> Mostrar borde circular de corte</label>
+                    <div class="control-row print-border-options">
+                        <div class="control-group">
+                            <label for="printBorderColor">Color del borde</label>
+                            <input type="color" id="printBorderColor" value="#8b948b">
+                        </div>
+                        <div class="control-group">
+                            <label for="printBorderWidth">Grosor (mm)</label>
+                            <input type="number" id="printBorderWidth" min="0.1" max="2" step="0.1" value="0.3">
+                        </div>
+                    </div>
+                    <p id="printLayoutSummary" class="print-layout-summary">Ajuste la configuración y actualice la vista.</p>
+                </div>
                 <div class="print-actions">
                     <button class="btn btn-secondary" type="button" onclick="createPDF()">Crear PDF</button>
                     <button class="btn btn-outline" type="button" onclick="printLabel()">Imprimir etiqueta</button>
@@ -348,6 +376,10 @@
             </div>
         </div>
     </div>
+
+    <button class="floating-print-refresh" type="button" onclick="refreshPreview()" aria-label="Actualizar vista previa">
+        ↻ <span>Actualizar vista previa</span>
+    </button>
 
     <!-- Firebase SDK -->
 

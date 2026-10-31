@@ -28,6 +28,12 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadClients();
             updateLabelSizeFromInches();
+            loadPrintSettings();
+            updatePrintPreview();
+            updateColors();
+            updateBorderColor();
+            ['printPaperSize', 'printMargin', 'printGap', 'printCutBorder', 'printBorderColor', 'printBorderWidth', 'labelSizeInches', 'labelQuantity']
+                .forEach(id => document.getElementById(id).addEventListener('change', updatePrintPreview));
         });
 
         // ============================================
@@ -93,7 +99,7 @@
                 const docRef = await db.collection('clientesBD').add(clientData);
                 const newClient = { id: docRef.id, ...clientData };
                 allClients.push(newClient);
-                selectClient(newClient.nombre);
+                selectClient(newClient);
                 document.getElementById('newClientForm').reset();
                 document.getElementById('newClientForm').hidden = true;
                 document.querySelector('.client-add-toggle').setAttribute('aria-expanded', 'false');
@@ -117,9 +123,11 @@
                 return;
             }
 
-            const filtered = allClients.filter(client => 
-                client.nombre.toLowerCase().includes(query.toLowerCase()) ||
-                (client.telefono && client.telefono.includes(query))
+            const normalizedQuery = query.toLowerCase();
+            const filtered = allClients.filter(client =>
+                String(client.nombre || '').toLowerCase().includes(normalizedQuery) ||
+                String(client.telefono || '').includes(query) ||
+                String(client.cedula || '').includes(query)
             );
 
             resultsDiv.replaceChildren();
@@ -136,7 +144,7 @@
                         phone.textContent = `Tel. ${client.telefono}`;
                         item.append(phone);
                     }
-                    item.addEventListener('click', () => selectClient(client.nombre || ''));
+                    item.addEventListener('click', () => selectClient(client));
                     resultsDiv.append(item);
                 });
             } else {
@@ -148,7 +156,9 @@
             resultsDiv.style.display = 'block';
         }
 
-        function selectClient(name) {
+        function selectClient(client) {
+            const clientData = typeof client === 'string' ? { nombre: client } : client;
+            const name = clientData.nombre || '';
             document.getElementById('selectedClient').value = name;
             document.getElementById('textClient').textContent = name;
             document.getElementById('searchResults').style.display = 'none';
@@ -298,21 +308,37 @@
 
         function updateBorderColor() {
             const color = document.getElementById('borderColor').value;
-            document.getElementById('borderText').setAttribute('fill', color);
+            document.getElementById('borderText').style.fill = color;
         }
 
         // ============================================
         // COLORES
         // ============================================
         function updateColors() {
-            document.getElementById('textMain').setAttribute('fill', document.getElementById('colorMain').value);
-            document.getElementById('textSub').setAttribute('fill', document.getElementById('colorMain').value);
-            document.getElementById('textMessage').setAttribute('fill', document.getElementById('colorMessage').value);
-            document.getElementById('textMessage2').setAttribute('fill', document.getElementById('colorMessage').value);
-            document.getElementById('textSinpe').setAttribute('fill', document.getElementById('colorSinpe').value);
-            document.getElementById('textSinpeLabel').setAttribute('fill', document.getElementById('colorSinpe').value);
-            document.getElementById('textBrand').setAttribute('fill', document.getElementById('colorBrand').value);
-            document.getElementById('textClient').setAttribute('fill', document.getElementById('colorClient').value);
+            const setFill = (id, color) => document.getElementById(id).style.fill = color;
+            setFill('textMain', document.getElementById('colorMain').value);
+            setFill('textSub', document.getElementById('colorMain').value);
+            setFill('textMessage', document.getElementById('colorMessage').value);
+            setFill('textMessage2', document.getElementById('colorMessage').value);
+            setFill('textSinpe', document.getElementById('colorSinpe').value);
+            setFill('textSinpeLabel', document.getElementById('colorSinpe').value);
+            setFill('textBrand', document.getElementById('colorBrand').value);
+            setFill('textClient', document.getElementById('colorClient').value);
+            document.querySelector('.label-circle').style.stroke = document.getElementById('labelCircleColor').value;
+        }
+
+        function refreshPreview() {
+            updateTexts();
+            updateTextSizes();
+            updateBorderText();
+            updateBorderSize();
+            updateBorderRadius();
+            updateBorderRotation();
+            updateBorderOffset();
+            updateBorderSpacing();
+            updateBorderColor();
+            updateColors();
+            updatePrintPreview();
         }
 
         // ============================================
@@ -382,7 +408,8 @@
                         sinpe: document.getElementById('colorSinpe').value,
                         brand: document.getElementById('colorBrand').value,
                         client: document.getElementById('colorClient').value,
-                        border: document.getElementById('borderColor').value
+                        border: document.getElementById('borderColor').value,
+                        labelCircle: document.getElementById('labelCircleColor').value
                     },
                     border: {
                         radius: document.getElementById('borderRadius').value,
@@ -402,7 +429,63 @@
         updateBorderText();
     
 
-// Imprime todas las etiquetas pedidas, distribuidas en hojas Carta o A4.
+function getPrintSettings() {
+    const margin = Number(document.getElementById('printMargin').value);
+    const gap = Number(document.getElementById('printGap').value);
+    const borderWidth = Number(document.getElementById('printBorderWidth').value);
+    return {
+        margin: Number.isFinite(margin) ? Math.min(1, Math.max(0, margin)) : 0.25,
+        gap: Number.isFinite(gap) ? Math.min(0.5, Math.max(0, gap)) : 0.04,
+        cutBorder: document.getElementById('printCutBorder').checked,
+        borderColor: document.getElementById('printBorderColor').value || '#8b948b',
+        borderWidth: Number.isFinite(borderWidth) ? Math.min(2, Math.max(0.1, borderWidth)) : 0.3
+    };
+}
+
+function loadPrintSettings() {
+    try {
+        const saved = JSON.parse(localStorage.getItem('ewePrintSettings') || 'null');
+        if (!saved) return;
+        if (Number.isFinite(Number(saved.margin))) document.getElementById('printMargin').value = saved.margin;
+        if (Number.isFinite(Number(saved.gap))) document.getElementById('printGap').value = saved.gap;
+        if (typeof saved.cutBorder === 'boolean') document.getElementById('printCutBorder').checked = saved.cutBorder;
+        if (typeof saved.borderColor === 'string') document.getElementById('printBorderColor').value = saved.borderColor;
+        if (Number.isFinite(Number(saved.borderWidth))) document.getElementById('printBorderWidth').value = saved.borderWidth;
+    } catch (error) {
+        console.warn('No se pudieron cargar los ajustes de impresión guardados.', error);
+    }
+}
+
+function updatePrintPreview() {
+    const settings = getPrintSettings();
+    document.getElementById('printMargin').value = settings.margin;
+    document.getElementById('printGap').value = settings.gap;
+    document.getElementById('printBorderWidth').value = settings.borderWidth;
+    try { localStorage.setItem('ewePrintSettings', JSON.stringify(settings)); } catch (error) { /* almacenamiento opcional */ }
+
+    const wrapper = document.getElementById('labelWrapper');
+    wrapper.classList.toggle('show-print-cut-border', settings.cutBorder);
+    wrapper.style.setProperty('--print-cut-color', settings.borderColor);
+    wrapper.style.setProperty('--print-cut-width', `${settings.borderWidth}mm`);
+
+    const paper = document.getElementById('printPaperSize').value;
+    const page = paper === 'a4'
+        ? { name: 'A4', width: 8.2677, height: 11.6929 }
+        : { name: 'Carta', width: 8.5, height: 11 };
+    const sizeInches = Number(document.getElementById('labelSizeInches').value) || 1.75;
+    const usableWidth = page.width - settings.margin * 2;
+    const usableHeight = page.height - settings.margin * 2;
+    const cols = Math.floor((usableWidth + settings.gap) / (sizeInches + settings.gap));
+    const rows = Math.floor((usableHeight + settings.gap) / (sizeInches + settings.gap));
+    const quantity = Math.max(1, Math.floor(Number(document.getElementById('labelQuantity').value) || 1));
+    const perSheet = Math.max(0, cols * rows);
+    const summary = document.getElementById('printLayoutSummary');
+    summary.textContent = perSheet
+        ? `Vista actualizada: ${perSheet} etiquetas por hoja ${page.name}; ${quantity} etiqueta(s) usarán ${Math.ceil(quantity / perSheet)} hoja(s).`
+        : `Con este margen, tamaño y papel la etiqueta no cabe en la hoja ${page.name}.`;
+}
+
+// Imprime todas las etiquetas pedidas, distribuidas en hojas con ajustes editables.
 function printLabels() {
     const quantityInput = document.getElementById('labelQuantity');
     const quantity = Math.floor(Number(quantityInput.value));
@@ -419,18 +502,21 @@ function printLabels() {
         return;
     }
 
+    updatePrintPreview();
+
     const page = paper === 'a4'
         ? { name: 'A4', width: 8.2677, height: 11.6929 }
         : { name: 'Letter', width: 8.5, height: 11 };
-    const margin = 0.25;
-    const gap = 0.04;
+    const settings = getPrintSettings();
+    const margin = settings.margin;
+    const gap = settings.gap;
     const usableWidth = page.width - margin * 2;
     const usableHeight = page.height - margin * 2;
     const columns = Math.floor((usableWidth + gap) / (sizeInches + gap));
     const rows = Math.floor((usableHeight + gap) / (sizeInches + gap));
 
     if (columns < 1 || rows < 1) {
-        alert(`La etiqueta de ${sizeInches.toFixed(2)} pulgadas no cabe en una hoja ${page.name} con margen de 0.25 pulgadas. Reduzca el tamaño o use otra hoja.`);
+        alert(`La etiqueta de ${sizeInches.toFixed(2)} pulgadas no cabe en una hoja ${page.name} con el margen seleccionado. Reduzca el margen o el tamaño de la etiqueta.`);
         return;
     }
 
@@ -442,7 +528,7 @@ function printLabels() {
     for (let start = 0; start < quantity; start += perSheet) {
         const count = Math.min(perSheet, quantity - start);
         const labels = Array.from({ length: count }, () =>
-            `<div class="label"><div class="svg-box">${svg.outerHTML}</div></div>`
+        `<div class="label${settings.cutBorder ? ' cut-border' : ''}"><div class="svg-box">${svg.outerHTML}</div></div>`
         ).join('');
         pages.push(`<section class="sheet">${labels}</section>`);
     }
@@ -464,6 +550,8 @@ function printLabels() {
             align-content: start; overflow: hidden; page-break-after: always; break-after: page; }
         .sheet:last-child { page-break-after: auto; break-after: auto; }
         .label, .svg-box { width: ${sizeInches}in; height: ${sizeInches}in; overflow: hidden; }
+        .label { position: relative; }
+        .label.cut-border::after { content: ""; position: absolute; inset: 2.5%; border: ${settings.borderWidth}mm solid ${settings.borderColor}; border-radius: 50%; pointer-events: none; }
         svg { display: block; width: 100%; height: 100%; }
         .label-circle { fill: white; stroke: #e8dfd5; stroke-width: 2; }
         .border-text-path { fill: #6b8f5e; font-family: Lora, serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
