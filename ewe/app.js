@@ -376,10 +376,10 @@
             const quantity = parseInt(document.getElementById('labelQuantity').value);
             const labelSize = parseFloat(document.getElementById('labelSizeInches').value);
 
-            if (!clientName) {
+            /*if (!clientName) {
                 alert('Por favor seleccione un cliente');
                 return;
-            }
+            }*/
 
             const queueItem = {
                 id: Date.now(),
