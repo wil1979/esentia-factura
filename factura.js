@@ -34,11 +34,15 @@ let currentDetailInvoice = null;
 let stockMovements = [];
 let allReceivables = [];
 let currentReceivableFilter = 'all';
+let showOutOfStockProducts = false;
 const LOW_STOCK_THRESHOLD = 5;
 
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('currentDate').textContent = new Date().toLocaleDateString('es-CR');
     document.getElementById('invoiceNumber').textContent = currentInvoiceNumber;
+
+    initLocationSelects();
+    
     try {
         await Promise.all([loadClients(), loadStock(), loadProducts()]);
         document.getElementById('loadingOverlay').style.opacity = '0';
@@ -154,9 +158,237 @@ async function loadProducts() {
         document.getElementById('loadErrorBanner').style.display = 'block';
         document.getElementById('loadErrorBanner').innerHTML = `⚠️ No se pudieron cargar: <strong>${errors.join(', ')}</strong>.`;
     }
-    renderProducts(allProducts);
+    filterProducts('');  // ✅ Aplica el filtro de stock automáticamente
 }
 
+// ==========================================
+// SISTEMA DE UBICACIONES COSTA RICA (CASCADA)
+// ==========================================
+
+// Inicializar select de provincias al cargar
+function initLocationSelects() {
+    const provinceSelect = document.getElementById('newClientProvince');
+    if (!provinceSelect) return;
+    
+    // Limpiar opciones existentes (excepto la primera)
+    provinceSelect.innerHTML = '<option value="">Seleccionar...</option>';
+    
+    // Agregar todas las provincias
+    Object.keys(COSTA_RICA_UBICACIONES).sort().forEach(provincia => {
+        const option = document.createElement('option');
+        option.value = provincia;
+        option.textContent = provincia;
+        provinceSelect.appendChild(option);
+    });
+}
+
+// Cuando cambia la provincia → cargar cantones
+function onProvinceChange() {
+    const province = document.getElementById('newClientProvince').value;
+    const cantonSelect = document.getElementById('newClientCanton');
+    const districtSelect = document.getElementById('newClientDistrict');
+    
+    // Resetear cantón y distrito
+    cantonSelect.innerHTML = '<option value="">Seleccionar...</option>';
+    districtSelect.innerHTML = '<option value="">Primero cantón</option>';
+    districtSelect.disabled = true;
+    
+    if (!province || !COSTA_RICA_UBICACIONES[province]) {
+        cantonSelect.disabled = true;
+        cantonSelect.innerHTML = '<option value="">Primero provincia</option>';
+        return;
+    }
+    
+    // Cargar cantones de la provincia seleccionada
+    const cantones = Object.keys(COSTA_RICA_UBICACIONES[province]).sort();
+    cantones.forEach(canton => {
+        const option = document.createElement('option');
+        option.value = canton;
+        option.textContent = canton;
+        cantonSelect.appendChild(option);
+    });
+    
+    cantonSelect.disabled = false;
+}
+
+// Cuando cambia el cantón → cargar distritos
+function onCantonChange() {
+    const province = document.getElementById('newClientProvince').value;
+    const canton = document.getElementById('newClientCanton').value;
+    const districtSelect = document.getElementById('newClientDistrict');
+    
+    // Resetear distrito
+    districtSelect.innerHTML = '<option value="">Seleccionar...</option>';
+    
+    if (!province || !canton || !COSTA_RICA_UBICACIONES[province]?.[canton]) {
+        districtSelect.disabled = true;
+        districtSelect.innerHTML = '<option value="">Primero cantón</option>';
+        return;
+    }
+    
+    // Cargar distritos del cantón seleccionado
+    const distritos = COSTA_RICA_UBICACIONES[province][canton];
+    distritos.forEach(distrito => {
+        const option = document.createElement('option');
+        option.value = distrito;
+        option.textContent = distrito;
+        districtSelect.appendChild(option);
+    });
+    
+    districtSelect.disabled = false;
+}
+
+// Modificar saveNewClient() para incluir el distrito
+// Busca la función saveNewClient() y agrega el campo distrito:
+async function saveNewClient() {
+    const nombre = document.getElementById('newClientName').value.trim();
+    const cedula = document.getElementById('newClientId').value.trim();
+    const telefono = document.getElementById('newClientPhone').value.trim();
+    const direccion = document.getElementById('newClientAddress').value.trim();
+    const provincia = document.getElementById('newClientProvince').value.trim();
+    const canton = document.getElementById('newClientCanton').value.trim();
+    const distrito = document.getElementById('newClientDistrict').value.trim(); // ✅ NUEVO
+    const editId = document.getElementById('editClientId').value;
+    
+    if (!nombre) { alert('El nombre del cliente es obligatorio'); return; }
+    if (!telefono) { alert('El teléfono es obligatorio'); return; }
+    
+    const lat = parseFloat(document.getElementById('newClientAddress').dataset.lat) || null;
+    const lng = parseFloat(document.getElementById('newClientAddress').dataset.lng) || null;
+    
+    const clientData = {
+        nombre,
+        cedula: cedula || 'N/A',
+        telefono,
+        direccion: direccion || '',
+        provincia: provincia || '',
+        canton: canton || '',
+        distrito: distrito || '', // ✅ NUEVO
+        lat: lat,
+        lng: lng,
+        ultimaActualizacion: new Date().toISOString()
+    };
+    
+    try {
+        let docRef;
+        if (editId) {
+            await db.collection('clientesBD').doc(editId).update(clientData);
+            docRef = { id: editId };
+            const index = allClients.findIndex(c => c.id === editId);
+            if (index !== -1) {
+                allClients[index] = { id: editId, ...clientData };
+            }
+            alert('✅ Cliente actualizado exitosamente');
+        } else {
+            clientData.fechaRegistro = firebase.firestore.FieldValue.serverTimestamp();
+            docRef = await db.collection('clientesBD').add(clientData);
+            allClients.push({ id: docRef.id, ...clientData });
+            alert('✅ Cliente agregado exitosamente');
+        }
+        
+        selectClient(docRef.id);
+        closeNewClientModal();
+        document.getElementById('editClientId').value = '';
+        document.getElementById('clientModalTitle').textContent = '➕ Nuevo Cliente';
+        
+    } catch (error) {
+        console.error("Error guardando cliente:", error);
+        alert('Error al guardar el cliente: ' + error.message);
+    }
+}
+
+// Modificar openEditClientModal() para cargar el distrito también:
+function openEditClientModal() {
+    if (!currentClient) return;
+    
+    document.getElementById('clientModalTitle').textContent = '✏️ Editar Cliente';
+    document.getElementById('editClientId').value = currentClient.id;
+    document.getElementById('newClientName').value = currentClient.nombre || '';
+    document.getElementById('newClientId').value = currentClient.cedula || '';
+    document.getElementById('newClientPhone').value = currentClient.telefono || '';
+    document.getElementById('newClientAddress').value = currentClient.direccion || '';
+    
+    // ✅ Cargar provincia primero (dispara onProvinceChange)
+    document.getElementById('newClientProvince').value = currentClient.provincia || '';
+    onProvinceChange(); // Esto carga los cantones
+    
+    // ✅ Luego cargar cantón (dispara onCantonChange)
+    setTimeout(() => {
+        document.getElementById('newClientCanton').value = currentClient.canton || '';
+        onCantonChange(); // Esto carga los distritos
+        
+        // ✅ Finalmente cargar distrito
+        setTimeout(() => {
+            document.getElementById('newClientDistrict').value = currentClient.distrito || '';
+        }, 100);
+    }, 100);
+    
+    if (currentClient.lat && currentClient.lng) {
+        document.getElementById('locationStatus').textContent = 
+            `📍 Coordenadas: ${currentClient.lat.toFixed(5)}, ${currentClient.lng.toFixed(5)}`;
+    } else {
+        document.getElementById('locationStatus').textContent = '';
+    }
+    
+    document.getElementById('newClientModal').classList.add('active');
+}
+
+// Modificar closeNewClientModal() para limpiar también el distrito:
+function closeNewClientModal() {
+    document.getElementById('newClientModal').classList.remove('active');
+    document.getElementById('editClientId').value = '';
+    document.getElementById('newClientName').value = '';
+    document.getElementById('newClientId').value = '';
+    document.getElementById('newClientPhone').value = '';
+    document.getElementById('newClientAddress').value = '';
+    document.getElementById('newClientProvince').value = '';
+    document.getElementById('newClientCanton').value = '';
+    document.getElementById('newClientDistrict').value = ''; // ✅ NUEVO
+    document.getElementById('newClientCanton').disabled = true;
+    document.getElementById('newClientDistrict').disabled = true;
+    document.getElementById('locationStatus').textContent = '';
+    delete document.getElementById('newClientAddress').dataset.lat;
+    delete document.getElementById('newClientAddress').dataset.lng;
+    document.getElementById('clientModalTitle').textContent = '➕ Nuevo Cliente';
+}
+
+// Modificar selectClient() para mostrar el distrito también:
+function selectClient(clientId) {
+    currentClient = allClients.find(c => c.id === clientId);
+    if (!currentClient) return;
+    
+    document.getElementById('clientSearch').value = '';
+    document.getElementById('clientResults').style.display = 'none';
+    document.getElementById('selectedClientInfo').style.display = 'flex';
+    document.getElementById('clientNameDisplay').textContent = currentClient.nombre || 'N/A';
+    document.getElementById('clientIdDisplay').textContent = currentClient.cedula || currentClient.id || 'N/A';
+    document.getElementById('clientPhoneDisplay').textContent = currentClient.telefono || 'N/A';
+    
+    const addressDiv = document.getElementById('clientAddressDisplay');
+    const addressText = document.getElementById('clientAddressText');
+    const locationBtn = document.getElementById('locationBtn');
+    
+    if (currentClient.direccion) {
+        let addressHTML = currentClient.direccion;
+        if (currentClient.distrito) addressHTML += `<br><small>📍 ${currentClient.distrito}`;
+        if (currentClient.canton) addressHTML += `, ${currentClient.canton}`;
+        if (currentClient.provincia) addressHTML += `, ${currentClient.provincia}`;
+        if (currentClient.distrito) addressHTML += `</small>`;
+        
+        addressText.innerHTML = addressHTML;
+        addressDiv.style.display = 'block';
+        locationBtn.style.display = 'block';
+    } else {
+        addressDiv.style.display = 'none';
+        locationBtn.style.display = currentClient.telefono && currentClient.telefono !== 'N/A' ? 'block' : 'none';
+    }
+    
+    document.getElementById('invoiceClientInfo').innerHTML = `
+        <strong>${currentClient.nombre || 'Cliente'}</strong>
+        <br><span style="font-size: 0.8rem; color: #666;">CC: ${currentClient.cedula || currentClient.id}</span>
+        ${currentClient.distrito ? `<br><span style="font-size: 0.75rem; color: var(--info);">📍 ${currentClient.distrito}, ${currentClient.canton || ''} ${currentClient.provincia || ''}</span>` : ''}
+    `;
+}
 // ==========================================
 // SOLICITAR UBICACIÓN AL CLIENTE POR WHATSAPP
 // ==========================================
@@ -907,19 +1139,35 @@ function openPaymentModalFromDetail() {
 // ==========================================
 function renderProducts(products) {
     const grid = document.getElementById('productsGrid');
-    if (products.length === 0) {
-        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #999; padding: 20px;">No se encontraron productos</div>';
+    
+    // ✅ FILTRO PRINCIPAL: Ocultar productos agotados por defecto
+    let filteredProducts = products.filter(p => {
+        const stock = getStockForProduct(p);
+        // Mostrar si: no tiene registro de stock O tiene stock > 0
+        // Ocultar si: tiene registro de stock Y cantidad <= 0
+        return !stock || stock.cantidad > 0;
+    });
+    
+    // Si el usuario activó "mostrar agotados", mostrar todos
+    if (showOutOfStockProducts) {
+        filteredProducts = products;
+    }
+    
+    if (filteredProducts.length === 0) {
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #999; padding: 20px;">No hay productos disponibles en inventario</div>';
         return;
     }
-    grid.innerHTML = products.map(p => {
+    
+    grid.innerHTML = filteredProducts.map(p => {
         const hasVariants = p.variantes && p.variantes.length > 0;
         const stock = getStockForProduct(p);
         const stockStatus = getStockStatus(stock);
         const isOutOfStock = stock && stock.cantidad <= 0;
         const isLowStock = stock && stock.cantidad > 0 && stock.cantidad <= LOW_STOCK_THRESHOLD;
+        
         return `
         <div class="product-card ${hasVariants ? 'has-variants' : ''} ${isOutOfStock ? 'out-of-stock' : ''} ${isLowStock ? 'low-stock' : ''}" 
-             onclick="${isOutOfStock ? `alert('️ Producto agotado.'); return false;` : `openProductModal('${p.id}')`}">
+             onclick="${isOutOfStock ? `alert('⚠️ Producto agotado.'); return false;` : `openProductModal('${p.id}')`}">
             <div class="stock-badge ${stockStatus.class}">${stockStatus.label}</div>
             <div class="product-category">${p.categoria}</div>
             <div class="product-name">${p.nombre}</div>
@@ -927,15 +1175,40 @@ function renderProducts(products) {
             <div class="product-code">ID: ${p.id}</div>
         </div>`;
     }).join('');
+    
+    // Actualizar contador si existe
+    if (document.getElementById('productCount')) {
+        document.getElementById('productCount').textContent = `${filteredProducts.length} productos`;
+    }
 }
 
 function filterProducts(query) {
-    if (!query) { renderProducts(allProducts); return; }
-    const q = query.toLowerCase();
-    const filtered = allProducts.filter(p => 
-        p.nombre.toLowerCase().includes(q) || String(p.id).toLowerCase().includes(q)
-    );
+    let filtered = allProducts;
+    
+    // Aplicar filtro de búsqueda por nombre o código
+    if (query) {
+        const q = query.toLowerCase();
+        filtered = filtered.filter(p => 
+            p.nombre.toLowerCase().includes(q) || 
+            String(p.id).toLowerCase().includes(q) ||
+            p.categoria.toLowerCase().includes(q)
+        );
+    }
+    
+    // ✅ Aplicar filtro de stock (si no está activado "mostrar agotados")
+    if (!showOutOfStockProducts) {
+        filtered = filtered.filter(p => {
+            const stock = getStockForProduct(p);
+            return !stock || stock.cantidad > 0;
+        });
+    }
+    
     renderProducts(filtered);
+}
+
+function toggleOutOfStock() {
+    showOutOfStockProducts = document.getElementById('showOutOfStock').checked;
+    filterProducts(document.getElementById('productSearch').value);
 }
 
 function openProductModal(productId) {
@@ -1219,6 +1492,40 @@ function updateTotals() {
 
 function formatMoney(amount) { return amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'); }
 
+
+// Variable global para controlar visualización de agotados
+l
+
+function toggleOutOfStock() {
+    showOutOfStockProducts = document.getElementById('showOutOfStock').checked;
+    filterProducts(document.getElementById('productSearch').value);
+}
+
+function filterProducts(query) {
+    let filtered = allProducts;
+    
+    // Aplicar filtro de búsqueda
+    if (query) {
+        const q = query.toLowerCase();
+        filtered = filtered.filter(p => 
+            p.nombre.toLowerCase().includes(q) || String(p.id).toLowerCase().includes(q)
+        );
+    }
+    
+    // Aplicar filtro de stock (si no está activado "mostrar agotados")
+    if (!showOutOfStockProducts) {
+        filtered = filtered.filter(p => {
+            const stock = getStockForProduct(p);
+            return !stock || stock.cantidad > 0;
+        });
+    }
+    
+    renderProducts(filtered);
+    
+    // Actualizar contador
+    document.getElementById('productCount').textContent = `${filtered.length} productos`;
+}
+
 // ==========================================
 // GUARDAR FACTURA CON TRANSPORTE
 // ==========================================
@@ -1487,18 +1794,51 @@ function onScanFailure(error) { }
 // IMPRESIÓN Y WHATSAPP
 // ==========================================
 function printTicket() {
-    if (cart.length === 0 || !currentClient) { alert('Carrito vacío o cliente no seleccionado'); return; }
+    if (cart.length === 0 || !currentClient) { 
+        alert('Carrito vacío o cliente no seleccionado'); 
+        return; 
+    }
+    
     document.getElementById('ticketDate').textContent = new Date().toLocaleString('es-CR');
     document.getElementById('ticketInvoiceNum').textContent = document.getElementById('invoiceNumber').textContent;
     document.getElementById('ticketClientName').textContent = currentClient.nombre || 'Cliente Contado';
     document.getElementById('ticketClientId').textContent = currentClient.cedula || currentClient.id || 'N/A';
+    
+    // NUEVO: Mostrar teléfono del cliente
+    const phoneLine = document.getElementById('ticketPhoneLine');
+    const phoneSpan = document.getElementById('ticketPhone');
+    
+    if (currentClient.telefono && currentClient.telefono !== 'N/A') {
+        phoneSpan.textContent = currentClient.telefono;
+        phoneLine.style.display = 'block';
+    } else {
+        phoneLine.style.display = 'none';
+    }
+    
+    // Mostrar dirección si existe
+    const addressLine = document.getElementById('ticketAddressLine');
+    const addressSpan = document.getElementById('ticketAddress');
+    
+    if (currentClient.direccion) {
+    let fullAddress = currentClient.direccion;
+    if (currentClient.distrito) fullAddress += ` - ${currentClient.distrito}`;
+    if (currentClient.canton) fullAddress += `, ${currentClient.canton}`;
+    if (currentClient.provincia) fullAddress += `, ${currentClient.provincia}`;
+    
+    addressSpan.textContent = fullAddress;
+    addressLine.style.display = 'block';
+} else {
+    addressLine.style.display = 'none';
+}
+    
     document.getElementById('ticketItems').innerHTML = cart.map(item => {
         let desc = `${item.cantidad} x ${item.nombre}`;
-if (item.descuentoColones > 0) {
-    desc += ` (-₡${formatMoney(item.descuentoColones)})`;
-}
-return `<div class="ticket-item"><div class="ticket-item-desc">${desc}</div><div>₡${formatMoney(item.precioFinalUnitario * item.cantidad)}</div></div>`;
+        if (item.descuentoColones > 0) {
+            desc += ` (-₡${formatMoney(item.descuentoColones)})`;
+        }
+        return `<div class="ticket-item"><div class="ticket-item-desc">${desc}</div><div>₡${formatMoney(item.precioFinalUnitario * item.cantidad)}</div></div>`;
     }).join('');
+    
     document.getElementById('ticketSubtotal').textContent = `₡${formatMoney(currentSubtotal)}`;
     document.getElementById('ticketTax').textContent = `₡${formatMoney(currentIva)}`;
     document.getElementById('ticketProductsTotal').textContent = `₡${formatMoney(currentSubtotal + currentIva)}`;
@@ -1532,7 +1872,9 @@ function sendWhatsApp() {
     // NUEVO: Agregar dirección si existe
     if (currentClient && currentClient.direccion) {
         message += `📍 *Dirección de envío:* ${currentClient.direccion}`;
-        if (currentClient.provincia) message += ` - ${currentClient.provincia}`;
+        if (currentClient.distrito) message += ` - ${currentClient.distrito}`;
+        if (currentClient.canton) message += `, ${currentClient.canton}`;
+        if (currentClient.provincia) message += `, ${currentClient.provincia}`;
         message += `\n`;
     }
     

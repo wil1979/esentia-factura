@@ -77,8 +77,17 @@
                     <button class="btn btn-scan" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openScanner()">📷 Escanear</button>
                 </div>
                 <div class="search-box" style="margin-bottom: 12px;">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="productSearch" placeholder="Buscar por nombre o código..." oninput="filterProducts(this.value)">
+                 <span class="search-icon">🔍</span>
+                 <input type="text" id="productSearch" placeholder="Buscar por nombre o código..." oninput="filterProducts(this.value)">
+                </div>
+
+                <!-- NUEVO: Toggle para mostrar agotados -->
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 8px; background: #f9f5f0; border-radius: 6px;">
+                  <label style="font-size: 0.85rem; font-weight: 600; color: var(--primary); cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="showOutOfStock" onchange="toggleOutOfStock()" style="cursor: pointer;">
+                   Mostrar productos agotados
+                  </label>
+                  <span style="font-size: 0.8rem; color: var(--text-light);" id="productCount">0 productos</span>
                 </div>
                 <div class="products-grid" id="productsGrid"></div>
             </div>
@@ -260,8 +269,8 @@
         </div>
     </div>
 
-    <!-- MODALES (se mantienen igual) -->
-    <!-- MODAL NUEVO/EDITAR CLIENTE -->
+
+<!-- MODAL NUEVO/EDITAR CLIENTE -->
 <div class="modal-overlay" id="newClientModal">
     <div class="modal-content">
         <div class="modal-header">
@@ -270,41 +279,55 @@
         </div>
         <div class="modal-body">
             <input type="hidden" id="editClientId">
-            <div class="form-group"><label>Nombre Completo *</label><input type="text" id="newClientName" placeholder="Ej: María Rodríguez"></div>
-            <div class="form-group"><label>Cédula / Identificación</label><input type="text" id="newClientId" placeholder="Ej: 102340567"></div>
-            <div class="form-group"><label>Teléfono / WhatsApp *</label><input type="text" id="newClientPhone" placeholder="Ej: 8888-8888"></div>
-            
-            <!-- NUEVO: Sección de Dirección -->
-            <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
-                <label style="font-weight: 600; color: var(--primary); display: block; margin-bottom: 8px;">📍 Dirección de Envío</label>
-                <div class="form-group" style="margin-bottom: 8px;">
-                    <label style="font-size: 0.8rem;">Dirección completa</label>
-                    <textarea id="newClientAddress" rows="2" placeholder="Ej: San José, Escazú, 200m norte del Parque, casa azul" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-family: 'Inter', sans-serif; resize: vertical;"></textarea>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label style="font-size: 0.8rem;">Provincia</label>
-                        <select id="newClientProvince" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px;">
-                            <option value="">Seleccionar...</option>
-                            <option value="San José">San José</option>
-                            <option value="Alajuela">Alajuela</option>
-                            <option value="Cartago">Cartago</option>
-                            <option value="Heredia">Heredia</option>
-                            <option value="Guanacaste">Guanacaste</option>
-                            <option value="Puntarenas">Puntarenas</option>
-                            <option value="Limón">Limón</option>
-                        </select>
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label style="font-size: 0.8rem;">Cantón / Distrito</label>
-                        <input type="text" id="newClientCanton" placeholder="Ej: Escazú" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px;">
-                    </div>
-                </div>
-                <div style="margin-top: 8px;">
-                    <button type="button" class="btn btn-info btn-sm" style="width: 100%;" onclick="getCurrentLocation()">📍 Usar mi ubicación actual</button>
-                    <div id="locationStatus" style="font-size: 0.75rem; color: var(--text-light); margin-top: 5px; text-align: center;"></div>
-                </div>
+            <div class="form-group">
+                <label>Nombre Completo *</label>
+                <input type="text" id="newClientName" placeholder="Ej: María Rodríguez">
             </div>
+            <div class="form-group">
+                <label>Cédula / Identificación</label>
+                <input type="text" id="newClientId" placeholder="Ej: 102340567">
+            </div>
+            <div class="form-group">
+                <label>Teléfono / WhatsApp *</label>
+                <input type="text" id="newClientPhone" placeholder="Ej: 8888-8888">
+            </div>
+            
+            <!-- Sección de Dirección mejorada -->
+<div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+    <label style="font-weight: 600; color: var(--primary); display: block; margin-bottom: 8px;">📍 Dirección de Envío</label>
+    
+    <div class="form-group" style="margin-bottom: 8px;">
+        <label style="font-size: 0.8rem;">Dirección completa (referencias)</label>
+        <textarea id="newClientAddress" rows="2" placeholder="Ej: 200m norte del Parque, casa azul con portón negro" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-family: 'Inter', sans-serif; resize: vertical;"></textarea>
+    </div>
+    
+    <!-- Selects en cascada -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+        <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-size: 0.8rem;">Provincia *</label>
+            <select id="newClientProvince" onchange="onProvinceChange()" style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px;">
+                <option value="">Seleccionar...</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-size: 0.8rem;">Cantón *</label>
+            <select id="newClientCanton" onchange="onCantonChange()" disabled style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: #f5f5f5;">
+                <option value="">Primero provincia</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-size: 0.8rem;">Distrito *</label>
+            <select id="newClientDistrict" disabled style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: #f5f5f5;">
+                <option value="">Primero cantón</option>
+            </select>
+        </div>
+    </div>
+    
+    <div style="margin-top: 8px;">
+        <button type="button" class="btn btn-info btn-sm" style="width: 100%;" onclick="getCurrentLocation()">📍 Usar mi ubicación actual</button>
+        <div id="locationStatus" style="font-size: 0.75rem; color: var(--text-light); margin-top: 5px; text-align: center;"></div>
+    </div>
+</div>
 
             <div style="display: flex; gap: 8px;">
                 <button class="btn btn-secondary" style="flex: 1;" onclick="closeNewClientModal()">Cancelar</button>
@@ -537,14 +560,19 @@
         <div class="ticket-header">
             <h2>EWE ESENTIA</h2>
             <div>Aromaterapia • Candelas • Difusores</div>
-            <div style="font-size: 9px; margin-top: 4px;">San José, Costa Rica | Tel: 7295-2454</div>
+            <div style="font-size: 9px; margin-top: 4px;">Cartago, Costa Rica | Tel: 7295-2454</div>
         </div>
         <div class="ticket-info">
-            <div>Fecha: <span id="ticketDate"></span></div>
-            <div>Factura: <span id="ticketInvoiceNum"></span></div>
-            <div>Cliente: <span id="ticketClientName"></span></div>
-            <div>Cédula: <span id="ticketClientId"></span></div>
-        </div>
+    <div>Fecha: <span id="ticketDate"></span></div>
+    <div>Factura: <span id="ticketInvoiceNum"></span></div>
+    <div>Cliente: <span id="ticketClientName"></span></div>
+    <div>Cédula: <span id="ticketClientId"></span></div>
+    <div id="ticketPhoneLine" style="display: none;">Tel: <span id="ticketPhone"></span></div>
+    <div id="ticketAddressLine" style="display: none; margin-top: 4px; font-size: 9px; border-top: 1px dashed #ccc; padding-top: 4px;">
+        <strong>📍 Envío a:</strong><br>
+        <span id="ticketAddress"></span>
+    </div>
+</div>
         <div class="ticket-items" id="ticketItems"></div>
         <div class="ticket-totals">
             <div class="ticket-total-line"><span>Subtotal:</span><span id="ticketSubtotal"></span></div>
@@ -561,6 +589,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="costa-rica-ubicaciones.js"></script>
     <script src="factura.js"></script>
 </body>
 </html>
