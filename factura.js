@@ -158,6 +158,42 @@ async function loadProducts() {
 }
 
 // ==========================================
+// SOLICITAR UBICACIÓN AL CLIENTE POR WHATSAPP
+// ==========================================
+function requestLocation() {
+    if (!currentClient) {
+        alert('Seleccione un cliente primero');
+        return;
+    }
+    
+    const phone = currentClient.telefono ? String(currentClient.telefono).replace(/\D/g, '') : '';
+    
+    if (!phone) {
+        alert('El cliente no tiene teléfono registrado. Edítelo para agregar el teléfono.');
+        return;
+    }
+    
+    const waPhone = phone.length === 8 ? '506' + phone : phone;
+    
+    // Mensaje profesional pidiendo ubicación
+    const message = `Hola ${currentClient.nombre} 🌿\n\n` +
+        `Somos de *EWE Esentia*. Para realizar el envío de su pedido, necesitamos que nos comparta su *ubicación actual*.\n\n` +
+        `📍 Por favor, envíenos su ubicación usando esta opción de WhatsApp:\n` +
+        `   1. Toque el clip 📎 o el + junto al campo de texto\n` +
+        `   2. Seleccione "Ubicación"\n` +
+        `   3. Elija "Enviar mi ubicación actual"\n\n` +
+        `También puede escribirnos la dirección completa con referencias (ej: 200m norte del parque, casa azul).\n\n` +
+        `¡Gracias! 🙏`;
+    
+    const whatsappUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`;
+    
+    // Confirmación antes de abrir
+    if (confirm(`📍 Se abrirá WhatsApp para solicitar la ubicación a:\n\n${currentClient.nombre}\n📞 ${currentClient.telefono}\n\n¿Continuar?`)) {
+        window.open(whatsappUrl, '_blank');
+    }
+}
+
+// ==========================================
 // TABS PARA MÓVIL
 // ==========================================
 function switchMobileTab(tab, button) {
@@ -208,7 +244,7 @@ function renderCart() {
         <div class="cart-item">
             <div class="cart-item-info">
                 <div class="cart-item-name">${item.nombre}</div>
-                ${item.descuentoPct > 0 ? `<div class="cart-item-discount">🏷️ -${item.descuentoPct}% descuento</div>` : ''}
+                ${item.descuentoColones > 0 ? `<div class="cart-item-discount">🏷️ -₡${formatMoney(item.descuentoColones)} desc. (${item.descuentoPct.toFixed(1)}%)</div>` : ''}
                 <div class="cart-item-price">₡${formatMoney(item.precioFinalUnitario)} c/u</div>
                 ${stockWarning}
             </div>
@@ -744,7 +780,10 @@ async function resendInvoice(invoiceId) {
         message += ` Fecha: ${dateObj.toLocaleDateString('es-CR')}\n━━━━━━━━━━━━━━━━━━\n`;
         if (factura.items && factura.items.length > 0) {
             factura.items.forEach(item => {
-                const desc = item.descuentoPct > 0 ? `${item.nombre} (-${item.descuentoPct}%)` : item.nombre;
+                item.nombre;
+if (item.descuentoColones > 0) {
+    desc += ` (-₡${formatMoney(item.descuentoColones)})`;
+}
                 message += `▪️ ${item.cantidad} x ${desc}\n   ₡${formatMoney(item.precioFinalUnitario * item.cantidad)}\n`;
             });
         }
@@ -798,7 +837,10 @@ async function openInvoiceDetailModal(invoiceId) {
         if (factura.items && factura.items.length > 0) {
             productsTable.innerHTML = factura.items.map(item => {
                 const itemTotal = item.precioFinalUnitario * item.cantidad;
-                const discountText = item.descuentoPct > 0 ? `${item.descuentoPct}%` : '-';
+                let discountText = '-';
+             if (item.descuentoColones > 0) {
+             discountText = `₡${formatMoney(item.descuentoColones)} (${item.descuentoPct.toFixed(1)}%)`;
+          }
                 return `
                     <tr style="border-bottom: 1px solid var(--border);">
                         <td style="padding: 10px;">
@@ -897,8 +939,11 @@ function filterProducts(query) {
 }
 
 function openProductModal(productId) {
+    
     const product = allProducts.find(p => p.id === productId);
     if (!product) return;
+    // Limpiar el atributo data-percent al abrir
+    document.getElementById('modalDiscount').dataset.percent = '0';
     document.getElementById('modalProductId').value = product.id;
     document.getElementById('modalProductName').textContent = product.nombre;
     document.getElementById('modalQuantity').value = 1;
@@ -983,18 +1028,47 @@ function closeProductModal() { document.getElementById('productModal').classList
 function updateModalPricePreview() {
     const productId = document.getElementById('modalProductId').value;
     const product = allProducts.find(p => p.id === productId);
+    
     let basePrice = product.precioBase;
     const variantSelect = document.getElementById('modalVariantSelect');
+    
     if (variantSelect.style.display !== 'none' && variantSelect.value !== 'base') {
         basePrice = parseFloat(variantSelect.options[variantSelect.selectedIndex].dataset.price);
     }
+    
     const qty = parseInt(document.getElementById('modalQuantity').value) || 1;
-    const discountPct = parseFloat(document.getElementById('modalDiscount').value) || 0;
-    const priceWithDiscount = basePrice * (1 - (discountPct / 100));
-    const totalFinal = priceWithDiscount * qty;
-    document.getElementById('modalOriginalPrice').textContent = `${formatMoney(basePrice)} c/u`;
+    
+    // ✅ NUEVO: El descuento ahora es en COLONES, no en %
+    const discountColones = parseFloat(document.getElementById('modalDiscount').value) || 0;
+    const totalBase = basePrice * qty;
+    
+    // Validar que el descuento no exceda el total
+    if (discountColones > totalBase) {
+        document.getElementById('modalDiscount').value = totalBase;
+        alert(`⚠️ El descuento no puede ser mayor al total (₡${formatMoney(totalBase)})`);
+        return updateModalPricePreview();
+    }
+    
+    // Calcular el % equivalente para mostrar en factura
+    const discountPercent = totalBase > 0 ? (discountColones / totalBase) * 100 : 0;
+    const totalFinal = Math.max(0, totalBase - discountColones);
+    
+    // Actualizar UI
+    document.getElementById('modalOriginalPrice').textContent = `₡${formatMoney(basePrice)} c/u`;
     document.getElementById('modalFinalPrice').textContent = `₡${formatMoney(totalFinal)}`;
-    document.getElementById('modalDiscountText').textContent = discountPct > 0 ? `Descuento: ${discountPct}% (-₡${formatMoney(basePrice * qty - totalFinal)})` : '';
+    
+    // Mostrar equivalencia en %
+    const percentLabel = document.getElementById('discountPercentLabel');
+    if (discountColones > 0) {
+        percentLabel.textContent = `Equivale a ${discountPercent.toFixed(1)}% de descuento (-₡${formatMoney(discountColones)})`;
+        percentLabel.style.color = 'var(--success)';
+    } else {
+        percentLabel.textContent = 'Sin descuento';
+        percentLabel.style.color = 'var(--text-light)';
+    }
+    
+    // Guardar el % calculado en un atributo data para usarlo después
+    document.getElementById('modalDiscount').dataset.percent = discountPercent.toFixed(2);
 }
 
 function generateInvoiceNumber() {
@@ -1011,32 +1085,55 @@ function confirmAddToCart() {
     const productId = document.getElementById('modalProductId').value;
     const product = allProducts.find(p => p.id === productId);
     const stock = getStockForProduct(product);
-    if (stock && stock.cantidad <= 0) { alert('❌ Producto agotado.'); return; }
+    
+    if (stock && stock.cantidad <= 0) {
+        alert('❌ Producto agotado.');
+        return;
+    }
 
     let basePrice = product.precioBase;
     let variantName = '';
     const variantSelect = document.getElementById('modalVariantSelect');
+    
     if (variantSelect.style.display !== 'none' && variantSelect.value !== 'base') {
         basePrice = parseFloat(variantSelect.options[variantSelect.selectedIndex].dataset.price);
         variantName = variantSelect.value;
     }
+    
     const qty = parseInt(document.getElementById('modalQuantity').value) || 1;
+    
+    // ✅ NUEVO: Leer descuento en colones y % calculado
+    const discountColones = parseFloat(document.getElementById('modalDiscount').value) || 0;
+    const discountPercent = parseFloat(document.getElementById('modalDiscount').dataset.percent) || 0;
+    
+    // Validación de stock
     const currentInCart = cart.filter(item => item.id === product.id && (!variantName || item.nombre.includes(variantName)))
                               .reduce((sum, item) => sum + item.cantidad, 0);
     const totalRequested = currentInCart + qty;
+    
     if (stock && totalRequested > stock.cantidad) {
-        alert(`️ Stock insuficiente.\nDisponible: ${stock.cantidad}\nEn carrito: ${currentInCart}\nSolicitado: ${qty}\nMáximo: ${stock.cantidad - currentInCart}`);
+        alert(`⚠️ Stock insuficiente.\nDisponible: ${stock.cantidad}\nEn carrito: ${currentInCart}\nSolicitado: ${qty}\nMáximo: ${stock.cantidad - currentInCart}`);
         return;
     }
-    const discountPct = parseFloat(document.getElementById('modalDiscount').value) || 0;
-    const finalPriceUnit = basePrice * (1 - (discountPct / 100));
+
+    // Calcular precio final unitario con descuento
+    const totalBase = basePrice * qty;
+    const totalFinal = Math.max(0, totalBase - discountColones);
+    const finalPriceUnit = totalFinal / qty;
+    
     const displayName = variantName ? `${product.nombre} (${variantName})` : product.nombre;
+    
     cart.push({
-        id: product.id, nombre: displayName,
-        precioUnitario: basePrice, descuentoPct: discountPct,
-        precioFinalUnitario: finalPriceUnit, cantidad: qty,
+        id: product.id,
+        nombre: displayName,
+        precioUnitario: basePrice,
+        descuentoColones: discountColones,      // ✅ NUEVO: descuento en colones (total)
+        descuentoPct: discountPercent,           // ✅ NUEVO: % equivalente (para factura)
+        precioFinalUnitario: finalPriceUnit,
+        cantidad: qty,
         stockId: stock ? stock.id : null
     });
+    
     closeProductModal();
     renderCart();
 }
@@ -1055,7 +1152,7 @@ function renderCart() {
         <div class="cart-item">
             <div class="cart-item-info">
                 <div class="cart-item-name">${item.nombre}</div>
-                ${item.descuentoPct > 0 ? `<div class="cart-item-discount">🏷️ -${item.descuentoPct}% descuento</div>` : ''}
+                ${item.descuentoColones > 0 ? `<div class="cart-item-discount">🏷️ -₡${formatMoney(item.descuentoColones)} desc. (${item.descuentoPct.toFixed(1)}%)</div>` : ''}
                 <div class="cart-item-price">₡${formatMoney(item.precioFinalUnitario)} c/u</div>
                 ${stockWarning}
             </div>
@@ -1396,8 +1493,11 @@ function printTicket() {
     document.getElementById('ticketClientName').textContent = currentClient.nombre || 'Cliente Contado';
     document.getElementById('ticketClientId').textContent = currentClient.cedula || currentClient.id || 'N/A';
     document.getElementById('ticketItems').innerHTML = cart.map(item => {
-        const desc = item.descuentoPct > 0 ? `${item.cantidad} x ${item.nombre} (-${item.descuentoPct}%)` : `${item.cantidad} x ${item.nombre}`;
-        return `<div class="ticket-item"><div class="ticket-item-desc">${desc}</div><div>₡${formatMoney(item.precioFinalUnitario * item.cantidad)}</div></div>`;
+        let desc = `${item.cantidad} x ${item.nombre}`;
+if (item.descuentoColones > 0) {
+    desc += ` (-₡${formatMoney(item.descuentoColones)})`;
+}
+return `<div class="ticket-item"><div class="ticket-item-desc">${desc}</div><div>₡${formatMoney(item.precioFinalUnitario * item.cantidad)}</div></div>`;
     }).join('');
     document.getElementById('ticketSubtotal').textContent = `₡${formatMoney(currentSubtotal)}`;
     document.getElementById('ticketTax').textContent = `₡${formatMoney(currentIva)}`;
@@ -1438,7 +1538,11 @@ function sendWhatsApp() {
     
     message += `━━━━━━━━━━━━━━━━━━\n`;
     cart.forEach(item => {
-        const desc = item.descuentoPct > 0 ? `${item.nombre} (-${item.descuentoPct}%)` : item.nombre;
+        let desc = item.nombre;
+if (item.descuentoColones > 0) {
+    desc += ` (-₡${formatMoney(item.descuentoColones)} | ${item.descuentoPct.toFixed(1)}%)`;
+}
+message += `▪️ ${item.cantidad} x ${desc}\n   ₡${formatMoney(item.precioFinalUnitario * item.cantidad)}\n`;
         message += `▪️ ${item.cantidad} x ${desc}\n   ₡${formatMoney(item.precioFinalUnitario * item.cantidad)}\n`;
     });
     message += `━━━━━━━━━━━━━━━━━━\nSubtotal: ₡${formatMoney(currentSubtotal)}\nIVA (13%): ₡${formatMoney(currentIva)}\n`;
@@ -1636,20 +1740,29 @@ function selectClient(clientId) {
     // Mostrar dirección si existe
     const addressDiv = document.getElementById('clientAddressDisplay');
     const addressText = document.getElementById('clientAddressText');
-    const uberBtn = document.getElementById('uberBtn');
+    const locationBtn = document.getElementById('locationBtn');
     
     if (currentClient.direccion) {
         let addressHTML = currentClient.direccion;
         if (currentClient.provincia) addressHTML += `<br><small>📍 ${currentClient.provincia}`;
         if (currentClient.canton) addressHTML += `, ${currentClient.canton}`;
         if (currentClient.provincia) addressHTML += `</small>`;
+
+        locationBtn.style.display = 'block';
+        locationBtn.textContent = '📍 Pedir Ubicación';
         
         addressText.innerHTML = addressHTML;
         addressDiv.style.display = 'block';
-        uberBtn.style.display = 'block'; // Mostrar botón Uber solo si hay dirección
+        
     } else {
         addressDiv.style.display = 'none';
-        uberBtn.style.display = 'none';
+        locationBtn.style.display = 'block'; // Mostrar siempre que haya teléfono
+    }
+    // Mostrar botón solo si tiene teléfono
+      if (currentClient.telefono && currentClient.telefono !== 'N/A') {
+       locationBtn.style.display = 'block';
+    } else {
+      locationBtn.style.display = 'none';
     }
     
     document.getElementById('invoiceClientInfo').innerHTML = `
@@ -1712,98 +1825,6 @@ function requestUber() {
     }
 }
 
-// Función alternativa para servicios de mensajería en CR
-// ==========================================
-// SOLICITAR ENVÍO CON DiDi Express
-// ==========================================
-function requestDelivery() {
-    if (!currentClient) {
-        alert('Seleccione un cliente primero');
-        return;
-    }
-    
-    if (!currentClient.direccion) {
-        alert('El cliente no tiene dirección registrada. Edítelo y agregue la dirección.');
-        return;
-    }
-    
-    const address = encodeURIComponent(currentClient.direccion);
-    const province = currentClient.provincia ? encodeURIComponent(currentClient.provincia) : '';
-    const canton = currentClient.canton ? encodeURIComponent(currentClient.canton) : '';
-    const fullAddress = `${address}${province ? ', ' + province : ''}${canton ? ', ' + canton : ''}, Costa Rica`;
-    
-    // Detectar si es móvil
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-    // Opciones de servicios de envío en Costa Rica
-    const options = [
-        { name: 'DiDi Express', icon: '🚗', desc: 'Envío de paquetes' },
-        { name: 'InDriver Envíos', icon: '📦', desc: 'Mensajería' },
-        { name: 'Google Maps', icon: '🗺️', desc: 'Ver ubicación' },
-        { name: 'WhatsApp', icon: '💬', desc: 'Contactar cliente' }
-    ];
-    
-    let message = `🚚 Solicitar envío para:\n\n`;
-    message += `👤 ${currentClient.nombre}\n`;
-    message += `📍 ${currentClient.direccion}\n`;
-    if (currentClient.provincia) message += `   ${currentClient.provincia}`;
-    if (currentClient.canton) message += `, ${currentClient.canton}`;
-    message += `\n\nSeleccione el servicio:\n\n`;
-    options.forEach((opt, idx) => {
-        message += `${idx + 1}. ${opt.icon} ${opt.name} - ${opt.desc}\n`;
-    });
-    message += `\n0. Cancelar`;
-    
-    const choice = prompt(message);
-    
-    if (choice === null || choice === '0') return;
-    
-    switch(choice) {
-        case '1':
-            // DiDi Express
-            if (isMobile) {
-                // Intentar abrir app de DiDi
-                window.location.href = `didiexpress://send?address=${fullAddress}`;
-                setTimeout(() => {
-                    window.open(`https://www.didiglobal.com/express`, '_blank');
-                }, 1500);
-            } else {
-                window.open(`https://www.didiglobal.com/express`, '_blank');
-            }
-            break;
-            
-        case '2':
-            // InDriver
-            if (isMobile) {
-                window.location.href = `indriver://?action=delivery&address=${fullAddress}`;
-                setTimeout(() => {
-                    window.open(`https://indriver.com/es-cr/`, '_blank');
-                }, 1500);
-            } else {
-                window.open(`https://indriver.com/es-cr/`, '_blank');
-            }
-            break;
-            
-        case '3':
-            // Google Maps
-            window.open(`https://www.google.com/maps/search/?api=1&query=${fullAddress}`, '_blank');
-            break;
-            
-        case '4':
-            // WhatsApp al cliente
-            const phone = currentClient.telefono ? String(currentClient.telefono).replace(/\D/g, '') : '';
-            if (phone) {
-                const waPhone = phone.length === 8 ? '506' + phone : phone;
-                const waMessage = encodeURIComponent(
-                    `Hola ${currentClient.nombre},\n\nSu pedido está listo para envío.\n\n📍 Dirección registrada: ${currentClient.direccion}`
-                );
-                window.open(`https://wa.me/${waPhone}?text=${waMessage}`, '_blank');
-            } else {
-                alert('El cliente no tiene teléfono registrado');
-            }
-            break;
-    }
-}
 
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.search-box') && !e.target.closest('.modal-overlay')) {
