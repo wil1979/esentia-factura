@@ -25,9 +25,19 @@
         <div style="font-size: 0.85rem; color: var(--text-light);" id="currentDate"></div>
     </div>
 
+    <!-- TABS PARA MÓVIL -->
+<div class="mobile-tabs" id="mobileTabs">
+    <button class="mobile-tab-btn active" onclick="switchMobileTab('products', this)">
+        📦 Productos
+    </button>
+    <button class="mobile-tab-btn" onclick="switchMobileTab('cart', this)">
+        🧾 Carrito <span class="badge" id="cartBadge" style="display: none;">0</span>
+    </button>
+</div>
+
     <!-- VISTA POS (Facturación) -->
     <div class="main-container" id="view-pos">
-        <div class="left-panel">
+        <div class="left-panel" id="productsPanel">
             <div class="card">
                 <div class="card-title"> Cliente</div>
                 <div class="search-box">
@@ -51,10 +61,10 @@
             <button class="btn btn-outline btn-sm" style="flex: 1;" onclick="openHistoryModal()">📊 Historial</button>
             <button class="btn btn-info btn-sm" style="flex: 1;" onclick="openEditClientModal()">✏️ Editar</button>
         </div>
-        <div style="display: flex; gap: 6px; width: 100%;">
-            <button class="btn btn-secondary btn-sm" style="flex: 1;" onclick="clearClient()">Cambiar</button>
-            <button class="btn btn-warning btn-sm" style="flex: 1;" onclick="requestUber()" id="uberBtn" style="display: none;">🚗 Solicitar Uber</button>
-        </div>
+       <div style="display: flex; gap: 6px; width: 100%;">
+    <button class="btn btn-secondary btn-sm" style="flex: 1;" onclick="clearClient()">Cambiar</button>
+    <button class="btn btn-warning btn-sm" style="flex: 1;" onclick="requestDelivery()" id="deliveryBtn" style="display: none;">🚚 Solicitar Envío</button>
+</div>
     </div>
 </div>
             </div>
@@ -74,7 +84,7 @@
             </div>
         </div>
 
-        <div class="right-panel">
+         <div class="right-panel mobile-hidden" id="cartPanel">
             <div class="invoice-header">
                 <div class="card-title" style="margin-bottom: 4px;">🧾 Factura <span id="invoiceNumber" style="font-weight: 400; font-size: 0.85rem; color: #666;"></span></div>
                 <div class="client-info-box" id="invoiceClientInfo" style="margin-top: 0; font-size: 0.85rem; background: transparent; border: none; padding: 0;">

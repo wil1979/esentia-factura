@@ -335,3 +335,344 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--tex
     50% { opacity: 0.5; }
     100% { opacity: 1; }
 }
+/* ==========================================
+   RESPONSIVE MEJORADO PARA MÓVIL
+   ========================================== */
+
+/* Botones de tabs para móvil */
+.mobile-tabs {
+    display: none;
+    background: var(--surface);
+    border-bottom: 2px solid var(--border);
+    padding: 8px;
+    gap: 8px;
+}
+
+.mobile-tab-btn {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-light);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.mobile-tab-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.mobile-tab-btn .badge {
+    background: var(--danger);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+/* MÓVIL - Cualquier orientación */
+@media (max-width: 768px) {
+    .header {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 10px;
+    }
+    
+    .header h1 {
+        font-size: 1.1rem;
+    }
+    
+    .header-nav {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .nav-btn {
+        font-size: 0.7rem;
+        padding: 5px 8px;
+    }
+    
+    /* Mostrar tabs en móvil */
+    .mobile-tabs {
+        display: flex;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    
+    .main-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+        overflow-y: auto;
+    }
+    
+    /* Paneles con altura controlada */
+    .left-panel, .right-panel {
+        max-height: none;
+        overflow-y: visible;
+    }
+    
+    /* Ocultar paneles según tab activo */
+    .left-panel.mobile-hidden {
+        display: none;
+    }
+    
+    .right-panel.mobile-hidden {
+        display: none;
+    }
+    
+    /* Productos más pequeños */
+    .products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        max-height: 300px;
+    }
+    
+    .product-card {
+        padding: 8px;
+    }
+    
+    .product-name {
+        font-size: 0.75rem;
+    }
+    
+    .product-price {
+        font-size: 0.9rem;
+    }
+    
+    /* Stats más compactos */
+    .stats-grid, .inventory-stats, .receivable-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    
+    .stat-card {
+        padding: 10px 8px;
+    }
+    
+    .stat-value {
+        font-size: 1.1rem;
+    }
+    
+    /* Carrito compacto */
+    .cart-items {
+        max-height: 250px;
+    }
+    
+    .cart-item {
+        padding: 8px;
+    }
+    
+    /* Botones más grandes para touch */
+    .btn {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+    
+    .btn-sm {
+        padding: 8px 12px;
+    }
+    
+    /* Modales full screen en móvil */
+    .modal-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+    
+    /* Tablas scrollables */
+    .inventory-table {
+        font-size: 0.75rem;
+    }
+    
+    .inventory-table th, .inventory-table td {
+        padding: 6px 4px;
+    }
+}
+
+/* MÓVIL EN HORIZONTAL (LANDSCAPE) - CRÍTICO */
+@media (max-width: 768px) and (orientation: landscape) {
+    body {
+        height: 100vh;
+        overflow: hidden;
+    }
+    
+    .header {
+        padding: 6px 10px;
+        min-height: 50px;
+    }
+    
+    .header h1 {
+        font-size: 1rem;
+    }
+    
+    .nav-btn {
+        font-size: 0.65rem;
+        padding: 4px 6px;
+    }
+    
+    /* Tabs más compactos */
+    .mobile-tabs {
+        padding: 4px 8px;
+        min-height: 40px;
+    }
+    
+    .mobile-tab-btn {
+        padding: 6px;
+        font-size: 0.75rem;
+    }
+    
+    /* Paneles con scroll interno */
+    .left-panel, .right-panel {
+        max-height: calc(100vh - 140px);
+        overflow-y: auto;
+        padding: 10px;
+    }
+    
+    /* Grid de productos más compacto */
+    .products-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        max-height: 200px;
+    }
+    
+    .product-card {
+        padding: 6px;
+    }
+    
+    .product-name {
+        font-size: 0.7rem;
+        margin-bottom: 4px;
+    }
+    
+    .product-price {
+        font-size: 0.8rem;
+    }
+    
+    .product-category {
+        font-size: 0.6rem;
+    }
+    
+    /* Carrito más compacto */
+    .cart-items {
+        max-height: 150px;
+        padding: 8px;
+    }
+    
+    .cart-item {
+        padding: 6px;
+        margin-bottom: 4px;
+    }
+    
+    .cart-item-name {
+        font-size: 0.75rem;
+    }
+    
+    /* Footer de factura compacto */
+    .invoice-footer {
+        padding: 10px;
+    }
+    
+    .total-row {
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+    }
+    
+    .total-row.grand-total {
+        font-size: 1rem;
+    }
+    
+    .action-buttons {
+        margin-top: 8px;
+    }
+    
+    .btn {
+        padding: 8px;
+        font-size: 0.8rem;
+    }
+    
+    /* Info de cliente compacta */
+    .client-info-box {
+        padding: 6px;
+        font-size: 0.75rem;
+    }
+    
+    /* Stats en una fila */
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+    
+    .stat-card {
+        padding: 8px 4px;
+    }
+    
+    .stat-value {
+        font-size: 0.95rem;
+    }
+    
+    .stat-label {
+        font-size: 0.65rem;
+    }
+    
+    /* Tablas más compactas */
+    .inventory-table {
+        font-size: 0.7rem;
+    }
+    
+    .inventory-table th, .inventory-table td {
+        padding: 4px 2px;
+    }
+    
+    /* Modales más compactos */
+    .modal-header {
+        padding: 10px 15px;
+    }
+    
+    .modal-body {
+        padding: 12px;
+    }
+    
+    .form-group {
+        margin-bottom: 10px;
+    }
+    
+    .form-group input, .form-group select {
+        padding: 8px;
+        font-size: 0.85rem;
+    }
+}
+
+/* MUY PEQUEÑO (teléfonos pequeños en landscape) */
+@media (max-height: 500px) and (orientation: landscape) {
+    .header {
+        min-height: 40px;
+        padding: 4px 8px;
+    }
+    
+    .mobile-tabs {
+        min-height: 35px;
+    }
+    
+    .left-panel, .right-panel {
+        max-height: calc(100vh - 120px);
+    }
+    
+    .products-grid {
+        max-height: 150px;
+    }
+    
+    .cart-items {
+        max-height: 100px;
+    }
+}

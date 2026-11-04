@@ -158,6 +158,73 @@ async function loadProducts() {
 }
 
 // ==========================================
+// TABS PARA MÓVIL
+// ==========================================
+function switchMobileTab(tab, button) {
+    const productsPanel = document.getElementById('productsPanel');
+    const cartPanel = document.getElementById('cartPanel');
+    
+    // Actualizar botones
+    document.querySelectorAll('.mobile-tab-btn').forEach(btn => btn.classList.remove('active'));
+    button.classList.add('active');
+    
+    // Mostrar/ocultar paneles
+    if (tab === 'products') {
+        productsPanel.classList.remove('mobile-hidden');
+        cartPanel.classList.add('mobile-hidden');
+    } else if (tab === 'cart') {
+        productsPanel.classList.add('mobile-hidden');
+        cartPanel.classList.remove('mobile-hidden');
+    }
+}
+
+// Actualizar badge del carrito
+function updateCartBadge() {
+    const badge = document.getElementById('cartBadge');
+    const totalItems = cart.reduce((sum, item) => sum + item.cantidad, 0);
+    
+    if (totalItems > 0) {
+        badge.textContent = totalItems;
+        badge.style.display = 'inline-block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// Llamar en renderCart
+function renderCart() {
+    const container = document.getElementById('cartItems');
+    if (cart.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: var(--text-light); padding: 40px 20px; font-size: 0.9rem;">Carrito vacío.<br>Agregue productos o escanee un código.</div>';
+        updateTotals();
+        updateCartBadge();
+        return;
+    }
+    container.innerHTML = cart.map((item, index) => {
+        const product = allProducts.find(p => p.id === item.id);
+        const stock = product ? getStockForProduct(product) : null;
+        const stockWarning = stock && item.cantidad >= stock.cantidad ? '<div class="cart-item-stock-warning">⚠️ Últimas unidades</div>' : '';
+        return `
+        <div class="cart-item">
+            <div class="cart-item-info">
+                <div class="cart-item-name">${item.nombre}</div>
+                ${item.descuentoPct > 0 ? `<div class="cart-item-discount">🏷️ -${item.descuentoPct}% descuento</div>` : ''}
+                <div class="cart-item-price">₡${formatMoney(item.precioFinalUnitario)} c/u</div>
+                ${stockWarning}
+            </div>
+            <div class="cart-item-controls">
+                <button class="qty-btn" onclick="updateCartItemQty(${index}, -1)">-</button>
+                <span class="qty-display">${item.cantidad}</span>
+                <button class="qty-btn" onclick="updateCartItemQty(${index}, 1)" ${stock && item.cantidad >= stock.cantidad ? 'disabled' : ''}>+</button>
+                <span class="remove-btn" onclick="removeFromCart(${index})">&times;</span>
+            </div>
+        </div>`;
+    }).join('');
+    updateTotals();
+    updateCartBadge();
+}
+
+// ==========================================
 // NAVEGACIÓN
 // ==========================================
 function switchView(view, event) {
@@ -454,13 +521,38 @@ function searchClients(query) {
 function selectClient(clientId) {
     currentClient = allClients.find(c => c.id === clientId);
     if (!currentClient) return;
+    
     document.getElementById('clientSearch').value = '';
     document.getElementById('clientResults').style.display = 'none';
     document.getElementById('selectedClientInfo').style.display = 'flex';
     document.getElementById('clientNameDisplay').textContent = currentClient.nombre || 'N/A';
     document.getElementById('clientIdDisplay').textContent = currentClient.cedula || currentClient.id || 'N/A';
     document.getElementById('clientPhoneDisplay').textContent = currentClient.telefono || 'N/A';
-    document.getElementById('invoiceClientInfo').innerHTML = `<strong>${currentClient.nombre || 'Cliente'}</strong><br><span style="font-size: 0.8rem; color: #666;">CC: ${currentClient.cedula || currentClient.id}</span>`;
+    
+    // Mostrar dirección si existe
+    const addressDiv = document.getElementById('clientAddressDisplay');
+    const addressText = document.getElementById('clientAddressText');
+    const deliveryBtn = document.getElementById('deliveryBtn');
+    
+    if (currentClient.direccion) {
+        let addressHTML = currentClient.direccion;
+        if (currentClient.provincia) addressHTML += `<br><small>📍 ${currentClient.provincia}`;
+        if (currentClient.canton) addressHTML += `, ${currentClient.canton}`;
+        if (currentClient.provincia) addressHTML += `</small>`;
+        
+        addressText.innerHTML = addressHTML;
+        addressDiv.style.display = 'block';
+        deliveryBtn.style.display = 'block'; // Mostrar botón de envío
+    } else {
+        addressDiv.style.display = 'none';
+        deliveryBtn.style.display = 'none';
+    }
+    
+    document.getElementById('invoiceClientInfo').innerHTML = `
+        <strong>${currentClient.nombre || 'Cliente'}</strong>
+        <br><span style="font-size: 0.8rem; color: #666;">CC: ${currentClient.cedula || currentClient.id}</span>
+        ${currentClient.direccion ? `<br><span style="font-size: 0.75rem; color: var(--info);">📍 ${currentClient.provincia || ''} ${currentClient.canton || ''}</span>` : ''}
+    `;
 }
 
 function clearClient() {
@@ -1621,26 +1713,95 @@ function requestUber() {
 }
 
 // Función alternativa para servicios de mensajería en CR
-function requestDelivery(service) {
-    if (!currentClient || !currentClient.direccion) {
-        alert('Cliente sin dirección registrada');
+// ==========================================
+// SOLICITAR ENVÍO CON DiDi Express
+// ==========================================
+function requestDelivery() {
+    if (!currentClient) {
+        alert('Seleccione un cliente primero');
+        return;
+    }
+    
+    if (!currentClient.direccion) {
+        alert('El cliente no tiene dirección registrada. Edítelo y agregue la dirección.');
         return;
     }
     
     const address = encodeURIComponent(currentClient.direccion);
-    const phone = currentClient.telefono ? encodeURIComponent(currentClient.telefono) : '';
+    const province = currentClient.provincia ? encodeURIComponent(currentClient.provincia) : '';
+    const canton = currentClient.canton ? encodeURIComponent(currentClient.canton) : '';
+    const fullAddress = `${address}${province ? ', ' + province : ''}${canton ? ', ' + canton : ''}, Costa Rica`;
     
-    const links = {
-        'didi': `https://www.didiglobal.com/`,
-        'indriver': `https://indriver.com/`,
-        'maps': `https://www.google.com/maps/search/?api=1&query=${address}`,
-        'whatsapp': `https://wa.me/50672952454?text=${encodeURIComponent(
-            `Hola, necesito enviar un paquete a:\n\n📍 ${currentClient.direccion}\n👤 ${currentClient.nombre}\n📞 ${currentClient.telefono}`
-        )}`
-    };
+    // Detectar si es móvil
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
-    if (links[service]) {
-        window.open(links[service], '_blank');
+    // Opciones de servicios de envío en Costa Rica
+    const options = [
+        { name: 'DiDi Express', icon: '🚗', desc: 'Envío de paquetes' },
+        { name: 'InDriver Envíos', icon: '📦', desc: 'Mensajería' },
+        { name: 'Google Maps', icon: '🗺️', desc: 'Ver ubicación' },
+        { name: 'WhatsApp', icon: '💬', desc: 'Contactar cliente' }
+    ];
+    
+    let message = `🚚 Solicitar envío para:\n\n`;
+    message += `👤 ${currentClient.nombre}\n`;
+    message += `📍 ${currentClient.direccion}\n`;
+    if (currentClient.provincia) message += `   ${currentClient.provincia}`;
+    if (currentClient.canton) message += `, ${currentClient.canton}`;
+    message += `\n\nSeleccione el servicio:\n\n`;
+    options.forEach((opt, idx) => {
+        message += `${idx + 1}. ${opt.icon} ${opt.name} - ${opt.desc}\n`;
+    });
+    message += `\n0. Cancelar`;
+    
+    const choice = prompt(message);
+    
+    if (choice === null || choice === '0') return;
+    
+    switch(choice) {
+        case '1':
+            // DiDi Express
+            if (isMobile) {
+                // Intentar abrir app de DiDi
+                window.location.href = `didiexpress://send?address=${fullAddress}`;
+                setTimeout(() => {
+                    window.open(`https://www.didiglobal.com/express`, '_blank');
+                }, 1500);
+            } else {
+                window.open(`https://www.didiglobal.com/express`, '_blank');
+            }
+            break;
+            
+        case '2':
+            // InDriver
+            if (isMobile) {
+                window.location.href = `indriver://?action=delivery&address=${fullAddress}`;
+                setTimeout(() => {
+                    window.open(`https://indriver.com/es-cr/`, '_blank');
+                }, 1500);
+            } else {
+                window.open(`https://indriver.com/es-cr/`, '_blank');
+            }
+            break;
+            
+        case '3':
+            // Google Maps
+            window.open(`https://www.google.com/maps/search/?api=1&query=${fullAddress}`, '_blank');
+            break;
+            
+        case '4':
+            // WhatsApp al cliente
+            const phone = currentClient.telefono ? String(currentClient.telefono).replace(/\D/g, '') : '';
+            if (phone) {
+                const waPhone = phone.length === 8 ? '506' + phone : phone;
+                const waMessage = encodeURIComponent(
+                    `Hola ${currentClient.nombre},\n\nSu pedido está listo para envío.\n\n📍 Dirección registrada: ${currentClient.direccion}`
+                );
+                window.open(`https://wa.me/${waPhone}?text=${waMessage}`, '_blank');
+            } else {
+                alert('El cliente no tiene teléfono registrado');
+            }
+            break;
     }
 }
 
