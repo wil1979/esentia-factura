@@ -38,17 +38,45 @@ let showOutOfStockProducts = false;
 const LOW_STOCK_THRESHOLD = 5;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('es-CR');
+    document.getElementById('currentDate').textContent =
+        new Date().toLocaleDateString('es-CR');
     document.getElementById('invoiceNumber').textContent = currentInvoiceNumber;
 
-    initLocationSelects();
-    
+    const overlay = document.getElementById('loadingOverlay');
+    const hideLoading = () => {
+        if (!overlay) return;
+        overlay.style.opacity = '0';
+        setTimeout(() => { overlay.style.display = 'none'; }, 300);
+    };
+    const withTimeout = (promise, ms, name) =>
+        Promise.race([
+            promise,
+            new Promise((_, reject) =>
+                setTimeout(() => reject(new Error(`${name}: tiempo de espera agotado`)), ms)
+            )
+        ]);
+
     try {
-        await Promise.all([loadClients(), loadStock(), loadProducts()]);
-        document.getElementById('loadingOverlay').style.opacity = '0';
-        setTimeout(() => { document.getElementById('loadingOverlay').style.display = 'none'; }, 300);
+        initLocationSelects();
+
+        const results = await Promise.allSettled([
+            withTimeout(loadClients(), 15000, 'Clientes'),
+            withTimeout(loadStock(), 15000, 'Stock'),
+            withTimeout(loadProducts(), 20000, 'Productos')
+        ]);
+
+        results.forEach((result, index) => {
+            if (result.status === 'rejected') {
+                console.error(`Error en carga ${index + 1}:`, result.reason);
+            }
+        });
+
         checkLowStockAlerts();
-    } catch (error) { console.error("Error crítico:", error); }
+    } catch (error) {
+        console.error('Error al iniciar la página:', error);
+    } finally {
+        hideLoading();
+    }
 });
 
 // ==========================================
