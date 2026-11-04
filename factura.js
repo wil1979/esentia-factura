@@ -1494,7 +1494,7 @@ function formatMoney(amount) { return amount.toFixed(2).replace(/\d(?=(\d{3})+\.
 
 
 // Variable global para controlar visualización de agotados
-l
+
 
 function toggleOutOfStock() {
     showOutOfStockProducts = document.getElementById('showOutOfStock').checked;
