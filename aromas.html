@@ -3,776 +3,521 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AromaLabel Pro V3</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Montserrat:wght@300;400;500;600&family=Roboto:wght@300;400;500&family=Great+Vibes&family=Alex+Brush&family=Cormorant+Garamond:wght@400;600;700&family=Cinzel:wght@400;600;700&family=Tangerine:wght@400;700&display=swap" rel="stylesheet">
+<title>AromaLabel Pro v4.1 - Diseñador de Etiquetas</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Montserrat:wght@300;400;500;600;700&family=Cinzel:wght@400;700&family=Great+Vibes&family=Dancing+Script:wght@400;700&family=Poppins:wght@300;400;500;600;700&family=Roboto+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="aromas.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<base target="_blank">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
 <header class="header">
   <div class="logo">
-    <div class="logo-icon">🕯️</div>
+    <div class="logo-icon">🌸</div>
     <div>
-      <div class="logo-text">AromaLabel</div>
-      <div class="logo-sub">Pro Designer · Velas</div>
+      <div class="logo-text">AromaLabel Pro</div>
+      <div class="logo-sub">Diseñador de Etiquetas v4.1</div>
     </div>
   </div>
+  <div class="tabs-nav">
+    <button class="tab-btn active" data-tab="producto" onclick="cambiarTab('producto')"><span class="tab-icon">📦</span><span class="tab-text">Catálogo</span></button>
+    <button class="tab-btn" data-tab="info" onclick="cambiarTab('info')"><span class="tab-icon">🛡️</span><span class="tab-text">Info</span></button>
+    <button class="tab-btn" data-tab="datos" onclick="cambiarTab('datos')"><span class="tab-icon">📝</span><span class="tab-text">Datos</span></button>
+    <button class="tab-btn" data-tab="estilo" onclick="cambiarTab('estilo')"><span class="tab-icon">🎨</span><span class="tab-text">Estilo</span></button>        
+    <button class="tab-btn" data-tab="favs" onclick="cambiarTab('favs')"><span class="tab-icon">❤️</span><span class="tab-text">Favs</span></button>
+  </div>
   <nav class="nav-tabs">
-    <button class="nav-tab active" onclick="showSection('designer', this)">✏️ Diseñador</button>
-    <button class="nav-tab" onclick="showSection('projects', this)"> Proyectos</button>
+    <button class="nav-tab active" onclick="showSection('designer', this)">🎨 Diseñador</button>
+    <button class="nav-tab" onclick="showSection('projects', this)">📂 Proyectos</button>
     <button class="nav-tab" onclick="showSection('print', this)">🖨️ Impresión</button>
+    <button class="nav-tab" onclick="saveProject()">💾 Guardar</button>
+    <label class="nav-tab" style="cursor:pointer;">📥 Cargar Backup<input type="file" accept=".json" onchange="importProject(event)" style="display:none;"></label>
   </nav>
 </header>
 
-<div id="firebaseStatus" style="position:fixed;top:70px;right:20px;background:var(--card-bg);padding:0.5rem 1rem;border-radius:8px;box-shadow:var(--shadow);font-size:0.8rem;z-index:99;display:flex;align-items:center;gap:0.5rem;">
-  <span id="firebaseIcon" style="width:10px;height:10px;border-radius:50%;background:#ffc107;"></span>
-  <span id="firebaseText">Conectando...</span>
-</div>
-
-<main class="main-container">
-
-  <!-- ✏️ SECCIÓN: DISEÑADOR -->
-  <div class="section active" id="designer">
-    
+<div class="main-container">
+  <section id="designer" class="section active">
     <aside class="sidebar">
-      <h2 class="sidebar-title">Configuración de Etiqueta</h2>
+      <h2 class="sidebar-title">🎨 Panel de Diseño</h2>
       
-      <div class="tabs-nav">
-        <button class="tab-btn active" onclick="cambiarTab('diseno')" data-tab="diseno">
-          <span class="tab-icon">📋</span><span class="tab-text">Diseño</span>
-        </button>
-        <button class="tab-btn" onclick="cambiarTab('producto')" data-tab="producto">
-          <span class="tab-icon">📦</span><span class="tab-text">Producto</span>
-        </button>
-        <button class="tab-btn" onclick="cambiarTab('imagenes')" data-tab="imagenes">
-          <span class="tab-icon">🖼️</span><span class="tab-text">Imágenes</span>
-        </button>
-        <button class="tab-btn" onclick="cambiarTab('info')" data-tab="info">
-          <span class="tab-icon">📱</span><span class="tab-text">Info</span>
-        </button>
-      
-        <button class="btn btn-info btn-sm" onclick="shareDesign()">🔗 Compartir</button>
-      </div>
-
-      <!-- TAB 1: DISEÑO -->
-      <div class="tab-content active" id="tab-diseno">
-        <div class="form-group">
-          <label class="form-label">Nombre del Proyecto</label>
-          <input type="text" class="form-input" id="projectName" value="Mi Etiqueta" oninput="updateLabel()">
-        </div>
-<!--
-        <div class="form-group">
-          <label class="form-label"> Plantillas Rápidas</label>
-          <div class="template-grid" id="templateGrid">
-            <button class="template-btn" onclick="applyTemplate('small', this)"><span class="template-icon">🕯️</span>Pequeña 50×60</button>
-            <button class="template-btn active" onclick="applyTemplate('medium', this)"><span class="template-icon">️</span>Mediana 70×90</button>
-            <button class="template-btn" onclick="applyTemplate('large', this)"><span class="template-icon">🕯️</span>Grande 90×110</button>
-            <button class="template-btn" onclick="applyTemplate('lid', this)"><span class="template-icon">⭕</span>Tapa 50×50</button>
-            <button class="template-btn" onclick="applyTemplate('luxury', this)"><span class="template-icon">✨</span>Luxury 80×100</button>
-            <button class="template-btn" onclick="applyTemplate('minimal', this)"><span class="template-icon">◻️</span>Minimal 60×40</button>
-            <button class="template-btn" onclick="applyTemplate('mini', this)"><span class="template-icon">🕯️</span>Mini 30×40</button>
-            <button class="template-btn" onclick="applyTemplate('micro', this)"><span class="template-icon">💫</span>Micro 25×35</button>
-            <button class="template-btn" onclick="applyTemplate('tealight', this)"><span class="template-icon">⚪</span>Tea Light 35×25</button>
-          </div>
-        </div>-->
-
-<!--  FORMAS DE ETIQUETA -->
-<div class="form-group collapsible-section">
-    <div class="section-header" onclick="toggleSection(this)">
-        <label class="form-label" style="margin:0;">🎨 Forma de la Etiqueta</label>
-        <span class="toggle-icon">▼</span>
-    </div>
-    <div class="section-body">
-        <div class="shape-selector" id="shapeSelector">
-            <button class="shape-btn active" onclick="cambiarForma('rectangular', this)">
-                <span class="shape-icon">▭</span>
-                <span>Rectangular</span>
-            </button>
-            <button class="shape-btn" onclick="cambiarForma('circular', this)">
-                <span class="shape-icon">⭕</span>
-                <span>Circular</span>
-            </button>
-            <button class="shape-btn" onclick="cambiarForma('arched-top', this)">
-                <span class="shape-icon">⌒</span>
-                <span>Arco Superior</span>
-            </button>
-            <button class="shape-btn" onclick="cambiarForma('arched-bottom', this)">
-                <span class="shape-icon">⌣</span>
-                <span>Arco Inferior</span>
-            </button>
-            <button class="shape-btn" onclick="cambiarForma('triangular', this)">
-                <span class="shape-icon">△</span>
-                <span>Triangular</span>
-            </button>
-            <button class="shape-btn" onclick="cambiarForma('oval', this)">
-                <span class="shape-icon">⬭</span>
-                <span>Ovalada</span>
-            </button>
-            <button class="shape-btn" onclick="cambiarForma('hexagon', this)">
-                <span class="shape-icon">⬡</span>
-                <span>Hexagonal</span>
-            </button>
-            <button class="shape-btn" onclick="cambiarForma('tag', this)">
-                <span class="shape-icon">🏷️</span>
-                <span>Etiqueta</span>
-            </button>
-            <button class="shape-btn" onclick="cambiarForma('diamond', this)">
-                <span class="shape-icon">◇</span>
-                <span>Diamante</span>
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- 🖼️ BORDES PERSONALIZABLES -->
-<div class="form-group collapsible-section">
-    <div class="section-header" onclick="toggleSection(this)">
-        <label class="form-label" style="margin:0;">🖼️ Bordes de la Etiqueta</label>
-        <span class="toggle-icon">▼</span>
-    </div>
-    <div class="section-body">
-        <div class="toggle-group">
-            <span class="toggle-label">Borde Completo</span>
-            <label class="toggle-switch">
-                <input type="checkbox" id="fullBorder" onchange="updateLabel()">
-                <span class="toggle-slider"></span>
-            </label>
-        </div>
-        <div class="toggle-group">
-            <span class="toggle-label">Solo Superior</span>
-            <label class="toggle-switch">
-                <input type="checkbox" id="topBorderOnly" onchange="updateLabel()">
-                <span class="toggle-slider"></span>
-            </label>
-        </div>
-        <div class="toggle-group">
-            <span class="toggle-label">Solo Inferior</span>
-            <label class="toggle-switch">
-                <input type="checkbox" id="bottomBorderOnly" onchange="updateLabel()">
-                <span class="toggle-slider"></span>
-            </label>
-        </div>
-        <div class="range-group">
-            <div class="range-label">Grosor del Borde (px) <span id="borderWidthVal">2</span></div>
-            <input type="range" id="borderWidth" min="1" max="10" value="2" oninput="updateLabel()">
-        </div>
-        <div class="color-picker-wrapper">
-            <label style="flex:1;">Color del Borde</label>
-            <input type="color" class="color-picker" id="borderColor" value="#c9a96e" oninput="updateLabel()">
-        </div>
-        <div>
-            <label style="font-size:11px; color:#666;">Estilo del Borde</label>
-            <select id="borderStyle" onchange="updateLabel()" class="form-select" style="margin-top:4px; padding:6px;">
-                <option value="solid">Sólido</option>
-                <option value="dashed">Punteado</option>
-                <option value="dotted">Puntos</option>
-                <option value="double">Doble</option>
-            </select>
-        </div>
-    </div>
-</div>
-
-        <div class="form-group collapsible-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <label class="form-label" style="margin:0;">📐 Dimensiones</label>
-            <span class="toggle-icon">▼</span>
-          </div>
+      <div id="tab-producto" class="tab-content active">
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>📦 Selección de Producto</span><span class="toggle-icon">▼</span></div>
           <div class="section-body">
-            <div class="range-group"><div class="range-label">Ancho (mm) <span id="labelWidthVal">60</span></div><input type="range" id="labelWidth" min="20" max="200" value="60" oninput="updateLabel()"></div>
-            <div class="range-group"><div class="range-label">Alto (mm) <span id="labelHeightVal">80</span></div><input type="range" id="labelHeight" min="20" max="300" value="80" oninput="updateLabel()"></div>
-            <div class="range-group"><div class="range-label">Padding (mm) <span id="labelPaddingVal">3</span></div><input type="range" id="labelPadding" min="0" max="20" value="3" step="0.5" oninput="updateLabel()"></div>
-            <div class="range-group"><div class="range-label">Radio esquinas (px) <span id="borderRadiusVal">4</span></div><input type="range" id="borderRadius" min="0" max="30" value="4" oninput="updateLabel()"></div>
-            <div class="range-group"><div class="range-label">Línea superior (px) <span id="topLineVal">4</span></div><input type="range" id="topLine" min="0" max="20" value="4" oninput="updateLabel()"></div>
-            <div class="range-group"><div class="range-label">Línea inferior (px) <span id="bottomLineVal">0</span></div><input type="range" id="bottomLine" min="0" max="20" value="0" oninput="updateLabel()"></div>
-            <div class="range-group"><div class="range-label">Espaciado áreas (px) <span id="areaGapVal">6</span></div><input type="range" id="areaGap" min="0" max="20" value="6" oninput="updateLabel()"></div>
-          </div>
-        </div>
-
-        <div class="form-group collapsible-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <label class="form-label" style="margin:0;">🔤 Tamaños de Fuente</label>
-            <span class="toggle-icon">▼</span>
-          </div>
-          <div class="section-body">
-            <div class="range-group"><div class="range-label">Marca (px) <span id="fontBrandVal">16</span></div><input type="range" id="fontBrand" min="8" max="40" value="16" oninput="updateLabel()"></div>
-            <div class="range-group"><div class="range-label">Submarca (px) <span id="fontBrandSubVal">0</span></div><input type="range" id="fontBrandSub" min="0" max="20" value="0" oninput="updateLabel()"></div>
-            <div class="range-group"><div class="range-label">Producto (px) <span id="fontProductVal">22</span></div><input type="range" id="fontProduct" min="10" max="50" value="22" oninput="updateLabel()"></div>
-            <div class="range-group"><div class="range-label">Tipo (px) <span id="fontTypeVal">10</span></div><input type="range" id="fontType" min="6" max="24" value="10" oninput="updateLabel()"></div>
-            <div class="range-group"><div class="range-label">Detalles (px) <span id="fontDetailsVal">9</span></div><input type="range" id="fontDetails" min="6" max="20" value="9" oninput="updateLabel()"></div>
-            <div class="range-group"><div class="range-label">Instrucciones (px) <span id="fontInstrVal">7</span></div><input type="range" id="fontInstr" min="4" max="16" value="7" oninput="updateLabel()"></div>
-            <div class="range-group"><div class="range-label">Lote (px) <span id="fontBatchVal">7</span></div><input type="range" id="fontBatch" min="4" max="16" value="7" oninput="updateLabel()"></div>
-            <div class="range-group"><div class="range-label">Origen (px) <span id="fontOriginVal">7</span></div><input type="range" id="fontOrigin" min="4" max="16" value="7" oninput="updateLabel()"></div>
-            <div class="range-group"><div class="range-label">Tamaño QR (%) <span id="qrSizeVal">22</span></div><input type="range" id="qrSize" min="10" max="50" value="22" oninput="updateLabel()"></div>
-          </div>
-        </div>
-
-        <div class="form-group collapsible-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <label class="form-label" style="margin:0;">🎨 Colores</label>
-            <span class="toggle-icon">▼</span>
-          </div>
-          <div class="section-body">
-            <div class="color-picker-wrapper"><label style="flex:1;">Color de Acento</label><input type="color" class="color-picker" id="accentColor" value="#c9a96e" oninput="updateLabel()"><span class="color-value" id="accentColorValue">#c9a96e</span></div>
-            <div class="color-picker-wrapper"><label style="flex:1;">Color de Texto</label><input type="color" class="color-picker" id="textColor" value="#1a1a1a" oninput="updateLabel()"><span class="color-value" id="textColorValue">#1a1a1a</span></div>
-            <div class="color-picker-wrapper"><label style="flex:1;">Color de Fondo</label><input type="color" class="color-picker" id="bgColor" value="#ffffff" oninput="updateLabel()"><span class="color-value" id="bgColorValue">#ffffff</span></div>
-            <div class="color-picker-wrapper"><label style="flex:1;">Color del QR</label><input type="color" class="color-picker" id="qrColor" value="#1a1a1a" oninput="updateLabel()"><span class="color-value" id="qrColorValue">#1a1a1a</span></div>
-            <div class="color-picker-wrapper"><label style="flex:1;">Color fondo QR</label><input type="color" class="color-picker" id="qrBgColor" value="#ffffff" oninput="updateLabel()"><span class="color-value" id="qrBgColorValue">#ffffff</span></div>
-          </div>
-        </div>
-
-        <div class="section-body">
-            <div class="toggle-group"><span class="toggle-label">Activar modo vinil</span><label class="toggle-switch"><input type="checkbox" id="vinylMode" onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
-            <div style="background: #fff9e6; padding: 10px; border-radius: 6px; font-size: 11px; color: #555; margin-top: 8px;">
-              💡 <strong>Consejos:</strong>
-              <ul style="margin: 5px 0 0 15px; padding: 0;">
-                <li>El QR siempre tendrá fondo blanco</li>
-                <li>Los textos se resaltan con contorno blanco</li>
-                <li>Usa colores oscuros para el texto</li>
-              </ul>
+            <div class="form-group">
+              <label class="form-label">Categoría / Catálogo</label>
+              <select id="categoriaProducto" class="form-select" onchange="cargarProductos()">
+                <option value="">-- Seleccionar Categoría --</option>
+                <option value="ESENCIAS">🌸 Esencias Aromáticas</option>
+                <option value="LIMPIEZA">🧼 Productos de Limpieza</option>
+                <option value="VELAS">🕯️ Velas & Candelas</option>
+              </select>
             </div>
-          </div>
-
-        <div class="form-group collapsible-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <label class="form-label" style="margin:0;">🔤 Fuentes</label>
-            <span class="toggle-icon">▼</span>
-          </div>
-          <div class="section-body">
-            <div class="font-control-group">
-              <div>
-                <label class="form-label">Fuente de la Marca</label>
-                <select class="form-select" id="brandFont" onchange="updateLabel()">
-                  <option value="'Adelia', cursive">✨ Adelia (Premium)</option>
-                  <option value="'Great Vibes', cursive">Great Vibes (Elegante)</option>
-                  <option value="'Alex Brush', cursive">Alex Brush (Manuscrita)</option>
-                  <option value="'Tangerine', cursive">Tangerine (Caligráfica)</option>
-                  <option value="'Playfair Display', serif">Playfair Display (Clásica)</option>
-                  <option value="'Cinzel', serif">Cinzel (Romana)</option>
-                  <option value="'Cormorant', serif">Cormorant (Sofisticada)</option>
-                  <option value="'Montserrat', sans-serif">Montserrat (Moderna)</option>
-                </select>
-              </div>
-              <div>
-                <label class="form-label">Fuente del Producto</label>
-                <select class="form-select" id="productFont" onchange="updateLabel()">
-                  <option value="'Playfair Display', serif">Playfair Display (Clásica)</option>
-                  <option value="'Cinzel', serif">Cinzel (Romana)</option>
-                  <option value="'Cormorant', serif">Cormorant (Sofisticada)</option>
-                  <option value="'Montserrat', sans-serif">Montserrat (Moderna)</option>
-                  <option value="'Great Vibes', cursive">Great Vibes (Elegante)</option>
+            <div class="form-group">
+              <label class="form-label">🔍 Búsqueda Global</label>
+              <input type="text" id="buscadorGlobal" class="form-input" placeholder="Buscar en todo el catálogo..." oninput="busquedaGlobal()">
+              <div id="resultadosGlobal" style="display:none;max-height:200px;overflow-y:auto;border:1px solid #ddd;border-radius:6px;margin-top:6px;background:white;"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Filtrar</label>
+              <input type="text" id="buscadorProductos" class="form-input" placeholder="Buscar..." oninput="filtrarProductos()" disabled>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Producto Seleccionado</label>
+              <select id="productoSeleccionado" class="form-select" onchange="aplicarProducto()" disabled>
+                <option value="">-- Selecciona una categoría primero --</option>
+              </select>
+            </div>
+            <div id="contenedorVariantes" hidden>
+              <div class="form-group">
+                <label class="form-label">Variante / Presentación</label>
+                <select id="varianteSeleccionada" class="form-select" onchange="aplicarVariante()">
+                  <option value="">-- Seleccionar variante --</option>
                 </select>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div class="form-group">
-          <label class="form-label">Marca Principal</label>
-          <input type="text" class="form-input" id="brandName" value="Esentia" oninput="updateLabel()">
-          <input type="text" class="form-input" id="brandSub" value="Fragancias & Candelas Aromáticas" oninput="updateLabel()" style="margin-top:6px;" placeholder="Submarca">
-        </div>
-      </div>
-
-      <!-- TAB 2: PRODUCTO -->
-      <div class="tab-content" id="tab-producto">
-        <div class="form-group" style="padding: 12px; background: linear-gradient(135deg, #fff9e6 0%, #fff 100%); border-radius: 10px; border: 1px solid #f0d98c;">
-          <div style="display: flex; gap: 4px; margin-bottom: 10px; border-bottom: 2px solid #e9ecef;">
-            <button type="button" onclick="mostrarTab('favoritos')" id="tabFavoritos" style="flex: 1; padding: 8px; background: #c9a96e; color: white; border: none; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; font-weight: bold;">❤️ Favoritos (<span id="contadorFavoritos">0</span>)</button>
-            <button type="button" onclick="mostrarTab('historial')" id="tabHistorial" style="flex: 1; padding: 8px; background: #e9ecef; color: #555; border: none; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; font-weight: bold;">🕐 Recientes (<span id="contadorHistorial">0</span>)</button>
-          </div>
-          <div id="contenidoFavoritos" style="display: block;">
-            <div id="listaFavoritos" style="max-height: 120px; overflow-y: auto; font-size: 11px;"><div style="text-align: center; color: #999; padding: 10px;">💡 Haz ❤️ en un producto para guardarlo aquí</div></div>
-          </div>
-          <div id="contenidoHistorial" style="display: none;">
-            <div id="listaHistorial" style="max-height: 120px; overflow-y: auto; font-size: 11px;"><div style="text-align: center; color: #999; padding: 10px;">🕐 Tus últimos productos usados aparecerán aquí</div></div>
-            <button type="button" onclick="limpiarHistorial()" style="margin-top: 6px; padding: 4px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 10px;">🗑️ Limpiar historial</button>
-          </div>
-        </div>
-
-        <div class="form-group" style="padding: 12px; background: linear-gradient(135deg, #e8f4fd 0%, #fff 100%); border-radius: 10px; border: 1px solid #b6d9f2;">
-          <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 6px;">🔍 Búsqueda Global</label>
-          <input type="text" id="buscadorGlobal" placeholder="🔎 Buscar en todos los catálogos..." oninput="busquedaGlobal()" style="padding: 10px; border-radius: 6px; border: 1px solid #b6d9f2; width: 100%; font-size: 13px; box-sizing: border-box; background: white;">
-          <div id="resultadosGlobal" style="margin-top: 8px; max-height: 200px; overflow-y: auto; display: none;"></div>
-        </div>
-
-        <div class="form-group" style="padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%); border-radius: 10px; border: 1px solid #e9ecef;">
-          <label style="font-weight: bold; display: block; margin-bottom: 10px; font-size: 15px;">📦 Auto-completar desde Catálogo</label>
-          <div style="margin-bottom: 10px;">
-            <label style="font-size: 12px; color: #555;">1️⃣ Categoría</label>
-            <select id="categoriaProducto" onchange="cargarProductos()" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc; width: 100%; font-size: 13px;">
-              <option value="">-- Seleccionar Categoría --</option>
-              <option value="ESENCIAS">🌸 Esencias y Aromas</option>
-              <option value="LIMPIEZA">🧼 Productos de Limpieza</option>
-              <option value="VELAS">🕯️ Velas</option>
-            </select>
-          </div>
-          <div style="margin-bottom: 10px;">
-            <label style="font-size: 12px; color: #555;">2️ Buscar y Seleccionar</label>
-            <input type="text" id="buscadorProductos" placeholder="🔍 Filtrar..." oninput="filtrarProductos()" disabled style="padding: 8px; border-radius: 6px 6px 0 0; border: 1px solid #ccc; border-bottom: none; width: 100%; font-size: 13px; box-sizing: border-box;">
-            <select id="productoSeleccionado" onchange="aplicarProducto()" disabled style="padding: 8px; border-radius: 0 0 6px 6px; border: 1px solid #ccc; width: 100%; font-size: 13px; box-sizing: border-box;">
-              <option value="">-- Primero seleccione categoría --</option>
-            </select>
-          </div>
-          <div class="catalog-export-actions">
-            <button type="button" id="btnExportarPNGCatalogo" class="btn btn-info" onclick="exportCatalogPNGs(this)">📦 Generar PNG de cada producto de esta categoría</button>
-            <div id="estadoExportacionCatalogo" role="status" aria-live="polite"></div>
-            <small>Genera un PNG por producto del catálogo seleccionado con los ajustes actuales y los guarda juntos en un ZIP.</small>
-          </div>
-          <div style="margin-bottom: 10px;" id="contenedorVariantes" hidden>
-            <label style="font-size: 12px; color: #555;">3️ Variante / Tamaño</label>
-            <select id="varianteSeleccionada" onchange="aplicarVariante()" style="padding: 8px; border-radius: 6px; border: 1px solid #c9a96e; width: 100%; font-size: 13px; background: #fffdf5;">
-              <option value="">-- Seleccionar variante --</option>
-            </select>
-          </div>
-          <div id="previewProducto" style="display: none; margin-top: 12px; padding: 10px; background: #fff; border-radius: 8px; border: 1px dashed #c9a96e;">
-            <div style="display: flex; gap: 12px; align-items: center;">
-              <img id="previewImagen" src="" alt="Producto" style="width: 70px; height: 70px; object-fit: contain; border-radius: 6px; background: #f5f5f5; border: 1px solid #eee;">
-              <div style="flex: 1;">
-                <div id="previewNombre" style="font-weight: bold; font-size: 14px; color: #1a1a1a;"></div>
-                <div id="previewCategoria" style="font-size: 11px; color: #888; margin-top: 2px;"></div>
-                <div id="previewBadges" style="margin-top: 5px; display: flex; gap: 4px; flex-wrap: wrap;"></div>
-                <div id="previewPrecio" style="font-size: 13px; color: #c9a96e; font-weight: bold; margin-top: 4px;"></div>
-              </div>
+            <div id="previewProducto" style="display:none;margin-top:10px;padding:10px;background:#f8f9fa;border-radius:8px;border:1px solid #e9ecef;">
+              <img id="previewImagen" style="width:100%;max-height:120px;object-fit:contain;border-radius:6px;margin-bottom:8px;background:white;" alt="Preview">
+              <div style="font-weight:bold;font-size:13px;" id="previewNombre">—</div>
+              <div style="font-size:11px;color:#666;" id="previewCategoria">—</div>
+              <div id="previewBadges" style="margin:4px 0;"></div>
+              <div style="font-weight:bold;color:#c9a96e;margin-top:4px;" id="previewPrecio">—</div>
             </div>
-            <button type="button" id="btnFavorito" onclick="toggleFavorito()" style="margin-top: 8px; padding: 6px 12px; background: #fff; border: 2px solid #e9ecef; border-radius: 20px; cursor: pointer; font-size: 11px; width: 100%;">
-              <span id="iconoFavorito"></span> <span id="textoFavorito">Agregar a favoritos</span>
+
+            <button id="btnFavorito" class="btn btn-secondary" onclick="toggleFavorito()" style="width:100%;margin-top:10px;margin-bottom:8px;">
+              <span id="iconoFavorito">🤍</span> <span id="textoFavorito">Agregar a favoritos</span>
             </button>
-          </div>
-        </div>
 
-        <div class="form-group">
-          <label class="form-label">Tipo / Categoría</label>
-          <input type="text" class="form-input" id="productType" oninput="updateLabel()" placeholder="Ej: Aromaterapia">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Detalles (peso, presentación)</label>
-          <input type="text" class="form-input" id="productDetails" oninput="updateLabel()" placeholder="Ej: 120 ml · 40h">
-        </div>
-        <div class="form-group">
-          <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
-            <input type="checkbox" id="showPrice" onchange="updateLabel()">💰 Mostrar precio en la etiqueta
-          </label>
-          <input type="text" class="form-input" id="productPrice" value="" placeholder="Ej: ₡7,000" oninput="updateLabel()" style="margin-top: 6px;">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Producto (nombre)</label>
-          <input type="text" class="form-input" id="productName" value="Lavanda" oninput="updateLabel()">
-        </div>
-      </div>
-
-      <!-- TAB 3: IMÁGENES -->
-      <div class="tab-content" id="tab-imagenes">
-        <div class="form-group collapsible-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <label class="form-label" style="margin:0;">🏷️ Logo / Marca</label>
-            <span class="toggle-icon">▼</span>
-          </div>
-          <div class="section-body">
-            <div class="image-upload-area" onclick="document.getElementById('logoUpload').click()">
-              <div class="image-upload-icon">📷</div>
-              <div class="image-upload-text">Haz clic para subir logo</div>
-              <img id="logoPreview" class="image-preview" style="display:none;">
-            </div>
-            <input type="file" id="logoUpload" accept="image/*" class="hidden-input" onchange="handleLogoUpload(event)">
-            <div class="range-group"><div class="range-label">Tamaño Logo (%) <span id="logoSizeVal">80</span></div><input type="range" id="logoSize" min="20" max="150" value="80" oninput="updateLogoControls()"></div>
-            <div class="range-group"><div class="range-label">Rotación (°) <span id="logoRotVal">0</span></div><input type="range" id="logoRot" min="-180" max="180" value="0" oninput="updateLogoControls()"></div>
-            <div class="range-group"><div class="range-label">Opacidad (%) <span id="logoOpaVal">100</span></div><input type="range" id="logoOpa" min="10" max="100" value="100" oninput="updateLogoControls()"></div>
-            <div class="image-pos-grid">
-              <input type="number" class="image-pos-input" id="logoPosX" value="50" min="0" max="100" placeholder="Pos X (%)" oninput="updateLogoControls()">
-              <input type="number" class="image-pos-input" id="logoPosY" value="50" min="0" max="100" placeholder="Pos Y (%)" oninput="updateLogoControls()">
-            </div>
             <div class="toggle-group">
-              <span class="toggle-label">Mostrar logo (ocultar texto)</span>
-              <label class="toggle-switch"><input type="checkbox" id="showLogoImg" onchange="updateLabel()"><span class="toggle-slider"></span></label>
+              <span class="toggle-label">🖼️ Mostrar foto en la etiqueta</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="usarImagenProducto" onchange="toggleImagenProducto()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <button id="btnAgregarImagen" class="btn btn-accent btn-sm" onclick="agregarImagenProducto()" style="width:100%;margin-top:6px;">➕ Agregar Imagen al Diseñador</button>
+            
+            <div class="form-group">
+              <label class="form-label">🌐 URL de la Imagen (Web)</label>
+              <input type="text" id="customImageUrl" class="form-input" placeholder="https://ejemplo.com/imagen.jpg" oninput="actualizarImagenDesdeURL()">
+              <small style="color:#666;font-size:10px;">Si el producto no tiene foto, ingresa una URL aquí</small>
+            </div>
+
+            <div id="controlesImagen" style="display:none;margin-top:10px;">
+              <div class="form-group"><label class="form-label">Tamaño (<span id="tamanoImagenValor">100</span>%)</label><input type="range" id="tamanoImagen" min="5" max="100" value="100" oninput="actualizarImagen()"></div>
+              <div class="form-group"><label class="form-label">Posición X (<span id="posXImagenValor">50</span>%)</label><input type="range" id="posXImagen" min="0" max="100" value="50" oninput="actualizarImagen()"></div>
+              <div class="form-group"><label class="form-label">Posición Y (<span id="posYImagenValor">30</span>%)</label><input type="range" id="posYImagen" min="0" max="100" value="30" oninput="actualizarImagen()"></div>
+              <div class="form-group"><label class="form-label">Rotación (<span id="rotacionImagenValor">0</span>°)</label><input type="range" id="rotacionImagen" min="0" max="360" value="0" oninput="actualizarImagen()"></div>
+              <div class="form-group"><label class="form-label">Opacidad de fondo (<span id="opacidadImagenValor">60</span>%)</label><input type="range" id="opacidadImagen" min="0" max="100" value="60" oninput="actualizarImagen()"></div>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-secondary btn-sm" onclick="centrarImagen()" style="flex:1;">Centrar</button>
+                <button class="btn btn-secondary btn-sm" onclick="resetearImagen()" style="flex:1;">Reset</button>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="form-group collapsible-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <label class="form-label" style="margin:0;">🖼️ Imágenes de la Etiqueta</label>
-            <span class="toggle-icon">▼</span>
-          </div>
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>🔗 Asignar enlace QR</span><span class="toggle-icon">▼</span></div>
           <div class="section-body">
-            <div id="imagesContainer"></div>
-            <button class="btn-add-image" onclick="addImageItem()">➕ Agregar Imagen</button>
+            <div class="toggle-group">
+              <span class="toggle-label">🔗 Activar QR del producto</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="usarQRProducto" onchange="toggleQRProducto()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div id="opcionesQR" style="display:none;margin-top:10px;">
+              <div class="form-group">
+                <label class="form-label">Contenido del QR:</label>
+                <label style="display:block;margin:4px 0;"><input type="radio" name="tipoQR" value="facebook" checked onchange="actualizarQR()"> Facebook / Redes</label>
+                <label style="display:block;margin:4px 0;"><input type="radio" name="tipoQR" value="producto" onchange="actualizarQR()"> Ficha Web del Producto</label>
+                <label style="display:block;margin:4px 0;"><input type="radio" name="tipoQR" value="json" onchange="actualizarQR()"> Datos JSON</label>
+              </div>
+            </div>
+            <button id="btnExportarPNGCatalogo" class="btn btn-accent" onclick="exportCatalogPNGs(this)" style="margin-top:10px;" disabled>📦 Exportar Todo el Catálogo en ZIP (PNG)</button>
+            <div id="estadoExportacionCatalogo" style="margin-top:6px;font-size:11px;color:#666;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-datos" class="tab-content">
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>📝 Información del Producto</span><span class="toggle-icon">▼</span></div>
+          <div class="section-body">
+            <div class="form-group"><label class="form-label">Nombre del Proyecto</label><input type="text" id="projectName" class="form-input" value="Mi Etiqueta"></div>
+            <div class="form-group"><label class="form-label">Nombre de la Marca</label><input type="text" id="brandName" class="form-input" value="Esentia" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Subtítulo / Eslogan de Marca</label><input type="text" id="brandSub" class="form-input" value="Aromaterapia Artesanal" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Nombre del Producto</label><input type="text" id="productName" class="form-input" value="Lavanda & Manzanilla" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Tipo o Categoría del Producto</label><input type="text" id="productType" class="form-input" value="Aceite Esencial Natural" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">📦 Detalles (peso/presentación)</label><input type="text" id="productDetails" class="form-input" placeholder="Ej: 10 ml · 0.34 fl oz" oninput="updateLabel()"></div>
+            <div class="toggle-group"><span class="toggle-label">📦 Mostrar detalles (peso / presentación)</span><label class="toggle-switch"><input type="checkbox" id="showDetails" onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
+            <div class="form-group" style="margin-top:10px;"><label class="form-label">💰 Precio del Producto</label><input type="text" id="productPrice" class="form-input" placeholder="Ej: ₡5,000" oninput="updateLabel()"></div>
+            <div class="toggle-group"><span class="toggle-label">💰 Mostrar precio en la etiqueta</span><label class="toggle-switch"><input type="checkbox" id="showPrice" onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-estilo" class="tab-content">
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>📐 Forma de la Etiqueta</span><span class="toggle-icon">▼</span></div>
+          <div class="section-body">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+              <button class="btn btn-secondary btn-sm shape-btn active" onclick="cambiarForma('rectangular', this)">Rectangular</button>
+              <button class="btn btn-secondary btn-sm shape-btn" onclick="cambiarForma('circular', this)">Circular</button>
+              <button class="btn btn-secondary btn-sm shape-btn" onclick="cambiarForma('oval', this)">Ovalada</button>
+              <button class="btn btn-secondary btn-sm shape-btn" onclick="cambiarForma('arched-top', this)">Arco Sup.</button>
+              <button class="btn btn-secondary btn-sm shape-btn" onclick="cambiarForma('hexagon', this)">Hexágono</button>
+              <button class="btn btn-secondary btn-sm shape-btn" onclick="cambiarForma('tag', this)">Etiqueta Colgante</button>
+            </div>
           </div>
         </div>
 
-        <div class="form-group collapsible-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <label class="form-label" style="margin:0;">🔗 Imagen de Fondo (URL)</label>
-            <span class="toggle-icon">▼</span>
-          </div>
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>✨ Soportes Especiales (Vinil)</span><span class="toggle-icon">▼</span></div>
           <div class="section-body">
-            <input type="text" id="bgImageUrl" class="form-input" placeholder="https://ejemplo.com/imagen.jpg" oninput="actualizarImagenFondo()">
-            <div class="range-group" style="margin-top:8px;">
-              <div class="range-label">Opacidad <span id="bgImageOpacityVal">30</span>%</div>
-              <input type="range" id="bgImageOpacity" min="10" max="100" value="30" oninput="actualizarImagenFondo()">
+            <div class="toggle-group"><span class="toggle-label">🍸 Vista Vinil Transparente</span><label class="toggle-switch"><input type="checkbox" id="vinylMode" onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
+            <div class="toggle-group"><span class="toggle-label">🔤 Negrita / Alto Contraste (Vinil)</span><label class="toggle-switch"><input type="checkbox" id="boldTextMode" onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
+            <div id="vinylBadge" class="vinyl-badge" style="display:none;margin-top:8px;">🍸 Modo Vinil Activo</div>
+          </div>
+        </div>
+
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>📐 Dimensiones y Márgenes</span><span class="toggle-icon">▼</span></div>
+          <div class="section-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div class="form-group"><label class="form-label">Ancho (mm): <span id="labelWidthVal">60</span></label><input type="range" id="labelWidth" min="20" max="200" value="60" oninput="updateLabel()"></div>
+              <div class="form-group"><label class="form-label">Alto (mm): <span id="labelHeightVal">80</span></label><input type="range" id="labelHeight" min="20" max="200" value="80" oninput="updateLabel()"></div>
             </div>
-            <div style="margin-top:8px;">
-              <label style="font-size:11px; color:#666;">Ajuste</label>
-              <select id="bgImageFit" onchange="actualizarImagenFondo()" style="width:100%; padding:6px; font-size:11px; border-radius:4px; border:1px solid #ccc;">
-                <option value="contain">Ajustar (Contain)</option>
-                <option value="cover">Cubrir (Cover)</option>
-                <option value="center">Centrar Original</option>
+            <div class="form-group"><label class="form-label">Margen Interior (mm): <span id="labelPaddingVal">1.5</span></label><input type="range" id="labelPadding" min="0" max="10" step="0.5" value="1.5" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Radio de Esquinas (px): <span id="borderRadiusVal">4</span></label><input type="range" id="borderRadius" min="0" max="50" value="4" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Espaciado entre Bloques (px): <span id="areaGapVal">2</span></label><input type="range" id="areaGap" min="0" max="30" value="2" oninput="updateLabel()"></div>
+          </div>
+        </div>
+
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>🔤 Fuentes y Tamaños</span><span class="toggle-icon">▼</span></div>
+          <div class="section-body">
+            <div class="form-group">
+              <label class="form-label">Tipografía de Marca</label>
+              <select id="brandFont" class="form-select" onchange="updateLabel()">
+                <option value="'Adelia', serif">Adelia</option>
+                <option value="'Playfair Display', serif">Playfair Display (Elegante)</option>
+                <option value="'Cinzel', serif">Cinzel (Clásica / Lujo)</option>
+                <option value="'Great Vibes', cursive">Great Vibes (Script)</option>
+                <option value="'Dancing Script', cursive">Dancing Script (Manuscrita)</option>
+                <option value="'Poppins', sans-serif">Poppins (Moderna)</option>
+                <option value="'Montserrat', sans-serif">Montserrat (Limpia)</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Tamaño Marca (px): <span id="fontBrandVal">21</span></label><input type="range" id="fontBrand" min="8" max="60" value="21" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Tamaño Subtítulo Marca (px): <span id="fontBrandSubVal">0</span></label><input type="range" id="fontBrandSub" min="0" max="30" value="0" oninput="updateLabel()"></div>
+            <div class="form-group">
+              <label class="form-label">Tipografía del Producto</label>
+              <select id="productFont" class="form-select" onchange="updateLabel()">
+                <option value="'Playfair Display', serif">Playfair Display</option>
+                <option value="'Montserrat', sans-serif">Montserrat</option>
+                <option value="'Poppins', sans-serif">Poppins</option>
+                <option value="'Cinzel', serif">Cinzel</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Tamaño Producto (px): <span id="fontProductVal">19</span></label><input type="range" id="fontProduct" min="8" max="60" value="19" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Tamaño Tipo / Categoría (px): <span id="fontTypeVal">10</span></label><input type="range" id="fontType" min="6" max="30" value="10" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Tamaño Detalles (px): <span id="fontDetailsVal">9</span></label><input type="range" id="fontDetails" min="6" max="24" value="9" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Tamaño Instrucciones (px): <span id="fontInstrVal">6</span></label><input type="range" id="fontInstr" min="6" max="24" value="6" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Tamaño Lote (px): <span id="fontBatchVal">6</span></label><input type="range" id="fontBatch" min="6" max="20" value="6" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Tamaño Origen (px): <span id="fontOriginVal">6</span></label><input type="range" id="fontOrigin" min="6" max="20" value="6" oninput="updateLabel()"></div>
+          </div>
+        </div>
+
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>🎨 Colores del Diseño</span><span class="toggle-icon">▼</span></div>
+          <div class="section-body">
+            <div class="form-group"><label class="form-label">Color Principal de Texto</label><input type="color" id="textColor" class="form-input" value="#1a1a1a" oninput="updateLabel()" style="height:40px;padding:2px;"></div>
+            <div class="form-group"><label class="form-label">Color Secundario / Acento</label><input type="color" id="accentColor" class="form-input" value="#1a1a1a" oninput="updateLabel()" style="height:40px;padding:2px;"></div>
+            <div class="form-group"><label class="form-label">Color de Fondo de la Etiqueta</label><input type="color" id="bgColor" class="form-input" value="#ffffff" oninput="updateLabel()" style="height:40px;padding:2px;"></div>
+          </div>
+        </div>
+
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>🖼️ Imagen de Fondo de la Etiqueta</span><span class="toggle-icon">▼</span></div>
+          <div class="section-body">
+            <div class="form-group"><label class="form-label">📁 Subir Imagen Local</label><input type="file" id="bgImageUpload" accept="image/*" onchange="handleBgImageUpload(event)" class="form-input"></div>
+            <div class="form-group"><label class="form-label">🌐 O URL desde la Web</label><input type="text" id="bgImageUrl" class="form-input" placeholder="https://ejemplo.com/imagen.jpg" oninput="actualizarImagenFondo()"></div>
+            <div id="bgImagePreviewWrap" style="display:none;margin-bottom:10px;">
+              <img id="bgImagePreview" style="width:100%;max-height:80px;object-fit:contain;border:1px solid #ddd;border-radius:4px;" alt="Fondo">
+              <button class="btn btn-danger btn-sm" onclick="quitarImagenFondo()" style="width:100%;margin-top:6px;">🗑️ Quitar Imagen de Fondo</button>
+            </div>
+            <div class="form-group"><label class="form-label">Opacidad (%): <span id="bgImageOpacityVal">30</span></label><input type="range" id="bgImageOpacity" min="5" max="100" value="30" oninput="actualizarImagenFondo()"></div>
+            <div class="form-group">
+              <label class="form-label">Ajuste de Imagen</label>
+              <select id="bgImageFit" class="form-select" onchange="actualizarImagenFondo()">
+                <option value="contain">Contener (sin recortar)</option>
+                <option value="cover">Cubrir (rellenar)</option>
+                <option value="fill">Estirar (rellenar exacto)</option>
               </select>
             </div>
           </div>
         </div>
 
-        <div class="form-group collapsible-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <label class="form-label" style="margin:0;"> Imagen del Producto</label>
-            <span class="toggle-icon">▼</span>
-          </div>
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>🖼️ Logo e Imágenes</span><span class="toggle-icon">▼</span></div>
           <div class="section-body">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer;"><input type="checkbox" id="usarImagenProducto" onchange="toggleImagenProducto()">🖼️ Usar imagen</label>
-              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer;"><input type="checkbox" id="usarQRProducto" onchange="toggleQRProducto()">📱 QR del Producto</label>
+            <div class="toggle-group"><span class="toggle-label">Mostrar Logo Subido</span><label class="toggle-switch"><input type="checkbox" id="showLogoImg" onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
+            <div class="form-group" style="margin-top:10px;">
+              <label class="form-label">📁 Subir Logo (Local)</label>
+              <input type="file" id="logoUpload" accept="image/*" onchange="handleLogoUpload(event)" class="form-input">
+              <img id="logoPreview" style="display:none;max-width:100%;max-height:80px;margin-top:8px;border:1px solid #ddd;border-radius:4px;" alt="Logo Preview">
             </div>
-            <button type="button" id="btnAgregarImagen" onclick="agregarImagenProducto()" style="width: 100%; padding: 10px; background: #c9a96e; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; margin-bottom: 10px;">➕ Agregar Imagen al Diseñador</button>
-            <div id="opcionesQR" style="display: none; padding: 10px; background: #f8f9fa; border-radius: 6px; margin-bottom: 10px;">
-              <div style="font-size: 11px; font-weight: bold; color: #555; margin-bottom: 8px;">Tipo de QR:</div>
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; padding: 4px;"><input type="radio" name="tipoQR" value="facebook" checked onchange="actualizarQR()">  Facebook</label>
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; padding: 4px;"><input type="radio" name="tipoQR" value="producto" onchange="actualizarQR()"> 🔗 Ficha del Producto</label>
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; padding: 4px;"><input type="radio" name="tipoQR" value="json" onchange="actualizarQR()"> 📦 Datos JSON</label>
+            <div class="form-group"><label class="form-label">🌐 O URL del Logo</label><input type="text" id="logoUrl" class="form-input" placeholder="https://ejemplo.com/logo.png" oninput="cargarLogoDesdeURL()"></div>
+            <div class="form-group"><label class="form-label">Tamaño Logo (%): <span id="logoSizeVal">80</span></label><input type="range" id="logoSize" min="10" max="200" value="80" oninput="updateLogoControls()"></div>
+            <div class="form-group"><label class="form-label">Posición X (%): <span id="logoPosXVal">50</span></label><input type="range" id="logoPosX" min="0" max="100" value="50" oninput="updateLogoControls()"></div>
+            <div class="form-group"><label class="form-label">Posición Y (%): <span id="logoPosYVal">50</span></label><input type="range" id="logoPosY" min="0" max="100" value="50" oninput="updateLogoControls()"></div>
+            <div class="form-group"><label class="form-label">Rotación (°): <span id="logoRotVal">0</span></label><input type="range" id="logoRot" min="0" max="360" value="0" oninput="updateLogoControls()"></div>
+            <div class="form-group"><label class="form-label">Opacidad (%): <span id="logoOpaVal">100</span></label><input type="range" id="logoOpa" min="10" max="100" value="100" oninput="updateLogoControls()"></div>
+
+            <div class="area-position-title">📍 Desplazamiento XY de Áreas</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div class="form-group"><label class="form-label">Logo X (px): <span id="logoAreaXVal">0</span></label><input type="range" id="logoAreaX" min="-100" max="100" value="0" oninput="updateLabel()"></div>
+              <div class="form-group"><label class="form-label">Logo Y (px): <span id="logoAreaYVal">0</span></label><input type="range" id="logoAreaY" min="-100" max="100" value="0" oninput="updateLabel()"></div>
+              <div class="form-group"><label class="form-label">Producto X (px): <span id="productAreaXVal">0</span></label><input type="range" id="productAreaX" min="-100" max="100" value="0" oninput="updateLabel()"></div>
+              <div class="form-group"><label class="form-label">Producto Y (px): <span id="productAreaYVal">-45</span></label><input type="range" id="productAreaY" min="-100" max="100" value="-45" oninput="updateLabel()"></div>
+              <div class="form-group"><label class="form-label">Instrucciones X (px): <span id="instructionsAreaXVal">0</span></label><input type="range" id="instructionsAreaX" min="-100" max="100" value="0" oninput="updateLabel()"></div>
+              <div class="form-group"><label class="form-label">Instrucciones Y (px): <span id="instructionsAreaYVal">-74</span></label><input type="range" id="instructionsAreaY" min="-100" max="100" value="-74" oninput="updateLabel()"></div>
+              <div class="form-group"><label class="form-label">Footer X (px): <span id="footerAreaXVal">-13</span></label><input type="range" id="footerAreaX" min="-100" max="100" value="0" oninput="updateLabel()"></div>
+              <div class="form-group"><label class="form-label">Footer Y (px): <span id="footerAreaYVal">-58</span></label><input type="range" id="footerAreaY" min="-100" max="100" value="0" oninput="updateLabel()"></div>
             </div>
-            <div id="controlesImagen" style="display: none; padding: 12px; background: #f8f9fa; border-radius: 6px;">
-              <div style="font-size: 11px; font-weight: bold; color: #555; margin-bottom: 8px;">🎛️ Ajustes</div>
-              <div class="range-group"><div class="range-label">Tamaño <span id="tamanoImagenValor">25</span>%</div><input type="range" id="tamanoImagen" min="5" max="80" value="25" oninput="actualizarImagen()"></div>
-              <div class="range-group"><div class="range-label">Posición X <span id="posXImagenValor">83</span>%</div><input type="range" id="posXImagen" min="0" max="100" value="83" oninput="actualizarImagen()"></div>
-              <div class="range-group"><div class="range-label">Posición Y <span id="posYImagenValor">56</span>%</div><input type="range" id="posYImagen" min="0" max="100" value="56" oninput="actualizarImagen()"></div>
-              <div class="range-group"><div class="range-label">Rotación <span id="rotacionImagenValor">0</span>°</div><input type="range" id="rotacionImagen" min="0" max="360" value="0" oninput="actualizarImagen()"></div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px;">
-                <button type="button" onclick="resetearImagen()" style="padding: 6px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">🔄 Resetear</button>
-                <button type="button" onclick="centrarImagen()" style="padding: 6px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">🎯 Centrar</button>
-              </div>
+            <button class="btn btn-secondary btn-sm" onclick="resetearPosicionesAreas()" style="width:100%;margin-top:6px;">🔄 Resetear Posiciones</button>
+
+            <div class="area-position-title" style="margin-top:12px;">Imágenes Adicionales / Sellos</div>
+            <button class="btn btn-secondary btn-sm" onclick="addImageItem()" style="width:100%;margin-bottom:10px;">➕ Añadir Otra Imagen</button>
+            <div id="imagesContainer"></div>
+          </div>
+        </div>
+
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>🖼️ Bordes y Marco</span><span class="toggle-icon">▼</span></div>
+          <div class="section-body">
+            <div class="toggle-group"><span class="toggle-label">Borde Completo</span><label class="toggle-switch"><input type="checkbox" id="fullBorder" onchange="aplicarBordes()"><span class="toggle-slider"></span></label></div>
+            <div class="toggle-group"><span class="toggle-label">Borde Solo Superior</span><label class="toggle-switch"><input type="checkbox" id="topBorderOnly" onchange="aplicarBordes()"><span class="toggle-slider"></span></label></div>
+            <div class="toggle-group"><span class="toggle-label">Borde Solo Inferior</span><label class="toggle-switch"><input type="checkbox" id="bottomBorderOnly" onchange="aplicarBordes()"><span class="toggle-slider"></span></label></div>
+            <div class="form-group" style="margin-top:10px;"><label class="form-label">Grosor de Borde (px): <span id="borderWidthVal">2</span></label><input type="range" id="borderWidth" min="1" max="10" value="2" oninput="aplicarBordes()"></div>
+            <div class="form-group"><label class="form-label">Color de Borde</label><input type="color" id="borderColor" class="form-input" value="#c9a96e" oninput="aplicarBordes()" style="height:40px;padding:2px;"></div>
+            <div class="form-group">
+              <label class="form-label">Estilo de Borde</label>
+              <select id="borderStyle" class="form-select" onchange="aplicarBordes()">
+                <option value="solid">Sólido</option>
+                <option value="dashed">Punteado</option>
+                <option value="dotted">Discontinuo</option>
+                <option value="double">Doble</option>
+              </select>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="form-group" style="margin-top: 20px;">
-    <button class="btn btn-primary" onclick="saveProject()">💾 Guardar Proyecto</button>
-    <button class="btn btn-accent" onclick="addToPrintQueue()">➕ Añadir a Cola</button>
-    
-    <!-- NUEVO: Botón de compartir -->
-    <button class="btn btn-info" onclick="shareDesign()" style="width: 100%; margin-top: 0.5rem;">
-        🔗 Compartir Diseño
-    </button>
-    
-    <div class="export-buttons">
-        <button class="btn btn-secondary btn-sm" onclick="exportSinglePDF()">📄 PDF</button>
-        <button class="btn btn-secondary btn-sm" onclick="exportPNG()">🖼️ PNG</button>
-        <button class="btn btn-info btn-sm" onclick="exportProject()">📤 Exportar</button>
-        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFile').click()">📥 Importar</button>
-    </div>
-    <input type="file" id="importFile" accept=".json" class="hidden-input" onchange="importProject(event)">
-</div>
-      <!-- TAB 4: INFO -->
-      <div class="tab-content" id="tab-info">
-        <div class="form-group">
-          <label class="form-label">Instrucciones de Seguridad</label>
-          <textarea class="form-textarea" id="instructions" oninput="updateLabel()">Quemar sobre superficie resistente al calor. No dejar sin supervisión. Mantener alejado de corrientes de aire, niños y mascotas. No quemar más de 4 horas seguidas. Detener cuando queden 1cm de cera.</textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label">URL para QR</label>
-          <input type="text" class="form-input" id="qrUrl" value="https://www.facebook.com/profile.php?id=61579078480913" oninput="updateLabel()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Info Legal / Lote</label>
-          <input type="text" class="form-input" id="batchInfo" value="Lote: 001 | Exp: 12/2029" oninput="updateLabel()">
-         
-<div style="margin-top: 6px; display: flex; gap: 0.5rem;">
-    <button type="button" onclick="actualizarLoteYExpiracion()" 
-            style="padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;">
-         Actualizar automáticamente
-    </button>
-    <span style="font-size: 11px; color: #666; align-self: center;">
-        Lote: AAAAMM | Exp: MM/AÑO+1
-    </span>
-</div>
-
-          <input type="text" class="form-input" id="originInfo" value="Esentia Fragancias & Candelas" oninput="updateLabel()" style="margin-top:6px;" placeholder="Origen / materiales">
-        </div>
-        <div class="form-group collapsible-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <label class="form-label" style="margin:0;">️ Visibilidad</label>
-            <span class="toggle-icon">▼</span>
-          </div>
+      <div id="tab-info" class="tab-content">
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>🛡️ Plantilla de Consejos de Seguridad</span><span class="toggle-icon">▼</span></div>
           <div class="section-body">
-            <div class="toggle-group"><span class="toggle-label">Línea divisoria</span><label class="toggle-switch"><input type="checkbox" id="showDivider" checked onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
-            <div class="toggle-group"><span class="toggle-label">Código QR</span><label class="toggle-switch"><input type="checkbox" id="showQR" checked onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
-            <div class="toggle-group"><span class="toggle-label">Código de barras (ID del producto)</span><label class="toggle-switch"><input type="checkbox" id="showBarcode" checked onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
-            <div class="toggle-group"><span class="toggle-label">Instrucciones</span><label class="toggle-switch"><input type="checkbox" id="showInstructions" checked onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
-            <div class="toggle-group"><span class="toggle-label">Información legal</span><label class="toggle-switch"><input type="checkbox" id="showFooter" checked onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
+            <div class="form-group">
+              <label class="form-label">Seleccionar Consejo Predefinido</label>
+              <select id="safetyPreset" class="form-select" onchange="aplicarPlantillaSeguridad()">
+                <option value="">-- Seleccionar Consejo Predefinido (Opcional) --</option>
+                <option value="VELAS">🕯️ Velas & Candelas Aromáticas</option>
+                <option value="ESENCIAS">🌸 Esencias Aromáticas Ambientales</option>
+                <option value="LIMPIEZA">🧼 Productos de Limpieza</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Instrucciones de Seguridad Personalizadas</label>
+              <textarea id="instructions" class="form-textarea" rows="5" oninput="updateLabel()">Quemar sobre superficie resistente al calor. No dejar sin supervisión. Mantener alejado de corrientes de aire, niños y mascotas. No quemar más de 4 horas seguidas.</textarea>
+            </div>
+            <div class="toggle-group"><span class="toggle-label">Mostrar Instrucciones</span><label class="toggle-switch"><input type="checkbox" id="showInstructions" checked onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
+            <div class="form-group" style="margin-top:8px;"><label class="form-label">Ancho del bloque (%) : <span id="instructionsWidthVal">100</span></label><input type="range" id="instructionsWidth" min="20" max="100" value="100" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Alto máximo del bloque (%) : <span id="instructionsHeightVal">100</span></label><input type="range" id="instructionsHeight" min="10" max="100" value="100" oninput="updateLabel()"></div>
+            <div class="toggle-group" style="margin-top:8px;"><span class="toggle-label">🥛 Fondo Blanco Glaseado (Instrucciones)</span><label class="toggle-switch"><input type="checkbox" id="frostedBg" onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
+            <div class="toggle-group" style="margin-top:8px;"><span class="toggle-label">📏 Mostrar Divisor entre secciones</span><label class="toggle-switch"><input type="checkbox" id="showDivider" onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
+            <div class="form-group" style="margin-top:10px;"><label class="form-label">Color del Divisor</label><input type="color" id="dividerColor" class="form-input" value="#c9a96e" oninput="updateLabel()" style="height:40px;padding:2px;"></div>
+            <div class="form-group"><label class="form-label">Grosor del Divisor (px): <span id="dividerWidthVal">1</span></label><input type="range" id="dividerWidth" min="1" max="5" value="1" oninput="updateLabel()"></div>
           </div>
-
-          <!-- 📍 POSICIÓN DEL QR -->
-<div class="form-group collapsible-section">
-  <div class="section-header" onclick="toggleSection(this)">
-    <label class="form-label" style="margin:0;">📍 Posición del QR</label>
-    <span class="toggle-icon">▼</span>
-  </div>
-  <div class="section-body">
-    <div class="range-group">
-      <div class="range-label">Posición X (%) <span id="qrPosXVal">50</span></div>
-      <input type="range" id="qrPosX" min="0" max="100" value="50" oninput="updateLabel()">
-    </div>
-    <div class="range-group">
-      <div class="range-label">Posición Y (%) <span id="qrPosYVal">90</span></div>
-      <input type="range" id="qrPosY" min="0" max="100" value="90" oninput="updateLabel()">
-    </div>
-    <div class="range-group">
-      <div class="range-label">Tamaño QR (%) <span id="qrSizeVal">22</span></div>
-      <input type="range" id="qrSize" min="10" max="50" value="22" oninput="updateLabel()">
-    </div>
-    <div class="range-group">
-      <div class="range-label">Rotación (°) <span id="qrRotationVal">0</span></div>
-      <input type="range" id="qrRotation" min="0" max="360" value="0" oninput="updateLabel()">
-    </div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px;">
-      <button type="button" onclick="resetQRPosition()" style="padding: 6px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">🔄 Resetear</button>
-      <button type="button" onclick="centerQR()" style="padding: 6px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">🎯 Centrar</button>
-    </div>
-  </div>
-</div>
         </div>
-        <div class="form-group collapsible-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <label class="form-label" style="margin:0;">🎞️ Modo Vinil Transparente</label>
-            <span class="toggle-icon">▼</span>
-          </div>
 
-<!-- NUEVO: Sección de consejos para el modo vinil 
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>🏷️ Lote y Fecha de Expiración</span><span class="toggle-icon">▼</span></div>
           <div class="section-body">
-            <div class="toggle-group"><span class="toggle-label">Activar modo vinil</span><label class="toggle-switch"><input type="checkbox" id="vinylMode" onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
-            <div style="background: #fff9e6; padding: 10px; border-radius: 6px; font-size: 11px; color: #555; margin-top: 8px;">
-              💡 <strong>Consejos:</strong>
-              <ul style="margin: 5px 0 0 15px; padding: 0;">
-                <li>El QR siempre tendrá fondo blanco</li>
-                <li>Los textos se resaltan con contorno blanco</li>
-                <li>Usa colores oscuros para el texto</li>
-              </ul>
+            <div class="form-group"><label class="form-label">Información de Lote</label><input type="text" id="batchInfo" class="form-input" value="Lote: 20261103 | Exp: 11/2028" oninput="updateLabel()"></div>
+            <button class="btn btn-secondary btn-sm" onclick="actualizarLoteYExpiracion()" style="width:100%;">🔄 Generar Automático</button>
+          </div>
+        </div>
+
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>📍 Origen / Fabricación</span><span class="toggle-icon">▼</span></div>
+          <div class="section-body">
+            <div class="form-group"><label class="form-label">Origen</label><input type="text" id="originInfo" class="form-input" value="Fragancias Arómaticas Ambientales" oninput="updateLabel()"></div>
+            <div class="toggle-group"><span class="toggle-label">Mostrar Pie de Etiqueta</span><label class="toggle-switch"><input type="checkbox" id="showFooter" checked onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
+          </div>
+        </div>
+
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>📱 Código QR</span><span class="toggle-icon">▼</span></div>
+          <div class="section-body">
+            <div class="toggle-group"><span class="toggle-label">Activar QR</span><label class="toggle-switch"><input type="checkbox" id="showQR" onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
+            <div class="form-group" style="margin-top:10px;"><label class="form-label">Enlace URL del QR</label><input type="text" id="qrUrl" class="form-input" value="https://www.facebook.com/profile.php?id=61579078480913" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Color QR</label><input type="color" id="qrColor" class="form-input" value="#000000" oninput="updateLabel()" style="height:40px;padding:2px;"></div>
+            <div class="form-group"><label class="form-label">Color Fondo QR</label><input type="color" id="qrBgColor" class="form-input" value="#ffffff" oninput="updateLabel()" style="height:40px;padding:2px;"></div>
+            <div class="form-group"><label class="form-label">Tamaño QR (%): <span id="qrSizeVal">34</span></label><input type="range" id="qrSize" min="10" max="80" value="34" oninput="updateLabel()"></div>
+            <div class="area-position-title">Posición del QR</div>
+            <div class="form-group"><label class="form-label">Posición X (%): <span id="qrPosXVal">21</span></label><input type="range" id="qrPosX" min="0" max="100" value="21" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Posición Y (%): <span id="qrPosYVal">87</span></label><input type="range" id="qrPosY" min="0" max="200" value="87" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Rotación (°): <span id="qrRotationVal">0</span></label><input type="range" id="qrRotation" min="0" max="360" value="0" oninput="updateLabel()"></div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-secondary btn-sm" onclick="centerQR()" style="flex:1;">Centrar QR</button>
+              <button class="btn btn-secondary btn-sm" onclick="resetQRPosition()" style="flex:1;">Reset Posición</button>
             </div>
           </div>
-        -->
-          <div class="toggle-group">
-    <span class="toggle-label">Mostrar Guías</span>
-    <label class="toggle-switch">
-        <input type="checkbox" id="showGuides" onchange="toggleGuides()">
-        <span class="toggle-slider"></span>
-    </label>
-</div>
-<div class="toggle-group">
-    <span class="toggle-label">Ajustar a Grid</span>
-    <label class="toggle-switch">
-        <input type="checkbox" id="snapToGrid" onchange="toggleSnapToGrid()">
-        <span class="toggle-slider"></span>
-    </label>
-</div>
         </div>
-        
+
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>📊 Código de Barras (CODE128)</span><span class="toggle-icon">▼</span></div>
+          <div class="section-body">
+            <div class="toggle-group"><span class="toggle-label">Activar Código de Barras</span><label class="toggle-switch"><input type="checkbox" id="showBarcode" onchange="updateLabel()"><span class="toggle-slider"></span></label></div>
+            <div class="area-position-title" style="margin-top:10px;">Posición del Código</div>
+            <div class="form-group"><label class="form-label">Posición X (%): <span id="barcodePosXVal">77</span></label><input type="range" id="barcodePosX" min="0" max="100" value="77" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Posición Y (%): <span id="barcodePosYVal">83</span></label><input type="range" id="barcodePosY" min="0" max="200" value="83" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Rotación (°): <span id="barcodeRotationVal">0</span></label><input type="range" id="barcodeRotation" min="0" max="360" value="0" oninput="updateLabel()"></div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-secondary btn-sm" onclick="centerBarcode()" style="flex:1;">Centrar Barras</button>
+              <button class="btn btn-secondary btn-sm" onclick="resetBarcodePosition()" style="flex:1;">Reset Posición</button>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <div id="tab-favs" class="tab-content">
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>❤️ Favoritos (<span id="contadorFavoritos">0</span>)</span><span class="toggle-icon">▼</span></div>
+          <div class="section-body"><div id="listaFavoritos"></div></div>
+        </div>
+        <div class="collapsible-section">
+          <div class="section-header" onclick="toggleSection(this)"><span>🕐 Historial (<span id="contadorHistorial">0</span>) — Últimos 10</span><span class="toggle-icon">▼</span></div>
+          <div class="section-body">
+            <div id="listaHistorial"></div>
+            <button class="btn btn-danger btn-sm" onclick="limpiarHistorial()" style="width:100%;margin-top:10px;">🗑️ Limpiar</button>
+          </div>
+        </div>
+      </div>
+
     </aside>
 
-    <!-- ÁREA DE VISTA PREVIA -->
     <div class="preview-area">
       <div class="preview-card">
         <div class="preview-header">
-          <h3 class="preview-title">Vista Previa de Etiqueta</h3>
-          <div class="vinyl-badge" id="vinylBadge" style="display: none;">🎞️ Vinil</div>
+          <h3 class="preview-title">👁️ Vista Previa en Tiempo Real</h3>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span id="printVinylBadge" class="vinyl-badge" style="display:none;">🍸 Modo Vinil</span>
+            <button class="btn btn-secondary btn-sm" onclick="shareDesign()">🔗 Compartir</button>
+          </div>
         </div>
-        <div class="label-container" id="labelContainer">
-          <div id="labelPreview" class="label">
-            <div id="labelTopLine" class="label-top-line"></div>
-            <div id="labelBottomLine" class="label-bottom-line"></div>
-            <div id="labelLogoArea" class="label-logo-area">
-              <img id="previewLogoImg" class="label-logo-img" style="display:none;">
-              <div id="previewBrand" class="label-logo">Esentia</div>
-              <div id="previewBrandSub" class="label-logo-sub">Fragancias & Candelas Aromáticas</div>
+
+        <div class="label-container">
+          <div class="label" id="labelPreview">
+            <canvas id="labelCanvas" style="display:none;"></canvas>
+
+            <div class="label-logo-area" id="labelLogoArea">
+              <img id="previewLogoImg" class="label-logo-img" style="display:none;" alt="Logo">
+              <span class="label-logo" id="previewBrand">Esentia</span>
+              <span class="label-logo-sub" id="previewBrandSub">Fragancias que Enamoran</span>
             </div>
-            <div id="labelProduct" class="label-product">
-              <div id="previewProduct" class="label-name">Lavanda</div>
-              <div id="previewType" class="label-type">Vela Aromática</div>
-              <div id="previewDetails" class="label-details">180g · 40h</div>
-              <div id="previewPrice" style="color: var(--accent-color, #c9a96e); font-weight: bold; margin-top: 4px;"></div>
+
+            <div class="label-product" id="labelProduct">
+              <img id="previewProductImg" class="label-product-img" style="display:none;" alt="Producto">
+              <span class="label-name" id="previewProduct">Lavanda & Manzanilla</span>
+              <span class="label-type" id="previewType">Aceite Esencial Natural</span>
+              <span class="label-details" id="previewDetails" style="display:none;">10 ml · 0.34 fl oz</span>
+              <span class="label-details" id="previewPrice" style="display:none;color:var(--accent-color);font-weight:700;">₡0</span>
             </div>
-            <div id="labelDivider" class="label-divider"></div>
-            <div id="previewInstructions" class="label-instructions">Quemar sobre superficie resistente al calor. No dejar sin supervisión.</div>
-            <div id="labelFooter" class="label-footer">
+
+            <div class="label-divider" id="labelDivider" style="display:none;"></div>
+
+            <div class="label-instructions" id="previewInstructions">
+              Quemar sobre superficie resistente al calor. No dejar sin supervisión. Mantener alejado de corrientes de aire, niños y mascotas.
+            </div>
+
+            <div class="label-qr" id="previewQR" style="display:none; position:absolute;"></div>
+
+            <div class="label-footer" id="labelFooter">
               <div class="label-info">
-                <div id="previewBatch" class="label-batch">Lote: 001 | Exp: 12/2026</div>
-                <div id="previewOrigin">Fragancias que Enamoran  & Candelas</div>
+                <div class="label-batch" id="previewBatch">Lote: 20261103 | Exp: 11/2028</div>
+                <div id="previewOrigin">Hecho en Costa Rica</div>
               </div>
-              <div id="previewQR" class="label-qr"></div>
             </div>
-            <div id="previewBarcodeWrap" class="label-barcode-wrap" style="display:none;">
-              <svg id="previewBarcode" aria-label="Código de barras del ID del producto"></svg>
+
+            <div class="label-barcode-wrap" id="previewBarcodeWrap" style="display:none;">
+              <svg id="previewBarcode"></svg>
             </div>
           </div>
         </div>
-        <button type="button" class="preview-refresh-btn" onclick="updateLabel()" title="Actualizar vista previa">⟳ Actualizar vista previa</button>
-      </div>
-    </div>
-  </div>
 
-  <!--  SECCIÓN: PROYECTOS -->
-  <div class="section" id="projects">
-    <div class="preview-card">
-      <div class="preview-header">
-        <h3 class="preview-title">Mis Proyectos Guardados</h3>
-        <div style="display: flex; gap: 0.5rem;">
-          <button class="btn btn-secondary btn-sm" onclick="loadAllProjects()">🔄 Actualizar</button>
-          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFileProjects').click()">📥 Importar</button>
-          <button class="btn btn-secondary btn-sm" onclick="exportAllProjects()">📤 Exportar Todo</button>
-          <input type="file" id="importFileProjects" accept=".json" class="hidden-input" onchange="importProject(event)">
-        </div>
-      </div>
-      <div id="projectsGrid" class="projects-grid">
-        <div class="empty-state">
-          <div class="empty-state-icon">📁</div>
-          <h3>No hay proyectos guardados</h3>
-          <p>Crea tu primera etiqueta en el Diseñador y guárdala aquí.</p>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:1.2rem;">
+          <button class="btn btn-primary" onclick="saveProject()">💾 Guardar</button>
+          <button class="btn btn-accent" onclick="addToPrintQueue()">📋 Añadir a Cola</button>
+          <button class="btn btn-secondary" onclick="exportPNG()">🖼️ PNG</button>
+          <button class="btn btn-secondary" onclick="exportSinglePDF()">📄 PDF</button>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- ️ SECCIÓN: IMPRESIÓN -->
-  <div class="section" id="print">
+  <section id="projects" class="section">
     <div class="preview-card">
-      <div class="preview-header">
-        <h3 class="preview-title">Optimización de Impresión</h3>
-        <div class="vinyl-badge" id="printVinylBadge" style="display: none;">🎞️ Modo Vinil Activo</div>
-      </div>
-      <div class="sheet-controls">
-        <div class="sheet-control-group"><label>Tamaño de Hoja</label><select id="sheetSize" onchange="updateSheetPreview()"><option value="A4">A4 (210×297mm)</option><option value="Carta">Carta (216×279mm)</option><option value="Oficio">Oficio (216×356mm)</option><option value="A3">A3 (297×420mm)</option><option value="A5">A5 (148×210mm)</option></select></div>
-        <div class="sheet-control-group"><label>Margen Sup. (mm)</label><input type="number" id="marginTop" value="3" min="0" max="50" onchange="updateSheetPreview()"></div>
-        <div class="sheet-control-group"><label>Margen Izq. (mm)</label><input type="number" id="marginLeft" value="3" min="0" max="50" onchange="updateSheetPreview()"></div>
-        <div class="sheet-control-group"><label>Margen Der. (mm)</label><input type="number" id="marginRight" value="3" min="0" max="50" onchange="updateSheetPreview()"></div>
-        <div class="sheet-control-group"><label>Margen Inf. (mm)</label><input type="number" id="marginBottom" value="3" min="0" max="50" onchange="updateSheetPreview()"></div>
-        <div class="sheet-control-group"><label>Espacio Horiz. (mm)</label><input type="number" id="spaceX" value="0" min="0" max="20" onchange="updateSheetPreview()"></div>
-        <div class="sheet-control-group"><label>Espacio Vert. (mm)</label><input type="number" id="spaceY" value="0" min="0" max="20" onchange="updateSheetPreview()"></div>
-      </div>
-      <div class="preview-header" style="margin-top: 2rem;">
-        <h3 class="preview-title">Cola de Impresión</h3>
-        <div style="display: flex; gap: 0.5rem;">
-    <button class="btn btn-danger btn-sm" onclick="printQueue=[]; updatePrintQueueDisplay(); updateSheetPreview();">🗑️ Vaciar Cola</button>
-    <button class="btn btn-primary btn-sm" onclick="printLabels()">️ Imprimir</button>
-    <button class="btn btn-secondary btn-sm" onclick="exportSinglePDF()">📄 PDF Actual</button>
-    <button class="btn btn-info btn-sm" onclick="exportQueuePDF()">📄 PDF Cola</button>
-</div>
-      </div>
-      <p class="queue-help">Cada diseño agregado aparece con su vista previa. Ajusta la cantidad de cada diseño por separado para imprimir varias copias.</p>
-      <div id="printQueueList" class="batch-list">
-        <div style="text-align:center; color:#999; padding:20px;">No hay etiquetas en la cola.</div>
-      </div>
-      <div class="sheet-stats" id="printStats">
-        <div class="stat"><div class="stat-value">0</div><div class="stat-label">Etiquetas en Cola</div></div>
-        <div class="stat"><div class="stat-value">0</div><div class="stat-label">Por Hoja</div></div>
-        <div class="stat"><div class="stat-value">0</div><div class="stat-label">Hojas Necesarias</div></div>
-        <div class="stat"><div class="stat-value stat-highlight">0%</div><div class="stat-label">Eficiencia</div></div>
+      <h3 class="preview-title">📂 Mis Proyectos Guardados</h3>
+      <p style="color:#666;margin-bottom:1.2rem;">Gestiona, vuelve a cargar o elimina etiquetas creadas previamente.</p>
+      <div id="projectsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;"></div>
+    </div>
+  </section>
+
+  <section id="print" class="section">
+    <div class="preview-card">
+      <h3 class="preview-title">🖨️ Impresión Masiva</h3>
+      <p style="color:#666;margin-bottom:1.2rem;">Organiza la cantidad de etiquetas por hoja.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+        <div>
+          <h4 style="margin-bottom:10px;">📋 Cola de Impresión</h4>
+          <div id="printQueueList" style="max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px;"></div>
+        </div>
+        <div>
+          <h4 style="margin-bottom:10px;">📐 Parámetros de la Hoja</h4>
+          <div class="form-group">
+            <label class="form-label">Tamaño de Papel</label>
+            <select id="sheetSize" class="form-select" onchange="updateSheetPreview()">
+              <option value="A4">A4 (210 x 297 mm)</option>
+              <option value="Carta">Carta (216 x 279 mm)</option>
+              <option value="Oficio">Oficio (216 x 356 mm)</option>
+              <option value="A3">A3 (297 x 420 mm)</option>
+            </select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="form-group"><label class="form-label">Margen Sup. (mm)</label><input type="number" id="marginTop" class="form-input" value="3" min="0" oninput="updateSheetPreview()"></div>
+            <div class="form-group"><label class="form-label">Margen Inf. (mm)</label><input type="number" id="marginBottom" class="form-input" value="3" min="0" oninput="updateSheetPreview()"></div>
+            <div class="form-group"><label class="form-label">Margen Izq. (mm)</label><input type="number" id="marginLeft" class="form-input" value="3" min="0" oninput="updateSheetPreview()"></div>
+            <div class="form-group"><label class="form-label">Margen Der. (mm)</label><input type="number" id="marginRight" class="form-input" value="3" min="0" oninput="updateSheetPreview()"></div>
+            <div class="form-group"><label class="form-label">Espacio X (mm)</label><input type="number" id="spaceX" class="form-input" value="0" min="0" oninput="updateSheetPreview()"></div>
+            <div class="form-group"><label class="form-label">Espacio Y (mm)</label><input type="number" id="spaceY" class="form-input" value="0" min="0" oninput="updateSheetPreview()"></div>
+          </div>
+          <div id="printStats" style="margin:15px 0;padding:12px;background:#f8f9fa;border-radius:8px;"></div>
+          <button class="btn btn-primary" onclick="printLabels()" style="width:100%;margin-bottom:8px;">🖨️ Imprimir Ahora</button>
+          <button class="btn btn-accent" onclick="exportQueuePDF()" style="width:100%;">📄 Exportar Pliego PDF</button>
+        </div>
       </div>
     </div>
-  </div>
-
-</main>
-
-<div class="modal-overlay" id="confirmModal">
-  <div class="modal">
-    <h3 class="modal-title">Confirmar</h3>
-    <p id="confirmMessage">¿Estás seguro?</p>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-primary" id="confirmBtn">Confirmar</button>
-    </div>
-  </div>
+  </section>
 </div>
-
-<canvas id="labelCanvas" style="display: none;"></canvas>
 
 <script src="aromas.js"></script>
-<script>
-// ==========================================
-// 📱 REGISTRO DE SERVICE WORKER
-// ==========================================
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-                console.log('✅ Service Worker registrado:', registration.scope);
-                
-                // Verificar actualizaciones periódicamente
-                setInterval(() => {
-                    registration.update();
-                }, 3600000); // Cada hora
-                
-                // Mostrar notificación de actualización
-                registration.addEventListener('updatefound', () => {
-                    const newWorker = registration.installing;
-                    newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            if (confirm('🔄 Nueva versión disponible. ¿Recargar para actualizar?')) {
-                                newWorker.postMessage('skipWaiting');
-                            }
-                        }
-                    });
-                });
-            })
-            .catch(error => {
-                console.warn('⚠️ Error al registrar Service Worker:', error);
-            });
-    });
-    
-    // Manejar estado de conexión
-    window.addEventListener('online', () => {
-        showToast(' Conexión restaurada', 'success');
-        document.getElementById('firebaseIcon').style.background = '#4caf50';
-        document.getElementById('firebaseText').textContent = 'Conectado';
-    });
-    
-    window.addEventListener('offline', () => {
-        showToast('📴 Modo Offline - Trabajando con caché', 'warning');
-        document.getElementById('firebaseIcon').style.background = '#ff9800';
-        document.getElementById('firebaseText').textContent = 'Offline';
-    });
-}
-</script>
-
-<script>
-function closeModal() {
-  const modal = document.getElementById('confirmModal');
-  if (modal) modal.classList.remove('show');
-}
-function exportAllProjects() {
-  if (typeof projects !== 'undefined' && projects.length > 0) {
-    const blob = new Blob([JSON.stringify(projects, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'todos_los_proyectos.json';
-    a.click();
-    URL.revokeObjectURL(url);
-    if (typeof showToast === 'function') showToast('📤 Todos los proyectos exportados', 'success');
-  } else {
-    if (typeof showToast === 'function') showToast('️ No hay proyectos para exportar', 'warning');
-  }
-}
-setTimeout(() => {
-  const icon = document.getElementById('firebaseIcon');
-  const text = document.getElementById('firebaseText');
-  if (icon) icon.style.background = '#4caf50';
-  if (text) text.textContent = 'Conectado';
-}, 1500);
-</script>
-
 </body>
 </html>

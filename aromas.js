@@ -1,6 +1,3 @@
-// ==========================================
-// 🎨 AROMALABEL PRO v3 - JavaScript Principal
-// ==========================================
 'use strict';
 
 // ==========================================
@@ -10,59 +7,110 @@ let logoDataUrl = null;
 let imagesList = [];
 let printQueue = [];
 let projects = JSON.parse(localStorage.getItem('aromaProjects') || '[]');
-
-window.estadoImagenProducto = { activa: false, url: '', tamano: 30, posX: 50, posY: 30, rotacion: 0 };
-window.estadoImagenFondo = { url: '', opacity: 0.3, fit: 'contain' };
-window.favoritos = JSON.parse(localStorage.getItem('aromalabel_favoritos') || '[]');
-window.historial = JSON.parse(localStorage.getItem('aromalabel_historial') || '[]');
-
+let codigoBarrasActual = '';
 let productosData = { ESENCIAS: [], LIMPIEZA: [], VELAS: [] };
 let productosFiltrados = [];
 let productoActual = null;
 
-// ==========================================
-// 🎯 SISTEMA DE PESTAÑAS
-// ==========================================
-function cambiarTab(tabId) {
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  const content = document.getElementById('tab-' + tabId);
-  const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
-  if (content) content.classList.add('active');
-  if (btn) btn.classList.add('active');
-  document.querySelector('.sidebar').scrollTop = 0;
+function obtenerCodigoBarrasProducto(producto) {
+  if (!producto) return '';
+  const candidatos = [producto.id, producto.codigo, producto.codigoBarras, producto.barcode, producto.sku, producto.SKU];
+  const valor = candidatos.find(v => v !== undefined && v !== null && String(v).trim() !== '');
+  return valor == null ? '' : String(valor).trim();
 }
 
-function showSection(sectionId, btn) {
-  document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+window.estadoImagenProducto = { activa: false, url: '', tamano: 30, posX: 50, posY: 30, rotacion: 0, opacidad: 22 };
+window.estadoImagenFondo = { url: '', opacity: 0.3, fit: 'contain' };
+window.favoritos = JSON.parse(localStorage.getItem('aromalabel_favoritos') || '[]');
+window.historial = JSON.parse(localStorage.getItem('aromalabel_historial') || '[]');
+
+// ==========================================
+// 💡 PLANTILLAS DE SEGURIDAD
+// ==========================================
+const plantillasSeguridad = {
+  VELAS: "🕯️ VELAS Y CANDELAS:\n• Quemar sobre superficie resistente al calor.\n• No dejar sin supervisión.\n• Mantener alejado de corrientes de aire, niños y mascotas.\n• No quemar más de 4 horas seguidas.\n• Detener cuando queden 1cm de cera.\n• Mantener la mecha recortada a 5mm.",
+  ESENCIAS: "🌸 ESENCIAS AROMÁTICAS:\n• Uso exclusivo para difusores o ambientación.\n• No ingerir ni aplicar directamente sobre la piel.\n• Mantener en lugar fresco, oscuro y fuera del alcance de niños y mascotas.\n• En caso de contacto con ojos, lavar con abundante agua.\n• No usar cerca de llamas abiertas.",
+  LIMPIEZA: "🧼 PRODUCTOS DE LIMPIEZA:\n• Mantener fuera del alcance de los niños.\n• En caso de contacto con los ojos, lavar con abundante agua.\n• No mezclar con otros productos químicos.\n• Utilizar en áreas ventiladas.\n• Usar guantes si se tiene piel sensible.\n• No ingerir."
+};
+
+window.aplicarPlantillaSeguridad = function() {
+  const select = document.getElementById('safetyPreset');
+  if (!select) return;
+  const tipo = select.value;
+  if (plantillasSeguridad[tipo]) {
+    const txtArea = document.getElementById('instructions');
+    if (txtArea) {
+      txtArea.value = plantillasSeguridad[tipo];
+      updateLabel();
+      showToast('🛡️ Instrucciones actualizadas: ' + tipo, 'success');
+    }
+  }
+};
+
+// ==========================================
+// 🔔 TOAST
+// ==========================================
+function showToast(message, type = 'info') {
+  const colores = { success: '#4caf50', danger: '#e74c3c', info: '#2196f3', warning: '#ff9800' };
+  let container = document.querySelector('.toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.style.background = colores[type] || colores.info;
+  toast.innerHTML = '<span>' + message + '</span>';
+  container.appendChild(toast);
+  setTimeout(function() {
+    toast.classList.add('fade-out');
+    setTimeout(function() { toast.remove(); }, 300);
+  }, 3000);
+}
+
+// ==========================================
+// 🎯 PESTAÑAS Y SECCIONES
+// ==========================================
+window.cambiarTab = function(tabId) {
+  document.querySelectorAll('.tab-content').forEach(function(c) { 
+    c.classList.remove('active'); 
+  });
+  document.querySelectorAll('.tab-btn').forEach(function(b) { 
+    b.classList.remove('active'); 
+  });
+  const content = document.getElementById('tab-' + tabId);
+  const btn = document.querySelector('.tab-btn[data-tab="' + tabId + '"]');
+  if (content) {
+    content.classList.add('active');
+  }
+  if (btn) btn.classList.add('active');
+  const sidebar = document.querySelector('.sidebar');
+  if (sidebar) sidebar.scrollTop = 0;
+};
+
+window.showSection = function(sectionId, btn) {
+  document.querySelectorAll('.section').forEach(function(sec) { sec.classList.remove('active'); });
   const targetSection = document.getElementById(sectionId);
   if (targetSection) targetSection.classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(function(tab) { tab.classList.remove('active'); });
   if (btn) btn.classList.add('active');
-  else {
-    const activeBtn = document.querySelector(`.nav-tab[onclick*="${sectionId}"]`);
-    if (activeBtn) activeBtn.classList.add('active');
-  }
-}
+};
 
-function toggleSection(header) {
+window.toggleSection = function(header) {
   const section = header.closest('.collapsible-section');
   if (section) section.classList.toggle('collapsed');
-}
+};
 
 // ==========================================
 // 🔄 SINCRONIZACIÓN DE SLIDERS
 // ==========================================
 function sincronizarValoresSliders() {
   const sliders = document.querySelectorAll('input[type="range"]');
-  sliders.forEach(slider => {
-    const actualizarDisplay = () => {
+  sliders.forEach(function(slider) {
+    const actualizarDisplay = function() {
       const valor = slider.value;
       let display = document.getElementById(slider.id + 'Val') || document.getElementById(slider.id + 'Valor');
-      if (!display) {
-        const padre = slider.parentElement;
-        if (padre) display = padre.querySelector('span');
-      }
       if (display) display.textContent = valor;
       if (typeof updateLabel === 'function') updateLabel();
     };
@@ -72,86 +120,113 @@ function sincronizarValoresSliders() {
 }
 
 // ==========================================
+// 🛠️ GENERADOR DE CANVAS DE QR
+// ==========================================
+function buildQRCanvas(data, sizePx, dark, light) {
+  if (typeof qrcode !== 'function') {
+    throw new Error('Librería qrcode no cargada');
+  }
+  const qr = qrcode(0, 'M');
+  qr.addData(data || 'https://example.com');
+  qr.make();
+  const n = qr.getModuleCount();
+  const quiet = 4;
+  const total = n + quiet * 2;
+  
+  const cellSize = Math.max(2, Math.floor(sizePx / total));
+  const canvasSize = cellSize * total;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = canvasSize;
+  canvas.height = canvasSize;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  
+  ctx.fillStyle = light || '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  ctx.fillStyle = dark || '#000000';
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (qr.isDark(r, c)) {
+        ctx.fillRect((c + quiet) * cellSize, (r + quiet) * cellSize, cellSize, cellSize);
+      }
+    }
+  }
+  return canvas;
+}
+
+// ==========================================
 // 🏷️ FUNCIÓN PRINCIPAL: updateLabel()
 // ==========================================
-function updateLabel() {
-  if (typeof qrcode !== 'function') console.warn('Librería qrcode no disponible');
-
-  // Canvas (para exportación)
-  const canvas = document.getElementById('labelCanvas');
-  if (canvas) {
-    try {
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (typeof dibujarImagenFondo === 'function') dibujarImagenFondo(ctx, canvas);
-      if (typeof dibujarImagenProducto === 'function') dibujarImagenProducto(ctx, canvas);
-    } catch (e) { console.warn('⚠️ Canvas error:', e); }
-  }
-
+window.updateLabel = function() {
   const label = document.getElementById('labelPreview');
   if (!label) return;
 
-  const getVal = (id, fallback = '') => {
+  const getVal = function(id, fallback) {
+    fallback = fallback || '';
     const el = document.getElementById(id);
     return el ? (el.value !== undefined ? el.value : fallback) : fallback;
   };
-  const getCheck = (id) => {
+  const getCheck = function(id) {
     const el = document.getElementById(id);
     return el ? el.checked : false;
   };
 
   const widthMm = parseInt(getVal('labelWidth', 60));
   const heightMm = parseInt(getVal('labelHeight', 80));
-  const paddingMm = parseFloat(getVal('labelPadding', 3));
+  const paddingMm = parseFloat(getVal('labelPadding', 1.5));
   const borderRadius = parseInt(getVal('borderRadius', 4));
-  const topLine = parseInt(getVal('topLine', 4));
-  const bottomLine = parseInt(getVal('bottomLine', 0));
-  const areaGap = parseInt(getVal('areaGap', 6));
-  const fontBrand = parseInt(getVal('fontBrand', 16));
-  const fontBrandSub = parseInt(getVal('fontBrandSub', 8));
-  const fontProduct = parseInt(getVal('fontProduct', 22));
+  const areaGap = Math.max(0, Math.min(30, parseFloat(getVal('areaGap', 2)) || 0));
+  const fontBrand = parseInt(getVal('fontBrand', 21));
+  const fontBrandSub = parseInt(getVal('fontBrandSub', 0));
+  const fontProduct = parseInt(getVal('fontProduct', 19));
   const fontType = parseInt(getVal('fontType', 10));
   const fontDetails = parseInt(getVal('fontDetails', 9));
-  const fontInstr = parseInt(getVal('fontInstr', 7));
-  const fontBatch = parseInt(getVal('fontBatch', 7));
-  const fontOrigin = parseInt(getVal('fontOrigin', 7));
-  const qrSizePercent = parseInt(getVal('qrSize', 22));
-  // ✅ NUEVO: Controles de posición del QR
-const qrPosX = parseInt(getVal('qrPosX', 50));
-const qrPosY = parseInt(getVal('qrPosY', 90));
-const qrRotation = parseInt(getVal('qrRotation', 0));
+  const fontInstr = parseInt(getVal('fontInstr', 10));
+  const fontBatch = parseInt(getVal('fontBatch', 9));
+  const fontOrigin = parseInt(getVal('fontOrigin', 8));
+  const instructionsWidth = Math.max(20, Math.min(100, parseInt(getVal('instructionsWidth', 100)) || 100));
+  const instructionsHeight = Math.max(10, Math.min(100, parseInt(getVal('instructionsHeight', 100)) || 100));
 
-// Aplicar variables CSS para posición del QR
-label.style.setProperty('--qr-pos-x', qrPosX + '%');
-label.style.setProperty('--qr-pos-y', qrPosY + '%');
-label.style.setProperty('--qr-rotation', qrRotation + 'deg');
+  const qrSizePercent = parseInt(getVal('qrSize', 34));
+  const qrSizeMm = Math.max(12, Math.min(Math.min(widthMm, heightMm) * 0.8, Math.min(widthMm, heightMm) * (qrSizePercent / 100)));
+  const qrPosX = parseInt(getVal('qrPosX', 20));
+  const qrPosY = parseInt(getVal('qrPosY', 80));
+  const qrRotation = parseInt(getVal('qrRotation', 0));
+  const barcodePosX = parseInt(getVal('barcodePosX', 71));
+  const barcodePosY = parseInt(getVal('barcodePosY', 89));
+  const barcodeRotation = parseInt(getVal('barcodeRotation', 0));
+
   const brandFont = getVal('brandFont', "'Playfair Display', serif");
   const productFont = getVal('productFont', "'Playfair Display', serif");
   const accentColor = getVal('accentColor', '#c9a96e');
   const textColor = getVal('textColor', '#1a1a1a');
   const bgColor = getVal('bgColor', '#ffffff');
-  const qrBgColor = getVal('qrBgColor', '#ffffff');
-  const showDivider = getCheck('showDivider');
-  const showQR = getCheck('showQR');
+
+  const showQR = getCheck('showQR') || getCheck('usarQRProducto');
   const showBarcode = getCheck('showBarcode');
   const showInstructions = getCheck('showInstructions');
   const showFooter = getCheck('showFooter');
   const vinylMode = getCheck('vinylMode');
+  const boldTextMode = getCheck('boldTextMode');
+  const frostedBg = getCheck('frostedBg');
+  const showDivider = getCheck('showDivider');
 
   label.style.setProperty('--label-width', widthMm + 'mm');
   label.style.setProperty('--label-height', heightMm + 'mm');
   label.style.setProperty('--label-padding', paddingMm + 'mm');
   label.style.setProperty('--border-radius', borderRadius + 'px');
-  label.style.setProperty('--top-line', topLine + 'px');
-  label.style.setProperty('--bottom-line', bottomLine + 'px');
   label.style.setProperty('--area-gap', areaGap + 'px');
   label.style.setProperty('--accent-color', accentColor);
   label.style.setProperty('--text-color', textColor);
   label.style.setProperty('--qr-size', qrSizePercent + '%');
-  label.style.setProperty('--qr-bg', qrBgColor);
   label.style.setProperty('--brand-font', brandFont);
   label.style.setProperty('--product-font', productFont);
   label.style.borderRadius = borderRadius + 'px';
+
+  if (boldTextMode) label.classList.add('bold-text');
+  else label.classList.remove('bold-text');
 
   if (vinylMode) {
     label.style.backgroundColor = 'transparent';
@@ -165,188 +240,229 @@ label.style.setProperty('--qr-rotation', qrRotation + 'deg');
     if (container) container.classList.remove('vinyl-preview');
   }
 
-  const topLineEl = document.getElementById('labelTopLine');
-  if (topLineEl) { topLineEl.style.height = topLine + 'px'; topLineEl.style.backgroundColor = accentColor; topLineEl.style.display = topLine > 0 ? 'block' : 'none'; }
-  const bottomLineEl = document.getElementById('labelBottomLine');
-  if (bottomLineEl) { bottomLineEl.style.height = bottomLine + 'px'; bottomLineEl.style.backgroundColor = accentColor; bottomLineEl.style.display = bottomLine > 0 ? 'block' : 'none'; }
+  const _vb = document.getElementById('vinylBadge');
+  if (_vb) _vb.style.display = vinylMode ? 'inline-flex' : 'none';
+  const _pvb = document.getElementById('printVinylBadge');
+  if (_pvb) _pvb.style.display = vinylMode ? 'inline-flex' : 'none';
 
-  const textShadowVinyl = vinylMode ? '0 0 3px rgba(255,255,255,0.9), 0 0 6px rgba(255,255,255,0.7), 0 0 1px rgba(0,0,0,0.3)' : 'none';
-  const textShadowName = vinylMode ? '0 0 4px rgba(255,255,255,0.95), 0 0 8px rgba(255,255,255,0.8), 0 0 1px rgba(0,0,0,0.4)' : 'none';
-  const textShadowLight = vinylMode ? '0 0 2px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2)' : 'none';
+  const textShadowVinyl = vinylMode ? '0 0 3px rgba(255,255,255,0.9), 0 0 6px rgba(255,255,255,0.7)' : 'none';
+  const textShadowName = vinylMode ? '0 0 4px rgba(255,255,255,0.95), 0 0 8px rgba(255,255,255,0.8)' : 'none';
+  const textShadowLight = vinylMode ? '0 0 2px rgba(255,255,255,0.9)' : 'none';
 
-  const setStyle = (id, styles) => { const el = document.getElementById(id); if (el) Object.assign(el.style, styles); };
+  const setStyle = function(id, styles) {
+    const el = document.getElementById(id);
+    if (el) Object.assign(el.style, styles);
+  };
 
-  setStyle('previewBrand', { fontSize: fontBrand + 'px', fontFamily: brandFont, color: textColor, textShadow: textShadowVinyl, lineHeight: '1.5', marginBottom: '0.25em', display: 'block', maxWidth: '100%', overflowWrap: 'break-word' });
-  setStyle('previewBrandSub', { fontSize: fontBrandSub + 'px', textShadow: textShadowLight, lineHeight: '1.35', margin: '0', display: 'block', maxWidth: '100%', overflowWrap: 'break-word' });
+  setStyle('previewBrand', { fontSize: fontBrand + 'px', fontFamily: brandFont, color: textColor, textShadow: textShadowVinyl });
+  setStyle('previewBrandSub', { fontSize: fontBrandSub + 'px', textShadow: textShadowLight });
   setStyle('previewProduct', { fontSize: fontProduct + 'px', fontFamily: productFont, color: textColor, textShadow: textShadowName });
   setStyle('previewType', { fontSize: fontType + 'px', textShadow: textShadowLight });
   setStyle('previewDetails', { fontSize: fontDetails + 'px', textShadow: textShadowLight });
-  setStyle('previewInstructions', { fontSize: fontInstr + 'px', textShadow: textShadowLight });
+  setStyle('previewInstructions', {
+    fontSize: fontInstr + 'px',
+    textShadow: textShadowLight,
+    width: instructionsWidth + '%',
+    maxHeight: instructionsHeight + '%',
+    maxWidth: '100%',
+    boxSizing: 'border-box'
+  });
+
+  const instructionsWidthVal = document.getElementById('instructionsWidthVal');
+  const instructionsHeightVal = document.getElementById('instructionsHeightVal');
+  if (instructionsWidthVal) instructionsWidthVal.textContent = instructionsWidth;
+  if (instructionsHeightVal) instructionsHeightVal.textContent = instructionsHeight;
+
   setStyle('previewBatch', { fontSize: fontBatch + 'px', color: textColor, textShadow: textShadowLight });
   setStyle('previewOrigin', { fontSize: fontOrigin + 'px', textShadow: textShadowLight });
 
-  const setText = (id, val, fallback = '') => { const el = document.getElementById(id); if (el) el.textContent = val || fallback; };
+  const setText = function(id, val, fallback) {
+    fallback = fallback || '';
+    const el = document.getElementById(id);
+    if (el) el.textContent = val || fallback;
+  };
   setText('previewBrand', getVal('brandName'), 'Marca');
   setText('previewBrandSub', getVal('brandSub'), '');
   setText('previewProduct', getVal('productName'), 'Producto');
   setText('previewType', getVal('productType'), '');
-  setText('previewDetails', getVal('productDetails'), '');
   setText('previewInstructions', getVal('instructions'), '');
   setText('previewBatch', getVal('batchInfo'), '');
   setText('previewOrigin', getVal('originInfo'), '');
 
+  const showDetails = getCheck('showDetails');
+  const previewDetailsEl = document.getElementById('previewDetails');
+  if (previewDetailsEl) {
+    previewDetailsEl.textContent = getVal('productDetails', '');
+    previewDetailsEl.style.display = showDetails ? 'block' : 'none';
+  }
+
   const showPrice = getCheck('showPrice');
   const previewPriceEl = document.getElementById('previewPrice');
   if (previewPriceEl) {
-    if (showPrice) {
-      const priceValue = getVal('productPrice', '');
+    const priceValue = getVal('productPrice', '');
+    if (showPrice && priceValue) {
       previewPriceEl.textContent = priceValue;
-      previewPriceEl.style.display = priceValue ? 'block' : 'none';
+      previewPriceEl.style.display = 'block';
       previewPriceEl.style.fontSize = (fontDetails + 1) + 'px';
       previewPriceEl.style.color = accentColor;
-      previewPriceEl.style.textShadow = textShadowLight;
-    } else { previewPriceEl.style.display = 'none'; }
+      previewPriceEl.style.fontWeight = '700';
+    } else {
+      previewPriceEl.style.display = 'none';
+    }
   }
 
+  const previewInstructionsEl = document.getElementById('previewInstructions');
+  if (previewInstructionsEl) {
+    if (frostedBg) previewInstructionsEl.classList.add('frosted-bg');
+    else previewInstructionsEl.classList.remove('frosted-bg');
+  }
+
+  const dividerEl = document.getElementById('labelDivider');
+  if (dividerEl) {
+    const dividerColor = getVal('dividerColor', '#c9a96e');
+    const dividerWidth = parseInt(getVal('dividerWidth', 1));
+    dividerEl.style.borderTop = dividerWidth + 'px solid ' + dividerColor;
+    if (showDivider) dividerEl.classList.add('visible');
+    else dividerEl.classList.remove('visible');
+  }
+
+  // 📱 RENDERIZADO DEL QR EN LA VISTA PREVIA
   const qrEl = document.getElementById('previewQR');
   if (qrEl) {
     if (showQR) {
       qrEl.style.display = 'flex';
-      qrEl.style.width = qrSizePercent + '%';
+      qrEl.style.setProperty('width', qrSizeMm + 'mm', 'important');
+      qrEl.style.setProperty('height', qrSizeMm + 'mm', 'important');
+      qrEl.style.setProperty('min-width', qrSizeMm + 'mm', 'important');
+      qrEl.style.setProperty('min-height', qrSizeMm + 'mm', 'important');
       qrEl.style.aspectRatio = '1 / 1';
       qrEl.style.backgroundColor = '#ffffff';
-      qrEl.style.padding = '3px';
+      qrEl.style.padding = '2px';
       qrEl.style.boxSizing = 'border-box';
+      qrEl.style.position = 'absolute';
+      qrEl.style.left = qrPosX + '%';
+      qrEl.style.top = qrPosY + '%';
+      qrEl.style.transform = 'translate(-50%, -50%) rotate(' + qrRotation + 'deg)';
+      qrEl.style.zIndex = '6';
+      
       try {
-        const qr = qrcode(0, 'H');
-        qr.addData(getVal('qrUrl', 'https://example.com'));
-        qr.make();
-        const moduleCount = qr.getModuleCount();
-        let qrHtml = '<table style="border-collapse:collapse;width:100%;height:100%;table-layout:fixed;">';
-        for (let row = 0; row < moduleCount; row++) {
-          qrHtml += '<tr style="height:' + (100 / moduleCount) + '%;">';
-          for (let col = 0; col < moduleCount; col++) {
-            const isDark = qr.isDark(row, col);
-            qrHtml += '<td style="width:' + (100 / moduleCount) + '%;background:' + (isDark ? '#000000' : '#ffffff') + ';padding:0;margin:0;border:none;">&nbsp;</td>';
-          }
-          qrHtml += '</tr>';
-        }
-        qrHtml += '</table>';
-        qrEl.innerHTML = qrHtml;
-      } catch (e) { qrEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:0.5rem;color:#999;">QR Error</div>'; }
-    } else { qrEl.style.display = 'none'; }
+        const qrCanvas = buildQRCanvas(
+          getVal('qrUrl', 'https://example.com'),
+          300,
+          getVal('qrColor', '#000000') || '#000000',
+          '#ffffff'
+        );
+        qrCanvas.style.width = '100%';
+        qrCanvas.style.height = '100%';
+        qrCanvas.style.display = 'block';
+        qrEl.innerHTML = '';
+        qrEl.appendChild(qrCanvas);
+      } catch (e) {
+        console.warn('Error al renderizar el QR:', e);
+      }
+    } else {
+      qrEl.style.display = 'none';
+    }
   }
 
-  // Código de barras Code 128: se genera únicamente con el ID real del producto seleccionado.
   const barcodeWrap = document.getElementById('previewBarcodeWrap');
   const barcodeSvg = document.getElementById('previewBarcode');
-  const productId = productoActual && productoActual.id != null ? String(productoActual.id).trim() : '';
+  const productId = obtenerCodigoBarrasProducto(productoActual) || codigoBarrasActual;
   if (barcodeWrap && barcodeSvg) {
     if (showBarcode && productId && typeof JsBarcode === 'function') {
       try {
         barcodeWrap.style.display = 'flex';
-        JsBarcode(barcodeSvg, productId, { format: 'CODE128', displayValue: true, text: productId, font: 'monospace', fontSize: 10, textMargin: 1, margin: 2, height: 32, width: 1.5, lineColor: '#111111', background: '#ffffff' });
+        barcodeWrap.classList.add('is-positioned');
+        barcodeWrap.style.position = 'absolute';
+        barcodeWrap.style.left = barcodePosX + '%';
+        barcodeWrap.style.top = barcodePosY + '%';
+        barcodeWrap.style.transform = 'translate(-50%, -50%) rotate(' + barcodeRotation + 'deg)';
+        barcodeWrap.style.zIndex = '6';
+        JsBarcode(barcodeSvg, productId, {
+          format: 'CODE128', displayValue: true, text: productId,
+          font: 'monospace', fontSize: 10, textMargin: 1, margin: 2,
+          height: 32, width: 1.5, lineColor: '#111', background: '#fff'
+        });
       } catch (e) {
         barcodeWrap.style.display = 'none';
-        console.warn('No se pudo generar el código de barras:', e);
+        console.warn('Barcode error:', e);
       }
     } else {
       barcodeWrap.style.display = 'none';
-      barcodeSvg.innerHTML = '';
     }
   }
 
-  setStyle('labelDivider', { display: showDivider ? 'block' : 'none' });
   setStyle('previewInstructions', { display: showInstructions ? 'block' : 'none' });
-  setStyle('labelFooter', { display: showFooter ? 'none' : 'block' });
+  setStyle('labelFooter', { display: showFooter ? 'flex' : 'none' });
 
- // Logo existente
- const logoImg = document.getElementById('previewLogoImg');
- const brandText = document.getElementById('previewBrand');
- const brandSub = document.getElementById('previewBrandSub');
+  const setAreaPosition = function(id, xId, yId) {
+    const area = document.getElementById(id);
+    if (!area) return;
+    const x = parseFloat(getVal(xId, 0)) || 0;
+    const y = parseFloat(getVal(yId, 0)) || 0;
+    area.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+  };
+  setAreaPosition('labelLogoArea', 'logoAreaX', 'logoAreaY');
+  setAreaPosition('labelProduct', 'productAreaX', 'productAreaY');
+  setAreaPosition('previewInstructions', 'instructionsAreaX', 'instructionsAreaY');
+  setAreaPosition('labelFooter', 'footerAreaX', 'footerAreaY');
 
- if (logoImg) {
+  const logoImg = document.getElementById('previewLogoImg');
+  const brandText = document.getElementById('previewBrand');
+  const brandSub = document.getElementById('previewBrandSub');
+  if (logoImg) {
     const showLogoImg = getCheck('showLogoImg');
-    
-    if (logoDataUrl) {
-        logoImg.src = logoDataUrl;
-    }
-    
+    if (logoDataUrl) logoImg.src = logoDataUrl;
     if (showLogoImg && logoDataUrl) {
-        logoImg.style.display = 'block';
-        logoImg.style.position = 'absolute';
-        logoImg.style.zIndex = '3';
-        
-        if (brandText) brandText.style.display = 'none';
-        if (brandSub) brandSub.style.display = 'none';
-        
-        // ✅ TAMAÑO: Usar porcentaje del contenedor label (no del logo-area)
-        const logoSize = parseInt(getVal('logoSize', 80));
-        const labelWidth = parseInt(getVal('labelWidth', 60));
-        const labelHeight = parseInt(getVal('labelHeight', 80));
-        
-        // Calcular tamaño en mm basado en el porcentaje
-        const sizeMm = Math.min(labelWidth, labelHeight) * (logoSize / 100);
-        logoImg.style.width = sizeMm + 'mm';
-        logoImg.style.height = 'auto';
-        logoImg.style.maxWidth = 'none';
-        logoImg.style.maxHeight = 'none';
-        
-        // Opacidad
-        logoImg.style.opacity = (getVal('logoOpa', 100) / 100);
-        
-        // Posición
-        logoImg.style.left = getVal('logoPosX', 50) + '%';
-        logoImg.style.top = getVal('logoPosY', 50) + '%';
-        logoImg.style.transform = `translate(-50%, -50%) rotate(${getVal('logoRot', 0)}deg)`;
+      logoImg.style.display = 'block';
+      logoImg.style.position = 'absolute';
+      logoImg.style.zIndex = '3';
+      if (brandText) brandText.style.display = 'none';
+      if (brandSub) brandSub.style.display = 'none';
+      const logoSize = parseInt(getVal('logoSize', 80));
+      const sizeMm = Math.min(widthMm, heightMm) * (logoSize / 100);
+      logoImg.style.width = sizeMm + 'mm';
+      logoImg.style.height = 'auto';
+      logoImg.style.opacity = (getVal('logoOpa', 100) / 100);
+      logoImg.style.left = getVal('logoPosX', 50) + '%';
+      logoImg.style.top = getVal('logoPosY', 50) + '%';
+      logoImg.style.transform = 'translate(-50%, -50%) rotate(' + getVal('logoRot', 0) + 'deg)';
     } else {
-        logoImg.style.display = 'none';
-        if (brandText) brandText.style.display = 'block';
-        if (brandSub) brandSub.style.display = 'block';
+      logoImg.style.display = 'none';
+      if (brandText) brandText.style.display = 'block';
+      if (brandSub) brandSub.style.display = 'block';
     }
-    
- }
- 
- // ✅ Renderizar imágenes dinámicas de la etiqueta
- imagesList.forEach(img => {
+  }
+
+  imagesList.forEach(function(img) {
     if (!img.url) return;
-    
-    let imgEl = document.getElementById(`dynamicImg_${img.id}`);
-    
+    let imgEl = document.getElementById('dynamicImg_' + img.id);
     if (!imgEl) {
-        imgEl = document.createElement('img');
-        imgEl.id = `dynamicImg_${img.id}`;
-        imgEl.style.position = 'absolute';
-        imgEl.style.pointerEvents = 'none';
-        imgEl.style.zIndex = '2';
-        label.appendChild(imgEl);
+      imgEl = document.createElement('img');
+      imgEl.id = 'dynamicImg_' + img.id;
+      imgEl.style.position = 'absolute';
+      imgEl.style.pointerEvents = 'none';
+      imgEl.style.zIndex = '2';
+      label.appendChild(imgEl);
     }
-    
     imgEl.src = img.url;
     imgEl.style.display = 'block';
-    
-    // Calcular tamaño
-    const labelWidth = parseInt(getVal('labelWidth', 60));
-    const labelHeight = parseInt(getVal('labelHeight', 80));
-    const sizeMm = Math.min(labelWidth, labelHeight) * (img.size / 100);
-    
+    const sizeMm = Math.min(widthMm, heightMm) * (img.size / 100);
     imgEl.style.width = sizeMm + 'mm';
     imgEl.style.height = 'auto';
     imgEl.style.opacity = (img.opacity / 100);
     imgEl.style.left = img.posX + '%';
     imgEl.style.top = img.posY + '%';
-    imgEl.style.transform = `translate(-50%, -50%) rotate(${img.rotation}deg)`;
- });
+    imgEl.style.transform = 'translate(-50%, -50%) rotate(' + img.rotation + 'deg)';
+  });
 
- // ✅ Limpiar imágenes dinámicas que ya no existen
- const existingDynamicImgs = label.querySelectorAll('img[id^="dynamicImg_"]');
- existingDynamicImgs.forEach(el => {
+  const existingDynamicImgs = label.querySelectorAll('img[id^="dynamicImg_"]');
+  existingDynamicImgs.forEach(function(el) {
     const imgId = parseInt(el.id.replace('dynamicImg_', ''));
-    const exists = imagesList.some(img => img.id === imgId && img.url);
+    const exists = imagesList.some(function(img) { return img.id === imgId && img.url; });
     if (!exists) el.remove();
- });
+  });
 
-  // Imágenes de fondo y producto
   let bgImgEl = document.getElementById('labelBgImage');
   const bgEstado = window.estadoImagenFondo || { url: '', opacity: 0.3, fit: 'contain' };
   if (bgEstado.url) {
@@ -354,8 +470,10 @@ label.style.setProperty('--qr-rotation', qrRotation + 'deg');
       bgImgEl = document.createElement('img');
       bgImgEl.id = 'labelBgImage';
       bgImgEl.style.position = 'absolute';
-      bgImgEl.style.top = '0'; bgImgEl.style.left = '0';
-      bgImgEl.style.width = '100%'; bgImgEl.style.height = '100%';
+      bgImgEl.style.top = '0';
+      bgImgEl.style.left = '0';
+      bgImgEl.style.width = '100%';
+      bgImgEl.style.height = '100%';
       bgImgEl.style.zIndex = '1';
       bgImgEl.style.pointerEvents = 'none';
       label.insertBefore(bgImgEl, label.firstChild);
@@ -364,126 +482,157 @@ label.style.setProperty('--qr-rotation', qrRotation + 'deg');
     bgImgEl.style.opacity = bgEstado.opacity;
     bgImgEl.style.objectFit = bgEstado.fit;
     bgImgEl.style.display = 'block';
-  } else if (bgImgEl) { bgImgEl.style.display = 'none'; }
+  } else if (bgImgEl) {
+    bgImgEl.style.display = 'none';
+  }
 
   let previewProductImg = document.getElementById('previewProductImg');
   if (window.estadoImagenProducto && window.estadoImagenProducto.activa && window.estadoImagenProducto.url) {
     if (!previewProductImg) {
       previewProductImg = document.createElement('img');
       previewProductImg.id = 'previewProductImg';
-      previewProductImg.style.pointerEvents = 'none';
-      previewProductImg.style.objectFit = 'contain';
-      previewProductImg.style.zIndex = '2';
-      previewProductImg.style.position = 'absolute';
-      label.appendChild(previewProductImg);
     }
+    if (previewProductImg.parentElement !== label) label.appendChild(previewProductImg);
+    previewProductImg.classList.add('label-product-img');
     previewProductImg.src = window.estadoImagenProducto.url;
     previewProductImg.style.display = 'block';
     previewProductImg.style.width = window.estadoImagenProducto.tamano + '%';
+    previewProductImg.style.height = 'auto';
     previewProductImg.style.left = window.estadoImagenProducto.posX + '%';
     previewProductImg.style.top = window.estadoImagenProducto.posY + '%';
-    previewProductImg.style.transform = `translate(-50%, -50%) rotate(${window.estadoImagenProducto.rotacion}deg)`;
-  } else if (previewProductImg) { previewProductImg.remove(); }
+    previewProductImg.style.opacity = (Number(window.estadoImagenProducto.opacidad || 22) / 100).toFixed(2);
+    previewProductImg.style.transform = 'translate(-50%, -50%) rotate(' + window.estadoImagenProducto.rotacion + 'deg)';
+  } else if (previewProductImg) {
+    previewProductImg.style.display = 'none';
+  }
 
- // cambiarForma ()
   aplicarBordes();
- }
+};
 
- // ==========================================
-// 📍 CONTROLES DE POSICIÓN DEL QR
 // ==========================================
-function resetQRPosition() {
-  document.getElementById('qrPosX').value = 50;
-  document.getElementById('qrPosY').value = 90;
-  document.getElementById('qrSize').value = 22;
-  document.getElementById('qrRotation').value = 0;
+// 📍 CONTROLES QR Y BARRAS
+// ==========================================
+window.resetQRPosition = function() {
+  const posX = document.getElementById('qrPosX');
+  const posY = document.getElementById('qrPosY');
+  const size = document.getElementById('qrSize');
+  const rotation = document.getElementById('qrRotation');
+
+  if (posX) posX.value = 20;
+  if (posY) posY.value = 80;
+  if (size) size.value = 34;
+  if (rotation) rotation.value = 0;
+
   updateLabel();
-}
+};
 
-function centerQR() {
-  document.getElementById('qrPosX').value = 50;
-  document.getElementById('qrPosY').value = 50;
+window.centerQR = function() {
+  const posX = document.getElementById('qrPosX');
+  const posY = document.getElementById('qrPosY');
+  if (posX) posX.value = 50;
+  if (posY) posY.value = 50;
   updateLabel();
-}
+  showToast('📍 QR centrado en la etiqueta', 'info');
+};
+
+window.resetBarcodePosition = function() {
+  const defaults = { barcodePosX: 71, barcodePosY: 89, barcodeRotation: 0 };
+  Object.keys(defaults).forEach(function(id) {
+    const input = document.getElementById(id);
+    if (input) input.value = defaults[id];
+  });
+  updateLabel();
+};
+
+window.centerBarcode = function() {
+  const x = document.getElementById('barcodePosX');
+  const y = document.getElementById('barcodePosY');
+  if (x) x.value = 50;
+  if (y) y.value = 50;
+  updateLabel();
+};
+
+window.resetearPosicionesAreas = function() {
+  ['logoAreaX', 'logoAreaY', 'productAreaX', 'productAreaY', 'instructionsAreaX', 'instructionsAreaY', 'footerAreaX', 'footerAreaY'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.value = 0;
+  });
+  updateLabel();
+  showToast('🔄 Posiciones reseteadas', 'info');
+};
 
 // ==========================================
-// 🎨 MEJORA 1: FORMAS DE ETIQUETA
+// 🎨 FORMAS Y BORDES
 // ==========================================
-function cambiarForma(forma, btn) {
-    const label = document.getElementById('labelPreview');
-    if (!label) return;
-    
-    // Remover todas las clases de forma
-    label.classList.remove('shape-rectangular', 'shape-circular', 'shape-arched-top', 
-                          'shape-arched-bottom', 'shape-triangular', 'shape-oval', 
-                          'shape-hexagon', 'shape-tag', 'shape-diamond', 'shape-heart');
-    
-    // Agregar nueva forma
-    label.classList.add('shape-' + forma);
-    
-    // Actualizar botones activos
-    document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
-    if (btn) btn.classList.add('active');
-    
-    // Guardar en localStorage
-    localStorage.setItem('aromaLabelShape', forma);
-    
-    updateLabel();
-}
-
-
-// ==========================================
-//  PLANTILLAS
-// ==========================================
-function applyTemplate(type, btn) {
-  const templates = {
-    small: { w: 50, h: 60 }, medium: { w: 70, h: 90 }, large: { w: 90, h: 110 },
-    lid: { w: 50, h: 50 }, luxury: { w: 80, h: 100 }, minimal: { w: 60, h: 40 },
-    mini: { w: 30, h: 40 }, micro: { w: 25, h: 35 }, tealight: { w: 35, h: 25 }
-  };
-  const t = templates[type];
-  if (!t) return;
-  document.getElementById('labelWidth').value = t.w;
-  document.getElementById('labelHeight').value = t.h;
-  document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+window.cambiarForma = function(forma, btn) {
+  const label = document.getElementById('labelPreview');
+  if (!label) return;
+  label.classList.remove('shape-rectangular', 'shape-circular', 'shape-arched-top', 'shape-arched-bottom', 'shape-triangular', 'shape-oval', 'shape-hexagon', 'shape-tag', 'shape-diamond');
+  if (forma) label.classList.add('shape-' + forma);
+  document.querySelectorAll('.shape-btn').forEach(function(b) { b.classList.remove('active'); });
   if (btn) btn.classList.add('active');
+  if (forma) localStorage.setItem('aromaLabelShape', forma);
   updateLabel();
-}
+};
+
+window.aplicarBordes = function() {
+  const label = document.getElementById('labelPreview');
+  if (!label) return;
+  const fullBorder = document.getElementById('fullBorder') ? document.getElementById('fullBorder').checked : false;
+  const topBorderOnly = document.getElementById('topBorderOnly') ? document.getElementById('topBorderOnly').checked : false;
+  const bottomBorderOnly = document.getElementById('bottomBorderOnly') ? document.getElementById('bottomBorderOnly').checked : false;
+  const borderWidth = document.getElementById('borderWidth') ? document.getElementById('borderWidth').value : 2;
+  const borderColor = document.getElementById('borderColor') ? document.getElementById('borderColor').value : '#c9a96e';
+  const borderStyle = document.getElementById('borderStyle') ? document.getElementById('borderStyle').value : 'solid';
+  label.style.border = 'none';
+  label.style.borderTop = 'none';
+  label.style.borderBottom = 'none';
+  label.style.borderLeft = 'none';
+  label.style.borderRight = 'none';
+  const borderValue = borderWidth + 'px ' + borderStyle + ' ' + borderColor;
+  if (fullBorder) label.style.border = borderValue;
+  else {
+    if (topBorderOnly) label.style.borderTop = borderValue;
+    if (bottomBorderOnly) label.style.borderBottom = borderValue;
+  }
+  label.style.setProperty('--border-width', borderWidth + 'px');
+  label.style.setProperty('--border-style', borderStyle);
+  label.style.setProperty('--border-color', borderColor);
+};
 
 // ==========================================
-// 📦 CATÁLOGO DE PRODUCTOS
+// 📦 CATÁLOGO
 // ==========================================
 function normalizarURL(img) {
   if (!img) return '';
   if (img.startsWith('http')) return img;
-  return `https://wil1979.github.io/esentia-factura/${img.replace(/^\/+/, '')}`;
+  return 'https://wil1979.github.io/esentia-factura/' + img.replace(/^\/+/, '');
 }
 
 function formatPrecio(p) {
   if (!p) return '';
-  return `₡${Number(p).toLocaleString('es-CR')}`;
+  return '₡' + Number(p).toLocaleString('es-CR');
 }
 
 async function cargarDatosProductos() {
   try {
     const resE = await fetch('https://wil1979.github.io/esentia-factura/data/productos_esentia.json');
     const dataE = await resE.json();
-    Object.keys(dataE).forEach(cat => {
+    Object.keys(dataE).forEach(function(cat) {
       if (Array.isArray(dataE[cat])) {
-        dataE[cat].forEach(p => productosData.ESENCIAS.push({ ...p, categoriaOrigen: cat, tipoCatalogo: 'ESENCIAS' }));
+        dataE[cat].forEach(function(p) { productosData.ESENCIAS.push(Object.assign({}, p, { categoriaOrigen: cat, tipoCatalogo: 'ESENCIAS' })); });
       }
     });
     const resL = await fetch('https://wil1979.github.io/esentia-factura/data/productos_limpieza_completo.json');
     const dataL = await resL.json();
-    dataL.forEach(p => productosData.LIMPIEZA.push({ ...p, tipoCatalogo: 'LIMPIEZA' }));
+    dataL.forEach(function(p) { productosData.LIMPIEZA.push(Object.assign({}, p, { tipoCatalogo: 'LIMPIEZA' })); });
     const resV = await fetch('https://wil1979.github.io/esentia-factura/data/catalogo-velas.json');
     const dataV = await resV.json();
-    dataV.forEach(p => productosData.VELAS.push({ ...p, tipoCatalogo: 'VELAS' }));
-    console.log('✅ Productos cargados:', { ESENCIAS: productosData.ESENCIAS.length, LIMPIEZA: productosData.LIMPIEZA.length, VELAS: productosData.VELAS.length });
+    dataV.forEach(function(p) { productosData.VELAS.push(Object.assign({}, p, { tipoCatalogo: 'VELAS' })); });
   } catch (e) { console.error('❌ Error cargando productos:', e); }
 }
 
-function cargarProductos() {
+window.cargarProductos = function() {
   const categoria = document.getElementById('categoriaProducto').value;
   const select = document.getElementById('productoSeleccionado');
   const buscador = document.getElementById('buscadorProductos');
@@ -496,69 +645,80 @@ function cargarProductos() {
   renderizarProductos(productosFiltrados);
   const exportButton = document.getElementById('btnExportarPNGCatalogo');
   if (exportButton) exportButton.disabled = productosFiltrados.length === 0;
-}
+};
 
-function filtrarProductos() {
+window.filtrarProductos = function() {
   const categoria = document.getElementById('categoriaProducto').value;
   const texto = document.getElementById('buscadorProductos').value.toLowerCase().trim();
   if (!categoria) return;
   const todos = productosData[categoria];
-  productosFiltrados = !texto ? todos : todos.filter(p => {
+  productosFiltrados = !texto ? todos : todos.filter(function(p) {
     const n = (p.nombre || '').toLowerCase();
     const no = (p.nombreOriginal || '').toLowerCase();
     const c = (p.categoria || p.categoriaOrigen || '').toLowerCase();
     return n.includes(texto) || no.includes(texto) || c.includes(texto);
   });
   renderizarProductos(productosFiltrados);
-}
+};
 
 function renderizarProductos(lista) {
   const select = document.getElementById('productoSeleccionado');
-  select.innerHTML = `<option value="">-- ${lista.length} productos --</option>`;
-  lista.forEach((p, i) => {
+  select.innerHTML = '<option value="">-- ' + lista.length + ' productos --</option>';
+  lista.forEach(function(p, i) {
     const opt = document.createElement('option');
     opt.value = i;
     const nombre = p.nombre || p.nombreOriginal || 'Sin nombre';
-    const sub = p.categoriaOrigen ? ` (${p.categoriaOrigen})` : '';
+    const sub = p.categoriaOrigen ? '(' + p.categoriaOrigen + ')' : '';
     const badges = [];
     if (p.esNuevo) badges.push('🆕');
     if (p.esBestseller) badges.push('🏆');
-    opt.textContent = `${badges.join('')}${nombre}${sub}`;
+    opt.textContent = badges.join('') + nombre + sub;
     select.appendChild(opt);
   });
 }
 
-function aplicarProducto() {
+window.aplicarProducto = function() {
   const categoria = document.getElementById('categoriaProducto').value;
   const idx = document.getElementById('productoSeleccionado').value;
   const preview = document.getElementById('previewProducto');
   const contVar = document.getElementById('contenedorVariantes');
 
-  window.estadoImagenProducto = { activa: false, url: '', tamano: 30, posX: 50, posY: 30, rotacion: 0 };
-  document.getElementById('usarImagenProducto').checked = false;
-  document.getElementById('usarQRProducto').checked = false;
+  window.estadoImagenProducto = { activa: false, url: '', tamano: 30, posX: 50, posY: 30, rotacion: 0, opacidad: 22 };
+  const checkUsarImg = document.getElementById('usarImagenProducto');
+  if (checkUsarImg) checkUsarImg.checked = false;
+  const checkUsarQR = document.getElementById('usarQRProducto');
+  if (checkUsarQR) checkUsarQR.checked = false;
   const controlesImg = document.getElementById('controlesImagen');
   if (controlesImg) controlesImg.style.display = 'none';
   const opcionesQR = document.getElementById('opcionesQR');
   if (opcionesQR) opcionesQR.style.display = 'none';
   const imgVieja = document.getElementById('previewProductImg');
-  if (imgVieja) imgVieja.remove();
-  const btnImg = document.getElementById('btnAgregarImagen');
-  if (btnImg) { btnImg.innerHTML = '➕ Agregar Imagen al Diseñador'; btnImg.style.background = '#c9a96e'; btnImg.disabled = false; }
+  if (imgVieja) imgVieja.style.display = 'none';
 
-  if (!categoria || idx === '') { preview.style.display = 'none'; contVar.hidden = true; productoActual = null; return; }
+  const customUrlInput = document.getElementById('customImageUrl');
+  if (customUrlInput) customUrlInput.value = '';
+
+  if (!categoria || idx === '') {
+    if (preview) preview.style.display = 'none';
+    if (contVar) contVar.hidden = true;
+    productoActual = null;
+    return;
+  }
 
   const producto = productosFiltrados[parseInt(idx)];
   productoActual = producto;
+  codigoBarrasActual = obtenerCodigoBarrasProducto(producto);
 
   const nombreSeleccionado = producto.nombre || producto.nombreOriginal || 'Sin Nombre';
   const elProductName = document.getElementById('productName');
   if (elProductName) elProductName.value = nombreSeleccionado;
   const projectNameInput = document.getElementById('projectName');
   if (projectNameInput) projectNameInput.value = nombreSeleccionado;
+
   const tipo = producto.categoria || producto.categoriaOrigen || producto.tipo || '';
   const elProductType = document.getElementById('productType');
   if (elProductType && tipo) elProductType.value = tipo;
+
   const info = producto.info || producto.descripcion || producto.beneficios || '';
   const elInstructions = document.getElementById('instructions');
   if (elInstructions && info) elInstructions.value = info;
@@ -567,10 +727,10 @@ function aplicarProducto() {
   selectVar.innerHTML = '<option value="">-- Seleccionar variante --</option>';
   if (producto.variantes && producto.variantes.length > 0) {
     contVar.hidden = false;
-    producto.variantes.forEach((v, i) => {
+    producto.variantes.forEach(function(v, i) {
       const opt = document.createElement('option');
       opt.value = i;
-      opt.textContent = `${v.nombre} — ${formatPrecio(v.precio)}`;
+      opt.textContent = v.nombre + ' — ' + formatPrecio(v.precio);
       selectVar.appendChild(opt);
     });
     selectVar.value = '0';
@@ -588,38 +748,39 @@ function aplicarProducto() {
 
   const imgURL = normalizarURL(producto.imagen);
   const imgPreview = document.getElementById('previewImagen');
-  if (imgURL && imgPreview) { imgPreview.src = imgURL; imgPreview.onerror = () => { imgPreview.src = ''; }; }
+  if (imgURL && imgPreview) {
+    imgPreview.src = imgURL;
+    imgPreview.onerror = function() { imgPreview.src = ''; };
+  }
   const elPreviewNombre = document.getElementById('previewNombre');
   if (elPreviewNombre) elPreviewNombre.textContent = producto.nombre || producto.nombreOriginal;
   const elPreviewCategoria = document.getElementById('previewCategoria');
   if (elPreviewCategoria) elPreviewCategoria.textContent = tipo;
-
   const badgesDiv = document.getElementById('previewBadges');
   if (badgesDiv) {
     badgesDiv.innerHTML = '';
     const badges = [];
     if (producto.esNuevo) badges.push({ txt: '✨ NUEVO', color: '#28a745' });
-    if (producto.esBestseller) badges.push({ txt: ' BESTSELLER', color: '#fd7e14' });
-    if (producto.calificacion && producto.calificacion >= 4.5) badges.push({ txt: `⭐ ${producto.calificacion}`, color: '#ffc107', textDark: true });
-    badges.forEach(b => {
+    if (producto.esBestseller) badges.push({ txt: '🏆 BESTSELLER', color: '#fd7e14' });
+    if (producto.calificacion && producto.calificacion >= 4.5) badges.push({ txt: '⭐ ' + producto.calificacion, color: '#ffc107', textDark: true });
+    badges.forEach(function(b) {
       const span = document.createElement('span');
       span.textContent = b.txt;
-      span.style.cssText = `padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; background: ${b.color}; color: ${b.textDark ? '#1a1a1a' : '#fff'};`;
+      span.style.cssText = 'padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; background: ' + b.color + '; color: ' + (b.textDark ? '#1a1a1a' : '#fff') + '; margin-right: 4px;';
       badgesDiv.appendChild(span);
     });
   }
-
   const precioPreview = producto.precioOferta || producto.precio;
   const elPreviewPrecio = document.getElementById('previewPrecio');
   if (elPreviewPrecio) elPreviewPrecio.innerHTML = precioPreview ? formatPrecio(precioPreview) : '';
-  preview.style.display = 'block';
+  if (preview) preview.style.display = 'block';
 
   agregarAlHistorial(producto);
   actualizarUIFavoritos();
-  if (typeof updateLabel === 'function') updateLabel();
-}
+  updateLabel();
+};
 
-function aplicarVariante() {
+window.aplicarVariante = function() {
   if (!productoActual) return;
   const idx = document.getElementById('varianteSeleccionada').value;
   if (idx === '') return;
@@ -631,35 +792,41 @@ function aplicarVariante() {
   if (elProductDetails) elProductDetails.value = detalles.join(' · ');
   const elProductPrice = document.getElementById('productPrice');
   if (elProductPrice) elProductPrice.value = formatPrecio(variante.precio);
-  const elPreviewPrecio = document.getElementById('previewPrecio');
-  if (elPreviewPrecio) elPreviewPrecio.innerHTML = formatPrecio(variante.precio);
-  if (typeof updateLabel === 'function') updateLabel();
-}
+  updateLabel();
+};
 
 // ==========================================
 // ❤️ FAVORITOS E HISTORIAL
 // ==========================================
-function obtenerIdUnico(producto) { return `${producto.tipoCatalogo || 'UNK'}-${producto.id || producto.nombre}`; }
+function obtenerIdUnico(producto) {
+  return (producto.tipoCatalogo || 'UNK') + '-' + (producto.id || producto.nombre);
+}
 
-function toggleFavorito() {
+window.toggleFavorito = function() {
   if (!productoActual) return;
   const productoId = obtenerIdUnico(productoActual);
-  const idx = window.favoritos.findIndex(f => f.idUnico === productoId);
+  const idx = window.favoritos.findIndex(function(f) { return f.idUnico === productoId; });
   if (idx >= 0) window.favoritos.splice(idx, 1);
   else {
-    window.favoritos.push({ idUnico: productoId, nombre: productoActual.nombre || productoActual.nombreOriginal, categoria: productoActual.categoria || productoActual.categoriaOrigen, imagen: productoActual.imagen, tipoCatalogo: productoActual.tipoCatalogo });
+    window.favoritos.push({
+      idUnico: productoId,
+      nombre: productoActual.nombre || productoActual.nombreOriginal,
+      categoria: productoActual.categoria || productoActual.categoriaOrigen,
+      imagen: productoActual.imagen,
+      tipoCatalogo: productoActual.tipoCatalogo
+    });
   }
   localStorage.setItem('aromalabel_favoritos', JSON.stringify(window.favoritos));
   actualizarUIFavoritos();
   renderizarFavoritos();
-}
+};
 
 function actualizarUIFavoritos() {
   const icono = document.getElementById('iconoFavorito');
   const texto = document.getElementById('textoFavorito');
   const btn = document.getElementById('btnFavorito');
   const contador = document.getElementById('contadorFavoritos');
-  const esFav = productoActual && window.favoritos.some(f => f.idUnico === obtenerIdUnico(productoActual));
+  const esFav = productoActual && window.favoritos.some(function(f) { return f.idUnico === obtenerIdUnico(productoActual); });
   if (icono) icono.textContent = esFav ? '❤️' : '🤍';
   if (texto) texto.textContent = esFav ? 'En favoritos' : 'Agregar a favoritos';
   if (btn) { btn.style.background = esFav ? '#ffe6e6' : '#fff'; btn.style.borderColor = esFav ? '#ff6b6b' : '#e9ecef'; }
@@ -670,34 +837,42 @@ function renderizarFavoritos() {
   const lista = document.getElementById('listaFavoritos');
   if (!lista) return;
   if (window.favoritos.length === 0) { lista.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">💡 Haz ❤️ en un producto</div>'; return; }
-  lista.innerHTML = window.favoritos.map((fav, i) => `<div style="display:flex;align-items:center;gap:8px;padding:6px;border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="cargarDesdeFavorito(${i})"> <span>❤️</span> <div style="flex:1;min-width:0;"> <div style="font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${fav.nombre}</div> <div style="font-size:9px;color:#888;">${fav.categoria || ''}</div> </div> <button onclick="event.stopPropagation();eliminarFavorito(${i})" style="padding:2px 6px;background:#dc3545;color:white;border:none;border-radius:3px;cursor:pointer;font-size:9px;">✕</button> </div>`).join('');
+  lista.innerHTML = window.favoritos.map(function(fav, i) {
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px;border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="cargarDesdeFavorito(' + i + ')"> <span>❤️</span> <div style="flex:1;min-width:0;"> <div style="font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + fav.nombre + '</div> <div style="font-size:9px;color:#888;">' + (fav.categoria || '') + '</div> </div> <button onclick="event.stopPropagation();eliminarFavorito(' + i + ')" style="padding:2px 6px;background:#dc3545;color:white;border:none;border-radius:3px;cursor:pointer;font-size:9px;">✕</button> </div>';
+  }).join('');
 }
 
-function cargarDesdeFavorito(index) {
+window.cargarDesdeFavorito = function(index) {
   const fav = window.favoritos[index];
   if (!fav) return;
   const productos = productosData[fav.tipoCatalogo] || [];
-  const producto = productos.find(p => obtenerIdUnico(p) === fav.idUnico);
+  const producto = productos.find(function(p) { return obtenerIdUnico(p) === fav.idUnico; });
   if (producto) {
     document.getElementById('categoriaProducto').value = fav.tipoCatalogo;
     cargarProductos();
-    const idx = productosFiltrados.findIndex(p => obtenerIdUnico(p) === fav.idUnico);
+    const idx = productosFiltrados.findIndex(function(p) { return obtenerIdUnico(p) === fav.idUnico; });
     if (idx >= 0) { document.getElementById('productoSeleccionado').value = idx; aplicarProducto(); }
   }
-}
+};
 
-function eliminarFavorito(index) {
+window.eliminarFavorito = function(index) {
   window.favoritos.splice(index, 1);
   localStorage.setItem('aromalabel_favoritos', JSON.stringify(window.favoritos));
   renderizarFavoritos();
   actualizarUIFavoritos();
-}
+};
 
 function agregarAlHistorial(producto) {
   if (!producto) return;
   const productoId = obtenerIdUnico(producto);
-  window.historial = window.historial.filter(h => h.idUnico !== productoId);
-  window.historial.unshift({ idUnico: productoId, nombre: producto.nombre || producto.nombreOriginal, categoria: producto.categoria || producto.categoriaOrigen, tipoCatalogo: producto.tipoCatalogo, fechaUso: new Date().toISOString() });
+  window.historial = window.historial.filter(function(h) { return h.idUnico !== productoId; });
+  window.historial.unshift({
+    idUnico: productoId,
+    nombre: producto.nombre || producto.nombreOriginal,
+    categoria: producto.categoria || producto.categoriaOrigen,
+    tipoCatalogo: producto.tipoCatalogo,
+    fechaUso: new Date().toISOString()
+  });
   if (window.historial.length > 10) window.historial = window.historial.slice(0, 10);
   localStorage.setItem('aromalabel_historial', JSON.stringify(window.historial));
   const contador = document.getElementById('contadorHistorial');
@@ -709,23 +884,25 @@ function renderizarHistorial() {
   const lista = document.getElementById('listaHistorial');
   if (!lista) return;
   if (window.historial.length === 0) { lista.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">🕐 Tus últimos productos aparecerán aquí</div>'; return; }
-  lista.innerHTML = window.historial.map((h, i) => `<div style="display:flex;align-items:center;gap:8px;padding:6px;border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="cargarDesdeHistorial(${i})"> <span style="color:#888;">${i + 1}.</span> <div style="flex:1;min-width:0;"> <div style="font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${h.nombre}</div> <div style="font-size:9px;color:#888;">${h.categoria || ''}</div> </div> </div>`).join('');
+  lista.innerHTML = window.historial.map(function(h, i) {
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px;border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="cargarDesdeHistorial(' + i + ')"> <span style="color:#888;">' + (i + 1) + '.</span> <div style="flex:1;min-width:0;"> <div style="font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + h.nombre + '</div> <div style="font-size:9px;color:#888;">' + (h.categoria || '') + '</div> </div> </div>';
+  }).join('');
 }
 
-function cargarDesdeHistorial(index) {
+window.cargarDesdeHistorial = function(index) {
   const h = window.historial[index];
   if (!h) return;
   const productos = productosData[h.tipoCatalogo] || [];
-  const producto = productos.find(p => obtenerIdUnico(p) === h.idUnico);
+  const producto = productos.find(function(p) { return obtenerIdUnico(p) === h.idUnico; });
   if (producto) {
     document.getElementById('categoriaProducto').value = h.tipoCatalogo;
     cargarProductos();
-    const idx = productosFiltrados.findIndex(p => obtenerIdUnico(p) === h.idUnico);
+    const idx = productosFiltrados.findIndex(function(p) { return obtenerIdUnico(p) === h.idUnico; });
     if (idx >= 0) { document.getElementById('productoSeleccionado').value = idx; aplicarProducto(); }
   }
-}
+};
 
-function limpiarHistorial() {
+window.limpiarHistorial = function() {
   if (confirm('¿Limpiar todo el historial?')) {
     window.historial = [];
     localStorage.setItem('aromalabel_historial', JSON.stringify(window.historial));
@@ -733,69 +910,56 @@ function limpiarHistorial() {
     const contador = document.getElementById('contadorHistorial');
     if (contador) contador.textContent = '0';
   }
-}
-
-function mostrarTab(tab) {
-  const tabFav = document.getElementById('tabFavoritos');
-  const tabHist = document.getElementById('tabHistorial');
-  const contFav = document.getElementById('contenidoFavoritos');
-  const contHist = document.getElementById('contenidoHistorial');
-  if (tab === 'favoritos') {
-    tabFav.style.background = '#c9a96e'; tabFav.style.color = 'white';
-    tabHist.style.background = '#e9ecef'; tabHist.style.color = '#555';
-    contFav.style.display = 'block'; contHist.style.display = 'none';
-  } else {
-    tabHist.style.background = '#c9a96e'; tabHist.style.color = 'white';
-    tabFav.style.background = '#e9ecef'; tabFav.style.color = '#555';
-    contHist.style.display = 'block'; contFav.style.display = 'none';
-  }
-}
+};
 
 // ==========================================
 // 🔍 BÚSQUEDA GLOBAL
 // ==========================================
-function busquedaGlobal() {
+window.busquedaGlobal = function() {
   const texto = document.getElementById('buscadorGlobal').value.toLowerCase().trim();
   const contenedor = document.getElementById('resultadosGlobal');
   if (!texto || texto.length < 2) { contenedor.style.display = 'none'; return; }
   const resultados = [];
-  ['ESENCIAS', 'LIMPIEZA', 'VELAS'].forEach(cat => {
-    (productosData[cat] || []).forEach(p => {
+  ['ESENCIAS', 'LIMPIEZA', 'VELAS'].forEach(function(cat) {
+    (productosData[cat] || []).forEach(function(p) {
       const n = (p.nombre || '').toLowerCase();
       const no = (p.nombreOriginal || '').toLowerCase();
       const c = (p.categoria || p.categoriaOrigen || '').toLowerCase();
-      if (n.includes(texto) || no.includes(texto) || c.includes(texto)) resultados.push({ producto: p, categoria: cat });
+      if (n.includes(texto) || no.includes(texto) || c.includes(texto)) {
+        resultados.push({ producto: p, categoria: cat });
+      }
     });
   });
   const top = resultados.slice(0, 15);
-  if (top.length === 0) { contenedor.innerHTML = '<div style="padding:10px;text-align:center;color:#999;">😕 Sin resultados</div>'; }
-  else {
-    contenedor.innerHTML = top.map(r => {
+  if (top.length === 0) {
+    contenedor.innerHTML = '<div style="padding:10px;text-align:center;color:#999;">😕 Sin resultados</div>';
+  } else {
+    contenedor.innerHTML = top.map(function(r) {
       const p = r.producto;
       const icono = r.categoria === 'ESENCIAS' ? '🌸' : r.categoria === 'LIMPIEZA' ? '🧼' : '🕯️';
       const precio = p.precioOferta || p.precio;
-      return `<div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid #f0f0f0;cursor:pointer;border-radius:4px;" onmouseover="this.style.background='#e8f4fd'" onmouseout="this.style.background='transparent'" onclick="seleccionarBusquedaGlobal('${r.categoria}','${obtenerIdUnico(p).replace(/'/g, "\\'")}')"> <span style="font-size:16px;">${icono}</span> <div style="flex:1;min-width:0;"> <div style="font-weight:bold;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.nombre || p.nombreOriginal}</div> <div style="font-size:10px;color:#888;">${p.categoria || p.categoriaOrigen || ''} · ${formatPrecio(precio)}</div> </div> </div>`;
+      return '<div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid #f0f0f0;cursor:pointer;border-radius:4px;" onclick="seleccionarBusquedaGlobal(\'' + r.categoria + '\',\'' + obtenerIdUnico(p).replace(/'/g, "\\'") + '\')"> <span style="font-size:16px;">' + icono + '</span> <div style="flex:1;min-width:0;"> <div style="font-weight:bold;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (p.nombre || p.nombreOriginal) + '</div> <div style="font-size:10px;color:#888;">' + (p.categoria || p.categoriaOrigen || '') + ' · ' + formatPrecio(precio) + '</div> </div> </div>';
     }).join('');
   }
   contenedor.style.display = 'block';
-}
+};
 
-function seleccionarBusquedaGlobal(categoria, idUnico) {
+window.seleccionarBusquedaGlobal = function(categoria, idUnico) {
   document.getElementById('categoriaProducto').value = categoria;
   cargarProductos();
-  const idx = productosFiltrados.findIndex(p => obtenerIdUnico(p) === idUnico);
+  const idx = productosFiltrados.findIndex(function(p) { return obtenerIdUnico(p) === idUnico; });
   if (idx >= 0) {
     document.getElementById('productoSeleccionado').value = idx;
     aplicarProducto();
     document.getElementById('buscadorGlobal').value = '';
     document.getElementById('resultadosGlobal').style.display = 'none';
   }
-}
+};
 
 // ==========================================
-// 🖼️ IMÁGENES
+// 🖼️ LOGO E IMÁGENES
 // ==========================================
-function handleLogoUpload(event) {
+window.handleLogoUpload = function(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
@@ -803,417 +967,503 @@ function handleLogoUpload(event) {
     logoDataUrl = e.target.result;
     const preview = document.getElementById('logoPreview');
     if (preview) { preview.src = logoDataUrl; preview.style.display = 'block'; }
+    const showLogoImg = document.getElementById('showLogoImg');
+    if (showLogoImg) showLogoImg.checked = true;
     updateLabel();
+    showToast('✅ Logo cargado', 'success');
   };
   reader.readAsDataURL(file);
-}
+};
 
-function updateLogoControls() {
-    ['logoSize', 'logoRot', 'logoOpa'].forEach(id => {
-        const val = document.getElementById(id + 'Val');
-        const input = document.getElementById(id);
-        if (val && input) val.textContent = input.value;
-    });
-    
-    // También actualizar logoPosX y logoPosY si existen
-    const posX = document.getElementById('logoPosX');
-    const posY = document.getElementById('logoPosY');
-    if (posX && posY) {
-        // No hay spans para estos, pero los valores están en los inputs
-    }
-    
-    // IMPORTANTE: Llamar a updateLabel() para aplicar los cambios
-    if (typeof updateLabel === 'function') {
-        updateLabel();
-    }
-}
-
-function actualizarImagenFondo() {
-  window.estadoImagenFondo = {
-    url: document.getElementById('bgImageUrl')?.value || '',
-    opacity: (parseInt(document.getElementById('bgImageOpacity')?.value || 30)) / 100,
-    fit: document.getElementById('bgImageFit')?.value || 'contain'
-  };
+window.cargarLogoDesdeURL = function() {
+  const urlInput = document.getElementById('logoUrl');
+  if (!urlInput) return;
+  const url = urlInput.value.trim();
+  if (!url) return;
+  logoDataUrl = url;
+  const preview = document.getElementById('logoPreview');
+  if (preview) { preview.src = url; preview.style.display = 'block'; }
+  const showLogoImg = document.getElementById('showLogoImg');
+  if (showLogoImg) showLogoImg.checked = true;
   updateLabel();
-}
+};
 
-function dibujarImagenFondo(ctx, canvas) {
-  const estado = window.estadoImagenFondo;
-  if (!estado.url) return;
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = function() {
-    ctx.save();
-    ctx.globalAlpha = estado.opacity;
-    const ratio = Math.min(canvas.width / img.width, canvas.height / img.height);
-    const w = img.width * ratio;
-    const h = img.height * ratio;
-    ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
-    ctx.restore();
-  };
-  img.src = estado.url;
-}
+window.updateLogoControls = function() {
+  ['logoSize', 'logoRot', 'logoOpa', 'logoPosX', 'logoPosY'].forEach(function(id) {
+    const val = document.getElementById(id + 'Val');
+    const input = document.getElementById(id);
+    if (val && input) val.textContent = input.value;
+  });
+  updateLabel();
+};
 
-function toggleImagenProducto() {
+window.toggleImagenProducto = function() {
   const checkbox = document.getElementById('usarImagenProducto');
   const controles = document.getElementById('controlesImagen');
   window.estadoImagenProducto.activa = checkbox.checked;
   controles.style.display = checkbox.checked ? 'block' : 'none';
-  if (checkbox.checked && !window.estadoImagenProducto.url && productoActual?.imagen) {
-    window.estadoImagenProducto.url = normalizarURL(productoActual.imagen);
-  } else if (!checkbox.checked) {
+  if (checkbox.checked) {
+    const customUrlInput = document.getElementById('customImageUrl');
+    const customUrl = customUrlInput ? customUrlInput.value.trim() : '';
+    if (customUrl) {
+      window.estadoImagenProducto.url = customUrl;
+    } else if (productoActual && productoActual.imagen) {
+      window.estadoImagenProducto.url = normalizarURL(productoActual.imagen);
+    } else {
+      window.estadoImagenProducto.url = '';
+    }
+  } else {
     window.estadoImagenProducto.url = '';
     const imgVieja = document.getElementById('previewProductImg');
-    if (imgVieja) imgVieja.remove();
+    if (imgVieja) imgVieja.style.display = 'none';
   }
   actualizarImagen();
-}
+};
 
-function actualizarImagen() {
+window.actualizarImagen = function() {
   window.estadoImagenProducto.tamano = parseInt(document.getElementById('tamanoImagen').value);
   window.estadoImagenProducto.posX = parseInt(document.getElementById('posXImagen').value);
   window.estadoImagenProducto.posY = parseInt(document.getElementById('posYImagen').value);
   window.estadoImagenProducto.rotacion = parseInt(document.getElementById('rotacionImagen').value);
+  const opacityInput = document.getElementById('opacidadImagen');
+  window.estadoImagenProducto.opacidad = opacityInput ? parseInt(opacityInput.value) : 22;
   document.getElementById('tamanoImagenValor').textContent = window.estadoImagenProducto.tamano;
   document.getElementById('posXImagenValor').textContent = window.estadoImagenProducto.posX;
   document.getElementById('posYImagenValor').textContent = window.estadoImagenProducto.posY;
   document.getElementById('rotacionImagenValor').textContent = window.estadoImagenProducto.rotacion;
+  const opacityValue = document.getElementById('opacidadImagenValor');
+  if (opacityValue) opacityValue.textContent = window.estadoImagenProducto.opacidad;
   updateLabel();
-}
+};
 
-function resetearImagen() {
+window.resetearImagen = function() {
   document.getElementById('tamanoImagen').value = 30;
   document.getElementById('posXImagen').value = 50;
   document.getElementById('posYImagen').value = 30;
   document.getElementById('rotacionImagen').value = 0;
+  document.getElementById('opacidadImagen').value = 22;
   actualizarImagen();
-}
+};
 
-function centrarImagen() {
+window.centrarImagen = function() {
   document.getElementById('posXImagen').value = 50;
   document.getElementById('posYImagen').value = 50;
   actualizarImagen();
-}
+};
 
-async function agregarImagenProducto() {
-  if (!productoActual?.imagen) { alert('⚠️ Primero selecciona un producto con imagen'); return; }
-  const url = normalizarURL(productoActual.imagen);
-  window.estadoImagenProducto.url = url;
+window.agregarImagenProducto = function() {
+  const customUrlInput = document.getElementById('customImageUrl');
+  const urlPersonalizada = customUrlInput ? customUrlInput.value.trim() : '';
+  if (urlPersonalizada) {
+    window.estadoImagenProducto.url = urlPersonalizada;
+  } else if (productoActual && productoActual.imagen) {
+    window.estadoImagenProducto.url = normalizarURL(productoActual.imagen);
+  } else {
+    alert('⚠️ El producto no tiene imagen y no has ingresado una URL.');
+    return;
+  }
   window.estadoImagenProducto.activa = true;
   document.getElementById('usarImagenProducto').checked = true;
   document.getElementById('controlesImagen').style.display = 'block';
   actualizarImagen();
-}
+  showToast('🖼️ Imagen agregada al diseñador', 'success');
+};
 
-function dibujarImagenProducto(ctx, canvas) {
-  if (!window.estadoImagenProducto.activa || !window.estadoImagenProducto.url) return;
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = function() {
-    const state = window.estadoImagenProducto;
-    const tamano = Math.min(canvas.width, canvas.height) * (state.tamano / 100);
-    const x = canvas.width * state.posX / 100;
-    const y = canvas.height * state.posY / 100;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(state.rotacion * Math.PI / 180);
-    ctx.drawImage(img, -tamano / 2, -tamano / 2, tamano, tamano);
-    ctx.restore();
+window.actualizarImagenDesdeURL = function() {
+  const customUrlInput = document.getElementById('customImageUrl');
+  if (!customUrlInput) return;
+  const url = customUrlInput.value.trim();
+  const checkbox = document.getElementById('usarImagenProducto');
+  if (url && checkbox && checkbox.checked) {
+    window.estadoImagenProducto.url = url;
+    window.estadoImagenProducto.activa = true;
+    updateLabel();
+  }
+};
+
+window.handleBgImageUpload = function(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const dataUrl = e.target.result;
+    window.estadoImagenFondo.url = dataUrl;
+    const urlInput = document.getElementById('bgImageUrl');
+    if (urlInput) urlInput.value = dataUrl.substring(0, 50) + '... [imagen local]';
+    const previewWrap = documentgetElementById('bgImagePreviewWrap');
+    const preview = document.getElementById('bgImagePreview');
+    if (preview) preview.src = dataUrl;
+    if (previewWrap) previewWrap.style.display = 'block';
+    updateLabel();
+    showToast('✅ Imagen de fondo cargada', 'success');
   };
-  img.src = window.estadoImagenProducto.url;
-}
+  reader.readAsDataURL(file);
+};
+
+window.actualizarImagenFondo = function() {
+  const urlInput = document.getElementById('bgImageUrl');
+  const opacityInput = document.getElementById('bgImageOpacity');
+  const fitInput = document.getElementById('bgImageFit');
+  const opacityVal = document.getElementById('bgImageOpacityVal');
+  const url = urlInput ? urlInput.value.trim() : '';
+  if (url && url.indexOf('[imagen local]') === -1) {
+    windowestadoImagenFondo.url = url;
+    const previewWrap = document.getElementById('bgImagePreviewWrap');
+    const preview = document.getElementById('bgImagePreview');
+    if (preview) preview.src = url;
+    if (previewWrap) previewWrap.style.display = 'block';
+  } else if (!url) {
+    window.estadoImagenFondo.url = '';
+    const previewWrap = document.getElementById('bgImagePreviewWrap');
+    if (previewWrap) previewWrap.style.display = 'none';
+  }
+  window.estadoImagenFondo.opacity = opacityInput ? (parseInt(opacityInput.value) / 100) : 0.3;
+  window.estadoImagenFondo.fit = fitInput ? fitInput.value : 'contain';
+  if (opacityVal && opacityInput) opacityVal.textContent = opacityInput.value;
+  updateLabel();
+};
+
+window.quitarImagenFondo = function() {
+  window.estadoImagenFondo = { url: '', opacity: 0.3, fit: 'contain' };
+  const urlInput = document.getElementById('bgImageUrl');
+  if (urlInput) urlInput.value = '';
+  const fileInput = document.getElementById('bgImageUpload');
+  if (fileInput) fileInput.value = '';
+  const previewWrap = document.getElementById('bgImagePreviewWrap');
+  if (previewWrap) previewWrap.style.display = 'none';
+  updateLabel();
+  showToast('🗑️ Imagen de fondo quitada', 'info');
+};
 
 // ==========================================
-//  QR
+// 📱 CONTROLES Y SINCRO DEL QR
 // ==========================================
-function toggleQRProducto() {
-  const checked = document.getElementById('usarQRProducto').checked;
+window.toggleQRProducto = function() {
+  const checkbox = document.getElementById('usarQRProducto');
   const opcionesQR = document.getElementById('opcionesQR');
-  const elQrUrl = document.getElementById('qrUrl');
-  if (!checked) { opcionesQR.style.display = 'none'; if (elQrUrl) elQrUrl.value = ''; updateLabel(); return; }
-  if (!productoActual) { alert('⚠️ Primero selecciona un producto'); document.getElementById('usarQRProducto').checked = false; return; }
-  opcionesQR.style.display = 'block';
-  actualizarQR();
-}
+  const showQRCheckbox = document.getElementById('showQR');
 
-function actualizarQR() {
-  if (!productoActual) return;
-  const tipoQR = document.querySelector('input[name="tipoQR"]:checked')?.value || 'facebook';
+  if (!checkbox) return;
+
+  if (!checkbox.checked) {
+    if (opcionesQR) opcionesQR.style.display = 'none';
+    if (showQRCheckbox) showQRCheckbox.checked = false;
+    updateLabel();
+    return;
+  }
+
+  if (opcionesQR) opcionesQR.style.display = 'block';
+  if (showQRCheckbox) showQRCheckbox.checked = true;
+  
+  actualizarQR();
+};
+
+window.actualizarQR = function() {
   const elQrUrl = document.getElementById('qrUrl');
   let contenido = '';
-  switch(tipoQR) {
-    case 'facebook': contenido = 'https://www.facebook.com/profile.php?id=61579078480913'; break;
-    case 'producto': contenido = `https://wil1979.github.io/esentia-factura/producto.html?id=${productoActual.id}`; break;
-    case 'json':
-      const variante = productoActual.variantes ? productoActual.variantes[document.getElementById('varianteSeleccionada')?.value || 0] : null;
-      contenido = JSON.stringify({ id: productoActual.id, nombre: productoActual.nombre || productoActual.nombreOriginal, precio: variante ? variante.precio : (productoActual.precioOferta || productoActual.precio) });
-      break;
+  
+  if (productoActual) {
+    const tipoQR = document.querySelector('input[name="tipoQR"]:checked');
+    const tipoQRValue = tipoQR ? tipoQR.value : 'facebook';
+    
+    switch(tipoQRValue) {
+      case 'facebook':
+        contenido = 'https://www.facebook.com/profile.php?id=61579078480913';
+        break;
+      case 'producto':
+        contenido = 'https://wil1979.github.io/esentia-factura/producto.html?id=' + (productoActual.id || '');
+        break;
+      case 'json':
+        const varSel = document.getElementById('varianteSeleccionada');
+        const variante = productoActual.variantes ? productoActual.variantes[varSel ? varSel.value || 0 : 0] : null;
+        contenido = JSON.stringify({
+          id: productoActual.id || '',
+          nombre: productoActual.nombre || productoActual.nombreOriginal || '',
+          precio: variante ? variante.precio : (productoActual.precioOferta || productoActual.precio || 0)
+        });
+        break;
+      default:
+        contenido = elQrUrl ? elQrUrl.value : 'https://example.com';
+    }
+  } else {
+    contenido = elQrUrl && elQrUrl.value ? elQrUrl.value : 'https://example.com';
   }
+
   if (elQrUrl) elQrUrl.value = contenido;
   updateLabel();
-}
-
-// ==========================================
-// ⌨️ ATAJOS DE TECLADO
-// ==========================================
-document.addEventListener('keydown', function(e) {
-  const tag = e.target.tagName.toLowerCase();
-  const esInput = tag === 'input' || tag === 'textarea' || tag === 'select';
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); if (typeof saveProject === 'function') saveProject(); }
-  if ((e.ctrlKey || e.metaKey) && e.key === 'd') { e.preventDefault(); toggleFavorito(); }
-  if ((e.ctrlKey || e.metaKey) && e.key === 'f' && !esInput) { e.preventDefault(); cambiarTab('producto'); setTimeout(() => document.getElementById('buscadorGlobal')?.focus(), 100); }
-  
-    
-    // Ctrl/Cmd + S: Guardar proyecto
-    if ((e.ctrlKey || e.metaKey) && e.key === 's' && !esInput) {
-        e.preventDefault();
-        saveProject();
-    }
-    
-    // Ctrl/Cmd + D: Duplicar etiqueta
-    if ((e.ctrlKey || e.metaKey) && e.key === 'd' && !esInput) {
-        e.preventDefault();
-        duplicateLabel();
-    }
-    
-    // Ctrl/Cmd + P: Imprimir
-    if ((e.ctrlKey || e.metaKey) && e.key === 'p' && !esInput) {
-        e.preventDefault();
-        window.print();
-    }
-    
-    // Ctrl/Cmd + N: Nuevo proyecto
-    if ((e.ctrlKey || e.metaKey) && e.key === 'n' && !esInput) {
-        e.preventDefault();
-        newProject();
-    }
-    
-    // Ctrl/Cmd + Z: Deshacer (si implementas historial)
-    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !esInput) {
-        e.preventDefault();
-        undo();
-    }
-    
-    // F5: Actualizar vista previa
-    if (e.key === 'F5' && !esInput) {
-        e.preventDefault();
-        updateLabel();
-    }
-    
-    // Escape: Cerrar modales
-    if (e.key === 'Escape') {
-        closeModal();
-    }
-    
-    // Flechas: Ajustar posición de imagen (si está seleccionada)
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && !esInput) {
-        e.preventDefault();
-        adjustImagePosition(e.key, e.shiftKey ? 10 : 1);
-    }
-
-});
+};
 
 // ==========================================
 // 💾 PROYECTOS
 // ==========================================
 function getCurrentConfig() {
+  const gv = function(id, fallback) {
+    fallback = fallback || '';
+    const el = document.getElementById(id);
+    return el ? (el.value !== undefined ? el.value : fallback) : fallback;
+  };
+  const gc = function(id, fallback) {
+    fallback = fallback || false;
+    const el = document.getElementById(id);
+    return el ? (el.checked !== undefined ? el.checked : fallback) : fallback;
+  };
   return {
-    width: document.getElementById('labelWidth').value,
-    height: document.getElementById('labelHeight').value,
-    padding: document.getElementById('labelPadding').value,
-    borderRadius: document.getElementById('borderRadius').value,
-    topLine: document.getElementById('topLine').value,
-    bottomLine: document.getElementById('bottomLine').value,
-    areaGap: document.getElementById('areaGap').value,
-    fontBrand: document.getElementById('fontBrand').value,
-    fontBrandSub: document.getElementById('fontBrandSub').value,
-    fontProduct: document.getElementById('fontProduct').value,
-    fontType: document.getElementById('fontType').value,
-    fontDetails: document.getElementById('fontDetails').value,
-    fontInstr: document.getElementById('fontInstr').value,
-    fontBatch: document.getElementById('fontBatch').value,
-    fontOrigin: document.getElementById('fontOrigin').value,
-    qrSize: document.getElementById('qrSize').value,
-    brandFont: document.getElementById('brandFont').value,
-    productFont: document.getElementById('productFont').value,
-    accentColor: document.getElementById('accentColor').value,
-    textColor: document.getElementById('textColor').value,
-    bgColor: document.getElementById('bgColor').value,
-    qrColor: document.getElementById('qrColor').value,
-    qrBgColor: document.getElementById('qrBgColor').value,
-    showDivider: document.getElementById('showDivider').checked,
-    showQR: document.getElementById('showQR').checked,
-    showInstructions: document.getElementById('showInstructions').checked,
-    showFooter: document.getElementById('showFooter').checked,
-    vinylMode: document.getElementById('vinylMode') ? document.getElementById('vinylMode').checked : false,
+    width: gv('labelWidth', 60),
+    height: gv('labelHeight', 80),
+    padding: gv('labelPadding', 1.5),
+    borderRadius: gv('borderRadius', 4),
+    areaGap: gv('areaGap', 2),
+    logoAreaX: gv('logoAreaX', 0),
+    logoAreaY: gv('logoAreaY', 0),
+    productAreaX: gv('productAreaX', 0),
+    productAreaY: gv('productAreaY', 0),
+    instructionsAreaX: gv('instructionsAreaX', 0),
+    instructionsAreaY: gv('instructionsAreaY', 0),
+    footerAreaX: gv('footerAreaX', 0),
+    footerAreaY: gv('footerAreaY', 0),
+    fontBrand: gv('fontBrand', 21),
+    fontBrandSub: gv('fontBrandSub', 0),
+    fontProduct: gv('fontProduct', 19),
+    fontType: gv('fontType', 10),
+    fontDetails: gv('fontDetails', 9),
+    fontInstr: gv('fontInstr', 10),
+    fontBatch: gv('fontBatch', 9),
+    fontOrigin: gv('fontOrigin', 8),
+    instructionsWidth: gv('instructionsWidth', 100),
+    instructionsHeight: gv('instructionsHeight', 100),
+    qrSize: gv('qrSize', 34),
+    brandFont: gv('brandFont'),
+    productFont: gv('productFont'),
+    accentColor: gv('accentColor', '#c9a96e'),
+    textColor: gv('textColor', '#1a1a1a'),
+    bgColor: gv('bgColor', '#ffffff'),
+    qrColor: gv('qrColor', '#000000'),
+    qrBgColor: gv('qrBgColor', '#ffffff'),
+    showDivider: gc('showDivider', false),
+    dividerColor: gv('dividerColor', '#c9a96e'),
+    dividerWidth: gv('dividerWidth', 1),
+    showQR: gc('showQR', false) || gc('usarQRProducto', false),
+    showInstructions: gc('showInstructions', true),
+    showFooter: gc('showFooter', true),
+    vinylMode: gc('vinylMode', false),
+    boldTextMode: gc('boldTextMode', false),
+    frostedBg: gc('frostedBg', false),
     images: getImagesConfig(),
-    imagenProducto: window.estadoImagenProducto ? { ...window.estadoImagenProducto } : null
+    showDetails: gc('showDetails', false),
+    showPrice: gc('showPrice', false),
+    labelShape: localStorage.getItem('aromaLabelShape') || 'rectangular',
+    qrPosX: gv('qrPosX', 20),
+    qrPosY: gv('qrPosY', 80),
+    qrRotation: gv('qrRotation', 0),
+    barcodePosX: gv('barcodePosX', 71),
+    barcodePosY: gv('barcodePosY', 89),
+    barcodeRotation: gv('barcodeRotation', 0),
+    showBarcode: gc('showBarcode', false),
+    productId: obtenerCodigoBarrasProducto(productoActual) || codigoBarrasActual,
+    fullBorder: gc('fullBorder', false),
+    topBorderOnly: gc('topBorderOnly', false),
+    bottomBorderOnly: gc('bottomBorderOnly', false),
+    borderWidth: gv('borderWidth', 2),
+    borderColor: gv('borderColor', '#c9a96e'),
+    borderStyle: gv('borderStyle', 'solid'),
+    showLogoImg: gc('showLogoImg', false),
+    logoSize: gv('logoSize', 80),
+    logoPosX: gv('logoPosX', 50),
+    logoPosY: gv('logoPosY', 50),
+    logoRot: gv('logoRot', 0),
+    logoOpa: gv('logoOpa', 100),
+    estadoImagenFondo: window.estadoImagenFondo ? Object.assign({}, window.estadoImagenFondo) : null,
+    imagenProducto: window.estadoImagenProducto ? Object.assign({}, window.estadoImagenProducto) : null
   };
 }
+
 function getCurrentContent() {
-  const getVal = (id, fallback = '') => { const el = document.getElementById(id); return el ? (el.value !== undefined ? el.value : fallback) : fallback; };
+  const gv = function(id, fallback) {
+    fallback = fallback || '';
+    const el = document.getElementById(id);
+    return el ? (el.value !== undefined ? el.value : fallback) : fallback;
+  };
   return {
-    projectName: getVal('projectName', 'Mi Etiqueta'), brandName: getVal('brandName', 'Marca'), brandSub: getVal('brandSub', ''),
-    productName: getVal('productName', 'Producto'), productType: getVal('productType', ''), productDetails: getVal('productDetails', ''), productPrice: getVal('productPrice', ''),
-    showPrice: document.getElementById('showPrice')?.checked || false, instructions: getVal('instructions', ''), qrUrl: getVal('qrUrl', ''), batchInfo: getVal('batchInfo', ''), originInfo: getVal('originInfo', '')
+    projectName: gv('projectName', 'Mi Etiqueta'),
+    brandName: gv('brandName', 'Esentia'),
+    brandSub: gv('brandSub', ''),
+    productName: gv('productName', 'Producto'),
+    productType: gv('productType', ''),
+    productDetails: gv('productDetails', ''),
+    productPrice: gv('productPrice', ''),
+    showPrice: document.getElementById('showPrice') ? document.getElementById('showPrice').checked : false,
+    showDetails: document.getElementById('showDetails') ? document.getElementById('showDetails').checked : false,
+    showDivider: document.getElementById('showDivider') ? document.getElementById('showDivider').checked : false,
+    showQR: (document.getElementById('showQR') ? document.getElementById('showQR').checked : false) || (document.getElementById('usarQRProducto') ? document.getElementById('usarQRProducto').checked : false),
+    showInstructions: document.getElementById('showInstructions') ? document.getElementById('showInstructions').checked : false,
+    showFooter: document.getElementById('showFooter') ? document.getElementById('showFooter').checked : false,
+    instructions: gv('instructions', ''),
+    batchInfo: gv('batchInfo', ''),
+    originInfo: gv('originInfo', ''),
+    qrUrl: gv('qrUrl', '')
   };
 }
 
-function getImagesConfig() { return imagesList.map(img => ({ ...img })); }
+function getImagesConfig() { return imagesList.map(function(img) { return Object.assign({}, img); }); }
 
-function showToast(message, type = 'info') {
-  const colores = { success: '#4caf50', danger: '#e74c3c', info: '#2196f3', warning: '#ff9800' };
-  let container = document.querySelector('.toast-container');
-  if (!container) { container = document.createElement('div'); container.className = 'toast-container'; document.body.appendChild(container); }
-  const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.style.background = colores[type] || colores.info;
-  toast.innerHTML = `<span>${message}</span>`;
-  container.appendChild(toast);
-  setTimeout(() => { toast.classList.add('fade-out'); setTimeout(() => toast.remove(), 300); }, 3000);
-}
-
-function saveProject() {
+window.saveProject = function() {
   try {
     const nombreProducto = productoActual && (productoActual.nombre || productoActual.nombreOriginal);
     const projectNameInput = document.getElementById('projectName');
-    const projectName = nombreProducto || projectNameInput?.value || 'Sin nombre';
+    const projectName = nombreProducto || (projectNameInput ? projectNameInput.value : '') || 'Sin nombre';
     if (projectNameInput && nombreProducto) projectNameInput.value = projectName;
-    const project = { id: Date.now(), name: projectName, date: new Date().toLocaleDateString('es-ES'), config: getCurrentConfig(), content: getCurrentContent(), logoDataUrl: logoDataUrl, images: getImagesConfig(), lastModified: new Date().toISOString() };
-    const existingIdx = projects.findIndex(p => p.name === project.name);
-    if (existingIdx >= 0) { project.id = projects[existingIdx].id; projects[existingIdx] = project; showToast('✅ Proyecto actualizado', 'success'); }
-    else { projects.push(project); showToast('💾 Proyecto guardado', 'success'); }
+    const project = {
+      id: Date.now(),
+      name: projectName,
+      date: new Date().toLocaleDateString('es-ES'),
+      config: getCurrentConfig(),
+      content: getCurrentContent(),
+      logoDataUrl: logoDataUrl,
+      images: getImagesConfig(),
+      lastModified: new Date().toISOString()
+    };
+    const existingIdx = projects.findIndex(function(p) { return p.name === project.name; });
+    if (existingIdx >= 0) {
+      project.id = projects[existingIdx].id;
+      projects[existingIdx] = project;
+      showToast('✅ Proyecto actualizado', 'success');
+    } else {
+      projects.push(project);
+      showToast('💾 Proyecto guardado', 'success');
+    }
     localStorage.setItem('aromaProjects', JSON.stringify(projects));
     loadAllProjects();
-  } catch (e) { showToast('❌ Error al guardar: ' + e.message, 'danger'); console.error(e); }
-}
+  } catch (e) {
+    showToast('❌ Error al guardar: ' + e.message, 'danger');
+    console.error(e);
+  }
+};
 
-// Función para generar thumbnail de proyecto
 async function generateProjectThumbnail(project) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const widthMm = parseInt(project.config.labelWidth) || 60;
-    const heightMm = parseInt(project.config.labelHeight) || 80;
-    
-    // Escala: 4px por mm
-    canvas.width = widthMm * 4;
-    canvas.height = heightMm * 4;
-    
-    // Fondo
-    ctx.fillStyle = project.config.vinylMode ? 'transparent' : (project.config.bgColor || '#ffffff');
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Texto simplificado
-    ctx.fillStyle = project.config.textColor || '#1a1a1a';
-    ctx.textAlign = 'center';
-    
-    // Marca
-    if (project.content.brandName) {
-        ctx.font = `bold ${Math.min(canvas.width, canvas.height) * 0.15}px Playfair Display`;
-        ctx.fillText(project.content.brandName, canvas.width / 2, canvas.height * 0.2);
-    }
-    
-    // Producto
-    if (project.content.productName) {
-        ctx.font = `bold ${Math.min(canvas.width, canvas.height) * 0.12}px Playfair Display`;
-        ctx.fillText(project.content.productName, canvas.width / 2, canvas.height * 0.5);
-    }
-    
-    return canvas.toDataURL('image/png');
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const widthMm = parseInt(project.config.width) || 60;
+  const heightMm = parseInt(project.config.height) || 80;
+  canvas.width = widthMm * 4;
+  canvas.height = heightMm * 4;
+  ctx.fillStyle = project.config.vinylMode ? 'transparent' : (project.config.bgColor || '#ffffff');
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = project.config.textColor || '#1a1a1a';
+  ctx.textAlign = 'center';
+  if (project.content.brandName) {
+    ctx.font = 'bold ' + Math.min(canvas.width, canvas.height) * 0.15 + 'px Playfair Display';
+    ctx.fillText(project.content.brandName, canvas.width / 2, canvas.height * 0.2);
+  }
+  if (project.content.productName) {
+    ctx.font = 'bold ' + Math.min(canvas.width, canvas.height) * 0.12 + 'px Playfair Display';
+    ctx.fillText(project.content.productName, canvas.width / 2, canvas.height * 0.5);
+  }
+  return canvas.toDataURL('image/png');
 }
 
-// Modificar loadAllProjects()
 async function loadAllProjects() {
-    const grid = document.getElementById('projectsGrid');
-    if (!grid) return;
-    
-    if (projects.length === 0) {
-        grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📁</div><h3>No hay proyectos guardados</h3><p>Crea tu primera etiqueta en el Diseñador y guárdala aquí.</p></div>';
-        return;
+  const grid = document.getElementById('projectsGrid');
+  if (!grid) return;
+  if (projects.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📁</div><h3>No hay proyectos guardados</h3><p>Crea tu primera etiqueta en el Diseñador y guárdala aquí.</p></div>';
+    return;
+  }
+  for (let i = 0; i < projects.length; i++) {
+    const project = projects[i];
+    if (!project.thumbnail) {
+      try { project.thumbnail = await generateProjectThumbnail(project); }
+      catch (e) { project.thumbnail = null; }
     }
-    
-    // Generar thumbnails para todos los proyectos
-    for (const project of projects) {
-        if (!project.thumbnail) {
-            try {
-                project.thumbnail = await generateProjectThumbnail(project);
-            } catch (e) {
-                console.error('Error generando thumbnail:', e);
-                project.thumbnail = null;
-            }
-        }
-    }
-    
-    // Guardar thumbnails en localStorage
-    localStorage.setItem('aromaProjects', JSON.stringify(projects));
-    
-    // Renderizar
-    grid.innerHTML = projects.map(p => `
-        <div class="project-card" onclick="loadProject(${p.id})">
-            <div class="project-preview">
-                ${p.thumbnail ? 
-                    `<img src="${p.thumbnail}" alt="${p.name}" style="width:100%; height:100%; object-fit:contain;">` : 
-                    '<div style="font-size:3rem;">🏷️</div>'
-                }
-            </div>
-            <div class="project-name">${p.name}</div>
-            <div class="project-meta">📅 ${p.date}</div>
-            <div class="project-actions">
-                <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();loadProject(${p.id})">📂 Cargar</button>
-                <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteProject(${p.id})">️</button>
-            </div>
-        </div>
-    `).join('');
+  }
+  localStorage.setItem('aromaProjects', JSON.stringify(projects));
+  grid.innerHTML = projects.map(function(p) {
+    return '<div class="project-card" onclick="loadProject(' + p.id + ')"> <div class="project-preview"> ' + (p.thumbnail ? '<img src="' + p.thumbnail + '" alt="' + p.name + '" style="width:100%;height:100%;object-fit:contain;">' : '<div style="font-size:3rem;">🏷️</div>') + ' </div> <div class="project-name">' + p.name + '</div> <div class="project-meta">📅 ' + p.date + '</div> <div class="project-actions"> <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();loadProject(' + p.id + ')">📂 Cargar</button> <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteProject(' + p.id + ')">🗑️</button> </div> </div>';
+  }).join('');
 }
 
-function loadProject(id) {
-  const project = projects.find(p => p.id === id);
+window.loadProject = function(id) {
+  const project = projects.find(function(p) { return p.id === id; });
   if (!project) { showToast('❌ Proyecto no encontrado', 'danger'); return; }
   try {
     if (project.config) {
-      Object.keys(project.config).forEach(key => {
+      Object.keys(project.config).forEach(function(key) {
         const el = document.getElementById(key);
-        if (el) { if (el.type === 'checkbox') el.checked = project.config[key]; else el.value = project.config[key]; }
+        if (el) {
+          if (el.type === 'checkbox') el.checked = project.config[key];
+          else el.value = project.config[key];
+        }
       });
-      if (project.config.estadoImagenProducto) window.estadoImagenProducto = { ...project.config.estadoImagenProducto };
-      if (project.config.estadoImagenFondo) window.estadoImagenFondo = { ...project.config.estadoImagenFondo };
+      if (project.config.productId != null) codigoBarrasActual = String(project.config.productId).trim();
+      if (project.config.imagenProducto) window.estadoImagenProducto = Object.assign({}, project.config.imagenProducto);
+      if (project.config.estadoImagenFondo) window.estadoImagenFondo = Object.assign({}, project.config.estadoImagenFondo);
     }
     if (project.content) {
-      Object.keys(project.content).forEach(key => {
-        if (key === 'showPrice') { const el = document.getElementById('showPrice'); if (el) el.checked = project.content[key]; }
-        else { const el = document.getElementById(key); if (el) el.value = project.content[key]; }
+      Object.keys(project.content).forEach(function(key) {
+        const el = document.getElementById(key);
+        if (el) {
+          if (el.type === 'checkbox') el.checked = project.content[key];
+          else el.value = project.content[key];
+        }
       });
     }
-    if (project.logoDataUrl) { logoDataUrl = project.logoDataUrl; const preview = document.getElementById('logoPreview'); if (preview) { preview.src = logoDataUrl; preview.style.display = 'block'; } }
-    if (project.images && Array.isArray(project.images)) { imagesList = project.images.map(img => ({ ...img })); renderImagesList(); }
+    if (project.logoDataUrl) {
+      logoDataUrl = project.logoDataUrl;
+      const preview = document.getElementById('logoPreview');
+      if (preview) { preview.src = logoDataUrl; preview.style.display = 'block'; }
+    }
+    if (project.images && Array.isArray(project.images)) {
+      imagesList = project.images.map(function(img) { return Object.assign({}, img); });
+      renderImagesList();
+    }
+    if (project.config && project.config.labelShape) {
+      const _sb = document.querySelector('.shape-btn[onclick*="' + project.config.labelShape + '"]');
+      if (_sb) cambiarForma(project.config.labelShape, _sb);
+    }
     sincronizarValoresSliders();
     updateLabel();
-    if (typeof showSection === 'function') showSection('designer');
-    showToast(`✅ Proyecto "${project.name}" cargado`, 'success');
-  } catch (e) { showToast('❌ Error al cargar: ' + e.message, 'danger'); console.error(e); }
-}
+    showSection('designer');
+    showToast('✅ Proyecto "' + project.name + '" cargado', 'success');
+  } catch (e) {
+    showToast('❌ Error al cargar: ' + e.message, 'danger');
+    console.error(e);
+  }
+};
 
-function deleteProject(id) {
+window.deleteProject = function(id) {
   if (!confirm('¿Eliminar este proyecto?')) return;
-  projects = projects.filter(p => p.id !== id);
+  projects = projects.filter(function(p) { return p.id !== id; });
   localStorage.setItem('aromaProjects', JSON.stringify(projects));
   loadAllProjects();
   showToast('🗑️ Proyecto eliminado', 'info');
-}
+};
 
-function addToPrintQueue() {
+// ==========================================
+// 🖨️ IMPRESIÓN Y RENDERIZADO RÁPIDO
+// ==========================================
+window.addToPrintQueue = function() {
   const labelPreview = document.getElementById('labelPreview');
   if (!labelPreview) { showToast('❌ No se encontró la vista previa', 'danger'); return; }
   try {
     const labelClone = labelPreview.cloneNode(true);
     const nombreProducto = productoActual && (productoActual.nombre || productoActual.nombreOriginal);
-    const item = { id: Date.now(), name: nombreProducto || document.getElementById('projectName')?.value || 'Sin nombre', config: getCurrentConfig(), content: getCurrentContent(), logoDataUrl: logoDataUrl, html: labelClone.outerHTML, qty: 1 };
+    const item = {
+      id: Date.now(),
+      name: nombreProducto || (document.getElementById('projectName') ? document.getElementById('projectName').value : '') || 'Sin nombre',
+      config: getCurrentConfig(),
+      content: getCurrentContent(),
+      logoDataUrl: logoDataUrl,
+      html: labelClone.outerHTML,
+      qty: 1
+    };
     printQueue.push(item);
     updatePrintQueueDisplay();
     updateSheetPreview();
     showToast('➕ Etiqueta añadida a la cola', 'success');
-  } catch (e) { showToast('❌ Error: ' + e.message, 'danger'); console.error(e); }
-}
+  } catch (e) {
+    showToast('❌ Error: ' + e.message, 'danger');
+    console.error(e);
+  }
+};
 
 function updatePrintQueueDisplay() {
   const queueEl = document.getElementById('printQueueList');
@@ -1223,37 +1473,32 @@ function updatePrintQueueDisplay() {
     queueEl.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">No hay etiquetas en la cola.</div>';
     return;
   }
-
-  printQueue.forEach((item, i) => {
+  printQueue.forEach(function(item, i) {
     const card = document.createElement('article');
-    card.className = 'batch-item queue-design-item';
+    card.className = 'queue-design-item';
     const preview = document.createElement('div');
     preview.className = 'queue-design-preview';
-    preview.setAttribute('aria-label', `Vista previa del diseño ${i + 1}`);
     preview.innerHTML = item.html || '';
     const label = preview.querySelector('.label');
     if (label) {
-      const widthMm = parseFloat(item.config?.width) || 60;
-      const heightMm = parseFloat(item.config?.height) || 80;
+      const widthMm = parseFloat(item.config && item.config.width) || 60;
+      const heightMm = parseFloat(item.config && item.config.height) || 80;
       const scale = Math.min(1, 150 / (widthMm * 3.7795), 165 / (heightMm * 3.7795));
-      label.style.width = `${widthMm}mm`;
-      label.style.height = `${heightMm}mm`;
-      label.style.transform = `scale(${scale})`;
+      label.style.width = widthMm + 'mm';
+      label.style.height = heightMm + 'mm';
+      label.style.transform = 'scale(' + scale + ')';
       label.style.transformOrigin = 'top left';
       label.style.boxShadow = '0 1px 5px rgba(0,0,0,.18)';
-      label.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+      label.querySelectorAll('[id]').forEach(function(el) { el.removeAttribute('id'); });
       label.removeAttribute('id');
-      preview.style.width = `${widthMm * 3.7795 * scale}px`;
-      preview.style.height = `${heightMm * 3.7795 * scale}px`;
-    } else {
-      preview.textContent = 'Vista previa no disponible';
+      preview.style.width = (widthMm * 3.7795 * scale) + 'px';
+      preview.style.height = (heightMm * 3.7795 * scale) + 'px';
     }
-
     const controls = document.createElement('div');
     controls.className = 'queue-design-controls';
     const title = document.createElement('div');
     title.className = 'queue-design-title';
-    title.textContent = `${i + 1}. ${item.name || item.content?.productName || 'Diseño sin nombre'}`;
+    title.textContent = (i + 1) + '. ' + (item.name || (item.content && item.content.productName) || 'Diseño sin nombre');
     const qtyLabel = document.createElement('label');
     qtyLabel.className = 'queue-qty-label';
     qtyLabel.textContent = 'Cantidad';
@@ -1263,8 +1508,7 @@ function updatePrintQueueDisplay() {
     qty.min = '1';
     qty.step = '1';
     qty.value = Math.max(1, parseInt(item.qty, 10) || 1);
-    qty.setAttribute('aria-label', `Cantidad para ${item.name || 'este diseño'}`);
-    qty.addEventListener('change', () => {
+    qty.addEventListener('change', function() {
       item.qty = Math.max(1, parseInt(qty.value, 10) || 1);
       qty.value = item.qty;
       updateSheetPreview();
@@ -1273,7 +1517,7 @@ function updatePrintQueueDisplay() {
     remove.type = 'button';
     remove.className = 'btn btn-danger btn-sm';
     remove.textContent = 'Quitar';
-    remove.addEventListener('click', () => {
+    remove.addEventListener('click', function() {
       printQueue.splice(i, 1);
       updatePrintQueueDisplay();
       updateSheetPreview();
@@ -1284,333 +1528,476 @@ function updatePrintQueueDisplay() {
   });
 }
 
-function updateSheetPreview() {
-  const total = printQueue.reduce((sum, item) => sum + item.qty, 0);
+const SHEET_SIZES = { 'A4': [210, 297], 'Carta': [216, 279], 'Oficio': [216, 356], 'A3': [297, 420], 'A5': [148, 210] };
+
+window.updateSheetPreview = function() {
+  const total = printQueue.reduce(function(sum, item) { return sum + Math.max(1, parseInt(item.qty) || 1); }, 0);
+  const designs = printQueue.length;
+  let per = 0, sheets = 0, eff = 0, sheetName = 'A4';
+  const sheetSel = document.getElementById('sheetSize');
+  if (sheetSel) sheetName = sheetSel.value;
+  if (designs > 0) {
+    const w = parseFloat(printQueue[0].config && printQueue[0].config.width) || 60;
+    const h = parseFloat(printQueue[0].config && printQueue[0].config.height) || 80;
+    const gv = function(id, d) { const el = document.getElementById(id); const n = el ? parseFloat(el.value) : NaN; return isNaN(n) ? d : n; };
+    const dims = SHEET_SIZES[sheetName] || SHEET_SIZES['A4'];
+    const pw = dims[0], ph = dims[1];
+    const ml = gv('marginLeft', 3), mr = gv('marginRight', 3);
+    const mt = gv('marginTop', 3), mb = gv('marginBottom', 3);
+    const sx = gv('spaceX', 0), sy = gv('spaceY', 0);
+    const cols = Math.max(0, Math.floor((pw - ml - mr + sx) / (w + sx)));
+    const rows = Math.max(0, Math.floor((ph - mt - mb + sy) / (h + sy)));
+    per = cols * rows;
+    sheets = per > 0 ? Math.ceil(total / per) : 0;
+    eff = (sheets > 0 && per > 0) ? Math.round((total / (sheets * per)) * 100) : 0;
+  }
   const statsEl = document.getElementById('printStats');
-  if (statsEl) statsEl.innerHTML = `<div class="stat"><div class="stat-value">${total}</div><div class="stat-label">Etiquetas</div></div><div class="stat"><div class="stat-value">${printQueue.length}</div><div class="stat-label">Diseños</div></div>`;
-}
+  if (statsEl) statsEl.innerHTML =
+    '<div class="stat"><div class="stat-value">' + total + '</div><div class="stat-label">Etiquetas en Cola</div></div>' +
+    '<div class="stat"><div class="stat-value">' + per + '</div><div class="stat-label">Por Hoja (' + sheetName + ')</div></div>' +
+    '<div class="stat"><div class="stat-value">' + sheets + '</div><div class="stat-label">Hojas Necesarias</div></div>' +
+    '<div class="stat"><div class="stat-value stat-highlight">' + eff + '%</div><div class="stat-label">Eficiencia</div></div>';
+};
+
+const PRINT_RENDER_SCALE = 4;
 
 async function renderLabelForPrint(item) {
-  const container = document.createElement('div'); container.style.cssText = 'position:absolute;left:-9999px;top:0;';
-  container.innerHTML = item.html; document.body.appendChild(container);
+  const container = document.createElement('div');
+  container.style.cssText = 'position:absolute;left:-9999px;top:0;';
+  container.innerHTML = item.html || '';
+  document.body.appendChild(container);
   const label = container.querySelector('.label');
-  const c = item.config;
-  label.style.setProperty('--label-width', c.width + 'mm'); label.style.setProperty('--label-height', c.height + 'mm');
-  label.style.setProperty('--label-padding', c.padding + 'mm'); label.style.setProperty('--border-radius', c.borderRadius + 'px');
-  label.style.setProperty('--top-line', c.topLine + 'px'); label.style.setProperty('--bottom-line', (c.bottomLine || 0) + 'px');
-  label.style.setProperty('--area-gap', c.areaGap + 'px'); label.style.setProperty('--accent-color', c.accentColor);
-  label.style.setProperty('--text-color', c.textColor); label.style.setProperty('--qr-size', c.qrSize + '%');
-  label.style.setProperty('--qr-bg', c.qrBgColor); label.style.setProperty('--brand-font', c.brandFont || "'Adelia', cursive");
+  if (!label) { document.body.removeChild(container); throw new Error('Etiqueta no disponible'); }
+  
+  const c = item.config || {};
+  const content = item.content || {};
+  const num = function(v, d) { const n = parseFloat(v); return isNaN(n) ? d : n; };
+  const widthMm = num(c.width, 60);
+  const heightMm = num(c.height, 80);
+  const areaGap = Math.max(0, Math.min(30, num(c.areaGap, 2)));
+  const qrSizeMm = Math.max(12, Math.min(Math.min(widthMm, heightMm) * 0.8, Math.min(widthMm, heightMm) * (num(c.qrSize, 34) / 100)));
+  const instructionsWidth = Math.max(20, Math.min(100, num(c.instructionsWidth, 100)));
+  const instructionsHeight = Math.max(10, Math.min(100, num(c.instructionsHeight, 100)));
+
+  label.style.setProperty('--label-width', widthMm + 'mm');
+  label.style.setProperty('--label-height', heightMm + 'mm');
+  label.style.setProperty('--label-padding', num(c.padding, 1.5) + 'mm');
+  label.style.setProperty('--border-radius', num(c.borderRadius, 4) + 'px');
+  label.style.setProperty('--area-gap', areaGap + 'px');
+  label.style.setProperty('--accent-color', c.accentColor || '#c9a96e');
+  label.style.setProperty('--text-color', c.textColor || '#1a1a1a');
+  label.style.setProperty('--qr-size', num(c.qrSize, 34) + '%');
+  label.style.setProperty('--brand-font', c.brandFont || "'Playfair Display', serif");
   label.style.setProperty('--product-font', c.productFont || "'Playfair Display', serif");
-  // Modo vinil: fondo transparente para impresión
-  if (c.vinylMode) {
-    label.style.backgroundColor = 'transparent';
-    label.classList.add('vinyl-mode');
-  } else {
-    label.style.backgroundColor = c.bgColor;
-    label.classList.remove('vinyl-mode');
+
+  label.className = 'label' + (c.vinylMode ? ' vinyl-mode' : '') + (c.labelShape ? ' shape-' + c.labelShape : '') + (c.boldTextMode ? ' bold-text' : '');
+  if (c.vinylMode) label.style.backgroundColor = 'transparent';
+  else label.style.backgroundColor = c.bgColor || '#ffffff';
+  label.style.borderRadius = num(c.borderRadius, 4) + 'px';
+  label.style.boxShadow = 'none';
+
+  const bw = num(c.borderWidth, 2), bc = c.borderColor || '#c9a96e', bs = c.borderStyle || 'solid';
+  if (c.fullBorder) label.style.border = bw + 'px ' + bs + ' ' + bc;
+  else {
+    if (c.topBorderOnly) label.style.borderTop = bw + 'px ' + bs + ' ' + bc;
+    if (c.bottomBorderOnly) label.style.borderBottom = bw + 'px ' + bs + ' ' + bc;
   }
-  label.style.borderRadius = c.borderRadius + 'px'; label.style.boxShadow = 'none';
 
-  const content = item.content;
-  const brandEl = label.querySelector('.label-logo'); const brandSubEl = label.querySelector('.label-logo-sub');
-  const productEl = label.querySelector('.label-name'); const typeEl = label.querySelector('.label-type');
-  const detailsEl = label.querySelector('.label-details'); const instrEl = label.querySelector('.label-instructions');
-  const batchEl = label.querySelector('.label-batch'); const originEl = label.querySelector('#previewOrigin');
-  if (brandEl) { brandEl.textContent = content.brandName || ''; brandEl.style.fontSize = c.fontBrand + 'px'; brandEl.style.fontFamily = c.brandFont; brandEl.style.color = c.textColor; if (c.vinylMode) brandEl.style.textShadow = '0 0 3px rgba(255,255,255,0.9), 0 0 6px rgba(255,255,255,0.7), 0 0 1px rgba(0,0,0,0.3)'; else brandEl.style.textShadow = 'none'; }
-  if (brandSubEl) { brandSubEl.textContent = content.brandSub || ''; brandSubEl.style.fontSize = c.fontBrandSub + 'px'; if (c.vinylMode) brandSubEl.style.textShadow = '0 0 2px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2)'; else brandSubEl.style.textShadow = 'none'; }
-  if (productEl) { productEl.textContent = content.productName || ''; productEl.style.fontSize = c.fontProduct + 'px'; productEl.style.fontFamily = c.productFont; productEl.style.color = c.textColor; if (c.vinylMode) productEl.style.textShadow = '0 0 4px rgba(255,255,255,0.95), 0 0 8px rgba(255,255,255,0.8), 0 0 1px rgba(0,0,0,0.4)'; else productEl.style.textShadow = 'none'; }
-  if (typeEl) { typeEl.textContent = content.productType || ''; typeEl.style.fontSize = c.fontType + 'px'; typeEl.style.color = c.accentColor; if (c.vinylMode) typeEl.style.textShadow = '0 0 3px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.3)'; else typeEl.style.textShadow = 'none'; }
-  if (detailsEl) { detailsEl.textContent = content.productDetails || ''; detailsEl.style.fontSize = c.fontDetails + 'px'; if (c.vinylMode) detailsEl.style.textShadow = '0 0 2px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2)'; else detailsEl.style.textShadow = 'none'; }
-  if (instrEl) { instrEl.textContent = content.instructions || ''; instrEl.style.fontSize = c.fontInstr + 'px'; instrEl.style.display = c.showInstructions ? 'block' : 'none'; if (c.vinylMode) instrEl.style.textShadow = '0 0 2px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2)'; else instrEl.style.textShadow = 'none'; }
-  if (batchEl) { batchEl.textContent = content.batchInfo || ''; batchEl.style.fontSize = c.fontBatch + 'px'; batchEl.style.color = c.textColor; if (c.vinylMode) batchEl.style.textShadow = '0 0 2px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2)'; else batchEl.style.textShadow = 'none'; }
-  if (originEl) { originEl.textContent = content.originInfo || ''; originEl.style.fontSize = c.fontOrigin + 'px'; if (c.vinylMode) originEl.style.textShadow = '0 0 2px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.2)'; else originEl.style.textShadow = 'none'; }
+  const brandEl = label.querySelector('.label-logo');
+  const brandSubEl = label.querySelector('.label-logo-sub');
+  const productEl = label.querySelector('.label-name');
+  const typeEl = label.querySelector('.label-type');
+  const detailsEl = label.querySelector('#previewDetails');
+  const priceEl = label.querySelector('#previewPrice');
+  const instrEl = label.querySelector('.label-instructions');
+  const batchEl = label.querySelector('.label-batch');
+  const originEl = label.querySelector('#previewOrigin');
+  const dividerEl = label.querySelector('#labelDivider');
 
-  const topLineEl = label.querySelector('.label-top-line');
-  if (topLineEl) { topLineEl.style.height = c.topLine + 'px'; topLineEl.style.backgroundColor = c.accentColor; topLineEl.style.display = c.topLine > 0 ? 'block' : 'none'; }
-  const bottomLineEl = label.querySelector('.label-bottom-line');
-  if (bottomLineEl) { bottomLineEl.style.height = (c.bottomLine || 0) + 'px'; bottomLineEl.style.backgroundColor = c.accentColor; bottomLineEl.style.display = (c.bottomLine || 0) > 0 ? 'block' : 'none'; }
-  const dividerEl = label.querySelector('.label-divider'); if (dividerEl) dividerEl.style.display = c.showDivider ? 'block' : 'none';
-  const footerEl = label.querySelector('.label-footer'); if (footerEl) footerEl.style.display = c.showFooter !== false ? 'flex' : 'none';
+  if (brandEl) { brandEl.textContent = content.brandName || ''; brandEl.style.fontSize = num(c.fontBrand, 21) + 'px'; brandEl.style.fontFamily = c.brandFont || 'inherit'; brandEl.style.color = c.textColor || '#1a1a1a'; }
+  if (brandSubEl) { brandSubEl.textContent = content.brandSub || ''; brandSubEl.style.fontSize = num(c.fontBrandSub, 0) + 'px'; }
+  if (productEl) { productEl.textContent = content.productName || 'Producto'; productEl.style.display = 'block'; productEl.style.fontSize = num(c.fontProduct, 19) + 'px'; productEl.style.fontFamily = c.productFont || 'inherit'; productEl.style.color = c.textColor || '#1a1a1a'; }
+  if (typeEl) { typeEl.textContent = content.productType || ''; typeEl.style.fontSize = num(c.fontType, 10) + 'px'; typeEl.style.color = c.accentColor || '#c9a96e'; }
+  if (detailsEl) { detailsEl.textContent = content.productDetails || ''; detailsEl.style.fontSize = num(c.fontDetails, 9) + 'px'; detailsEl.style.display = c.showDetails ? 'block' : 'none'; }
+  if (priceEl) {
+    if (c.showPrice && content.productPrice) {
+      priceEl.textContent = content.productPrice;
+      priceEl.style.display = 'block';
+      priceEl.style.fontSize = (num(c.fontDetails, 9) + 1) + 'px';
+      priceEl.style.color = c.accentColor || '#c9a96e';
+      priceEl.style.fontWeight = 'bold';
+    } else priceEl.style.display = 'none';
+  }
 
-  const qrEl = label.querySelector('.label-qr');
-  if (qrEl && c.showQR) {
-    qrEl.style.display = 'flex';
-    qrEl.style.width = c.qrSize + '%';
-    qrEl.style.height = 'auto';
-    qrEl.style.aspectRatio = '1 / 1';
-    // Fondo blanco opaco + quiet zone para vinil transparente
-    qrEl.style.backgroundColor = '#ffffff';
-    qrEl.style.padding = '3px';
-    qrEl.style.boxSizing = 'border-box';
-    try {
-      const qr = qrcode(0, 'H'); // máxima corrección de errores (30%)
-      qr.addData(content.qrUrl || 'https://example.com');
-      qr.make();
-      const moduleCount = qr.getModuleCount();
-      // Generar QR como tabla HTML para máxima compatibilidad
-      let qrHtml = '<table style="border-collapse:collapse;width:100%;height:100%;table-layout:fixed;">';
-      for (let row = 0; row < moduleCount; row++) {
-        qrHtml += '<tr style="height:' + (100 / moduleCount) + '%;">';
-        for (let col = 0; col < moduleCount; col++) {
-          const isDark = qr.isDark(row, col);
-          qrHtml += '<td style="width:' + (100 / moduleCount) + '%;background:' + (isDark ? '#000000' : '#ffffff') + ';padding:0;margin:0;border:none;min-width:1px;min-height:1px;">&nbsp;</td>';
-        }
-        qrHtml += '</tr>';
+  const productImg = label.querySelector('#previewProductImg');
+  const productImgState = c.imagenProducto || {};
+  if (productImg) {
+    const imageActive = productImgState.activa !== false && (productImgState.url || productImg.getAttribute('src'));
+    productImg.classList.add('label-product-img');
+    productImg.style.position = 'absolute';
+    productImg.style.left = num(productImgState.posX, 50) + '%';
+    productImg.style.top = num(productImgState.posY, 30) + '%';
+    productImg.style.width = num(productImgState.tamano, 30) + '%';
+    productImg.style.height = 'auto';
+    productImg.style.opacity = String(num(productImgState.opacidad, 22) / 100);
+    productImg.style.transform = 'translate(-50%, -50%) rotate(' + num(productImgState.rotacion, 0) + 'deg)';
+    productImg.style.zIndex = '2';
+    productImg.style.pointerEvents = 'none';
+    productImg.style.display = imageActive ? 'block' : 'none';
+  }
+  if (dividerEl) {
+    const dividerColor = c.dividerColor || '#c9a96e';
+    const dividerWidth = num(c.dividerWidth, 1);
+    dividerEl.style.borderTop = dividerWidth + 'px solid ' + dividerColor;
+    if (c.showDivider) dividerEl.classList.add('visible');
+    else dividerEl.classList.remove('visible');
+  }
+
+  if (instrEl) {
+    instrEl.textContent = content.instructions || '';
+    instrEl.style.fontSize = num(c.fontInstr, 10) + 'px';
+    instrEl.style.width = instructionsWidth + '%';
+    instrEl.style.maxHeight = instructionsHeight + '%';
+    instrEl.style.maxWidth = '100%';
+    instrEl.style.boxSizing = 'border-box';
+    instrEl.style.display = c.showInstructions !== false ? 'block' : 'none';
+    if (c.frostedBg) instrEl.classList.add('frosted-bg');
+    else instrEl.classList.remove('frosted-bg');
+  }
+  if (batchEl) { batchEl.textContent = content.batchInfo || ''; batchEl.style.fontSize = num(c.fontBatch, 9) + 'px'; batchEl.style.color = c.textColor || '#1a1a1a'; }
+  if (originEl) { originEl.textContent = content.originInfo || ''; originEl.style.fontSize = num(c.fontOrigin, 8) + 'px'; }
+
+  const footerEl = label.querySelector('.label-footer');
+  if (footerEl) footerEl.style.display = c.showFooter !== false ? 'flex' : 'none';
+
+  // 📱 GENERACIÓN DE QR PARA EXPORTACIÓN/IMPRESIÓN
+  const qrEl = label.querySelector('.label-qr') || label.querySelector('#previewQR');
+  if (qrEl) {
+    const isQrVisible = c.showQR || c.usarQRProducto;
+    if (isQrVisible) {
+      qrEl.style.display = 'block';
+      qrEl.style.setProperty('width', qrSizeMm + 'mm', 'important');
+      qrEl.style.setProperty('height', qrSizeMm + 'mm', 'important');
+      qrEl.style.setProperty('min-width', qrSizeMm + 'mm', 'important');
+      qrEl.style.setProperty('min-height', qrSizeMm + 'mm', 'important');
+      qrEl.style.aspectRatio = '1 / 1';
+      qrEl.style.backgroundColor = '#ffffff';
+      qrEl.style.padding = '2px';
+      qrEl.style.boxSizing = 'border-box';
+      qrEl.style.position = 'absolute';
+      qrEl.style.left = (c.qrPosX != null ? c.qrPosX : 20) + '%';
+      qrEl.style.top = (c.qrPosY != null ? c.qrPosY : 80) + '%';
+      qrEl.style.transform = 'translate(-50%, -50%) rotate(' + (c.qrRotation || 0) + 'deg)';
+      qrEl.style.zIndex = '6';
+      
+      try {
+        const qrCanvas = buildQRCanvas(
+          content.qrUrl || 'https://example.com', 
+          400 * PRINT_RENDER_SCALE, 
+          c.qrColor || '#000000', 
+          '#ffffff'
+        );
+        qrCanvas.style.width = '100%';
+        qrCanvas.style.height = '100%';
+        qrCanvas.style.display = 'block';
+        qrEl.innerHTML = '';
+        qrEl.appendChild(qrCanvas);
+      } catch (e) {
+        console.warn('Error al generar el QR para impresión:', e);
       }
-      qrHtml += '</table>';
-      qrEl.innerHTML = qrHtml;
-    } catch (e) { 
-      console.error('QR render error:', e);
-      qrEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:0.5rem;color:#999;text-align:center;padding:2px;">QR<br>Error</div>'; 
+    } else {
+      qrEl.style.display = 'none';
     }
-  } else if (qrEl) { qrEl.style.display = 'none'; }
-
-  const logoImg = label.querySelector('.label-logo-img');
-  if (logoImg) {
-    if (item.logoDataUrl) {
-      logoImg.src = item.logoDataUrl; logoImg.style.display = 'block';
-      if (brandEl) brandEl.style.display = 'none'; if (brandSubEl) brandSubEl.style.display = 'none';
-      logoImg.style.maxHeight = (parseInt(c.height) * 0.15) + 'mm';
-    } else { logoImg.style.display = 'none'; if (brandEl) brandEl.style.display = 'block'; if (brandSubEl) brandSubEl.style.display = 'block'; }
   }
 
-  const logoArea = label.querySelector('.label-logo-area'); const productArea = label.querySelector('.label-product');
-  if (logoArea) logoArea.style.padding = (parseInt(c.areaGap) * 0.5) + 'px 0';
-  if (productArea) productArea.style.padding = (parseInt(c.areaGap) * 0.5) + 'px 0';
-  if (instrEl) instrEl.style.padding = (parseInt(c.areaGap) * 0.5) + 'px 0';
-  if (footerEl) footerEl.style.paddingTop = c.areaGap + 'px';
+  const barcodeWrap = label.querySelector('.label-barcode-wrap');
+  const barcodeId = c.productId || '';
+  if (barcodeWrap) {
+    if (c.showBarcode && barcodeId && typeof JsBarcode === 'function') {
+      try {
+        barcodeWrap.style.display = 'flex';
+        barcodeWrap.classList.add('is-positioned');
+        barcodeWrap.style.position = 'absolute';
+        barcodeWrap.style.left = (c.barcodePosX != null ? c.barcodePosX : 71) + '%';
+        barcodeWrap.style.top = (c.barcodePosY != null ? c.barcodePosY : 89) + '%';
+        barcodeWrap.style.transform = 'translate(-50%, -50%) rotate(' + (c.barcodeRotation || 0) + 'deg)';
+        barcodeWrap.style.zIndex = '6';
+        const bcCanvas = document.createElement('canvas');
+        JsBarcode(bcCanvas, barcodeId, {
+          format: 'CODE128', displayValue: true, text: barcodeId,
+          font: 'monospace', fontSize: 10 * PRINT_RENDER_SCALE,
+          textMargin: 1 * PRINT_RENDER_SCALE, margin: 2 * PRINT_RENDER_SCALE,
+          height: 32 * PRINT_RENDER_SCALE, width: 1.5 * PRINT_RENDER_SCALE,
+          lineColor: '#111111', background: '#ffffff'
+        });
+        bcCanvas.style.maxWidth = '90%';
+        bcCanvas.style.maxHeight = '14mm';
+        bcCanvas.style.display = 'block';
+        const oldSvg = barcodeWrap.querySelector('svg');
+        if (oldSvg) oldSvg.style.display = 'none';
+        const oldCanvas = barcodeWrap.querySelector('canvas');
+        if (oldCanvas && oldCanvas !== bcCanvas) oldCanvas.remove();
+        barcodeWrap.appendChild(bcCanvas);
+      } catch (e) { barcodeWrap.style.display = 'none'; }
+    } else {
+      barcodeWrap.style.display = 'none';
+    }
+  }
 
-  if (item.logoDataUrl && logoImg) { await new Promise(resolve => { if (logoImg.complete) resolve(); else { logoImg.onload = resolve; logoImg.onerror = resolve; } }); }
-  const canvas = await html2canvas(label, { scale: 4, backgroundColor: c.vinylMode ? null : c.bgColor, useCORS: true, logging: false });
+  const logoArea = label.querySelector('.label-logo-area');
+  const productArea = label.querySelector('.label-product');
+  if (logoArea) logoArea.style.padding = areaGap + 'px 0';
+  if (productArea) productArea.style.padding = areaGap + 'px 0';
+  if (instrEl) instrEl.style.padding = areaGap + 'px 0';
+  if (footerEl) footerEl.style.paddingTop = areaGap + 'px';
+
+  const setPrintAreaPosition = function(area, xKey, yKey) {
+    if (!area) return;
+    const x = num(c[xKey], 0);
+    const y = num(c[yKey], 0);
+    area.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+  };
+  setPrintAreaPosition(logoArea, 'logoAreaX', 'logoAreaY');
+  setPrintAreaPosition(productArea, 'productAreaX', 'productAreaY');
+  setPrintAreaPosition(instrEl, 'instructionsAreaX', 'instructionsAreaY');
+  setPrintAreaPosition(footerEl, 'footerAreaX', 'footerAreaY');
+
+  const imgs = label.querySelectorAll('img');
+  await Promise.all(Array.from(imgs).map(function(img) {
+    if (img.complete) return Promise.resolve();
+    return new Promise(function(res) { img.onload = res; img.onerror = res; setTimeout(res, 2000); });
+  }));
+  await new Promise(function(r) { setTimeout(r, 60); });
+
+  const canvas = await html2canvas(label, {
+    scale: PRINT_RENDER_SCALE,
+    backgroundColor: c.vinylMode ? null : (c.bgColor || '#ffffff'),
+    useCORS: true,
+    logging: false,
+    width: label.offsetWidth,
+    height: label.offsetHeight
+  });
   document.body.removeChild(container);
   return canvas;
 }
 
-function printLabels() {
-    if (printQueue.length === 0) {
-        showToast('️ No hay etiquetas en la cola', 'warning');
-        return;
+window.printLabels = async function() {
+  if (printQueue.length === 0) { showToast('🖨️ No hay etiquetas en la cola', 'warning'); return; }
+  showToast('🖨️ Preparando impresión...', 'info');
+  const firstItem = printQueue[0];
+  const widthMm = parseInt(firstItem.config && firstItem.config.width) || 60;
+  const heightMm = parseInt(firstItem.config && firstItem.config.height) || 80;
+  try {
+    const printContainer = document.createElement('div');
+    printContainer.className = 'print-area';
+    const sheetName = document.getElementById('sheetSize') ? document.getElementById('sheetSize').value : 'A4';
+    const sheet = SHEET_SIZES[sheetName] || SHEET_SIZES.A4;
+    const readMm = function(id, fallback) {
+      const el = document.getElementById(id);
+      const value = el ? parseFloat(el.value) : NaN;
+      return Number.isFinite(value) && value >= 0 ? value : fallback;
+    };
+    const marginTop = readMm('marginTop', 3);
+    const marginRight = readMm('marginRight', 3);
+    const marginBottom = readMm('marginBottom', 3);
+    const marginLeft = readMm('marginLeft', 3);
+    const spaceX = readMm('spaceX', 0);
+    const spaceY = readMm('spaceY', 0);
+    printContainer.style.cssText = [
+      'position:fixed', 'top:0', 'left:0',
+      'width:' + sheet[0] + 'mm', 'height:' + sheet[1] + 'mm',
+      'background:white', 'z-index:9999',
+      'padding:' + marginTop + 'mm ' + marginRight + 'mm ' + marginBottom + 'mm ' + marginLeft + 'mm',
+      'box-sizing:border-box', 'overflow:hidden', 'display:flex',
+      'flex-wrap:wrap', 'align-content:flex-start',
+      'column-gap:' + spaceX + 'mm', 'row-gap:' + spaceY + 'mm'
+    ].join(';');
+    const cache = new Map();
+    const getCanvas = async function(item) {
+      if (!cache.has(item.id)) cache.set(item.id, await renderLabelForPrint(item));
+      return cache.get(item.id);
+    };
+    for (let i = 0; i < printQueue.length; i++) {
+      const item = printQueue[i];
+      const qty = Math.max(1, parseInt(item.qty) || 1);
+      const itW = parseFloat(item.config && item.config.width) || widthMm;
+      const itH = parseFloat(item.config && item.config.height) || heightMm;
+      const src = await getCanvas(item);
+      for (let j = 0; j < qty; j++) {
+        const copy = document.createElement('canvas');
+        copy.width = src.width;
+        copy.height = src.height;
+        copy.getContext('2d').drawImage(src, 0, 0);
+        copy.style.width = itW + 'mm';
+        copy.style.height = itH + 'mm';
+        copy.style.flex = '0 0 auto';
+        copy.style.display = 'block';
+        copy.style.margin = '0';
+        copy.style.objectFit = 'fill';
+        copy.style.pageBreakInside = 'avoid';
+        copy.style.breakInside = 'avoid';
+        printContainer.appendChild(copy);
+      }
     }
+    document.body.appendChild(printContainer);
+    await new Promise(function(r) { setTimeout(r, 400); });
+    window.print();
+    setTimeout(function() { if (printContainer.parentNode) document.body.removeChild(printContainer); }, 1500);
+  } catch (e) {
+    showToast('❌ Error al imprimir: ' + e.message, 'danger');
+    console.error(e);
+  }
+};
 
-    // ✅ OBTENER DIMENSIONES DE LA PRIMERA ETIQUETA
+// ==========================================
+// 📄 EXPORTACIÓN PDF / PNG
+// ==========================================
+window.exportSinglePDF = async function() {
+  showToast('📄 Generando PDF...', 'info');
+  try {
+    if (typeof window.jspdf === 'undefined' && typeof jspdf === 'undefined') {
+      showToast('⚠️ Librería jsPDF no cargada', 'warning');
+      return;
+    }
+    const { jsPDF } = window.jspdf;
+    const widthMm = parseInt(document.getElementById('labelWidth').value);
+    const heightMm = parseInt(document.getElementById('labelHeight').value);
+    const pdf = new jsPDF({
+      orientation: heightMm > widthMm ? 'portrait' : 'landscape',
+      unit: 'mm',
+      format: [widthMm, heightMm]
+    });
+    const fakeItem = {
+      config: getCurrentConfig(),
+      content: getCurrentContent(),
+      logoDataUrl: logoDataUrl,
+      html: document.getElementById('labelPreview').outerHTML
+    };
+    const canvas = await renderLabelForPrint(fakeItem);
+    const imgData = canvas.toDataURL('image/png');
+    pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
+    pdf.save('etiqueta_' + (document.getElementById('productName') ? document.getElementById('productName').value : 'etiqueta') + '.pdf');
+    showToast('✅ PDF exportado', 'success');
+  } catch (e) {
+    showToast('❌ Error: ' + e.message, 'danger');
+    console.error(e);
+  }
+};
+
+window.exportQueuePDF = async function() {
+  if (printQueue.length === 0) { showToast('⚠️ No hay etiquetas en la cola', 'warning'); return; }
+  showToast('📄 Generando PDF con ' + printQueue.length + ' diseños...', 'info');
+  try {
+    if (typeof window.jspdf === 'undefined' && typeof jspdf === 'undefined') {
+      showToast('⚠️ Librería jsPDF no cargada', 'warning');
+      return;
+    }
+    const { jsPDF } = window.jspdf;
     const firstItem = printQueue[0];
     const widthMm = parseInt(firstItem.config.width) || 60;
     const heightMm = parseInt(firstItem.config.height) || 80;
-
-    // Crear contenedor temporal para impresión
-    const printContainer = document.createElement('div');
-    printContainer.className = 'print-area';
-    printContainer.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: white;
-        z-index: 9999;
-        padding: 20px;
-        box-sizing: border-box;
-        overflow: auto;
-        display: flex;
-        flex-wrap: wrap;
-        align-content: flex-start;
-        gap: 10px;
-    `;
-
-    // Agregar todas las etiquetas
-    printQueue.forEach(item => {
-        const qty = item.qty || 1;
-        for (let i = 0; i < qty; i++) {
-            const labelDiv = document.createElement('div');
-            labelDiv.innerHTML = item.html;
-            labelDiv.style.cssText = `
-                page-break-inside: avoid;
-                break-inside: avoid;
-                margin: 5px;
-                width: ${widthMm}mm;
-                height: ${heightMm}mm;
-            `;
-            printContainer.appendChild(labelDiv);
-        }
+    const sheetName = document.getElementById('sheetSize') ? document.getElementById('sheetSize').value : 'A4';
+    const sheet = SHEET_SIZES[sheetName] || SHEET_SIZES.A4;
+    const readMm = function(id, fallback) {
+      const el = document.getElementById(id);
+      const value = el ? parseFloat(el.value) : NaN;
+      return Number.isFinite(value) && value >= 0 ? value : fallback;
+    };
+    const marginTop = readMm('marginTop', 3);
+    const marginRight = readMm('marginRight', 3);
+    const marginBottom = readMm('marginBottom', 3);
+    const marginLeft = readMm('marginLeft', 3);
+    const spaceX = readMm('spaceX', 0);
+    const spaceY = readMm('spaceY', 0);
+    const pdf = new jsPDF({
+      orientation: sheet[1] >= sheet[0] ? 'portrait' : 'landscape',
+      unit: 'mm', format: [sheet[0], sheet[1]]
     });
-
-    document.body.appendChild(printContainer);
-    
-    // Imprimir
-    setTimeout(() => {
-        window.print();
-        // Limpiar después de imprimir
-        setTimeout(() => {
-            document.body.removeChild(printContainer);
-        }, 1000);
-    }, 500);
-}
-
-async function exportSinglePDF() {
-    showToast('📄 Generando PDF...', 'info');
-    try {
-        if (typeof window.jspdf === 'undefined' && typeof jspdf === 'undefined') {
-            showToast('⚠️ Librería jsPDF no cargada', 'warning');
-            return;
-        }
-
-        const { jsPDF } = window.jspdf;
-        const widthMm = parseInt(document.getElementById('labelWidth').value);
-        const heightMm = parseInt(document.getElementById('labelHeight').value);
-        
-        // Crear PDF con tamaño de etiqueta
-        const pdf = new jsPDF({
-            orientation: heightMm > widthMm ? 'portrait' : 'landscape',
-            unit: 'mm',
-            format: [widthMm, heightMm]
-        });
-
-        // Generar canvas de la etiqueta actual
-        const fakeItem = {
-            config: getCurrentConfig(),
-            content: getCurrentContent(),
-            logoDataUrl: logoDataUrl,
-            html: document.getElementById('labelPreview').outerHTML
-        };
-        
-        const canvas = await renderLabelForPrint(fakeItem);
-        const imgData = canvas.toDataURL('image/png');
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
-        pdf.save('etiqueta_' + (document.getElementById('productName')?.value || 'etiqueta') + '.pdf');
-        showToast('✅ PDF exportado', 'success');
-    } catch (e) {
-        showToast('❌ Error: ' + e.message, 'danger');
-        console.error(e);
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const pdfCache = new Map();
+    const getItemCanvas = async function(item) {
+      if (!pdfCache.has(item.id)) pdfCache.set(item.id, await renderLabelForPrint(item));
+      return pdfCache.get(item.id);
+    };
+    let cursor = 0;
+    let curW = parseFloat(firstItem.config && firstItem.config.width) || 60;
+    let curH = parseFloat(firstItem.config && firstItem.config.height) || 80;
+    let cols = Math.max(1, Math.floor((pageWidth - marginLeft - marginRight + spaceX) / (curW + spaceX)));
+    let rows = Math.max(1, Math.floor((pageHeight - marginTop - marginBottom + spaceY) / (curH + spaceY)));
+    let labelIndex = 0;
+    for (let i = 0; i < printQueue.length; i++) {
+      const item = printQueue[i];
+      const qty = Math.max(1, parseInt(item.qty) || 1);
+      const w = parseFloat(item.config && item.config.width) || 60;
+      const h = parseFloat(item.config && item.config.height) || 80;
+      if (w !== curW || h !== curH) {
+        pdf.addPage();
+        curW = w; curH = h;
+        cols = Math.max(1, Math.floor((pageWidth - marginLeft - marginRight + spaceX) / (w + spaceX)));
+        rows = Math.max(1, Math.floor((pageHeight - marginTop - marginBottom + spaceY) / (h + spaceY)));
+        cursor = 0;
+      }
+      const perPage = cols * rows;
+      for (let j = 0; j < qty; j++) {
+        if (cursor >= perPage) { pdf.addPage(); cursor = 0; }
+        const col = cursor % cols;
+        const row = Math.floor(cursor / cols);
+        const x = marginLeft + col * (w + spaceX);
+        const y = marginTop + row * (h + spaceY);
+        const canvas = await getItemCanvas(item);
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, w, h);
+        cursor++;
+        labelIndex++;
+      }
     }
-}
+    pdf.save('etiquetas_impresion_' + new Date().getTime() + '.pdf');
+    showToast('✅ PDF con ' + labelIndex + ' etiquetas exportado', 'success');
+  } catch (e) {
+    showToast('❌ Error: ' + e.message, 'danger');
+    console.error(e);
+  }
+};
 
-async function exportQueuePDF() {
-    if (printQueue.length === 0) {
-        showToast('️ No hay etiquetas en la cola', 'warning');
-        return;
-    }
-
-    showToast('📄 Generando PDF con ' + printQueue.length + ' diseños...', 'info');
-    
-    try {
-        if (typeof window.jspdf === 'undefined' && typeof jspdf === 'undefined') {
-            showToast('⚠️ Librería jsPDF no cargada', 'warning');
-            return;
-        }
-
-        const { jsPDF } = window.jspdf;
-        
-        // ✅ OBTENER DIMENSIONES DE LA PRIMERA ETIQUETA EN COLA
-        const firstItem = printQueue[0];
-        const widthMm = parseInt(firstItem.config.width) || 60;
-        const heightMm = parseInt(firstItem.config.height) || 80;
-        
-        // Crear PDF en tamaño carta o A4
-        const pdf = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'letter'
-        });
-
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        
-        // Calcular cuántas etiquetas caben por página
-        const cols = Math.floor((pageWidth - 20) / (widthMm + 5));
-        const rows = Math.floor((pageHeight - 20) / (heightMm + 5));
-        const labelsPerPage = cols * rows;
-
-        let labelIndex = 0;
-        let isFirstPage = true;
-
-        for (let item of printQueue) {
-            const qty = item.qty || 1;
-            
-            for (let i = 0; i < qty; i++) {
-                // Calcular posición en la página
-                const pageIndex = Math.floor(labelIndex / labelsPerPage);
-                const posInPage = labelIndex % labelsPerPage;
-                const col = posInPage % cols;
-                const row = Math.floor(posInPage / cols);
-                
-                // Agregar nueva página si es necesario
-                if (posInPage === 0 && !isFirstPage) {
-                    pdf.addPage();
-                }
-                isFirstPage = false;
-
-                // Generar canvas de la etiqueta
-                const canvas = await renderLabelForPrint(item);
-                const imgData = canvas.toDataURL('image/png');
-                
-                // Calcular posición
-                const x = 10 + col * (widthMm + 5);
-                const y = 10 + row * (heightMm + 5);
-                
-                pdf.addImage(imgData, 'PNG', x, y, widthMm, heightMm);
-                labelIndex++;
-            }
-        }
-
-        pdf.save('etiquetas_impression_' + new Date().getTime() + '.pdf');
-        showToast('✅ PDF con ' + labelIndex + ' etiquetas exportado', 'success');
-    } catch (e) {
-        showToast('❌ Error: ' + e.message, 'danger');
-        console.error(e);
-    }
-}
-async function exportPNG() {
-  showToast('️ Generando PNG...', 'info');
+window.exportPNG = async function() {
+  showToast('🖼️ Generando PNG...', 'info');
   try {
-    const fakeItem = { config: getCurrentConfig(), content: getCurrentContent(), logoDataUrl: logoDataUrl, html: document.getElementById('labelPreview').outerHTML };
+    const fakeItem = {
+      config: getCurrentConfig(),
+      content: getCurrentContent(),
+      logoDataUrl: logoDataUrl,
+      html: document.getElementById('labelPreview').outerHTML
+    };
     const canvas = await renderLabelForPrint(fakeItem);
     const link = document.createElement('a');
-    link.download = 'etiqueta_' + (document.getElementById('productName')?.value || 'etiqueta') + '.png';
+    link.download = 'etiqueta_' + (document.getElementById('productName') ? document.getElementById('productName').value : 'etiqueta') + '.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
     showToast('✅ PNG exportado', 'success');
-  } catch (e) { showToast('❌ Error: ' + e.message, 'danger'); console.error(e); }
-}
+  } catch (e) {
+    showToast('❌ Error: ' + e.message, 'danger');
+    console.error(e);
+  }
+};
 
-async function exportCatalogPNGs(button) {
-  const category = document.getElementById('categoriaProducto')?.value;
+window.exportCatalogPNGs = async function(button) {
+  const category = document.getElementById('categoriaProducto') ? document.getElementById('categoriaProducto').value : '';
   const products = category ? (productosData[category] || []) : [];
   const status = document.getElementById('estadoExportacionCatalogo');
-  if (!category) { showToast('Selecciona primero la categoría/catálogo JSON.', 'warning'); return; }
-  if (!products.length) { showToast('No hay productos cargados en esta categoría. Espera a que cargue el catálogo.', 'warning'); return; }
-  if (typeof JSZip === 'undefined') { showToast('No se pudo cargar el generador ZIP. Revisa tu conexión e inténtalo de nuevo.', 'danger'); return; }
-
-  const idsToSave = ['brandName', 'brandSub', 'productName', 'productType', 'productDetails', 'productPrice', 'showPrice', 'instructions', 'qrUrl', 'projectName', 'batchInfo', 'originInfo'];
-  const savedFields = {};
-  idsToSave.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) savedFields[id] = el.type === 'checkbox' ? el.checked : el.value;
-  });
-  const variantSelect = document.getElementById('varianteSeleccionada');
-  const savedVariant = variantSelect?.value;
-  const savedProduct = productoActual;
-  const savedImageState = window.estadoImagenProducto ? { ...window.estadoImagenProducto } : null;
-  const useProductImage = document.getElementById('usarImagenProducto')?.checked || false;
-  const useProductQR = document.getElementById('usarQRProducto')?.checked || false;
-  const originalImageToggle = document.getElementById('usarImagenProducto')?.checked;
-  const originalQrToggle = document.getElementById('usarQRProducto')?.checked;
-  const zip = new JSZip();
-  const exportFolder = zip.folder(String(category).toLowerCase());
-  const failures = [];
-  let generated = 0;
-
+  if (!category) { showToast('Selecciona primero la categoría.', 'warning'); return; }
+  if (!products.length) { showToast('No hay productos cargados.', 'warning'); return; }
+  if (typeof JSZip === 'undefined') { showToast('No se pudo cargar JSZip.', 'danger'); return; }
+  showToast('Generando ' + products.length + ' PNG...', 'info');
   if (button) button.disabled = true;
-  if (status) status.textContent = `Preparando ${products.length} productos…`;
-  showToast(`Generando ${products.length} PNG del catálogo ${category}…`, 'info');
-
+  if (status) status.textContent = 'Preparando ' + products.length + ' productos…';
   try {
+    const zip = new JSZip();
+    const exportFolder = zip.folder(String(category).toLowerCase());
+    let generated = 0;
     for (let i = 0; i < products.length; i++) {
       const product = products[i];
-      const name = product.nombre || product.nombreOriginal || `producto_${i + 1}`;
+      const name = product.nombre || product.nombreOriginal || 'producto_' + (i + 1);
       try {
-        productoActual = product;
         const nameEl = document.getElementById('productName');
         const projectEl = document.getElementById('projectName');
         const typeEl = document.getElementById('productType');
@@ -1619,31 +2006,12 @@ async function exportCatalogPNGs(button) {
         const instructionsEl = document.getElementById('instructions');
         if (nameEl) nameEl.value = name;
         if (projectEl) projectEl.value = name;
-        if (typeEl) typeEl.value = product.categoria || product.categoriaOrigen || product.tipo || savedFields.productType || '';
-        if (instructionsEl) instructionsEl.value = product.info || product.descripcion || product.beneficios || savedFields.instructions || '';
-
-        const variant = Array.isArray(product.variantes) && product.variantes.length ? product.variantes[0] : null;
-        if (variantSelect) variantSelect.value = variant ? '0' : '';
-        const detailParts = [];
-        if (product.duracion) detailParts.push(product.duracion);
-        if (variant?.nombre) detailParts.push(variant.nombre);
-        if (detailsEl) detailsEl.value = detailParts.join(' · ');
-        const productPrice = variant ? variant.precio : (product.precioOferta || product.precio);
-        if (priceEl) priceEl.value = productPrice ? formatPrecio(productPrice) : '';
-
-        if (useProductImage && product.imagen && savedImageState) {
-          window.estadoImagenProducto = { ...savedImageState, activa: true, url: normalizarURL(product.imagen) };
-        } else if (savedImageState) {
-          window.estadoImagenProducto = useProductImage
-            ? { ...savedImageState, activa: false, url: '' }
-            : { ...savedImageState };
-        }
-        const qrType = document.querySelector('input[name="tipoQR"]:checked')?.value;
-        if (useProductQR && (qrType === 'producto' || qrType === 'json')) actualizarQR();
-        else updateLabel();
-
-        // Esperar un momento para que la vista previa y las imágenes del producto se actualicen.
-        await new Promise(resolve => setTimeout(resolve, 80));
+        if (typeEl) typeEl.value = product.categoria || product.categoriaOrigen || '';
+        if (instructionsEl) instructionsEl.value = product.info || product.descripcion || '';
+        const precio = product.precioOferta || product.precio;
+        if (priceEl) priceEl.value = precio ? formatPrecio(precio) : '';
+        updateLabel();
+        await new Promise(function(r) { setTimeout(r, 80); });
         const currentLabel = document.getElementById('labelPreview');
         const item = {
           config: getCurrentConfig(),
@@ -1652,60 +2020,48 @@ async function exportCatalogPNGs(button) {
           html: currentLabel.outerHTML
         };
         const canvas = await renderLabelForPrint(item);
-        const pngBlob = await new Promise((resolve, reject) => {
-          canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('No se pudo crear el PNG')), 'image/png');
+        const pngBlob = await new Promise(function(resolve, reject) {
+          canvas.toBlob(function(blob) { blob ? resolve(blob) : reject(new Error('No se pudo crear el PNG')); }, 'image/png');
         });
-        const slug = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9_-]+/gi, '_').replace(/^_+|_+$/g, '') || 'producto';
-        const productId = slug(product.id ?? 'sin_id');
+        const slug = function(value) { return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9_-]+/gi, '_').replace(/^_+|_+$/g, '') || 'producto'; };
+        const productId = slug(product.id !== undefined ? product.id : 'sin_id');
         const indexPart = String(i + 1).padStart(4, '0');
-        exportFolder.file(`${indexPart}_${productId}_${slug(name)}.png`, pngBlob);
+        exportFolder.file(indexPart + '_' + productId + '_' + slug(name) + '.png', pngBlob);
         generated++;
-      } catch (e) {
-        failures.push(`${name}: ${e.message}`);
-        console.error(`Error exportando PNG del producto ${name}:`, e);
-      }
-      if (status) status.textContent = `Generando PNG: ${i + 1} de ${products.length}`;
-      if (i % 5 === 4) await new Promise(resolve => setTimeout(resolve, 0));
+      } catch (e) { console.warn('Error en ' + name + ':', e); }
+      if (status) status.textContent = 'Generando PNG: ' + (i + 1) + ' de ' + products.length;
+      if (i % 5 === 4) await new Promise(function(r) { setTimeout(r, 0); });
     }
-
-    if (!generated) throw new Error('No se pudo generar ningún PNG. Comprueba las imágenes y el diseño.');
+    if (!generated) throw new Error('No se pudo generar ningún PNG.');
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     const url = URL.createObjectURL(zipBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `etiquetas_${String(category).toLowerCase()}_${new Date().toISOString().slice(0, 10)}.zip`;
+    link.download = 'etiquetas_' + String(category).toLowerCase() + '_' + new Date().toISOString().slice(0, 10) + '.zip';
     document.body.appendChild(link);
     link.click();
     link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 30000);
-    const summary = failures.length ? `Se exportaron ${generated}; ${failures.length} con error.` : `ZIP creado con ${generated} PNG.`;
-    if (status) status.textContent = summary;
-    showToast(`✅ ${summary}`, failures.length ? 'warning' : 'success');
+    setTimeout(function() { URL.revokeObjectURL(url); }, 30000);
+    if (status) status.textContent = '✅ ZIP creado con ' + generated + ' PNG.';
+    showToast('✅ ZIP creado con ' + generated + ' PNG.', 'success');
   } catch (e) {
-    if (status) status.textContent = `Error: ${e.message}`;
-    showToast(`❌ ${e.message}`, 'danger');
-    console.error('Error en exportación de catálogo:', e);
+    if (status) status.textContent = 'Error: ' + e.message;
+    showToast('❌ ' + e.message, 'danger');
   } finally {
-    idsToSave.forEach(id => {
-      const el = document.getElementById(id);
-      if (el && Object.prototype.hasOwnProperty.call(savedFields, id)) {
-        if (el.type === 'checkbox') el.checked = savedFields[id];
-        else el.value = savedFields[id];
-      }
-    });
-    if (variantSelect && savedVariant != null) variantSelect.value = savedVariant;
-    if (originalImageToggle != null) document.getElementById('usarImagenProducto').checked = originalImageToggle;
-    if (originalQrToggle != null) document.getElementById('usarQRProducto').checked = originalQrToggle;
-    productoActual = savedProduct;
-    if (savedImageState) window.estadoImagenProducto = { ...savedImageState };
-    updateLabel();
     if (button) button.disabled = false;
   }
-}
+};
 
-function exportProject() {
+window.exportProject = function() {
   try {
-    const project = { name: document.getElementById('projectName')?.value || 'Sin nombre', date: new Date().toLocaleDateString('es-ES'), config: getCurrentConfig(), content: getCurrentContent(), logoDataUrl: logoDataUrl, images: getImagesConfig() };
+    const project = {
+      name: document.getElementById('projectName') ? document.getElementById('projectName').value : 'Sin nombre',
+      date: new Date().toLocaleDateString('es-ES'),
+      config: getCurrentConfig(),
+      content: getCurrentContent(),
+      logoDataUrl: logoDataUrl,
+      images: getImagesConfig()
+    };
     const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1715,9 +2071,9 @@ function exportProject() {
     URL.revokeObjectURL(url);
     showToast('📤 Proyecto exportado', 'success');
   } catch (e) { showToast('❌ Error: ' + e.message, 'danger'); }
-}
+};
 
-function importProject(event) {
+window.importProject = function(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
@@ -1726,8 +2082,9 @@ function importProject(event) {
       const project = JSON.parse(e.target.result);
       project.id = Date.now();
       project.date = project.date || new Date().toLocaleDateString('es-ES');
-      const existingIdx = projects.findIndex(p => p.name === project.name);
-      if (existingIdx >= 0) projects[existingIdx] = project; else projects.push(project);
+      const existingIdx = projects.findIndex(function(p) { return p.name === project.name; });
+      if (existingIdx >= 0) projects[existingIdx] = project;
+      else projects.push(project);
       localStorage.setItem('aromaProjects', JSON.stringify(projects));
       loadProject(project.id);
       showToast('📥 Proyecto importado: ' + project.name, 'success');
@@ -1735,613 +2092,172 @@ function importProject(event) {
   };
   reader.readAsText(file);
   event.target.value = '';
-}
+};
 
 // ==========================================
-// 🖼️ GESTIÓN DE IMÁGENES DINÁMICAS
+// 🖼️ IMÁGENES DINÁMICAS
 // ==========================================
-function addImageItem() {
+window.addImageItem = function() {
   const id = Date.now();
   imagesList.push({ id: id, url: '', size: 30, posX: 50, posY: 50, rotation: 0, opacity: 100 });
   renderImagesList();
-}
-
-function removeImageItem(id) {
-  imagesList = imagesList.filter(img => img.id !== id);
-  renderImagesList();
-  if (typeof updateLabel === 'function') updateLabel();
-}
-
-function updateImageItem(id, field, value) {
-  const img = imagesList.find(i => i.id === id);
-  if (img) { img[field] = isNaN(value) ? value : Number(value); if (typeof updateLabel === 'function') updateLabel(); }
-}
-
-function renderImagesList() {
-    const container = document.getElementById('imagesContainer');
-    if (!container) return;
-    
-    if (imagesList.length === 0) {
-        container.innerHTML = '<div style="text-align:center; color:#999; padding:10px; font-size:11px;">No hay imágenes adicionales</div>';
-        return;
-    }
-    
-    container.innerHTML = imagesList.map(img => `
-        <div class="image-item" style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span style="font-size:11px; font-weight:bold; color:#555;">Imagen #${img.id.toString().slice(-4)}</span>
-                <button onclick="removeImageItem(${img.id})" style="background:#dc3545; color:white; border:none; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:10px;">✕</button>
-            </div>
-            
-            <!-- ✅ Preview de la imagen -->
-            <div style="width:100%; height:80px; background:white; border:1px solid #ddd; border-radius:6px; margin-bottom:8px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                ${img.url ? `<img src="${img.url}" style="max-width:100%; max-height:100%; object-fit:contain;" onerror="this.parentElement.innerHTML='<span style=\\'color:#999;font-size:10px;\\'>❌ Error al cargar imagen</span>'">` : '<span style="color:#999;font-size:10px;">Sin imagen</span>'}
-            </div>
-            
-            <!-- ✅ Input para URL -->
-            <input type="text" placeholder="URL de la imagen" value="${img.url || ''}" 
-                   oninput="updateImageItem(${img.id}, 'url', this.value)"
-                   style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px; font-size:11px; margin-bottom:8px; box-sizing:border-box;">
-            
-            <!-- ✅ Botón para subir imagen local -->
-            <div style="margin-bottom:8px;">
-                <label style="display:inline-block; padding:6px 12px; background:#2196f3; color:white; border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold;">
-                    📁 Subir imagen local
-                    <input type="file" accept="image/*" style="display:none;" onchange="handleImageUpload(${img.id}, this)">
-                </label>
-            </div>
-            
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; font-size:10px;">
-                <div>
-                    <label>Tamaño (%) <span id="sizeVal_${img.id}">${img.size}</span></label>
-                    <input type="range" min="5" max="100" value="${img.size}" 
-                           oninput="updateImageItem(${img.id}, 'size', this.value); document.getElementById('sizeVal_${img.id}').textContent=this.value" style="width:100%;">
-                </div>
-                <div>
-                    <label>Opacidad (%) <span id="opVal_${img.id}">${img.opacity}</span></label>
-                    <input type="range" min="10" max="100" value="${img.opacity}" 
-                           oninput="updateImageItem(${img.id}, 'opacity', this.value); document.getElementById('opVal_${img.id}').textContent=this.value" style="width:100%;">
-                </div>
-                <div>
-                    <label>Pos X (%) <span id="xVal_${img.id}">${img.posX}</span></label>
-                    <input type="range" min="0" max="100" value="${img.posX}" 
-                           oninput="updateImageItem(${img.id}, 'posX', this.value); document.getElementById('xVal_${img.id}').textContent=this.value" style="width:100%;">
-                </div>
-                <div>
-                    <label>Pos Y (%) <span id="yVal_${img.id}">${img.posY}</span></label>
-                    <input type="range" min="0" max="100" value="${img.posY}" 
-                           oninput="updateImageItem(${img.id}, 'posY', this.value); document.getElementById('yVal_${img.id}').textContent=this.value" style="width:100%;">
-                </div>
-                <div style="grid-column: span 2;">
-                    <label>Rotación (°) <span id="rotVal_${img.id}">${img.rotation}</span></label>
-                    <input type="range" min="0" max="360" value="${img.rotation}" 
-                           oninput="updateImageItem(${img.id}, 'rotation', this.value); document.getElementById('rotVal_${img.id}').textContent=this.value" style="width:100%;">
-                </div>
-            </div>
-        </div>
-    `).join('');
-    
-    // ✅ Actualizar vista previa después de renderizar
-    if (typeof updateLabel === 'function') updateLabel();
-}
-
-// ✅ Nueva función para manejar subida de imagen local
-function handleImageUpload(imageId, input) {
-    const file = input.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const dataUrl = e.target.result;
-        updateImageItem(imageId, 'url', dataUrl);
-        
-        // Actualizar el input de URL también
-        const urlInput = document.querySelector(`input[oninput*="updateImageItem(${imageId}, 'url'"]`);
-        if (urlInput) urlInput.value = dataUrl;
-        
-        // Re-renderizar para mostrar preview
-        renderImagesList();
-    };
-    reader.readAsDataURL(file);
-}
-
-// Función para generar lote automático (YYYYMM)
-function generarLoteAutomatico() {
-    const ahora = new Date();
-    const año = ahora.getFullYear();
-    const mes = String(ahora.getMonth() + 1).padStart(2, '0');
-    const dia = String(ahora.getDate()).padStart(2, '0');
-    return `${año}${mes}${dia}`;
-}
-
-// Función para generar fecha de expiración (MM/AÑO+1)
-function generarExpiracionAutomatica() {
-    const ahora = new Date();
-    const mes = String(ahora.getMonth() + 1).padStart(2, '0');
-    const añoSiguiente = ahora.getFullYear() + 2;
-    return `${mes}/${añoSiguiente}`;
-}
-
-// Función para actualizar campos automáticamente
-function actualizarLoteYExpiracion() {
-    const batchInput = document.getElementById('batchInfo');
-    const originInput = document.getElementById('originInfo');
-    
-    if (batchInput) {
-        const lote = generarLoteAutomatico();
-        const exp = generarExpiracionAutomatica();
-        batchInput.value = `Lote: ${lote} | Exp: ${exp}`;
-    }
-    
-    // Actualizar vista previa
-    if (typeof updateLabel === 'function') {
-        updateLabel();
-    }
-    
-    showToast('✅ Lote y expiración actualizados', 'success');
-}
-
-// Generar URL con parámetros
-function generateShareableURL() {
-    const config = getCurrentConfig();
-    const content = getCurrentContent();
-    
-    const params = new URLSearchParams();
-    params.set('brand', content.brandName);
-    params.set('product', content.productName);
-    params.set('width', config.labelWidth);
-    params.set('height', config.labelHeight);
-    params.set('shape', config.labelShape || 'rectangular');
-    params.set('accent', config.accentColor);
-    // ... agregar más parámetros
-    
-    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-    return url;
-}
-
-// Cargar desde URL
-function loadFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    
-    if (params.has('brand')) {
-        document.getElementById('brandName').value = params.get('brand');
-    }
-    if (params.has('product')) {
-        document.getElementById('productName').value = params.get('product');
-    }
-    if (params.has('width')) {
-        document.getElementById('labelWidth').value = params.get('width');
-    }
-    // ... cargar más parámetros
-    
-    updateLabel();
-}
-
-// Botón para compartir
-function shareDesign() {
-    const url = generateShareableURL();
-    
-    // Copiar al portapapeles
-    navigator.clipboard.writeText(url).then(() => {
-        showToast('🔗 URL copiada al portapapeles', 'success');
-    }).catch(() => {
-        // Fallback
-        prompt('Copia esta URL:', url);
-    });
-}
-
-function exportProductSheet() {
-    const content = getCurrentContent();
-    const config = getCurrentConfig();
-    
-    const sheet = {
-        producto: content.productName,
-        marca: content.brandName,
-        tipo: content.productType,
-        detalles: content.productDetails,
-        precio: content.productPrice,
-        instrucciones: content.instructions,
-        dimensiones: {
-            ancho: `${config.labelWidth}mm`,
-            alto: `${config.labelHeight}mm`
-        },
-        colores: {
-            acento: config.accentColor,
-            texto: config.textColor,
-            fondo: config.bgColor
-        },
-        fecha: new Date().toLocaleDateString('es-ES')
-    };
-    
-    // Exportar como PDF
-    const doc = new jspdf.jsPDF();
-    doc.setFontSize(20);
-    doc.text('Ficha Técnica del Producto', 20, 20);
-    doc.setFontSize(12);
-    doc.text(`Producto: ${sheet.producto}`, 20, 40);
-    doc.text(`Marca: ${sheet.marca}`, 20, 50);
-    doc.text(`Tipo: ${sheet.tipo}`, 20, 60);
-    doc.text(`Precio: ${sheet.precio}`, 20, 70);
-    doc.text(`Dimensiones: ${sheet.dimensiones.ancho} x ${sheet.dimensiones.alto}`, 20, 80);
-    doc.text(`Instrucciones: ${sheet.instrucciones.substring(0, 100)}...`, 20, 90);
-    
-    doc.save(`ficha_tecnica_${content.productName}.pdf`);
-}
-
-const aromaCombinations = {
-    'Lavanda': ['CalmDream', 'Zen Bamboo', 'Crystal Embrace'],
-    'Vainilla': ['Sweet Comfort', 'CocoVanilla Dream', 'Caramel Bliss'],
-    'Cítricos': ['Citrus Energy', 'Fresh Apple', 'Tropical Peach Mango'],
-    'Floral': ['Floral Bliss', 'Romantic Rose', 'Paradise Bloom']
 };
 
-function suggestAromas(currentAroma) {
-    const suggestions = [];
-    
-    // Buscar combinaciones
-    for (const [key, values] of Object.entries(aromaCombinations)) {
-        if (currentAroma.toLowerCase().includes(key.toLowerCase())) {
-            suggestions.push(...values);
-        }
-    }
-    
-    // Si no hay combinaciones, sugerir aleatorias
-    if (suggestions.length === 0) {
-        const allAromas = Object.values(aromaCombinations).flat();
-        suggestions.push(...allAromas.sort(() => 0.5 - Math.random()).slice(0, 3));
-    }
-    
-    return suggestions.slice(0, 3);
+window.removeImageItem = function(id) {
+  imagesList = imagesList.filter(function(img) { return img.id !== id; });
+  renderImagesList();
+  updateLabel();
+};
+
+window.updateImageItem = function(id, field, value) {
+  const img = imagesList.find(function(i) { return i.id === id; });
+  if (img) { img[field] = isNaN(value) ? value : Number(value); updateLabel(); }
+};
+
+function renderImagesList() {
+  const container = document.getElementById('imagesContainer');
+  if (!container) return;
+  if (imagesList.length === 0) {
+    container.innerHTML = '<div style="text-align:center; color:#999; padding:10px; font-size:11px;">No hay imágenes adicionales</div>';
+    return;
+  }
+  container.innerHTML = imagesList.map(function(img) {
+    return '<div class="image-item" style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;"> <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;"> <span style="font-size:11px; font-weight:bold; color:#555;">Imagen #' + img.id.toString().slice(-4) + '</span> <button onclick="removeImageItem(' + img.id + ')" style="background:#dc3545; color:white; border:none; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:10px;">✕</button> </div> <div style="width:100%; height:80px; background:white; border:1px solid #ddd; border-radius:6px; margin-bottom:8px; display:flex; align-items:center; justify-content:center; overflow:hidden;"> ' + (img.url ? '<img src="' + img.url + '" style="max-width:100%; max-height:100%; object-fit:contain;">' : '<span style="color:#999;font-size:10px;">Sin imagen</span>') + ' </div> <div style="margin-bottom:8px;"> <label style="display:inline-block; padding:6px 12px; background:#2196f3; color:white; border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold; margin-right:6px;"> 📁 Subir local <input type="file" accept="image/*" style="display:none;" onchange="handleImageUpload(' + img.id + ', this)"> </label> </div> <input type="text" placeholder="🌐 O URL de la imagen" value="' + (img.url && img.url.indexOf('data:') !== 0 ? img.url : '') + '" oninput="updateImageItem(' + img.id + ', \'url\', this.value)" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px; font-size:11px; margin-bottom:8px; box-sizing:border-box;"> <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; font-size:10px;"> <div> <label>Tamaño (%) <span id="sizeVal_' + img.id + '">' + img.size + '</span></label> <input type="range" min="5" max="100" value="' + img.size + '" oninput="updateImageItem(' + img.id + ', \'size\', this.value); document.getElementById(\'sizeVal_' + img.id + '\').textContent=this.value" style="width:100%;"> </div> <div> <label>Opacidad (%) <span id="opVal_' + img.id + '">' + img.opacity + '</span></label> <input type="range" min="10" max="100" value="' + img.opacity + '" oninput="updateImageItem(' + img.id + ', \'opacity\', this.value); document.getElementById(\'opVal_' + img.id + '\').textContent=this.value" style="width:100%;"> </div> <div> <label>Pos X (%) <span id="xVal_' + img.id + '">' + img.posX + '</span></label> <input type="range" min="0" max="100" value="' + img.posX + '" oninput="updateImageItem(' + img.id + ', \'posX\', this.value); document.getElementById(\'xVal_' + img.id + '\').textContent=this.value" style="width:100%;"> </div> <div> <label>Pos Y (%) <span id="yVal_' + img.id + '">' + img.posY + '</span></label> <input type="range" min="0" max="100" value="' + img.posY + '" oninput="updateImageItem(' + img.id + ', \'posY\', this.value); document.getElementById(\'yVal_' + img.id + '\').textContent=this.value" style="width:100%;"> </div> <div style="grid-column: span 2;"> <label>Rotación (°) <span id="rotVal_' + img.id + '">' + img.rotation + '</span></label> <input type="range" min="0" max="360" value="' + img.rotation + '" oninput="updateImageItem(' + img.id + ', \'rotation\', this.value); document.getElementById(\'rotVal_' + img.id + '\').textContent=this.value" style="width:100%;"> </div> </div> </div>';
+  }).join('');
+  updateLabel();
 }
 
-// Mostrar sugerencias
-function showAromaSuggestions() {
-    const currentProduct = document.getElementById('productName').value;
-    const suggestions = suggestAromas(currentProduct);
-    
-    if (suggestions.length > 0) {
-        const message = `💡 Te sugerimos probar también:\n\n${suggestions.join('\n')}`;
-        showToast(message, 'info');
-    }
-}
-
-function sendToWhatsApp() {
-    const content = getCurrentContent();
-    const config = getCurrentConfig();
-    
-    // Generar imagen de la etiqueta
-    exportPNG().then(() => {
-        const message = `🕯️ *${content.productName}*\n\n` +
-                       `Marca: ${content.brandName}\n` +
-                       `Tipo: ${content.productType}\n` +
-                       `Precio: ${content.productPrice}\n\n` +
-                       `¡Me encantó esta etiqueta! ¿La puedo pedir?`;
-        
-        const phone = '506XXXXXXXX'; // Reemplazar con número real
-        const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-        
-        window.open(url, '_blank');
-    });
-}
-
-function bulkGenerateLabels() {
-    const products = [
-        { name: 'Lavanda', type: 'Aromaterapia', price: '3,000' },
-        { name: 'Vainilla', type: 'Dulce', price: '₡3,500' },
-        { name: 'Cítricos', type: 'Fresco', price: '₡3,000' }
-        // ... más productos
-    ];
-    
-    products.forEach((product, index) => {
-        setTimeout(() => {
-            // Actualizar campos
-            document.getElementById('productName').value = product.name;
-            document.getElementById('productType').value = product.type;
-            document.getElementById('productPrice').value = product.price;
-            
-            // Actualizar vista previa
-            updateLabel();
-            
-            // Exportar
-            setTimeout(() => {
-                exportPNG();
-            }, 500);
-        }, index * 1000);
-    });
-}
-
+window.handleImageUpload = function(imageId, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const dataUrl = e.target.result;
+    updateImageItem(imageId, 'url', dataUrl);
+    renderImagesList();
+  };
+  reader.readAsDataURL(file);
+};
 
 // ==========================================
-// 🖼️ MEJORA 2: BORDES PERSONALIZABLES
+// 📅 LOTE Y EXPIRACIÓN
 // ==========================================
-function aplicarBordes() {
-    const label = document.getElementById('labelPreview');
-    if (!label) return;
-    
-    const fullBorder = document.getElementById('fullBorder')?.checked || false;
-    const topBorderOnly = document.getElementById('topBorderOnly')?.checked || false;
-    const bottomBorderOnly = document.getElementById('bottomBorderOnly')?.checked || false;
-    const borderWidth = document.getElementById('borderWidth')?.value || 2;
-    const borderColor = document.getElementById('borderColor')?.value || '#c9a96e';
-    const borderStyle = document.getElementById('borderStyle')?.value || 'solid';
-    
-    // Resetear bordes
-    label.style.border = 'none';
-    label.style.borderTop = 'none';
-    label.style.borderBottom = 'none';
-    label.style.borderLeft = 'none';
-    label.style.borderRight = 'none';
-    
-    const borderValue = `${borderWidth}px ${borderStyle} ${borderColor}`;
-    
-    if (fullBorder) {
-        label.style.border = borderValue;
-    } else if (topBorderOnly) {
-        label.style.borderTop = borderValue;
-    } else if (bottomBorderOnly) {
-        label.style.borderBottom = borderValue;
-    }
+function generarLoteAutomatico() {
+  const ahora = new Date();
+  const año = ahora.getFullYear();
+  const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+  const dia = String(ahora.getDate()).padStart(2, '0');
+  return '' + año + mes + dia;
 }
 
+function generarExpiracionAutomatica() {
+  const ahora = new Date();
+  const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+  const añoSiguiente = ahora.getFullYear() + 1;
+  return mes + '/' + añoSiguiente;
+}
+
+window.actualizarLoteYExpiracion = function() {
+  const batchInput = document.getElementById('batchInfo');
+  if (batchInput) {
+    const lote = generarLoteAutomatico();
+    const exp = generarExpiracionAutomatica();
+    batchInput.value = 'Lote: ' + lote + ' | Exp: ' + exp;
+  }
+  updateLabel();
+  showToast('✅ Lote y expiración actualizados', 'success');
+};
+
 // ==========================================
-// ⌨️ MEJORA 3: ATAJOS DE TECLADO EXPANDIDOS
+// 🔗 COMPARTIR
+// ==========================================
+function generateShareableURL() {
+  const config = getCurrentConfig();
+  const content = getCurrentContent();
+  const params = new URLSearchParams();
+  params.set('brand', content.brandName);
+  params.set('brandSub', content.brandSub);
+  params.set('product', content.productName);
+  params.set('type', content.productType);
+  params.set('details', content.productDetails);
+  params.set('instructions', content.instructions);
+  params.set('batch', content.batchInfo);
+  params.set('origin', content.originInfo);
+  params.set('width', config.width);
+  params.set('height', config.height);
+  params.set('accent', config.accentColor);
+  params.set('showDetails', config.showDetails ? '1' : '0');
+  params.set('showPrice', config.showPrice ? '1' : '0');
+  params.set('vinylMode', config.vinylMode ? '1' : '0');
+  params.set('boldTextMode', config.boldTextMode ? '1' : '0');
+  params.set('frostedBg', config.frostedBg ? '1' : '0');
+  return window.location.origin + window.location.pathname + '?' + params.toString();
+}
+
+function loadFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has('brand') && !params.has('product')) return false;
+  try {
+    if (params.has('brand')) document.getElementById('brandName').value = params.get('brand');
+    if (params.has('brandSub')) document.getElementById('brandSub').value = params.get('brandSub');
+    if (params.has('product')) document.getElementById('productName').value = params.get('product');
+    if (params.has('type')) document.getElementById('productType').value = params.get('type');
+    if (params.has('details')) document.getElementById('productDetails').value = params.get('details');
+    if (params.has('instructions')) document.getElementById('instructions').value = params.get('instructions');
+    if (params.has('batch')) document.getElementById('batchInfo').value = params.get('batch');
+    if (params.has('origin')) document.getElementById('originInfo').value = params.get('origin');
+    if (params.has('width')) document.getElementById('labelWidth').value = params.get('width');
+    if (params.has('height')) document.getElementById('labelHeight').value = params.get('height');
+    if (params.has('accent')) document.getElementById('accentColor').value = params.get('accent');
+    if (params.has('showDetails')) document.getElementById('showDetails').checked = params.get('showDetails') === '1';
+    if (params.has('showPrice')) document.getElementById('showPrice').checked = params.get('showPrice') === '1';
+    if (params.has('vinylMode')) document.getElementById('vinylMode').checked = params.get('vinylMode') === '1';
+    if (params.has('boldTextMode')) document.getElementById('boldTextMode').checked = params.get('boldTextMode') === '1';
+    if (params.has('frostedBg')) document.getElementById('frostedBg').checked = params.get('frostedBg') === '1';
+    sincronizarValoresSliders();
+    updateLabel();
+    showToast('🔗 Diseño cargado desde URL', 'success');
+    return true;
+  } catch (e) {
+    console.error('Error al cargar desde URL:', e);
+    return false;
+  }
+}
+
+window.shareDesign = function() {
+  const url = generateShareableURL();
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(function() {
+      showToast('🔗 URL copiada al portapapeles', 'success');
+    }).catch(function() { prompt('Copia esta URL:', url); });
+  } else {
+    prompt('Copia esta URL:', url);
+  }
+};
+
+// ==========================================
+// ⌨️ ATAJOS DE TECLADO
 // ==========================================
 document.addEventListener('keydown', function(e) {
-    const tag = e.target.tagName.toLowerCase();
-    const esInput = tag === 'input' || tag === 'textarea' || tag === 'select';
-    
-    // Ctrl/Cmd + S: Guardar proyecto
-    if ((e.ctrlKey || e.metaKey) && e.key === 's' && !esInput) {
-        e.preventDefault();
-        if (typeof saveProject === 'function') saveProject();
-    }
-    
-    // Ctrl/Cmd + D: Duplicar etiqueta (añadir a cola)
-    if ((e.ctrlKey || e.metaKey) && e.key === 'd' && !esInput) {
-        e.preventDefault();
-        if (typeof addToPrintQueue === 'function') addToPrintQueue();
-    }
-    
-    // Ctrl/Cmd + P: Imprimir
-    if ((e.ctrlKey || e.metaKey) && e.key === 'p' && !esInput) {
-        e.preventDefault();
-        window.print();
-    }
-    
-    // Ctrl/Cmd + N: Nuevo proyecto (limpiar formulario)
-    if ((e.ctrlKey || e.metaKey) && e.key === 'n' && !esInput) {
-        e.preventDefault();
-        if (confirm('¿Crear nuevo proyecto? Se perderán los cambios no guardados.')) {
-            document.getElementById('projectName').value = 'Mi Etiqueta';
-            document.getElementById('brandName').value = 'Esentia';
-            document.getElementById('brandSub').value = 'Velas Artesanales';
-            document.getElementById('productName').value = 'Lavanda';
-            updateLabel();
-        }
-    }
-    
-    // Ctrl/Cmd + E: Exportar PDF
-    if ((e.ctrlKey || e.metaKey) && e.key === 'e' && !esInput) {
-        e.preventDefault();
-        if (typeof exportSinglePDF === 'function') exportSinglePDF();
-    }
-    
-    // Ctrl/Cmd + F: Buscar producto
-    if ((e.ctrlKey || e.metaKey) && e.key === 'f' && !esInput) {
-        e.preventDefault();
-        cambiarTab('producto');
-        setTimeout(() => document.getElementById('buscadorGlobal')?.focus(), 100);
-    }
-    
-    // Ctrl/Cmd + G: Toggle guías
-    if ((e.ctrlKey || e.metaKey) && e.key === 'g' && !esInput) {
-        e.preventDefault();
-        const container = document.querySelector('.label-container');
-        if (container) {
-            container.classList.toggle('show-guides');
-        }
-    }
-    
-    // Escape: Cerrar modales
-    if (e.key === 'Escape') {
-        const modal = document.getElementById('confirmModal');
-        if (modal) modal.classList.remove('show');
-    }
-    
-    // F5: Forzar actualización de vista previa
-    if (e.key === 'F5') {
-        e.preventDefault();
-        updateLabel();
-    }
+  const tag = e.target.tagName.toLowerCase();
+  const esInput = tag === 'input' || tag === 'textarea' || tag === 'select';
+  if ((e.ctrlKey || e.metaKey) && e.key === 's' && !esInput) {
+    e.preventDefault();
+    saveProject();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'd' && !esInput) {
+    e.preventDefault();
+    addToPrintQueue();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'p' && !esInput) {
+    e.preventDefault();
+    window.print();
+  }
+  if (e.key === 'F5' && !esInput) {
+    e.preventDefault();
+    updateLabel();
+  }
 });
-
-// ==========================================
-// 🚀 CARGAR FORMA GUARDADA AL INICIAR
-// ==========================================
-function cargarFormaGuardada() {
-    const formaGuardada = localStorage.getItem('aromaLabelShape') || 'rectangular';
-    const btn = document.querySelector(`.shape-btn[onclick*="${formaGuardada}"]`);
-    if (btn) {
-        cambiarForma(formaGuardada, btn);
-    }
-}
-
-// Agregar al DOMContentLoaded existente
-const originalDOMContentLoaded = document.addEventListener;
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(cargarFormaGuardada, 500);
-});
-
-// ==========================================
-// 🔗 COMPARTIR DISEÑO POR URL
-// ==========================================
-
-/**
- * Genera URL compartible con todos los parámetros del diseño
- */
-function generateShareableURL() {
-    const config = getCurrentConfig();
-    const content = getCurrentContent();
-    
-    const params = new URLSearchParams();
-    
-    // Contenido
-    params.set('brand', content.brandName);
-    params.set('brandSub', content.brandSub);
-    params.set('product', content.productName);
-    params.set('type', content.productType);
-    params.set('details', content.productDetails);
-    params.set('instructions', content.instructions);
-    params.set('batch', content.batchInfo);
-    params.set('origin', content.originInfo);
-    
-    // Configuración
-    params.set('width', config.labelWidth);
-    params.set('height', config.labelHeight);
-    params.set('padding', config.labelPadding);
-    params.set('borderRadius', config.borderRadius);
-    params.set('topLine', config.topLine);
-    params.set('bottomLine', config.bottomLine);
-    params.set('areaGap', config.areaGap);
-    
-    // Fuentes
-    params.set('fontBrand', config.fontBrand);
-    params.set('fontProduct', config.fontProduct);
-    params.set('brandFont', config.brandFont);
-    params.set('productFont', config.productFont);
-    
-    // Colores
-    params.set('accent', config.accentColor);
-    params.set('textColor', config.textColor);
-    params.set('bgColor', config.bgColor);
-    
-    // Visibilidad
-    params.set('showDivider', config.showDivider ? '1' : '0');
-    params.set('showQR', config.showQR ? '1' : '0');
-    params.set('showInstructions', config.showInstructions ? '1' : '0');
-    params.set('showFooter', config.showFooter ? '1' : '0');
-    params.set('vinylMode', config.vinylMode ? '1' : '0');
-    
-    const baseURL = window.location.origin + window.location.pathname;
-    return `${baseURL}?${params.toString()}`;
-}
-
-/**
- * Carga diseño desde parámetros URL
- */
-function loadFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    
-    if (!params.has('brand') && !params.has('product')) {
-        return false; // No hay parámetros
-    }
-    
-    try {
-        // Contenido
-        if (params.has('brand')) document.getElementById('brandName').value = params.get('brand');
-        if (params.has('brandSub')) document.getElementById('brandSub').value = params.get('brandSub');
-        if (params.has('product')) document.getElementById('productName').value = params.get('product');
-        if (params.has('type')) document.getElementById('productType').value = params.get('type');
-        if (params.has('details')) document.getElementById('productDetails').value = params.get('details');
-        if (params.has('instructions')) document.getElementById('instructions').value = params.get('instructions');
-        if (params.has('batch')) document.getElementById('batchInfo').value = params.get('batch');
-        if (params.has('origin')) document.getElementById('originInfo').value = params.get('origin');
-        
-        // Configuración
-        if (params.has('width')) document.getElementById('labelWidth').value = params.get('width');
-        if (params.has('height')) document.getElementById('labelHeight').value = params.get('height');
-        if (params.has('padding')) document.getElementById('labelPadding').value = params.get('padding');
-        if (params.has('borderRadius')) document.getElementById('borderRadius').value = params.get('borderRadius');
-        if (params.has('topLine')) document.getElementById('topLine').value = params.get('topLine');
-        if (params.has('bottomLine')) document.getElementById('bottomLine').value = params.get('bottomLine');
-        if (params.has('areaGap')) document.getElementById('areaGap').value = params.get('areaGap');
-        
-        // Fuentes
-        if (params.has('fontBrand')) document.getElementById('fontBrand').value = params.get('fontBrand');
-        if (params.has('fontProduct')) document.getElementById('fontProduct').value = params.get('fontProduct');
-        if (params.has('brandFont')) document.getElementById('brandFont').value = params.get('brandFont');
-        if (params.has('productFont')) document.getElementById('productFont').value = params.get('productFont');
-        
-        // Colores
-        if (params.has('accent')) document.getElementById('accentColor').value = params.get('accent');
-        if (params.has('textColor')) document.getElementById('textColor').value = params.get('textColor');
-        if (params.has('bgColor')) document.getElementById('bgColor').value = params.get('bgColor');
-        
-        // Visibilidad
-        if (params.has('showDivider')) document.getElementById('showDivider').checked = params.get('showDivider') === '1';
-        if (params.has('showQR')) document.getElementById('showQR').checked = params.get('showQR') === '1';
-        if (params.has('showInstructions')) document.getElementById('showInstructions').checked = params.get('showInstructions') === '1';
-        if (params.has('showFooter')) document.getElementById('showFooter').checked = params.get('showFooter') === '1';
-        if (params.has('vinylMode')) document.getElementById('vinylMode').checked = params.get('vinylMode') === '1';
-        
-        // Sincronizar sliders y actualizar
-        sincronizarValoresSliders();
-        updateLabel();
-        
-        showToast('🔗 Diseño cargado desde URL', 'success');
-        return true;
-    } catch (e) {
-        console.error('Error al cargar desde URL:', e);
-        showToast('⚠️ Error al cargar diseño', 'warning');
-        return false;
-    }
-}
-
-/**
- * Comparte el diseño (copia URL al portapapeles)
- */
-function shareDesign() {
-    const url = generateShareableURL();
-    
-    // Intentar usar Web Share API primero
-    if (navigator.share) {
-        navigator.share({
-            title: 'Mi Diseño de Etiqueta - AromaLabel Pro',
-            text: `Mira este diseño de etiqueta: ${document.getElementById('productName').value}`,
-            url: url
-        }).catch(err => {
-            console.log('Share API cancelado');
-            copyToClipboard(url);
-        });
-    } else {
-        // Fallback: copiar al portapapeles
-        copyToClipboard(url);
-    }
-}
-
-/**
- * Copia texto al portapapeles
- */
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        showToast(' URL copiada al portapapeles', 'success');
-    }).catch(() => {
-        // Fallback antiguo
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        showToast('🔗 URL copiada', 'success');
-    });
-}
-
-/**
- * Acortar URL para compartir (opcional)
- */
-function getShortURL() {
-    const params = new URLSearchParams();
-    
-    // Solo parámetros esenciales para URL más corta
-    params.set('p', document.getElementById('productName').value);
-    params.set('b', document.getElementById('brandName').value);
-    params.set('w', document.getElementById('labelWidth').value);
-    params.set('h', document.getElementById('labelHeight').value);
-    params.set('ac', document.getElementById('accentColor').value);
-    
-    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-}
 
 // ==========================================
 // 🚀 INICIALIZACIÓN
@@ -2354,47 +2270,15 @@ document.addEventListener('DOMContentLoaded', function() {
   actualizarUIFavoritos();
   loadAllProjects();
   actualizarLoteYExpiracion();
-  cambiarForma();
-   //verificarElementosCriticos();
-    
 
-    
-  
-   
-  const contFav = document.getElementById('contadorFavoritos');
-  const contHist = document.getElementById('contadorHistorial');
-  if (contFav) contFav.textContent = window.favoritos.length;
-  if (contHist) contHist.textContent = window.historial.length;
-  setTimeout(updateLabel, 300);
- 
+  const formaGuardada = localStorage.getItem('aromaLabelShape') || 'rectangular';
+  const btnShape = document.querySelector('.shape-btn[onclick*="' + formaGuardada + '"]');
+  if (btnShape) cambiarForma(formaGuardada, btnShape);
 
-   // Agregar event listeners a los controles del logo
-    const logoControls = ['logoSize', 'logoRot', 'logoOpa', 'logoPosX', 'logoPosY'];
-    logoControls.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('input', updateLogoControls);
-            el.addEventListener('change', updateLogoControls);
-        }
-    });
-
-    // Sincronizar sliders de posición del QR
-['qrPosX', 'qrPosY', 'qrSize', 'qrRotation'].forEach(id => {
-  const slider = document.getElementById(id);
-  const display = document.getElementById(id + 'Val');
-  if (slider && display) {
-    slider.addEventListener('input', () => {
-      display.textContent = slider.value;
-    });
+  const loadedFromURL = loadFromURL();
+  if (!loadedFromURL) {
+    setTimeout(updateLabel, 300);
   }
-});
 
-    // Intentar cargar desde URL
-    const loadedFromURL = loadFromURL();
-    
-    if (!loadedFromURL) {
-        setTimeout(updateLabel, 300);
-    }
-
-     console.log('🚀 AromaLabel Pro v3 inicializado correctamente');
+  console.log('🚀 AromaLabel Pro v4.2 inicializado correctamente');
 });
