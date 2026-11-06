@@ -2364,7 +2364,7 @@ function newPurchaseOrder() {
     document.getElementById('poNumero').value = generatePONumber();
     document.getElementById('poProveedor').value = '';
     document.getElementById('poNotas').value = '';
-    document.getElementById('poSolicitadoPor').value = '';
+    document.getElementById('poSolicitadoPor').value = 'M Elena Gutierrez S.';
     document.getElementById('poAutorizadoPor').value = 'Wilber Calderon M.';
     ['poProveedor', 'poNotas', 'poSolicitadoPor', 'poAutorizadoPor'].forEach(fid => { document.getElementById(fid).disabled = false; });
     document.getElementById('poEstadoBadge').textContent = '🟣 Borrador';
@@ -2514,7 +2514,7 @@ function printPurchaseOrderData(o) {
     const lineas = o.lineas || [];
     const fecha = o.fecha?.toDate ? o.fecha.toDate().toLocaleString('es-CR') : (o.ultimaActualizacion ? new Date(o.ultimaActualizacion).toLocaleString('es-CR') : new Date().toLocaleString('es-CR'));
     const estadoTxt = o.estado === 'aprobada' ? 'APROBADA' : 'BORRADOR';
-    const solicitadoPor = o.solicitadoPor || '—';
+    const solicitadoPor = o.solicitadoPor || 'M Elena Gutierrez S.';
     const autorizadoPor = o.autorizadoPor || 'Wilber Calderon M.';
 
     const rows = lineas.map((l, i) => `
@@ -2590,7 +2590,7 @@ function printPurchaseOrder() {
         numero: document.getElementById('poNumero')?.value || generatePONumber(),
         proveedor: document.getElementById('poProveedor')?.value || '',
         notas: document.getElementById('poNotas')?.value || '',
-        solicitadoPor: document.getElementById('poSolicitadoPor')?.value.trim() || '',
+        solicitadoPor: document.getElementById('poSolicitadoPor')?.value.trim() || 'M Elena Gutierrez S.',
         autorizadoPor: document.getElementById('poAutorizadoPor')?.value.trim() || 'Wilber Calderon M.',
         estado: currentPO?.estado || 'borrador',
         lineas: lineasValidas,
@@ -2712,7 +2712,7 @@ async function savePurchaseOrder(estado) {
             numero,
             proveedor,
             notas: document.getElementById('poNotas').value.trim(),
-            solicitadoPor: document.getElementById('poSolicitadoPor')?.value.trim() || '',
+            solicitadoPor: document.getElementById('poSolicitadoPor')?.value.trim() || 'M Elena Gutierrez S.',
             autorizadoPor: document.getElementById('poAutorizadoPor')?.value.trim() || 'Wilber Calderon M.',
             lineas,
             total,
@@ -2802,7 +2802,7 @@ async function editPurchaseOrder(id, silent = false) {
         document.getElementById('poNumero').value = currentPO.numero || '';
         document.getElementById('poProveedor').value = currentPO.proveedor || '';
         document.getElementById('poNotas').value = currentPO.notas || '';
-        document.getElementById('poSolicitadoPor').value = currentPO.solicitadoPor || '';
+        document.getElementById('poSolicitadoPor').value = currentPO.solicitadoPor || 'M Elena Gutierrez S.';
         document.getElementById('poAutorizadoPor').value = currentPO.autorizadoPor || 'Wilber Calderon M.';
         document.getElementById('poEstadoBadge').innerHTML = currentPO.estado === 'aprobada'
             ? '<span style="color:var(--success);">✅ Aprobada</span>'
