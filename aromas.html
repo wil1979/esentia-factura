@@ -23,19 +23,24 @@
     </div>
   </div>
   <div class="tabs-nav">
-    <button class="tab-btn active" data-tab="producto" onclick="cambiarTab('producto')"><span class="tab-icon">📦</span><span class="tab-text">Catálogo</span></button>
-    <button class="tab-btn" data-tab="info" onclick="cambiarTab('info')"><span class="tab-icon">🛡️</span><span class="tab-text">Info</span></button>
-    <button class="tab-btn" data-tab="datos" onclick="cambiarTab('datos')"><span class="tab-icon">📝</span><span class="tab-text">Datos</span></button>
-    <button class="tab-btn" data-tab="estilo" onclick="cambiarTab('estilo')"><span class="tab-icon">🎨</span><span class="tab-text">Estilo</span></button>        
-    <button class="tab-btn" data-tab="favs" onclick="cambiarTab('favs')"><span class="tab-icon">❤️</span><span class="tab-text">Favs</span></button>
+    <button class="nav-tab active" data-tab="producto" onclick="cambiarTab('producto')"><span class="tab-icon">📦</span><span class="tab-text">Catálogo</span></button>
+    <button class="nav-tab" data-tab="info" onclick="cambiarTab('info')"><span class="tab-icon">🛡️</span><span class="tab-text">Info</span></button>
+    <button class="nav-tab" data-tab="datos" onclick="cambiarTab('datos')"><span class="tab-icon">📝</span><span class="tab-text">Datos</span></button>
+    <button class="nav-tab" data-tab="estilo" onclick="cambiarTab('estilo')"><span class="tab-icon">🎨</span><span class="tab-text">Estilo</span></button>        
+    <button class="nav-tab" data-tab="favs" onclick="cambiarTab('favs')"><span class="tab-icon">❤️</span><span class="tab-text">Favs</span></button>
+    <button class="nav-tab" onclick="showSection('designer', this)">🎨 Diseñador</button>
+    <button class="nav-tab" onclick="showSection('projects', this)">📂 Proyectos</button>
+    <button class="nav-tab active" onclick="showSection('print', this)">🖨️ Impresión</button>
+    <button class="nav-tab" onclick="saveProject()">💾 Guardar</button>
+    <label class="nav-tab" style="cursor:pointer;">📥 Cargar Backup<input type="file" accept=".json" onchange="importProject(event)" style="display:none;"></label>
   </div>
-  <nav class="nav-tabs">
+ <!-- <nav class="nav-tabs">
     <button class="nav-tab active" onclick="showSection('designer', this)">🎨 Diseñador</button>
     <button class="nav-tab" onclick="showSection('projects', this)">📂 Proyectos</button>
     <button class="nav-tab" onclick="showSection('print', this)">🖨️ Impresión</button>
     <button class="nav-tab" onclick="saveProject()">💾 Guardar</button>
     <label class="nav-tab" style="cursor:pointer;">📥 Cargar Backup<input type="file" accept=".json" onchange="importProject(event)" style="display:none;"></label>
-  </nav>
+  </nav>-->
 </header>
 
 <div class="main-container">
@@ -247,7 +252,7 @@
           <div class="section-header" onclick="toggleSection(this)"><span>🖼️ Imagen de Fondo de la Etiqueta</span><span class="toggle-icon">▼</span></div>
           <div class="section-body">
             <div class="form-group"><label class="form-label">📁 Subir Imagen Local</label><input type="file" id="bgImageUpload" accept="image/*" onchange="handleBgImageUpload(event)" class="form-input"></div>
-            <div class="form-group"><label class="form-label">🌐 O URL desde la Web</label><input type="text" id="bgImageUrl" class="form-input" placeholder="https://ejemplo.com/imagen.jpg" oninput="actualizarImagenFondo()"></div>
+            <div class="form-group"><label class="form-label">🌐 O URL desde la Web</label><input type="text" id="bgImageUrl" class="form-input" value="https://png.pngtree.com/png-vector/20241211/ourmid/pngtree-a-cute-christmas-clipart-with-santa-claus-and-reindeer-png-image_14703875.png" oninput="actualizarImagenFondo()"></div>
             <div id="bgImagePreviewWrap" style="display:none;margin-bottom:10px;">
               <img id="bgImagePreview" style="width:100%;max-height:80px;object-fit:contain;border:1px solid #ddd;border-radius:4px;" alt="Fondo">
               <button class="btn btn-danger btn-sm" onclick="quitarImagenFondo()" style="width:100%;margin-top:6px;">🗑️ Quitar Imagen de Fondo</button>
@@ -256,8 +261,8 @@
             <div class="form-group">
               <label class="form-label">Ajuste de Imagen</label>
               <select id="bgImageFit" class="form-select" onchange="actualizarImagenFondo()">
-                <option value="contain">Contener (sin recortar)</option>
                 <option value="cover">Cubrir (rellenar)</option>
+                <option value="contain">Contener (sin recortar)</option>                
                 <option value="fill">Estirar (rellenar exacto)</option>
               </select>
             </div>
@@ -328,8 +333,8 @@
               <label class="form-label">Seleccionar Consejo Predefinido</label>
               <select id="safetyPreset" class="form-select" onchange="aplicarPlantillaSeguridad()">
                 <option value="">-- Seleccionar Consejo Predefinido (Opcional) --</option>
-                <option value="VELAS">🕯️ Velas & Candelas Aromáticas</option>
                 <option value="ESENCIAS">🌸 Esencias Aromáticas Ambientales</option>
+                <option value="VELAS">🕯️ Velas & Candelas Aromáticas</option>                
                 <option value="LIMPIEZA">🧼 Productos de Limpieza</option>
               </select>
             </div>
@@ -370,7 +375,7 @@
             <div class="form-group" style="margin-top:10px;"><label class="form-label">Enlace URL del QR</label><input type="text" id="qrUrl" class="form-input" value="https://www.facebook.com/profile.php?id=61579078480913" oninput="updateLabel()"></div>
             <div class="form-group"><label class="form-label">Color QR</label><input type="color" id="qrColor" class="form-input" value="#000000" oninput="updateLabel()" style="height:40px;padding:2px;"></div>
             <div class="form-group"><label class="form-label">Color Fondo QR</label><input type="color" id="qrBgColor" class="form-input" value="#ffffff" oninput="updateLabel()" style="height:40px;padding:2px;"></div>
-            <div class="form-group"><label class="form-label">Tamaño QR (%): <span id="qrSizeVal">34</span></label><input type="range" id="qrSize" min="10" max="80" value="34" oninput="updateLabel()"></div>
+            <div class="form-group"><label class="form-label">Tamaño QR (%): <span id="qrSizeVal">42</span></label><input type="range" id="qrSize" min="10" max="80" value="42" oninput="updateLabel()"></div>
             <div class="area-position-title">Posición del QR</div>
             <div class="form-group"><label class="form-label">Posición X (%): <span id="qrPosXVal">21</span></label><input type="range" id="qrPosX" min="0" max="100" value="21" oninput="updateLabel()"></div>
             <div class="form-group"><label class="form-label">Posición Y (%): <span id="qrPosYVal">87</span></label><input type="range" id="qrPosY" min="0" max="200" value="87" oninput="updateLabel()"></div>

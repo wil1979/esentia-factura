@@ -157,6 +157,46 @@ function buildQRCanvas(data, sizePx, dark, light) {
 }
 
 // ==========================================
+// 📊 GENERADOR DE CANVAS DE CÓDIGO DE BARRAS (medidas exactas en mm)
+// Se usa CANVAS (no SVG) porque html2canvas/jsPDF/impresión deforman los SVG
+// sin viewBox. El canvas se dibuja a alta resolución y se fija en mm por CSS.
+// ==========================================
+const BARCODE_W_MM = 38;
+const BARCODE_H_MM = 10;
+const PX_PER_MM_HQ = 24; // ~600 dpi
+
+function buildBarcodeCanvas(text, color, widthMm, heightMm) {
+  widthMm = widthMm || BARCODE_W_MM;
+  heightMm = heightMm || BARCODE_H_MM;
+  const out = document.createElement('canvas');
+  out.width = Math.round(widthMm * PX_PER_MM_HQ);
+  out.height = Math.round(heightMm * PX_PER_MM_HQ);
+  out.className = 'barcode-canvas';
+  out.style.setProperty('width', widthMm + 'mm', 'important');
+  out.style.setProperty('height', heightMm + 'mm', 'important');
+  if (typeof JsBarcode !== 'function') return out;
+  const tmp = document.createElement('canvas');
+  JsBarcode(tmp, String(text || '750100000000'), {
+    format: 'CODE128', lineColor: color || '#000000', background: '#ffffff',
+    width: 6, height: 140, displayValue: true, fontSize: 40, textMargin: 4, margin: 0
+  });
+  const ctx = out.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, out.width, out.height);
+  // Escalado "contain" manteniendo proporción
+  const k = Math.min(out.width / tmp.width, out.height / tmp.height);
+  const dw = tmp.width * k, dh = tmp.height * k;
+  ctx.drawImage(tmp, (out.width - dw) / 2, (out.height - dh) / 2, dw, dh);
+  return out;
+}
+
+function textoCodigoBarras() {
+  const t = obtenerCodigoBarrasProducto(productoActual) || codigoBarrasActual || '';
+  return String(t).trim() !== '' ? String(t).trim() : '750100000000';
+}
+
+// ==========================================
 // 🏷️ FUNCIÓN PRINCIPAL: updateLabel()
 // ==========================================
 window.updateLabel = function() {
@@ -335,14 +375,18 @@ window.updateLabel = function() {
       qrEl.style.setProperty('height', qrSizeMm + 'mm', 'important');
       qrEl.style.setProperty('min-width', qrSizeMm + 'mm', 'important');
       qrEl.style.setProperty('min-height', qrSizeMm + 'mm', 'important');
+      qrEl.style.setProperty('max-width', qrSizeMm + 'mm', 'important');
+      qrEl.style.setProperty('max-height', qrSizeMm + 'mm', 'important');
       qrEl.style.aspectRatio = '1 / 1';
       qrEl.style.backgroundColor = '#ffffff';
       qrEl.style.padding = '2px';
       qrEl.style.boxSizing = 'border-box';
       qrEl.style.position = 'absolute';
-      qrEl.style.left = qrPosX + '%';
-      qrEl.style.top = qrPosY + '%';
-      qrEl.style.transform = 'translate(-50%, -50%) rotate(' + qrRotation + 'deg)';
+      // Posición en mm SIN translate(-50%) (html2canvas lo aplica dos veces y desplaza el QR)
+      qrEl.style.left = (widthMm * qrPosX / 100 - qrSizeMm / 2) + 'mm';
+      qrEl.style.top = (heightMm * qrPosY / 100 - qrSizeMm / 2) + 'mm';
+      qrEl.style.transformOrigin = 'center center';
+      qrEl.style.transform = qrRotation ? 'rotate(' + qrRotation + 'deg)' : 'none';
       qrEl.style.zIndex = '6';
       
       try {
@@ -352,8 +396,11 @@ window.updateLabel = function() {
           getVal('qrColor', '#000000') || '#000000',
           '#ffffff'
         );
-        qrCanvas.style.width = '100%';
-        qrCanvas.style.height = '100%';
+        qrCanvas.style.setProperty('width', '100%', 'important');
+        qrCanvas.style.setProperty('height', '100%', 'important');
+        qrCanvas.style.setProperty('max-width', '100%', 'important');
+        qrCanvas.style.setProperty('max-height', '100%', 'important');
+        qrCanvas.style.objectFit = 'contain';
         qrCanvas.style.display = 'block';
         qrEl.innerHTML = '';
         qrEl.appendChild(qrCanvas);
@@ -365,27 +412,26 @@ window.updateLabel = function() {
     }
   }
 
+  // 📊 RENDERIZADO DEL CÓDIGO DE BARRAS (CODE128) EN VISTA PREVIA
   const barcodeWrap = document.getElementById('previewBarcodeWrap');
-  const barcodeSvg = document.getElementById('previewBarcode');
-  const productId = obtenerCodigoBarrasProducto(productoActual) || codigoBarrasActual;
-  if (barcodeWrap && barcodeSvg) {
-    if (showBarcode && productId && typeof JsBarcode === 'function') {
+  if (barcodeWrap) {
+    if (showBarcode) {
+      barcodeWrap.style.display = 'flex';
+      barcodeWrap.style.position = 'absolute';
+      barcodeWrap.style.left = (widthMm * barcodePosX / 100 - BARCODE_W_MM / 2) + 'mm';
+      barcodeWrap.style.top = (heightMm * barcodePosY / 100 - BARCODE_H_MM / 2) + 'mm';
+      barcodeWrap.style.transformOrigin = 'center center';
+      barcodeWrap.style.transform = barcodeRotation ? 'rotate(' + barcodeRotation + 'deg)' : 'none';
+      barcodeWrap.style.zIndex = '6';
+      barcodeWrap.style.setProperty('width', BARCODE_W_MM + 'mm', 'important');
+      barcodeWrap.style.setProperty('height', BARCODE_H_MM + 'mm', 'important');
+      barcodeWrap.style.padding = '0';
+
       try {
-        barcodeWrap.style.display = 'flex';
-        barcodeWrap.classList.add('is-positioned');
-        barcodeWrap.style.position = 'absolute';
-        barcodeWrap.style.left = barcodePosX + '%';
-        barcodeWrap.style.top = barcodePosY + '%';
-        barcodeWrap.style.transform = 'translate(-50%, -50%) rotate(' + barcodeRotation + 'deg)';
-        barcodeWrap.style.zIndex = '6';
-        JsBarcode(barcodeSvg, productId, {
-          format: 'CODE128', displayValue: true, text: productId,
-          font: 'monospace', fontSize: 10, textMargin: 1, margin: 2,
-          height: 32, width: 1.5, lineColor: '#111', background: '#fff'
-        });
-      } catch (e) {
-        barcodeWrap.style.display = 'none';
-        console.warn('Barcode error:', e);
+        barcodeWrap.innerHTML = '';
+        barcodeWrap.appendChild(buildBarcodeCanvas(textoCodigoBarras(), textColor || '#000000'));
+      } catch (err) {
+        console.warn('Error al renderizar código de barras:', err);
       }
     } else {
       barcodeWrap.style.display = 'none';
@@ -1090,7 +1136,7 @@ window.handleBgImageUpload = function(event) {
     window.estadoImagenFondo.url = dataUrl;
     const urlInput = document.getElementById('bgImageUrl');
     if (urlInput) urlInput.value = dataUrl.substring(0, 50) + '... [imagen local]';
-    const previewWrap = documentgetElementById('bgImagePreviewWrap');
+    const previewWrap = document.getElementById('bgImagePreviewWrap');
     const preview = document.getElementById('bgImagePreview');
     if (preview) preview.src = dataUrl;
     if (previewWrap) previewWrap.style.display = 'block';
@@ -1107,7 +1153,7 @@ window.actualizarImagenFondo = function() {
   const opacityVal = document.getElementById('bgImageOpacityVal');
   const url = urlInput ? urlInput.value.trim() : '';
   if (url && url.indexOf('[imagen local]') === -1) {
-    windowestadoImagenFondo.url = url;
+    window.estadoImagenFondo.url = url;
     const previewWrap = document.getElementById('bgImagePreviewWrap');
     const preview = document.getElementById('bgImagePreview');
     if (preview) preview.src = url;
@@ -1563,11 +1609,19 @@ const PRINT_RENDER_SCALE = 4;
 
 async function renderLabelForPrint(item) {
   const container = document.createElement('div');
-  container.style.cssText = 'position:absolute;left:-9999px;top:0;';
+  container.className = 'export-stage';
+  container.style.cssText = 'position:fixed;left:-10000px;top:0;width:auto;height:auto;transform:none;zoom:1;';
   container.innerHTML = item.html || '';
   document.body.appendChild(container);
   const label = container.querySelector('.label');
   if (!label) { document.body.removeChild(container); throw new Error('Etiqueta no disponible'); }
+  // ⚠️ Evita heredar escalas/animaciones de la vista previa (causa medidas erróneas)
+  label.style.transition = 'none';
+  label.style.animation = 'none';
+  label.style.transform = 'none';
+  label.style.zoom = '1';
+  label.style.margin = '0';
+  label.querySelectorAll('*').forEach(function(el) { el.style.transition = 'none'; el.style.animation = 'none'; });
   
   const c = item.config || {};
   const content = item.content || {};
@@ -1601,6 +1655,21 @@ async function renderLabelForPrint(item) {
   else {
     if (c.topBorderOnly) label.style.borderTop = bw + 'px ' + bs + ' ' + bc;
     if (c.bottomBorderOnly) label.style.borderBottom = bw + 'px ' + bs + ' ' + bc;
+  }
+
+  // 🖼️ RENDERIZAR IMAGEN DE FONDO EN EXPORTACIÓN
+  // html2canvas NO soporta object-fit ni opacidad fiable en <img>, por eso la
+  // imagen se pre-dibuja en un <canvas> con el ajuste y la opacidad ya aplicados.
+  const bgEstado = c.estadoImagenFondo || {};
+  const oldBg = label.querySelector('#labelBgImage');
+  if (oldBg) oldBg.parentNode.removeChild(oldBg);
+  if (bgEstado.url) {
+    const bgCanvas = await crearCanvasFondo(bgEstado, widthMm, heightMm);
+    if (bgCanvas) {
+      bgCanvas.id = 'labelBgImage';
+      bgCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;display:block;';
+      label.insertBefore(bgCanvas, label.firstChild);
+    }
   }
 
   const brandEl = label.querySelector('.label-logo');
@@ -1645,6 +1714,7 @@ async function renderLabelForPrint(item) {
     productImg.style.pointerEvents = 'none';
     productImg.style.display = imageActive ? 'block' : 'none';
   }
+
   if (dividerEl) {
     const dividerColor = c.dividerColor || '#c9a96e';
     const dividerWidth = num(c.dividerWidth, 1);
@@ -1670,24 +1740,28 @@ async function renderLabelForPrint(item) {
   const footerEl = label.querySelector('.label-footer');
   if (footerEl) footerEl.style.display = c.showFooter !== false ? 'flex' : 'none';
 
-  // 📱 GENERACIÓN DE QR PARA EXPORTACIÓN/IMPRESIÓN
+  // 📱 RENDERIZADO DEL QR EN EXPORTACIÓN
   const qrEl = label.querySelector('.label-qr') || label.querySelector('#previewQR');
   if (qrEl) {
     const isQrVisible = c.showQR || c.usarQRProducto;
     if (isQrVisible) {
-      qrEl.style.display = 'block';
+      qrEl.style.display = 'flex';
       qrEl.style.setProperty('width', qrSizeMm + 'mm', 'important');
       qrEl.style.setProperty('height', qrSizeMm + 'mm', 'important');
       qrEl.style.setProperty('min-width', qrSizeMm + 'mm', 'important');
       qrEl.style.setProperty('min-height', qrSizeMm + 'mm', 'important');
+      qrEl.style.setProperty('max-width', qrSizeMm + 'mm', 'important');
+      qrEl.style.setProperty('max-height', qrSizeMm + 'mm', 'important');
       qrEl.style.aspectRatio = '1 / 1';
       qrEl.style.backgroundColor = '#ffffff';
       qrEl.style.padding = '2px';
       qrEl.style.boxSizing = 'border-box';
       qrEl.style.position = 'absolute';
-      qrEl.style.left = (c.qrPosX != null ? c.qrPosX : 20) + '%';
-      qrEl.style.top = (c.qrPosY != null ? c.qrPosY : 80) + '%';
-      qrEl.style.transform = 'translate(-50%, -50%) rotate(' + (c.qrRotation || 0) + 'deg)';
+      const qx = num(c.qrPosX, 20), qy = num(c.qrPosY, 80), qrot = num(c.qrRotation, 0);
+      qrEl.style.left = (widthMm * qx / 100 - qrSizeMm / 2) + 'mm';
+      qrEl.style.top = (heightMm * qy / 100 - qrSizeMm / 2) + 'mm';
+      qrEl.style.transformOrigin = 'center center';
+      qrEl.style.transform = qrot ? 'rotate(' + qrot + 'deg)' : 'none';
       qrEl.style.zIndex = '6';
       
       try {
@@ -1697,88 +1771,130 @@ async function renderLabelForPrint(item) {
           c.qrColor || '#000000', 
           '#ffffff'
         );
-        qrCanvas.style.width = '100%';
-        qrCanvas.style.height = '100%';
+        qrCanvas.style.setProperty('width', '100%', 'important');
+        qrCanvas.style.setProperty('height', '100%', 'important');
+        qrCanvas.style.objectFit = 'contain';
         qrCanvas.style.display = 'block';
         qrEl.innerHTML = '';
         qrEl.appendChild(qrCanvas);
       } catch (e) {
-        console.warn('Error al generar el QR para impresión:', e);
+        console.warn('Error al generar el QR para exportación:', e);
       }
     } else {
       qrEl.style.display = 'none';
     }
   }
 
-  const barcodeWrap = label.querySelector('.label-barcode-wrap');
-  const barcodeId = c.productId || '';
+  // 📊 RENDERIZADO DEL CÓDIGO DE BARRAS EN EXPORTACIÓN
+  const barcodeWrap = label.querySelector('.label-barcode-wrap') || label.querySelector('#previewBarcodeWrap');
   if (barcodeWrap) {
-    if (c.showBarcode && barcodeId && typeof JsBarcode === 'function') {
+    const isBarcodeVisible = c.showBarcode;
+    if (isBarcodeVisible) {
+      barcodeWrap.style.display = 'flex';
+      barcodeWrap.style.position = 'absolute';
+      const bx = num(c.barcodePosX, 71), by = num(c.barcodePosY, 89), brot = num(c.barcodeRotation, 0);
+      barcodeWrap.style.left = (widthMm * bx / 100 - BARCODE_W_MM / 2) + 'mm';
+      barcodeWrap.style.top = (heightMm * by / 100 - BARCODE_H_MM / 2) + 'mm';
+      barcodeWrap.style.transformOrigin = 'center center';
+      barcodeWrap.style.transform = brot ? 'rotate(' + brot + 'deg)' : 'none';
+      barcodeWrap.style.zIndex = '6';
+      barcodeWrap.style.setProperty('width', BARCODE_W_MM + 'mm', 'important');
+      barcodeWrap.style.setProperty('height', BARCODE_H_MM + 'mm', 'important');
+      barcodeWrap.style.padding = '0';
+
       try {
-        barcodeWrap.style.display = 'flex';
-        barcodeWrap.classList.add('is-positioned');
-        barcodeWrap.style.position = 'absolute';
-        barcodeWrap.style.left = (c.barcodePosX != null ? c.barcodePosX : 71) + '%';
-        barcodeWrap.style.top = (c.barcodePosY != null ? c.barcodePosY : 89) + '%';
-        barcodeWrap.style.transform = 'translate(-50%, -50%) rotate(' + (c.barcodeRotation || 0) + 'deg)';
-        barcodeWrap.style.zIndex = '6';
-        const bcCanvas = document.createElement('canvas');
-        JsBarcode(bcCanvas, barcodeId, {
-          format: 'CODE128', displayValue: true, text: barcodeId,
-          font: 'monospace', fontSize: 10 * PRINT_RENDER_SCALE,
-          textMargin: 1 * PRINT_RENDER_SCALE, margin: 2 * PRINT_RENDER_SCALE,
-          height: 32 * PRINT_RENDER_SCALE, width: 1.5 * PRINT_RENDER_SCALE,
-          lineColor: '#111111', background: '#ffffff'
-        });
-        bcCanvas.style.maxWidth = '90%';
-        bcCanvas.style.maxHeight = '14mm';
-        bcCanvas.style.display = 'block';
-        const oldSvg = barcodeWrap.querySelector('svg');
-        if (oldSvg) oldSvg.style.display = 'none';
-        const oldCanvas = barcodeWrap.querySelector('canvas');
-        if (oldCanvas && oldCanvas !== bcCanvas) oldCanvas.remove();
-        barcodeWrap.appendChild(bcCanvas);
-      } catch (e) { barcodeWrap.style.display = 'none'; }
+        const textToBarcode = (c.productId && String(c.productId).trim() !== '') ? String(c.productId).trim() : '750100000000';
+        barcodeWrap.innerHTML = '';
+        barcodeWrap.appendChild(buildBarcodeCanvas(textToBarcode, c.textColor || '#000000'));
+      } catch (err) {
+        console.warn('Error al generar código de barras para exportación:', err);
+      }
     } else {
       barcodeWrap.style.display = 'none';
     }
   }
 
-  const logoArea = label.querySelector('.label-logo-area');
-  const productArea = label.querySelector('.label-product');
-  if (logoArea) logoArea.style.padding = areaGap + 'px 0';
-  if (productArea) productArea.style.padding = areaGap + 'px 0';
-  if (instrEl) instrEl.style.padding = areaGap + 'px 0';
-  if (footerEl) footerEl.style.paddingTop = areaGap + 'px';
-
-  const setPrintAreaPosition = function(area, xKey, yKey) {
-    if (!area) return;
-    const x = num(c[xKey], 0);
-    const y = num(c[yKey], 0);
-    area.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
-  };
-  setPrintAreaPosition(logoArea, 'logoAreaX', 'logoAreaY');
-  setPrintAreaPosition(productArea, 'productAreaX', 'productAreaY');
-  setPrintAreaPosition(instrEl, 'instructionsAreaX', 'instructionsAreaY');
-  setPrintAreaPosition(footerEl, 'footerAreaX', 'footerAreaY');
-
+  // ⏳ ESPERA ROBUSTA PARA MÓVILES (Asegura carga completa de imágenes antes de capturar)
   const imgs = label.querySelectorAll('img');
   await Promise.all(Array.from(imgs).map(function(img) {
-    if (img.complete) return Promise.resolve();
-    return new Promise(function(res) { img.onload = res; img.onerror = res; setTimeout(res, 2000); });
+    if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+    return new Promise(function(res) {
+      img.onload = res;
+      img.onerror = res;
+      setTimeout(res, 4000); // Tiempo límite extendido para redes lentas en móviles
+    });
   }));
-  await new Promise(function(r) { setTimeout(r, 60); });
+  if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
+  await new Promise(function(r) { setTimeout(r, 150); });
 
-  const canvas = await html2canvas(label, {
-    scale: PRINT_RENDER_SCALE,
-    backgroundColor: c.vinylMode ? null : (c.bgColor || '#ffffff'),
-    useCORS: true,
-    logging: false,
-    width: label.offsetWidth,
-    height: label.offsetHeight
-  });
-  document.body.removeChild(container);
+  // Tamaño exacto en px CSS (96 dpi) a partir de los mm configurados
+  const pxW = Math.round(widthMm * 96 / 25.4);
+  const pxH = Math.round(heightMm * 96 / 25.4);
+  label.style.setProperty('width', widthMm + 'mm', 'important');
+  label.style.setProperty('height', heightMm + 'mm', 'important');
+
+  let canvas;
+  try {
+    canvas = await html2canvas(label, {
+      scale: PRINT_RENDER_SCALE,
+      backgroundColor: c.vinylMode ? null : (c.bgColor || '#ffffff'),
+      useCORS: true,
+      logging: false,
+      width: pxW,
+      height: pxH,
+      windowWidth: Math.max(document.documentElement.clientWidth, pxW + 20),
+      windowHeight: Math.max(document.documentElement.clientHeight, pxH + 20),
+      scrollX: 0,
+      scrollY: 0
+    });
+  } finally {
+    if (container.parentNode) document.body.removeChild(container);
+  }
   return canvas;
+}
+
+
+// 🖼️ Dibuja la imagen de fondo en un canvas respetando fit (contain/cover/fill) y opacidad
+function cargarImagenFondo(url) {
+  return new Promise(function(res) {
+    const img = new Image();
+    if (url.indexOf('data:') !== 0) img.crossOrigin = 'anonymous';
+    img.onload = function() { res(img); };
+    img.onerror = function() {
+      if (img.crossOrigin) { // reintento sin CORS (se verá en pantalla pero puede bloquear la exportación)
+        const img2 = new Image();
+        img2.onload = function() { res(img2); };
+        img2.onerror = function() { res(null); };
+        img2.src = url;
+      } else res(null);
+    };
+    img.src = url;
+  });
+}
+
+async function crearCanvasFondo(estado, widthMm, heightMm) {
+  const img = await cargarImagenFondo(estado.url);
+  if (!img || !img.naturalWidth) { showToast('⚠️ No se pudo cargar la imagen de fondo (usa "Subir local")', 'warning'); return null; }
+  const scale = (typeof PRINT_RENDER_SCALE !== 'undefined' ? PRINT_RENDER_SCALE : 4);
+  const W = Math.round(widthMm * 96 / 25.4 * scale);
+  const H = Math.round(heightMm * 96 / 25.4 * scale);
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  ctx.globalAlpha = estado.opacity != null ? Number(estado.opacity) : 0.3;
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  const fit = estado.fit || 'contain';
+  let dw = W, dh = H;
+  if (fit === 'contain' || fit === 'cover') {
+    const r = fit === 'contain' ? Math.min(W / iw, H / ih) : Math.max(W / iw, H / ih);
+    dw = iw * r; dh = ih * r;
+  } else if (fit === 'none') { dw = iw * scale; dh = ih * scale; }
+  ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  try { cv.toDataURL(); } catch (e) {
+    showToast('⚠️ La URL de la imagen bloquea la exportación. Usa "Subir local"', 'warning');
+    return null;
+  }
+  return cv;
 }
 
 window.printLabels = async function() {
@@ -1839,10 +1955,25 @@ window.printLabels = async function() {
         printContainer.appendChild(copy);
       }
     }
+    // @page con el tamaño real de hoja: evita que el navegador "ajuste a página" y cambie las medidas
+    const pageStyle = document.createElement('style');
+    pageStyle.id = 'dynamicPrintPage';
+    pageStyle.textContent = '@page { size: ' + sheet[0] + 'mm ' + sheet[1] + 'mm; margin: 0; }';
+    const prev = document.getElementById('dynamicPrintPage');
+    if (prev) prev.remove();
+    document.head.appendChild(pageStyle);
     document.body.appendChild(printContainer);
-    await new Promise(function(r) { setTimeout(r, 400); });
+    document.body.classList.add('is-printing');
+    const limpiar = function() {
+      document.body.classList.remove('is-printing');
+      if (printContainer.parentNode) document.body.removeChild(printContainer);
+      if (pageStyle.parentNode) pageStyle.remove();
+      window.removeEventListener('afterprint', limpiar);
+    };
+    window.addEventListener('afterprint', limpiar);
+    await new Promise(function(r) { setTimeout(r, 300); });
     window.print();
-    setTimeout(function() { if (printContainer.parentNode) document.body.removeChild(printContainer); }, 1500);
+    setTimeout(limpiar, 60000); // respaldo si 'afterprint' no se dispara
   } catch (e) {
     showToast('❌ Error al imprimir: ' + e.message, 'danger');
     console.error(e);

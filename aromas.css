@@ -280,43 +280,54 @@ body {
 }
 
 /* ✅ CORRECCIÓN 2: QR sin width fijo en CSS para que JS lo controle con !important */
+/* 📱 CONTENEDOR DE QR ROBUSTO */
 .label-qr {
   border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   flex-shrink: 0;
   overflow: hidden;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 1 / 1 !important;
   background: #ffffff !important;
   padding: 2px;
   box-sizing: border-box;
-  min-width: 15mm;
-  min-height: 15mm;
 }
-.label-qr table { border-collapse: collapse !important; width: 100% !important; height: 100% !important; border: none !important; table-layout: fixed !important; }
-.label-qr td { padding: 0 !important; margin: 0 !important; border: none !important; font-size: 1px !important; line-height: 1px !important; }
-.label-qr canvas { width: 100% !important; height: 100% !important; object-fit: contain !important; display: block !important; image-rendering: crisp-edges; }
 
-.label-barcode-wrap {
-  width: 100%;
-  min-height: 12mm;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding-top: 1mm;
-  position: relative;
-  z-index: 5;
-  overflow: hidden;
+.label-qr table { display: none !important; }
+.label-qr canvas { 
+  width: 100% !important; 
+  height: 100% !important; 
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  display: block !important; 
+  image-rendering: crisp-edges; 
 }
-.label-barcode-wrap.is-positioned {
-  width: 90%;
-  min-height: 12mm;
-  padding-top: 1mm;
-  overflow: visible;
+
+/* 📊 CONTENEDOR DE CÓDIGO DE BARRAS (regla única, sin conflictos) */
+.label-barcode-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  overflow: hidden;
+  background: #ffffff;
+  border-radius: 2px;
+  padding: 0;
+  box-sizing: border-box;
+  position: absolute;
+  z-index: 6;
   transform-origin: center center;
 }
-.label-barcode-wrap svg, .label-barcode-wrap canvas { display: block; max-width: 90%; max-height: 14mm; height: auto; }
+.label-barcode-wrap svg,
+.label-barcode-wrap canvas {
+  display: block;
+  flex: 0 0 auto;
+  max-width: none;
+  max-height: none;
+  image-rendering: pixelated;
+}
 .label-info { color: var(--secondary); line-height: 1.4; text-align: right; flex: 1; min-width: 0; overflow: hidden; }
 .label-batch { font-family: 'Roboto Mono', monospace; color: var(--text-color, #1a1a1a); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -655,7 +666,14 @@ body {
   .print-area canvas {
     box-sizing: border-box;
     transform: none !important;
+    max-width: none !important;
+    max-height: none !important;
   }
+  html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  /* Oculta (sin ocupar espacio) todo lo que no sea el área de impresión */
+  body.is-printing > *:not(.print-area) { display: none !important; }
+  body.is-printing .print-area { position: static !important; z-index: auto !important; }
 }
 
 @media (max-width: 1100px) {
