@@ -421,6 +421,7 @@ async function loadProducts() {
     }
 
     filterProducts('');
+    if (typeof refreshPODatalist === 'function') refreshPODatalist();
 }
 
 // ==========================================
@@ -2280,13 +2281,20 @@ function initPurchaseModule() {
                 <div>Producto</div><div>Cant.</div><div>Costo unit. ₡</div><div>Subtotal ₡</div><div></div>
             </div>
             <div id="poLines"></div>
-            <button class="btn btn-sm" style="margin-top:6px;" onclick="addPOLine()">➕ Agregar producto</button>
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+                <input id="poQuickSearch" list="poProductDatalist" placeholder="🔍 Buscar producto por nombre o ID y agregar..."
+                    style="flex:1;min-width:220px;padding:8px;border:1px solid var(--border,#ccc);border-radius:6px;">
+                <datalist id="poProductDatalist"></datalist>
+                <button class="btn btn-sm" onclick="addPOLineFromSearch()">➕ Agregar</button>
+                <button class="btn btn-sm" onclick="addPOLine()">➕ Línea vacía</button>
+            </div>
 
             <div id="poTotals" style="text-align:right;font-weight:700;margin:12px 0;font-size:1.05rem;"></div>
 
             <div id="poActions" style="display:flex;gap:8px;flex-wrap:wrap;">
                 <button class="btn" onclick="savePurchaseOrder('borrador')">💾 Guardar borrador</button>
                 <button class="btn btn-success" onclick="savePurchaseOrder('aprobada')">✅ Aprobar compra y actualizar inventario</button>
+                <button class="btn" onclick="printPurchaseOrder()">🖨️ Imprimir orden</button>
                 <button class="btn" onclick="closePOEditor()">Cerrar</button>
             </div>
             <div id="poApprovedMsg" style="display:none;color:var(--success);font-weight:600;margin-top:8px;">
@@ -2302,6 +2310,7 @@ function initPurchaseModule() {
     } else {
         document.body.appendChild(view);
     }
+    refreshPODatalist();
 }
 
 function generatePONumber() {
@@ -2415,6 +2424,137 @@ function renderPOLines() {
 function addPOLine() {
     poLines.push({ productId: '', nombre: '', cantidad: 1, costoUnitario: 0, detalle: '' });
     renderPOLines();
+}
+
+function refreshPODatalist() {
+    const datalist = document.getElementById('poProductDatalist');
+    if (!datalist) return;
+    datalist.innerHTML = allProducts.map(p => `<option value="${p.nombre}" data-id="${p.id}"></option>`).join('');
+}
+
+function addPOLineFromSearch() {
+    const input = document.getElementById('poQuickSearch');
+    const q = (input?.value || '').trim().toLowerCase();
+    if (!q) { alert('Escriba el nombre o ID del producto'); return; }
+
+    const product = allProducts.find(p =>
+        p.nombre.toLowerCase() === q ||
+        p.nombre.toLowerCase().includes(q) ||
+        String(p.id).toLowerCase() === q ||
+        String(p.id).toLowerCase().includes(q)
+    );
+    if (!product) { alert(`❌ Producto no encontrado: "${q}"`); return; }
+
+    const already = poLines.findIndex(l => String(l.productId) === String(product.id));
+    if (already !== -1) {
+        poLines[already].cantidad = (parseInt(poLines[already].cantidad) || 0) + 1;
+    } else {
+        const stock = getStockForProduct(product);
+        poLines.push({
+            productId: product.id,
+            nombre: product.nombre,
+            cantidad: 1,
+            costoUnitario: stock ? (stock.costoUnitario || 0) : (product.precioBase || 0),
+            detalle: stock ? `Stock actual: ${stock.cantidad}` : ''
+        });
+    }
+    if (input) input.value = '';
+    renderPOLines();
+}
+
+// ==========================================
+// IMPRESIÓN DE ORDEN DE COMPRA
+// ==========================================
+function printPurchaseOrderData(o) {
+    if (!o) return;
+    const lineas = o.lineas || [];
+    const fecha = o.fecha?.toDate ? o.fecha.toDate().toLocaleString('es-CR') : (o.ultimaActualizacion ? new Date(o.ultimaActualizacion).toLocaleString('es-CR') : new Date().toLocaleString('es-CR'));
+    const estadoTxt = o.estado === 'aprobada' ? 'APROBADA' : 'BORRADOR';
+
+    const rows = lineas.map((l, i) => `
+        <tr>
+            <td style="text-align:center;">${i + 1}</td>
+            <td>${l.nombre || ''}<br><small style="color:#666;">ID: ${l.productId || '-'}</small></td>
+            <td style="text-align:center;">${l.cantidad}</td>
+            <td style="text-align:right;">₡${formatMoney(l.costoUnitario || 0)}</td>
+            <td style="text-align:right;">₡${formatMoney((l.cantidad || 0) * (l.costoUnitario || 0))}</td>
+        </tr>`).join('');
+
+    const win = window.open('', '_blank');
+    if (!win) { alert('Permita las ventanas emergentes para imprimir'); return; }
+    win.document.write(`<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Orden de Compra ${o.numero || ''}</title>
+<style>
+    body { font-family: Arial, sans-serif; margin: 24px; color: #222; }
+    h1 { font-size: 20px; margin: 0 0 4px; color: #2e7d32; }
+    .sub { color: #666; font-size: 12px; margin-bottom: 16px; }
+    .info { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 14px; font-size: 13px; }
+    .info div { min-width: 150px; }
+    .label { color: #888; font-size: 11px; text-transform: uppercase; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
+    th, td { border: 1px solid #ccc; padding: 7px 8px; }
+    th { background: #f0f0f0; }
+    .total-row td { font-weight: bold; font-size: 15px; background: #fafafa; }
+    .firma { display: flex; justify-content: space-between; margin-top: 70px; gap: 30px; }
+    .firma div { flex: 1; text-align: center; border-top: 1px solid #333; padding-top: 6px; font-size: 12px; color: #555; }
+    .estado { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: bold; background: ${o.estado === 'aprobada' ? '#e6f4ea' : '#f3e8ff'}; color: ${o.estado === 'aprobada' ? '#1e7e34' : '#6d28d9'}; }
+    @media print { body { margin: 10mm; } }
+</style>
+</head>
+<body>
+    <h1>📋 ORDEN DE COMPRA</h1>
+    <div class="sub">EWE Esentia · Documento generado desde el sistema</div>
+    <div class="info">
+        <div><div class="label">No. Orden</div><strong>${o.numero || 'S/N'}</strong></div>
+        <div><div class="label">Fecha</div>${fecha}</div>
+        <div><div class="label">Proveedor</div>${o.proveedor || '-'}</div>
+        <div><div class="label">Estado</div><span class="estado">${estadoTxt}</span></div>
+    </div>
+    ${o.notas ? `<div style="font-size:12px;margin-bottom:8px;"><span class="label">Notas:</span> ${o.notas}</div>` : ''}
+    <table>
+        <thead>
+            <tr><th>#</th><th style="text-align:left;">Producto</th><th>Cant.</th><th style="text-align:right;">Costo unit.</th><th style="text-align:right;">Subtotal</th></tr>
+        </thead>
+        <tbody>
+            ${rows || '<tr><td colspan="5" style="text-align:center;color:#888;">Sin productos</td></tr>'}
+            <tr class="total-row">
+                <td colspan="4" style="text-align:right;">TOTAL ORDEN</td>
+                <td style="text-align:right;">₡${formatMoney(o.total || 0)}</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="firma">
+        <div>Solicitado por</div>
+        <div>Autorizado por</div>
+        <div>Recibido conforme</div>
+    </div>
+    <script>window.onload = function() { window.print(); }<\/script>
+</body>
+</html>`);
+    win.document.close();
+}
+
+function printPurchaseOrder() {
+    const lineasValidas = poLines.filter(l => l.productId && (parseInt(l.cantidad) || 0) > 0);
+    if (!lineasValidas.length) { alert('No hay productos para imprimir'); return; }
+    printPurchaseOrderData({
+        numero: document.getElementById('poNumero')?.value || generatePONumber(),
+        proveedor: document.getElementById('poProveedor')?.value || '',
+        notas: document.getElementById('poNotas')?.value || '',
+        estado: currentPO?.estado || 'borrador',
+        lineas: lineasValidas,
+        total: recalcPOTotals(),
+        ultimaActualizacion: new Date().toISOString()
+    });
+}
+
+function printPurchaseOrderById(id) {
+    const o = purchaseOrders.find(x => x.id === id);
+    if (!o) { alert('Orden no encontrada'); return; }
+    printPurchaseOrderData(o);
 }
 
 function updatePOLine(index, field, value) {
@@ -2590,6 +2730,7 @@ function renderPurchaseOrdersList() {
                 <div style="display:flex;align-items:center;gap:8px;">
                     <div style="font-weight:700;font-size:1.05rem;color:var(--primary,#2e7d32);">₡${formatMoney(o.total || 0)}</div>
                     <button class="btn btn-sm" onclick="editPurchaseOrder('${o.id}')">✏️ Editar</button>
+                    <button class="btn btn-sm" onclick="printPurchaseOrderById('${o.id}')">🖨️</button>
                     ${!aprobada ? `<button class="btn btn-success btn-sm" onclick="quickApprovePO('${o.id}')">✅ Aprobar</button>` : ''}
                     <button class="btn btn-sm" style="color:var(--danger);" onclick="deletePurchaseOrder('${o.id}')">🗑️</button>
                 </div>
