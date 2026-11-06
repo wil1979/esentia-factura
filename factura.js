@@ -90,6 +90,28 @@ function normalizeString(str) {
     return String(str || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/\s+/g, '');
 }
 
+// Descripción comercial para facturas/proformas: nombre visible + nombre original del JSON.
+// Evita repetir el texto cuando ambos nombres son iguales o cuando una factura antigua
+// ya guardó el nombre original dentro del nombre visible.
+function buildProductDescription(nombre, nombreOriginal) {
+    const displayName = String(nombre || nombreOriginal || 'Producto').trim();
+    const originalName = String(nombreOriginal || '').trim();
+    if (!originalName || normalizeString(displayName) === normalizeString(originalName)) return displayName;
+    return `${displayName} (${originalName})`;
+}
+
+function getItemDescription(item) {
+    if (!item) return 'Producto';
+    return item.descripcion || buildProductDescription(item.nombre, item.nombreOriginal);
+}
+
+function getPOLineDescription(line) {
+    if (!line) return 'Producto';
+    const product = allProducts.find(p => String(p.id) === String(line.productId));
+    if (product) return buildProductDescription(product.nombre, product.nombreOriginal);
+    return line.descripcion || buildProductDescription(line.nombre, line.nombreOriginal);
+}
+
 function formatMoney(amount) {
     const value = Number(amount) || 0;
     return value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
@@ -399,9 +421,10 @@ async function loadProducts() {
                 return {
                     id: String(p.id),
                     nombre: p.nombre || p.nombreOriginal || 'Producto sin nombre',
+                    nombreOriginal: p.nombreOriginal || p.nombre || 'Producto sin nombre',
                     precioBase: parseFloat(precioBase) || 0,
                     categoria: p.categoriaDetectada || item.catDefault,
-                    variantes: p.variantes || []
+                    variantes: Array.isArray(p.variantes) ? p.variantes : []
                 };
             });
             allProducts = allProducts.concat(mapped);
@@ -865,12 +888,9 @@ function renderProducts(products) {
     if (!grid) return;
 
     let visibleProducts = Array.isArray(products) ? products : [];
-    if (!showOutOfStockProducts) {
-        visibleProducts = visibleProducts.filter(p => {
-            const stock = getStockForProduct(p);
-            return !stock || stock.cantidad > 0;
-        });
-    }
+    // La pantalla principal usa el mismo filtro que Inventario > Stock Bajo (≤5):
+    // existencia mayor que cero y menor o igual al umbral configurado.
+    visibleProducts = visibleProducts.filter(p => getStockStatus(getStockForProduct(p)).status === 'low');
 
     const counter = document.getElementById('productCount');
     if (counter) counter.textContent = `${visibleProducts.length} productos`;
@@ -892,7 +912,7 @@ function renderProducts(products) {
              onclick="${isOutOfStock ? `alert('⚠️ Producto agotado.'); return false;` : `openProductModal('${p.id}')`}">
             <div class="stock-badge ${stockStatus.class}">${stockStatus.label}</div>
             <div class="product-category">${p.categoria}</div>
-            <div class="product-name">${p.nombre}</div>
+            <div class="product-name">${buildProductDescription(p.nombre, p.nombreOriginal)}</div>
             <div class="product-price">Desde ₡${formatMoney(p.precioBase)}</div>
             <div class="product-code">ID: ${p.id}</div>
         </div>`;
@@ -1091,15 +1111,20 @@ function confirmAddToCart() {
         return;
     }
 
-    const totalBase = basePrice * qty;
+   const totalBase = basePrice * qty;
     const totalFinal = Math.max(0, totalBase - discountColones);
     const finalPriceUnit = totalFinal / qty;
+    const baseDescription = buildProductDescription(product.nombre, product.nombreOriginal);
     const displayName = variantName ? `${product.nombre} (${variantName})` : product.nombre;
+    const nombreOriginal = variantName ? `${product.nombreOriginal || product.nombre} (${variantName})` : (product.nombreOriginal || product.nombre);
+    const descripcion = variantName ? `${baseDescription} (${variantName})` : baseDescription;
 
     cart.push({
         id: product.id,
         nombre: displayName,
-        precioUnitario: basePrice,
+        nombreOriginal,
+        descripcion,
+        precioUnitario: basePrice,      
         descuentoColones: discountColones,
         descuentoPct: discountPercent,
         precioFinalUnitario: finalPriceUnit,
@@ -1950,7 +1975,7 @@ async function resendInvoice(invoiceId) {
 
         if (factura.items && factura.items.length > 0) {
             factura.items.forEach(item => {
-                let desc = item.nombre || 'Producto';
+                let desc = getItemDescription(item);
                 if (item.descuentoColones > 0) desc += ` (-₡${formatMoney(item.descuentoColones)})`;
                 message += `▪️ ${item.cantidad} x ${desc}\n   ₡${formatMoney(item.precioFinalUnitario * item.cantidad)}\n`;
             });
@@ -2019,7 +2044,7 @@ async function openInvoiceDetailModal(invoiceId) {
                 return `
                     <tr style="border-bottom: 1px solid var(--border);">
                         <td style="padding: 10px;">
-                            <div style="font-weight: 600;">${item.nombre}</div>
+                            <div style="font-weight: 600;">${getItemDescription(item)}</div>
                             <div style="font-size: 0.75rem; color: var(--text-light);">ID: ${item.id}</div>
                         </td>
                         <td style="padding: 10px; text-align: center;">${item.cantidad}</td>
@@ -2167,8 +2192,8 @@ function printTicket() {
         addressLine.style.display = 'none';
     }
 
-    document.getElementById('ticketItems').innerHTML = cart.map(item => {
-        let desc = `${item.cantidad} x ${item.nombre}`;
+       document.getElementById('ticketItems').innerHTML = cart.map(item => {
+        let desc = `${item.cantidad} x ${getItemDescription(item)}`;
         if (item.descuentoColones > 0) desc += ` (-₡${formatMoney(item.descuentoColones)})`;
         return `<div class="ticket-item"><div class="ticket-item-desc">${desc}</div><div>₡${formatMoney(item.precioFinalUnitario * item.cantidad)}</div></div>`;
     }).join('');
@@ -2211,8 +2236,14 @@ function sendWhatsApp() {
     }
 
     message += `━━━━━━━━━━━━━━━━━━\n`;
-    cart.forEach(item => {
-        let desc = item.nombre;
+  //  cart.forEach(item => {
+  //      let desc = item.nombre;
+  //      if (item.descuentoColones > 0) desc += ` (-₡${formatMoney(item.descuentoColones)} | ${Number(item.descuentoPct || 0).toFixed(1)}%)`;
+  //      message += `▪️ ${item.cantidad} x ${desc}\n   ₡${formatMoney(item.precioFinalUnitario * item.cantidad)}\n`;
+  //  });
+
+      cart.forEach(item => {
+        let desc = getItemDescription(item);
         if (item.descuentoColones > 0) desc += ` (-₡${formatMoney(item.descuentoColones)} | ${Number(item.descuentoPct || 0).toFixed(1)}%)`;
         message += `▪️ ${item.cantidad} x ${desc}\n   ₡${formatMoney(item.precioFinalUnitario * item.cantidad)}\n`;
     });
@@ -2274,6 +2305,14 @@ function initPurchaseModule() {
                     <label style="font-size:0.75rem;color:var(--text-light,#888);">Notas</label><br>
                     <input id="poNotas" placeholder="Notas de la compra" style="padding:6px;border:1px solid var(--border,#ccc);border-radius:6px;width:100%;">
                 </div>
+                <div>
+                    <label style="font-size:0.75rem;color:var(--text-light,#888);">Solicitado por</label><br>
+                    <input id="poSolicitadoPor" value="M Elena Gutierrez S." placeholder="Nombre del solicitante" style="padding:6px;border:1px solid var(--border,#ccc);border-radius:6px;width:190px;">
+                </div>
+                <div>
+                    <label style="font-size:0.75rem;color:var(--text-light,#888);">Autorizado por</label><br>
+                    <input id="poAutorizadoPor" value="Wilber Calderon M." placeholder="Nombre del autorizador" style="padding:6px;border:1px solid var(--border,#ccc);border-radius:6px;width:190px;">
+                </div>
                 <div id="poEstadoBadge" style="font-weight:700;"></div>
             </div>
 
@@ -2325,6 +2364,9 @@ function newPurchaseOrder() {
     document.getElementById('poNumero').value = generatePONumber();
     document.getElementById('poProveedor').value = '';
     document.getElementById('poNotas').value = '';
+    document.getElementById('poSolicitadoPor').value = '';
+    document.getElementById('poAutorizadoPor').value = 'Wilber Calderon M.';
+    ['poProveedor', 'poNotas', 'poSolicitadoPor', 'poAutorizadoPor'].forEach(fid => { document.getElementById(fid).disabled = false; });
     document.getElementById('poEstadoBadge').textContent = '🟣 Borrador';
     document.getElementById('poEditor').style.display = 'block';
     document.getElementById('poApprovedMsg').style.display = 'none';
@@ -2409,7 +2451,7 @@ function renderPOLines() {
             <div style="display:grid;grid-template-columns:2fr 70px 120px 120px 40px;gap:8px;align-items:center;margin-bottom:4px;">
                 <select onchange="updatePOLine(${i},'productId',this.value)" ${dis} style="padding:6px;border:1px solid var(--border,#ccc);border-radius:6px;">
                     <option value="">— Seleccionar —</option>
-                    ${allProducts.map(p => `<option value="${p.id}" ${String(p.id) === String(l.productId) ? 'selected' : ''}>${p.nombre}</option>`).join('')}
+                    ${allProducts.map(p => `<option value="${p.id}" ${String(p.id) === String(l.productId) ? 'selected' : ''}>${buildProductDescription(p.nombre, p.nombreOriginal)}</option>`).join('')}
                 </select>
                 <input type="number" min="1" value="${l.cantidad}" onchange="updatePOLine(${i},'cantidad',this.value)" ${dis} style="padding:6px;border:1px solid var(--border,#ccc);border-radius:6px;width:100%;">
                 <input type="number" min="0" step="0.01" value="${l.costoUnitario}" onchange="updatePOLine(${i},'costoUnitario',this.value)" ${dis} style="padding:6px;border:1px solid var(--border,#ccc);border-radius:6px;width:100%;">
@@ -2453,6 +2495,8 @@ function addPOLineFromSearch() {
         poLines.push({
             productId: product.id,
             nombre: product.nombre,
+            nombreOriginal: product.nombreOriginal || product.nombre,
+            descripcion: buildProductDescription(product.nombre, product.nombreOriginal),
             cantidad: 1,
             costoUnitario: stock ? (stock.costoUnitario || 0) : (product.precioBase || 0),
             detalle: stock ? `Stock actual: ${stock.cantidad}` : ''
@@ -2470,11 +2514,13 @@ function printPurchaseOrderData(o) {
     const lineas = o.lineas || [];
     const fecha = o.fecha?.toDate ? o.fecha.toDate().toLocaleString('es-CR') : (o.ultimaActualizacion ? new Date(o.ultimaActualizacion).toLocaleString('es-CR') : new Date().toLocaleString('es-CR'));
     const estadoTxt = o.estado === 'aprobada' ? 'APROBADA' : 'BORRADOR';
+    const solicitadoPor = o.solicitadoPor || '—';
+    const autorizadoPor = o.autorizadoPor || 'Wilber Calderon M.';
 
     const rows = lineas.map((l, i) => `
         <tr>
             <td style="text-align:center;">${i + 1}</td>
-            <td>${l.nombre || ''}<br><small style="color:#666;">ID: ${l.productId || '-'}</small></td>
+            <td>${getPOLineDescription(l)}<br><small style="color:#666;">ID: ${l.productId || '-'}</small></td>
             <td style="text-align:center;">${l.cantidad}</td>
             <td style="text-align:right;">₡${formatMoney(l.costoUnitario || 0)}</td>
             <td style="text-align:right;">₡${formatMoney((l.cantidad || 0) * (l.costoUnitario || 0))}</td>
@@ -2527,8 +2573,8 @@ function printPurchaseOrderData(o) {
         </tbody>
     </table>
     <div class="firma">
-        <div>Solicitado por</div>
-        <div>Autorizado por</div>
+        <div>Solicitado por<br><strong>${solicitadoPor}</strong></div>
+        <div>Autorizado por<br><strong>${autorizadoPor}</strong></div>
         <div>Recibido conforme</div>
     </div>
     <script>window.onload = function() { window.print(); }<\/script>
@@ -2544,6 +2590,8 @@ function printPurchaseOrder() {
         numero: document.getElementById('poNumero')?.value || generatePONumber(),
         proveedor: document.getElementById('poProveedor')?.value || '',
         notas: document.getElementById('poNotas')?.value || '',
+        solicitadoPor: document.getElementById('poSolicitadoPor')?.value.trim() || '',
+        autorizadoPor: document.getElementById('poAutorizadoPor')?.value.trim() || 'Wilber Calderon M.',
         estado: currentPO?.estado || 'borrador',
         lineas: lineasValidas,
         total: recalcPOTotals(),
@@ -2564,6 +2612,8 @@ function updatePOLine(index, field, value) {
         const product = allProducts.find(p => String(p.id) === String(value));
         line.productId = value;
         line.nombre = product ? product.nombre : '';
+        line.nombreOriginal = product ? (product.nombreOriginal || product.nombre) : '';
+        line.descripcion = product ? buildProductDescription(product.nombre, product.nombreOriginal) : '';
         if (product) {
             const stock = getStockForProduct(product);
             line.costoUnitario = stock ? (stock.costoUnitario || 0) : (product.precioBase || 0);
@@ -2599,6 +2649,8 @@ async function savePurchaseOrder(estado) {
     const lineas = lineasValidas.map(l => ({
         productId: String(l.productId),
         nombre: l.nombre || (allProducts.find(p => String(p.id) === String(l.productId))?.nombre || ''),
+        nombreOriginal: l.nombreOriginal || (allProducts.find(p => String(p.id) === String(l.productId))?.nombreOriginal || ''),
+        descripcion: getPOLineDescription(l),
         cantidad: parseInt(l.cantidad) || 0,
         costoUnitario: parseFloat(l.costoUnitario) || 0,
         subtotal: (parseInt(l.cantidad) || 0) * (parseFloat(l.costoUnitario) || 0),
@@ -2660,6 +2712,8 @@ async function savePurchaseOrder(estado) {
             numero,
             proveedor,
             notas: document.getElementById('poNotas').value.trim(),
+            solicitadoPor: document.getElementById('poSolicitadoPor')?.value.trim() || '',
+            autorizadoPor: document.getElementById('poAutorizadoPor')?.value.trim() || 'Wilber Calderon M.',
             lineas,
             total,
             estado,
@@ -2748,6 +2802,8 @@ async function editPurchaseOrder(id, silent = false) {
         document.getElementById('poNumero').value = currentPO.numero || '';
         document.getElementById('poProveedor').value = currentPO.proveedor || '';
         document.getElementById('poNotas').value = currentPO.notas || '';
+        document.getElementById('poSolicitadoPor').value = currentPO.solicitadoPor || '';
+        document.getElementById('poAutorizadoPor').value = currentPO.autorizadoPor || 'Wilber Calderon M.';
         document.getElementById('poEstadoBadge').innerHTML = currentPO.estado === 'aprobada'
             ? '<span style="color:var(--success);">✅ Aprobada</span>'
             : '<span style="color:#6d28d9;">🟣 Borrador</span>';
@@ -2755,7 +2811,7 @@ async function editPurchaseOrder(id, silent = false) {
         const readOnly = currentPO.estado === 'aprobada';
         document.getElementById('poActions').style.display = readOnly ? 'none' : 'flex';
         document.getElementById('poApprovedMsg').style.display = readOnly ? 'block' : 'none';
-        ['poProveedor', 'poNotas'].forEach(fid => { document.getElementById(fid).disabled = readOnly; });
+        ['poProveedor', 'poNotas', 'poSolicitadoPor', 'poAutorizadoPor'].forEach(fid => { document.getElementById(fid).disabled = readOnly; });
         renderPOLines();
         if (!silent) document.getElementById('poEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (error) {
