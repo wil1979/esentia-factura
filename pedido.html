@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EWE Essentia - Catálogo de Fragancias</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- GSAP for Smooth Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: {
+                            950: '#07120c',
+                            900: '#0e2419',
+                            800: '#1b3b2b',
+                            700: '#28533e',
+                            600: '#387055',
+                        },
+                        gold: {
+                            100: '#fff9e6',
+                            300: '#f3e5ab',
+                            400: '#e6c875',
+                            500: '#d4af37',
+                            600: '#aa8822',
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Cormorant Garamond"', 'serif'],
+                        sans: ['Montserrat', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0e2419;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #28533e;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d4af37;
+        }
+        
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #fff3c4 0%, #d4af37 50%, #aa8822 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .gold-gradient-bg {
+            background: linear-gradient(135deg, #f3e5ab 0%, #d4af37 50%, #997819 100%);
+        }
+
+        .gold-border-gradient {
+            border-image: linear-gradient(to bottom right, #f3e5ab, #d4af37, #7a5f10) 1;
+        }
+
+        .glass-card {
+            background: rgba(27, 59, 43, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .glass-modal {
+            background: rgba(14, 36, 25, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        
+        /* Shimmer effect for luxury tags */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .shimmer {
+            background: linear-gradient(90deg, rgba(212,175,55,0) 0%, rgba(243,229,171,0.3) 50%, rgba(212,175,55,0) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 4s infinite;
+        }
+    </style>
+</head>
+<body class="bg-emerald-950 text-gray-100 font-sans min-h-screen flex flex-col selection:bg-gold-500 selection:text-emerald-950">
+
+    <!-- TOP ANNOUNCEMENT BAR -->
+    <div class="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-900 border-b border-gold-500/30 text-xs tracking-wider py-2 text-center text-gold-300 uppercase px-4 flex justify-between items-center">
+        <span class="hidden sm:inline-block"><i class="fa-solid fa-sparkles mr-2"></i>Calidad Premium en Costa Rica</span>
+        <span class="mx-auto sm:mx-0 font-medium">✨ Pedidos Directos a WhatsApp: +506 72952454</span>
+        <span class="hidden sm:inline-block"><i class="fa-solid fa-leaf mr-2"></i>Esencias 100% Puras</span>
+    </div>
+
+    <!-- MAIN HEADER / NAVBAR -->
+    <header class="sticky top-0 z-40 bg-emerald-950/90 backdrop-blur-md border-b border-gold-500/20 shadow-2xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            
+            <!-- Logo & Brand Name -->
+            <div class="flex items-center space-x-4 cursor-pointer" onclick="scrollToTop()">
+                <div class="w-12 h-12 rounded-full gold-gradient-bg p-0.5 flex items-center justify-center shadow-lg shadow-gold-500/20">
+                    <div class="w-full h-full bg-emerald-950 rounded-full flex items-center justify-center">
+                        <i class="fa-solid fa-spray-can-sparkles text-gold-400 text-xl"></i>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="font-serif text-2xl md:text-3xl font-bold tracking-widest gold-gradient-text uppercase leading-none">EWE Essentia</h1>
+                    <p class="text-xs text-gold-300/80 italic tracking-widest font-serif mt-1">“Fragancias que Enamoran”</p>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="relative w-full md:w-80">
+                <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Buscar por aroma o nota..." 
+                    class="w-full bg-emerald-900/60 border border-gold-500/30 rounded-full py-2.5 pl-10 pr-4 text-sm text-gray-100 placeholder-emerald-600 focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400 transition-all">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-gold-400/60 text-sm"></i>
+                <button id="clearSearch" onclick="clearSearchInput()" class="hidden absolute right-3 top-2.5 text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Cart Trigger Button -->
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleCartDrawer(true)" class="relative flex items-center gap-2 bg-emerald-800/80 hover:bg-gold-500 hover:text-emerald-950 border border-gold-500/40 text-gold-300 font-semibold px-4 py-2.5 rounded-full transition-all duration-300 shadow-md group">
+                    <i class="fa-solid fa-bag-shopping text-lg group-hover:scale-110 transition-transform"></i>
+                    <span class="text-xs tracking-wider uppercase hidden sm:inline">Mi Pedido</span>
+                    <span id="cartBadge" class="bg-gold-500 text-emerald-950 group-hover:bg-emerald-950 group-hover:text-gold-300 font-bold text-xs w-5 h-5 rounded-full flex items-center justify-center transition-colors">0</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- CATEGORY FILTERS NAVBAR -->
+        <div class="border-t border-emerald-800/50 bg-emerald-900/30">
+            <div class="max-w-7xl mx-auto px-4 overflow-x-auto scrollbar-none py-3 flex gap-2 sm:gap-3 justify-start md:justify-center">
+                <button onclick="filterCategory('all')" class="cat-btn active px-4 py-1.5 rounded-full text-xs uppercase tracking-wider font-medium whitespace-nowrap transition-all border border-gold-500/40 bg-gold-500 text-emerald-950 shadow-md shadow-gold-500/10" data-cat="all">
+                    Todos los Aromas
+                </button>
+                <button onclick="filterCategory('Nuevos')" class="cat-btn px-4 py-1.5 rounded-full text-xs uppercase tracking-wider font-medium whitespace-nowrap transition-all border border-gold-500/20 text-gold-300/80 hover:border-gold-400 hover:text-gold-200" data-cat="Nuevos">
+                    ✨ Nuevos Aromas
+                </button>
+                <button onclick="filterCategory('Florales')" class="cat-btn px-4 py-1.5 rounded-full text-xs uppercase tracking-wider font-medium whitespace-nowrap transition-all border border-gold-500/20 text-gold-300/80 hover:border-gold-400 hover:text-gold-200" data-cat="Florales">
+                    🌸 Florales & Dulces
+                </button>
+                <button onclick="filterCategory('Frescos')" class="cat-btn px-4 py-1.5 rounded-full text-xs uppercase tracking-wider font-medium whitespace-nowrap transition-all border border-gold-500/20 text-gold-300/80 hover:border-gold-400 hover:text-gold-200" data-cat="Frescos">
+                    🌿 Frescos & Citricos
+                </button>
+                <button onclick="filterCategory('Cálidos')" class="cat-btn px-4 py-1.5 rounded-full text-xs uppercase tracking-wider font-medium whitespace-nowrap transition-all border border-gold-500/20 text-gold-300/80 hover:border-gold-400 hover:text-gold-200" data-cat="Cálidos">
+                    🪵 Cálidos & Madera
+                </button>
+                <button onclick="filterCategory('Navideños')" class="cat-btn px-4 py-1.5 rounded-full text-xs uppercase tracking-wider font-medium whitespace-nowrap transition-all border border-gold-500/20 text-gold-300/80 hover:border-gold-400 hover:text-gold-200" data-cat="Navideños">
+                    🎄 Navideños & Especiales
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO / BANNER SECTION -->
+    <section class="relative py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full text-center overflow-hidden">
+        <div class="absolute inset-0 opacity-10 pointer-events-none flex items-center justify-center">
+            <i class="fa-solid fa-spa text-[300px] text-gold-500"></i>
+        </div>
+        <div class="relative z-10 max-w-3xl mx-auto">
+            <span class="text-gold-400 font-serif text-sm tracking-[0.3em] uppercase block mb-2">Colección Exclusiva 2026</span>
+            <h2 class="font-serif text-3xl sm:text-5xl font-bold tracking-wide text-white mb-4">Descubra Nuestra Galería de Esencias</h2>
+            <div class="w-24 h-0.5 bg-gradient-to-r from-transparent via-gold-400 to-transparent mx-auto mb-6"></div>
+            <p class="text-gray-300 text-sm sm:text-base font-light leading-relaxed">
+                Seleccione sus fragancias preferidas y elija la presentación perfecta para sus espacios o uso personal. Envíe su pedido directamente a nuestro WhatsApp oficial.
+            </p>
+        </div>
+
+        <!-- Presentations Ribbon -->
+        <div class="mt-8 grid grid-cols-2 sm:grid-cols-5 gap-3 max-w-4xl mx-auto">
+            <div class="bg-emerald-900/40 border border-gold-500/20 p-2.5 rounded-xl text-center backdrop-blur-sm">
+                <span class="block text-gold-400 font-serif font-bold text-lg">8 ml</span>
+                <span class="text-xs text-gray-300">₡1,500</span>
+            </div>
+            <div class="bg-emerald-900/40 border border-gold-500/20 p-2.5 rounded-xl text-center backdrop-blur-sm">
+                <span class="block text-gold-400 font-serif font-bold text-lg">10 ml</span>
+                <span class="text-xs text-gray-300">₡2,000</span>
+            </div>
+            <div class="bg-emerald-900/40 border border-gold-500/20 p-2.5 rounded-xl text-center backdrop-blur-sm">
+                <span class="block text-gold-400 font-serif font-bold text-lg">30 ml</span>
+                <span class="text-xs text-gray-300">₡3,000</span>
+            </div>
+            <div class="bg-emerald-900/40 border border-gold-500/20 p-2.5 rounded-xl text-center backdrop-blur-sm">
+                <span class="block text-gold-400 font-serif font-bold text-lg">60 ml</span>
+                <span class="text-xs text-gray-300">₡5,000</span>
+            </div>
+            <div class="bg-emerald-900/40 border border-gold-500/20 p-2.5 rounded-xl text-center backdrop-blur-sm col-span-2 sm:col-span-1">
+                <span class="block text-gold-400 font-serif font-bold text-lg">120 ml</span>
+                <span class="text-xs text-gray-300">₡7,000</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- CATALOG GRID SECTION -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <!-- Section Header -->
+        <div class="flex justify-between items-center mb-8 border-b border-emerald-800/60 pb-4">
+            <div>
+                <h3 id="currentCategoryTitle" class="font-serif text-2xl text-gold-300 font-semibold">Todos los Aromas</h3>
+                <p id="fragranceCount" class="text-xs text-gray-400 mt-1">Cargando catálogo...</p>
+            </div>
+            <div class="text-xs text-gold-400/80 flex items-center gap-1">
+                <i class="fa-solid fa-hand-pointer"></i>
+                <span>Haga clic para expandir opciones</span>
+            </div>
+        </div>
+
+        <!-- Fragrances Grid -->
+        <div id="catalogGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+            <!-- Dynamically Rendered Fragrance Cards -->
+        </div>
+
+        <!-- Empty Search Result State -->
+        <div id="emptyState" class="hidden text-center py-16">
+            <i class="fa-regular fa-compass text-5xl text-gold-500/40 mb-4"></i>
+            <h4 class="font-serif text-xl text-gold-300 font-medium">No se encontraron aromas</h4>
+            <p class="text-sm text-gray-400 mt-1">Intente buscar con otro nombre o ajuste los filtros de categoría.</p>
+            <button onclick="resetFilters()" class="mt-4 bg-emerald-800 hover:bg-emerald-700 text-gold-300 text-xs uppercase px-4 py-2 rounded-full border border-gold-500/30">Restablecer Filtros</button>
+        </div>
+    </main>
+
+    <!-- PRODUCT DETAIL MODAL -->
+    <div id="productModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
+        <div id="modalContainer" class="glass-modal w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl border border-gold-500/40 transform scale-95 transition-transform duration-300 max-h-[90vh] flex flex-col">
+            
+            <!-- Modal Header -->
+            <div class="relative bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-900 p-6 text-center border-b border-gold-500/30">
+                <button onclick="closeProductModal()" class="absolute top-4 right-4 text-gold-400/70 hover:text-gold-300 w-8 h-8 rounded-full bg-emerald-950/50 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+                <div id="modalIconContainer" class="w-16 h-16 mx-auto rounded-full bg-emerald-950/80 border border-gold-500/40 flex items-center justify-center text-3xl text-gold-400 mb-3 shadow-inner">
+                    <!-- Dynamic Icon -->
+                </div>
+                <span id="modalCategoryBadge" class="inline-block bg-gold-500/10 text-gold-300 border border-gold-500/30 text-[10px] uppercase tracking-widest px-3 py-0.5 rounded-full mb-1">Categoría</span>
+                <h3 id="modalTitle" class="font-serif text-2xl sm:text-3xl text-white font-bold gold-gradient-text">Nombre Aroma</h3>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-6 overflow-y-auto space-y-6 flex-grow">
+                <!-- Olfactory Info -->
+                <div>
+                    <h4 class="text-xs uppercase tracking-widest text-gold-400 font-semibold mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-notes"></i> Notas Olfativas & Perfil
+                    </h4>
+                    <p id="modalDescription" class="text-sm text-gray-300 leading-relaxed font-light">
+                        Descripción detallada de la esencia.
+                    </p>
+                </div>
+
+                <!-- Presentation Selector -->
+                <div>
+                    <label class="block text-xs uppercase tracking-widest text-gold-400 font-semibold mb-3 flex items-center gap-1.5">
+                        <i class="fa-solid fa-flask"></i> Seleccione Presentación:
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5" id="presentationOptions">
+                        <!-- Dynamic Buttons for Sizes -->
+                        <button type="button" onclick="selectSize('8ml', 1500)" class="size-btn py-2.5 px-3 rounded-xl border border-gold-500/30 text-left bg-emerald-900/30 hover:border-gold-400 transition-all flex flex-col justify-between" data-size="8ml">
+                            <span class="text-xs font-semibold text-white">8 ml</span>
+                            <span class="text-xs text-gold-400 font-mono mt-1">₡1,500</span>
+                        </button>
+                        <button type="button" onclick="selectSize('10ml', 2000)" class="size-btn py-2.5 px-3 rounded-xl border border-gold-500/30 text-left bg-emerald-900/30 hover:border-gold-400 transition-all flex flex-col justify-between" data-size="10ml">
+                            <span class="text-xs font-semibold text-white">10 ml</span>
+                            <span class="text-xs text-gold-400 font-mono mt-1">₡2,000</span>
+                        </button>
+                        <button type="button" onclick="selectSize('30ml', 3000)" class="size-btn py-2.5 px-3 rounded-xl border border-gold-500/30 text-left bg-emerald-900/30 hover:border-gold-400 transition-all flex flex-col justify-between" data-size="30ml">
+                            <span class="text-xs font-semibold text-white">30 ml</span>
+                            <span class="text-xs text-gold-400 font-mono mt-1">₡3,000</span>
+                        </button>
+                        <button type="button" onclick="selectSize('60ml', 5000)" class="size-btn py-2.5 px-3 rounded-xl border border-gold-500/30 text-left bg-emerald-900/30 hover:border-gold-400 transition-all flex flex-col justify-between" data-size="60ml">
+                            <span class="text-xs font-semibold text-white">60 ml</span>
+                            <span class="text-xs text-gold-400 font-mono mt-1">₡5,000</span>
+                        </button>
+                        <button type="button" onclick="selectSize('120ml', 7000)" class="size-btn py-2.5 px-3 rounded-xl border border-gold-500/30 text-left bg-emerald-900/30 hover:border-gold-400 transition-all flex flex-col justify-between col-span-2 sm:col-span-1" data-size="120ml">
+                            <span class="text-xs font-semibold text-white">120 ml</span>
+                            <span class="text-xs text-gold-400 font-mono mt-1">₡7,000</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quantity Controls -->
+                <div class="flex items-center justify-between bg-emerald-900/40 p-3 rounded-xl border border-gold-500/20">
+                    <span class="text-xs uppercase tracking-wider text-gray-300 font-medium">Cantidad:</span>
+                    <div class="flex items-center gap-3 bg-emerald-950 border border-gold-500/30 rounded-lg px-2 py-1">
+                        <button onclick="adjustModalQty(-1)" class="text-gold-400 hover:text-white px-2 text-lg font-bold">-</button>
+                        <span id="modalQty" class="text-white font-mono font-bold text-sm w-6 text-center">1</span>
+                        <button onclick="adjustModalQty(1)" class="text-gold-400 hover:text-white px-2 text-lg font-bold">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-6 bg-emerald-950 border-t border-gold-500/20 flex items-center justify-between gap-4">
+                <div>
+                    <span class="block text-[10px] uppercase text-gray-400">Total Aroma</span>
+                    <span id="modalTotalPrice" class="font-serif text-2xl font-bold text-gold-300">₡1,500</span>
+                </div>
+                <button onclick="confirmAddToCart()" class="gold-gradient-bg text-emerald-950 font-bold px-6 py-3 rounded-xl hover:brightness-110 transition-all flex items-center gap-2 shadow-lg shadow-gold-500/20">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Agregar al Pedido</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SHOPPING CART DRAWER -->
+    <div id="cartDrawer" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div id="cartPanel" class="fixed right-0 top-0 bottom-0 w-full max-w-md bg-emerald-950 border-l border-gold-500/30 transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+            
+            <!-- Drawer Header -->
+            <div class="p-5 border-b border-gold-500/20 bg-emerald-900/50 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-bag-shopping text-gold-400 text-xl"></i>
+                    <h3 class="font-serif text-xl font-bold text-white uppercase tracking-wider">Su Pedido</h3>
+                </div>
+                <button onclick="toggleCartDrawer(false)" class="text-gray-400 hover:text-white text-xl p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Cart Items List -->
+            <div id="cartItemsContainer" class="flex-grow p-5 overflow-y-auto space-y-4">
+                <!-- Dynamic Cart Items -->
+            </div>
+
+            <!-- Empty Cart State -->
+            <div id="cartEmptyState" class="hidden flex-grow flex flex-col items-center justify-center p-8 text-center">
+                <i class="fa-solid fa-basket-shopping text-5xl text-gold-500/30 mb-4"></i>
+                <p class="text-gray-300 font-serif text-lg">Su pedido está vacío</p>
+                <p class="text-xs text-gray-500 mt-1">Explore nuestro catálogo y agregue sus fragancias favoritas.</p>
+            </div>
+
+            <!-- Cart Form & Checkout Section -->
+            <div id="cartCheckoutSection" class="p-5 border-t border-gold-500/20 bg-emerald-900/30 space-y-4">
+                <!-- Customer Details Form -->
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[11px] uppercase tracking-wider text-gold-300 mb-1 font-medium">Nombre Completo *</label>
+                        <input type="text" id="custName" placeholder="Ej: María González" 
+                            class="w-full bg-emerald-950/80 border border-gold-500/30 rounded-lg py-2 px-3 text-xs text-white placeholder-emerald-700 focus:outline-none focus:border-gold-400">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] uppercase tracking-wider text-gold-300 mb-1 font-medium">Dirección / Notas de Entrega</label>
+                        <input type="text" id="custAddress" placeholder="Ej: San José, Costa Rica / Entregar en oficina" 
+                            class="w-full bg-emerald-950/80 border border-gold-500/30 rounded-lg py-2 px-3 text-xs text-white placeholder-emerald-700 focus:outline-none focus:border-gold-400">
+                    </div>
+                </div>
+
+                <!-- Total Summary -->
+                <div class="pt-2 border-t border-emerald-800 flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-300 uppercase tracking-wider">Total Estimado:</span>
+                    <span id="cartTotalSum" class="font-serif text-2xl font-bold text-gold-300">₡0</span>
+                </div>
+
+                <!-- WhatsApp Send Button -->
+                <button onclick="submitOrderToWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider">
+                    <i class="fa-brands fa-whatsapp text-xl"></i>
+                    <span>Enviar Pedido a WhatsApp</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ORDER SUCCESS THANK YOU MODAL -->
+    <div id="successModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="glass-modal max-w-md w-full rounded-2xl p-6 sm:p-8 text-center border border-gold-500/40 shadow-2xl relative">
+            <div class="w-20 h-20 rounded-full gold-gradient-bg p-0.5 mx-auto mb-4 flex items-center justify-center shadow-lg shadow-gold-500/30">
+                <div class="w-full h-full bg-emerald-950 rounded-full flex items-center justify-center">
+                    <i class="fa-solid fa-heart text-gold-400 text-3xl animate-pulse"></i>
+                </div>
+            </div>
+            
+            <h3 class="font-serif text-2xl sm:text-3xl text-white font-bold gold-gradient-text mb-2">¡Muchas Gracias por su Pedido!</h3>
+            <p class="text-sm text-gray-300 font-light leading-relaxed mb-6">
+                Próximamente responderemos a su mensaje para procesar la entrega con mucho amor y cuidado. 💖
+            </p>
+            
+            <div class="bg-emerald-900/40 p-4 rounded-xl border border-gold-500/20 text-xs text-gold-300 mb-6">
+                <p>EWE Essentia — <em>Fragancias que Enamoran</em></p>
+            </div>
+
+            <button onclick="closeSuccessModal()" class="w-full gold-gradient-bg text-emerald-950 font-bold py-3 rounded-xl hover:brightness-110 transition-all uppercase text-xs tracking-wider">
+                Volver al Catálogo
+            </button>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="mt-auto border-t border-gold-500/20 bg-emerald-950/90 text-gray-400 text-xs py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+            
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+                <div>
+                    <h4 class="font-serif text-lg font-bold gold-gradient-text uppercase">EWE Essentia</h4>
+                    <p class="text-gold-300/70 italic font-serif">“Fragancias que Enamoran”</p>
+                </div>
+                <div class="flex items-center gap-4 text-gold-400">
+                    <a href="https://wa.me/50672952454" target="_blank" class="hover:text-white transition-colors flex items-center gap-1.5">
+                        <i class="fa-brands fa-whatsapp text-base"></i> +506 72952454
+                    </a>
+                    <span>•</span>
+                    <span class="text-gray-400"><i class="fa-solid fa-location-dot"></i> Costa Rica</span>
+                </div>
+            </div>
+
+            <div class="w-full h-px bg-emerald-800/50"></div>
+
+            <!-- MANDATORY FOOTER DISCLAIMER -->
+            <div class="bg-emerald-900/30 p-4 rounded-xl border border-gold-500/10 text-center text-gray-300/90 font-light leading-relaxed">
+                <p class="font-semibold text-gold-300 mb-1">Nota al pie de página:</p>
+                <p>Aplican restricciones. Precios de promoción y/o ofertas aplican con pago de contado. Crédito previo aplica tarifa normal. Entrega bajo solicitud previa.</p>
+            </div>
+
+            <div class="text-center text-[11px] text-gray-500">
+                &copy; 2026 EWE Essentia. Todos los derechos reservados.
+            </div>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC & CATALOG DATA -->
+    <script>
+        // -------------------------------------------------------------
+        // CATALOG DATABASE (Extracted & Mapped from Reference Document)
+        // -------------------------------------------------------------
+        const FRAGRANCES = [
+            // NUEVOS AROMAS
+            { id: 'abrazos-sol', name: 'Abrazos del Sol', category: 'Nuevos', icon: 'fa-sun', desc: 'Notas cálidas y radiantes con matices de ámbar dorado y brisa marina solar.', isNew: true },
+            { id: 'girasol', name: 'Girasol', category: 'Nuevos', icon: 'fa-seedling', desc: 'Aroma vivo y luminoso de pétalos silvestres expuestos al sol de la tarde.', isNew: true },
+            { id: 'argan', name: 'Argan', category: 'Nuevos', icon: 'fa-oil-well', desc: 'Nuez exótica, dulce y aterciopelada con toque gourmet relajante.', isNew: true },
+            { id: 'manzanilla-n', name: 'Manzanilla', category: 'Nuevos', icon: 'fa-leaf', desc: 'Bálsamo herbal suave y reconfortante que invita a la serenidad.', isNew: true },
+            { id: 'bahamas', name: 'Bahamas', category: 'Nuevos', icon: 'fa-umbrella-beach', desc: 'Cóctel tropical de coco, frutos exóticos y brisa marina del Caribe.', isNew: true },
+            { id: 'mora', name: 'Mora', category: 'Nuevos', icon: 'fa-apple-whole', desc: 'Frutos silvestres oscuros, jugosos y ligeramente acidulados.', isNew: true },
+            { id: 'pradera', name: 'Pradera', category: 'Nuevos', icon: 'fa-plant-wilt', desc: 'Hierba recién cortada fusionada con flor de campo al amanecer.', isNew: true },
+            { id: 'uva', name: 'Uva', category: 'Nuevos', icon: 'fa-wine-glass', desc: 'Uva morada madura y dulce, llena de vitalidad y frescura.', isNew: true },
+            { id: 'melon', name: 'Melón', category: 'Nuevos', icon: 'fa-bowl-food', desc: 'Dulzura refrescante y acuosa de melón madurado bajo el sol.', isNew: true },
+            { id: 'frescura-marina', name: 'Frescura Marina', category: 'Nuevos', icon: 'fa-water', desc: 'Notas ozónicas de brisa oceánica y sal mineral revitalizante.', isNew: true },
+            { id: 'jardin-encantado', name: 'Jardín Encantado', category: 'Nuevos', icon: 'fa-wand-magic-sparkles', desc: 'Fantasía floral mística con sutiles destellos de nectarinas.', isNew: true },
+            { id: 'rocio-fresco', name: 'Rocío Fresco', category: 'Nuevos', icon: 'fa-droplet', desc: 'Gotas matutinas de lluvia limpia sobre hojas de té verde.', isNew: true },
+            { id: 'ylang-ylang', name: 'Ylang Ylang', category: 'Nuevos', icon: 'fa-spa', desc: 'Flor exótica oriental, sensual, cremosa y profundamente relajante.', isNew: true },
+
+            // CATALOGO PRINCIPAL
+            { id: 'ariel', name: 'Ariel', category: 'Frescos', icon: 'fa-wind', desc: 'Pureza cristalina con acordes limpios de algodón y brisa marina.' },
+            { id: 'bambu', name: 'Bambú', category: 'Frescos', icon: 'fa-tree', desc: 'Notas verdes zen, tallos húmedos de bambú y aire de montaña.' },
+            { id: 'bebe', name: 'Bebé', category: 'Florales', icon: 'fa-baby', desc: 'Tierno aroma a talco suave, lavanda sutil y pureza de hogar.' },
+            { id: 'canela', name: 'Canela', category: 'Cálidos', icon: 'fa-fire', desc: 'Especiado estimulante de corteza de canela pura y dulce.' },
+            { id: 'cherry', name: 'Cherry', category: 'Florales', icon: 'fa-cherries', desc: 'Cerezas rojas jugosas con toques de vainilla y almendra.' },
+            { id: 'chicle', name: 'Chicle', category: 'Florales', icon: 'fa-candy-cane', desc: 'Divertida y dulce fragancia de tutti-frutti acaramelado.' },
+            { id: 'cipres', name: 'Ciprés', category: 'Cálidos', icon: 'fa-tree-city', desc: 'Resina boscosa, maderas de pino y aire de bosque profundo.' },
+            { id: 'fresco-amanecer', name: 'Fresco Amanecer', category: 'Frescos', icon: 'fa-sun-plant-wilt', desc: 'Cítricos dorados envueltos en rocío de primeras horas del día.' },
+            { id: 'citronela', name: 'Citronela', category: 'Frescos', icon: 'fa-lemon', desc: 'Vibrante toque herbal cítrico repelente natural y energetizante.' },
+            { id: 'fantasia-navidena', name: 'Fantasía Navideña', category: 'Navideños', icon: 'fa-holly-berry', desc: 'Manzana asada con canela, clavo dulce y pino navideño.' },
+            { id: 'floral', name: 'Floral', category: 'Florales', icon: 'fa-fan', desc: 'Bouquet clásico de pétalos blancos, jazmín y lilas.' },
+            { id: 'floral-intenso', name: 'Floral Intenso', category: 'Florales', icon: 'fa-clover', desc: 'Concentrado seductor de rosas rojas y orquídeas salvajes.' },
+            { id: 'manzana', name: 'Manzana', category: 'Florales', icon: 'fa-apple-whole', desc: 'Manzana roja crujiente, jugosa y llena de frescura natural.' },
+            { id: 'manzana-canela', name: 'Manzana Canela', category: 'Cálidos', icon: 'fa-mortar-pestle', desc: 'Clásica combinación acogedora de manzana horneada y especias.' },
+            { id: 'manzana-verde', name: 'Manzana Verde', category: 'Frescos', icon: 'fa-apple-whole', desc: 'Ácida, efervescente y vigorizante manzana verde silvestre.' },
+            { id: 'melocoton', name: 'Melocotón', category: 'Florales', icon: 'fa-peach', desc: 'Melocotón dulce y aterciopelado recién cosechado.' },
+            { id: 'frutos-rojos', name: 'Frutos Rojos', category: 'Florales', icon: 'fa-pepper-hot', desc: 'Mezcla intensa de frambuesas, fresas y arándanos maduros.' },
+            { id: 'kiwi', name: 'Kiwi', category: 'Frescos', icon: 'fa-stroopwafel', desc: 'Fruta tropical verde, exótica, ácida y refrescante.' },
+            { id: 'lavanda', name: 'Lavanda', category: 'Frescos', icon: 'fa-spa', desc: 'Flores de lavanda provenzal, calmantes e ideales para el confort.' },
+            { id: 'limon', name: 'Limón', category: 'Frescos', icon: 'fa-lemon', desc: 'Zumo concentrado de limón amarillo chispeante y limpio.' },
+            { id: 'violeta', name: 'Violeta', category: 'Florales', icon: 'fa-stroopwafel', desc: 'Sutiles notas atalcadas de flor de violeta de primavera.' },
+            { id: 'menta-limon', name: 'Menta Limón', category: 'Frescos', icon: 'fa-whiskey-glass', desc: 'Fusión ultra refrescante estilo mojito herbal de menta y rodajas de limón.' },
+            { id: 'menta', name: 'Menta', category: 'Frescos', icon: 'fa-leaf', desc: 'Hojas de menta piperita silvestre y frescor mentolado puro.' },
+            { id: 'pepino', name: 'Pepino', category: 'Frescos', icon: 'fa-glass-water', desc: 'Agua de pepino hidratante, ligera y súper limpia.' },
+            { id: 'maracuya', name: 'Maracuyá', category: 'Florales', icon: 'fa-martini-glass-citrus', desc: 'Fruta de la pasión ácida y tropical repleta de energía.' },
+            { id: 'fresa', name: 'Fresa', category: 'Florales', icon: 'fa-bowl-rice', desc: 'Fresa silvestre ultra dulce y jugosa.' },
+            { id: 'pera', name: 'Pera', category: 'Frescos', icon: 'fa-pear', desc: 'Pera verde suave con matices florales ligeros.' },
+            { id: 'naranja', name: 'Naranja', category: 'Frescos', icon: 'fa-citrus', desc: 'Naranja de zumo recién exprimida al sol.' },
+            { id: 'sandia', name: 'Sandía', category: 'Frescos', icon: 'fa-watermelon-slice', desc: 'Dulce tajada de sandía veraniega, fresca y acuosa.' },
+            { id: 'sabila', name: 'Sábila', category: 'Frescos', icon: 'fa-leaf', desc: 'Aloe vera cristalino, calmante y botánico.' },
+            { id: 'suave-abril', name: 'Suave Abril', category: 'Florales', icon: 'fa-shirt', desc: 'Aroma reconfortante a ropa limpia secada al aire libre.' },
+            { id: 'vainilla', name: 'Vainilla', category: 'Cálidos', icon: 'fa-cookie', desc: 'Vaina de vainilla cremosita, dulce y gourmand.' },
+            { id: 'primaveral', name: 'Primaveral', category: 'Florales', icon: 'fa-cloud-sun-rain', desc: 'Flores nuevas y brisa cálida de estación de primavera.' },
+            { id: 'flores-paraiso', name: 'Flores Paraíso', category: 'Florales', icon: 'fa-feather', desc: 'Aroma exótico tropical de flores de Strelitzia y orquídeas.' },
+            { id: 'romero', name: 'Romero', category: 'Frescos', icon: 'fa-plant-wilt', desc: 'Herbal aromático silvestre, estimulante para la mente.' },
+            { id: 'eucalipto', name: 'Eucalipto', category: 'Frescos', icon: 'fa-notes-medical', desc: 'Notas mentoladas balsámicas que abren las vías respiratorias.' },
+            { id: 'popurri', name: 'Popurrí', category: 'Florales', icon: 'fa-compact-disc', desc: 'Mezcla artesanal de flores secas, pétalos e inciensos.' },
+            { id: 'herbal', name: 'Herbal', category: 'Frescos', icon: 'fa-cannabis', desc: 'Extracto puro de hierbas aromáticas de jardín medicinal.' },
+            { id: 'mango-mandarina', name: 'Mango Mandarina', category: 'Florales', icon: 'fa-wine-bottle', desc: 'Explosión cítrico-dulce de mango maduro y mandarina jugosa.' },
+            { id: 'vainilla-navidena', name: 'Vainilla Navideña', category: 'Navideños', icon: 'fa-gifts', desc: 'Vainilla especiada con toques de nuez moscada y azucaradas festivas.' },
+            { id: 'brisa-marina', name: 'Brisa Marina', category: 'Frescos', icon: 'fa-sailboat', desc: 'Brisa de mar abierto con notas ozónicas y saladas.' },
+            { id: 'coco', name: 'Coco', category: 'Florales', icon: 'fa-cookie-bite', desc: 'Leche de coco cremosa y tropical con toque de sol.' },
+            { id: 'zacate-limon', name: 'Zacate Limón', category: 'Frescos', icon: 'fa-grass', desc: 'Lemongrass tailandés, cítrico chispeante y limpiador.' },
+            { id: 'abrazos-cristal', name: 'Abrazos Cristal', category: 'Navideños', icon: 'fa-snowflake', desc: 'Aire puro invernal con matices atalcados y reconfortantes.' },
+            { id: 'rustico', name: 'Rústico', category: 'Cálidos', icon: 'fa-campground', desc: 'Madera ahumada, musgo de roble y ambiente de cabaña de montaña.' },
+            { id: 'cuero', name: 'Cuero', category: 'Cálidos', icon: 'fa-vest', desc: 'Elegante y sofisticado acorde de cuero refinado y tabaco suave.' },
+            { id: 'jazmin', name: 'Jazmín', category: 'Florales', icon: 'fa-disease', desc: 'Flores nocturnas de jazmín blanco, intensamente aromáticas.' },
+            { id: 'maracuya-menta', name: 'Maracuyá Menta', category: 'Frescos', icon: 'fa-glass-water-droplet', desc: 'Cóctel exótico que equilibra la acidez tropical con la frescura mentolada.' },
+            { id: 'pino-navideno', name: 'Pino Navideño', category: 'Navideños', icon: 'fa-tree', desc: 'Bosque de pinos frescos recién cortados para las festividades.' },
+            { id: 'rompope', name: 'Rompope', category: 'Navideños', icon: 'fa-glass-cheers', desc: 'Crema dulce tradicional con notas de vainilla, ron y canela.' },
+            { id: 'cesta-navidena', name: 'Cesta Navideña', category: 'Navideños', icon: 'fa-gift', desc: 'Frutos secos, especias de invierno y golosinas festivas.' },
+            { id: 'caramelo', name: 'Caramelo', category: 'Cálidos', icon: 'fa-cubes-stacked', desc: 'Caramelo toffee tostado con mantequilla y azúcar moreno.' },
+            { id: 'chocolate', name: 'Chocolate', category: 'Cálidos', icon: 'fa-mug-hot', desc: 'Cacao amargo rico y dulce chocolate artesanal caliente.' },
+            { id: 'cafe', name: 'Café', category: 'Cálidos', icon: 'fa-mug-saucer', desc: 'Grano de café tico recién tostado con aroma profundo e inspirador.' },
+            { id: 'carro-nuevo', name: 'Carro Nuevo', category: 'Cálidos', icon: 'fa-car-side', desc: 'Combinación limpia de tapicería premium y acabados impecables.' },
+            { id: 'pina-colada', name: 'Piña Colada', category: 'Florales', icon: 'fa-cocktail', desc: 'Piña madura, crema de coco y un toque suave de ron blanco.' },
+            { id: 'galleta-gengibre', name: 'Galleta Gengibre', category: 'Navideños', icon: 'fa-cookie', desc: 'Galletas de jengibre recién horneadas con especias dulces.' },
+            { id: 'lady-rose', name: 'Lady Rose', category: 'Florales', icon: 'fa-rose', desc: 'Rosas inglesas elegantes con destellos de peonía y ámbar.' },
+            { id: 'grape-fruit', name: 'Grape Fruit', category: 'Frescos', icon: 'fa-circle-dot', desc: 'Toronja rosada amarga y refrescante llena de vigor.' },
+            { id: 'new-moon', name: 'New Moon', category: 'Cálidos', icon: 'fa-moon', desc: 'Mística nocturna de almizcle blanco, ámbar y maderas suaves.' },
+            { id: 'rosas', name: 'Rosas', category: 'Florales', icon: 'fa-spa', desc: 'Puro bouquet clásico de pétalos de rosa fresca del jardín.' }
+        ];
+
+        // PRICES BY SIZE
+        const PRESENTATION_PRICES = {
+            '8ml': 1500,
+            '10ml': 2000,
+            '30ml': 3000,
+            '60ml': 5000,
+            '120ml': 7000
+        };
+
+        // -------------------------------------------------------------
+        // STATE MANAGEMENT
+        // -------------------------------------------------------------
+        let activeCategory = 'all';
+        let currentSearchQuery = '';
+        let selectedProductForModal = null;
+        let selectedSize = '8ml';
+        let modalQuantity = 1;
+        let cart = [];
+
+        // -------------------------------------------------------------
+        // INITIALIZATION
+        // -------------------------------------------------------------
+        window.addEventListener('DOMContentLoaded', () => {
+            renderCatalog();
+            updateCartUI();
+        });
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // -------------------------------------------------------------
+        // CATALOG RENDER & FILTERING
+        // -------------------------------------------------------------
+        function filterCategory(category) {
+            activeCategory = category;
+            
+            // Update active tab buttons
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.dataset.cat === category) {
+                    btn.className = 'cat-btn active px-4 py-1.5 rounded-full text-xs uppercase tracking-wider font-medium whitespace-nowrap transition-all border border-gold-500/40 bg-gold-500 text-emerald-950 shadow-md shadow-gold-500/10';
+                } else {
+                    btn.className = 'cat-btn px-4 py-1.5 rounded-full text-xs uppercase tracking-wider font-medium whitespace-nowrap transition-all border border-gold-500/20 text-gold-300/80 hover:border-gold-400 hover:text-gold-200';
+                }
+            });
+
+            // Update title
+            const titleElem = document.getElementById('currentCategoryTitle');
+            if (category === 'all') titleElem.textContent = 'Todos los Aromas';
+            else if (category === 'Nuevos') titleElem.textContent = '✨ Nuevos Aromas';
+            else if (category === 'Florales') titleElem.textContent = '🌸 Aromas Florales & Dulces';
+            else if (category === 'Frescos') titleElem.textContent = '🌿 Aromas Frescos & Cítricos';
+            else if (category === 'Cálidos') titleElem.textContent = '🪵 Aromas Cálidos & Maderas';
+            else if (category === 'Navideños') titleElem.textContent = '🎄 Aromas Navideños & Especiales';
+
+            renderCatalog();
+        }
+
+        function handleSearch() {
+            const input = document.getElementById('searchInput');
+            currentSearchQuery = input.value.toLowerCase().trim();
+            const clearBtn = document.getElementById('clearSearch');
+            
+            if (currentSearchQuery.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+
+            renderCatalog();
+        }
+
+        function clearSearchInput() {
+            const input = document.getElementById('searchInput');
+            input.value = '';
+            handleSearch();
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            currentSearchQuery = '';
+            document.getElementById('clearSearch').classList.add('hidden');
+            filterCategory('all');
+        }
+
+        function renderCatalog() {
+            const grid = document.getElementById('catalogGrid');
+            const emptyState = document.getElementById('emptyState');
+            const countElem = document.getElementById('fragranceCount');
+
+            // Filter logic
+            const filtered = FRAGRANCES.filter(item => {
+                const matchesCategory = (activeCategory === 'all') || (item.category === activeCategory);
+                const matchesSearch = item.name.toLowerCase().includes(currentSearchQuery) || 
+                                      item.desc.toLowerCase().includes(currentSearchQuery);
+                return matchesCategory && matchesSearch;
+            });
+
+            countElem.textContent = `Mostrando ${filtered.length} fragancias disponibles`;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            // Render cards HTML
+            grid.innerHTML = filtered.map((item, index) => {
+                return `
+                <div onclick="openProductModal('${item.id}')" 
+                     class="glass-card rounded-2xl p-4 flex flex-col justify-between cursor-pointer group hover:border-gold-400/70 hover:shadow-xl hover:shadow-gold-500/10 transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden">
+                    
+                    ${item.isNew ? `<span class="absolute top-2 right-2 bg-gradient-to-r from-gold-400 to-gold-600 text-emerald-950 font-bold text-[9px] uppercase px-2 py-0.5 rounded-full tracking-wider shadow">Nuevo</span>` : ''}
+
+                    <div>
+                        <!-- Icon representation -->
+                        <div class="w-12 h-12 rounded-xl bg-emerald-900/80 border border-gold-500/20 group-hover:border-gold-400 flex items-center justify-center text-gold-400 text-xl mb-3 shadow-inner group-hover:scale-110 transition-transform">
+                            <i class="fa-solid ${item.icon}"></i>
+                        </div>
+
+                        <!-- Title & Category -->
+                        <span class="text-[10px] uppercase tracking-widest text-gold-400/80 font-semibold">${item.category}</span>
+                        <h4 class="font-serif text-lg font-bold text-white group-hover:text-gold-300 transition-colors leading-snug line-clamp-1">${item.name}</h4>
+                        
+                        <p class="text-xs text-gray-400 font-light mt-1.5 line-clamp-2 leading-relaxed">
+                            ${item.desc}
+                        </p>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-emerald-800/40 flex items-center justify-between">
+                        <span class="text-[11px] text-gray-400">Desde <strong class="text-gold-300 font-mono">₡1,500</strong></span>
+                        <span class="w-7 h-7 rounded-full bg-emerald-800 group-hover:bg-gold-500 group-hover:text-emerald-950 text-gold-300 flex items-center justify-center text-xs transition-colors">
+                            <i class="fa-solid fa-plus"></i>
+                        </span>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            // GSAP stagger animation on cards
+            gsap.fromTo("#catalogGrid > div", 
+                { opacity: 0, y: 15 },
+                { opacity: 1, y: 0, duration: 0.3, stagger: 0.03, ease: "power1.out" }
+            );
+        }
+
+        // -------------------------------------------------------------
+        // MODAL LOGIC & PRESENTATION SELECTION
+        // -------------------------------------------------------------
+        function openProductModal(id) {
+            const product = FRAGRANCES.find(p => p.id === id);
+            if (!product) return;
+
+            selectedProductForModal = product;
+            selectedSize = '8ml';
+            modalQuantity = 1;
+
+            // Populate modal fields
+            document.getElementById('modalTitle').textContent = product.name;
+            document.getElementById('modalCategoryBadge').textContent = product.category;
+            document.getElementById('modalDescription').textContent = product.desc;
+            document.getElementById('modalIconContainer').innerHTML = `<i class="fa-solid ${product.icon}"></i>`;
+            document.getElementById('modalQty').textContent = modalQuantity;
+
+            // Reset selected size highlight
+            updateSizeButtonsUI();
+            updateModalPrice();
+
+            // Show Modal with Animation
+            const modal = document.getElementById('productModal');
+            const container = document.getElementById('modalContainer');
+
+            modal.classList.remove('pointer-events-none');
+            gsap.to(modal, { opacity: 1, duration: 0.25 });
+            gsap.to(container, { scale: 1, duration: 0.3, ease: "back.out(1.2)" });
+        }
+
+        function closeProductModal() {
+            const modal = document.getElementById('productModal');
+            const container = document.getElementById('modalContainer');
+
+            gsap.to(container, { scale: 0.95, duration: 0.2 });
+            gsap.to(modal, { opacity: 0, duration: 0.2, onComplete: () => {
+                modal.classList.add('pointer-events-none');
+            }});
+        }
+
+        function selectSize(size, price) {
+            selectedSize = size;
+            updateSizeButtonsUI();
+            updateModalPrice();
+        }
+
+        function updateSizeButtonsUI() {
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                if (btn.dataset.size === selectedSize) {
+                    btn.className = 'size-btn py-2.5 px-3 rounded-xl border border-gold-400 text-left bg-gold-500/20 shadow-md flex flex-col justify-between transition-all';
+                } else {
+                    btn.className = 'size-btn py-2.5 px-3 rounded-xl border border-gold-500/30 text-left bg-emerald-900/30 hover:border-gold-400/50 transition-all flex flex-col justify-between';
+                }
+            });
+        }
+
+        function adjustModalQty(delta) {
+            modalQuantity = Math.max(1, modalQuantity + delta);
+            document.getElementById('modalQty').textContent = modalQuantity;
+            updateModalPrice();
+        }
+
+        function updateModalPrice() {
+            const unitPrice = PRESENTATION_PRICES[selectedSize] || 1500;
+            const total = unitPrice * modalQuantity;
+            document.getElementById('modalTotalPrice').textContent = `₡${total.toLocaleString()}`;
+        }
+
+        // -------------------------------------------------------------
+        // CART DRAWER LOGIC
+        // -------------------------------------------------------------
+        function confirmAddToCart() {
+            if (!selectedProductForModal) return;
+
+            const unitPrice = PRESENTATION_PRICES[selectedSize];
+            const existingIndex = cart.findIndex(item => item.id === selectedProductForModal.id && item.size === selectedSize);
+
+            if (existingIndex > -1) {
+                cart[existingIndex].qty += modalQuantity;
+            } else {
+                cart.push({
+                    id: selectedProductForModal.id,
+                    name: selectedProductForModal.name,
+                    icon: selectedProductForModal.icon,
+                    size: selectedSize,
+                    unitPrice: unitPrice,
+                    qty: modalQuantity
+                });
+            }
+
+            closeProductModal();
+            updateCartUI();
+            toggleCartDrawer(true);
+        }
+
+        function updateCartUI() {
+            const countElem = document.getElementById('cartBadge');
+            const container = document.getElementById('cartItemsContainer');
+            const emptyState = document.getElementById('cartEmptyState');
+            const checkoutSec = document.getElementById('cartCheckoutSection');
+            const totalSumElem = document.getElementById('cartTotalSum');
+
+            const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+            countElem.textContent = totalItems;
+
+            if (cart.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                checkoutSec.classList.add('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            checkoutSec.classList.remove('hidden');
+
+            let grandTotal = 0;
+
+            container.innerHTML = cart.map((item, index) => {
+                const itemTotal = item.unitPrice * item.qty;
+                grandTotal += itemTotal;
+
+                return `
+                <div class="bg-emerald-900/40 border border-gold-500/20 rounded-xl p-3 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-950 border border-gold-500/30 flex items-center justify-center text-gold-400 text-lg">
+                            <i class="fa-solid ${item.icon}"></i>
+                        </div>
+                        <div>
+                            <h5 class="font-serif font-bold text-white text-sm">${item.name}</h5>
+                            <div class="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+                                <span class="bg-gold-500/20 text-gold-300 border border-gold-500/30 px-1.5 py-0.2 rounded font-mono text-[10px]">${item.size}</span>
+                                <span>₡${item.unitPrice.toLocaleString()} c/u</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-1.5 bg-emerald-950 border border-gold-500/30 rounded px-1.5 py-0.5 text-xs">
+                            <button onclick="updateCartItemQty(${index}, -1)" class="text-gold-400 px-1 font-bold">-</button>
+                            <span class="text-white font-mono font-bold">${item.qty}</span>
+                            <button onclick="updateCartItemQty(${index}, 1)" class="text-gold-400 px-1 font-bold">+</button>
+                        </div>
+                        <button onclick="removeCartItem(${index})" class="text-red-400/70 hover:text-red-400 text-sm">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            totalSumElem.textContent = `₡${grandTotal.toLocaleString()}`;
+        }
+
+        function updateCartItemQty(index, delta) {
+            if (cart[index]) {
+                cart[index].qty += delta;
+                if (cart[index].qty <= 0) {
+                    cart.splice(index, 1);
+                }
+                updateCartUI();
+            }
+        }
+
+        function removeCartItem(index) {
+            cart.splice(index, 1);
+            updateCartUI();
+        }
+
+        function toggleCartDrawer(open) {
+            const drawer = document.getElementById('cartDrawer');
+            const panel = document.getElementById('cartPanel');
+
+            if (open) {
+                drawer.classList.remove('pointer-events-none');
+                gsap.to(drawer, { opacity: 1, duration: 0.25 });
+                gsap.to(panel, { x: '0%', duration: 0.3, ease: "power2.out" });
+            } else {
+                gsap.to(panel, { x: '100%', duration: 0.25, ease: "power2.in" });
+                gsap.to(drawer, { opacity: 0, duration: 0.25, onComplete: () => {
+                    drawer.classList.add('pointer-events-none');
+                }});
+            }
+        }
+
+        // -------------------------------------------------------------
+        // WHATSAPP DISPATCH & FINAL CONFIRMATION
+        // -------------------------------------------------------------
+        function submitOrderToWhatsApp() {
+            if (cart.length === 0) return;
+
+            const nameInput = document.getElementById('custName').value.trim();
+            const addressInput = document.getElementById('custAddress').value.trim();
+
+            if (!nameInput) {
+                alert('Por favor ingrese su nombre para poder procesar la solicitud.');
+                document.getElementById('custName').focus();
+                return;
+            }
+
+            const phone = "50672952454";
+            let grandTotal = 0;
+
+            let message = `✨ *SOLICITUD DE PEDIDO - EWE ESSENTIA* ✨\n`;
+            message += `_“Fragancias que Enamoran”_\n\n`;
+            message += `👤 *Cliente:* ${nameInput}\n`;
+            if (addressInput) {
+                message += `📍 *Dirección/Notas:* ${addressInput}\n`;
+            }
+            message += `-----------------------------------\n`;
+            message += `🛍️ *DETALLE DEL PEDIDO:*\n\n`;
+
+            cart.forEach((item, idx) => {
+                const subtotal = item.unitPrice * item.qty;
+                grandTotal += subtotal;
+                message += `${idx + 1}. *${item.name}*\n`;
+                message += `   • Presentación: ${item.size}\n`;
+                message += `   • Cantidad: ${item.qty}\n`;
+                message += `   • Subtotal: ₡${subtotal.toLocaleString()}\n\n`;
+            });
+
+            message += `-----------------------------------\n`;
+            message += `💰 *TOTAL ESTIMADO:* ₡${grandTotal.toLocaleString()}\n\n`;
+            message += `Quedo a la espera de la confirmación para procesar la entrega. ¡Muchas gracias!`;
+
+            const encodedMessage = encodeURIComponent(message);
+            const waUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
+
+            // Open WhatsApp link
+            window.open(waUrl, '_blank');
+
+            // Reset cart and toggle modals
+            cart = [];
+            updateCartUI();
+            toggleCartDrawer(false);
+            openSuccessModal();
+        }
+
+        function openSuccessModal() {
+            const modal = document.getElementById('successModal');
+            modal.classList.remove('pointer-events-none');
+            gsap.to(modal, { opacity: 1, duration: 0.3 });
+        }
+
+        function closeSuccessModal() {
+            const modal = document.getElementById('successModal');
+            gsap.to(modal, { opacity: 0, duration: 0.2, onComplete: () => {
+                modal.classList.add('pointer-events-none');
+            }});
+        }
+    </script>
+</body>
+</html>
