@@ -41,6 +41,7 @@ let shippingDiscount = 0;
 let purchaseOrders = [];
 let currentPO = null;
 let poLines = [];
+let currentEditingInvoice = null;
 const LOW_STOCK_THRESHOLD = 5;
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -1266,6 +1267,11 @@ async function saveInvoice() {
     if (cart.length === 0) { alert('El carrito está vacío'); return; }
     if (!currentClient) { alert('Seleccione un cliente'); return; }
 
+    if (currentEditingInvoice) {
+        await updateExistingInvoice();
+        return;
+    }
+
     try {
         await db.runTransaction(async (transaction) => {
             const stockGroups = new Map();
@@ -1376,6 +1382,98 @@ async function saveInvoice() {
         console.error("Error guardando factura:", error);
         if (error.message.includes('Stock insuficiente')) alert('⚠️ ' + error.message);
         else alert('Error al guardar: ' + error.message);
+    }
+}
+
+// Actualiza una factura existente y ajusta el inventario únicamente por la diferencia
+// entre las cantidades anteriores y las nuevas. Así editar no vuelve a descontar toda la venta.
+async function updateExistingInvoice() {
+    const original = currentEditingInvoice;
+    if (!original || !original.id) return;
+
+    const originalItems = Array.isArray(original.items) ? original.items : [];
+    const oldByStock = new Map();
+    const newByStock = new Map();
+    const addQuantities = (target, items) => items.forEach(item => {
+        const product = allProducts.find(p => String(p.id) === String(item.id));
+        const stockId = item.stockId || (product ? getStockDocId(product) : '');
+        if (!stockId) throw new Error(`No se encontró el inventario de "${item.nombre || item.id}"`);
+        target.set(stockId, (target.get(stockId) || 0) + (parseInt(item.cantidad) || 0));
+    });
+
+    try {
+        addQuantities(oldByStock, originalItems);
+        addQuantities(newByStock, cart);
+        const allStockIds = new Set([...oldByStock.keys(), ...newByStock.keys()]);
+        const shipSave = getShippingTotals();
+        const effectiveTransport = requiresShipping ? shipSave.net : 0;
+        const totalPaid = (original.abonos || []).reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
+
+        await db.runTransaction(async transaction => {
+            const stockDocs = new Map();
+            for (const stockId of allStockIds) {
+                const ref = db.collection('stock').doc(stockId);
+                stockDocs.set(stockId, { ref, doc: await transaction.get(ref) });
+            }
+
+            for (const stockId of allStockIds) {
+                const entry = stockDocs.get(stockId);
+                const currentStock = entry.doc.exists ? (parseInt(entry.doc.data().cantidad) || 0) : 0;
+                const delta = (newByStock.get(stockId) || 0) - (oldByStock.get(stockId) || 0);
+                if (delta > 0 && currentStock < delta) {
+                    const product = allProducts.find(p => getStockDocId(p) === stockId);
+                    throw new Error(`Stock insuficiente para "${product?.nombre || stockId}": necesita ${delta}, disponible ${currentStock}`);
+                }
+                const stockData = entry.doc.exists ? entry.doc.data() : {};
+                transaction.set(entry.ref, {
+                    ...stockData, id: stockId,
+                    cantidad: Math.max(0, currentStock - delta),
+                    ultimaActualizacion: new Date().toISOString()
+                }, { merge: true });
+            }
+
+            transaction.update(db.collection('facturas').doc(original.id), {
+                clienteId: currentClient.id || original.clienteId || 'contado',
+                clienteNombre: currentClient.nombre || original.clienteNombre || 'Cliente Contado',
+                clienteTelefono: currentClient.telefono || original.clienteTelefono || '',
+                clienteDireccion: requiresShipping ? (currentClient.direccion || '') : '',
+                clienteProvincia: requiresShipping ? (currentClient.provincia || '') : '',
+                clienteCanton: requiresShipping ? (currentClient.canton || '') : '',
+                clienteDistrito: requiresShipping ? (currentClient.distrito || '') : '',
+                requiereEnvio: requiresShipping, items: cart,
+                subtotal: currentSubtotal, impuesto: currentIva,
+                transporte: effectiveTransport,
+                descuentoEnvio: requiresShipping ? shipSave.discount : 0,
+                total: currentTotal,
+                estado: totalPaid >= currentTotal && currentTotal > 0 ? 'pagada' : (totalPaid > 0 ? 'parcial' : 'pendiente'),
+                fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            for (const stockId of allStockIds) {
+                const delta = (newByStock.get(stockId) || 0) - (oldByStock.get(stockId) || 0);
+                if (!delta) continue;
+                const product = allProducts.find(p => getStockDocId(p) === stockId);
+                const movementRef = db.collection('stock_movements').doc();
+                transaction.set(movementRef, {
+                    productId: product?.id || stockId, productName: product?.nombre || stockId,
+                    type: delta > 0 ? 'salida_ajuste_factura' : 'entrada_ajuste_factura',
+                    quantity: Math.abs(delta), reference: original.numero || currentInvoiceNumber,
+                    invoiceId: original.id,
+                    notes: `Ajuste por edición de factura para ${currentClient.nombre || 'Cliente Contado'}`,
+                    fecha: firebase.firestore.FieldValue.serverTimestamp(), fechaLocal: new Date().toISOString()
+                });
+            }
+        });
+
+        alert('✅ Factura actualizada y stock ajustado correctamente');
+        currentEditingInvoice = null; cart = []; renderCart();
+        document.getElementById('transportCost').value = ''; resetShippingControls();
+        currentInvoiceNumber = generateInvoiceNumber();
+        document.getElementById('invoiceNumber').textContent = currentInvoiceNumber;
+        await loadStock(); filterProducts(document.getElementById('productSearch')?.value || ''); checkLowStockAlerts();
+    } catch (error) {
+        console.error('Error actualizando factura:', error);
+        alert(error.message.includes('Stock insuficiente') ? '⚠️ ' + error.message : 'Error al actualizar: ' + error.message);
     }
 }
 
@@ -2088,11 +2186,89 @@ async function openInvoiceDetailModal(invoiceId) {
             document.getElementById('detailPaymentBtn').style.display = 'none';
         }
 
+        ensureInvoiceDetailActions();
         document.getElementById('invoiceDetailModal').classList.add('active');
     } catch (error) {
         console.error("Error abriendo detalle de factura:", error);
         alert('Error al cargar el detalle de la factura.');
     }
+}
+
+function ensureInvoiceDetailActions() {
+    const modal = document.getElementById('invoiceDetailModal');
+    if (!modal || document.getElementById('invoiceDetailActions')) return;
+    const actions = document.createElement('div');
+    actions.id = 'invoiceDetailActions';
+    actions.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0;';
+    actions.innerHTML = `
+        <button type="button" class="btn btn-info" onclick="printHistoricalInvoice()">🖨️ Imprimir factura</button>
+        <button type="button" class="btn btn-warning" onclick="editCurrentInvoice()">✏️ Editar factura</button>`;
+    const closeBtn = modal.querySelector('[onclick*="closeInvoiceDetailModal"]');
+    if (closeBtn && closeBtn.parentElement) closeBtn.parentElement.insertBefore(actions, closeBtn);
+    else modal.querySelector('.modal-content, .modal-body')?.appendChild(actions);
+}
+
+function editCurrentInvoice() {
+    const invoice = currentDetailInvoice;
+    if (!invoice) return;
+    if ((invoice.abonos || []).length > 0 && !confirm('Esta factura tiene abonos registrados. ¿Desea continuar con la edición?')) return;
+
+    currentEditingInvoice = JSON.parse(JSON.stringify(invoice, (key, value) => {
+        if (value && typeof value.toDate === 'function') return value.toDate().toISOString();
+        return value;
+    }));
+    currentInvoiceNumber = invoice.numero || currentInvoiceNumber;
+    document.getElementById('invoiceNumber').textContent = currentInvoiceNumber;
+    cart = (invoice.items || []).map(item => ({ ...item }));
+
+    const knownClient = allClients.find(c => String(c.id) === String(invoice.clienteId));
+    currentClient = knownClient || {
+        id: invoice.clienteId || 'contado', nombre: invoice.clienteNombre || 'Cliente Contado',
+        telefono: invoice.clienteTelefono || '', direccion: invoice.clienteDireccion || '',
+        provincia: invoice.clienteProvincia || '', canton: invoice.clienteCanton || '', distrito: invoice.clienteDistrito || ''
+    };
+    if (knownClient) selectClient(knownClient.id);
+    else {
+        document.getElementById('invoiceClientInfo').innerHTML = `<strong>${currentClient.nombre}</strong>`;
+        document.getElementById('selectedClientInfo').style.display = 'flex';
+        document.getElementById('clientNameDisplay').textContent = currentClient.nombre;
+        document.getElementById('clientIdDisplay').textContent = currentClient.id;
+        document.getElementById('clientPhoneDisplay').textContent = currentClient.telefono || 'N/A';
+    }
+
+    requiresShipping = Boolean(invoice.requiereEnvio || invoice.clienteDireccion);
+    shippingDiscount = parseFloat(invoice.descuentoEnvio) || 0;
+    document.getElementById('transportCost').value = requiresShipping ? ((parseFloat(invoice.transporte) || 0) + shippingDiscount) : '';
+    const shippingChk = document.getElementById('requiresShippingChk');
+    if (shippingChk) shippingChk.checked = requiresShipping;
+    const shippingWrap = document.getElementById('shippingDiscountWrap');
+    if (shippingWrap) shippingWrap.style.display = requiresShipping ? 'flex' : 'none';
+    const discountInput = document.getElementById('shippingDiscountInput');
+    if (discountInput) discountInput.value = shippingDiscount;
+    renderCart();
+    closeInvoiceDetailModal();
+    switchView('pos');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    alert(`✏️ Editando factura ${invoice.numero || 'S/N'}. Revise los cambios y presione "Guardar factura".`);
+}
+
+function printHistoricalInvoice() {
+    if (currentDetailInvoice) printInvoiceData(currentDetailInvoice);
+}
+
+function printInvoiceData(invoice) {
+    const dateObj = invoice.fecha?.toDate ? invoice.fecha.toDate() : new Date(invoice.fecha || Date.now());
+    const items = invoice.items || [];
+    const rows = items.map(item => `<tr><td>${getItemDescription(item)}</td><td>${item.cantidad}</td><td>₡${formatMoney(item.precioFinalUnitario)}</td><td>₡${formatMoney((item.precioFinalUnitario || 0) * (item.cantidad || 0))}</td></tr>`).join('');
+    const win = window.open('', '_blank', 'width=800,height=900');
+    if (!win) { alert('Permita las ventanas emergentes para imprimir'); return; }
+    win.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Factura ${invoice.numero || ''}</title>
+        <style>body{font-family:Arial,sans-serif;color:#222;margin:28px}h1{color:#216e39;margin-bottom:4px}.head{display:flex;justify-content:space-between;border-bottom:2px solid #216e39;padding-bottom:12px}.muted{color:#666;font-size:13px}table{width:100%;border-collapse:collapse;margin-top:22px}th,td{padding:9px;border-bottom:1px solid #ddd;text-align:left}th{background:#f1f7f2}td:nth-child(n+2),th:nth-child(n+2){text-align:right}.totals{margin:20px 0 0 auto;width:280px}.line{display:flex;justify-content:space-between;padding:5px}.grand{font-weight:bold;font-size:18px;border-top:2px solid #216e39;margin-top:7px;padding-top:9px}@media print{body{margin:10mm}}</style></head><body>
+        <div class="head"><div><h1>EWE ESENTIA</h1><div class="muted">Factura de venta</div></div><div><b>No. ${invoice.numero || 'S/N'}</b><br><span class="muted">${dateObj.toLocaleString('es-CR')}</span></div></div>
+        <p><b>Cliente:</b> ${invoice.clienteNombre || 'Cliente Contado'}<br><span class="muted">Tel: ${invoice.clienteTelefono || 'N/A'}</span>${invoice.requiereEnvio && invoice.clienteDireccion ? `<br><span class="muted">Dirección: ${invoice.clienteDireccion}, ${[invoice.clienteDistrito, invoice.clienteCanton, invoice.clienteProvincia].filter(Boolean).join(', ')}</span>` : ''}</p>
+        <table><thead><tr><th>Producto</th><th>Cant.</th><th>Precio c/u</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>
+        <div class="totals"><div class="line"><span>Subtotal</span><span>₡${formatMoney(invoice.subtotal || 0)}</span></div><div class="line"><span>IVA (13%)</span><span>₡${formatMoney(invoice.impuesto || 0)}</span></div>${invoice.transporte > 0 ? `<div class="line"><span>Transporte</span><span>₡${formatMoney(invoice.transporte)}</span></div>` : ''}${invoice.descuentoEnvio > 0 ? `<div class="line"><span>Desc. envío</span><span>-₡${formatMoney(invoice.descuentoEnvio)}</span></div>` : ''}<div class="line grand"><span>TOTAL</span><span>₡${formatMoney(invoice.total || 0)}</span></div></div><p class="muted">¡Gracias por su compra!</p><script>window.onload=function(){window.print();}<\/script></body></html>`);
+    win.document.close();
 }
 
 function closeInvoiceDetailModal() {
