@@ -70,10 +70,6 @@
             background: linear-gradient(135deg, #f3e5ab 0%, #d4af37 50%, #997819 100%);
         }
 
-        .gold-border-gradient {
-            border-image: linear-gradient(to bottom right, #f3e5ab, #d4af37, #7a5f10) 1;
-        }
-
         .glass-card {
             background: rgba(27, 59, 43, 0.4);
             backdrop-filter: blur(12px);
@@ -88,7 +84,6 @@
             border: 1px solid rgba(212, 175, 55, 0.3);
         }
         
-        /* Shimmer effect for luxury tags */
         @keyframes shimmer {
             0% { background-position: -200% 0; }
             100% { background-position: 200% 0; }
@@ -115,10 +110,8 @@
             
             <!-- Logo & Brand Name -->
             <div class="flex items-center space-x-4 cursor-pointer" onclick="scrollToTop()">
-                <div class="w-12 h-12 rounded-full gold-gradient-bg p-0.5 flex items-center justify-center shadow-lg shadow-gold-500/20">
-                    <div class="w-full h-full bg-emerald-950 rounded-full flex items-center justify-center">
-                        <i class="fa-solid fa-spray-can-sparkles text-gold-400 text-xl"></i>
-                    </div>
+                <div class="w-14 h-14 rounded-full gold-gradient-bg p-0.5 flex items-center justify-center shadow-lg shadow-gold-500/20 overflow-hidden">
+                    <img src="https://wil1979.github.io/esentia-factura/images/logo.png" alt="EWE Essentia Logo" class="w-full h-full object-cover rounded-full bg-emerald-950">
                 </div>
                 <div>
                     <h1 class="font-serif text-2xl md:text-3xl font-bold tracking-widest gold-gradient-text uppercase leading-none">EWE Essentia</h1>
@@ -173,9 +166,11 @@
 
     <!-- HERO / BANNER SECTION -->
     <section class="relative py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full text-center overflow-hidden">
-        <div class="absolute inset-0 opacity-10 pointer-events-none flex items-center justify-center">
-            <i class="fa-solid fa-spa text-[300px] text-gold-500"></i>
+        <!-- LOGO DE FONDO COMO MARCA DE AGUA (Reemplaza al ícono SVG anterior) -->
+        <div class="absolute inset-0 opacity-[0.06] pointer-events-none flex items-center justify-center overflow-hidden">
+            <img src="https://wil1979.github.io/esentia-factura/images/logo.png" alt="EWE Essentia Watermark" class="w-[350px] h-[350px] md:w-[500px] md:h-[500px] object-contain">
         </div>
+        
         <div class="relative z-10 max-w-3xl mx-auto">
             <span class="text-gold-400 font-serif text-sm tracking-[0.3em] uppercase block mb-2">Colección Exclusiva 2026</span>
             <h2 class="font-serif text-3xl sm:text-5xl font-bold tracking-wide text-white mb-4">Descubra Nuestra Galería de Esencias</h2>
@@ -185,7 +180,7 @@
             </p>
         </div>
 
-        <!-- Presentations Ribbon -->
+        <!-- Presentations Ribbon 
         <div class="mt-8 grid grid-cols-2 sm:grid-cols-5 gap-3 max-w-4xl mx-auto">
             <div class="bg-emerald-900/40 border border-gold-500/20 p-2.5 rounded-xl text-center backdrop-blur-sm">
                 <span class="block text-gold-400 font-serif font-bold text-lg">8 ml</span>
@@ -207,7 +202,7 @@
                 <span class="block text-gold-400 font-serif font-bold text-lg">120 ml</span>
                 <span class="text-xs text-gray-300">₡7,000</span>
             </div>
-        </div>
+        </div>-->
     </section>
 
     <!-- CATALOG GRID SECTION -->
@@ -220,7 +215,7 @@
             </div>
             <div class="text-xs text-gold-400/80 flex items-center gap-1">
                 <i class="fa-solid fa-hand-pointer"></i>
-                <span>Haga clic para expandir opciones</span>
+                <span>Haga clic para ver detalles</span>
             </div>
         </div>
 
@@ -244,12 +239,15 @@
             
             <!-- Modal Header -->
             <div class="relative bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-900 p-6 text-center border-b border-gold-500/30">
-                <button onclick="closeProductModal()" class="absolute top-4 right-4 text-gold-400/70 hover:text-gold-300 w-8 h-8 rounded-full bg-emerald-950/50 flex items-center justify-center transition-colors">
+                <button onclick="closeProductModal()" class="absolute top-4 right-4 text-gold-400/70 hover:text-gold-300 w-8 h-8 rounded-full bg-emerald-950/50 flex items-center justify-center transition-colors z-10">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
-                <div id="modalIconContainer" class="w-16 h-16 mx-auto rounded-full bg-emerald-950/80 border border-gold-500/40 flex items-center justify-center text-3xl text-gold-400 mb-3 shadow-inner">
-                    <!-- Dynamic Icon -->
+                
+                <!-- Dynamic Image or Icon Container -->
+                <div id="modalImageContainer" class="w-28 h-28 mx-auto rounded-2xl bg-emerald-950/80 border border-gold-500/40 flex items-center justify-center mb-3 shadow-inner overflow-hidden">
+                    <!-- Se llena dinámicamente con JS -->
                 </div>
+                
                 <span id="modalCategoryBadge" class="inline-block bg-gold-500/10 text-gold-300 border border-gold-500/30 text-[10px] uppercase tracking-widest px-3 py-0.5 rounded-full mb-1">Categoría</span>
                 <h3 id="modalTitle" class="font-serif text-2xl sm:text-3xl text-white font-bold gold-gradient-text">Nombre Aroma</h3>
             </div>
@@ -272,7 +270,6 @@
                         <i class="fa-solid fa-flask"></i> Seleccione Presentación:
                     </label>
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5" id="presentationOptions">
-                        <!-- Dynamic Buttons for Sizes -->
                         <button type="button" onclick="selectSize('8ml', 1500)" class="size-btn py-2.5 px-3 rounded-xl border border-gold-500/30 text-left bg-emerald-900/30 hover:border-gold-400 transition-all flex flex-col justify-between" data-size="8ml">
                             <span class="text-xs font-semibold text-white">8 ml</span>
                             <span class="text-xs text-gold-400 font-mono mt-1">₡1,500</span>
@@ -409,9 +406,12 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
             
             <div class="flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
-                <div>
-                    <h4 class="font-serif text-lg font-bold gold-gradient-text uppercase">EWE Essentia</h4>
-                    <p class="text-gold-300/70 italic font-serif">“Fragancias que Enamoran”</p>
+                <div class="flex items-center gap-3">
+                    <img src="https://wil1979.github.io/esentia-factura/images/logo.png" alt="EWE Essentia Logo" class="w-10 h-10 rounded-full object-cover border border-gold-500/30 bg-emerald-950">
+                    <div>
+                        <h4 class="font-serif text-lg font-bold gold-gradient-text uppercase">EWE Essentia</h4>
+                        <p class="text-gold-300/70 italic font-serif">“Fragancias que Enamoran”</p>
+                    </div>
                 </div>
                 <div class="flex items-center gap-4 text-gold-400">
                     <a href="https://wa.me/50672952454" target="_blank" class="hover:text-white transition-colors flex items-center gap-1.5">
@@ -439,94 +439,97 @@
     <!-- JAVASCRIPT LOGIC & CATALOG DATA -->
     <script>
         // -------------------------------------------------------------
-        // CATALOG DATABASE (Extracted & Mapped from Reference Document)
+        // CATALOG DATABASE 
+        // INSTRUCCIÓN: Reemplaza 'URL_DE_TU_IMAGEN' con la ruta real de tus fotos.
+        // Ejemplo: image: 'https://wil1979.github.io/esentia-factura/images/productos/abrazos-sol.jpg'
+        // Si dejas 'image: "null"', se mostrará automáticamente el ícono de FontAwesome.
         // -------------------------------------------------------------
         const FRAGRANCES = [
             // NUEVOS AROMAS
-            { id: 'abrazos-sol', name: 'Abrazos del Sol', category: 'Nuevos', icon: 'fa-sun', desc: 'Notas cálidas y radiantes con matices de ámbar dorado y brisa marina solar.', isNew: true },
-            { id: 'girasol', name: 'Girasol', category: 'Nuevos', icon: 'fa-seedling', desc: 'Aroma vivo y luminoso de pétalos silvestres expuestos al sol de la tarde.', isNew: true },
-            { id: 'argan', name: 'Argan', category: 'Nuevos', icon: 'fa-oil-well', desc: 'Nuez exótica, dulce y aterciopelada con toque gourmet relajante.', isNew: true },
-            { id: 'manzanilla-n', name: 'Manzanilla', category: 'Nuevos', icon: 'fa-leaf', desc: 'Bálsamo herbal suave y reconfortante que invita a la serenidad.', isNew: true },
-            { id: 'bahamas', name: 'Bahamas', category: 'Nuevos', icon: 'fa-umbrella-beach', desc: 'Cóctel tropical de coco, frutos exóticos y brisa marina del Caribe.', isNew: true },
-            { id: 'mora', name: 'Mora', category: 'Nuevos', icon: 'fa-apple-whole', desc: 'Frutos silvestres oscuros, jugosos y ligeramente acidulados.', isNew: true },
-            { id: 'pradera', name: 'Pradera', category: 'Nuevos', icon: 'fa-plant-wilt', desc: 'Hierba recién cortada fusionada con flor de campo al amanecer.', isNew: true },
-            { id: 'uva', name: 'Uva', category: 'Nuevos', icon: 'fa-wine-glass', desc: 'Uva morada madura y dulce, llena de vitalidad y frescura.', isNew: true },
-            { id: 'melon', name: 'Melón', category: 'Nuevos', icon: 'fa-bowl-food', desc: 'Dulzura refrescante y acuosa de melón madurado bajo el sol.', isNew: true },
-            { id: 'frescura-marina', name: 'Frescura Marina', category: 'Nuevos', icon: 'fa-water', desc: 'Notas ozónicas de brisa oceánica y sal mineral revitalizante.', isNew: true },
-            { id: 'jardin-encantado', name: 'Jardín Encantado', category: 'Nuevos', icon: 'fa-wand-magic-sparkles', desc: 'Fantasía floral mística con sutiles destellos de nectarinas.', isNew: true },
-            { id: 'rocio-fresco', name: 'Rocío Fresco', category: 'Nuevos', icon: 'fa-droplet', desc: 'Gotas matutinas de lluvia limpia sobre hojas de té verde.', isNew: true },
-            { id: 'ylang-ylang', name: 'Ylang Ylang', category: 'Nuevos', icon: 'fa-spa', desc: 'Flor exótica oriental, sensual, cremosa y profundamente relajante.', isNew: true },
+            { id: 'abrazos-sol', name: 'Abrazos del Sol', category: 'Nuevos', icon: 'fa-sun', image: 'https://media.istockphoto.com/id/2256457861/photo/amanecer.jpg?s=612x612&w=0&k=20&c=CapIpQEkkxy1lSqo4U4cm9SL8m22lud4gxP0wbZS610=', desc: 'Notas cálidas y radiantes con matices de ámbar dorado y brisa marina solar.', isNew: true },
+            { id: 'girasol', name: 'Girasol', category: 'Nuevos', icon: 'fa-seedling', image: "https://media.istockphoto.com/id/497418016/photo/sunflowers.jpg?s=612x612&w=0&k=20&c=W6nid0xBCHfMm5F47rF7LaB_vhNkm6XeFSrpRH_XE98=", desc: 'Aroma vivo y luminoso de pétalos silvestres expuestos al sol de la tarde.', isNew: true },
+            { id: 'argan', name: 'Argan', category: 'Nuevos', icon: 'fa-oil-well', image: "https://media.istockphoto.com/id/2231250666/photo/yellow-transparent-wave-with-argan-oil-bubbles-liquid-cosmetic-skin-care-3d-background-golden.jpg?s=612x612&w=0&k=20&c=7Z1euoOVoEr7iDYcZnYMhORHghqS0qFUx2DrObNddf0=", desc: 'Nuez exótica, dulce y aterciopelada con toque gourmet relajante.', isNew: true },
+            { id: 'manzanilla-n', name: 'Manzanilla', category: 'Nuevos', icon: 'fa-leaf', image: "https://media.istockphoto.com/id/2285668230/video/a-vertical-sharp-macro-shot-of-white-daisies-gently-swaying-in-a-green-meadow-a-video-themed.jpg?s=640x640&k=20&c=xjvsY3D1KXMRQjWS-r7O2P7oa6t_hRxwwjk92-Cpq50=", desc: 'Bálsamo herbal suave y reconfortante que invita a la serenidad.', isNew: true },
+            { id: 'bahamas', name: 'Bahamas', category: 'Nuevos', icon: 'fa-umbrella-beach', image: "https://media.istockphoto.com/id/2220609311/photo/palm-beach-in-tropical-idyllic-paradise-island-with-palm-tree-on-ocean.jpg?s=612x612&w=0&k=20&c=t6onrZ5uVqEmLP2tzm5__A483MaaHCU_nJ7CPiPMydY=", desc: 'Cóctel tropical de coco, frutos exóticos y brisa marina del Caribe.', isNew: true },
+            { id: 'mora', name: 'Mora', category: 'Nuevos', icon: 'fa-apple-whole', image: "https://media.istockphoto.com/id/1957478532/photo/fresh-mulberry-in-ceramic-bowl.jpg?s=612x612&w=0&k=20&c=HXs73k4rOs2OKtSfALylH9hVhTbf9cRvQ1hGl8OygyM=", desc: 'Frutos silvestres oscuros, jugosos y ligeramente acidulados.', isNew: true },
+            { id: 'pradera', name: 'Pradera', category: 'Nuevos', icon: 'fa-plant-wilt', image: "https://media.istockphoto.com/id/2272052437/photo/landscape-of-circo-de-soaso-with-arazas-river-and-monte-perdido-pyrenees.jpg?s=612x612&w=0&k=20&c=H6CFIRwgrxcsWPB_Tcc2N_mYZcJ-_6Qdqrvn6U0eXbU=", desc: 'Hierba recién cortada fusionada con flor de campo al amanecer.', isNew: true },
+            { id: 'uva', name: 'Uva', category: 'Nuevos', icon: 'fa-wine-glass', image: "https://media.istockphoto.com/id/2246202371/photo/fresh-purple-grapes-with-water-drops-harvesting-succulent-fruit-for-healthy-eating-and.jpg?s=612x612&w=0&k=20&c=UYNe-ClzXuerP_ThwS-4iL69YbpkK1SC8p6ZIW8vm4w=", desc: 'Uva morada madura y dulce, llena de vitalidad y frescura.', isNew: true },
+            { id: 'melon', name: 'Melón', category: 'Nuevos', icon: 'fa-bowl-food', image: "https://media.istockphoto.com/id/2296705585/photo/orange-melon-isolated-on-white-background-shizuoka-crown-melon-or-cantaloupe-isolated-on.jpg?s=612x612&w=0&k=20&c=LBi11WvpuyHt1Tb-Gb0avm4E41WDYTDerjTU6rouj24=", desc: 'Dulzura refrescante y acuosa de melón madurado bajo el sol.', isNew: true },
+            { id: 'frescura-marina', name: 'Frescura Marina', category: 'Nuevos', icon: 'fa-water', image: "https://media.istockphoto.com/id/1373240601/photo/close-up-detail-of-powerful-teal-blue-wave-breaking-in-open-ocean-on-a-bright-sunny-afternoon.jpg?s=612x612&w=0&k=20&c=cUJcskTkxlVujRex2R_A0_zwoZ4Pve2L1qcOXy-lwIs=", desc: 'Notas ozónicas de brisa oceánica y sal mineral revitalizante.', isNew: true },
+            { id: 'jardin-encantado', name: 'Jardín Encantado', category: 'Nuevos', icon: 'fa-wand-magic-sparkles', image: "https://media.istockphoto.com/id/1338025359/photo/green-gardens.jpg?s=612x612&w=0&k=20&c=Z3lvIf9idx779MUSPOIRmNbkVfTow9W3UI9QXKZOY_Y=", desc: 'Fantasía floral mística con sutiles destellos de nectarinas.', isNew: true },
+            { id: 'rocio-fresco', name: 'Rocío Fresco', category: 'Nuevos', icon: 'fa-droplet', image: "https://media.istockphoto.com/id/2254391576/photo/morning-dew-glistens-on-fresh-green-grass-in-a-tranquil-outdoor-setting.jpg?s=612x612&w=0&k=20&c=72xFi927KqFhDuIsj6xvjhRGY0n0POBDGvXlIE3-DRE=", desc: 'Gotas matutinas de lluvia limpia sobre hojas de té verde.', isNew: true },
+            { id: 'ylang-ylang', name: 'Ylang Ylang', category: 'Nuevos', icon: 'fa-spa', image: "https://media.istockphoto.com/id/2290578407/photo/beautiful-and-fresh-cananga-odorata-commonly-known-as-ylang-ylang-featuring-a-distinctive.jpg?s=612x612&w=0&k=20&c=k2oWIIARYyNdW2f9UEMtvPI04iT3bZFyR9ZKhj6KtJU=", desc: 'Flor exótica oriental, sensual, cremosa y profundamente relajante.', isNew: true },
 
-            // CATALOGO PRINCIPAL
-            { id: 'ariel', name: 'Ariel', category: 'Frescos', icon: 'fa-wind', desc: 'Pureza cristalina con acordes limpios de algodón y brisa marina.' },
-            { id: 'bambu', name: 'Bambú', category: 'Frescos', icon: 'fa-tree', desc: 'Notas verdes zen, tallos húmedos de bambú y aire de montaña.' },
-            { id: 'bebe', name: 'Bebé', category: 'Florales', icon: 'fa-baby', desc: 'Tierno aroma a talco suave, lavanda sutil y pureza de hogar.' },
-            { id: 'canela', name: 'Canela', category: 'Cálidos', icon: 'fa-fire', desc: 'Especiado estimulante de corteza de canela pura y dulce.' },
-            { id: 'cherry', name: 'Cherry', category: 'Florales', icon: 'fa-cherries', desc: 'Cerezas rojas jugosas con toques de vainilla y almendra.' },
-            { id: 'chicle', name: 'Chicle', category: 'Florales', icon: 'fa-candy-cane', desc: 'Divertida y dulce fragancia de tutti-frutti acaramelado.' },
-            { id: 'cipres', name: 'Ciprés', category: 'Cálidos', icon: 'fa-tree-city', desc: 'Resina boscosa, maderas de pino y aire de bosque profundo.' },
-            { id: 'fresco-amanecer', name: 'Fresco Amanecer', category: 'Frescos', icon: 'fa-sun-plant-wilt', desc: 'Cítricos dorados envueltos en rocío de primeras horas del día.' },
-            { id: 'citronela', name: 'Citronela', category: 'Frescos', icon: 'fa-lemon', desc: 'Vibrante toque herbal cítrico repelente natural y energetizante.' },
-            { id: 'fantasia-navidena', name: 'Fantasía Navideña', category: 'Navideños', icon: 'fa-holly-berry', desc: 'Manzana asada con canela, clavo dulce y pino navideño.' },
-            { id: 'floral', name: 'Floral', category: 'Florales', icon: 'fa-fan', desc: 'Bouquet clásico de pétalos blancos, jazmín y lilas.' },
-            { id: 'floral-intenso', name: 'Floral Intenso', category: 'Florales', icon: 'fa-clover', desc: 'Concentrado seductor de rosas rojas y orquídeas salvajes.' },
-            { id: 'manzana', name: 'Manzana', category: 'Florales', icon: 'fa-apple-whole', desc: 'Manzana roja crujiente, jugosa y llena de frescura natural.' },
-            { id: 'manzana-canela', name: 'Manzana Canela', category: 'Cálidos', icon: 'fa-mortar-pestle', desc: 'Clásica combinación acogedora de manzana horneada y especias.' },
-            { id: 'manzana-verde', name: 'Manzana Verde', category: 'Frescos', icon: 'fa-apple-whole', desc: 'Ácida, efervescente y vigorizante manzana verde silvestre.' },
-            { id: 'melocoton', name: 'Melocotón', category: 'Florales', icon: 'fa-peach', desc: 'Melocotón dulce y aterciopelado recién cosechado.' },
-            { id: 'frutos-rojos', name: 'Frutos Rojos', category: 'Florales', icon: 'fa-pepper-hot', desc: 'Mezcla intensa de frambuesas, fresas y arándanos maduros.' },
-            { id: 'kiwi', name: 'Kiwi', category: 'Frescos', icon: 'fa-stroopwafel', desc: 'Fruta tropical verde, exótica, ácida y refrescante.' },
-            { id: 'lavanda', name: 'Lavanda', category: 'Frescos', icon: 'fa-spa', desc: 'Flores de lavanda provenzal, calmantes e ideales para el confort.' },
-            { id: 'limon', name: 'Limón', category: 'Frescos', icon: 'fa-lemon', desc: 'Zumo concentrado de limón amarillo chispeante y limpio.' },
-            { id: 'violeta', name: 'Violeta', category: 'Florales', icon: 'fa-stroopwafel', desc: 'Sutiles notas atalcadas de flor de violeta de primavera.' },
-            { id: 'menta-limon', name: 'Menta Limón', category: 'Frescos', icon: 'fa-whiskey-glass', desc: 'Fusión ultra refrescante estilo mojito herbal de menta y rodajas de limón.' },
-            { id: 'menta', name: 'Menta', category: 'Frescos', icon: 'fa-leaf', desc: 'Hojas de menta piperita silvestre y frescor mentolado puro.' },
-            { id: 'pepino', name: 'Pepino', category: 'Frescos', icon: 'fa-glass-water', desc: 'Agua de pepino hidratante, ligera y súper limpia.' },
-            { id: 'maracuya', name: 'Maracuyá', category: 'Florales', icon: 'fa-martini-glass-citrus', desc: 'Fruta de la pasión ácida y tropical repleta de energía.' },
-            { id: 'fresa', name: 'Fresa', category: 'Florales', icon: 'fa-bowl-rice', desc: 'Fresa silvestre ultra dulce y jugosa.' },
-            { id: 'pera', name: 'Pera', category: 'Frescos', icon: 'fa-pear', desc: 'Pera verde suave con matices florales ligeros.' },
-            { id: 'naranja', name: 'Naranja', category: 'Frescos', icon: 'fa-citrus', desc: 'Naranja de zumo recién exprimida al sol.' },
-            { id: 'sandia', name: 'Sandía', category: 'Frescos', icon: 'fa-watermelon-slice', desc: 'Dulce tajada de sandía veraniega, fresca y acuosa.' },
-            { id: 'sabila', name: 'Sábila', category: 'Frescos', icon: 'fa-leaf', desc: 'Aloe vera cristalino, calmante y botánico.' },
-            { id: 'suave-abril', name: 'Suave Abril', category: 'Florales', icon: 'fa-shirt', desc: 'Aroma reconfortante a ropa limpia secada al aire libre.' },
-            { id: 'vainilla', name: 'Vainilla', category: 'Cálidos', icon: 'fa-cookie', desc: 'Vaina de vainilla cremosita, dulce y gourmand.' },
-            { id: 'primaveral', name: 'Primaveral', category: 'Florales', icon: 'fa-cloud-sun-rain', desc: 'Flores nuevas y brisa cálida de estación de primavera.' },
-            { id: 'flores-paraiso', name: 'Flores Paraíso', category: 'Florales', icon: 'fa-feather', desc: 'Aroma exótico tropical de flores de Strelitzia y orquídeas.' },
-            { id: 'romero', name: 'Romero', category: 'Frescos', icon: 'fa-plant-wilt', desc: 'Herbal aromático silvestre, estimulante para la mente.' },
-            { id: 'eucalipto', name: 'Eucalipto', category: 'Frescos', icon: 'fa-notes-medical', desc: 'Notas mentoladas balsámicas que abren las vías respiratorias.' },
-            { id: 'popurri', name: 'Popurrí', category: 'Florales', icon: 'fa-compact-disc', desc: 'Mezcla artesanal de flores secas, pétalos e inciensos.' },
-            { id: 'herbal', name: 'Herbal', category: 'Frescos', icon: 'fa-cannabis', desc: 'Extracto puro de hierbas aromáticas de jardín medicinal.' },
-            { id: 'mango-mandarina', name: 'Mango Mandarina', category: 'Florales', icon: 'fa-wine-bottle', desc: 'Explosión cítrico-dulce de mango maduro y mandarina jugosa.' },
-            { id: 'vainilla-navidena', name: 'Vainilla Navideña', category: 'Navideños', icon: 'fa-gifts', desc: 'Vainilla especiada con toques de nuez moscada y azucaradas festivas.' },
-            { id: 'brisa-marina', name: 'Brisa Marina', category: 'Frescos', icon: 'fa-sailboat', desc: 'Brisa de mar abierto con notas ozónicas y saladas.' },
-            { id: 'coco', name: 'Coco', category: 'Florales', icon: 'fa-cookie-bite', desc: 'Leche de coco cremosa y tropical con toque de sol.' },
-            { id: 'zacate-limon', name: 'Zacate Limón', category: 'Frescos', icon: 'fa-grass', desc: 'Lemongrass tailandés, cítrico chispeante y limpiador.' },
-            { id: 'abrazos-cristal', name: 'Abrazos Cristal', category: 'Navideños', icon: 'fa-snowflake', desc: 'Aire puro invernal con matices atalcados y reconfortantes.' },
-            { id: 'rustico', name: 'Rústico', category: 'Cálidos', icon: 'fa-campground', desc: 'Madera ahumada, musgo de roble y ambiente de cabaña de montaña.' },
-            { id: 'cuero', name: 'Cuero', category: 'Cálidos', icon: 'fa-vest', desc: 'Elegante y sofisticado acorde de cuero refinado y tabaco suave.' },
-            { id: 'jazmin', name: 'Jazmín', category: 'Florales', icon: 'fa-disease', desc: 'Flores nocturnas de jazmín blanco, intensamente aromáticas.' },
-            { id: 'maracuya-menta', name: 'Maracuyá Menta', category: 'Frescos', icon: 'fa-glass-water-droplet', desc: 'Cóctel exótico que equilibra la acidez tropical con la frescura mentolada.' },
-            { id: 'pino-navideno', name: 'Pino Navideño', category: 'Navideños', icon: 'fa-tree', desc: 'Bosque de pinos frescos recién cortados para las festividades.' },
-            { id: 'rompope', name: 'Rompope', category: 'Navideños', icon: 'fa-glass-cheers', desc: 'Crema dulce tradicional con notas de vainilla, ron y canela.' },
-            { id: 'cesta-navidena', name: 'Cesta Navideña', category: 'Navideños', icon: 'fa-gift', desc: 'Frutos secos, especias de invierno y golosinas festivas.' },
-            { id: 'caramelo', name: 'Caramelo', category: 'Cálidos', icon: 'fa-cubes-stacked', desc: 'Caramelo toffee tostado con mantequilla y azúcar moreno.' },
-            { id: 'chocolate', name: 'Chocolate', category: 'Cálidos', icon: 'fa-mug-hot', desc: 'Cacao amargo rico y dulce chocolate artesanal caliente.' },
-            { id: 'cafe', name: 'Café', category: 'Cálidos', icon: 'fa-mug-saucer', desc: 'Grano de café tico recién tostado con aroma profundo e inspirador.' },
-            { id: 'carro-nuevo', name: 'Carro Nuevo', category: 'Cálidos', icon: 'fa-car-side', desc: 'Combinación limpia de tapicería premium y acabados impecables.' },
-            { id: 'pina-colada', name: 'Piña Colada', category: 'Florales', icon: 'fa-cocktail', desc: 'Piña madura, crema de coco y un toque suave de ron blanco.' },
-            { id: 'galleta-gengibre', name: 'Galleta Gengibre', category: 'Navideños', icon: 'fa-cookie', desc: 'Galletas de jengibre recién horneadas con especias dulces.' },
-            { id: 'lady-rose', name: 'Lady Rose', category: 'Florales', icon: 'fa-rose', desc: 'Rosas inglesas elegantes con destellos de peonía y ámbar.' },
-            { id: 'grape-fruit', name: 'Grape Fruit', category: 'Frescos', icon: 'fa-circle-dot', desc: 'Toronja rosada amarga y refrescante llena de vigor.' },
-            { id: 'new-moon', name: 'New Moon', category: 'Cálidos', icon: 'fa-moon', desc: 'Mística nocturna de almizcle blanco, ámbar y maderas suaves.' },
-            { id: 'rosas', name: 'Rosas', category: 'Florales', icon: 'fa-spa', desc: 'Puro bouquet clásico de pétalos de rosa fresca del jardín.' }
+            // CATALOGO PRINCIPAL (Ejemplos con imagen, el resto usa ícono por defecto)
+            { id: 'ariel', name: 'Ariel', category: 'Frescos', icon: 'fa-wind', image: "https://media.istockphoto.com/id/488531674/photo/city-of-los-angeles-california.jpg?s=612x612&w=0&k=20&c=8TRzLy9cyoW7LqewRRmLvw4G5BLS43IJ2S_KCASknbU=", desc: 'Pureza cristalina con acordes limpios de algodón y brisa marina.' },
+            { id: 'bambu', name: 'Bambú', category: 'Frescos', icon: 'fa-tree', image: "https://media.istockphoto.com/id/2268937385/photo/bambusa-bambos-or-spiny-bamboo-plant-image.jpg?s=612x612&w=0&k=20&c=t5_GFW4sxNZ4YZKPuHayXxrr8gWWnYAqt7viVIOOhg8=", desc: 'Notas verdes zen, tallos húmedos de bambú y aire de montaña.' },
+            { id: 'bebe', name: 'Bebé', category: 'Florales', icon: 'fa-baby', image: "https://media.istockphoto.com/id/1676794303/photo/other-of-atender-feet-of-a-newborn-girl.jpg?s=612x612&w=0&k=20&c=4eRW6ABTayT5nxRwIUx_TJQqC27H22MA3taYoP2yduE=", desc: 'Tierno aroma a talco suave, lavanda sutil y pureza de hogar.' },
+            { id: 'canela', name: 'Canela', category: 'Cálidos', icon: 'fa-fire', image: "https://media.istockphoto.com/id/1527578003/photo/cinnamon-sticks-isolated-over-white-background-closeup-canella-spice-aromatic-condiment.jpg?s=612x612&w=0&k=20&c=pfhItrpFgBIzfSfLIiriaEjWYcsSJBiXRwGd7xB8HrQ=", desc: 'Especiado estimulante de corteza de canela pura y dulce.' },
+            { id: 'cherry', name: 'Cherry', category: 'Florales', icon: 'fa-cherries', image: "https://media.istockphoto.com/id/519050468/photo/close-up-of-fresh-cherry.jpg?s=612x612&w=0&k=20&c=uFqIGBRypPFd_OFYf2DdVJ1PypXITrq502imfm333_k=", desc: 'Cerezas rojas jugosas con toques de vainilla y almendra.' },
+            { id: 'chicle', name: 'Chicle', category: 'Florales', icon: 'fa-candy-cane', image: "https://media.istockphoto.com/id/1013663798/photo/gum-a-various-shades-of-pink-and-purple-gum-for-food-pattern-and-background.jpg?s=612x612&w=0&k=20&c=l6j2G9qY2o1X2JQHCdMFof63l7xIw16K2LZL8BgTOHE=", desc: 'Divertida y dulce fragancia de tutti-frutti acaramelado.' },
+            { id: 'cipres', name: 'Ciprés', category: 'Cálidos', icon: 'fa-tree-city', image: "https://media.istockphoto.com/id/678511404/photo/leaves-pine-cones-and-flowers-of-cypress.jpg?s=612x612&w=0&k=20&c=JwV38fSR8iwt9YZZSlVrWT3r20iqTHJ35gdWF6WQw7U=", desc: 'Resina boscosa, maderas de pino y aire de bosque profundo.' },
+            { id: 'fresco-amanecer', name: 'Fresco Amanecer', category: 'Frescos', icon: 'fa-sun-plant-wilt', image: "https://media.istockphoto.com/id/1163861026/photo/beautifull-early-morning-sun-rays-on-clouds.jpg?s=612x612&w=0&k=20&c=OHA9aKZs38S3giomCViRyr_V2Tlmz3Qzvoq0QERNmUI=", desc: 'Cítricos dorados envueltos en rocío de primeras horas del día.' },
+            { id: 'citronela', name: 'Citronela', category: 'Frescos', icon: 'fa-lemon', image: "https://media.istockphoto.com/id/1224750467/photo/lemongrass.jpg?s=612x612&w=0&k=20&c=f6ClDwIQWP9UUGqOPxiuakL3Tg1qvLu-WfV35-Dt3yE=", desc: 'Vibrante toque herbal cítrico repelente natural y energetizante.' },
+            { id: 'fantasia-navidena', name: 'Fantasía Navideña', category: 'Navideños', icon: 'fa-holly-berry', image: "https://media.istockphoto.com/id/2268710839/photo/dairy-based-dessert-arroz-con-leche-with-cinnamon-and-raw-ingredients-in-the-background.jpg?s=612x612&w=0&k=20&c=C-JbStEJMZ83PlaoFdxcnD1IErueiZTlysBEe1BDbF0=", desc: 'Manzana asada con canela, clavo dulce y pino navideño.' },
+            { id: 'floral', name: 'Floral', category: 'Florales', icon: 'fa-fan', image: "https://media.istockphoto.com/id/2256206391/photo/colourful-summer-meadow.jpg?s=612x612&w=0&k=20&c=8D7ElExP-X4PCGVPL28kUinb7hQuigjxzSs576esk6A=", desc: 'Bouquet clásico de pétalos blancos, jazmín y lilas.' },
+            { id: 'floral-intenso', name: 'Floral Intenso', category: 'Florales', icon: 'fa-clover', image: "https://media.istockphoto.com/id/2249203129/photo/green-grass-with-wild-white-flowers-in-the-mountains-at-sunny-day-beautiful-summer-landscape.jpg?s=612x612&w=0&k=20&c=_CGnvzRopw0ILIIk1mAUE7jIJltLrhfiQWcZand06t4=", desc: 'Concentrado seductor de rosas rojas y orquídeas salvajes.' },
+            { id: 'manzana', name: 'Manzana', category: 'Florales', icon: 'fa-apple-whole', image: "https://media.istockphoto.com/id/2197344204/photo/ripe-red-apples-hanging-on-tree-in-orchard-garden.jpg?s=612x612&w=0&k=20&c=T2U2t6bJBJwAjmAc7a1fGgUh33uf7YwMAyr4-_Wnsyk=", desc: 'Manzana roja crujiente, jugosa y llena de frescura natural.' },
+            { id: 'manzana-canela', name: 'Manzana Canela', category: 'Cálidos', icon: 'fa-mortar-pestle', image: "https://media.istockphoto.com/id/483711990/photo/apples-with-star-anise-autumn-composition-with-leaves-and-apples.jpg?s=612x612&w=0&k=20&c=XRanwU2D9548tbYj0dFxy2nhJKYDFoEuAp1HH3bNXn4=", desc: 'Clásica combinación acogedora de manzana horneada y especias.' },
+            { id: 'manzana-verde', name: 'Manzana Verde', category: 'Frescos', icon: 'fa-apple-whole', image: "https://media.istockphoto.com/id/2291746773/photo/green-apples-on-branch-in-a-danish-orchard-close-up-of-malus-domestica-fruit-and-leaves.jpg?s=612x612&w=0&k=20&c=cxD3Bpe3jseSw03WOgGDtE3WmvXSMbeKHdAwRyvUfoQ=", desc: 'Ácida, efervescente y vigorizante manzana verde silvestre.' },
+            { id: 'melocoton', name: 'Melocotón', category: 'Florales', icon: 'fa-peach', image: "https://media.istockphoto.com/id/1134603550/photo/gold-peach-on-a-white-background.jpg?s=612x612&w=0&k=20&c=R4kG3M2b6XQjFOjyhPHMawObJaa_rq_kY_gi_UZMN4Q=", desc: 'Melocotón dulce y aterciopelado recién cosechado.' },
+            { id: 'frutos-rojos', name: 'Frutos Rojos', category: 'Florales', icon: 'fa-pepper-hot', image: "https://media.istockphoto.com/id/152166352/photo/fresh-fruits.jpg?s=612x612&w=0&k=20&c=SyvwJzXwstSCib2_W5Lf5e0L1Qd7gdRuG8qRwZk6Bks=", desc: 'Mezcla intensa de frambuesas, fresas y arándanos maduros.' },
+            { id: 'kiwi', name: 'Kiwi', category: 'Frescos', icon: 'fa-stroopwafel', image: "https://media.istockphoto.com/id/537403487/photo/kiwi.jpg?s=612x612&w=0&k=20&c=NC7ogHNUxPDFL3SkcTMOe1vrr6p_5p34n7saoI-jhac=", desc: 'Fruta tropical verde, exótica, ácida y refrescante.' },
+            { id: 'lavanda', name: 'Lavanda', category: 'Frescos', icon: 'fa-spa', image: "https://media.istockphoto.com/id/2283844845/photo/beautiful-blooming-lavender-flowers-field-in-full-blossom-purple-lavender-garden-landscape.jpg?s=612x612&w=0&k=20&c=OtgyNunjlu1XN29RFCDObodMUKdulIdPX8ndtzkhaHk=", desc: 'Flores de lavanda provenzal, calmantes e ideales para el confort.' },
+            { id: 'limon', name: 'Limón', category: 'Frescos', icon: 'fa-lemon', image: "https://media.istockphoto.com/id/2239450377/photo/lemon-and-cut-in-a-slice-isolated-on-white-background-with-green-leaf.jpg?s=612x612&w=0&k=20&c=Uqp4BvPz3sxwwLozvivNK61mGP5RAmrGnyJSc-rhXLU=", desc: 'Zumo concentrado de limón amarillo chispeante y limpio.' },
+            { id: 'violeta', name: 'Violeta', category: 'Florales', icon: 'fa-stroopwafel', image: "https://media.istockphoto.com/id/2209133352/photo/viola-sororia-common-blue-violet.jpg?s=612x612&w=0&k=20&c=5ysdBullQmzdg8-nypAXpZPu8ZQdJcKQ9XF9BdGOGqM=", desc: 'Sutiles notas atalcadas de flor de violeta de primavera.' },
+            { id: 'menta-limon', name: 'Menta Limón', category: 'Frescos', icon: 'fa-whiskey-glass', image: "https://media.istockphoto.com/id/509300610/photo/lemon-and-mint.jpg?s=612x612&w=0&k=20&c=MmtHk63m4qwrtYM1_ykZsC8VCX8ez-fHDotzaTKePEs=", desc: 'Fusión ultra refrescante estilo mojito herbal de menta y rodajas de limón.' },
+            { id: 'menta', name: 'Menta', category: 'Frescos', icon: 'fa-leaf', image: "https://media.istockphoto.com/id/1295858179/photo/fresh-mint-sprig.jpg?s=612x612&w=0&k=20&c=jiSmjJvNIEgoXCi0S1FwCrzhH-5ETPjfWzgHqvdY9rs=", desc: 'Hojas de menta piperita silvestre y frescor mentolado puro.' },
+            { id: 'pepino', name: 'Pepino', category: 'Frescos', icon: 'fa-glass-water', image: "https://media.istockphoto.com/id/531779660/photo/cucumber.jpg?s=612x612&w=0&k=20&c=dGrYzKlYYKy72z-T6sExP6004Vi5rjEstz2bZBKc5uM=", desc: 'Agua de pepino hidratante, ligera y súper limpia.' },
+            { id: 'maracuya', name: 'Maracuyá', category: 'Florales', icon: 'fa-martini-glass-citrus', image: "https://media.istockphoto.com/id/2239714725/photo/yellow-passion-fruit-isolated-on-white-background-fresh-passion-fruit-or-maracuja-on-white.jpg?s=612x612&w=0&k=20&c=keplV8BWKZvQZxjySr25b6g-tr9tzNAwmoAF-mQ0D5w=", desc: 'Fruta de la pasión ácida y tropical repleta de energía.' },
+            { id: 'fresa', name: 'Fresa', category: 'Florales', icon: 'fa-bowl-rice', image: "https://media.istockphoto.com/id/683435296/photo/strawberry.jpg?s=612x612&w=0&k=20&c=hUAE0M0z5Ao9cINOqOe8qiGdRyeMmH-K0xiBXydEwVI=", desc: 'Fresa silvestre ultra dulce y jugosa.' },
+            { id: 'pera', name: 'Pera', category: 'Frescos', icon: 'fa-pear', image: "https://media.istockphoto.com/id/1299073137/photo/pears-isolated-one-and-a-half-green-pear-fruit-with-leaf-on-white-background-pear-slice-with.jpg?s=612x612&w=0&k=20&c=KwN77KxCAl025ZaSBgzO7aqM9DALlBcrX0TXUNF5kDs=", desc: 'Pera verde suave con matices florales ligeros.' },
+            { id: 'naranja', name: 'Naranja', category: 'Frescos', icon: 'fa-citrus', image: "https://media.istockphoto.com/id/2291545922/photo/kerala-lemon-candy-or-naranja-mittayi-traditional-indian-citrus-hard-candies-with-fresh-lime.jpg?s=612x612&w=0&k=20&c=RO42cDWivnzi0zo39IgzEakj83fG5_glOwn4ceadRqo=", desc: 'Naranja de zumo recién exprimida al sol.' },
+            { id: 'sandia', name: 'Sandía', category: 'Frescos', icon: 'fa-watermelon-slice', image: "https://media.istockphoto.com/id/2214586747/photo/watermelon-popsicle-slice-surrounded-by-fresh-mint-leaves.jpg?s=612x612&w=0&k=20&c=aJT3paFdH6EhUVjE9_fbGY3RnCtvWb-vABcEoM4pQwM=", desc: 'Dulce tajada de sandía veraniega, fresca y acuosa.' },
+            { id: 'sabila', name: 'Sábila', category: 'Frescos', icon: 'fa-leaf', image: "https://media.istockphoto.com/id/925912236/photo/aloe-vera-leaves.jpg?s=612x612&w=0&k=20&c=qMMES5yM-IK07smD4xfrKtvwAOl3LNys1xvXsTSRrFU=", desc: 'Aloe vera cristalino, calmante y botánico.' },
+            { id: 'suave-abril', name: 'Suave Abril', category: 'Florales', icon: 'fa-shirt', image: "https://media.istockphoto.com/id/1372097926/photo/close-up-on-almond-flower-on-branch-tree.jpg?s=612x612&w=0&k=20&c=c1jv6gHk6tKwEWN9Br6Lo7Sa0iHzXxFCbx4NiuFLH6Y=", desc: 'Aroma reconfortante a ropa limpia secada al aire libre.' },
+            { id: 'vainilla', name: 'Vainilla', category: 'Cálidos', icon: 'fa-cookie', image: "https://media.istockphoto.com/id/1455431829/photo/vanilla-beans-and-flower-on-a-wooden-table.jpg?s=612x612&w=0&k=20&c=4ubwqmBF5bjX0RxRIpTgFFmeqvfWP6yAUe3wddzZ-Qg=", desc: 'Vaina de vainilla cremosita, dulce y gourmand.' },
+            { id: 'primaveral', name: 'Primaveral', category: 'Florales', icon: 'fa-cloud-sun-rain', image: "https://media.istockphoto.com/id/2209183203/photo/primavera.jpg?s=612x612&w=0&k=20&c=n1OSk6aq6Zu5j-s9mHK2bhn3kf7f7_O6s2xUxQAgR98=", desc: 'Flores nuevas y brisa cálida de estación de primavera.' },
+            { id: 'flores-paraiso', name: 'Flores Paraíso', category: 'Florales', icon: 'fa-feather', image: "https://media.istockphoto.com/id/1385988465/photo/ave-del-paraiso-flower.jpg?s=612x612&w=0&k=20&c=VI00lwVMPC8o_MXqCX5G-wy0O6fnXLhI4PrvVLK9gT8=", desc: 'Aroma exótico tropical de flores de Strelitzia y orquídeas.' },
+            { id: 'romero', name: 'Romero', category: 'Frescos', icon: 'fa-plant-wilt', image: "https://media.istockphoto.com/id/2243672883/photo/selective-focus-of-fresh-rosemary-plant-showing-texture-and-vibrant-color-in-soft-daylight.jpg?s=612x612&w=0&k=20&c=8znPFvOksbhxRuHE1i4J-omDjA-c2o0Pvkec8b2rAuc=", desc: 'Herbal aromático silvestre, estimulante para la mente.' },
+            { id: 'eucalipto', name: 'Eucalipto', category: 'Frescos', icon: 'fa-notes-medical', image: "https://media.istockphoto.com/id/2268277006/photo/fresh-eucalyptus-branch-with-flowers-and-seeds-isolated-on-white.jpg?s=612x612&w=0&k=20&c=t8PcLUXPNYx7bxfII7PKgmznkeF_iwT3VCbXTddzNug=", desc: 'Notas mentoladas balsámicas que abren las vías respiratorias.' },
+            { id: 'popurri', name: 'Popurrí', category: 'Florales', icon: 'fa-compact-disc', image: "https://media.istockphoto.com/id/105637634/photo/dried-fruits.jpg?s=612x612&w=0&k=20&c=ElxAUA1vJORZ4FJRtcKBpdMO2CvXqCIJkNfni-kjYmc=", desc: 'Mezcla artesanal de flores secas, pétalos e inciensos.' },
+            { id: 'herbal', name: 'Herbal', category: 'Frescos', icon: 'fa-cannabis', image: "https://media.istockphoto.com/id/2269343887/photo/different-herbs-growing-in-pots-on-table-above-view.jpg?s=612x612&w=0&k=20&c=GvwrWal3NHsdMdbVEGCUwLMhSfJPAfO5vs_hwaqQ2Eo=", desc: 'Extracto puro de hierbas aromáticas de jardín medicinal.' },
+            { id: 'mango-mandarina', name: 'Mango Mandarina', category: 'Florales', icon: 'fa-wine-bottle', image: "https://media.istockphoto.com/id/2276498362/photo/dynamic-composition-set-of-flying-fresh-fruits-levitating-whole-and-scored-mangoes-alongside.jpg?s=612x612&w=0&k=20&c=ucrjBzCiPXVUn9l4SBGkOM6QPhpATWQf60tW829CsLI=", desc: 'Explosión cítrico-dulce de mango maduro y mandarina jugosa.' },
+            { id: 'vainilla-navidena', name: 'Vainilla Navideña', category: 'Navideños', icon: 'fa-gifts', image: "https://media.istockphoto.com/id/136284956/photo/vanilla.jpg?s=612x612&w=0&k=20&c=GuUz1DvtrVuAxmeaolT3ug8n3mHyZwYnGqWrP4xRoPg=", desc: 'Vainilla especiada con toques de nuez moscada y azucaradas festivas.' },
+            { id: 'brisa-marina', name: 'Brisa Marina', category: 'Frescos', icon: 'fa-sailboat', image: "https://media.istockphoto.com/id/1302108132/photo/ships-bunkering-in-bay-of-gibraltar.jpg?s=612x612&w=0&k=20&c=dppG3fotwL1jCQfOeAYgbpC4CXZMntcfGDe4FnQjTgE=", desc: 'Brisa de mar abierto con notas ozónicas y saladas.' },
+            { id: 'coco', name: 'Coco', category: 'Florales', icon: 'fa-cookie-bite', image: "https://media.istockphoto.com/id/1131857545/photo/ripe-coconut.jpg?s=612x612&w=0&k=20&c=OxR68x37ai9nvl0_dxc5kCnkZhOm1qTRhjbxoxCimug=", desc: 'Leche de coco cremosa y tropical con toque de sol.' },
+            { id: 'zacate-limon', name: 'Zacate Limón', category: 'Frescos', icon: 'fa-grass', image: "https://media.istockphoto.com/id/2214475687/photo/green-grass-with-dew-drops-possibly-lemongrass-wheatgrass-or-barley.jpg?s=612x612&w=0&k=20&c=9HMwKhicmWVllHMFZZ3dMBaZU8OO2tNovQe2SDs9M1c=", desc: 'Lemongrass tailandés, cítrico chispeante y limpiador.' },
+            { id: 'abrazos-cristal', name: 'Abrazos Cristal', category: 'Navideños', icon: 'fa-snowflake', image: "nuhttps://media.istockphoto.com/id/2257848508/photo/close-up-of-white-salt-crystals-coarse-rock-salt-texture-in-macro-shot.jpg?s=612x612&w=0&k=20&c=WXQBe4eTxePhpaCs8XqCFT4YyoVwGVH_WSK-sv56V28=ll", desc: 'Aire puro invernal con matices atalcados y reconfortantes.' },
+            { id: 'rustico', name: 'Rústico', category: 'Cálidos', icon: 'fa-campground', image: "https://media.istockphoto.com/id/2207478978/photo/warm-rustic-living-room-with-high-ceilings-leather-seating-and-natural-light-3d-rendering.jpg?s=612x612&w=0&k=20&c=We04AUNZib6MR4jidJctk1uc-FZruFtE3ECk4vHBqCI=", desc: 'Madera ahumada, musgo de roble y ambiente de cabaña de montaña.' },
+            { id: 'cuero', name: 'Cuero', category: 'Cálidos', icon: 'fa-vest', image: "https://media.istockphoto.com/id/514801257/photo/leather-texture.jpg?s=612x612&w=0&k=20&c=FIQFnN5dHODqpDXO4eE_8HSQaYWjk7Pae_W4_VtafAc=", desc: 'Elegante y sofisticado acorde de cuero refinado y tabaco suave.' },
+            { id: 'jazmin', name: 'Jazmín', category: 'Florales', icon: 'fa-disease', image: "https://media.istockphoto.com/id/526212775/photo/raindrops.jpg?s=612x612&w=0&k=20&c=jyjVDXUPmy_7PBm_bkrkVQagX6e7chokLx0e3KTqqio=", desc: 'Flores nocturnas de jazmín blanco, intensamente aromáticas.' },
+            { id: 'maracuya-menta', name: 'Maracuyá Menta', category: 'Frescos', icon: 'fa-glass-water-droplet', image: "https://media.istockphoto.com/id/1173893482/photo/detail-of-dessert-cake-with-passion-fruit.jpg?s=612x612&w=0&k=20&c=14zWOBqUw2UuljjbVH1Z7VDO3ZxzyezH_I0JiSHkUzo=", desc: 'Cóctel exótico que equilibra la acidez tropical con la frescura mentolada.' },
+            { id: 'pino-navideno', name: 'Pino Navideño', category: 'Navideños', icon: 'fa-tree', image: "https://media.istockphoto.com/id/184608019/photo/christmas-tree.jpg?s=612x612&w=0&k=20&c=O6JrQJQmBZAp0-uPIl4qOrQpQrpaPd6JVGaJVMxFS1Y=", desc: 'Bosque de pinos frescos recién cortados para las festividades.' },
+            { id: 'rompope', name: 'Rompope', category: 'Navideños', icon: 'fa-glass-cheers', image: "https://media.istockphoto.com/id/2246572548/photo/rompope-vanilla-liqueur-eggnog-drink-made-with-eggs-in-mexico-traditional-for-mexican.jpg?s=612x612&w=0&k=20&c=d9_LmD_U-OP82VvufL7uhmFryRDVVyMr6YkaBb6OXiQ=", desc: 'Crema dulce tradicional con notas de vainilla, ron y canela.' },
+            { id: 'cesta-navidena', name: 'Cesta Navideña', category: 'Navideños', icon: 'fa-gift', image: "https://media.istockphoto.com/id/866046318/photo/christmas-decoration-with-fir-branches.jpg?s=612x612&w=0&k=20&c=jyW4rTt7Mb2G-j_HhBOEFQDRuKV8ZSpJbc5KMtNzTcc=", desc: 'Frutos secos, especias de invierno y golosinas festivas.' },
+            { id: 'caramelo', name: 'Caramelo', category: 'Cálidos', icon: 'fa-cubes-stacked', image: "https://media.istockphoto.com/id/2206442831/photo/hazelnut-flan-flan-with-red-berries-topped-with-caramel-sauce-hazelnut-pudding.jpg?s=612x612&w=0&k=20&c=4yPD14cgbktx3OT3Vz9SJl9gRnjFjfhejyUy3Y1hY78=", desc: 'Caramelo toffee tostado con mantequilla y azúcar moreno.' },
+            { id: 'chocolate', name: 'Chocolate', category: 'Cálidos', icon: 'fa-mug-hot', image: "null", desc: 'Cacao amargo rico y dulce chocolate artesanal caliente.' },
+            { id: 'cafe', name: 'Café', category: 'Cálidos', icon: 'fa-mug-saucer', image: "nuhttps://media.istockphoto.com/id/2232885441/photo/white-cup-of-black-coffee-on-coffee-beans-background-top-view.jpg?s=612x612&w=0&k=20&c=EkypRaG7AAm5KLfTMnByxPV4sGWu6XEggi2B6dwAza0=ll", desc: 'Grano de café tico recién tostado con aroma profundo e inspirador.' },
+            { id: 'carro-nuevo', name: 'Carro Nuevo', category: 'Cálidos', icon: 'fa-car-side', image: "https://media.istockphoto.com/id/91608213/photo/miniature-toy-car-wrapped-in-red-ribbon-with-bow.jpg?s=612x612&w=0&k=20&c=q1SgheYtpszV6koxr7P-UKW0KojmEeLWzHn45h8r3Hc=", desc: 'Combinación limpia de tapicería premium y acabados impecables.' },
+            { id: 'pina-colada', name: 'Piña Colada', category: 'Florales', icon: 'fa-cocktail', image: "https://media.istockphoto.com/id/169947794/photo/pina-colada-cocktail-on-the-beach-with-copy-space.jpg?s=612x612&w=0&k=20&c=8fzRIUKlaf4RQxlLpLVqk670PipjNuKhmkbuxnIkzlo=", desc: 'Piña madura, crema de coco y un toque suave de ron blanco.' },
+            { id: 'galleta-gengibre', name: 'Galleta Gengibre', category: 'Navideños', icon: 'fa-cookie', image: "https://media.istockphoto.com/id/177235487/photo/gingerbread-men.jpg?s=612x612&w=0&k=20&c=AvMsyiDGlU2__9uYjm0FYCgGOPq3dBQ-mb1tXf_1AN8=", desc: 'Galletas de jengibre recién horneadas con especias dulces.' },
+            { id: 'lady-rose', name: 'Lady Rose', category: 'Florales', icon: 'fa-rose', image: "https://media.istockphoto.com/id/157330341/photo/a-full-single-red-rose-on-a-white-background.jpg?s=612x612&w=0&k=20&c=puhfwDAs2ZvIg0z2CCTUOH9RCsJFz7c3rhP-4yxDDYw=", desc: 'Rosas inglesas elegantes con destellos de peonía y ámbar.' },
+            { id: 'grape-fruit', name: 'Grape Fruit', category: 'Frescos', icon: 'fa-circle-dot', image: "https://media.istockphoto.com/id/2272135625/photo/close-up-grapefruit-and-orange-slices-in-bubbly-drink.jpg?s=612x612&w=0&k=20&c=TLvz1NfoYzdT2bMzrPm5mXE3UNCxANNIvVtlI36b5pU=", desc: 'Toronja rosada amarga y refrescante llena de vigor.' },
+            { id: 'new-moon', name: 'New Moon', category: 'Cálidos', icon: 'fa-moon', image: "https://media.istockphoto.com/id/2277098568/photo/waxing-moon-lonely-moon-in-the-sky-crescent-moon.jpg?s=612x612&w=0&k=20&c=0VuPygtnWB9wEN98naOauCQtPTiv-JEgoQ-TqED0wbA=", desc: 'Mística nocturna de almizcle blanco, ámbar y maderas suaves.' },
+            { id: 'rosas', name: 'Rosas', category: 'Florales', icon: 'fa-spa', image: "https://media.istockphoto.com/id/2227084557/photo/red-rose.jpg?s=612x612&w=0&k=20&c=c7hsnkQYOuBxJv28lgkuX8M6d6wpIX4yxdylgAtCtKM=", desc: 'Puro bouquet clásico de pétalos de rosa fresca del jardín.' }
         ];
 
         // PRICES BY SIZE
         const PRESENTATION_PRICES = {
-            '8ml': 1500,
-            '10ml': 2000,
-            '30ml': 3000,
-            '60ml': 5000,
+          //  '8ml': 1500,
+          //  '10ml': 2000,
+          //  '30ml': 3000,
+          //  '60ml': 5000,
             '120ml': 7000
         };
 
@@ -535,8 +538,8 @@
         // -------------------------------------------------------------
         let activeCategory = 'all';
         let currentSearchQuery = '';
-        let selectedProductForModal = null;
-        let selectedSize = '8ml';
+        let selectedProductForModal = "null";
+        let selectedSize = '120ml';
         let modalQuantity = 1;
         let cart = [];
 
@@ -558,7 +561,6 @@
         function filterCategory(category) {
             activeCategory = category;
             
-            // Update active tab buttons
             document.querySelectorAll('.cat-btn').forEach(btn => {
                 if (btn.dataset.cat === category) {
                     btn.className = 'cat-btn active px-4 py-1.5 rounded-full text-xs uppercase tracking-wider font-medium whitespace-nowrap transition-all border border-gold-500/40 bg-gold-500 text-emerald-950 shadow-md shadow-gold-500/10';
@@ -567,7 +569,6 @@
                 }
             });
 
-            // Update title
             const titleElem = document.getElementById('currentCategoryTitle');
             if (category === 'all') titleElem.textContent = 'Todos los Aromas';
             else if (category === 'Nuevos') titleElem.textContent = '✨ Nuevos Aromas';
@@ -589,13 +590,11 @@
             } else {
                 clearBtn.classList.add('hidden');
             }
-
             renderCatalog();
         }
 
         function clearSearchInput() {
-            const input = document.getElementById('searchInput');
-            input.value = '';
+            document.getElementById('searchInput').value = '';
             handleSearch();
         }
 
@@ -611,7 +610,6 @@
             const emptyState = document.getElementById('emptyState');
             const countElem = document.getElementById('fragranceCount');
 
-            // Filter logic
             const filtered = FRAGRANCES.filter(item => {
                 const matchesCategory = (activeCategory === 'all') || (item.category === activeCategory);
                 const matchesSearch = item.name.toLowerCase().includes(currentSearchQuery) || 
@@ -629,21 +627,24 @@
 
             emptyState.classList.add('hidden');
 
-            // Render cards HTML
-            grid.innerHTML = filtered.map((item, index) => {
+            grid.innerHTML = filtered.map((item) => {
+                // Lógica para mostrar imagen si existe, de lo contrario el ícono
+                const imageHTML = item.image 
+                    ? `<img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">`
+                    : `<i class="fa-solid ${item.icon} text-4xl text-gold-400/50 group-hover:text-gold-400 transition-colors"></i>`;
+
                 return `
                 <div onclick="openProductModal('${item.id}')" 
                      class="glass-card rounded-2xl p-4 flex flex-col justify-between cursor-pointer group hover:border-gold-400/70 hover:shadow-xl hover:shadow-gold-500/10 transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden">
                     
-                    ${item.isNew ? `<span class="absolute top-2 right-2 bg-gradient-to-r from-gold-400 to-gold-600 text-emerald-950 font-bold text-[9px] uppercase px-2 py-0.5 rounded-full tracking-wider shadow">Nuevo</span>` : ''}
+                    ${item.isNew ? `<span class="absolute top-3 right-3 z-10 bg-gradient-to-r from-gold-400 to-gold-600 text-emerald-950 font-bold text-[9px] uppercase px-2 py-0.5 rounded-full tracking-wider shadow">Nuevo</span>` : ''}
 
                     <div>
-                        <!-- Icon representation -->
-                        <div class="w-12 h-12 rounded-xl bg-emerald-900/80 border border-gold-500/20 group-hover:border-gold-400 flex items-center justify-center text-gold-400 text-xl mb-3 shadow-inner group-hover:scale-110 transition-transform">
-                            <i class="fa-solid ${item.icon}"></i>
+                        <!-- Contenedor de Imagen o Ícono -->
+                        <div class="w-full h-40 rounded-xl bg-emerald-900/80 border border-gold-500/20 group-hover:border-gold-400 flex items-center justify-center mb-3 shadow-inner overflow-hidden relative">
+                            ${imageHTML}
                         </div>
 
-                        <!-- Title & Category -->
                         <span class="text-[10px] uppercase tracking-widest text-gold-400/80 font-semibold">${item.category}</span>
                         <h4 class="font-serif text-lg font-bold text-white group-hover:text-gold-300 transition-colors leading-snug line-clamp-1">${item.name}</h4>
                         
@@ -662,7 +663,6 @@
                 `;
             }).join('');
 
-            // GSAP stagger animation on cards
             gsap.fromTo("#catalogGrid > div", 
                 { opacity: 0, y: 15 },
                 { opacity: 1, y: 0, duration: 0.3, stagger: 0.03, ease: "power1.out" }
@@ -680,18 +680,22 @@
             selectedSize = '8ml';
             modalQuantity = 1;
 
-            // Populate modal fields
             document.getElementById('modalTitle').textContent = product.name;
             document.getElementById('modalCategoryBadge').textContent = product.category;
             document.getElementById('modalDescription').textContent = product.desc;
-            document.getElementById('modalIconContainer').innerHTML = `<i class="fa-solid ${product.icon}"></i>`;
             document.getElementById('modalQty').textContent = modalQuantity;
 
-            // Reset selected size highlight
+            // Lógica para mostrar imagen o ícono en el modal
+            const imgContainer = document.getElementById('modalImageContainer');
+            if (product.image) {
+                imgContainer.innerHTML = `<img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover">`;
+            } else {
+                imgContainer.innerHTML = `<i class="fa-solid ${product.icon} text-4xl text-gold-400"></i>`;
+            }
+
             updateSizeButtonsUI();
             updateModalPrice();
 
-            // Show Modal with Animation
             const modal = document.getElementById('productModal');
             const container = document.getElementById('modalContainer');
 
@@ -754,6 +758,7 @@
                     id: selectedProductForModal.id,
                     name: selectedProductForModal.name,
                     icon: selectedProductForModal.icon,
+                    image: selectedProductForModal.image, // Guardamos la imagen para el carrito también
                     size: selectedSize,
                     unitPrice: unitPrice,
                     qty: modalQuantity
@@ -790,12 +795,17 @@
             container.innerHTML = cart.map((item, index) => {
                 const itemTotal = item.unitPrice * item.qty;
                 grandTotal += itemTotal;
+                
+                // Miniatura en el carrito (imagen o ícono)
+                const thumbHTML = item.image 
+                    ? `<img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover rounded-lg">`
+                    : `<i class="fa-solid ${item.icon} text-gold-400 text-lg"></i>`;
 
                 return `
                 <div class="bg-emerald-900/40 border border-gold-500/20 rounded-xl p-3 flex items-center justify-between gap-3">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-emerald-950 border border-gold-500/30 flex items-center justify-center text-gold-400 text-lg">
-                            <i class="fa-solid ${item.icon}"></i>
+                        <div class="w-12 h-12 rounded-lg bg-emerald-950 border border-gold-500/30 flex items-center justify-center overflow-hidden flex-shrink-0">
+                            ${thumbHTML}
                         </div>
                         <div>
                             <h5 class="font-serif font-bold text-white text-sm">${item.name}</h5>
@@ -897,10 +907,8 @@
             const encodedMessage = encodeURIComponent(message);
             const waUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
 
-            // Open WhatsApp link
             window.open(waUrl, '_blank');
 
-            // Reset cart and toggle modals
             cart = [];
             updateCartUI();
             toggleCartDrawer(false);
