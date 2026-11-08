@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarjeta Circular de Agradecimiento - Amigurumi's Elena</title>
+    <!-- Librería para generar códigos QR -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary-purple: #7B5EA7;
+            --light-purple: #9A75CC;
+            --bg-color: #F8F5FC;
+            --card-bg: #FFFFFF;
+            --text-dark: #4A3B69;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .controls-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(123, 94, 167, 0.1);
+            margin-bottom: 25px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            max-width: 600px;
+        }
+
+        .btn {
+            background-color: var(--primary-purple);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--light-purple);
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* Contenedor Principal de la Tarjeta Circular */
+        .card-preview-wrapper {
+            position: relative;
+            padding: 10px;
+        }
+
+        .circle-card {
+            width: 450px;
+            height: 450px;
+            border-radius: 50%;
+            background-color: var(--card-bg);
+            border: 4px dashed var(--light-purple);
+            box-shadow: 0 10px 30px rgba(123, 94, 167, 0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 40px;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        /* Líneas de corte (Guías de impresión) */
+        .crop-marks {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: none;
+        }
+        .crop-marks.active {
+            display: block;
+        }
+        .crop-marks::before, .crop-marks::after {
+            content: '';
+            position: absolute;
+            border: 1px dotted rgba(123, 94, 167, 0.4);
+            border-radius: 50%;
+        }
+        .crop-marks::before {
+            top: -6px; left: -6px; right: -6px; bottom: -6px;
+        }
+
+        /* Elementos internos de la tarjeta */
+        .card-header {
+            margin-top: 5px;
+        }
+
+        .logo-img {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--light-purple);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .thank-you-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--primary-purple);
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .thank-you-sub {
+            font-size: 12px;
+            color: #666;
+            margin: 0;
+        }
+
+        .payment-box {
+            background-color: #F4EFFA;
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: 12px;
+            margin-top: 2px;
+            border: 1px solid rgba(123, 94, 167, 0.2);
+        }
+
+        .payment-box strong {
+            color: var(--primary-purple);
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 5px;
+        }
+
+        .qr-container {
+            background: white;
+            padding: 4px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-container img, .qr-container canvas {
+            display: block;
+            width: 55px !important;
+            height: 55px !important;
+        }
+
+        .social-info {
+            text-align: left;
+            font-size: 11px;
+            line-height: 1.3;
+        }
+
+        .social-info .label {
+            font-weight: bold;
+            color: var(--primary-purple);
+            margin: 0;
+        }
+
+        .social-info .url {
+            color: #555;
+            margin: 0;
+            font-size: 10px;
+            word-break: break-all;
+            max-width: 150px;
+        }
+
+        /* Estilos específicos para impresión */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .controls-container {
+                display: none;
+            }
+            .circle-card {
+                box-shadow: none;
+                border: 2px solid #ccc;
+                margin: 0 auto;
+            }
+            .crop-marks.active {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Panel de Control para Interactividad -->
+    <div class="controls-container">
+        <label class="checkbox-label">
+            <input type="checkbox" id="cropToggle" onchange="toggleCropMarks()"> Mostrar marcas de corte / guía circular
+        </label>
+        <button class="btn" onclick="window.print()">Imprimir / Guardar PDF</button>
+    </div>
+
+    <!-- Vista Previa de la Tarjeta Circular -->
+    <div class="card-preview-wrapper">
+        <div class="circle-card" id="printableCard">
+            <!-- Guías visuales de corte -->
+            <div class="crop-marks" id="cropMarks"></div>
+
+            <!-- Cabecera con Logo -->
+            <div class="card-header">
+                <!-- Se incluye la imagen del logo proporcionada[span_0](start_span)[span_0](end_span) -->
+                <img src="image.png" alt="Amigurumi's Elena Logo" class="logo-img">
+            </div>
+
+            <!-- Cuerpo con Mensaje y Pago -->
+            <div class="card-body">
+                <h1 class="thank-you-title">¡Gracias por tu compra!</h1>
+                <p class="thank-you-sub">Hecho a mano con mucho amor y dedicación.</p>
+                <div class="payment-box">
+                    Sinpe Móvil: <strong>60840204</strong><br>
+                    <span>Elena Gutiérrez S.</span>
+                </div>
+            </div>
+
+            <!-- Pie con Código QR y Redes Sociales -->
+            <div class="card-footer">
+                <div class="qr-container" id="qrcode"></div>
+                <div class="social-info">
+                    <p class="label">¡Visítanos!</p>
+                    <p class="url">facebook.com/share/1Dmy3iLLLj/</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generar el código QR apuntando al enlace de Facebook proporcionado
+        new QRCode(document.getElementById("qrcode"), {
+            text: "https://www.facebook.com/share/1Dmy3iLLLj/",
+            width: 60,
+            height: 60,
+            colorDark: "#7B5EA7",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        // Función para alternar las líneas de guía de corte
+        function toggleCropMarks() {
+            const cropMarks = document.getElementById('cropMarks');
+            const cropToggle = document.getElementById('cropToggle');
+            if (cropToggle.checked) {
+                cropMarks.classList.add('active');
+            } else {
+                cropMarks.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>
