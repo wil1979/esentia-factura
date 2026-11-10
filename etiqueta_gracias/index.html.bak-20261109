@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Etiquetas EWE Esentia - Editor Avanzado</title>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Dancing+Script:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- ✅ QR Code Generator - LIBRERÍA NECESARIA -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Editor de etiquetas <span class="heading-accent">EWE Esentia</span></h1>
+        <p class="page-intro">Diseña, personaliza y prepara tus etiquetas para impresión.</p>
+
+        <div class="main-layout">
+            <!-- PANEL IZQUIERDO -->
+            <div class="panel">
+                <h2 class="panel-title">🔍 Cliente y Cantidad</h2>
+
+                <div class="search-box">
+                    <input type="text" id="clientSearch" placeholder="Buscar cliente por nombre, teléfono o cédula..." oninput="searchClients(this.value)">
+                    <div class="search-results" id="searchResults"></div>
+                </div>
+
+                <input type="hidden" id="selectedClient" value="">
+
+                <div class="custom-client-section">
+                    <label class="print-check">
+                        <input type="checkbox" id="useCustomClient" onchange="toggleCustomClient()">
+                        <span>Usar nombre personalizado (sin registrar en BD)</span>
+                    </label>
+                    <div id="customClientContainer" class="custom-client-container" style="display:none;">
+                        <div class="control-group">
+                            <label for="customClientName">Nombre personalizado</label>
+                            <input type="text" id="customClientName" placeholder="Ej: María Pérez" oninput="updateCustomClient()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="labelQuantity">Cantidad de Etiquetas</label>
+                    <input type="number" id="labelQuantity" value="24" min="1" max="1000">
+                </div>
+
+                <div class="divider"></div>
+
+                <h2 class="panel-title">📐 Tamaño de Etiqueta</h2>
+                <div class="info-box">
+                    <strong>Tamaño predeterminado:</strong><br>
+                    1.75 pulgadas (44.45 mm)
+                </div>
+
+                <div class="control-row">
+                    <div class="control-group">
+                        <label for="labelSizeInches">Tamaño en Pulgadas</label>
+                        <input type="number" id="labelSizeInches" value="1.75" step="0.01" min="0.5" max="4" oninput="updateLabelSizeFromInches()">
+                    </div>
+                    <div class="control-group">
+                        <label for="labelSizeMm">Tamaño en Milímetros</label>
+                        <input type="number" id="labelSizeMm" value="44.45" step="0.01" min="12" max="100" oninput="updateLabelSizeFromMm()">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="labelSizePx">Diámetro Visual (px)</label>
+                    <input type="range" id="labelSizePx" min="200" max="600" value="400" oninput="updateLabelSizePx(this.value)">
+                    <div class="range-value" id="labelSizePxValue">400 px</div>
+                </div>
+
+                <div class="size-indicator">
+                    ⌀ <span id="currentSizeDisplay">1.75"</span> | <span id="currentSizeMm">44.45 mm</span>
+                </div>
+
+                <div class="divider"></div>
+
+                <h2 class="panel-title">💾 Diseños Guardados</h2>
+                <div class="design-actions">
+                    <button class="btn btn-primary" onclick="saveDesign()">💾 Guardar diseño actual</button>
+                    <button class="btn btn-outline" onclick="document.getElementById('loadDesignFile').click()">📂 Cargar desde archivo</button>
+                    <input type="file" id="loadDesignFile" accept=".json" style="display:none" onchange="loadDesignFromFile(event)">
+                    <button class="btn btn-outline" onclick="exportDesignJSON()">📤 Exportar JSON</button>
+                </div>
+                <div class="control-group" style="margin-top:12px;">
+                    <label for="savedDesignsList">Mis diseños guardados</label>
+                    <select id="savedDesignsList" size="4" onchange="loadSelectedDesign()">
+                        <option value="">-- Ninguno --</option>
+                    </select>
+                </div>
+                <button class="btn btn-outline" onclick="deleteSelectedDesign()" style="margin-top:8px;">🗑️ Eliminar diseño seleccionado</button>
+            </div>
+
+            <!-- PANEL CENTRAL: PREVIEW -->
+            <div class="preview-container">
+                <div class="label-wrapper" id="labelWrapper">
+                    <svg id="labelSvg" class="label-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <pattern id="bgPattern" patternUnits="userSpaceOnUse" width="400" height="400">
+                                <image id="bgImage" href="" x="0" y="0" width="400" height="400" preserveAspectRatio="xMidYMid slice"/>
+                            </pattern>
+                            <clipPath id="circleClip">
+                                <circle cx="200" cy="200" r="195"/>
+                            </clipPath>
+                            <path id="borderPath" d="M 200, 200 m -170, 0 a 170,170 0 1,1 340,0 a 170,170 0 1,1 -340,0"/>
+                        </defs>
+
+                        <circle class="label-circle" cx="200" cy="200" r="195"/>
+                        <g clip-path="url(#circleClip)">
+                            <rect id="bgRect" x="0" y="0" width="400" height="400" fill="url(#bgPattern)" opacity="0"/>
+                        </g>
+
+                        <g class="leaf-decoration" transform="translate(80, 130)">
+                            <path d="M0,0 Q10,-15 20,0 Q10,15 0,0" fill="#6b8f5e" opacity="0.6"/>
+                        </g>
+                        <g class="leaf-decoration" transform="translate(300, 130) scale(-1,1)">
+                            <path d="M0,0 Q10,-15 20,0 Q10,15 0,0" fill="#6b8f5e" opacity="0.6"/>
+                        </g>
+
+                        <text id="borderText" class="border-text-path">
+                            <textPath id="borderTextPath" href="#borderPath" startOffset="0%">✦ EWE ESENTIA ✦ AROMATERAPIA NATURAL ✦ FRAGANCIAS QUE ENAMORAN ✦</textPath>
+                        </text>
+
+                        <text id="textMain" class="label-text-main adelia-font" x="200" y="180" font-size="42">Esentia</text>
+                        <text id="textSub" class="label-text-sub" x="200" y="210" font-size="18">♥ Fragancias que enamoran ♥</text>
+
+                        <text id="textMessage" class="label-text-message" x="200" y="240" font-size="10">Gracias por tu compra</text>
+                        <text id="textMessage2" class="label-text-message" x="200" y="255" font-size="10">Cada pedido es preparado con cariño</text>
+
+                        <text id="textSinpeLabel" class="label-text-sinpe" x="200" y="285" font-size="11">SINPE Móvil</text>
+                        <text id="textSinpe" class="label-text-sinpe" x="200" y="300" font-size="13">7295-2454</text>
+
+                        <text id="textBrand" class="label-text-brand" x="200" y="325" font-size="14">EWE Esentia</text>
+                        <text id="textFooter" class="label-text-footer" x="200" y="340" font-size="10">Aromaterapia • Candelas • Difusores</text>
+
+                        <text id="textClient" class="label-text-client" x="200" y="365" font-size="12">Gracias</text>
+
+                        <!-- ✅ QR Code - Grupo visible cuando se activa -->
+                        <g id="qrGroup" style="display:none;">
+                            <image id="qrImage" x="170" y="170" width="60" height="60" href=""/>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- PANEL DERECHO: CONTROLES -->
+            <div class="panel">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('textos', this)">Textos</button>
+                    <button class="tab" onclick="switchTab('borde', this)">Borde</button>
+                    <button class="tab" onclick="switchTab('colores', this)">Colores</button>
+                    <button class="tab" onclick="switchTab('fondo', this)">Fondo</button>
+                    <button class="tab" onclick="switchTab('qr', this)">QR</button>
+                    <button class="tab" onclick="switchTab('imprimir', this)">Imprimir</button>
+                </div>
+
+                <!-- TAB TEXTOS -->
+                <div class="tab-content active" id="tab-textos">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span>📝 Textos Principales</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="info-box">
+                                <strong>Nota:</strong> La palabra <strong>"ESENTIA"</strong> siempre se mostrará con la fuente <em>Adelia</em>.
+                            </div>
+                            <div class="control-group">
+                                <label for="editMainText">Título Principal (fuente Adelia)</label>
+                                <input type="text" id="editMainText" value="Esentia" oninput="updateTexts()">
+                            </div>
+                          <!--  <div class="control-group">
+                                <label for="editMainText">Título Principal (fuente Adelia)</label>
+                                <select id="editMainText" onchange="updateTexts()">
+                                    <option value="">-- Selecciona un título (Opcional) --</option>
+                                    <option value="Fragancias que enamoran" selected>Fragancias que enamoran</option>
+                                    <option value="Tu aroma, tu identidad">Tu aroma, tu identidad</option>
+                                    <option value="La elegancia hecha perfume">La elegancia hecha perfume</option>
+                                    <option value="Esencias que dejan huella">Esencias que dejan huella</option>
+                                </select>
+                            </div>-->
+                            <div class="control-group">
+                                <label for="editSubText">Subtítulo (Opcional o Personalizado)</label>
+                                <input type="text" id="editSubText" list="subtextOptions" value="Fragancias que enamoran" oninput="updateTexts()">
+                                
+                                <datalist id="subtextOptions">
+                                    <option value="Fragancias que enamoran">
+                                    <option value="Tu aroma, tu identidad">
+                                    <option value="La elegancia hecha perfume">
+                                    <option value="Esencias que dejan huella">
+                                </datalist>
+                            </div>
+
+                            <div class="control-row">
+                                <div class="control-group">
+                                    <label for="sizeMain">Tamaño Título (px)</label>
+                                    <input type="number" id="sizeMain" value="42" min="10" max="80" oninput="updateTextSizes()">
+                                </div>
+                                <div class="control-group">
+                                    <label for="sizeSub">Tamaño Subtítulo (px)</label>
+                                    <input type="number" id="sizeSub" value="18" min="8" max="40" oninput="updateTextSizes()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span>💬 Mensaje</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="control-group">
+                                <label for="editMessage1">Línea 1</label>
+                                <input type="text" id="editMessage1" value="Gracias por tu compra" oninput="updateTexts()">
+                            </div>
+                            <div class="control-group">
+                                <label for="editMessage2">Línea 2</label>
+                                <input type="text" id="editMessage2" value="Cada pedido es preparado con cariño" oninput="updateTexts()">
+                            </div>
+                            <div class="control-group">
+                                <label for="sizeMessage">Tamaño Mensaje (px)</label>
+                                <input type="number" id="sizeMessage" value="10" min="6" max="24" oninput="updateTextSizes()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span>📱 SINPE, Marca y Footer</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="control-group">
+                                <label for="editSinpeLabel">Etiqueta SINPE</label>
+                                <input type="text" id="editSinpeLabel" value="SINPE Móvil" oninput="updateTexts()">
+                            </div>
+                            <div class="control-group">
+                                <label for="editSinpe">Número SINPE</label>
+                                <input type="text" id="editSinpe" value="7295-2454" oninput="updateTexts()">
+                            </div>
+
+                           <!-- <div class="control-group">
+                                <label for="editBrand">Nombre de Marca</label>
+                                <input type="text" id="editBrand" value="EWE Esentia" oninput="updateTexts()">
+                            </div>-->
+
+                            <div class="control-group">
+                                    <label for="editBrand">Subtítulo (Opcional)</label>
+                                    <select id="editBrand" onchange="updateTexts()">
+                                        <option value="">-- Selecciona un subtítulo (Opcional) --</option>
+                                        <option value="EWE Esentia" selected>EWE Esentia</option>
+                                        <option value="Amigurumi's Elena">Amigurumi's Elena</option>
+                                        <option value="EWE Esentia Candelas">EWE Esentia Candelas</option>
+                                    </select>
+                                </div>
+                                                            
+                            <div class="control-group">
+                                <label for="editFooter">Texto inferior (footer)</label>
+                                <input type="text" id="editFooter" value="Aromaterapia • Candelas • Difusores" oninput="updateTexts()">
+                            </div>
+                            <div class="control-row">
+                                <div class="control-group">
+                                    <label for="sizeSinpe">Tamaño SINPE (px)</label>
+                                    <input type="number" id="sizeSinpe" value="13" min="8" max="30" oninput="updateTextSizes()">
+                                </div>
+                                <div class="control-group">
+                                    <label for="sizeSinpeLabel">Tamaño Etiqueta SINPE (px)</label>
+                                    <input type="number" id="sizeSinpeLabel" value="11" min="6" max="24" oninput="updateTextSizes()">
+                                </div>
+                            </div>
+                            <div class="control-row">
+                                <div class="control-group">
+                                    <label for="sizeBrand">Tamaño Marca (px)</label>
+                                    <input type="number" id="sizeBrand" value="14" min="8" max="30" oninput="updateTextSizes()">
+                                </div>
+                                <div class="control-group">
+                                    <label for="sizeFooter">Tamaño Footer (px)</label>
+                                    <input type="number" id="sizeFooter" value="10" min="6" max="24" oninput="updateTextSizes()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span>👤 Cliente</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="info-box">
+                                <strong>Nota:</strong> El nombre del cliente es <strong>opcional</strong>.
+                            </div>
+                            <div class="control-group">
+                                <label for="editClientName">Nombre del Cliente (editable)</label>
+                                <input type="text" id="editClientName" placeholder="Ej: María Pérez" oninput="updateClientText()">
+                            </div>
+                            <div class="control-group">
+                                <label for="sizeClient">Tamaño Nombre Cliente (px)</label>
+                                <input type="number" id="sizeClient" value="12" min="8" max="24" oninput="updateTextSizes()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB BORDE -->
+                <div class="tab-content" id="tab-borde">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span>🔄 Texto del Borde Circular</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="control-group">
+                                <label for="editBorderText">Texto del Borde</label>
+                                <textarea id="editBorderText" rows="2" oninput="updateBorderText()">✦ EWE ESENTIA ✦ AROMATERAPIA ✦ Fragancias que Enamoran ✦</textarea>
+                            </div>
+                            <div class="control-group">
+                                <label for="borderTextSize">Tamaño del Texto (px)</label>
+                                <input type="range" id="borderTextSize" min="6" max="20" value="11" oninput="updateBorderSize()">
+                                <div class="range-value" id="borderTextSizeValue">11 px</div>
+                            </div>
+                            <div class="control-group">
+                                <label for="borderRadius">Radio del Borde</label>
+                                <input type="range" id="borderRadius" min="100" max="195" value="170" oninput="updateBorderRadius()">
+                                <div class="range-value" id="borderRadiusValue">170 px</div>
+                            </div>
+                            <div class="control-group">
+                                <label for="borderRotation">Rotación (0-360°)</label>
+                                <input type="range" id="borderRotation" min="0" max="360" value="0" oninput="updateBorderRotation()">
+                                <div class="range-value" id="borderRotationValue">0°</div>
+                            </div>
+                            <div class="control-group">
+                                <label for="borderStartOffset">Posición Inicial</label>
+                                <input type="range" id="borderStartOffset" min="0" max="100" value="0" oninput="updateBorderOffset()">
+                                <div class="range-value" id="borderStartOffsetValue">0%</div>
+                            </div>
+                            <div class="control-group">
+                                <label for="borderLetterSpacing">Espaciado entre letras</label>
+                                <input type="range" id="borderLetterSpacing" min="0" max="10" value="2" oninput="updateBorderSpacing()">
+                                <div class="range-value" id="borderLetterSpacingValue">2 px</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB COLORES -->
+                <div class="tab-content" id="tab-colores">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span>🎨 Colores del Borde</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="control-row">
+                                <div class="control-group">
+                                    <label for="borderColor">Color del Texto del Borde</label>
+                                    <input type="color" id="borderColor" value="#6b8f5e" oninput="updateBorderColor()">
+                                </div>
+                                <div class="control-group">
+                                    <label for="labelCircleColor">Color del Contorno Circular</label>
+                                    <input type="color" id="labelCircleColor" value="#e8dfd5" oninput="updateColors()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span>🎨 Colores de Textos</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="control-group">
+                                <label for="colorMain">Color Título (Adelia)</label>
+                                <input type="color" id="colorMain" value="#2d5016" oninput="updateColors()">
+                            </div>
+                            <div class="control-group">
+                                <label for="colorSub">Color Subtítulo</label>
+                                <input type="color" id="colorSub" value="#2d5016" oninput="updateColors()">
+                            </div>
+                            <div class="control-group">
+                                <label for="colorMessage">Color Mensajes</label>
+                                <input type="color" id="colorMessage" value="#444444" oninput="updateColors()">
+                            </div>
+                            <div class="control-group">
+                                <label for="colorSinpe">Color SINPE</label>
+                                <input type="color" id="colorSinpe" value="#1a1a1a" oninput="updateColors()">
+                            </div>
+                            <div class="control-group">
+                                <label for="colorBrand">Color Marca</label>
+                                <input type="color" id="colorBrand" value="#2d5016" oninput="updateColors()">
+                            </div>
+                            <div class="control-group">
+                                <label for="colorFooter">Color Footer</label>
+                                <input type="color" id="colorFooter" value="#555555" oninput="updateColors()">
+                            </div>
+                            <div class="control-group">
+                                <label for="colorClient">Color Cliente</label>
+                                <input type="color" id="colorClient" value="#1a1a1a" oninput="updateColors()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB FONDO -->
+                <div class="tab-content" id="tab-fondo">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span>🖼️ Imagen de Fondo Personalizada</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="info-box">
+                                <strong>Tip:</strong> Sube una imagen para usarla como fondo.
+                            </div>
+                            <div class="control-group">
+                                <label for="bgImageUpload">Seleccionar imagen</label>
+                                <input type="file" id="bgImageUpload" accept="image/*" onchange="handleBackgroundImage(event)">
+                            </div>
+                            <div class="control-group">
+                                <label for="bgOpacity">Opacidad del fondo</label>
+                                <input type="range" id="bgOpacity" min="0" max="100" value="100" oninput="updateBackgroundOpacity()">
+                                <div class="range-value" id="bgOpacityValue">100%</div>
+                            </div>
+                            <div class="control-row">
+                                <button class="btn btn-outline" onclick="removeBackgroundImage()">🗑️ Quitar imagen</button>
+                                <button class="btn btn-outline" onclick="resetBackground()">🔄 Restablecer</button>
+                            </div>
+                            <div class="control-group" style="margin-top:12px;">
+                                <label for="bgColor">Color de fondo (si no hay imagen)</label>
+                                <input type="color" id="bgColor" value="#ffffff" oninput="updateBackgroundColor()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB QR -->
+                <div class="tab-content" id="tab-qr">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span>📱 Código QR Personalizado</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="section-content">
+                            <label class="print-check">
+                                <input type="checkbox" id="qrEnabled" onchange="toggleQR()">
+                                <span>Mostrar QR en la etiqueta</span>
+                            </label>
+
+                            <div class="control-group">
+                                <label for="qrContent">Contenido del QR (URL, texto, SINPE...)</label>
+                                <textarea id="qrContent" rows="2" value="https://www.facebook.com/share/1Dmy3iLLLj/" oninput="generateQR()">https://wa.me/50672952454</textarea>
+                            </div>
+
+                            <div class="control-group">
+                                <label for="qrSize">Tamaño del QR (px)</label>
+                                <input type="range" id="qrSize" min="30" max="150" value="60" oninput="updateQRPosition()">
+                                <div class="range-value" id="qrSizeValue">60 px</div>
+                            </div>
+
+                            <div class="control-row">
+                                <div class="control-group">
+                                    <label for="qrPosX">Posición X (px)</label>
+                                    <input type="number" id="qrPosX" value="170" min="0" max="400" oninput="updateQRPosition()">
+                                </div>
+                                <div class="control-group">
+                                    <label for="qrPosY">Posición Y (px)</label>
+                                    <input type="number" id="qrPosY" value="170" min="0" max="400" oninput="updateQRPosition()">
+                                </div>
+                            </div>
+
+                            <div class="control-group">
+                                <label>Posiciones rápidas</label>
+                                <div class="control-row">
+                                    <button class="btn btn-outline" onclick="setQRPosition('center')">⭕ Centro</button>
+                                    <button class="btn btn-outline" onclick="setQRPosition('bottom')">⬇️ Abajo</button>
+                                </div>
+                                <div class="control-row" style="margin-top:6px;">
+                                    <button class="btn btn-outline" onclick="setQRPosition('top-right')">↗️ Arriba Der.</button>
+                                    <button class="btn btn-outline" onclick="setQRPosition('bottom-right')">↘️ Abajo Der.</button>
+                                </div>
+                            </div>
+
+                            <div class="control-row">
+                                <div class="control-group">
+                                    <label for="qrColorDark">Color oscuro</label>
+                                    <input type="color" id="qrColorDark" value="#2d5016" oninput="generateQR()">
+                                </div>
+                                <div class="control-group">
+                                    <label for="qrColorLight">Color claro</label>
+                                    <input type="color" id="qrColorLight" value="#ffffff" oninput="generateQR()">
+                                </div>
+                            </div>
+
+                            <div class="control-group">
+                                <label for="qrMargin">Margen interno del QR</label>
+                                <input type="range" id="qrMargin" min="0" max="8" value="2" oninput="generateQR()">
+                                <div class="range-value" id="qrMarginValue">2</div>
+                            </div>
+
+                            <button class="btn btn-primary" onclick="generateQR()">🔄 Regenerar QR</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB IMPRIMIR -->
+                <!-- TAB IMPRIMIR -->
+<div class="tab-content" id="tab-imprimir">
+    <div class="print-layout-controls">
+        <div class="paper-size-control">
+            <div class="control-group">
+                <label for="printPaperSize">Tamaño de hoja</label>
+                <select id="printPaperSize" onchange="updatePrintPreview()">
+                    <option value="a4">A4 (210 × 297 mm)</option>
+                    <option value="letter">Carta (215.9 × 279.4 mm)</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="control-row-3">
+            <div class="control-group">
+                <label for="printMarginMm">Margen de hoja (mm)</label>
+                <input type="number" id="printMarginMm" value="6.35" step="0.5" min="0" max="20" oninput="updatePrintPreview()">
+            </div>
+            <div class="control-group">
+                <label for="printGapMm">Separación (mm)</label>
+                <input type="number" id="printGapMm" value="1.0" step="0.1" min="0" max="10" oninput="updatePrintPreview()">
+            </div>
+            <div class="control-group">
+                <label for="printBorderWidth">Grosor borde (mm)</label>
+                <input type="number" id="printBorderWidth" value="0.3" step="0.1" min="0.1" max="2" oninput="updatePrintPreview()">
+            </div>
+        </div>
+
+        <label class="print-check">
+            <input type="checkbox" id="printCutBorder" onchange="updatePrintPreview()">
+            <span>Mostrar borde circular de corte</span>
+        </label>
+        
+        <div class="control-group print-border-options">
+            <label for="printBorderColor">Color del borde</label>
+            <input type="color" id="printBorderColor" value="#8b948b" oninput="updatePrintPreview()">
+        </div>
+
+        <div class="print-layout-summary" id="printLayoutSummary">Vista actualizada.</div>
+
+        <!-- ✅ NUEVO: Vista previa visual de la distribución en la hoja -->
+        <div class="sheet-preview-container">
+            <h4>📄 Vista previa de distribución en hoja</h4>
+            <div id="sheetPreview" class="sheet-preview"></div>
+        </div>
+    </div>
+
+    <div class="print-actions">
+        <button class="btn btn-primary" onclick="createPDF()">📄 Crear PDF</button>
+        <button class="btn btn-secondary" onclick="printLabel()">🖨️ Imprimir etiqueta</button>
+    </div>
+
+    <button class="btn btn-outline" onclick="addToQueue()">➕ Agregar a Cola de Impresión</button>
+</div>
+            </div>
+        </div>
+    </div>
+
+    <button class="floating-print-refresh" onclick="refreshPreview()">↻ Actualizar vista previa</button>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

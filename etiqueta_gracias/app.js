@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateBorderColor();
     updateTexts();
     updateTextSizes(); // ✅ IMPORTANTE: aplicar tamaños iniciales
+    updateTextPositions();
     updateBorderText();
     loadSavedDesignsList();
 
@@ -206,8 +207,8 @@ function updateTexts() {
     textMain.setAttribute('class', 'label-text-main adelia-font');
 
     // Subtítulo
-    const subText = document.getElementById('editSubText').value;
-    document.getElementById('textSub').textContent = '♥ ' + subText + ' ♥';
+    const subText = document.getElementById('editSubText').value.trim();
+    document.getElementById('textSub').textContent = subText ? '♥ ' + subText + ' ♥' : '';
 
     // Mensajes
     document.getElementById('textMessage').textContent = document.getElementById('editMessage1').value;
@@ -225,6 +226,25 @@ function updateTexts() {
 }
 
 // ✅ CORREGIDO: ahora actualiza TODOS los tamaños incluyendo sinpeLabel y footer
+function applySubTextPreset() {
+    const preset = document.getElementById('subTextPreset').value;
+    if (preset !== '__custom__') document.getElementById('editSubText').value = preset;
+    updateTexts();
+}
+
+function applyBrandPreset() {
+    const preset = document.getElementById('brandPreset').value;
+    if (preset !== '__custom__') document.getElementById('editBrand').value = preset;
+    updateTexts();
+}
+function updateTextPositions() {
+    const map = [['textSub','subPosX','subPosY'], ['textClient','clientPosX','clientPosY']];
+    map.forEach(([textId,xId,yId]) => {
+        const text = document.getElementById(textId), x = document.getElementById(xId), y = document.getElementById(yId);
+        if (text && x && y) { text.setAttribute('x', x.value); text.setAttribute('y', y.value); }
+    });
+}
+
 function updateTextSizes() {
     document.getElementById('textMain').setAttribute('font-size', document.getElementById('sizeMain').value);
     document.getElementById('textSub').setAttribute('font-size', document.getElementById('sizeSub').value);
@@ -299,6 +319,7 @@ function updateColors() {
 function refreshPreview() {
     updateTexts();
     updateTextSizes();
+    updateTextPositions();
     updateBorderText();
     updateBorderSize();
     updateBorderRadius();
@@ -479,6 +500,7 @@ function getCurrentDesign() {
             client: document.getElementById('editClientName').value,
             border: document.getElementById('editBorderText').value
         },
+        positions: { sub: { x: document.getElementById('subPosX').value, y: document.getElementById('subPosY').value }, client: { x: document.getElementById('clientPosX').value, y: document.getElementById('clientPosY').value } },
         sizes: {
             main: document.getElementById('sizeMain').value,
             sub: document.getElementById('sizeSub').value,
@@ -539,6 +561,11 @@ function applyDesign(design) {
             const el = document.getElementById(elId);
             if (el && design.texts[field] !== undefined) el.value = design.texts[field];
         });
+    }
+
+    if (design.positions) {
+        if (design.positions.sub) { document.getElementById('subPosX').value = design.positions.sub.x; document.getElementById('subPosY').value = design.positions.sub.y; }
+        if (design.positions.client) { document.getElementById('clientPosX').value = design.positions.client.x; document.getElementById('clientPosY').value = design.positions.client.y; }
     }
 
     if (design.sizes) {
