@@ -113,6 +113,44 @@ function getPOLineDescription(line) {
     return line.descripcion || buildProductDescription(line.nombre, line.nombreOriginal);
 }
 
+// ==========================================
+// CÁLCULO DE INTERESES POR MORA
+// Regla: 
+//   - 0 a 15 días    → 0%
+//   - 16 a 30 días   → 1.5%
+//   - 31 a 45 días   → 3.5% (1.5% + 2% acumulable)
+//   - Más de 45 días → 3.5% (tope máximo)
+// ==========================================
+function calculateMoratoryInterest(saldoPendiente, diasAtraso) {
+    const saldo = Math.max(0, parseFloat(saldoPendiente) || 0);
+    const dias = Math.max(0, parseInt(diasAtraso) || 0);
+    if (saldo <= 0 || dias <= 15) {
+        return { dias, porcentaje: 0, monto: 0, totalConInteres: saldo, tramo: 'al_dia' };
+    }
+    let porcentaje = 0;
+    let tramo = 'al_dia';
+    if (dias <= 30) {
+        porcentaje = 1.5;
+        tramo = 'leve';
+    } else if (dias <= 45) {
+        porcentaje = 3.5; // 1.5 + 2 acumulados
+        tramo = 'moderado';
+    } else {
+        porcentaje = 3.5;
+        tramo = 'severo';
+    }
+    const monto = +(saldo * (porcentaje / 100)).toFixed(2);
+    return { dias, porcentaje, monto, totalConInteres: +(saldo + monto).toFixed(2), tramo };
+}
+
+// Etiqueta legible del tramo de mora
+function getMoratoryLabel(interest) {
+    if (!interest || interest.porcentaje === 0) return { text: 'Al día (sin recargo)', class: 'days-normal', icon: '✅' };
+    if (interest.tramo === 'leve') return { text: `Recargo 1.5% (${interest.dias} días)`, class: 'days-warning', icon: '🟡' };
+    if (interest.tramo === 'moderado') return { text: `Recargo 3.5% (${interest.dias} días)`, class: 'days-urgent', icon: '🟠' };
+    return { text: `Recargo 3.5% (${interest.dias} días)`, class: 'days-urgent', icon: '🔴' };
+}
+
 function formatMoney(amount) {
     const value = Number(amount) || 0;
     return value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
@@ -132,6 +170,494 @@ function normalizePhone(phone) {
     let digits = String(phone || '').replace(/\D/g, '');
     if (digits.length === 8) digits = '506' + digits;
     return digits;
+}
+
+// ==========================================
+// CONSENTIMIENTO DE MORA + CÁLCULO DE RECARGOS
+// EWE Esentia
+// ==========================================
+
+const MORA_POLICY = {
+    version: 'EWE-MORA-2026-11-V1',
+    graceBusinessDays: 15,
+    firstPercent: 1.5,
+    secondPercent: 2,
+    maxPercent: 3.5,
+    businessDaysFirstCharge: 16,
+    businessDaysSecondCharge: 31
+};
+
+// Si luego quieres excluir feriados de Costa Rica, agrégalos aquí:
+// formato: 'YYYY-MM-DD'
+const MORA_HOLIDAYS = new Set([
+    // '2026-12-25',
+    // '2027-01-01'
+]);
+
+let moraConsentResolver = null;
+let moraConsentContext = null;
+
+function getMoraDate(value) {
+    if (!value) return new Date();
+    if (value?.toDate) return value.toDate();
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? new Date() : d;
+}
+
+function toDateKey(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function isMoraBusinessDay(date) {
+    const day = date.getDay(); // 0 domingo, 6 sábado
+    if (day === 0 || day === 6) return false;
+    return !MORA_HOLIDAYS.has(toDateKey(date));
+}
+
+function addMoraBusinessDays(startDate, days) {
+    const date = new Date(startDate);
+    date.setHours(0, 0, 0, 0);
+
+    let added = 0;
+    while (added < days) {
+        date.setDate(date.getDate() + 1);
+        if (isMoraBusinessDay(date)) added++;
+    }
+    return date;
+}
+
+function getMoraBusinessDaysElapsed(startDate, endDate = new Date()) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+
+    if (end <= start) return 0;
+
+    let count = 0;
+    const current = new Date(start);
+
+    while (current < end) {
+        current.setDate(current.getDate() + 1);
+        if (isMoraBusinessDay(current)) count++;
+    }
+
+    return count;
+}
+
+// Calcula la mora con base en la fecha de factura.
+// Regla:
+// 0 a 15 días hábiles: 0%
+// 16 a 30 días hábiles: 1.5%
+// 31 en adelante: 3.5% acumulado
+function calculateMoratoryInterest(saldoPendiente, fechaFactura) {
+    const saldo = Math.max(0, parseFloat(saldoPendiente) || 0);
+    const invoiceDate = getMoraDate(fechaFactura);
+    const dueDate = addMoraBusinessDays(invoiceDate, MORA_POLICY.graceBusinessDays);
+    const businessDaysElapsed = getMoraBusinessDaysElapsed(invoiceDate, new Date());
+    const overdueBusinessDays = Math.max(0, businessDaysElapsed - MORA_POLICY.graceBusinessDays);
+
+    let porcentaje = 0;
+    let tramo = 'sin_recargo';
+
+    if (saldo > 0 && businessDaysElapsed >= MORA_POLICY.businessDaysFirstCharge) {
+        porcentaje = MORA_POLICY.firstPercent;
+        tramo = 'primer_recargo';
+    }
+
+    if (saldo > 0 && businessDaysElapsed >= MORA_POLICY.businessDaysSecondCharge) {
+        porcentaje = MORA_POLICY.maxPercent;
+        tramo = 'recargo_acumulado';
+    }
+
+    const monto = +(saldo * (porcentaje / 100)).toFixed(2);
+    const totalConInteres = +(saldo + monto).toFixed(2);
+
+    return {
+        saldo,
+        fechaFactura: invoiceDate,
+        fechaVencimiento: dueDate,
+        diasHabilesTranscurridos: businessDaysElapsed,
+        diasHabilesAtraso: overdueBusinessDays,
+        porcentaje,
+        monto,
+        totalConInteres,
+        tramo
+    };
+}
+
+function getMoraPolicyPlainText() {
+    return `CONSENTIMIENTO INFORMADO DE CONDICIONES DE PAGO Y CARGOS POR MORA
+
+Los precios indicados en la factura corresponden a condiciones de pago de contado. El cliente se compromete a cancelar el monto total adeudado dentro de un plazo máximo de quince (15) días hábiles contados a partir de la fecha de emisión de la factura.
+
+Si la factura no ha sido cancelada dentro de ese plazo, EWE Esentia podrá aplicar cargos por mora sobre el saldo pendiente, de la siguiente manera:
+
+1. De 0 a 15 días hábiles desde la fecha de factura: sin recargo.
+2. A partir de 16 días hábiles: recargo del 1.5% sobre el saldo pendiente.
+3. Al superar 30 días hábiles: se suma un 2% adicional, para un total acumulado de 3.5%.
+4. A los 45 días o más: el recargo acumulado será de 3.5%, salvo condiciones especiales previamente acordadas.
+
+Los recargos se calculan únicamente sobre el saldo pendiente y no sobre montos ya abonados.
+
+El cliente declara que ha sido informado claramente sobre estas condiciones, que las comprende y que las acepta para sus compras pendientes de pago.`;
+}
+
+function buildMoraPolicyWhatsAppBlock(invoice, saldoPendiente, type = 'invoice') {
+    const saldo = Math.max(0, parseFloat(saldoPendiente) || 0);
+
+    if (saldo <= 0) {
+        return `\n✅ *Factura cancelada.* No genera cargos por mora.\n`;
+    }
+
+    const interest = calculateMoratoryInterest(saldo, invoice.fecha);
+    const fechaVencimiento = interest.fechaVencimiento.toLocaleDateString('es-CR');
+
+    let msg = `\n━━━━━━━━━━━━━━━━━━\n`;
+    msg += `📌 *Condiciones de pago y cargos por mora*\n\n`;
+    msg += `Los precios facturados corresponden a *pago de contado* dentro de un plazo máximo de *15 días hábiles* desde la fecha de factura.\n\n`;
+    msg += `🗓️ *Fecha límite sin recargo:* ${fechaVencimiento}\n`;
+    msg += `📆 Días hábiles transcurridos: *${interest.diasHabilesTranscurridos}*\n`;
+
+    if (interest.porcentaje > 0) {
+        msg += `\n⚠️ currently aplica un recargo por mora de *${interest.porcentaje}%* sobre el saldo pendiente.\n`;
+        msg += `💸 Recargo estimado: *₡${formatMoney(interest.monto)}*\n`;
+        msg += `💵 *Total estimado con recargo: ₡${formatMoney(interest.totalConInteres)}*\n`;
+    } else {
+        msg += `\n✅ Actualmente está dentro del plazo sin recargo.\n`;
+        msg += `Para evitar cargos adicionales, puede cancelar antes del ${fechaVencimiento}.\n`;
+    }
+
+    msg += `\n📋 *Política aplicada:*\n`;
+    msg += `• 0 a 15 días hábiles: 0%\n`;
+    msg += `• Desde 16 días hábiles: 1.5%\n`;
+    msg += `• Al superar 30 días hábiles: 3.5% acumulado\n`;
+    msg += `• El cálculo se realiza solo sobre el saldo pendiente.\n`;
+
+    if (type === 'reminder') {
+        msg += `\n🙏 Le recordamos con mucho gusto esta información para evitar recargos mayores. Si ya realizó el pago, por favor enviarnos el comprobante.\n`;
+    }
+
+    return msg;
+}
+
+// Corrige el texto anterior en español.
+// Se deja esta función envolvente por si el navegador copia "currently" por error.
+function buildMoraPolicyWhatsAppBlockES(invoice, saldoPendiente, type = 'invoice') {
+    return buildMoraPolicyWhatsAppBlock(invoice, saldoPendiente, type)
+        .replace('currently aplica', 'actualmente aplica');
+}
+
+// ==========================================
+// CONSENTIMIENTO EN FIREBASE
+// ==========================================
+
+async function hasMoraConsentAccepted(clienteId) {
+    if (!clienteId || clienteId === 'contado') return false;
+
+    const localClient = allClients.find(c => c.id === clienteId);
+    const localConsent = localClient?.consentimientoMora;
+
+    if (
+        localConsent &&
+        localConsent.aceptado === true &&
+        localConsent.version === MORA_POLICY.version
+    ) {
+        return true;
+    }
+
+    try {
+        const snap = await db.collection('consentimientos_mora')
+            .where('clienteId', '==', clienteId)
+            .where('version', '==', MORA_POLICY.version)
+            .where('aceptado', '==', true)
+            .limit(1)
+            .get();
+
+        return !snap.empty;
+    } catch (error) {
+        console.error('Error verificando consentimiento de mora:', error);
+        return false;
+    }
+}
+
+function ensureMoraConsentModal() {
+    if (document.getElementById('moraConsentModal')) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'moraConsentModal';
+    modal.style.cssText = `
+        display:none;
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,0.65);
+        z-index:100000;
+        align-items:center;
+        justify-content:center;
+        padding:16px;
+    `;
+
+    modal.innerHTML = `
+        <div style="
+            background:#ffffff;
+            width:min(720px, 100%);
+            max-height:92vh;
+            overflow:auto;
+            border-radius:16px;
+            box-shadow:0 12px 40px rgba(0,0,0,0.35);
+            border:1px solid rgba(255,255,255,0.4);
+        ">
+            <div style="
+                padding:16px 18px;
+                background:linear-gradient(135deg,#14532d,#b8860b);
+                color:#fff;
+                border-radius:16px 16px 0 0;
+                display:flex;
+                justify-content:space-between;
+                gap:12px;
+                align-items:center;
+            ">
+                <div>
+                    <h3 style="margin:0;font-size:1.05rem;">📋 Consentimiento informado</h3>
+                    <div style="font-size:0.8rem;opacity:0.9;">Condiciones de pago y cargos por mora</div>
+                </div>
+                <button type="button" onclick="cancelMoraConsent()" style="
+                    border:none;
+                    background:rgba(255,255,255,0.2);
+                    color:#fff;
+                    border-radius:50%;
+                    width:34px;
+                    height:34px;
+                    cursor:pointer;
+                    font-size:20px;
+                ">×</button>
+            </div>
+
+            <div style="padding:16px 18px;">
+                <div id="moraConsentClientInfo" style="
+                    background:#f8fafc;
+                    border:1px solid #e5e7eb;
+                    border-radius:10px;
+                    padding:10px;
+                    margin-bottom:12px;
+                    font-size:0.9rem;
+                "></div>
+
+                <pre id="moraConsentText" style="
+                    white-space:pre-wrap;
+                    font-family:Arial,sans-serif;
+                    font-size:0.88rem;
+                    line-height:1.45;
+                    background:#fffbeb;
+                    border:1px solid #facc15;
+                    color:#3f3f46;
+                    padding:12px;
+                    border-radius:10px;
+                    max-height:310px;
+                    overflow:auto;
+                "></pre>
+
+                <label style="
+                    display:flex;
+                    gap:10px;
+                    align-items:flex-start;
+                    margin:14px 0;
+                    font-size:0.9rem;
+                    cursor:pointer;
+                ">
+                    <input type="checkbox" id="moraConsentCheck" style="margin-top:3px;width:18px;height:18px;">
+                    <span>
+                        Declaro que la información fue explicada claramente y que el cliente acepta las condiciones de pago y cargos por mora indicadas.
+                    </span>
+                </label>
+
+                <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+                    <button type="button" class="btn" onclick="cancelMoraConsent()">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="acceptMoraConsent()">✅ Registrar aceptación</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+}
+
+async function requestMoraConsent(context = {}) {
+    const cliente = context.cliente;
+
+    if (!cliente || !cliente.id || cliente.id === 'contado') {
+        alert('Seleccione un cliente registrado para aceptar las condiciones de pago.');
+        return false;
+    }
+
+    const accepted = await hasMoraConsentAccepted(cliente.id);
+    if (accepted) return true;
+
+    ensureMoraConsentModal();
+
+    moraConsentContext = {
+        cliente,
+        facturaId: context.facturaId || null,
+        numeroFactura: context.numeroFactura || '',
+        total: parseFloat(context.total) || 0,
+        saldo: parseFloat(context.saldo) || 0,
+        canal: context.canal || 'sistema'
+    };
+
+    document.getElementById('moraConsentText').textContent = getMoraPolicyPlainText();
+    document.getElementById('moraConsentCheck').checked = false;
+
+    document.getElementById('moraConsentClientInfo').innerHTML = `
+        <strong>Cliente:</strong> ${cliente.nombre || 'N/A'}<br>
+        <strong>Teléfono:</strong> ${cliente.telefono || 'N/A'}<br>
+        <strong>Cédula:</strong> ${cliente.cedula || 'N/A'}<br>
+        ${moraConsentContext.numeroFactura ? `<strong>Factura:</strong> ${moraConsentContext.numeroFactura}<br>` : ''}
+        ${moraConsentContext.saldo > 0 ? `<strong>Saldo:</strong> ₡${formatMoney(moraConsentContext.saldo)}` : ''}
+    `;
+
+    document.getElementById('moraConsentModal').style.display = 'flex';
+
+    return new Promise(resolve => {
+        moraConsentResolver = resolve;
+    });
+}
+
+async function acceptMoraConsent() {
+    const check = document.getElementById('moraConsentCheck');
+
+    if (!check?.checked) {
+        alert('Debe confirmar que el cliente acepta las condiciones.');
+        return;
+    }
+
+    if (!moraConsentContext?.cliente?.id) {
+        alert('No hay cliente seleccionado.');
+        return;
+    }
+
+    const cliente = moraConsentContext.cliente;
+
+    const consentData = {
+        clienteId: cliente.id,
+        clienteNombre: cliente.nombre || '',
+        clienteTelefono: cliente.telefono || '',
+        clienteCedula: cliente.cedula || '',
+        facturaId: moraConsentContext.facturaId || null,
+        numeroFactura: moraConsentContext.numeroFactura || '',
+        totalFactura: moraConsentContext.total || 0,
+        saldoPendiente: moraConsentContext.saldo || 0,
+        canal: moraConsentContext.canal,
+        aceptado: true,
+        version: MORA_POLICY.version,
+        politica: {
+            plazoDiasHabiles: MORA_POLICY.graceBusinessDays,
+            primerPorcentaje: MORA_POLICY.firstPercent,
+            segundoPorcentaje: MORA_POLICY.secondPercent,
+            porcentajeMaximo: MORA_POLICY.maxPercent,
+            desdeDiaHabil: MORA_POLICY.businessDaysFirstCharge,
+            acumuladoDesdeDiaHabil: MORA_POLICY.businessDaysSecondCharge
+        },
+        textoAceptado: getMoraPolicyPlainText(),
+        fechaLocal: new Date().toISOString(),
+        fechaAceptacion: firebase.firestore.FieldValue.serverTimestamp(),
+        userAgent: navigator.userAgent || ''
+    };
+
+    try {
+        await db.collection('consentimientos_mora').add(consentData);
+
+        const resumenConsent = {
+            aceptado: true,
+            version: MORA_POLICY.version,
+            fechaLocal: consentData.fechaLocal,
+            canal: consentData.canal
+        };
+
+        try {
+            await db.collection('clientesBD').doc(cliente.id).update({
+                consentimientoMora: resumenConsent
+            });
+        } catch (e) {
+            console.warn('No se pudo actualizar resumen en cliente:', e);
+        }
+
+        const idx = allClients.findIndex(c => c.id === cliente.id);
+        if (idx !== -1) {
+            allClients[idx].consentimientoMora = resumenConsent;
+        }
+
+        document.getElementById('moraConsentModal').style.display = 'none';
+
+        if (moraConsentResolver) moraConsentResolver(true);
+
+        moraConsentResolver = null;
+        moraConsentContext = null;
+
+        alert('✅ Consentimiento de condiciones de mora registrado correctamente.');
+    } catch (error) {
+        console.error('Error guardando consentimiento:', error);
+        alert('Error al guardar el consentimiento: ' + error.message);
+    }
+}
+
+function cancelMoraConsent() {
+    const modal = document.getElementById('moraConsentModal');
+    if (modal) modal.style.display = 'none';
+
+    if (moraConsentResolver) moraConsentResolver(false);
+
+    moraConsentResolver = null;
+    moraConsentContext = null;
+}
+
+function renderMoraInfoInInvoiceDetail(factura, saldoPendiente) {
+    const balanceEl = document.getElementById('detailBalance');
+    if (!balanceEl) return;
+
+    let box = document.getElementById('detailMoraInfoBox');
+
+    if (!box) {
+        box = document.createElement('div');
+        box.id = 'detailMoraInfoBox';
+        balanceEl.closest('div')?.parentElement?.appendChild(box);
+    }
+
+    if (saldoPendiente <= 0) {
+        box.innerHTML = `
+            <div style="margin-top:10px;padding:10px;border-radius:10px;background:#dcfce7;color:#14532d;border:1px solid #86efac;">
+                ✅ Factura cancelada. No genera cargos por mora.
+            </div>
+        `;
+        return;
+    }
+
+    const interest = calculateMoratoryInterest(saldoPendiente, factura.fecha);
+    const dueDate = interest.fechaVencimiento.toLocaleDateString('es-CR');
+
+    if (interest.porcentaje > 0) {
+        box.innerHTML = `
+            <div style="margin-top:10px;padding:12px;border-radius:10px;background:#fff7ed;color:#7c2d12;border:1px solid #fdba74;">
+                <div style="font-weight:700;margin-bottom:4px;">⚠️ Recargo por mora aplicado</div>
+                <div style="font-size:0.85rem;">Fecha límite sin recargo: <strong>${dueDate}</strong></div>
+                <div style="font-size:0.85rem;">Días hábiles transcurridos: <strong>${interest.diasHabilesTranscurridos}</strong></div>
+                <div style="font-size:0.85rem;">Porcentaje aplicado: <strong>${interest.porcentaje}%</strong></div>
+                <div style="font-size:0.85rem;">Recargo: <strong>₡${formatMoney(interest.monto)}</strong></div>
+                <div style="font-size:0.95rem;margin-top:5px;">Total estimado con recargo: <strong>₡${formatMoney(interest.totalConInteres)}</strong></div>
+            </div>
+        `;
+    } else {
+        box.innerHTML = `
+            <div style="margin-top:10px;padding:12px;border-radius:10px;background:#ecfdf5;color:#064e3b;border:1px solid #6ee7b7;">
+                <div style="font-weight:700;margin-bottom:4px;">✅ Dentro del plazo sin recargo</div>
+                <div style="font-size:0.85rem;">Fecha límite sin recargo: <strong>${dueDate}</strong></div>
+                <div style="font-size:0.85rem;">Días hábiles transcurridos: <strong>${interest.diasHabilesTranscurridos}</strong></div>
+            </div>
+        `;
+    }
 }
 
 // ==========================================
@@ -734,6 +1260,33 @@ function selectClient(clientId) {
         <br><span style="font-size: 0.8rem; color: #666;">CC: ${currentClient.cedula || currentClient.id}</span>
         ${currentClient.direccion ? `<br><span style="font-size: 0.75rem; color: var(--info);">📍 ${[currentClient.distrito, currentClient.canton, currentClient.provincia].filter(Boolean).join(', ')}</span>` : ''}
     `;
+
+    // Botón de consentimiento si no ha aceptado
+const consentBtn = document.getElementById('consentStatusBtn');
+if (consentBtn) consentBtn.remove();
+
+if (currentClient.id && currentClient.id !== 'contado') {
+    hasMoraConsentAccepted(currentClient.id).then(aceptado => {
+        const infoBox = document.getElementById('invoiceClientInfo');
+        if (!infoBox) return;
+        const btn = document.createElement('button');
+        btn.id = 'consentStatusBtn';
+        btn.type = 'button';
+        btn.style.cssText = 'margin-top:6px;padding:4px 10px;border-radius:6px;border:none;font-size:0.75rem;cursor:pointer;font-weight:600;';
+        if (aceptado) {
+            btn.style.background = '#dcfce7';
+            btn.style.color = '#14532d';
+            btn.innerHTML = '✅ Consentimiento aceptado';
+            btn.disabled = true;
+        } else {
+            btn.style.background = '#fef3c7';
+            btn.style.color = '#92400e';
+            btn.innerHTML = '📋 Enviar consentimiento';
+            btn.onclick = () => sendConsentLinkByWhatsApp(currentClient.id);
+        }
+        infoBox.appendChild(btn);
+    });
+}
 }
 
 function clearClient() {
@@ -1267,6 +1820,20 @@ async function saveInvoice() {
     if (cart.length === 0) { alert('El carrito está vacío'); return; }
     if (!currentClient) { alert('Seleccione un cliente'); return; }
 
+    const aceptaMora = await requestMoraConsent({
+        cliente: currentClient,
+        facturaId: currentEditingInvoice?.id || null,
+        numeroFactura: currentInvoiceNumber,
+        total: currentTotal,
+        saldo: currentTotal,
+        canal: 'facturacion'
+    });
+
+    if (!aceptaMora) {
+        alert('No se puede guardar la factura pendiente sin aceptar las condiciones de pago y cargos por mora.');
+        return;
+    }
+
     if (currentEditingInvoice) {
         await updateExistingInvoice();
         return;
@@ -1778,7 +2345,15 @@ function renderReceivablesList(receivables) {
                     <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 4px;">${urgencyLabel}</div>
                 </div>
                 <div class="receivable-amount">
-                    <div class="receivable-balance">₡${formatMoney(r.saldo)}</div>
+                   <div class="receivable-balance">₡${formatMoney(r.saldo)}</div>
+${(() => {
+    const interest = calculateMoratoryInterest(r.saldo, r.dias);
+    if (interest.porcentaje > 0) {
+        return `<div style="font-size:0.72rem;color:#d97706;margin-top:2px;">+₡${formatMoney(interest.monto)} recargo (${interest.porcentaje}%)</div>
+                <div style="font-size:0.75rem;font-weight:700;color:#b45309;">Total: ₡${formatMoney(interest.totalConInteres)}</div>`;
+    }
+    return `<div style="font-size:0.72rem;color:var(--success);margin-top:2px;">Sin recargo</div>`;
+})()}
                     <div class="receivable-total">de ₡${formatMoney(r.total)}</div>
                 </div>
             </div>
@@ -1829,42 +2404,19 @@ async function sendReminder(invoiceId) {
     try {
         const doc = await db.collection('facturas').doc(invoiceId).get();
         if (!doc.exists) { alert('Factura no encontrada'); return; }
-
         const factura = { id: doc.id, ...doc.data() };
-        const abonos = factura.abonos || [];
-        const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
-        const saldoPendiente = Math.max(0, (parseFloat(factura.total) || 0) - totalAbonado);
 
         let phone = '';
         const clienteLocal = allClients.find(c => c.id === factura.clienteId);
         if (clienteLocal && clienteLocal.telefono) phone = normalizePhone(clienteLocal.telefono);
         else if (factura.clienteTelefono) phone = normalizePhone(factura.clienteTelefono);
-
         if (!phone) {
             phone = prompt(`Ingrese el número de WhatsApp para enviar recordatorio:`);
             if (!phone) return;
             phone = normalizePhone(phone);
         }
 
-        const dateObj = factura.fecha?.toDate ? factura.fecha.toDate() : new Date(factura.fecha);
-        const dateStr = dateObj.toLocaleDateString('es-CR');
-        const diffDays = Math.ceil(Math.abs(new Date() - dateObj) / (1000 * 60 * 60 * 24));
-
-        let message = `🌿 *RECORDATORIO DE PAGO* 🌿\n\n`;
-        message += `Estimado/a ${factura.clienteNombre || 'Cliente'},\n\n`;
-        message += `Le recordamos amablemente que tiene un saldo pendiente en nuestra tienda EWE Esentia:\n\n`;
-        message += `📄 Factura: ${factura.numero || 'S/N'}\n`;
-        message += `📅 Fecha: ${dateStr} (${diffDays} días)\n`;
-        message += `💰 *Saldo Pendiente: ₡${formatMoney(saldoPendiente)}*\n\n`;
-
-        if (abonos.length > 0) message += `Total abonado: ₡${formatMoney(totalAbonado)}\n`;
-
-        message += `\nLe agradecemos realizar el pago a la brevedad posible.\n\n`;
-        message += `💳 *Datos para el pago:*\n`;
-        message += `SINPE Móvil: 7295-2454\n`;
-        message += `EWE Esentia\n\n`;
-        message += `¡Gracias por su preferencia! 🙏`;
-
+        const { message, interest } = buildWhatsAppMessage(factura, 'reminder');
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
     } catch (error) {
         console.error("Error enviando recordatorio:", error);
@@ -2048,56 +2600,19 @@ async function resendInvoice(invoiceId) {
     try {
         const doc = await db.collection('facturas').doc(invoiceId).get();
         if (!doc.exists) { alert('Factura no encontrada'); return; }
-
         const factura = { id: doc.id, ...doc.data() };
+
         let phone = '';
-        const clientName = factura.clienteNombre || 'Cliente';
         const clienteLocal = allClients.find(c => c.id === factura.clienteId);
         if (clienteLocal && clienteLocal.telefono) phone = normalizePhone(clienteLocal.telefono);
         else if (factura.clienteTelefono) phone = normalizePhone(factura.clienteTelefono);
-
         if (!phone) {
             phone = prompt(`Ingrese el número de WhatsApp para reenviar la factura ${factura.numero}:`);
             if (!phone) return;
             phone = normalizePhone(phone);
         }
 
-        const abonos = factura.abonos || [];
-        const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
-        const totalFactura = parseFloat(factura.total) || 0;
-        const saldoPendiente = Math.max(0, totalFactura - totalAbonado);
-
-        let message = `🌿 *FACTURA EWE ESENTIA* 🌿\n📄 Factura: ${factura.numero || 'S/N'}\n👤 Cliente: ${clientName}\n`;
-        const dateObj = factura.fecha?.toDate ? factura.fecha.toDate() : new Date(factura.fecha);
-        message += `📅 Fecha: ${dateObj.toLocaleDateString('es-CR')}\n━━━━━━━━━━━━━━━━━━\n`;
-
-        if (factura.items && factura.items.length > 0) {
-            factura.items.forEach(item => {
-                let desc = getItemDescription(item);
-                if (item.descuentoColones > 0) desc += ` (-₡${formatMoney(item.descuentoColones)})`;
-                message += `▪️ ${item.cantidad} x ${desc}\n   ₡${formatMoney(item.precioFinalUnitario * item.cantidad)}\n`;
-            });
-        }
-
-        message += `━━━━━━━━━━━━━━━━━━\nSubtotal: ₡${formatMoney(factura.subtotal || 0)}\nIVA (13%): ₡${formatMoney(factura.impuesto || 0)}\n💰 *TOTAL: ₡${formatMoney(totalFactura)}*\n\n`;
-
-        if (factura.transporte > 0) {
-            message += `🚚 Transporte: ₡${formatMoney(factura.transporte)}\n`;
-            if (factura.descuentoEnvio > 0) message += `🏷️ Descuento envío: -₡${formatMoney(factura.descuentoEnvio)}\n`;
-        }
-
-        if (abonos.length > 0) {
-            message += `💳 *PAGOS REALIZADOS:*\n`;
-            abonos.forEach((a, idx) => {
-                const aDate = a.fecha?.toDate ? a.fecha.toDate() : new Date(a.fecha);
-                message += `  ${idx + 1}. ₡${formatMoney(a.monto)} - ${a.metodo} (${aDate.toLocaleDateString('es-CR')})\n`;
-            });
-            message += `\nTotal Abonado: ₡${formatMoney(totalAbonado)}\n`;
-            if (saldoPendiente > 0) message += `⚠️ *SALDO PENDIENTE: ₡${formatMoney(saldoPendiente)}*\n\n`;
-            else message += `✅ *FACTURA PAGADA*\n\n`;
-        }
-
-        message += `¡Gracias por su compra! 🙏\n💳 SINPE Móvil: 7295-2454`;
+        const { message } = buildWhatsAppMessage(factura, 'resend');
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
     } catch (error) {
         console.error("Error reenviando factura:", error);
@@ -2179,7 +2694,37 @@ async function openInvoiceDetailModal(invoiceId) {
                 document.getElementById('detailPaymentsTable').innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: var(--text-light);">Sin pagos registrados</td></tr>';
             }
             document.getElementById('detailTotalPaid').textContent = `₡${formatMoney(totalAbonado)}`;
-            document.getElementById('detailBalance').textContent = `₡${formatMoney(saldoPendiente)}`;
+           document.getElementById('detailBalance').textContent = `₡${formatMoney(saldoPendiente)}`;
+
+// 🎯 Mostrar intereses por mora en el detalle
+const diasAtraso = Math.ceil(Math.abs(new Date() - dateObj) / (1000 * 60 * 60 * 24));
+const interest = calculateMoratoryInterest(saldoPendiente, diasAtraso);
+const interestBox = document.getElementById('detailInterestBox');
+if (interestBox) {
+    if (interest.porcentaje > 0) {
+        interestBox.style.display = 'block';
+        interestBox.innerHTML = `
+            <div style="padding:10px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;margin-top:8px;">
+                <div style="font-weight:700;color:#856404;">⏰ Intereses por mora</div>
+                <div style="font-size:0.85rem;color:#664d03;margin-top:4px;">
+                    ${interest.dias} días de atraso → ${interest.porcentaje}% de recargo
+                </div>
+                <div style="font-size:0.9rem;margin-top:6px;">
+                    Recargo: <strong>₡${formatMoney(interest.monto)}</strong><br>
+                    Total a pagar hoy: <strong style="color:#d97706;">₡${formatMoney(interest.totalConInteres)}</strong>
+                </div>
+            </div>`;
+    } else {
+        interestBox.style.display = 'block';
+        interestBox.innerHTML = `
+            <div style="padding:10px;background:#d1fae5;border:1px solid #10b981;border-radius:8px;margin-top:8px;">
+                <div style="font-weight:700;color:#065f46;">✅ Al día</div>
+                <div style="font-size:0.85rem;color:#064e3b;margin-top:4px;">
+                    ${diasAtraso} días — sin recargo (plazo libre: 15 días)
+                </div>
+            </div>`;
+    }
+}
             document.getElementById('detailPaymentBtn').style.display = saldoPendiente > 0 ? 'flex' : 'none';
         } else {
             paymentsSection.style.display = 'none';
@@ -2200,9 +2745,11 @@ function ensureInvoiceDetailActions() {
     const actions = document.createElement('div');
     actions.id = 'invoiceDetailActions';
     actions.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0;';
-    actions.innerHTML = `
-        <button type="button" class="btn btn-info" onclick="printHistoricalInvoice()">🖨️ Imprimir factura</button>
-        <button type="button" class="btn btn-warning" onclick="editCurrentInvoice()">✏️ Editar factura</button>`;
+   actions.innerHTML = `
+    <button type="button" class="btn btn-info" onclick="printHistoricalInvoice()">🖨️ Imprimir</button>
+    <button type="button" class="btn btn-warning" onclick="editCurrentInvoice()">✏️ Editar</button>
+    <button type="button" class="btn btn-gold" onclick="sendConsentFromDetail()">📋 Enviar consentimiento</button>
+`;
     const closeBtn = modal.querySelector('[onclick*="closeInvoiceDetailModal"]');
     if (closeBtn && closeBtn.parentElement) closeBtn.parentElement.insertBefore(actions, closeBtn);
     else modal.querySelector('.modal-content, .modal-body')?.appendChild(actions);
@@ -2285,6 +2832,40 @@ function openPaymentModalFromDetail() {
         const invoiceId = currentDetailInvoice.id;
         closeInvoiceDetailModal();
         setTimeout(() => openPaymentModal(invoiceId), 300);
+    }
+}
+
+async function sendConsentFromDetail() {
+    if (!currentDetailInvoice) return;
+    const clienteId = currentDetailInvoice.clienteId;
+    if (!clienteId || clienteId === 'contado') {
+        alert('Esta factura no tiene cliente registrado.');
+        return;
+    }
+    const cliente = allClients.find(c => c.id === clienteId);
+    if (!cliente) {
+        alert('Cliente no encontrado en la base de datos.');
+        return;
+    }
+
+    // Verificar si ya aceptó
+    const yaAcepto = await hasMoraConsentAccepted(clienteId);
+    if (yaAcepto) {
+        alert(`✅ ${cliente.nombre} ya aceptó las condiciones de mora.`);
+        return;
+    }
+
+    const accion = confirm(
+        `📋 Enviar consentimiento a:\n\n` +
+        `${cliente.nombre}\n📞 ${cliente.telefono || 'Sin teléfono'}\n\n` +
+        `Aceptar = Enviar por WhatsApp\n` +
+        `Cancelar = Copiar enlace al portapapeles`
+    );
+
+    if (accion) {
+        await sendConsentLinkByWhatsApp(clienteId, currentDetailInvoice.id);
+    } else {
+        await copyConsentLink(clienteId, currentDetailInvoice.id);
     }
 }
 
@@ -2393,46 +2974,220 @@ function printTicket() {
     window.print();
 }
 
+// ==========================================
+// MENSAJES WHATSAPP UNIFICADOS
+// type: 'invoice' (al facturar) | 'reminder' (recordatorio) | 'resend' (reenvío)
+// ==========================================
+function buildWhatsAppMessage(invoice, type = 'invoice') {
+    const clientName = invoice.clienteNombre || 'Cliente';
+    const numero = invoice.numero || 'S/N';
+    const dateObj = invoice.fecha?.toDate ? invoice.fecha.toDate() : new Date(invoice.fecha || Date.now());
+    const fechaStr = dateObj.toLocaleDateString('es-CR');
+    const totalFactura = parseFloat(invoice.total) || 0;
+    const abonos = invoice.abonos || [];
+    const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
+    const saldoPendiente = Math.max(0, totalFactura - totalAbonado);
+
+    // Calcular días de atraso desde la fecha de la factura
+    const diasAtraso = Math.ceil(Math.abs(new Date() - dateObj) / (1000 * 60 * 60 * 24));
+    const interest = calculateMoratoryInterest(saldoPendiente, diasAtraso);
+
+    let header = '';
+    if (type === 'reminder') {
+        header = `🌿 *Recordatorio amable de pago* 🌿\n\nHola ${clientName} 👋, esperamos que estés muy bien.\n\nTe escribimos de *EWE Esentia* para recordarte amablemente que tienes un saldo pendiente con nosotros:\n\n`;
+    } else if (type === 'resend') {
+        header = `🌿 *Factura EWE Esentia* 🌿\nHola ${clientName} 👋, te reenviamos tu factura:\n\n`;
+    } else {
+        header = `🌿 *¡Gracias por tu compra en EWE Esentia!* 🌿\nHola ${clientName} 👋, aquí tienes tu factura:\n\n`;
+    }
+
+    let msg = header;
+    msg += `📄 *Factura:* ${numero}\n`;
+    msg += `📅 *Fecha:* ${fechaStr}\n`;
+
+    if (invoice.requiereEnvio && invoice.clienteDireccion) {
+        const dir = [invoice.clienteDireccion, invoice.clienteDistrito, invoice.clienteCanton, invoice.clienteProvincia].filter(Boolean).join(', ');
+        msg += `📍 *Envío a:* ${dir}\n`;
+    }
+
+    msg += `\n━━━━━━━━━━━━━━━━━━\n*🛍️ Detalle de productos:*\n`;
+
+    if (invoice.items && invoice.items.length > 0) {
+        invoice.items.forEach(item => {
+            let desc = getItemDescription(item);
+            if (item.descuentoColones > 0) desc += ` (-₡${formatMoney(item.descuentoColones)})`;
+            msg += `▪️ ${item.cantidad} x ${desc}\n   ₡${formatMoney(item.precioFinalUnitario * item.cantidad)}\n`;
+        });
+    }
+
+    msg += `━━━━━━━━━━━━━━━━━━\n`;
+    msg += `Subtotal: ₡${formatMoney(invoice.subtotal || 0)}\n`;
+    msg += `IVA (13%): ₡${formatMoney(invoice.impuesto || 0)}\n`;
+    if (invoice.transporte > 0) {
+        msg += `🚚 Transporte: ₡${formatMoney(invoice.transporte)}\n`;
+        if (invoice.descuentoEnvio > 0) msg += `🏷️ Desc. envío: -₡${formatMoney(invoice.descuentoEnvio)}\n`;
+    }
+    msg += `\n💰 *TOTAL: ₡${formatMoney(totalFactura)}*\n`;
+
+    // Sección de pagos y saldo
+    if (abonos.length > 0) {
+        msg += `\n💳 *Pagos realizados:*\n`;
+        abonos.forEach((a, idx) => {
+            const aDate = a.fecha?.toDate ? a.fecha.toDate() : new Date(a.fecha);
+            msg += `  ${idx + 1}. ₡${formatMoney(a.monto)} - ${a.metodo} (${aDate.toLocaleDateString('es-CR')})\n`;
+        });
+        msg += `\n*Total abonado:* ₡${formatMoney(totalAbonado)}\n`;
+    }
+
+    if (saldoPendiente > 0) {
+        msg += `\n⚠️ *Saldo pendiente:* ₡${formatMoney(saldoPendiente)}\n`;
+
+        // 🎯 Bloque de intereses por mora (solo si aplica)
+        if (interest.porcentaje > 0) {
+            msg += `\n⏰ *Política de pago:*\n`;
+            msg += `Después de *15 días* de atraso se aplica un recargo acumulable:\n`;
+            msg += `  • 16 a 30 días → *1.5%*\n`;
+            msg += `  • 31 a 45 días → *3.5%* (1.5% + 2%)\n`;
+            msg += `  • Más de 45 días → *3.5%* (tope)\n\n`;
+            msg += `📌 En tu caso (${interest.dias} días): *${interest.porcentaje}%*\n`;
+            msg += `💸 Recargo actual: *₡${formatMoney(interest.monto)}*\n`;
+            msg += `💵 *Total a pagar hoy: ₡${formatMoney(interest.totalConInteres)}*\n`;
+        } else {
+            msg += `\n🕐 Tienes *${diasAtraso} días* sin recargo. ¡Paga dentro de los primeros 15 días y evita intereses!\n`;
+        }
+    } else {
+        msg += `\n✅ *Factura totalmente pagada.* ¡Gracias!\n`;
+    }
+
+    // Cierre según tipo
+    if (type === 'reminder') {
+        msg += `\n🙏 Te agradecemos mucho realizar el pago a la brevedad.\n`;
+        msg += `Cualquier consulta estamos con gusto 😊\n`;
+    } else {
+        msg += `\n¡Gracias por tu preferencia! 🙏🌿\n`;
+    }
+
+    msg += `\n💳 *SINPE Móvil:* 7295-2454\n*EWE Esentia*`;
+    return { message: msg, interest, diasAtraso };
+}
+
 function sendWhatsApp() {
     if (cart.length === 0) { alert('El carrito está vacío'); return; }
-
     let phone = currentClient && currentClient.telefono ? normalizePhone(currentClient.telefono) : '';
-    const clientName = currentClient ? (currentClient.nombre || "Cliente") : "Cliente";
-
     if (!phone) {
         phone = prompt("Ingrese el número de WhatsApp:");
         if (!phone) return;
         phone = normalizePhone(phone);
     }
-
-    let message = `🌿 *FACTURA EWE ESENTIA* 🌿\n📄 Factura: ${document.getElementById('invoiceNumber').textContent}\n👤 Cliente: ${clientName}\n📅 Fecha: ${new Date().toLocaleDateString('es-CR')}\n`;
-
-    if (requiresShipping && currentClient && currentClient.direccion) {
-        message += `📍 *Dirección de envío:* ${[currentClient.direccion, currentClient.distrito, currentClient.canton, currentClient.provincia].filter(Boolean).join(', ')}\n`;
-    }
-
-    message += `━━━━━━━━━━━━━━━━━━\n`;
-  //  cart.forEach(item => {
-  //      let desc = item.nombre;
-  //      if (item.descuentoColones > 0) desc += ` (-₡${formatMoney(item.descuentoColones)} | ${Number(item.descuentoPct || 0).toFixed(1)}%)`;
-  //      message += `▪️ ${item.cantidad} x ${desc}\n   ₡${formatMoney(item.precioFinalUnitario * item.cantidad)}\n`;
-  //  });
-
-      cart.forEach(item => {
-        let desc = getItemDescription(item);
-        if (item.descuentoColones > 0) desc += ` (-₡${formatMoney(item.descuentoColones)} | ${Number(item.descuentoPct || 0).toFixed(1)}%)`;
-        message += `▪️ ${item.cantidad} x ${desc}\n   ₡${formatMoney(item.precioFinalUnitario * item.cantidad)}\n`;
-    });
-    message += `━━━━━━━━━━━━━━━━━━\nSubtotal: ₡${formatMoney(currentSubtotal)}\nIVA (13%): ₡${formatMoney(currentIva)}\n`;
-
+    // Construir factura temporal con los datos actuales
     const shipWA = getShippingTotals();
-    if (shipWA.gross > 0) {
-        message += `🚚 Transporte: ₡${formatMoney(shipWA.net)}\n`;
-        if (shipWA.discount > 0) message += `🏷️ Descuento envío: -₡${formatMoney(shipWA.discount)}\n`;
+    const invoice = {
+        numero: document.getElementById('invoiceNumber').textContent,
+        fecha: new Date(),
+        clienteNombre: currentClient ? currentClient.nombre : 'Cliente',
+        clienteTelefono: currentClient?.telefono || '',
+        requiereEnvio: requiresShipping,
+        clienteDireccion: requiresShipping && currentClient ? currentClient.direccion : '',
+        clienteDistrito: requiresShipping && currentClient ? currentClient.distrito : '',
+        clienteCanton: requiresShipping && currentClient ? currentClient.canton : '',
+        clienteProvincia: requiresShipping && currentClient ? currentClient.provincia : '',
+        items: cart,
+        subtotal: currentSubtotal,
+        impuesto: currentIva,
+        transporte: shipWA.net,
+        descuentoEnvio: shipWA.discount,
+        total: currentTotal,
+        abonos: []
+    };
+    const { message } = buildWhatsAppMessage(invoice, 'invoice');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+}
+
+// ==========================================
+// GENERACIÓN DE ENLACES DE CONSENTIMIENTO
+// ==========================================
+const CONSENT_PAGE_URL = 'https://wil1979.github.io/esentia-factura/consentimiento-mora.html';
+
+// Genera un token seguro y guarda referencia en Firebase
+async function generateConsentToken(clienteId, facturaId = null) {
+    if (!clienteId || clienteId === 'contado') {
+        alert('Seleccione un cliente registrado.');
+        return null;
     }
 
-    message += `💰 *TOTAL A PAGAR: ₡${formatMoney(currentTotal)}*\n\n¡Gracias por su compra! 🙏\n💳 SINPE Móvil: 7295-2454`;
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+    // Generar token aleatorio
+    const array = new Uint8Array(24);
+    crypto.getRandomValues(array);
+    const token = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+
+    const tokenData = {
+        clienteId,
+        facturaId,
+        version: MORA_POLICY.version,
+        aceptado: false,
+        creado: firebase.firestore.FieldValue.serverTimestamp(),
+        expira: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 días
+        creadoPor: 'sistema_facturacion'
+    };
+
+    try {
+        await db.collection('consent_tokens').doc(token).set(tokenData);
+        return token;
+    } catch (error) {
+        console.error('Error generando token:', error);
+        alert('Error al generar el enlace: ' + error.message);
+        return null;
+    }
+}
+
+// Construye la URL completa del consentimiento
+function buildConsentUrl(token, clienteId, facturaId = null) {
+    let url = `${CONSENT_PAGE_URL}?token=${token}&c=${clienteId}`;
+    if (facturaId) url += `&f=${facturaId}`;
+    return url;
+}
+
+// Envía el enlace por WhatsApp al cliente
+async function sendConsentLinkByWhatsApp(clienteId, facturaId = null) {
+    const cliente = allClients.find(c => c.id === clienteId);
+    if (!cliente) {
+        alert('Cliente no encontrado.');
+        return;
+    }
+    if (!cliente.telefono) {
+        alert('El cliente no tiene teléfono registrado.');
+        return;
+    }
+
+    const token = await generateConsentToken(clienteId, facturaId);
+    if (!token) return;
+
+    const url = buildConsentUrl(token, clienteId, facturaId);
+    const phone = normalizePhone(cliente.telefono);
+
+    const msg = `🌿 *EWE ESENTIA - Consentimiento de Pago*\n\n` +
+        `Hola ${cliente.nombre} 👋\n\n` +
+        `Para completar su registro en nuestro sistema, le solicitamos amablemente aceptar nuestras *condiciones de pago y cargos por mora*.\n\n` +
+        `📋 Por favor abra el siguiente enlace desde su celular:\n` +
+        `🔗 ${url}\n\n` +
+        `⏰ Este enlace es válido por 7 días.\n\n` +
+        `El proceso toma menos de 1 minuto. ¡Gracias! 🙏\n\n` +
+        `Cualquier consulta estamos al teléfono 7295-2454.`;
+
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// Copia el enlace al portapapeles
+async function copyConsentLink(clienteId, facturaId = null) {
+    const token = await generateConsentToken(clienteId, facturaId);
+    if (!token) return;
+    const url = buildConsentUrl(token, clienteId, facturaId);
+    try {
+        await navigator.clipboard.writeText(url);
+        alert('✅ Enlace copiado al portapapeles:\n\n' + url);
+    } catch (e) {
+        prompt('Copie el enlace manualmente:', url);
+    }
 }
 
 
