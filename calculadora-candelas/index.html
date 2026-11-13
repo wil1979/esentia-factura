@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Calculadora independiente de costos para producción de velas">
+  <meta name="theme-color" content="#0f172a">
+  <title>Esentia | Calculadora de Producción</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <style>body{min-height:100vh}.calc-modal-overlay{display:flex;position:relative;min-height:100vh;overflow:visible}.calc-modal-content{max-height:none;margin:24px auto}.calc-return{position:fixed;left:18px;top:18px;z-index:1100;color:#fff;background:#0ea5e9;padding:10px 16px;border-radius:12px;text-decoration:none;font-weight:700}.calc-reopen{display:none;position:fixed;right:20px;bottom:20px;z-index:1100;border:0;border-radius:50%;width:58px;height:58px;background:#0ea5e9;color:#fff;font-size:1.5rem;cursor:pointer;box-shadow:0 8px 24px #0006}.calc-reopen.visible{display:block}</style>
+</head>
+<body>
+  <a class="calc-return" href="index.html">← Volver a la aplicación</a>
+  <div class="toast" id="toast"></div>
+    <!-- ===== MODAL CALCULADORA ===== -->
+    <div class="calc-modal-overlay" id="calcModalOverlay">
+        <div class="calc-modal-content">
+            <div class="calc-modal-header">
+                <h2>🕯️ Calculadora de Producción</h2>
+                <button class="calc-modal-close" onclick="cerrarCalculadora()">✕</button>
+            </div>
+            <div class="calc-body">
+                <div class="calc-grid">
+                    <!-- Panel Izquierdo: Inputs -->
+                    <div class="calc-card">
+                        <h3>📋 Datos de Producción</h3>
+
+                        <!-- ===== SECCIÓN IMAGEN ===== -->
+                        <div class="calc-imagen-section">
+                            <label style="display:block; color:rgba(255,255,255,0.7); font-size:0.85rem; margin-bottom:0.6rem; font-weight:600;">📸 Imagen del Producto</label>
+
+                            <div class="calc-imagen-tabs">
+                                <div class="calc-imagen-tab active" data-tab="file" onclick="cambiarTabImagen('file')">📁 Archivo</div>
+                                <div class="calc-imagen-tab" data-tab="url" onclick="cambiarTabImagen('url')">🔗 URL Web</div>
+                            </div>
+
+                            <div id="calcImagenFileSection">
+                                <input type="file" id="calcImagenFile" class="calc-imagen-input-file" accept="image/*" onchange="handleFileSelect(event)">
+                                <button class="calc-imagen-btn-file" onclick="document.getElementById('calcImagenFile').click()">
+                                    <i class="fas fa-upload"></i> Seleccionar Imagen
+                                </button>
+                            </div>
+
+                            <div id="calcImagenUrlSection" style="display:none;">
+                                <div class="calc-form-group" style="margin-bottom:0.5rem;">
+                                    <input type="text" id="calcImagenUrlInput" placeholder="https://ejemplo.com/imagen.jpg" class="input-field">
+                                </div>
+                                <button class="calc-imagen-btn-file" onclick="handleUrlImagen()">
+                                    <i class="fas fa-link"></i> Cargar desde URL
+                                </button>
+                            </div>
+
+                            <img id="calcImagenPreview" class="calc-imagen-preview empty" style="display:none;" alt="Preview">
+                            <button id="calcImagenRemove" class="calc-imagen-remove" style="display:none;" onclick="removerImagen()">
+                                <i class="fas fa-trash"></i> Quitar Imagen
+                            </button>
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Tipo de Cera</label>
+                            <select id="calcTipoCera">
+                                <option value="cera_china">Cera China (₡1,000/kg)</option>
+                                <option value="cera_soya">Cera de Soya (₡2,500/kg)</option>
+                                <option value="cera_abeja">Cera de Abeja (₡4,000/kg)</option>
+                                <option value="parafina_gel">Parafina en Gel (₡3,000/kg)</option>
+                                <option value="cera_coco">Cera de Coco (₡3,500/kg)</option>
+                                <option value="personalizado">Personalizado</option>
+                            </select>
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Peso total de la Vela (gramos)</label>
+                            <input type="number" id="calcPesoVela" placeholder="Ej: 200" min="1">
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Porcentaje de Fragancia (%)</label>
+                            <input type="number" id="calcPorcentajeFragancia" value="10" min="0" max="50">
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Costo de Cera por kg (₡)</label>
+                            <input type="number" id="calcCostoCera" placeholder="0" min="0">
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Costo de Fragancia por unidad (₡ por g/ml)</label>
+                            <div style="display:grid;grid-template-columns:1fr 2fr;gap:0.5rem;">
+                                <select id="calcUnidadFragancia" aria-label="Unidad de fragancia">
+                                    <option value="g">Por gramo (g)</option>
+                                    <option value="ml">Por mililitro (ml)</option>
+                                </select>
+                                <input type="number" id="calcCostoFragancia" placeholder="Costo por g o ml" min="0" step="0.01">
+                            </div>
+                            <small style="display:block;color:rgba(255,255,255,.55);margin-top:.35rem;">Para ml se usa una equivalencia aproximada de 1 g = 1 ml.</small>
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Porcentaje de Ácido Esteárico sobre la base (%)</label>
+                            <input type="number" id="calcPorcentajeAcidoEstearico" value="0" min="0" max="100" step="0.1">
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Costo de Ácido Esteárico por kg (₡)</label>
+                            <input type="number" id="calcCostoAcidoEstearicoKg" placeholder="0" min="0" step="0.01">
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Costo de Mecha + Envase (₡)</label>
+                            <input type="number" id="calcCostoMecheEnvase" placeholder="0" min="0">
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Costos Indirectos (₡)</label>
+                            <input type="number" id="calcCostosIndirectos" placeholder="Electricidad, gas, empaque..." min="0">
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Mano de Obra por Vela (₡)</label>
+                            <input type="number" id="calcManoObra" placeholder="Tiempo de elaboración" min="0">
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Margen de Ganancia Deseado (%)</label>
+                            <input type="number" id="calcMargenGanancia" value="50" min="0">
+                        </div>
+
+                        <div class="calc-form-group">
+                            <label>Nombre del Producto (opcional)</label>
+                            <input type="text" id="calcNombreProducto" placeholder="Ej: Vela Aromática Lavanda">
+                        </div>
+                    </div>
+
+                    <!-- Panel Derecho: Resultados -->
+                    <div class="calc-card">
+                        <h3>💰 Resumen de Costos</h3>
+
+                        <div class="calc-resumen">
+                            <div class="calc-resumen-row">
+                                <span>Peso Fragancia (g):</span>
+                                <span id="calcPesoFraganciaTotal">0g</span>
+                            </div>
+                            <div class="calc-resumen-row">
+                                <span>Costo de Cera:</span>
+                                <span id="calcCostoCeraTotal">₡0</span>
+                            </div>
+                            <div class="calc-resumen-row">
+                                <span>Costo de Fragancia:</span>
+                                <span id="calcCostoFraganciaTotal">₡0</span>
+                            </div>
+                            <div class="calc-resumen-row">
+                                <span>Ácido Esteárico:</span>
+                                <span id="calcCostoAcidoEstearicoTotal">₡0</span>
+                            </div>
+                            <div class="calc-resumen-row">
+                                <span>Mecha + Envase:</span>
+                                <span id="calcCostoMecheEnvaseTotal">₡0</span>
+                            </div>
+                            <div class="calc-resumen-row">
+                                <span>Costos Indirectos:</span>
+                                <span id="calcCostosIndirectosTotal">₡0</span>
+                            </div>
+                            <div class="calc-resumen-row">
+                                <span>Mano de Obra:</span>
+                                <span id="calcManoObraTotal">₡0</span>
+                            </div>
+                            <div class="calc-resumen-row" style="background: rgba(255,255,255,0.1); margin: 10px 0; padding: 12px; border-radius: 8px;">
+                                <span><strong>COSTO TOTAL:</strong></span>
+                                <span><strong id="calcCostoTotal">₡0</strong></span>
+                            </div>
+                            <div class="calc-resumen-row">
+                                <span>Margen de Ganancia:</span>
+                                <span id="calcMargenGananciaValor">0%</span>
+                            </div>
+                            <div class="calc-resumen-row">
+                                <span>Ganancia por Vela:</span>
+                                <span id="calcGananciaVela">₡0</span>
+                            </div>
+                            <div class="calc-resumen-row">
+                                <span>PRECIO DE VENTA:</span>
+                                <span id="calcPrecioVenta">₡0</span>
+                            </div>
+                        </div>
+
+                        <div class="calc-actions">
+                            <button class="calc-btn calc-btn-calc" onclick="calcularProduccion()">🔄 Calcular</button>
+                            <button id="calcBtnSave" class="calc-btn calc-btn-save" onclick="guardarCalculoFirestore()">💾 Guardar</button>
+                            <button class="calc-btn calc-btn-pdf" onclick="descargarPDF()">📄 PDF</button>
+                            <button class="calc-btn calc-btn-excel" onclick="descargarExcel()">📊 Excel</button>
+                            <button class="calc-btn calc-btn-clear" onclick="limpiarCalculadora()">🗑️ Limpiar</button>
+                        </div>
+
+                        <!-- Historial -->
+                        <div class="calc-historial-section">
+                            <h3>📚 Historial de Cálculos</h3>
+                            <div class="calc-actions" style="margin-bottom: 1rem;">
+                                <button class="calc-btn calc-btn-calc" onclick="cargarHistorialCalculadora()">🔄 Cargar Historial</button>
+                            </div>
+                            <div id="calcHistorialList" class="calc-historial-list">
+                                <p style="text-align: center; color: rgba(255,255,255,0.4); font-size: 0.9rem;">No hay cálculos guardados.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+  <button class="calc-reopen" id="calcReopen" type="button" onclick="abrirCalculadora()" title="Abrir calculadora">🕯️</button>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="calculadora.js"></script>
+</body>
+</html>
