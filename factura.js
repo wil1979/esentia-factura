@@ -1293,26 +1293,52 @@ function getShippingTotals() {
 function updateTotals() {
     const transportInput = document.getElementById('transportCost');
     transportCost = parseFloat(transportInput?.value) || 0;
-    const totalConIva = cart.reduce((sum, item) => sum + (item.precioFinalUnitario * item.cantidad), 0);
+    
+    // Calcular total de productos (precios ya incluyen IVA)
+    const totalConIva = cart.reduce((sum, item) => {
+        const itemTotal = item.precioFinalUnitario * item.cantidad;
+        return sum + itemTotal;
+    }, 0);
+    
+    // Calcular subtotal sin IVA (dividir entre 1.13)
     const subtotalReal = totalConIva / 1.13;
-    const ivaReal = totalConIva - subtotalReal;
-    const productsTotal = subtotalReal + ivaReal;
+    
+    // Calcular IVA (13% del subtotal)
+    const ivaReal = subtotalReal * 0.13;
+    
+    // Redondear a 2 decimales para evitar errores acumulativos
+    const subtotalRedondeado = Math.round(subtotalReal * 100) / 100;
+    const ivaRedondeado = Math.round(ivaReal * 100) / 100;
+    
+    // Ajustar el IVA para que subtotal + IVA = total exacto
+    const ivaAjustado = Math.round((totalConIva - subtotalRedondeado) * 100) / 100;
+    
+    const productsTotal = subtotalRedondeado + ivaAjustado;
     const ship = getShippingTotals();
     shippingDiscount = ship.discount;
     const finalTotal = productsTotal + ship.net;
-    currentSubtotal = subtotalReal;
-    currentIva = ivaReal;
+    
+    currentSubtotal = subtotalRedondeado;
+    currentIva = ivaAjustado;
     currentTotal = finalTotal;
-    document.getElementById('subtotalAmount').textContent = `₡${formatMoney(subtotalReal)}`;
-    document.getElementById('taxAmount').textContent = `₡${formatMoney(ivaReal)}`;
+    
+    document.getElementById('subtotalAmount').textContent = `₡${formatMoney(subtotalRedondeado)}`;
+    document.getElementById('taxAmount').textContent = `₡${formatMoney(ivaAjustado)}`;
     document.getElementById('productsTotal').textContent = `₡${formatMoney(productsTotal)}`;
+    
     const transportRow = document.getElementById('transportRow');
     if (transportRow) {
         if (ship.gross > 0) {
             transportRow.style.display = 'flex';
-            document.getElementById('transportAmount').textContent = ship.discount > 0 ? `₡${formatMoney(ship.net)} (desc. envío -₡${formatMoney(ship.discount)})` : `₡${formatMoney(ship.net)}`;
-        } else { transportRow.style.display = 'none'; }
+            document.getElementById('transportAmount').textContent =
+                ship.discount > 0
+                    ? `₡${formatMoney(ship.net)} (desc. envío -₡${formatMoney(ship.discount)})`
+                    : `₡${formatMoney(ship.net)}`;
+        } else {
+            transportRow.style.display = 'none';
+        }
     }
+    
     document.getElementById('totalAmount').textContent = `₡${formatMoney(finalTotal)}`;
 }
 
