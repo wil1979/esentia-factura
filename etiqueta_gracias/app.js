@@ -992,6 +992,9 @@ function updateSheetVisualPreview(cols, rows, quantity, perSheet, labelSizeMm, s
 // ============================================
 // ✅ IMPRESIÓN - CORREGIDA PARA MÓVIL
 // ============================================
+// ============================================
+// ✅ IMPRESIÓN - CORREGIDA DEFINITIVAMENTE PARA MÓVIL
+// ============================================
 function printLabels() {
   // 1. Auto-guardar antes de imprimir
   try {
@@ -1055,7 +1058,7 @@ function printLabels() {
   const pageCss = buildPrintCSS(page, marginMm, usableWidthMm, usableHeightMm, columns, rows, labelSizeMm, gapMm, settings);
   const htmlContent = buildPrintHTML(quantity, pages, pageCss);
 
-  // ✅ DETECCIÓN: móvil usa iframe, desktop usa window.open
+  // ✅ DETECCIÓN: móvil usa iframe con botones, desktop usa window.open
   if (isMobileDevice()) {
     printViaIframe(htmlContent);
   } else {
@@ -1064,6 +1067,302 @@ function printLabels() {
 
   console.log(`✅ Generadas ${totalLabels} etiquetas en ${pages.length} hoja(s)`);
 }
+
+function buildPrintCSS(page, marginMm, usableWidthMm, usableHeightMm, columns, rows, labelSizeMm, gapMm, settings) {
+  return `
+    @font-face {
+      font-family: 'Adelia';
+      src: url('fonts/Adelia.ttf') format('truetype'),
+           url('fonts/Adelia.otf') format('opentype');
+      font-display: swap;
+    }
+    @page { size: ${page.name}; margin: ${marginMm}mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: #fff; font-family: Arial, sans-serif; }
+    .sheet {
+      width: ${usableWidthMm}mm; height: ${usableHeightMm}mm;
+      display: grid !important;
+      grid-template-columns: repeat(${columns}, ${labelSizeMm}mm) !important;
+      grid-template-rows: repeat(${rows}, ${labelSizeMm}mm) !important;
+      gap: ${gapMm}mm !important;
+      justify-content: start !important;
+      align-content: start !important;
+      overflow: hidden !important;
+      page-break-after: always;
+      break-after: page;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .sheet:last-child { page-break-after: auto; break-after: auto; }
+    .label {
+      width: ${labelSizeMm}mm !important;
+      height: ${labelSizeMm}mm !important;
+      overflow: hidden; position: relative; display: block;
+    }
+    .svg-box { width: 100% !important; height: 100% !important; overflow: hidden; }
+    .label.cut-border::after {
+      content: ""; position: absolute; inset: 2.5%;
+      border: ${settings.borderWidth}mm solid ${settings.borderColor};
+      border-radius: 50%; pointer-events: none;
+    }
+    svg { display: block; width: 100% !important; height: 100% !important; }
+    .label-circle { fill: white; stroke: #e8dfd5; stroke-width: 2; }
+    .border-text-path { fill: #6b8f5e; font-family: Lora, serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
+    .leaf-decoration { opacity: .7; }
+    .label-text-main, .adelia-font { font-family: 'Adelia', 'Great Vibes', cursive !important; fill: #2d5016; text-anchor: middle; }
+    .label-text-sub { font-family: 'Great Vibes', cursive; fill: #2d5016; text-anchor: middle; }
+    .label-text-message { font-family: Lora, serif; fill: #444; text-anchor: middle; font-size: 10px; }
+    .label-text-sinpe { font-family: 'Playfair Display', serif; fill: #1a1a1a; text-anchor: middle; font-weight: 700; }
+    .label-text-brand { font-family: 'Playfair Display', serif; fill: #2d5016; text-anchor: middle; font-weight: 700; }
+    .label-text-client { font-family: 'Playfair Display', serif; fill: #1a1a1a; text-anchor: middle; font-weight: 600; }
+    .label-text-footer { font-family: 'Dancing Script', cursive; fill: #555; text-anchor: middle; }
+    @media screen {
+      body { padding: 18px; background: #f1f4ef; }
+      .sheet { background: #fff; margin: 0 auto 18px; box-shadow: 0 2px 14px rgba(0,0,0,0.1); }
+    }
+  `;
+}
+
+// ✅ HTML con instrucciones claras para móvil
+function buildPrintHTML(quantity, pages, pageCss) {
+  return `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Etiquetas para imprimir (${quantity})</title>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+  <style>${pageCss}</style>
+</head>
+<body>
+  ${pages.join('\n')}
+  <script>
+    window.addEventListener('load', function() {
+      // ✅ Función de impresión expuesta globalmente
+      window.doPrint = function() {
+        try {
+          window.focus();
+          window.print();
+          return true;
+        } catch(e) {
+          console.error('Error al imprimir:', e);
+          return false;
+        }
+      };
+
+      // Intento automático DESPUÉS de que las fuentes carguen
+      const tryAutoPrint = () => {
+        setTimeout(() => {
+          try {
+            window.focus();
+            window.print();
+          } catch(e) {}
+        }, 800);
+      };
+
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(tryAutoPrint);
+      } else {
+        tryAutoPrint();
+      }
+
+      // Avisar al padre cuando termine la impresión
+      window.addEventListener('afterprint', () => {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'ewe-print-done' }, '*');
+        }
+      });
+    });
+  <\/script>
+</body>
+</html>`;
+}
+
+// ✅ DESKTOP: window.open (funciona bien)
+function printViaWindow(htmlContent) {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    showToast('⚠️ Permita ventanas emergentes', 'warning');
+    return;
+  }
+  printWindow.document.open();
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+}
+
+// ✅ MÓVIL: iframe con srcdoc + botones manuales
+function printViaIframe(htmlContent) {
+  // Remover overlay anterior si existe
+  const existingOverlay = document.getElementById('ewePrintOverlay');
+  if (existingOverlay) existingOverlay.remove();
+
+  // Crear overlay fullscreen
+  const overlay = document.createElement('div');
+  overlay.id = 'ewePrintOverlay';
+  overlay.style.cssText = `
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(0,0,0,0.9);
+    display: flex; flex-direction: column;
+    align-items: center;
+    padding: 0;
+    animation: fadeIn 0.3s ease;
+  `;
+
+  // ✅ Barra superior con TODOS los botones necesarios
+  const topBar = document.createElement('div');
+  topBar.style.cssText = `
+    width: 100%;
+    display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(135deg, #2d5016, #3d6b20);
+    color: white;
+    padding: 10px 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  `;
+  topBar.innerHTML = `
+    <span style="font-size: 13px; font-weight: 600; font-family: 'Lora', serif; flex: 1;">
+      📄 Vista previa
+    </span>
+    <button id="ewePrintBtn" style="
+      background: #d4a843; color: white; border: none;
+      padding: 10px 14px; border-radius: 8px;
+      font-weight: 700; cursor: pointer; font-size: 13px;
+      font-family: 'Lora', serif;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    ">🖨️ Imprimir</button>
+    <button id="eweDownloadBtn" style="
+      background: #1976d2; color: white; border: none;
+      padding: 10px 14px; border-radius: 8px;
+      font-weight: 700; cursor: pointer; font-size: 13px;
+      font-family: 'Lora', serif;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    ">💾 Guardar</button>
+    <button id="eweClosePrint" style="
+      background: #a23a36; color: white; border: none;
+      padding: 10px 14px; border-radius: 8px;
+      font-weight: 700; cursor: pointer; font-size: 13px;
+      font-family: 'Lora', serif;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    ">✕ Cerrar</button>
+  `;
+
+  // ✅ Instrucciones para el usuario (solo en móvil)
+  const instructions = document.createElement('div');
+  instructions.style.cssText = `
+    width: 100%;
+    background: #fff9e6;
+    color: #7a5a00;
+    padding: 10px 14px;
+    font-size: 12px;
+    font-family: 'Lora', serif;
+    text-align: center;
+    border-bottom: 2px solid #d4a843;
+    line-height: 1.4;
+  `;
+  instructions.innerHTML = `
+    <strong>📱 En móvil:</strong> Toca <strong>🖨️ Imprimir</strong> o <strong>💾 Guardar</strong> abajo.
+    Si no funciona, usa <strong>💾 Guardar</strong> y abre el archivo descargado.
+  `;
+
+  // ✅ Iframe con srcdoc (mucho más confiable que document.write)
+  const iframe = document.createElement('iframe');
+  iframe.id = 'ewePrintIframe';
+  iframe.setAttribute('srcdoc', htmlContent);
+  iframe.style.cssText = `
+    width: 100%;
+    flex: 1;
+    background: white;
+    border: none;
+  `;
+
+  overlay.appendChild(topBar);
+  overlay.appendChild(instructions);
+  overlay.appendChild(iframe);
+  document.body.appendChild(overlay);
+
+  // ✅ Referencia al iframe para usarla en los botones
+  let iframeRef = iframe;
+
+  // ✅ BOTÓN: Imprimir
+  document.getElementById('ewePrintBtn').addEventListener('click', () => {
+    try {
+      // Intentar 1: llamar a la función expuesta dentro del iframe
+      if (iframeRef.contentWindow && iframeRef.contentWindow.doPrint) {
+        const success = iframeRef.contentWindow.doPrint();
+        if (success) return;
+      }
+      // Intentar 2: focus + print directo
+      iframeRef.contentWindow.focus();
+      setTimeout(() => {
+        iframeRef.contentWindow.print();
+      }, 100);
+    } catch (e) {
+      console.error('Error al imprimir iframe:', e);
+      showToast('⚠️ Use el botón 💾 Guardar como alternativa', 'warning');
+    }
+  });
+
+  // ✅ BOTÓN: Guardar/Descargar como HTML
+  document.getElementById('eweDownloadBtn').addEventListener('click', () => {
+    try {
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const timestamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+      a.download = `etiquetas-esentia-${timestamp}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast('✅ Archivo descargado. Ábrelo e imprímelo.', 'success');
+    } catch (e) {
+      console.error('Error al descargar:', e);
+      showToast('❌ Error al guardar', 'error');
+    }
+  });
+
+  // ✅ BOTÓN: Cerrar
+  document.getElementById('eweClosePrint').addEventListener('click', () => {
+    overlay.remove();
+  });
+
+  // ✅ Cerrar con tecla Escape (si hay teclado)
+  const escHandler = (e) => {
+    if (e.key === 'Escape') {
+      overlay.remove();
+      window.removeEventListener('keydown', escHandler);
+    }
+  };
+  window.addEventListener('keydown', escHandler);
+
+  // ✅ Escuchar mensaje "impresión terminada" desde el iframe
+  const msgHandler = (e) => {
+    if (e.data && e.data.type === 'ewe-print-done') {
+      showToast('✅ Impresión completada', 'success');
+      window.removeEventListener('message', msgHandler);
+    }
+  };
+  window.addEventListener('message', msgHandler);
+
+  // ✅ Cuando el iframe cargue, intentar auto-imprimir (puede funcionar en algunos móviles)
+  iframe.addEventListener('load', () => {
+    setTimeout(() => {
+      try {
+        if (iframe.contentWindow && iframe.contentWindow.doPrint) {
+          // No auto-imprimir, dejar que el usuario decida con los botones
+          console.log('✅ Iframe cargado y listo para imprimir');
+        }
+      } catch(e) {}
+    }, 1000);
+  });
+
+  showToast('📱 Usa los botones de arriba para imprimir o guardar', 'info');
+}
+
+function printLabel() { printLabels(); }
+function createPDF() { printLabels(); }
 
 function buildPrintCSS(page, marginMm, usableWidthMm, usableHeightMm, columns, rows, labelSizeMm, gapMm, settings) {
   return `
