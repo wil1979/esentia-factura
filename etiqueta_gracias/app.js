@@ -23,6 +23,8 @@ const DEFAULT_SIZE_MM = DEFAULT_SIZE_INCHES * INCHES_TO_MM;
 let currentBackgroundImage = null;
 let currentQRDataUrl = null;
 const AUTOSAVE_KEY = 'eweAutosaveDesign';
+let unsavedChanges = 0;
+let lastSavedState = null;
 
 // ✅ Detectar si es móvil
 function isMobileDevice() {
@@ -46,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
   updateBorderText();
   loadSavedDesignsList();
 
-  // ✅ RECUPERACIÓN AUTOMÁTICA de diseño si el navegador se cerró
+  // ✅ RECUPERACIÓN AUTOMÁTICA
   recoverAutosave();
 
   if (document.getElementById('qrEnabled').checked) {
@@ -59,15 +61,70 @@ document.addEventListener('DOMContentLoaded', function() {
       if (el) el.addEventListener('change', updatePrintPreview);
     });
 
-  // ✅ AUTO-GUARDADO cada 30 segundos (por si se cierra el navegador)
+  // ✅ Guardar estado inicial (para detectar cambios)
+  setTimeout(() => {
+    lastSavedState = JSON.stringify(getCurrentDesign());
+  }, 1000);
+
+  // ✅ AUTO-GUARDADO cada 30 segundos
   setInterval(() => {
     try {
       const design = getCurrentDesign();
       design._autosave = true;
       localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(design));
-    } catch(e) {}
+      showAutosaveIndicator('💾 Diseño guardado automáticamente');
+    } catch(e) {
+      console.warn('No se pudo auto-guardar:', e);
+    }
   }, 30000);
+
+  // ✅ Detectar cambios en inputs para mostrar badge
+  document.addEventListener('input', trackChanges);
+  document.addEventListener('change', trackChanges);
+
+  // ✅ PROTECCIÓN: avisar al salir si hay cambios sin guardar
+  window.addEventListener('beforeunload', function(e) {
+    if (unsavedChanges > 0) {
+      e.preventDefault();
+      e.returnValue = 'Tienes cambios sin guardar. ¿Seguro que quieres salir?';
+      return e.returnValue;
+    }
+  });
 });
+
+// ✅ Rastrear cambios no guardados
+function trackChanges() {
+  try {
+    const currentState = JSON.stringify(getCurrentDesign());
+    if (lastSavedState && currentState !== lastSavedState) {
+      unsavedChanges++;
+      updateChangesBadge();
+    }
+  } catch(e) {}
+}
+
+// ✅ Actualizar badge de cambios pendientes
+function updateChangesBadge() {
+  const badge = document.getElementById('changesBadge');
+  if (!badge) return;
+  if (unsavedChanges > 0) {
+    badge.style.display = 'inline-block';
+    badge.textContent = unsavedChanges > 99 ? '99+' : unsavedChanges;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// ✅ Mostrar indicador de auto-guardado
+function showAutosaveIndicator(message, type = 'saved') {
+  const indicator = document.getElementById('autosaveIndicator');
+  if (!indicator) return;
+  indicator.textContent = message;
+  indicator.className = 'autosave-indicator show ' + type;
+  setTimeout(() => {
+    indicator.classList.remove('show');
+  }, 2000);
+}
 
 // ✅ Recuperar diseño guardado automáticamente
 function recoverAutosave() {
@@ -77,7 +134,6 @@ function recoverAutosave() {
     const design = JSON.parse(saved);
     if (!design || !design._autosave) return;
 
-    // No molestar si el diseño está "vacío" (valores por defecto)
     const hasContent = design.texts && (
       design.texts.main || design.texts.client || design.texts.sub
     );
@@ -87,6 +143,9 @@ function recoverAutosave() {
     if (confirm(`🔄 Se encontró un diseño sin guardar (${savedDate}).\n\n¿Deseas recuperarlo?`)) {
       applyDesign(design);
       showToast('✅ Diseño recuperado correctamente', 'success');
+      lastSavedState = JSON.stringify(design);
+      unsavedChanges = 0;
+      updateChangesBadge();
     }
   } catch(e) {
     console.warn('No se pudo recuperar autosave:', e);
@@ -103,7 +162,7 @@ function showToast(message, type = 'info') {
   toast.textContent = message;
   toast.style.cssText = `
     position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-    background: ${type === 'success' ? '#2d5016' : type === 'error' ? '#a23a36' : '#333'};
+    background: ${type === 'success' ? '#2d5016' : type === 'error' ? '#a23a36' : type === 'warning' ? '#d4a843' : '#333'};
     color: white; padding: 12px 24px; border-radius: 8px;
     font-family: 'Lora', serif; font-size: 14px; font-weight: 600;
     z-index: 9999; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
@@ -522,7 +581,7 @@ function setQRPosition(position) {
 // ============================================
 function getCurrentDesign() {
   return {
-    version: '1.1',
+    version: '1.2',
     savedAt: new Date().toISOString(),
     texts: {
       main: document.getElementById('editMainText').value,
@@ -660,6 +719,38 @@ function applyDesign(design) {
   refreshPreview();
 }
 
+// ✅ NUEVO: Guardado rápido (sin pedir nombre)
+function quickSaveDesign() {
+  const design = getCurrentDesign();
+  const timestamp = new Date().toLocaleString('es-CR', {
+    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+  }).replace(/[\/\,\:]/g, '-');
+  const name = 'Diseño rápido ' + timestamp;
+  design.name = name;
+
+  let designs = JSON.parse(localStorage.getItem('eweDesigns') || '[]');
+  designs.push(design);
+
+  try {
+    localStorage.setItem('eweDesigns', JSON.stringify(designs));
+    loadSavedDesignsList();
+
+    // ✅ Guardar también como autosave
+    design._autosave = true;
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(design));
+
+    // ✅ Resetear contador de cambios
+    lastSavedState = JSON.stringify(design);
+    unsavedChanges = 0;
+    updateChangesBadge();
+
+    showToast(`💾 Diseño guardado: "${name}"`, 'success');
+    showAutosaveIndicator('✅ Guardado correctamente');
+  } catch (error) {
+    showToast('❌ Error al guardar. Almacenamiento lleno.', 'error');
+  }
+}
+
 function saveDesign() {
   const name = prompt('Nombre para el diseño:', 'Diseño ' + new Date().toLocaleDateString('es-CR'));
   if (!name) return;
@@ -676,6 +767,12 @@ function saveDesign() {
   try {
     localStorage.setItem('eweDesigns', JSON.stringify(designs));
     loadSavedDesignsList();
+
+    // ✅ Resetear contador
+    lastSavedState = JSON.stringify(design);
+    unsavedChanges = 0;
+    updateChangesBadge();
+
     showToast(`✅ Diseño "${name}" guardado.`, 'success');
   } catch (error) {
     showToast('Error al guardar. Posiblemente el diseño es muy grande.', 'error');
@@ -701,6 +798,9 @@ function loadSelectedDesign() {
   const design = designs[index];
   if (design && confirm(`¿Cargar "${design.name}"?`)) {
     applyDesign(design);
+    lastSavedState = JSON.stringify(design);
+    unsavedChanges = 0;
+    updateChangesBadge();
   }
 }
 
@@ -893,11 +993,12 @@ function updateSheetVisualPreview(cols, rows, quantity, perSheet, labelSizeMm, s
 // ✅ IMPRESIÓN - CORREGIDA PARA MÓVIL
 // ============================================
 function printLabels() {
-  // 1. Auto-guardar antes de imprimir (por si algo falla)
+  // 1. Auto-guardar antes de imprimir
   try {
     const design = getCurrentDesign();
     design._autosave = true;
     localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(design));
+    showAutosaveIndicator('💾 Diseño guardado antes de imprimir');
   } catch(e) {}
 
   const quantityInput = document.getElementById('labelQuantity');
@@ -906,12 +1007,12 @@ function printLabels() {
   const paper = document.getElementById('printPaperSize').value;
 
   if (!Number.isFinite(quantity) || quantity < 1 || quantity > 1000) {
-    alert('Indique una cantidad entre 1 y 1000 etiquetas.');
+    showToast('⚠️ Cantidad entre 1 y 1000 etiquetas', 'warning');
     quantityInput.focus();
     return;
   }
   if (!Number.isFinite(labelSizeMm) || labelSizeMm <= 0) {
-    alert('Revise el tamaño de la etiqueta antes de imprimir.');
+    showToast('⚠️ Revise el tamaño de la etiqueta', 'warning');
     return;
   }
 
@@ -930,7 +1031,7 @@ function printLabels() {
   const rows = Math.floor((usableHeightMm + gapMm) / (labelSizeMm + gapMm));
 
   if (columns < 1 || rows < 1) {
-    alert(`La etiqueta de ${labelSizeMm.toFixed(1)} mm no cabe en una hoja ${page.name} con el margen seleccionado.`);
+    showToast(`⚠️ Etiqueta muy grande para hoja ${page.name}`, 'warning');
     return;
   }
 
@@ -952,7 +1053,6 @@ function printLabels() {
   }
 
   const pageCss = buildPrintCSS(page, marginMm, usableWidthMm, usableHeightMm, columns, rows, labelSizeMm, gapMm, settings);
-
   const htmlContent = buildPrintHTML(quantity, pages, pageCss);
 
   // ✅ DETECCIÓN: móvil usa iframe, desktop usa window.open
@@ -965,7 +1065,6 @@ function printLabels() {
   console.log(`✅ Generadas ${totalLabels} etiquetas en ${pages.length} hoja(s)`);
 }
 
-// ✅ CSS de impresión (extraído para reutilizar)
 function buildPrintCSS(page, marginMm, usableWidthMm, usableHeightMm, columns, rows, labelSizeMm, gapMm, settings) {
   return `
     @font-face {
@@ -1043,7 +1142,6 @@ function buildPrintHTML(quantity, pages, pageCss) {
       }
     });
     window.addEventListener('afterprint', () => {
-      // Avisar al padre (iframe) que terminó
       if (window.parent && window.parent !== window) {
         window.parent.postMessage({ type: 'ewe-print-done' }, '*');
       }
@@ -1054,11 +1152,10 @@ function buildPrintHTML(quantity, pages, pageCss) {
 </html>`;
 }
 
-// ✅ IMPRESIÓN EN DESKTOP (window.open)
 function printViaWindow(htmlContent) {
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
-    alert('El navegador bloqueó la ventana de impresión. Permita ventanas emergentes.');
+    showToast('⚠️ Permita ventanas emergentes', 'warning');
     return;
   }
   printWindow.document.open();
@@ -1066,13 +1163,10 @@ function printViaWindow(htmlContent) {
   printWindow.document.close();
 }
 
-// ✅ IMPRESIÓN EN MÓVIL (iframe embebido - NO abre ventanas nuevas)
 function printViaIframe(htmlContent) {
-  // Remover overlay anterior si existe
   const existingOverlay = document.getElementById('ewePrintOverlay');
   if (existingOverlay) existingOverlay.remove();
 
-  // Crear overlay fullscreen
   const overlay = document.createElement('div');
   overlay.id = 'ewePrintOverlay';
   overlay.style.cssText = `
@@ -1083,7 +1177,6 @@ function printViaIframe(htmlContent) {
     padding: 10px;
   `;
 
-  // Barra superior con botón cerrar
   const topBar = document.createElement('div');
   topBar.style.cssText = `
     width: 100%; max-width: 600px;
@@ -1101,7 +1194,6 @@ function printViaIframe(htmlContent) {
     ">✕ Cerrar</button>
   `;
 
-  // Iframe con el contenido
   const iframe = document.createElement('iframe');
   iframe.style.cssText = `
     width: 100%; max-width: 600px;
@@ -1114,18 +1206,15 @@ function printViaIframe(htmlContent) {
   overlay.appendChild(iframe);
   document.body.appendChild(overlay);
 
-  // Escribir contenido en el iframe
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
   iframeDoc.open();
   iframeDoc.write(htmlContent);
   iframeDoc.close();
 
-  // Botón cerrar
   document.getElementById('eweClosePrint').addEventListener('click', () => {
     overlay.remove();
   });
 
-  // Cerrar con tecla Escape
   const escHandler = (e) => {
     if (e.key === 'Escape') {
       overlay.remove();
@@ -1134,7 +1223,6 @@ function printViaIframe(htmlContent) {
   };
   window.addEventListener('keydown', escHandler);
 
-  // Escuchar mensaje de "impresión terminada" desde el iframe
   const msgHandler = (e) => {
     if (e.data && e.data.type === 'ewe-print-done') {
       overlay.remove();

@@ -329,3 +329,163 @@ h1 {
     text-align: center;
     line-height: 1.1;
 }
+/* ============================================ */
+/* BOTONES FLOTANTES DE ACCIÓN RÁPIDA           */
+/* ============================================ */
+.floating-actions {
+  position: fixed;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  z-index: 2999;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 20px;
+  pointer-events: none;
+}
+
+.floating-btn {
+  pointer-events: auto;
+  padding: 14px 20px;
+  border-radius: 999px;
+  border: none;
+  font-family: 'Lora', serif;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.floating-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+}
+
+.floating-btn-save {
+  background: linear-gradient(135deg, #d4a843, #c49833);
+}
+
+.floating-btn-save:hover {
+  background: linear-gradient(135deg, #e0b554, #d4a843);
+}
+
+.floating-btn-print {
+  background: linear-gradient(135deg, #2d5016, #3d6b20);
+}
+
+.floating-btn-print:hover {
+  background: linear-gradient(135deg, #3d6b20, #4d8a28);
+}
+
+.floating-btn .badge {
+  background: #a23a36;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Indicador de auto-guardado */
+.autosave-indicator {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  background: rgba(45, 80, 22, 0.9);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 3000;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+  backdrop-filter: blur(10px);
+}
+
+.autosave-indicator.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.autosave-indicator.saved {
+  background: rgba(45, 80, 22, 0.95);
+}
+
+.autosave-indicator.saving {
+  background: rgba(212, 168, 67, 0.95);
+}
+
+/* Toast mejorado */
+#eweToast {
+  animation: slideDown 0.3s ease !important;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Overlay de impresión mejorado */
+#ewePrintOverlay {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Responsive móvil */
+@media (max-width: 768px) {
+  .floating-actions {
+    bottom: 15px;
+    padding: 0 15px;
+  }
+
+  .floating-btn {
+    padding: 16px 22px;
+    font-size: 13px;
+  }
+
+  .floating-btn span.btn-text {
+    display: none; /* En móvil solo mostrar icono */
+  }
+
+  .floating-btn {
+    padding: 16px;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    justify-content: center;
+  }
+
+  .floating-btn .badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+  }
+}
+
+/* Ocultar al imprimir */
+@media print {
+  .floating-actions,
+  .autosave-indicator {
+    display: none !important;
+  }
+}
