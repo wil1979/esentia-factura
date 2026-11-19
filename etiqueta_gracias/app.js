@@ -824,8 +824,11 @@ function exportDesignJSON() {
   const a = document.createElement('a');
   a.href = url;
   a.download = design.name.replace(/[^a-z0-9]/gi, '_') + '.json';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 function loadDesignFromFile(event) {
@@ -990,82 +993,200 @@ function updateSheetVisualPreview(cols, rows, quantity, perSheet, labelSizeMm, s
 }
 
 // ============================================
-// ✅ IMPRESIÓN - CORREGIDA PARA MÓVIL
+// IMPRESIÓN Y PDF COMPATIBLES CON IOS / DESKTOP
 // ============================================
+
+function getPrintSettings() {
+  const marginMm = Number(document.getElementById('printMarginMm').value);
+  const gapMm = Number(document.getElementById('printGapMm').value);
+  const borderWidth = Number(document.getElementById('printBorderWidth').value);
+  return {
+    marginMm: Number.isFinite(marginMm) ? Math.min(20, Math.max(0, marginMm)) : 6.35,
+    gapMm: Number.isFinite(gapMm) ? Math.min(10, Math.max(0, gapMm)) : 1.0,
+    cutBorder: document.getElementById('printCutBorder').checked,
+    borderColor: document.getElementById('printBorderColor').value || '#8b948b',
+    borderWidth: Number.isFinite(borderWidth) ? Math.min(2, Math.max(0.1, borderWidth)) : 0.3
+  };
+}
+
+function loadPrintSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('ewePrintSettings') || 'null');
+    if (!saved) return;
+    if (Number.isFinite(Number(saved.marginMm))) document.getElementById('printMarginMm').value = saved.marginMm;
+    if (Number.isFinite(Number(saved.gapMm))) document.getElementById('printGapMm').value = saved.gapMm;
+    if (typeof saved.cutBorder === 'boolean') document.getElementById('printCutBorder').checked = saved.cutBorder;
+    if (typeof saved.borderColor === 'string') document.getElementById('printBorderColor').value = saved.borderColor;
+    if (Number.isFinite(Number(saved.borderWidth))) document.getElementById('printBorderWidth').value = saved.borderWidth;
+  } catch (error) {
+    console.warn('No se pudieron cargar ajustes de impresión.', error);
+  }
+}
+
+function updatePrintPreview() {
+  const settings = getPrintSettings();
+  const wrapper = document.getElementById('labelWrapper');
+  if (wrapper) {
+    wrapper.classList.toggle('show-print-cut-border', settings.cutBorder);
+    wrapper.style.setProperty('--print-cut-color', settings.borderColor);
+    wrapper.style.setProperty('--print-cut-width', `${settings.borderWidth}mm`);
+  }
+
+  const paper = document.getElementById('printPaperSize').value;
+  const page = paper === 'a4'
+    ? { name: 'A4', widthMm: 210, heightMm: 297 }
+    : { name: 'Carta', widthMm: 215.9, heightMm: 279.4 };
+  const labelSizeMm = Number(document.getElementById('labelSizeMm').value) || DEFAULT_SIZE_MM;
+  const usableWidthMm = page.widthMm - settings.marginMm * 2;
+  const usableHeightMm = page.heightMm - settings.marginMm * 2;
+  const cols = Math.floor((usableWidthMm + settings.gapMm) / (labelSizeMm + settings.gapMm));
+  const rows = Math.floor((usableHeightMm + settings.gapMm) / (labelSizeMm + settings.gapMm));
+  const quantity = Math.max(1, Math.floor(Number(document.getElementById('labelQuantity').value) || 1));
+  const perSheet = Math.max(0, cols * rows);
+  const summary = document.getElementById('printLayoutSummary');
+  if (summary) {
+    summary.textContent = perSheet
+      ? `Capacidad: ${cols} columnas × ${rows} filas = ${perSheet} etiquetas por hoja ${page.name}. ${quantity} etiqueta(s) usarán ${Math.ceil(quantity / perSheet)} hoja(s).`
+      : `La etiqueta no cabe en la hoja ${page.name} con estos márgenes.`;
+  }
+  updateSheetVisualPreview(cols, rows, quantity, perSheet, labelSizeMm, settings);
+}
+
+function updateSheetVisualPreview(cols, rows, quantity, perSheet, labelSizeMm, settings) {
+  const container = document.getElementById('sheetPreview');
+  if (!container) return;
+  container.replaceChildren();
+  if (perSheet === 0) {
+    container.innerHTML = '<div style="color:#a23a36;text-align:center;padding:20px;font-size:12px">⚠️ La etiqueta no cabe en la hoja con esta configuración. Reduce el tamaño o los márgenes.</div>';
+    container.style.display = 'block';
+    return;
+  }
+  const scale = 1.5;
+  const previewLabelSize = labelSizeMm * scale;
+  const previewGap = settings.gapMm * scale;
+  const previewMargin = settings.marginMm * scale;
+  container.style.display = 'grid';
+  container.style.gridTemplateColumns = `repeat(${cols}, ${previewLabelSize}px)`;
+  container.style.gridTemplateRows = `repeat(${rows}, ${previewLabelSize}px)`;
+  container.style.gap = `${previewGap}px`;
+  container.style.padding = `${previewMargin}px`;
+  container.style.width = 'fit-content';
+  container.style.margin = '0 auto';
+  container.style.background = '#fff';
+  container.style.border = '1px solid #ccc';
+  container.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
+  const totalToRender = Math.min(quantity, perSheet);
+  for (let i = 0; i < perSheet; i++) {
+    const labelDiv = document.createElement('div');
+    labelDiv.className = 'preview-label';
+    if (i < totalToRender) {
+      labelDiv.style.background = '#f0f5ef';
+      labelDiv.style.border = settings.cutBorder ? `1.5px solid ${settings.borderColor}` : '1px dashed #2d5016';
+      labelDiv.textContent = 'Etiqueta';
+    } else {
+      labelDiv.style.background = '#f9f9f9';
+      labelDiv.style.border = '1px dotted #ddd';
+      labelDiv.style.opacity = '0.4';
+      labelDiv.style.color = '#999';
+      labelDiv.textContent = 'Vacío';
+    }
+    container.appendChild(labelDiv);
+  }
+}
+
+function isIOSDevice() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function openBlobForIOS(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  if (isIOSDevice()) {
+    const opened = window.open(url, '_blank');
+    if (!opened) window.location.href = url;
+    setTimeout(() => URL.revokeObjectURL(url), 120000);
+    return 'ios-viewer';
+  }
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  link.rel = 'noopener';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  return 'download';
+}
+
+async function shareOrOpenPDF(blob, fileName) {
+  const file = new File([blob], fileName, { type: 'application/pdf' });
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: fileName });
+      return 'shared';
+    } catch (error) {
+      if (error && error.name === 'AbortError') return 'cancelled';
+      console.warn('No se pudo compartir el PDF; se abrirá como archivo.', error);
+    }
+  }
+  return openBlobForIOS(blob, fileName);
+}
 
 function buildPrintCSS(page, marginMm, usableWidthMm, usableHeightMm, columns, rows, labelSizeMm, gapMm, settings) {
   return `
-    @font-face {
-      font-family: 'Adelia';
-      src: url('fonts/Adelia.ttf') format('truetype'),
-           url('fonts/Adelia.otf') format('opentype');
-      font-display: swap;
-    }
-    @page { size: ${page.name}; margin: ${marginMm}mm; }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { background: #fff; font-family: Arial, sans-serif; }
-    .sheet {
-      width: ${usableWidthMm}mm; height: ${usableHeightMm}mm;
-      display: grid !important;
-      grid-template-columns: repeat(${columns}, ${labelSizeMm}mm) !important;
-      grid-template-rows: repeat(${rows}, ${labelSizeMm}mm) !important;
-      gap: ${gapMm}mm !important;
-      justify-content: start !important;
-      align-content: start !important;
-      overflow: hidden !important;
-      page-break-after: always;
-      break-after: page;
-      page-break-inside: avoid;
-      break-inside: avoid;
-    }
-    .sheet:last-child { page-break-after: auto; break-after: auto; }
-    .label {
-      width: ${labelSizeMm}mm !important;
-      height: ${labelSizeMm}mm !important;
-      overflow: hidden; position: relative; display: block;
-    }
-    .svg-box { width: 100% !important; height: 100% !important; overflow: hidden; }
-    .label.cut-border::after {
-      content: ""; position: absolute; inset: 2.5%;
-      border: ${settings.borderWidth}mm solid ${settings.borderColor};
-      border-radius: 50%; pointer-events: none;
-    }
-    svg { display: block; width: 100% !important; height: 100% !important; }
-    .label-circle { fill: white; stroke: #e8dfd5; stroke-width: 2; }
-    .border-text-path { fill: #6b8f5e; font-family: Lora, serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
-    .leaf-decoration { opacity: .7; }
-    .label-text-main, .adelia-font { font-family: 'Adelia', 'Great Vibes', cursive !important; fill: #2d5016; text-anchor: middle; }
-    .label-text-sub { font-family: 'Great Vibes', cursive; fill: #2d5016; text-anchor: middle; }
-    .label-text-message { font-family: Lora, serif; fill: #444; text-anchor: middle; font-size: 10px; }
-    .label-text-sinpe { font-family: 'Playfair Display', serif; fill: #1a1a1a; text-anchor: middle; font-weight: 700; }
-    .label-text-brand { font-family: 'Playfair Display', serif; fill: #2d5016; text-anchor: middle; font-weight: 700; }
-    .label-text-client { font-family: 'Playfair Display', serif; fill: #1a1a1a; text-anchor: middle; font-weight: 600; }
-    .label-text-footer { font-family: 'Dancing Script', cursive; fill: #555; text-anchor: middle; }
-    @media screen {
-      body { padding: 18px; background: #f1f4ef; }
-      .sheet { background: #fff; margin: 0 auto 18px; box-shadow: 0 2px 14px rgba(0,0,0,0.1); }
-    }
+    @font-face { font-family:'Adelia'; src:url('fonts/Adelia.ttf') format('truetype'), url('fonts/Adelia.otf') format('opentype'); font-display:swap; }
+    @page { size:${page.name}; margin:${marginMm}mm; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    html, body { background:#fff; font-family:Arial,sans-serif; }
+    .sheet { width:${usableWidthMm}mm; height:${usableHeightMm}mm; display:grid !important; grid-template-columns:repeat(${columns},${labelSizeMm}mm) !important; grid-template-rows:repeat(${rows},${labelSizeMm}mm) !important; gap:${gapMm}mm !important; justify-content:start !important; align-content:start !important; overflow:hidden !important; page-break-after:always; break-after:page; page-break-inside:avoid; break-inside:avoid; }
+    .sheet:last-child { page-break-after:auto; break-after:auto; }
+    .label { width:${labelSizeMm}mm !important; height:${labelSizeMm}mm !important; overflow:hidden; position:relative; display:block; }
+    .svg-box { width:100% !important; height:100% !important; overflow:hidden; }
+    .label.cut-border::after { content:""; position:absolute; inset:2.5%; border:${settings.borderWidth}mm solid ${settings.borderColor}; border-radius:50%; pointer-events:none; }
+    svg { display:block; width:100% !important; height:100% !important; }
+    .label-circle { fill:white; stroke:#e8dfd5; stroke-width:2; }
+    .border-text-path { fill:#6b8f5e; font-family:Lora,serif; font-size:11px; letter-spacing:2px; text-transform:uppercase; }
+    .leaf-decoration { opacity:.7; }
+    .label-text-main,.adelia-font { font-family:'Adelia','Great Vibes',cursive !important; fill:#2d5016; text-anchor:middle; }
+    .label-text-sub { font-family:'Great Vibes',cursive; fill:#2d5016; text-anchor:middle; }
+    .label-text-message { font-family:Lora,serif; fill:#444; text-anchor:middle; font-size:10px; }
+    .label-text-sinpe { font-family:'Playfair Display',serif; fill:#1a1a1a; text-anchor:middle; font-weight:700; }
+    .label-text-brand { font-family:'Playfair Display',serif; fill:#2d5016; text-anchor:middle; font-weight:700; }
+    .label-text-client { font-family:'Playfair Display',serif; fill:#1a1a1a; text-anchor:middle; font-weight:600; }
+    .label-text-footer { font-family:'Dancing Script',cursive; fill:#555; text-anchor:middle; }
+    @media screen { body { padding:18px; background:#f1f4ef; } .sheet { background:#fff; margin:0 auto 18px; box-shadow:0 2px 14px rgba(0,0,0,.1); } }
   `;
 }
-// ============================================
-// ✅ IMPRESIÓN DEFINITIVA - FUNCIONA EN MÓVIL Y DESKTOP
-// ============================================
+
+function buildPrintHTML(quantity, pages, pageCss) {
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Etiquetas (${quantity})</title><link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet"><style>${pageCss}</style></head><body>${pages.join('\n')}</body></html>`;
+}
+
+function printViaWindow(htmlContent) {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    showToast('⚠️ Permita ventanas emergentes', 'warning');
+    return;
+  }
+  printWindow.document.open();
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+}
+
 function printLabels() {
-  // 1. Auto-guardar antes de imprimir
   try {
     const design = getCurrentDesign();
     design._autosave = true;
     localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(design));
-    if (typeof showAutosaveIndicator === 'function') {
-      showAutosaveIndicator('💾 Diseño guardado antes de imprimir');
-    }
-  } catch(e) {}
+    showAutosaveIndicator('💾 Diseño guardado antes de imprimir');
+  } catch (error) {
+    console.warn('No se pudo guardar antes de imprimir:', error);
+  }
 
   const quantityInput = document.getElementById('labelQuantity');
   const quantity = Math.floor(Number(quantityInput.value));
   const labelSizeMm = Number(document.getElementById('labelSizeMm').value);
   const paper = document.getElementById('printPaperSize').value;
-
   if (!Number.isFinite(quantity) || quantity < 1 || quantity > 1000) {
     showToast('⚠️ Cantidad entre 1 y 1000 etiquetas', 'warning');
     quantityInput.focus();
@@ -1077,19 +1198,14 @@ function printLabels() {
   }
 
   updatePrintPreview();
-
   const page = paper === 'a4'
-    ? { name: 'A4', widthMm: 210, heightMm: 297 }
-    : { name: 'Letter', widthMm: 215.9, heightMm: 279.4 };
-
+    ? { name:'A4', widthMm:210, heightMm:297 }
+    : { name:'Letter', widthMm:215.9, heightMm:279.4 };
   const settings = getPrintSettings();
-  const marginMm = settings.marginMm;
-  const gapMm = settings.gapMm;
-  const usableWidthMm = page.widthMm - marginMm * 2;
-  const usableHeightMm = page.heightMm - marginMm * 2;
-  const columns = Math.floor((usableWidthMm + gapMm) / (labelSizeMm + gapMm));
-  const rows = Math.floor((usableHeightMm + gapMm) / (labelSizeMm + gapMm));
-
+  const usableWidthMm = page.widthMm - settings.marginMm * 2;
+  const usableHeightMm = page.heightMm - settings.marginMm * 2;
+  const columns = Math.floor((usableWidthMm + settings.gapMm) / (labelSizeMm + settings.gapMm));
+  const rows = Math.floor((usableHeightMm + settings.gapMm) / (labelSizeMm + settings.gapMm));
   if (columns < 1 || rows < 1) {
     showToast(`⚠️ Etiqueta muy grande para hoja ${page.name}`, 'warning');
     return;
@@ -1099,7 +1215,6 @@ function printLabels() {
   const svg = document.getElementById('labelSvg').cloneNode(true);
   svg.removeAttribute('id');
   svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-
   const pages = [];
   let totalLabels = 0;
   for (let start = 0; start < quantity; start += perSheet) {
@@ -1112,442 +1227,133 @@ function printLabels() {
     totalLabels += count;
   }
 
-  const pageCss = buildPrintCSS(page, marginMm, usableWidthMm, usableHeightMm, columns, rows, labelSizeMm, gapMm, settings);
+  const pageCss = buildPrintCSS(page, settings.marginMm, usableWidthMm, usableHeightMm, columns, rows, labelSizeMm, settings.gapMm, settings);
   const htmlContent = buildPrintHTML(quantity, pages, pageCss);
-
-  // ✅ MÓVIL: overlay con botones PDF + Imprimir + Cerrar
-  // ✅ DESKTOP: ventana nueva con auto-print
   if (isMobileDevice()) {
-    showPrintOverlay(htmlContent, quantity, page, settings, labelSizeMm, columns, rows, gapMm, marginMm);
+    showPrintOverlay(htmlContent, quantity, page, settings, labelSizeMm, columns, rows, settings.gapMm, settings.marginMm);
   } else {
     printViaWindow(htmlContent);
   }
-
   console.log(`✅ Generadas ${totalLabels} etiquetas en ${pages.length} hoja(s)`);
 }
 
-function buildPrintCSS(page, marginMm, usableWidthMm, usableHeightMm, columns, rows, labelSizeMm, gapMm, settings) {
-  return `
-    @font-face {
-      font-family: 'Adelia';
-      src: url('fonts/Adelia.ttf') format('truetype'),
-           url('fonts/Adelia.otf') format('opentype');
-      font-display: swap;
-    }
-    @page { size: ${page.name}; margin: ${marginMm}mm; }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { background: #fff; font-family: Arial, sans-serif; }
-    .sheet {
-      width: ${usableWidthMm}mm; height: ${usableHeightMm}mm;
-      display: grid !important;
-      grid-template-columns: repeat(${columns}, ${labelSizeMm}mm) !important;
-      grid-template-rows: repeat(${rows}, ${labelSizeMm}mm) !important;
-      gap: ${gapMm}mm !important;
-      justify-content: start !important;
-      align-content: start !important;
-      overflow: hidden !important;
-      page-break-after: always;
-      break-after: page;
-    }
-    .sheet:last-child { page-break-after: auto; break-after: auto; }
-    .label {
-      width: ${labelSizeMm}mm !important;
-      height: ${labelSizeMm}mm !important;
-      overflow: hidden; position: relative; display: block;
-    }
-    .svg-box { width: 100% !important; height: 100% !important; overflow: hidden; }
-    .label.cut-border::after {
-      content: ""; position: absolute; inset: 2.5%;
-      border: ${settings.borderWidth}mm solid ${settings.borderColor};
-      border-radius: 50%; pointer-events: none;
-    }
-    svg { display: block; width: 100% !important; height: 100% !important; }
-    .label-circle { fill: white; stroke: #e8dfd5; stroke-width: 2; }
-    .border-text-path { fill: #6b8f5e; font-family: Lora, serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
-    .leaf-decoration { opacity: .7; }
-    .label-text-main, .adelia-font { font-family: 'Adelia', 'Great Vibes', cursive !important; fill: #2d5016; text-anchor: middle; }
-    .label-text-sub { font-family: 'Great Vibes', cursive; fill: #2d5016; text-anchor: middle; }
-    .label-text-message { font-family: Lora, serif; fill: #444; text-anchor: middle; font-size: 10px; }
-    .label-text-sinpe { font-family: 'Playfair Display', serif; fill: #1a1a1a; text-anchor: middle; font-weight: 700; }
-    .label-text-brand { font-family: 'Playfair Display', serif; fill: #2d5016; text-anchor: middle; font-weight: 700; }
-    .label-text-client { font-family: 'Playfair Display', serif; fill: #1a1a1a; text-anchor: middle; font-weight: 600; }
-    .label-text-footer { font-family: 'Dancing Script', cursive; fill: #555; text-anchor: middle; }
-    @media screen {
-      body { padding: 18px; background: #f1f4ef; }
-      .sheet { background: #fff; margin: 0 auto 18px; box-shadow: 0 2px 14px rgba(0,0,0,0.1); }
-    }
-  `;
-}
-
-function buildPrintHTML(quantity, pages, pageCss) {
-  return `<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Etiquetas (${quantity})</title>
-  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
-  <style>${pageCss}</style>
-</head>
-<body>${pages.join('\n')}</body>
-</html>`;
-}
-
-// ✅ DESKTOP: ventana nueva con auto-print
-function printViaWindow(htmlContent) {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    showToast('⚠️ Permita ventanas emergentes', 'warning');
-    return;
-  }
-  printWindow.document.open();
-  printWindow.document.write(htmlContent);
-  printWindow.document.close();
-}
-
-// ✅ MÓVIL: Overlay con 3 botones (PDF, Imprimir, Cerrar)
 function showPrintOverlay(htmlContent, quantity, page, settings, labelSizeMm, columns, rows, gapMm, marginMm) {
   const existingOverlay = document.getElementById('ewePrintOverlay');
   if (existingOverlay) existingOverlay.remove();
 
   const overlay = document.createElement('div');
   overlay.id = 'ewePrintOverlay';
-  overlay.style.cssText = `
-    position: fixed; inset: 0; z-index: 10000;
-    background: rgba(0,0,0,0.92);
-    display: flex; flex-direction: column;
-    animation: fadeIn 0.3s ease;
-  `;
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.92);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)';
 
-  // ✅ Barra superior con botones
   const topBar = document.createElement('div');
-  topBar.style.cssText = `
-    width: 100%;
-    display: flex; justify-content: space-between; align-items: center;
-    background: linear-gradient(135deg, #2d5016, #3d6b20);
-    color: white;
-    padding: 10px 12px;
-    gap: 8px;
-    flex-wrap: wrap;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-  `;
-  topBar.innerHTML = `
-    <span style="font-size: 13px; font-weight: 600; font-family: 'Lora', serif; flex: 1;">
-      📄 ${quantity} etiqueta(s) · ${page.name}
-    </span>
-    <button id="ewePdfBtn" style="
-      background: #d4a843; color: white; border: none;
-      padding: 10px 14px; border-radius: 8px;
-      font-weight: 700; cursor: pointer; font-size: 13px;
-      font-family: 'Lora', serif;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    ">📄 PDF</button>
-    <button id="ewePrintBtn" style="
-      background: #1976d2; color: white; border: none;
-      padding: 10px 14px; border-radius: 8px;
-      font-weight: 700; cursor: pointer; font-size: 13px;
-      font-family: 'Lora', serif;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    ">🖨️ Imprimir</button>
-    <button id="eweClosePrint" style="
-      background: #a23a36; color: white; border: none;
-      padding: 10px 14px; border-radius: 8px;
-      font-weight: 700; cursor: pointer; font-size: 13px;
-      font-family: 'Lora', serif;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    ">✕</button>
-  `;
+  topBar.style.cssText = 'width:100%;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#2d5016,#3d6b20);color:#fff;padding:10px 12px;gap:8px;flex-wrap:wrap;box-shadow:0 2px 10px rgba(0,0,0,.3)';
+  topBar.innerHTML = `<span style="font-size:13px;font-weight:600;flex:1">${quantity} etiqueta(s) · ${page.name}</span><button id="ewePdfBtn" type="button" style="background:#d4a843;color:#fff;border:0;padding:10px 14px;border-radius:8px;font-weight:700;min-height:44px">📄 PDF / Guardar</button><button id="ewePrintBtn" type="button" style="background:#1976d2;color:#fff;border:0;padding:10px 14px;border-radius:8px;font-weight:700;min-height:44px">🖨️ Imprimir</button><button id="eweClosePrint" type="button" style="background:#a23a36;color:#fff;border:0;padding:10px 14px;border-radius:8px;font-weight:700;min-height:44px">✕</button>`;
 
-  // ✅ Instrucciones
   const instructions = document.createElement('div');
-  instructions.style.cssText = `
-    width: 100%;
-    background: #fff9e6;
-    color: #7a5a00;
-    padding: 10px 14px;
-    font-size: 12px;
-    font-family: 'Lora', serif;
-    text-align: center;
-    border-bottom: 2px solid #d4a843;
-    line-height: 1.4;
-  `;
-  instructions.innerHTML = `
-    <strong>📱 Recomendado:</strong> Toca <strong>📄 PDF</strong> para descargar el archivo. 
-    Ábrelo desde "Archivos" o "Descargas" e imprímelo.
-  `;
+  instructions.style.cssText = 'width:100%;background:#fff9e6;color:#7a5a00;padding:10px 14px;font-size:12px;text-align:center;border-bottom:2px solid #d4a843;line-height:1.4';
+  instructions.innerHTML = isIOSDevice()
+    ? '<strong>iPhone/iPad:</strong> toca <strong>PDF / Guardar</strong> y luego Compartir → Guardar en Archivos o Imprimir.'
+    : '<strong>Recomendado:</strong> toca PDF / Guardar para descargar o Imprimir para abrir el diálogo.';
 
-  // ✅ Iframe con la vista previa
   const iframe = document.createElement('iframe');
   iframe.id = 'ewePrintIframe';
-  iframe.setAttribute('srcdoc', htmlContent);
-  iframe.style.cssText = `
-    width: 100%;
-    flex: 1;
-    background: white;
-    border: none;
-  `;
-
-  overlay.appendChild(topBar);
-  overlay.appendChild(instructions);
-  overlay.appendChild(iframe);
+  iframe.title = 'Vista previa de impresión';
+  iframe.srcdoc = htmlContent;
+  iframe.style.cssText = 'width:100%;flex:1;background:#fff;border:0';
+  overlay.append(topBar, instructions, iframe);
   document.body.appendChild(overlay);
 
-  // ✅ BOTÓN: Generar PDF (el más confiable en móvil)
-  document.getElementById('ewePdfBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('ewePdfBtn');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '⏳ Generando...';
+  document.getElementById('ewePdfBtn').addEventListener('click', async (event) => {
+    const btn = event.currentTarget;
+    const originalText = btn.textContent;
     btn.disabled = true;
-    btn.style.opacity = '0.6';
-
+    btn.textContent = '⏳ Generando PDF…';
     try {
-      await generatePDFDirect(quantity, page, settings, labelSizeMm, columns, rows, gapMm, marginMm);
-      showToast('✅ PDF descargado correctamente', 'success');
+      const result = await generatePDFDirect(quantity, page, settings, labelSizeMm, columns, rows, gapMm, marginMm);
+      if (result !== 'cancelled') showToast('✅ PDF listo para guardar o imprimir', 'success');
     } catch (error) {
       console.error('Error generando PDF:', error);
-      showToast('❌ Error: ' + error.message, 'error');
+      showToast('❌ No se pudo generar el PDF: ' + (error.message || error), 'error');
     } finally {
-      btn.innerHTML = originalText;
       btn.disabled = false;
-      btn.style.opacity = '1';
+      btn.textContent = originalText;
     }
   });
 
-  // ✅ BOTÓN: Imprimir (intenta abrir diálogo)
   document.getElementById('ewePrintBtn').addEventListener('click', () => {
-    try {
-      const iframeEl = document.getElementById('ewePrintIframe');
-      if (iframeEl && iframeEl.contentWindow) {
-        iframeEl.contentWindow.focus();
-        setTimeout(() => {
-          iframeEl.contentWindow.print();
-        }, 100);
-      }
-    } catch (e) {
-      showToast('⚠️ Use el botón 📄 PDF como alternativa', 'warning');
-    }
+    const blob = new Blob([htmlContent], { type:'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const opened = window.open(url, '_blank');
+    if (!opened) window.location.href = url;
+    setTimeout(() => URL.revokeObjectURL(url), 120000);
+    showToast(isIOSDevice() ? '📱 En la nueva pestaña usa Compartir → Imprimir' : '🖨️ Preparando impresión', 'info');
   });
 
-  // ✅ BOTÓN: Cerrar
-  document.getElementById('eweClosePrint').addEventListener('click', () => {
-    overlay.remove();
-  });
-
-  // ✅ Cerrar con Escape
-  const escHandler = (e) => {
-    if (e.key === 'Escape') {
-      overlay.remove();
-      window.removeEventListener('keydown', escHandler);
-    }
-  };
-  window.addEventListener('keydown', escHandler);
-
-  showToast('📱 Toca 📄 PDF para descargar', 'info');
+  document.getElementById('eweClosePrint').addEventListener('click', () => overlay.remove());
+  showToast(isIOSDevice() ? '📱 PDF / Guardar abre las opciones de iOS' : '📄 Selecciona PDF o Imprimir', 'info');
 }
 
-// ✅ FUNCIÓN CLAVE: Generar PDF directamente con jsPDF + html2canvas
 async function generatePDFDirect(quantity, page, settings, labelSizeMm, columns, rows, gapMm, marginMm) {
-  // Verificar librerías
-  if (typeof window.jspdf === 'undefined' || typeof html2canvas === 'undefined') {
+  if (!window.jspdf || typeof html2canvas !== 'function') {
     throw new Error('Librerías PDF no cargadas. Recargue la página.');
   }
-
   const { jsPDF } = window.jspdf;
-
-  // Crear PDF con orientación según la hoja
-  const orientation = page.widthMm > page.heightMm ? 'landscape' : 'portrait';
-  const pdf = new jsPDF({
-    orientation: orientation,
-    unit: 'mm',
-    format: page.name.toLowerCase() === 'a4' ? 'a4' : 'letter'
-  });
-
-  const pageWidth = page.widthMm;
-  const pageHeight = page.heightMm;
-
-  // Clonar el SVG de la etiqueta
+  const pdf = new jsPDF({ orientation:page.widthMm > page.heightMm ? 'landscape' : 'portrait', unit:'mm', format:page.name.toLowerCase() === 'a4' ? 'a4' : 'letter' });
   const originalSvg = document.getElementById('labelSvg');
+  if (!originalSvg) throw new Error('No se encontró la etiqueta para exportar.');
   const svgClone = originalSvg.cloneNode(true);
   svgClone.removeAttribute('id');
   svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
-  // Contenedor temporal fuera de pantalla
+  const px = Math.max(1, Math.round(labelSizeMm * 3.779527559));
   const container = document.createElement('div');
-  container.style.cssText = `
-    position: fixed;
-    left: -9999px;
-    top: 0;
-    width: ${labelSizeMm * 3.78}mm;
-    height: ${labelSizeMm * 3.78}mm;
-    background: white;
-    z-index: -1;
-  `;
-
-  // Convertir SVG a data URL para que html2canvas lo renderice
-  const svgString = new XMLSerializer().serializeToString(svgClone);
-  const svgDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
-
-  const imgElement = document.createElement('img');
-  imgElement.src = svgDataUrl;
-  imgElement.style.cssText = `
-    width: 100%;
-    height: 100%;
-    display: block;
-  `;
-
-  container.appendChild(imgElement);
+  container.style.cssText = `position:fixed;left:0;top:0;width:${px}px;height:${px}px;background:#fff;opacity:.01;pointer-events:none;z-index:-1`;
+  const img = document.createElement('img');
+  img.alt = 'Etiqueta';
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(svgClone));
+  img.style.cssText = 'display:block;width:100%;height:100%';
+  container.appendChild(img);
   document.body.appendChild(container);
 
-  // Esperar a que la imagen cargue
-  await new Promise((resolve, reject) => {
-    imgElement.onload = resolve;
-    imgElement.onerror = () => reject(new Error('No se pudo renderizar la etiqueta'));
-    setTimeout(resolve, 1500); // Timeout de seguridad
-  });
-
-  // Esperar un poco más para asegurar renderizado
-  await new Promise(resolve => setTimeout(resolve, 300));
-
-  // Convertir a canvas
-  const canvas = await html2canvas(container, {
-    backgroundColor: '#ffffff',
-    scale: 3, // Alta calidad
-    useCORS: true,
-    allowTaint: true,
-    logging: false
-  });
-
-  // Limpiar contenedor temporal
-  document.body.removeChild(container);
-
-  // Convertir canvas a imagen
-  const labelImageData = canvas.toDataURL('image/png', 1.0);
-
-  // Calcular posiciones
-  const usableWidth = pageWidth - (marginMm * 2);
-  const usableHeight = pageHeight - (marginMm * 2);
-
-  // Generar etiquetas página por página
-  let labelsRemaining = quantity;
-  let isFirstPage = true;
-
-  while (labelsRemaining > 0) {
-    if (!isFirstPage) {
-      pdf.addPage();
-    }
-    isFirstPage = false;
-
-    const labelsOnThisPage = Math.min(columns * rows, labelsRemaining);
-    let labelIndex = 0;
-
-    for (let row = 0; row < rows && labelIndex < labelsOnThisPage; row++) {
-      for (let col = 0; col < columns && labelIndex < labelsOnThisPage; col++) {
-        const x = marginMm + (col * (labelSizeMm + gapMm));
-        const y = marginMm + (row * (labelSizeMm + gapMm));
-
-        // Agregar la imagen de la etiqueta
-        pdf.addImage(labelImageData, 'PNG', x, y, labelSizeMm, labelSizeMm);
-
-        // Agregar borde de corte si está activado
-        if (settings.cutBorder) {
-          pdf.setDrawColor(settings.borderColor);
-          pdf.setLineWidth(settings.borderWidth);
-          const borderInset = labelSizeMm * 0.025;
-          const borderSize = labelSizeMm - (borderInset * 2);
-          pdf.circle(
-            x + (labelSizeMm / 2),
-            y + (labelSizeMm / 2),
-            borderSize / 2,
-            'S'
-          );
+  try {
+    await new Promise((resolve, reject) => {
+      if (img.complete) return resolve();
+      img.onload = resolve;
+      img.onerror = () => reject(new Error('No se pudo renderizar la etiqueta.'));
+      setTimeout(() => reject(new Error('Tiempo agotado al renderizar la etiqueta.')), 10000);
+    });
+    const canvas = await html2canvas(container, { backgroundColor:'#fff', scale:Math.min(2, window.devicePixelRatio || 1), useCORS:true, allowTaint:false, logging:false });
+    const imageData = canvas.toDataURL('image/png', 1);
+    let remaining = quantity;
+    let firstPage = true;
+    while (remaining > 0) {
+      if (!firstPage) pdf.addPage();
+      firstPage = false;
+      const count = Math.min(columns * rows, remaining);
+      let index = 0;
+      for (let row = 0; row < rows && index < count; row++) {
+        for (let col = 0; col < columns && index < count; col++) {
+          const x = marginMm + col * (labelSizeMm + gapMm);
+          const y = marginMm + row * (labelSizeMm + gapMm);
+          pdf.addImage(imageData, 'PNG', x, y, labelSizeMm, labelSizeMm);
+          if (settings.cutBorder) {
+            pdf.setDrawColor(settings.borderColor);
+            pdf.setLineWidth(settings.borderWidth);
+            const inset = labelSizeMm * .025;
+            pdf.circle(x + labelSizeMm / 2, y + labelSizeMm / 2, (labelSizeMm - inset * 2) / 2, 'S');
+          }
+          index++;
         }
-
-        labelIndex++;
       }
+      remaining -= count;
     }
-
-    labelsRemaining -= labelsOnThisPage;
+    const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+    const fileName = `etiquetas-esentia-${quantity}-${stamp}.pdf`;
+    return await shareOrOpenPDF(pdf.output('blob'), fileName);
+  } finally {
+    container.remove();
   }
-
-  // Descargar el PDF
-  const timestamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
-  const fileName = `etiquetas-esentia-${quantity}-${timestamp}.pdf`;
-  pdf.save(fileName);
 }
 
 function printLabel() { printLabels(); }
 function createPDF() { printLabels(); }
-
-// ✅ DESKTOP: window.open (funciona bien)
-function printViaWindow(htmlContent) {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    showToast('⚠️ Permita ventanas emergentes', 'warning');
-    return;
-  }
-  printWindow.document.open();
-  printWindow.document.write(htmlContent);
-  printWindow.document.close();
-}
-
-
-
-
-function buildPrintCSS(page, marginMm, usableWidthMm, usableHeightMm, columns, rows, labelSizeMm, gapMm, settings) {
-  return `
-    @font-face {
-      font-family: 'Adelia';
-      src: url('fonts/Adelia.ttf') format('truetype'),
-           url('fonts/Adelia.otf') format('opentype');
-      font-display: swap;
-    }
-    @page { size: ${page.name}; margin: ${marginMm}mm; }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { background: #fff; font-family: Arial, sans-serif; }
-    .sheet {
-      width: ${usableWidthMm}mm; height: ${usableHeightMm}mm;
-      display: grid !important;
-      grid-template-columns: repeat(${columns}, ${labelSizeMm}mm) !important;
-      grid-template-rows: repeat(${rows}, ${labelSizeMm}mm) !important;
-      gap: ${gapMm}mm !important;
-      justify-content: start !important;
-      align-content: start !important;
-      overflow: hidden !important;
-      page-break-after: always;
-      break-after: page;
-      page-break-inside: avoid;
-      break-inside: avoid;
-    }
-    .sheet:last-child { page-break-after: auto; break-after: auto; }
-    .label {
-      width: ${labelSizeMm}mm !important;
-      height: ${labelSizeMm}mm !important;
-      overflow: hidden; position: relative; display: block;
-    }
-    .svg-box { width: 100% !important; height: 100% !important; overflow: hidden; }
-    .label.cut-border::after {
-      content: ""; position: absolute; inset: 2.5%;
-      border: ${settings.borderWidth}mm solid ${settings.borderColor};
-      border-radius: 50%; pointer-events: none;
-    }
-    svg { display: block; width: 100% !important; height: 100% !important; }
-    .label-circle { fill: white; stroke: #e8dfd5; stroke-width: 2; }
-    .border-text-path { fill: #6b8f5e; font-family: Lora, serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
-    .leaf-decoration { opacity: .7; }
-    .label-text-main, .adelia-font { font-family: 'Adelia', 'Great Vibes', cursive !important; fill: #2d5016; text-anchor: middle; }
-    .label-text-sub { font-family: 'Great Vibes', cursive; fill: #2d5016; text-anchor: middle; }
-    .label-text-message { font-family: Lora, serif; fill: #444; text-anchor: middle; font-size: 10px; }
-    .label-text-sinpe { font-family: 'Playfair Display', serif; fill: #1a1a1a; text-anchor: middle; font-weight: 700; }
-    .label-text-brand { font-family: 'Playfair Display', serif; fill: #2d5016; text-anchor: middle; font-weight: 700; }
-    .label-text-client { font-family: 'Playfair Display', serif; fill: #1a1a1a; text-anchor: middle; font-weight: 600; }
-    .label-text-footer { font-family: 'Dancing Script', cursive; fill: #555; text-anchor: middle; }
-    @media screen {
-      body { padding: 18px; background: #f1f4ef; }
-      .sheet { background: #fff; margin: 0 auto 18px; box-shadow: 0 2px 14px rgba(0,0,0,0.1); }
-    }
-  `;
-}
-
-
-
-
