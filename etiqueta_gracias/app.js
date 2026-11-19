@@ -48,20 +48,18 @@ document.addEventListener('DOMContentLoaded', function() {
   updateBorderText();
   loadSavedDesignsList();
 
-  // ✅ RECUPERACIÓN AUTOMÁTICA
   recoverAutosave();
 
   if (document.getElementById('qrEnabled').checked) {
     generateQR();
   }
 
-  ['printPaperSize', 'printMargin', 'printGap', 'printCutBorder', 'printBorderColor', 'printBorderWidth', 'labelSizeInches', 'labelQuantity']
+  ['printPaperSize', 'printMarginMm', 'printGapMm', 'printCutBorder', 'printBorderColor', 'printBorderWidth', 'labelSizeInches', 'labelQuantity']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) el.addEventListener('change', updatePrintPreview);
     });
 
-  // ✅ Guardar estado inicial (para detectar cambios)
   setTimeout(() => {
     lastSavedState = JSON.stringify(getCurrentDesign());
   }, 1000);
@@ -72,27 +70,22 @@ document.addEventListener('DOMContentLoaded', function() {
       const design = getCurrentDesign();
       design._autosave = true;
       localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(design));
-      showAutosaveIndicator('💾 Diseño guardado automáticamente');
-    } catch(e) {
-      console.warn('No se pudo auto-guardar:', e);
-    }
+      showAutosaveIndicator('💾 Guardado automático');
+    } catch(e) {}
   }, 30000);
 
-  // ✅ Detectar cambios en inputs para mostrar badge
   document.addEventListener('input', trackChanges);
   document.addEventListener('change', trackChanges);
 
-  // ✅ PROTECCIÓN: avisar al salir si hay cambios sin guardar
   window.addEventListener('beforeunload', function(e) {
     if (unsavedChanges > 0) {
       e.preventDefault();
-      e.returnValue = 'Tienes cambios sin guardar. ¿Seguro que quieres salir?';
+      e.returnValue = 'Tienes cambios sin guardar.';
       return e.returnValue;
     }
   });
 });
 
-// ✅ Rastrear cambios no guardados
 function trackChanges() {
   try {
     const currentState = JSON.stringify(getCurrentDesign());
@@ -103,7 +96,6 @@ function trackChanges() {
   } catch(e) {}
 }
 
-// ✅ Actualizar badge de cambios pendientes
 function updateChangesBadge() {
   const badge = document.getElementById('changesBadge');
   if (!badge) return;
@@ -115,18 +107,14 @@ function updateChangesBadge() {
   }
 }
 
-// ✅ Mostrar indicador de auto-guardado
 function showAutosaveIndicator(message, type = 'saved') {
   const indicator = document.getElementById('autosaveIndicator');
   if (!indicator) return;
   indicator.textContent = message;
   indicator.className = 'autosave-indicator show ' + type;
-  setTimeout(() => {
-    indicator.classList.remove('show');
-  }, 2000);
+  setTimeout(() => indicator.classList.remove('show'), 2000);
 }
 
-// ✅ Recuperar diseño guardado automáticamente
 function recoverAutosave() {
   try {
     const saved = localStorage.getItem(AUTOSAVE_KEY);
@@ -134,25 +122,20 @@ function recoverAutosave() {
     const design = JSON.parse(saved);
     if (!design || !design._autosave) return;
 
-    const hasContent = design.texts && (
-      design.texts.main || design.texts.client || design.texts.sub
-    );
+    const hasContent = design.texts && (design.texts.main || design.texts.client || design.texts.sub);
     if (!hasContent) return;
 
     const savedDate = design.savedAt ? new Date(design.savedAt).toLocaleString('es-CR') : 'reciente';
-    if (confirm(`🔄 Se encontró un diseño sin guardar (${savedDate}).\n\n¿Deseas recuperarlo?`)) {
+    if (confirm(`🔄 Diseño sin guardar encontrado (${savedDate}).\n\n¿Recuperarlo?`)) {
       applyDesign(design);
-      showToast('✅ Diseño recuperado correctamente', 'success');
+      showToast('✅ Diseño recuperado', 'success');
       lastSavedState = JSON.stringify(design);
       unsavedChanges = 0;
       updateChangesBadge();
     }
-  } catch(e) {
-    console.warn('No se pudo recuperar autosave:', e);
-  }
+  } catch(e) {}
 }
 
-// ✅ Toast notification
 function showToast(message, type = 'info') {
   const existing = document.getElementById('eweToast');
   if (existing) existing.remove();
@@ -165,8 +148,8 @@ function showToast(message, type = 'info') {
     background: ${type === 'success' ? '#2d5016' : type === 'error' ? '#a23a36' : type === 'warning' ? '#d4a843' : '#333'};
     color: white; padding: 12px 24px; border-radius: 8px;
     font-family: 'Lora', serif; font-size: 14px; font-weight: 600;
-    z-index: 9999; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    animation: slideDown 0.3s ease;
+    z-index: 99999; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    animation: slideDown 0.3s ease; max-width: 90vw; text-align: center;
   `;
   document.body.appendChild(toast);
   setTimeout(() => {
@@ -719,7 +702,6 @@ function applyDesign(design) {
   refreshPreview();
 }
 
-// ✅ NUEVO: Guardado rápido (sin pedir nombre)
 function quickSaveDesign() {
   const design = getCurrentDesign();
   const timestamp = new Date().toLocaleString('es-CR', {
@@ -735,19 +717,17 @@ function quickSaveDesign() {
     localStorage.setItem('eweDesigns', JSON.stringify(designs));
     loadSavedDesignsList();
 
-    // ✅ Guardar también como autosave
     design._autosave = true;
     localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(design));
 
-    // ✅ Resetear contador de cambios
     lastSavedState = JSON.stringify(design);
     unsavedChanges = 0;
     updateChangesBadge();
 
-    showToast(`💾 Diseño guardado: "${name}"`, 'success');
-    showAutosaveIndicator('✅ Guardado correctamente');
+    showToast(`💾 Diseño guardado`, 'success');
+    showAutosaveIndicator('✅ Guardado');
   } catch (error) {
-    showToast('❌ Error al guardar. Almacenamiento lleno.', 'error');
+    showToast('❌ Error al guardar', 'error');
   }
 }
 
@@ -767,15 +747,12 @@ function saveDesign() {
   try {
     localStorage.setItem('eweDesigns', JSON.stringify(designs));
     loadSavedDesignsList();
-
-    // ✅ Resetear contador
     lastSavedState = JSON.stringify(design);
     unsavedChanges = 0;
     updateChangesBadge();
-
-    showToast(`✅ Diseño "${name}" guardado.`, 'success');
+    showToast(`✅ Diseño "${name}" guardado`, 'success');
   } catch (error) {
-    showToast('Error al guardar. Posiblemente el diseño es muy grande.', 'error');
+    showToast('Error al guardar', 'error');
   }
 }
 
@@ -824,11 +801,8 @@ function exportDesignJSON() {
   const a = document.createElement('a');
   a.href = url;
   a.download = design.name.replace(/[^a-z0-9]/gi, '_') + '.json';
-  a.rel = 'noopener';
-  document.body.appendChild(a);
   a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  URL.revokeObjectURL(url);
 }
 
 function loadDesignFromFile(event) {
@@ -889,7 +863,7 @@ function addToQueue() {
 }
 
 // ============================================
-// IMPRESIÓN
+// IMPRESIÓN - CONFIGURACIÓN
 // ============================================
 function getPrintSettings() {
   const marginMm = Number(document.getElementById('printMarginMm').value);
@@ -913,9 +887,7 @@ function loadPrintSettings() {
     if (typeof saved.cutBorder === 'boolean') document.getElementById('printCutBorder').checked = saved.cutBorder;
     if (typeof saved.borderColor === 'string') document.getElementById('printBorderColor').value = saved.borderColor;
     if (Number.isFinite(Number(saved.borderWidth))) document.getElementById('printBorderWidth').value = saved.borderWidth;
-  } catch (error) {
-    console.warn('No se pudieron cargar ajustes.', error);
-  }
+  } catch (error) {}
 }
 
 function updatePrintPreview() {
@@ -952,7 +924,7 @@ function updateSheetVisualPreview(cols, rows, quantity, perSheet, labelSizeMm, s
   container.innerHTML = '';
 
   if (perSheet === 0) {
-    container.innerHTML = '<div style="color:#a23a36; text-align:center; padding:20px; font-size:12px;">⚠️ La etiqueta no cabe en la hoja con esta configuración. Reduce el tamaño o los márgenes.</div>';
+    container.innerHTML = '<div style="color:#a23a36; text-align:center; padding:20px; font-size:12px;">⚠️ La etiqueta no cabe en la hoja con esta configuración.</div>';
     container.style.display = 'block';
     return;
   }
@@ -993,176 +965,467 @@ function updateSheetVisualPreview(cols, rows, quantity, perSheet, labelSizeMm, s
 }
 
 // ============================================
-// IMPRESIÓN Y PDF COMPATIBLES CON IOS / DESKTOP
+// ✅ IMPRESIÓN - FUNCIÓN PRINCIPAL
 // ============================================
-
-function getPrintSettings() {
-  const marginMm = Number(document.getElementById('printMarginMm').value);
-  const gapMm = Number(document.getElementById('printGapMm').value);
-  const borderWidth = Number(document.getElementById('printBorderWidth').value);
-  return {
-    marginMm: Number.isFinite(marginMm) ? Math.min(20, Math.max(0, marginMm)) : 6.35,
-    gapMm: Number.isFinite(gapMm) ? Math.min(10, Math.max(0, gapMm)) : 1.0,
-    cutBorder: document.getElementById('printCutBorder').checked,
-    borderColor: document.getElementById('printBorderColor').value || '#8b948b',
-    borderWidth: Number.isFinite(borderWidth) ? Math.min(2, Math.max(0.1, borderWidth)) : 0.3
-  };
-}
-
-function loadPrintSettings() {
+function printLabels() {
   try {
-    const saved = JSON.parse(localStorage.getItem('ewePrintSettings') || 'null');
-    if (!saved) return;
-    if (Number.isFinite(Number(saved.marginMm))) document.getElementById('printMarginMm').value = saved.marginMm;
-    if (Number.isFinite(Number(saved.gapMm))) document.getElementById('printGapMm').value = saved.gapMm;
-    if (typeof saved.cutBorder === 'boolean') document.getElementById('printCutBorder').checked = saved.cutBorder;
-    if (typeof saved.borderColor === 'string') document.getElementById('printBorderColor').value = saved.borderColor;
-    if (Number.isFinite(Number(saved.borderWidth))) document.getElementById('printBorderWidth').value = saved.borderWidth;
-  } catch (error) {
-    console.warn('No se pudieron cargar ajustes de impresión.', error);
-  }
-}
+    const design = getCurrentDesign();
+    design._autosave = true;
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(design));
+    showAutosaveIndicator('💾 Guardado antes de imprimir');
+  } catch(e) {}
 
-function updatePrintPreview() {
-  const settings = getPrintSettings();
-  const wrapper = document.getElementById('labelWrapper');
-  if (wrapper) {
-    wrapper.classList.toggle('show-print-cut-border', settings.cutBorder);
-    wrapper.style.setProperty('--print-cut-color', settings.borderColor);
-    wrapper.style.setProperty('--print-cut-width', `${settings.borderWidth}mm`);
-  }
-
+  const quantityInput = document.getElementById('labelQuantity');
+  const quantity = Math.floor(Number(quantityInput.value));
+  const labelSizeMm = Number(document.getElementById('labelSizeMm').value);
   const paper = document.getElementById('printPaperSize').value;
+
+  if (!Number.isFinite(quantity) || quantity < 1 || quantity > 1000) {
+    showToast('⚠️ Cantidad entre 1 y 1000', 'warning');
+    return;
+  }
+  if (!Number.isFinite(labelSizeMm) || labelSizeMm <= 0) {
+    showToast('⚠️ Revise el tamaño', 'warning');
+    return;
+  }
+
+  updatePrintPreview();
+
   const page = paper === 'a4'
     ? { name: 'A4', widthMm: 210, heightMm: 297 }
-    : { name: 'Carta', widthMm: 215.9, heightMm: 279.4 };
-  const labelSizeMm = Number(document.getElementById('labelSizeMm').value) || DEFAULT_SIZE_MM;
-  const usableWidthMm = page.widthMm - settings.marginMm * 2;
-  const usableHeightMm = page.heightMm - settings.marginMm * 2;
-  const cols = Math.floor((usableWidthMm + settings.gapMm) / (labelSizeMm + settings.gapMm));
-  const rows = Math.floor((usableHeightMm + settings.gapMm) / (labelSizeMm + settings.gapMm));
-  const quantity = Math.max(1, Math.floor(Number(document.getElementById('labelQuantity').value) || 1));
-  const perSheet = Math.max(0, cols * rows);
-  const summary = document.getElementById('printLayoutSummary');
-  if (summary) {
-    summary.textContent = perSheet
-      ? `Capacidad: ${cols} columnas × ${rows} filas = ${perSheet} etiquetas por hoja ${page.name}. ${quantity} etiqueta(s) usarán ${Math.ceil(quantity / perSheet)} hoja(s).`
-      : `La etiqueta no cabe en la hoja ${page.name} con estos márgenes.`;
-  }
-  updateSheetVisualPreview(cols, rows, quantity, perSheet, labelSizeMm, settings);
-}
+    : { name: 'Letter', widthMm: 215.9, heightMm: 279.4 };
 
-function updateSheetVisualPreview(cols, rows, quantity, perSheet, labelSizeMm, settings) {
-  const container = document.getElementById('sheetPreview');
-  if (!container) return;
-  container.replaceChildren();
-  if (perSheet === 0) {
-    container.innerHTML = '<div style="color:#a23a36;text-align:center;padding:20px;font-size:12px">⚠️ La etiqueta no cabe en la hoja con esta configuración. Reduce el tamaño o los márgenes.</div>';
-    container.style.display = 'block';
+  const settings = getPrintSettings();
+  const marginMm = settings.marginMm;
+  const gapMm = settings.gapMm;
+  const usableWidthMm = page.widthMm - marginMm * 2;
+  const usableHeightMm = page.heightMm - marginMm * 2;
+  const columns = Math.floor((usableWidthMm + gapMm) / (labelSizeMm + gapMm));
+  const rows = Math.floor((usableHeightMm + gapMm) / (labelSizeMm + gapMm));
+
+  if (columns < 1 || rows < 1) {
+    showToast(`⚠️ Etiqueta muy grande`, 'warning');
     return;
   }
-  const scale = 1.5;
-  const previewLabelSize = labelSizeMm * scale;
-  const previewGap = settings.gapMm * scale;
-  const previewMargin = settings.marginMm * scale;
-  container.style.display = 'grid';
-  container.style.gridTemplateColumns = `repeat(${cols}, ${previewLabelSize}px)`;
-  container.style.gridTemplateRows = `repeat(${rows}, ${previewLabelSize}px)`;
-  container.style.gap = `${previewGap}px`;
-  container.style.padding = `${previewMargin}px`;
-  container.style.width = 'fit-content';
-  container.style.margin = '0 auto';
-  container.style.background = '#fff';
-  container.style.border = '1px solid #ccc';
-  container.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
-  const totalToRender = Math.min(quantity, perSheet);
-  for (let i = 0; i < perSheet; i++) {
-    const labelDiv = document.createElement('div');
-    labelDiv.className = 'preview-label';
-    if (i < totalToRender) {
-      labelDiv.style.background = '#f0f5ef';
-      labelDiv.style.border = settings.cutBorder ? `1.5px solid ${settings.borderColor}` : '1px dashed #2d5016';
-      labelDiv.textContent = 'Etiqueta';
-    } else {
-      labelDiv.style.background = '#f9f9f9';
-      labelDiv.style.border = '1px dotted #ddd';
-      labelDiv.style.opacity = '0.4';
-      labelDiv.style.color = '#999';
-      labelDiv.textContent = 'Vacío';
-    }
-    container.appendChild(labelDiv);
-  }
+
+  const perSheet = columns * rows;
+
+  // ✅ Mostrar overlay con opciones
+  showPrintOverlay(quantity, page, settings, labelSizeMm, columns, rows, gapMm, marginMm);
 }
 
-function isIOSDevice() {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-}
+// ============================================
+// ✅ OVERLAY DE IMPRESIÓN (MÓVIL Y DESKTOP)
+// ============================================
+function showPrintOverlay(quantity, page, settings, labelSizeMm, columns, rows, gapMm, marginMm) {
+  const existingOverlay = document.getElementById('ewePrintOverlay');
+  if (existingOverlay) existingOverlay.remove();
 
-function openBlobForIOS(blob, fileName) {
-  const url = URL.createObjectURL(blob);
-  if (isIOSDevice()) {
-    const opened = window.open(url, '_blank');
-    if (!opened) window.location.href = url;
-    setTimeout(() => URL.revokeObjectURL(url), 120000);
-    return 'ios-viewer';
-  }
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  link.rel = 'noopener';
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 60000);
-  return 'download';
-}
-
-async function shareOrOpenPDF(blob, fileName) {
-  const file = new File([blob], fileName, { type: 'application/pdf' });
-  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title: fileName });
-      return 'shared';
-    } catch (error) {
-      if (error && error.name === 'AbortError') return 'cancelled';
-      console.warn('No se pudo compartir el PDF; se abrirá como archivo.', error);
-    }
-  }
-  return openBlobForIOS(blob, fileName);
-}
-
-function buildPrintCSS(page, marginMm, usableWidthMm, usableHeightMm, columns, rows, labelSizeMm, gapMm, settings) {
-  return `
-    @font-face { font-family:'Adelia'; src:url('fonts/Adelia.ttf') format('truetype'), url('fonts/Adelia.otf') format('opentype'); font-display:swap; }
-    @page { size:${page.name}; margin:${marginMm}mm; }
-    * { box-sizing:border-box; margin:0; padding:0; }
-    html, body { background:#fff; font-family:Arial,sans-serif; }
-    .sheet { width:${usableWidthMm}mm; height:${usableHeightMm}mm; display:grid !important; grid-template-columns:repeat(${columns},${labelSizeMm}mm) !important; grid-template-rows:repeat(${rows},${labelSizeMm}mm) !important; gap:${gapMm}mm !important; justify-content:start !important; align-content:start !important; overflow:hidden !important; page-break-after:always; break-after:page; page-break-inside:avoid; break-inside:avoid; }
-    .sheet:last-child { page-break-after:auto; break-after:auto; }
-    .label { width:${labelSizeMm}mm !important; height:${labelSizeMm}mm !important; overflow:hidden; position:relative; display:block; }
-    .svg-box { width:100% !important; height:100% !important; overflow:hidden; }
-    .label.cut-border::after { content:""; position:absolute; inset:2.5%; border:${settings.borderWidth}mm solid ${settings.borderColor}; border-radius:50%; pointer-events:none; }
-    svg { display:block; width:100% !important; height:100% !important; }
-    .label-circle { fill:white; stroke:#e8dfd5; stroke-width:2; }
-    .border-text-path { fill:#6b8f5e; font-family:Lora,serif; font-size:11px; letter-spacing:2px; text-transform:uppercase; }
-    .leaf-decoration { opacity:.7; }
-    .label-text-main,.adelia-font { font-family:'Adelia','Great Vibes',cursive !important; fill:#2d5016; text-anchor:middle; }
-    .label-text-sub { font-family:'Great Vibes',cursive; fill:#2d5016; text-anchor:middle; }
-    .label-text-message { font-family:Lora,serif; fill:#444; text-anchor:middle; font-size:10px; }
-    .label-text-sinpe { font-family:'Playfair Display',serif; fill:#1a1a1a; text-anchor:middle; font-weight:700; }
-    .label-text-brand { font-family:'Playfair Display',serif; fill:#2d5016; text-anchor:middle; font-weight:700; }
-    .label-text-client { font-family:'Playfair Display',serif; fill:#1a1a1a; text-anchor:middle; font-weight:600; }
-    .label-text-footer { font-family:'Dancing Script',cursive; fill:#555; text-anchor:middle; }
-    @media screen { body { padding:18px; background:#f1f4ef; } .sheet { background:#fff; margin:0 auto 18px; box-shadow:0 2px 14px rgba(0,0,0,.1); } }
+  const overlay = document.createElement('div');
+  overlay.id = 'ewePrintOverlay';
+  overlay.style.cssText = `
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(0,0,0,0.95);
+    display: flex; flex-direction: column;
+    animation: fadeIn 0.3s ease;
   `;
+
+  // Barra superior con botones grandes
+  const topBar = document.createElement('div');
+  topBar.style.cssText = `
+    width: 100%;
+    display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(135deg, #2d5016, #3d6b20);
+    color: white;
+    padding: 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  `;
+  topBar.innerHTML = `
+    <span style="font-size: 14px; font-weight: 600; font-family: 'Lora', serif; flex: 1; min-width: 150px;">
+      📄 ${quantity} etiqueta(s) · ${page.name}
+    </span>
+    <button id="ewePdfBtn" style="
+      background: #d4a843; color: white; border: none;
+      padding: 12px 18px; border-radius: 8px;
+      font-weight: 700; cursor: pointer; font-size: 14px;
+      font-family: 'Lora', serif;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      min-width: 90px;
+    ">📄 PDF</button>
+    <button id="ewePrintBtn" style="
+      background: #1976d2; color: white; border: none;
+      padding: 12px 18px; border-radius: 8px;
+      font-weight: 700; cursor: pointer; font-size: 14px;
+      font-family: 'Lora', serif;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      min-width: 110px;
+    ">🖨️ Imprimir</button>
+    <button id="eweClosePrint" style="
+      background: #a23a36; color: white; border: none;
+      padding: 12px 18px; border-radius: 8px;
+      font-weight: 700; cursor: pointer; font-size: 14px;
+      font-family: 'Lora', serif;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    ">✕ Cerrar</button>
+  `;
+
+  // Instrucciones
+  const instructions = document.createElement('div');
+  instructions.style.cssText = `
+    width: 100%;
+    background: #fff9e6;
+    color: #7a5a00;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-family: 'Lora', serif;
+    text-align: center;
+    border-bottom: 2px solid #d4a843;
+    line-height: 1.5;
+  `;
+  instructions.innerHTML = `
+    <strong>📱 En móvil:</strong> Toque <strong>📄 PDF</strong> para descargar el archivo PDF.
+    Luego ábralo desde "Descargas" e imprímelo.
+  `;
+
+  // Vista previa (miniatura)
+  const previewArea = document.createElement('div');
+  previewArea.style.cssText = `
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: #f1f4ef;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  `;
+
+  // Mostrar miniatura de la etiqueta
+  const svg = document.getElementById('labelSvg').cloneNode(true);
+  svg.removeAttribute('id');
+  svg.style.cssText = `
+    width: 250px;
+    height: 250px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  `;
+  previewArea.appendChild(svg);
+
+  const info = document.createElement('div');
+  info.style.cssText = `
+    background: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    text-align: center;
+    font-family: 'Lora', serif;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    max-width: 400px;
+    width: 100%;
+  `;
+  info.innerHTML = `
+    <div style="font-size: 14px; color: #2d5016; font-weight: 600; margin-bottom: 8px;">
+      📋 Configuración de impresión
+    </div>
+    <div style="font-size: 12px; color: #555; line-height: 1.6;">
+      <div>📏 Tamaño etiqueta: <strong>${labelSizeMm.toFixed(1)} mm</strong></div>
+      <div>📄 Hoja: <strong>${page.name}</strong></div>
+      <div>🔢 Etiquetas por hoja: <strong>${columns * rows}</strong></div>
+      <div>📑 Hojas necesarias: <strong>${Math.ceil(quantity / (columns * rows))}</strong></div>
+      <div>📐 Márgenes: <strong>${marginMm} mm</strong> | Separación: <strong>${gapMm} mm</strong></div>
+    </div>
+  `;
+  previewArea.appendChild(info);
+
+  overlay.appendChild(topBar);
+  overlay.appendChild(instructions);
+  overlay.appendChild(previewArea);
+  document.body.appendChild(overlay);
+
+  // ✅ BOTÓN PDF - Genera PDF con conversión SVG→PNG nativa
+  document.getElementById('ewePdfBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('ewePdfBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '⏳ Generando...';
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+
+    try {
+      await generatePDFNative(quantity, page, settings, labelSizeMm, columns, rows, gapMm, marginMm);
+      showToast('✅ PDF descargado', 'success');
+    } catch (error) {
+      console.error('Error generando PDF:', error);
+      showToast('❌ Error: ' + error.message, 'error');
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+  });
+
+  // ✅ BOTÓN IMPRIMIR - Abre ventana nueva con auto-print
+  document.getElementById('ewePrintBtn').addEventListener('click', () => {
+    try {
+      openPrintWindow(quantity, page, settings, labelSizeMm, columns, rows, gapMm, marginMm);
+    } catch (e) {
+      console.error('Error al imprimir:', e);
+      showToast('⚠️ Use el botón PDF', 'warning');
+    }
+  });
+
+  // ✅ BOTÓN CERRAR
+  document.getElementById('eweClosePrint').addEventListener('click', () => {
+    overlay.remove();
+  });
+
+  // Cerrar con Escape
+  const escHandler = (e) => {
+    if (e.key === 'Escape') {
+      overlay.remove();
+      window.removeEventListener('keydown', escHandler);
+    }
+  };
+  window.addEventListener('keydown', escHandler);
 }
 
-function buildPrintHTML(quantity, pages, pageCss) {
-  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Etiquetas (${quantity})</title><link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet"><style>${pageCss}</style></head><body>${pages.join('\n')}</body></html>`;
+// ============================================
+// ✅ CONVERSIÓN SVG → PNG (NATIVA, SIN html2canvas)
+// ============================================
+async function svgToPng(svgElement, size = 1000) {
+  // Esperar a que las fuentes estén cargadas
+  if (document.fonts && document.fonts.ready) {
+    await document.fonts.ready;
+  }
+
+  // Clonar el SVG
+  const svgClone = svgElement.cloneNode(true);
+  svgClone.removeAttribute('id');
+  svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  svgClone.setAttribute('width', size);
+  svgClone.setAttribute('height', size);
+  svgClone.setAttribute('viewBox', '0 0 400 400');
+
+  // Serializar a string
+  const svgString = new XMLSerializer().serializeToString(svgClone);
+
+  // Crear blob y URL
+  const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      // Fondo blanco circular
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, size, size);
+
+      // Dibujar el SVG
+      ctx.drawImage(img, 0, 0, size, size);
+
+      URL.revokeObjectURL(url);
+
+      // Convertir a PNG
+      const pngData = canvas.toDataURL('image/png', 1.0);
+      resolve(pngData);
+    };
+
+    img.onerror = function(e) {
+      URL.revokeObjectURL(url);
+      reject(new Error('No se pudo convertir la etiqueta a imagen'));
+    };
+
+    img.src = url;
+
+    // Timeout de seguridad
+    setTimeout(() => {
+      reject(new Error('Timeout al convertir la imagen'));
+    }, 10000);
+  });
 }
 
-function printViaWindow(htmlContent) {
+// ============================================
+// ✅ GENERAR PDF CON JSPDF (USANDO CONVERSIÓN NATIVA)
+// ============================================
+async function generatePDFNative(quantity, page, settings, labelSizeMm, columns, rows, gapMm, marginMm) {
+  // Verificar jsPDF
+  if (typeof window.jspdf === 'undefined') {
+    throw new Error('Librería jsPDF no cargada. Recargue la página.');
+  }
+
+  const { jsPDF } = window.jspdf;
+
+  showToast('⏳ Convirtiendo etiqueta a imagen...', 'info');
+
+  // Convertir SVG a PNG de alta resolución
+  const labelPng = await svgToPng(document.getElementById('labelSvg'), 1200);
+
+  showToast('⏳ Generando PDF...', 'info');
+
+  // Crear PDF
+  const orientation = page.widthMm > page.heightMm ? 'landscape' : 'portrait';
+  const pdf = new jsPDF({
+    orientation: orientation,
+    unit: 'mm',
+    format: page.name.toLowerCase() === 'a4' ? 'a4' : 'letter'
+  });
+
+  let labelsRemaining = quantity;
+  let isFirstPage = true;
+
+  while (labelsRemaining > 0) {
+    if (!isFirstPage) {
+      pdf.addPage();
+    }
+    isFirstPage = false;
+
+    const labelsOnThisPage = Math.min(columns * rows, labelsRemaining);
+    let labelIndex = 0;
+
+    for (let row = 0; row < rows && labelIndex < labelsOnThisPage; row++) {
+      for (let col = 0; col < columns && labelIndex < labelsOnThisPage; col++) {
+        const x = marginMm + (col * (labelSizeMm + gapMm));
+        const y = marginMm + (row * (labelSizeMm + gapMm));
+
+        // Agregar imagen de la etiqueta
+        pdf.addImage(labelPng, 'PNG', x, y, labelSizeMm, labelSizeMm);
+
+        // Borde de corte si está activado
+        if (settings.cutBorder) {
+          pdf.setDrawColor(
+            parseInt(settings.borderColor.slice(1, 3), 16),
+            parseInt(settings.borderColor.slice(3, 5), 16),
+            parseInt(settings.borderColor.slice(5, 7), 16)
+          );
+          pdf.setLineWidth(settings.borderWidth);
+          const borderInset = labelSizeMm * 0.025;
+          const radius = (labelSizeMm - (borderInset * 2)) / 2;
+          pdf.circle(
+            x + (labelSizeMm / 2),
+            y + (labelSizeMm / 2),
+            radius,
+            'S'
+          );
+        }
+
+        labelIndex++;
+      }
+    }
+
+    labelsRemaining -= labelsOnThisPage;
+  }
+
+  // Descargar PDF
+  const timestamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+  const fileName = `etiquetas-esentia-${quantity}-${timestamp}.pdf`;
+  pdf.save(fileName);
+}
+
+// ============================================
+// ✅ IMPRIMIR - VENTANA NUEVA (FUNCiona EN MÓVIL)
+// ============================================
+function openPrintWindow(quantity, page, settings, labelSizeMm, columns, rows, gapMm, marginMm) {
+  const usableWidthMm = page.widthMm - settings.marginMm * 2;
+  const usableHeightMm = page.heightMm - settings.marginMm * 2;
+
+  const svg = document.getElementById('labelSvg').cloneNode(true);
+  svg.removeAttribute('id');
+  svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+  const pages = [];
+  for (let start = 0; start < quantity; start += columns * rows) {
+    const count = Math.min(columns * rows, quantity - start);
+    const labels = [];
+    for (let i = 0; i < count; i++) {
+      labels.push(`<div class="label${settings.cutBorder ? ' cut-border' : ''}"><div class="svg-box">${svg.outerHTML}</div></div>`);
+    }
+    pages.push(`<section class="sheet">${labels.join('')}</section>`);
+  }
+
+  const pageCss = `
+    @font-face {
+      font-family: 'Adelia';
+      src: url('fonts/Adelia.ttf') format('truetype'),
+           url('fonts/Adelia.otf') format('opentype');
+      font-display: swap;
+    }
+    @page { size: ${page.name}; margin: ${settings.marginMm}mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: #fff; font-family: Arial, sans-serif; }
+    .sheet {
+      width: ${usableWidthMm}mm; height: ${usableHeightMm}mm;
+      display: grid !important;
+      grid-template-columns: repeat(${columns}, ${labelSizeMm}mm) !important;
+      grid-template-rows: repeat(${rows}, ${labelSizeMm}mm) !important;
+      gap: ${settings.gapMm}mm !important;
+      justify-content: start !important;
+      align-content: start !important;
+      overflow: hidden !important;
+      page-break-after: always;
+      break-after: page;
+    }
+    .sheet:last-child { page-break-after: auto; break-after: auto; }
+    .label {
+      width: ${labelSizeMm}mm !important;
+      height: ${labelSizeMm}mm !important;
+      overflow: hidden; position: relative; display: block;
+    }
+    .svg-box { width: 100% !important; height: 100% !important; overflow: hidden; }
+    .label.cut-border::after {
+      content: ""; position: absolute; inset: 2.5%;
+      border: ${settings.borderWidth}mm solid ${settings.borderColor};
+      border-radius: 50%; pointer-events: none;
+    }
+    svg { display: block; width: 100% !important; height: 100% !important; }
+    .label-circle { fill: white; stroke: #e8dfd5; stroke-width: 2; }
+    .border-text-path { fill: #6b8f5e; font-family: Lora, serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
+    .leaf-decoration { opacity: .7; }
+    .label-text-main, .adelia-font { font-family: 'Adelia', 'Great Vibes', cursive !important; fill: #2d5016; text-anchor: middle; }
+    .label-text-sub { font-family: 'Great Vibes', cursive; fill: #2d5016; text-anchor: middle; }
+    .label-text-message { font-family: Lora, serif; fill: #444; text-anchor: middle; font-size: 10px; }
+    .label-text-sinpe { font-family: 'Playfair Display', serif; fill: #1a1a1a; text-anchor: middle; font-weight: 700; }
+    .label-text-brand { font-family: 'Playfair Display', serif; fill: #2d5016; text-anchor: middle; font-weight: 700; }
+    .label-text-client { font-family: 'Playfair Display', serif; fill: #1a1a1a; text-anchor: middle; font-weight: 600; }
+    .label-text-footer { font-family: 'Dancing Script', cursive; fill: #555; text-anchor: middle; }
+    @media screen {
+      body { padding: 18px; background: #f1f4ef; }
+      .sheet { background: #fff; margin: 0 auto 18px; box-shadow: 0 2px 14px rgba(0,0,0,0.1); }
+    }
+  `;
+
+  const htmlContent = `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Etiquetas (${quantity})</title>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+  <style>${pageCss}</style>
+</head>
+<body>
+  ${pages.join('\n')}
+  <script>
+    window.addEventListener('load', function() {
+      const go = () => setTimeout(() => window.print(), 800);
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(go);
+      } else {
+        go();
+      }
+    });
+  <\/script>
+</body>
+</html>`;
+
+  // Abrir ventana nueva
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
     showToast('⚠️ Permita ventanas emergentes', 'warning');
@@ -1171,188 +1434,8 @@ function printViaWindow(htmlContent) {
   printWindow.document.open();
   printWindow.document.write(htmlContent);
   printWindow.document.close();
-}
 
-function printLabels() {
-  try {
-    const design = getCurrentDesign();
-    design._autosave = true;
-    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(design));
-    showAutosaveIndicator('💾 Diseño guardado antes de imprimir');
-  } catch (error) {
-    console.warn('No se pudo guardar antes de imprimir:', error);
-  }
-
-  const quantityInput = document.getElementById('labelQuantity');
-  const quantity = Math.floor(Number(quantityInput.value));
-  const labelSizeMm = Number(document.getElementById('labelSizeMm').value);
-  const paper = document.getElementById('printPaperSize').value;
-  if (!Number.isFinite(quantity) || quantity < 1 || quantity > 1000) {
-    showToast('⚠️ Cantidad entre 1 y 1000 etiquetas', 'warning');
-    quantityInput.focus();
-    return;
-  }
-  if (!Number.isFinite(labelSizeMm) || labelSizeMm <= 0) {
-    showToast('⚠️ Revise el tamaño de la etiqueta', 'warning');
-    return;
-  }
-
-  updatePrintPreview();
-  const page = paper === 'a4'
-    ? { name:'A4', widthMm:210, heightMm:297 }
-    : { name:'Letter', widthMm:215.9, heightMm:279.4 };
-  const settings = getPrintSettings();
-  const usableWidthMm = page.widthMm - settings.marginMm * 2;
-  const usableHeightMm = page.heightMm - settings.marginMm * 2;
-  const columns = Math.floor((usableWidthMm + settings.gapMm) / (labelSizeMm + settings.gapMm));
-  const rows = Math.floor((usableHeightMm + settings.gapMm) / (labelSizeMm + settings.gapMm));
-  if (columns < 1 || rows < 1) {
-    showToast(`⚠️ Etiqueta muy grande para hoja ${page.name}`, 'warning');
-    return;
-  }
-
-  const perSheet = columns * rows;
-  const svg = document.getElementById('labelSvg').cloneNode(true);
-  svg.removeAttribute('id');
-  svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  const pages = [];
-  let totalLabels = 0;
-  for (let start = 0; start < quantity; start += perSheet) {
-    const count = Math.min(perSheet, quantity - start);
-    const labels = [];
-    for (let i = 0; i < count; i++) {
-      labels.push(`<div class="label${settings.cutBorder ? ' cut-border' : ''}"><div class="svg-box">${svg.outerHTML}</div></div>`);
-    }
-    pages.push(`<section class="sheet">${labels.join('')}</section>`);
-    totalLabels += count;
-  }
-
-  const pageCss = buildPrintCSS(page, settings.marginMm, usableWidthMm, usableHeightMm, columns, rows, labelSizeMm, settings.gapMm, settings);
-  const htmlContent = buildPrintHTML(quantity, pages, pageCss);
-  if (isMobileDevice()) {
-    showPrintOverlay(htmlContent, quantity, page, settings, labelSizeMm, columns, rows, settings.gapMm, settings.marginMm);
-  } else {
-    printViaWindow(htmlContent);
-  }
-  console.log(`✅ Generadas ${totalLabels} etiquetas en ${pages.length} hoja(s)`);
-}
-
-function showPrintOverlay(htmlContent, quantity, page, settings, labelSizeMm, columns, rows, gapMm, marginMm) {
-  const existingOverlay = document.getElementById('ewePrintOverlay');
-  if (existingOverlay) existingOverlay.remove();
-
-  const overlay = document.createElement('div');
-  overlay.id = 'ewePrintOverlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.92);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)';
-
-  const topBar = document.createElement('div');
-  topBar.style.cssText = 'width:100%;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#2d5016,#3d6b20);color:#fff;padding:10px 12px;gap:8px;flex-wrap:wrap;box-shadow:0 2px 10px rgba(0,0,0,.3)';
-  topBar.innerHTML = `<span style="font-size:13px;font-weight:600;flex:1">${quantity} etiqueta(s) · ${page.name}</span><button id="ewePdfBtn" type="button" style="background:#d4a843;color:#fff;border:0;padding:10px 14px;border-radius:8px;font-weight:700;min-height:44px">📄 PDF / Guardar</button><button id="ewePrintBtn" type="button" style="background:#1976d2;color:#fff;border:0;padding:10px 14px;border-radius:8px;font-weight:700;min-height:44px">🖨️ Imprimir</button><button id="eweClosePrint" type="button" style="background:#a23a36;color:#fff;border:0;padding:10px 14px;border-radius:8px;font-weight:700;min-height:44px">✕</button>`;
-
-  const instructions = document.createElement('div');
-  instructions.style.cssText = 'width:100%;background:#fff9e6;color:#7a5a00;padding:10px 14px;font-size:12px;text-align:center;border-bottom:2px solid #d4a843;line-height:1.4';
-  instructions.innerHTML = isIOSDevice()
-    ? '<strong>iPhone/iPad:</strong> toca <strong>PDF / Guardar</strong> y luego Compartir → Guardar en Archivos o Imprimir.'
-    : '<strong>Recomendado:</strong> toca PDF / Guardar para descargar o Imprimir para abrir el diálogo.';
-
-  const iframe = document.createElement('iframe');
-  iframe.id = 'ewePrintIframe';
-  iframe.title = 'Vista previa de impresión';
-  iframe.srcdoc = htmlContent;
-  iframe.style.cssText = 'width:100%;flex:1;background:#fff;border:0';
-  overlay.append(topBar, instructions, iframe);
-  document.body.appendChild(overlay);
-
-  document.getElementById('ewePdfBtn').addEventListener('click', async (event) => {
-    const btn = event.currentTarget;
-    const originalText = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = '⏳ Generando PDF…';
-    try {
-      const result = await generatePDFDirect(quantity, page, settings, labelSizeMm, columns, rows, gapMm, marginMm);
-      if (result !== 'cancelled') showToast('✅ PDF listo para guardar o imprimir', 'success');
-    } catch (error) {
-      console.error('Error generando PDF:', error);
-      showToast('❌ No se pudo generar el PDF: ' + (error.message || error), 'error');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = originalText;
-    }
-  });
-
-  document.getElementById('ewePrintBtn').addEventListener('click', () => {
-    const blob = new Blob([htmlContent], { type:'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const opened = window.open(url, '_blank');
-    if (!opened) window.location.href = url;
-    setTimeout(() => URL.revokeObjectURL(url), 120000);
-    showToast(isIOSDevice() ? '📱 En la nueva pestaña usa Compartir → Imprimir' : '🖨️ Preparando impresión', 'info');
-  });
-
-  document.getElementById('eweClosePrint').addEventListener('click', () => overlay.remove());
-  showToast(isIOSDevice() ? '📱 PDF / Guardar abre las opciones de iOS' : '📄 Selecciona PDF o Imprimir', 'info');
-}
-
-async function generatePDFDirect(quantity, page, settings, labelSizeMm, columns, rows, gapMm, marginMm) {
-  if (!window.jspdf || typeof html2canvas !== 'function') {
-    throw new Error('Librerías PDF no cargadas. Recargue la página.');
-  }
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ orientation:page.widthMm > page.heightMm ? 'landscape' : 'portrait', unit:'mm', format:page.name.toLowerCase() === 'a4' ? 'a4' : 'letter' });
-  const originalSvg = document.getElementById('labelSvg');
-  if (!originalSvg) throw new Error('No se encontró la etiqueta para exportar.');
-  const svgClone = originalSvg.cloneNode(true);
-  svgClone.removeAttribute('id');
-  svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-
-  const px = Math.max(1, Math.round(labelSizeMm * 3.779527559));
-  const container = document.createElement('div');
-  container.style.cssText = `position:fixed;left:0;top:0;width:${px}px;height:${px}px;background:#fff;opacity:.01;pointer-events:none;z-index:-1`;
-  const img = document.createElement('img');
-  img.alt = 'Etiqueta';
-  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(svgClone));
-  img.style.cssText = 'display:block;width:100%;height:100%';
-  container.appendChild(img);
-  document.body.appendChild(container);
-
-  try {
-    await new Promise((resolve, reject) => {
-      if (img.complete) return resolve();
-      img.onload = resolve;
-      img.onerror = () => reject(new Error('No se pudo renderizar la etiqueta.'));
-      setTimeout(() => reject(new Error('Tiempo agotado al renderizar la etiqueta.')), 10000);
-    });
-    const canvas = await html2canvas(container, { backgroundColor:'#fff', scale:Math.min(2, window.devicePixelRatio || 1), useCORS:true, allowTaint:false, logging:false });
-    const imageData = canvas.toDataURL('image/png', 1);
-    let remaining = quantity;
-    let firstPage = true;
-    while (remaining > 0) {
-      if (!firstPage) pdf.addPage();
-      firstPage = false;
-      const count = Math.min(columns * rows, remaining);
-      let index = 0;
-      for (let row = 0; row < rows && index < count; row++) {
-        for (let col = 0; col < columns && index < count; col++) {
-          const x = marginMm + col * (labelSizeMm + gapMm);
-          const y = marginMm + row * (labelSizeMm + gapMm);
-          pdf.addImage(imageData, 'PNG', x, y, labelSizeMm, labelSizeMm);
-          if (settings.cutBorder) {
-            pdf.setDrawColor(settings.borderColor);
-            pdf.setLineWidth(settings.borderWidth);
-            const inset = labelSizeMm * .025;
-            pdf.circle(x + labelSizeMm / 2, y + labelSizeMm / 2, (labelSizeMm - inset * 2) / 2, 'S');
-          }
-          index++;
-        }
-      }
-      remaining -= count;
-    }
-    const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
-    const fileName = `etiquetas-esentia-${quantity}-${stamp}.pdf`;
-    return await shareOrOpenPDF(pdf.output('blob'), fileName);
-  } finally {
-    container.remove();
-  }
+  showToast('🖨️ Ventana de impresión abierta', 'success');
 }
 
 function printLabel() { printLabels(); }
