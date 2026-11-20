@@ -1,8 +1,7 @@
 // ==========================================
 // EWE ESENTIA - FACTURA.JS
-// Versión: 2026-11-V3 (LIMPIO Y CORREGIDO)
+// Versión: 2026-11-V4 (CORREGIDO Y ESTABILIZADO)
 // ==========================================
-
 const firebaseConfig = {
     apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
     authDomain: "esentiacreditos-8345f.firebaseapp.com",
@@ -51,6 +50,7 @@ const LOW_STOCK_THRESHOLD = 5;
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('currentDate').textContent = new Date().toLocaleDateString('es-CR');
     document.getElementById('invoiceNumber').textContent = currentInvoiceNumber;
+
     const overlay = document.getElementById('loadingOverlay');
     const hideLoading = () => {
         if (!overlay) return;
@@ -62,19 +62,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             promise,
             new Promise((_, reject) => setTimeout(() => reject(new Error(`${name}: tiempo de espera agotado`)), ms))
         ]);
+
     try {
         initLocationSelects();
         initShippingControls();
         initUberFloatingButton();
         initPurchaseModule();
+
         const results = await Promise.allSettled([
             withTimeout(loadClients(), 15000, 'Clientes'),
             withTimeout(loadStock(), 15000, 'Stock'),
             withTimeout(loadProducts(), 20000, 'Productos')
         ]);
+
         results.forEach((result, index) => {
             if (result.status === 'rejected') console.error(`Error en carga ${index + 1}:`, result.reason);
         });
+
         checkLowStockAlerts();
     } catch (error) {
         console.error('Error al iniciar la página:', error);
@@ -109,7 +113,6 @@ function getPOLineDescription(line) {
     return line.descripcion || buildProductDescription(line.nombre, line.nombreOriginal);
 }
 
-// ✅ CORREGIDO: sin doble coma en colones
 function formatMoney(amount) {
     const value = Number(amount) || 0;
     const fixed = value.toFixed(2);
@@ -136,8 +139,6 @@ function normalizePhone(phone) {
 
 // ==========================================
 // CÁLCULO DE INTERESES POR MORA (DÍAS HÁBILES)
-// 0-15 días hábiles → 0% | 16-30 → 1.5% | 31+ → 3.5% acumulado
-// ✅ ÚNICA VERSIÓN: recibe la FECHA de la factura (no días)
 // ==========================================
 const MORA_POLICY = {
     version: 'EWE-MORA-2026-11-V1',
@@ -205,9 +206,10 @@ function calculateMoratoryInterest(saldoPendiente, fechaFactura) {
     const dueDate = addMoraBusinessDays(invoiceDate, MORA_POLICY.graceBusinessDays);
     const businessDaysElapsed = getMoraBusinessDaysElapsed(invoiceDate, new Date());
     const overdueBusinessDays = Math.max(0, businessDaysElapsed - MORA_POLICY.graceBusinessDays);
-
+    
     let porcentaje = 0;
     let tramo = 'sin_recargo';
+    
     if (saldo > 0 && businessDaysElapsed >= MORA_POLICY.businessDaysFirstCharge) {
         porcentaje = MORA_POLICY.firstPercent;
         tramo = 'primer_recargo';
@@ -216,7 +218,7 @@ function calculateMoratoryInterest(saldoPendiente, fechaFactura) {
         porcentaje = MORA_POLICY.maxPercent;
         tramo = 'recargo_acumulado';
     }
-
+    
     const monto = +(saldo * (porcentaje / 100)).toFixed(2);
     return {
         saldo,
@@ -231,12 +233,6 @@ function calculateMoratoryInterest(saldoPendiente, fechaFactura) {
     };
 }
 
-function getMoratoryLabel(interest) {
-    if (!interest || interest.porcentaje === 0) return { text: 'Al día (sin recargo)', class: 'days-normal', icon: '✅' };
-    if (interest.tramo === 'primer_recargo') return { text: `Recargo 1.5% (${interest.diasHabilesTranscurridos} días hábiles)`, class: 'days-warning', icon: '🟡' };
-    return { text: `Recargo 3.5% (${interest.diasHabilesTranscurridos} días hábiles)`, class: 'days-urgent', icon: '🟠' };
-}
-
 // ==========================================
 // CONSENTIMIENTO DE MORA
 // ==========================================
@@ -244,20 +240,7 @@ let moraConsentResolver = null;
 let moraConsentContext = null;
 
 function getMoraPolicyPlainText() {
-    return `CONSENTIMIENTO INFORMADO DE CONDICIONES DE PAGO Y CARGOS POR MORA
-
-Los precios indicados en la factura corresponden a condiciones de pago de contado. El cliente se compromete a cancelar el monto total adeudado dentro de un plazo máximo de quince (15) días hábiles contados a partir de la fecha de emisión de la factura.
-
-Si la factura no ha sido cancelada dentro de ese plazo, EWE Esentia podrá aplicar cargos por mora sobre el saldo pendiente, de la siguiente manera:
-
-• De 0 a 15 días hábiles desde la fecha de factura: sin recargo.
-• A partir de 16 días hábiles: recargo del 1.5% sobre el saldo pendiente.
-• Al superar 30 días hábiles: se suma un 2% adicional, para un total acumulado de 3.5%.
-• A los 45 días o más: el recargo acumulado será de 3.5%, salvo condiciones especiales previamente acordadas.
-
-Los recargos se calculan únicamente sobre el saldo pendiente y no sobre montos ya abonados.
-
-El cliente declara que ha sido informado claramente sobre estas condiciones, que las comprende y que las acepta para sus compras pendientes de pago.`;
+    return `CONSENTIMIENTO INFORMADO DE CONDICIONES DE PAGO Y CARGOS POR MORA\n\nLos precios indicados en la factura corresponden a condiciones de pago de contado. El cliente se compromete a cancelar el monto total adeudado dentro de un plazo máximo de quince (15) días hábiles contados a partir de la fecha de emisión de la factura.\n\nSi la factura no ha sido cancelada dentro de ese plazo, EWE Esentia podrá aplicar cargos por mora sobre el saldo pendiente, de la siguiente manera:\n• De 0 a 15 días hábiles desde la fecha de factura: sin recargo.\n• A partir de 16 días hábiles: recargo del 1.5% sobre el saldo pendiente.\n• Al superar 30 días hábiles: se suma un 2% adicional, para un total acumulado de 3.5%.\n\nLos recargos se calculan únicamente sobre el saldo pendiente y no sobre montos ya abonados.\n\nEl cliente declara que ha sido informado claramente sobre estas condiciones, que las comprende y que las acepta para sus compras pendientes de pago.`;
 }
 
 async function hasMoraConsentAccepted(clienteId) {
@@ -265,6 +248,7 @@ async function hasMoraConsentAccepted(clienteId) {
     const localClient = allClients.find(c => c.id === clienteId);
     const localConsent = localClient?.consentimientoMora;
     if (localConsent && localConsent.aceptado === true && localConsent.version === MORA_POLICY.version) return true;
+    
     try {
         const snap = await db.collection('consentimientos_mora')
             .where('clienteId', '==', clienteId)
@@ -316,7 +300,7 @@ async function requestMoraConsent(context = {}) {
     }
     const accepted = await hasMoraConsentAccepted(cliente.id);
     if (accepted) return true;
-
+    
     ensureMoraConsentModal();
     moraConsentContext = {
         cliente,
@@ -326,6 +310,7 @@ async function requestMoraConsent(context = {}) {
         saldo: parseFloat(context.saldo) || 0,
         canal: context.canal || 'sistema'
     };
+    
     document.getElementById('moraConsentText').textContent = getMoraPolicyPlainText();
     document.getElementById('moraConsentCheck').checked = false;
     document.getElementById('moraConsentClientInfo').innerHTML = `
@@ -334,6 +319,7 @@ async function requestMoraConsent(context = {}) {
         <strong>Cédula:</strong> ${cliente.cedula || 'N/A'}<br>
         ${moraConsentContext.numeroFactura ? `<strong>Factura:</strong> ${moraConsentContext.numeroFactura}<br>` : ''}
         ${moraConsentContext.saldo > 0 ? `<strong>Saldo:</strong> ₡${formatMoney(moraConsentContext.saldo)}` : ''}`;
+        
     document.getElementById('moraConsentModal').style.display = 'flex';
     return new Promise(resolve => { moraConsentResolver = resolve; });
 }
@@ -342,6 +328,7 @@ async function acceptMoraConsent() {
     const check = document.getElementById('moraConsentCheck');
     if (!check?.checked) { alert('Debe confirmar que el cliente acepta las condiciones.'); return; }
     if (!moraConsentContext?.cliente?.id) { alert('No hay cliente seleccionado.'); return; }
+    
     const cliente = moraConsentContext.cliente;
     const consentData = {
         clienteId: cliente.id,
@@ -366,14 +353,17 @@ async function acceptMoraConsent() {
         fechaAceptacion: firebase.firestore.FieldValue.serverTimestamp(),
         userAgent: navigator.userAgent || ''
     };
+    
     try {
         await db.collection('consentimientos_mora').add(consentData);
         const resumenConsent = { aceptado: true, version: MORA_POLICY.version, fechaLocal: consentData.fechaLocal, canal: consentData.canal };
         try {
             await db.collection('clientesBD').doc(cliente.id).update({ consentimientoMora: resumenConsent });
         } catch (e) { console.warn('No se pudo actualizar resumen en cliente:', e); }
+        
         const idx = allClients.findIndex(c => c.id === cliente.id);
         if (idx !== -1) allClients[idx].consentimientoMora = resumenConsent;
+        
         document.getElementById('moraConsentModal').style.display = 'none';
         if (moraConsentResolver) moraConsentResolver(true);
         moraConsentResolver = null;
@@ -394,7 +384,7 @@ function cancelMoraConsent() {
 }
 
 // ==========================================
-// ENLACES DE CONSENTIMIENTO (página pública)
+// ENLACES DE CONSENTIMIENTO
 // ==========================================
 const CONSENT_PAGE_URL = 'https://wil1979.github.io/esentia-factura/consentimiento-mora.html';
 
@@ -403,15 +393,14 @@ async function generateConsentToken(clienteId, facturaId = null) {
     const array = new Uint8Array(24);
     crypto.getRandomValues(array);
     const token = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+    
     const tokenData = {
-        clienteId,
-        facturaId,
-        version: MORA_POLICY.version,
-        aceptado: false,
+        clienteId, facturaId, version: MORA_POLICY.version, aceptado: false,
         creado: firebase.firestore.FieldValue.serverTimestamp(),
         expira: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         creadoPor: 'sistema_facturacion'
     };
+    
     try {
         await db.collection('consent_tokens').doc(token).set(tokenData);
         return token;
@@ -432,18 +421,14 @@ async function sendConsentLinkByWhatsApp(clienteId, facturaId = null) {
     const cliente = allClients.find(c => c.id === clienteId);
     if (!cliente) { alert('Cliente no encontrado.'); return; }
     if (!cliente.telefono) { alert('El cliente no tiene teléfono registrado.'); return; }
+    
     const token = await generateConsentToken(clienteId, facturaId);
     if (!token) return;
+    
     const url = buildConsentUrl(token, clienteId, facturaId);
     const phone = normalizePhone(cliente.telefono);
-    const msg = `🌿 *EWE ESENTIA - Consentimiento de Pago*\n\n` +
-        `Hola ${cliente.nombre} 👋\n\n` +
-        `Para completar su registro en nuestro sistema, le solicitamos amablemente aceptar nuestras *condiciones de pago y cargos por mora*.\n\n` +
-        `📋 Por favor abra el siguiente enlace desde su celular:\n` +
-        `🔗 ${url}\n\n` +
-        `⏰ Este enlace es válido por 7 días.\n\n` +
-        `El proceso toma menos de 1 minuto. ¡Gracias! 🙏\n\n` +
-        `Cualquier consulta estamos al teléfono 7295-2454.`;
+    const msg = `🌿 *EWE ESENTIA - Consentimiento de Pago*\n\nHola ${cliente.nombre} 👋\nPara completar su registro en nuestro sistema, le solicitamos amablemente aceptar nuestras *condiciones de pago y cargos por mora*.\n\n📋 Por favor abra el siguiente enlace desde su celular:\n🔗 ${url}\n\n⏰ Este enlace es válido por 7 días. El proceso toma menos de 1 minuto. ¡Gracias! 🙏\nCualquier consulta estamos al teléfono 7295-2454.`;
+    
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
@@ -453,7 +438,7 @@ async function copyConsentLink(clienteId, facturaId = null) {
     const url = buildConsentUrl(token, clienteId, facturaId);
     try {
         await navigator.clipboard.writeText(url);
-        alert('✅ Enlace copiado al portapapeles:\n\n' + url);
+        alert(`✅ Enlace copiado al portapapeles:\n${url}`); // CORREGIDO: Error de sintaxis por salto de línea en comillas simples
     } catch (e) {
         prompt('Copie el enlace manualmente:', url);
     }
@@ -463,14 +448,14 @@ async function sendConsentFromDetail() {
     if (!currentDetailInvoice) return;
     const clienteId = currentDetailInvoice.clienteId;
     if (!clienteId || clienteId === 'contado') { alert('Esta factura no tiene cliente registrado.'); return; }
+    
     const cliente = allClients.find(c => c.id === clienteId);
     if (!cliente) { alert('Cliente no encontrado en la base de datos.'); return; }
+    
     const yaAcepto = await hasMoraConsentAccepted(clienteId);
     if (yaAcepto) { alert(`✅ ${cliente.nombre} ya aceptó las condiciones de mora.`); return; }
-    const accion = confirm(
-        `📋 Enviar consentimiento a:\n\n${cliente.nombre}\n📞 ${cliente.telefono || 'Sin teléfono'}\n\n` +
-        `Aceptar = Enviar por WhatsApp\nCancelar = Copiar enlace al portapapeles`
-    );
+    
+    const accion = confirm(`📋 Enviar consentimiento a:\n${cliente.nombre}\n📞 ${cliente.telefono || 'Sin teléfono'}\n\nAceptar = Enviar por WhatsApp\nCancelar = Copiar enlace al portapapeles`);
     if (accion) await sendConsentLinkByWhatsApp(clienteId, currentDetailInvoice.id);
     else await copyConsentLink(clienteId, currentDetailInvoice.id);
 }
@@ -481,8 +466,10 @@ async function sendConsentFromDetail() {
 function initShippingControls() {
     const transportInput = document.getElementById('transportCost');
     if (!transportInput || document.getElementById('shippingToggleWrap')) return;
+
     const anchor = transportInput.closest('.summary-row') || transportInput.parentElement;
     if (!anchor || !anchor.parentElement) return;
+
     const wrap = document.createElement('div');
     wrap.id = 'shippingToggleWrap';
     wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin:8px 0;padding:10px;border:1px dashed var(--border,#cccccc);border-radius:8px;background:rgba(0,0,0,0.02);';
@@ -496,11 +483,13 @@ function initShippingControls() {
             <input type="number" id="shippingDiscountInput" min="0" step="100" value="0" style="width:120px;padding:6px;border:1px solid var(--border,#cccccc);border-radius:6px;">
         </label>`;
     anchor.parentElement.insertBefore(wrap, anchor);
+
     document.getElementById('requiresShippingChk').addEventListener('change', (e) => {
         requiresShipping = e.target.checked;
         document.getElementById('shippingDiscountWrap').style.display = requiresShipping ? 'flex' : 'none';
         updateTotals();
     });
+
     document.getElementById('shippingDiscountInput').addEventListener('input', (e) => {
         const ship = getShippingTotals();
         if ((parseFloat(e.target.value) || 0) > ship.gross && ship.gross > 0) e.target.value = ship.gross;
@@ -531,6 +520,7 @@ function initUberFloatingButton() {
     btn.textContent = '🚚';
     btn.style.cssText = 'position:fixed;right:18px;bottom:18px;width:56px;height:56px;border-radius:50%;border:none;background:#276EF1;color:#ffffff;font-size:26px;line-height:1;box-shadow:0 4px 14px rgba(0,0,0,0.35);z-index:99999;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;display:flex;align-items:center;justify-content:center;padding:0;';
     document.body.appendChild(btn);
+
     try {
         const saved = JSON.parse(localStorage.getItem('uberBtnPos') || 'null');
         if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)) {
@@ -540,6 +530,7 @@ function initUberFloatingButton() {
             btn.style.bottom = 'auto';
         }
     } catch (e) { /* ignore */ }
+
     let dragging = false, moved = false, startX = 0, startY = 0, baseLeft = 0, baseTop = 0;
     btn.addEventListener('pointerdown', (e) => {
         dragging = true; moved = false;
@@ -549,6 +540,7 @@ function initUberFloatingButton() {
         btn.style.cursor = 'grabbing';
         try { btn.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
     });
+
     btn.addEventListener('pointermove', (e) => {
         if (!dragging) return;
         const dx = e.clientX - startX;
@@ -562,6 +554,7 @@ function initUberFloatingButton() {
             btn.style.right = 'auto'; btn.style.bottom = 'auto';
         }
     });
+
     const endDrag = () => {
         if (!dragging) return;
         dragging = false; btn.style.cursor = 'grab';
@@ -569,6 +562,7 @@ function initUberFloatingButton() {
         try { localStorage.setItem('uberBtnPos', JSON.stringify({ x: rect.left, y: rect.top })); } catch (e) { /* ignore */ }
         if (!moved) requestUberEnvio();
     };
+
     btn.addEventListener('pointerup', endDrag);
     btn.addEventListener('pointercancel', () => { dragging = false; btn.style.cursor = 'grab'; });
 }
@@ -576,20 +570,25 @@ function initUberFloatingButton() {
 function requestUberEnvio() {
     if (!currentClient) { alert('Seleccione un cliente primero'); return; }
     if (!currentClient.direccion) {
-        const pedir = confirm(`⚠️ ${currentClient.nombre || 'El cliente'} no tiene dirección registrada.\n\nAceptar = Pedir dirección por WhatsApp\nCancelar = Editar cliente ahora`);
+        const pedir = confirm(`⚠️ ${currentClient.nombre || 'El cliente'} no tiene dirección registrada.\nAceptar = Pedir dirección por WhatsApp\nCancelar = Editar cliente ahora`);
         if (pedir) requestLocation(); else openEditClientModal();
         return;
     }
+
     const fullAddress = [currentClient.direccion, currentClient.distrito, currentClient.canton, currentClient.provincia, 'Costa Rica'].filter(Boolean).join(', ');
     const mapsLink = (currentClient.lat && currentClient.lng)
         ? `https://maps.google.com/?q=${currentClient.lat},${currentClient.lng}`
         : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
+
     const deliveryInfo = `📦 ENVÍO UBER - EWE Esentia\n👤 Cliente: ${currentClient.nombre || 'N/A'}\n📞 Teléfono: ${currentClient.telefono || 'N/A'}\n📍 Dirección: ${fullAddress}\n🌐 Mapa: ${mapsLink}\n`;
     try { if (navigator.clipboard?.writeText) navigator.clipboard.writeText(deliveryInfo); } catch (e) { /* ignore */ }
+
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const uberDeep = `uber://?action=setPickup&pickup=my_location&dropoff[formatted_address]=${encodeURIComponent(fullAddress)}`;
     const uberWeb = `https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[formatted_address]=${encodeURIComponent(fullAddress)}`;
-    const abrirUber = confirm(`🚚 Gestionar envío para:\n\n${currentClient.nombre || 'Cliente'}\n📍 ${fullAddress}\n\nLos datos del envío fueron copiados al portapapeles.\n\nAceptar = Abrir Uber\nCancelar = Abrir Google Maps`);
+
+    const abrirUber = confirm(`🚚 Gestionar envío para:\n${currentClient.nombre || 'Cliente'}\n📍 ${fullAddress}\n\nLos datos del envío fueron copiados al portapapeles.\n\nAceptar = Abrir Uber\nCancelar = Abrir Google Maps`);
+    
     if (abrirUber) {
         if (isMobile) {
             window.location.href = uberDeep;
@@ -646,6 +645,7 @@ function getStockForProduct(product) {
     if (!product) return null;
     let stock = allStock.get(String(product.id).toLowerCase());
     if (stock) return stock;
+
     const normalizedName = normalizeString(product.nombre);
     for (const [key, value] of allStock.entries()) {
         if (normalizeString(value.nombre) === normalizedName || key === normalizedName) return value;
@@ -693,12 +693,14 @@ async function loadProducts() {
         { url: ProductManager.URLS.VELAS, catDefault: 'Velas' }
     ];
     const errors = [];
+
     for (const item of urls) {
         try {
             const response = await fetch(item.url);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
             let productsToProcess = [];
+
             if (Array.isArray(data)) {
                 productsToProcess = data.map(p => ({ ...p, categoriaDetectada: item.catDefault }));
             } else {
@@ -708,12 +710,13 @@ async function loadProducts() {
                     }
                 }
             }
+
             const mapped = productsToProcess.map(p => {
                 const precioBase = (p.precioOferta && p.precioOferta > 0) ? p.precioOferta : (p.precioOriginal || 0);
                 return {
                     id: String(p.id),
                     nombre: p.nombre || p.nombreOriginal || 'Producto sin nombre',
-                    nombreOriginal: p.nombreOriginal || p.nombre || 'Producto sin nombre',
+                    nombreOriginal: p.nombreOriginal || p.nombre || 'Producto sin nombre', // ✅ ASEGURADO
                     precioBase: parseFloat(precioBase) || 0,
                     categoria: p.categoriaDetectada || item.catDefault,
                     variantes: Array.isArray(p.variantes) ? p.variantes : []
@@ -725,6 +728,7 @@ async function loadProducts() {
             errors.push(item.catDefault);
         }
     }
+
     const errorBanner = document.getElementById('loadErrorBanner');
     if (errors.length > 0 && errorBanner) {
         errorBanner.style.display = 'block';
@@ -733,6 +737,7 @@ async function loadProducts() {
         errorBanner.style.display = 'none';
         errorBanner.innerHTML = '';
     }
+
     filterProducts('');
     if (typeof refreshPODatalist === 'function') refreshPODatalist();
 }
@@ -762,15 +767,18 @@ function onProvinceChange() {
     const cantonSelect = document.getElementById('newClientCanton');
     const districtSelect = document.getElementById('newClientDistrict');
     if (!provinceSelect || !cantonSelect || !districtSelect) return;
+
     const province = provinceSelect.value;
     cantonSelect.innerHTML = '<option value="">Seleccionar...</option>';
     districtSelect.innerHTML = '<option value="">Primero cantón</option>';
     districtSelect.disabled = true;
+
     if (!province || !COSTA_RICA_UBICACIONES[province]) {
         cantonSelect.disabled = true;
         cantonSelect.innerHTML = '<option value="">Primero provincia</option>';
         return;
     }
+
     Object.keys(COSTA_RICA_UBICACIONES[province]).sort().forEach(canton => {
         const option = document.createElement('option');
         option.value = canton;
@@ -786,14 +794,17 @@ function onCantonChange() {
     const cantonSelect = document.getElementById('newClientCanton');
     const districtSelect = document.getElementById('newClientDistrict');
     if (!provinceSelect || !cantonSelect || !districtSelect) return;
+
     const province = provinceSelect.value;
     const canton = cantonSelect.value;
     districtSelect.innerHTML = '<option value="">Seleccionar...</option>';
+
     if (!province || !canton || !COSTA_RICA_UBICACIONES[province]?.[canton]) {
         districtSelect.disabled = true;
         districtSelect.innerHTML = '<option value="">Primero cantón</option>';
         return;
     }
+
     COSTA_RICA_UBICACIONES[province][canton].forEach(distrito => {
         const option = document.createElement('option');
         option.value = distrito;
@@ -822,17 +833,21 @@ function openEditClientModal() {
     document.getElementById('newClientId').value = currentClient.cedula || '';
     document.getElementById('newClientPhone').value = currentClient.telefono || '';
     document.getElementById('newClientAddress').value = currentClient.direccion || '';
+
     const provinceSelect = document.getElementById('newClientProvince');
     const cantonSelect = document.getElementById('newClientCanton');
     const districtSelect = document.getElementById('newClientDistrict');
     const status = document.getElementById('locationStatus');
+
     provinceSelect.value = currentClient.provincia || '';
     onProvinceChange();
+
     setTimeout(() => {
         cantonSelect.value = currentClient.canton || '';
         onCantonChange();
         setTimeout(() => { districtSelect.value = currentClient.distrito || ''; }, 80);
     }, 80);
+
     if (currentClient.lat && currentClient.lng) {
         document.getElementById('newClientAddress').dataset.lat = currentClient.lat;
         document.getElementById('newClientAddress').dataset.lng = currentClient.lng;
@@ -851,14 +866,18 @@ function closeNewClientModal(keepOpen = false) {
     if (modal && !keepOpen) modal.classList.remove('active');
     const fields = { editClientId: '', newClientName: '', newClientId: '', newClientPhone: '', newClientAddress: '', newClientProvince: '', newClientCanton: '', newClientDistrict: '' };
     Object.entries(fields).forEach(([id, value]) => { const el = document.getElementById(id); if (el) el.value = value; });
+    
     const cantonSelect = document.getElementById('newClientCanton');
     const districtSelect = document.getElementById('newClientDistrict');
     if (cantonSelect) { cantonSelect.innerHTML = '<option value="">Primero provincia</option>'; cantonSelect.disabled = true; }
     if (districtSelect) { districtSelect.innerHTML = '<option value="">Primero cantón</option>'; districtSelect.disabled = true; }
+    
     const status = document.getElementById('locationStatus');
     if (status) { status.textContent = ''; status.className = ''; status.style.color = ''; }
+    
     const address = document.getElementById('newClientAddress');
     if (address) { delete address.dataset.lat; delete address.dataset.lng; }
+    
     const title = document.getElementById('clientModalTitle');
     if (title) title.textContent = '➕ Nuevo Cliente';
 }
@@ -873,11 +892,19 @@ async function saveNewClient() {
     const distrito = document.getElementById('newClientDistrict').value.trim();
     const editId = document.getElementById('editClientId').value;
     const addressEl = document.getElementById('newClientAddress');
+
     if (!nombre) { alert('El nombre del cliente es obligatorio'); return; }
     if (!telefono) { alert('El teléfono es obligatorio'); return; }
+
     const lat = parseFloat(addressEl.dataset.lat) || null;
     const lng = parseFloat(addressEl.dataset.lng) || null;
-    const clientData = { nombre, cedula: cedula || 'N/A', telefono, direccion: direccion || '', provincia: provincia || '', canton: canton || '', distrito: distrito || '', lat, lng, ultimaActualizacion: new Date().toISOString() };
+
+    const clientData = { 
+        nombre, cedula: cedula || 'N/A', telefono, direccion: direccion || '', 
+        provincia: provincia || '', canton: canton || '', distrito: distrito || '', 
+        lat, lng, ultimaActualizacion: new Date().toISOString() 
+    };
+
     try {
         let clientId;
         if (editId) {
@@ -905,8 +932,14 @@ function searchClients(query) {
     const resultsDiv = document.getElementById('clientResults');
     if (!resultsDiv) return;
     if (query.length < 2) { resultsDiv.style.display = 'none'; return; }
+    
     const q = query.toLowerCase();
-    const filtered = allClients.filter(c => (c.nombre || '').toLowerCase().includes(q) || (c.cedula || c.id || '').toLowerCase().includes(q) || (c.telefono || '').toLowerCase().includes(q));
+    const filtered = allClients.filter(c => 
+        (c.nombre || '').toLowerCase().includes(q) || 
+        (c.cedula || c.id || '').toLowerCase().includes(q) || 
+        (c.telefono || '').toLowerCase().includes(q)
+    );
+
     if (filtered.length > 0) {
         resultsDiv.innerHTML = filtered.map(c => `<div class="result-item" onclick="selectClient('${c.id}')"><div class="result-name">${c.nombre || 'Sin nombre'}</div><div class="result-meta">CC: ${c.cedula || c.id || 'N/A'} | Tel: ${c.telefono || 'N/A'}</div></div>`).join('');
         resultsDiv.style.display = 'block';
@@ -919,62 +952,56 @@ function searchClients(query) {
 function selectClient(clientId) {
     currentClient = allClients.find(c => c.id === clientId);
     if (!currentClient) return;
+
     document.getElementById('clientSearch').value = '';
     document.getElementById('clientResults').style.display = 'none';
     document.getElementById('selectedClientInfo').style.display = 'flex';
     document.getElementById('clientNameDisplay').textContent = currentClient.nombre || 'N/A';
     document.getElementById('clientIdDisplay').textContent = currentClient.cedula || currentClient.id || 'N/A';
     document.getElementById('clientPhoneDisplay').textContent = currentClient.telefono || 'N/A';
+
     const addressDiv = document.getElementById('clientAddressDisplay');
     const addressText = document.getElementById('clientAddressText');
     const locationBtn = document.getElementById('locationBtn');
     const deliveryBtn = document.getElementById('deliveryBtn');
+
     if (currentClient.direccion) { addressText.innerHTML = buildClientAddressHTML(currentClient); addressDiv.style.display = 'block'; }
     else { addressDiv.style.display = 'none'; }
+
     const hasPhone = currentClient.telefono && currentClient.telefono !== 'N/A';
     if (locationBtn) locationBtn.style.display = hasPhone ? 'block' : 'none';
     if (deliveryBtn) deliveryBtn.style.display = currentClient.direccion ? 'block' : 'none';
+
     document.getElementById('invoiceClientInfo').innerHTML = `
         <strong>${currentClient.nombre || 'Cliente'}</strong>
         <br><span style="font-size: 0.8rem; color: #666;">CC: ${currentClient.cedula || currentClient.id}</span>
         ${currentClient.direccion ? `<br><span style="font-size: 0.75rem; color: var(--info);">📍 ${[currentClient.distrito, currentClient.canton, currentClient.provincia].filter(Boolean).join(', ')}</span>` : ''}`;
 
-    // 🎯 Indicador de consentimiento con botón individual (no molesta a todos)
+    // 🎯 Indicador de consentimiento con botón individual
     const consentIndicator = document.getElementById('consentIndicator');
     if (consentIndicator) consentIndicator.remove();
-
+    
     if (currentClient.id && currentClient.id !== 'contado') {
         const consent = currentClient.consentimientoMora;
         const yaAcepto = consent && consent.aceptado === true && consent.version === MORA_POLICY.version;
-
         const indicator = document.createElement('div');
         indicator.id = 'consentIndicator';
         indicator.style.cssText = 'margin-top:8px;padding:8px 10px;border-radius:8px;font-size:0.75rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
-
+        
         if (yaAcepto) {
             indicator.style.background = '#dcfce7';
             indicator.style.color = '#14532d';
             indicator.innerHTML = `
                 <span>✅ Consentimiento aceptado (${new Date(consent.fechaLocal).toLocaleDateString('es-CR')})</span>
-                <button type="button" onclick="sendConsentLinkByWhatsApp('${currentClient.id}')" 
-                    style="background:rgba(0,0,0,0.08);color:#14532d;border:none;padding:3px 8px;border-radius:5px;font-size:0.68rem;cursor:pointer;">
-                    🔁 Reenviar
-                </button>`;
+                <button type="button" onclick="sendConsentLinkByWhatsApp('${currentClient.id}')" style="background:rgba(0,0,0,0.08);color:#14532d;border:none;padding:3px 8px;border-radius:5px;font-size:0.68rem;cursor:pointer;">🔁 Reenviar</button>`;
         } else {
             indicator.style.background = '#fef3c7';
             indicator.style.color = '#92400e';
             indicator.innerHTML = `
                 <span>⚠️ Sin consentimiento</span>
-                <button type="button" onclick="requestMoraConsent({ cliente: currentClient, total: currentTotal, saldo: currentTotal, canal: 'manual' }).then(ok => { if (ok) selectClient(currentClient.id); })" 
-                    style="background:#14532d;color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:0.7rem;cursor:pointer;font-weight:700;">
-                    📋 Registrar aquí
-                </button>
-                <button type="button" onclick="sendConsentLinkByWhatsApp('${currentClient.id}')" 
-                    style="background:#25D366;color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:0.7rem;cursor:pointer;font-weight:700;">
-                    📱 Enviar enlace
-                </button>`;
+                <button type="button" onclick="requestMoraConsent({ cliente: currentClient, total: currentTotal, saldo: currentTotal, canal: 'manual' }).then(ok => { if (ok) selectClient(currentClient.id); })" style="background:#14532d;color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:0.7rem;cursor:pointer;font-weight:700;">📋 Registrar aquí</button>
+                <button type="button" onclick="sendConsentLinkByWhatsApp('${currentClient.id}')" style="background:#25D366;color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:0.7rem;cursor:pointer;font-weight:700;">📱 Enviar enlace</button>`;
         }
-
         const infoBox = document.getElementById('invoiceClientInfo');
         if (infoBox) infoBox.appendChild(indicator);
     }
@@ -993,8 +1020,10 @@ function requestLocation() {
     if (!currentClient) { alert('Seleccione un cliente primero'); return; }
     const phone = normalizePhone(currentClient.telefono);
     if (!phone) { alert('El cliente no tiene teléfono registrado.'); return; }
-    const message = `Hola ${currentClient.nombre} 🌿\n\nSomos de *EWE Esentia*. Para realizar el envío de su pedido, necesitamos que nos comparta su *ubicación actual*.\n\n📍 Por favor, envíenos su ubicación usando esta opción de WhatsApp:\n   1. Toque el clip 📎 o el + junto al campo de texto\n   2. Seleccione "Ubicación"\n   3. Elija "Enviar mi ubicación actual"\n\nTambién puede escribirnos la dirección completa con referencias.\n\n¡Gracias! 🙏`;
-    if (confirm(`📍 Se abrirá WhatsApp para solicitar la ubicación a:\n\n${currentClient.nombre}\n📞 ${currentClient.telefono}\n\n¿Continuar?`)) {
+    
+    const message = `Hola ${currentClient.nombre} 🌿\n\nSomos de *EWE Esentia*. Para realizar el envío de su pedido, necesitamos que nos comparta su *ubicación actual*.\n\n📍 Por favor, envíenos su ubicación usando esta opción de WhatsApp:\n1. Toque el clip 📎 o el + junto al campo de texto\n2. Seleccione "Ubicación"\n3. Elija "Enviar mi ubicación actual"\n\nTambién puede escribirnos la dirección completa con referencias.\n\n¡Gracias! 🙏`;
+    
+    if (confirm(`📍 Se abrirá WhatsApp para solicitar la ubicación a:\n${currentClient.nombre}\n📞 ${currentClient.telefono}\n\n¿Continuar?`)) {
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
     }
 }
@@ -1005,15 +1034,18 @@ function getCurrentLocation() {
     const statusDiv = document.getElementById('locationStatus');
     const addressInput = document.getElementById('newClientAddress');
     if (!statusDiv || !addressInput) return;
+
     if (!navigator.geolocation) {
         statusDiv.textContent = '❌ Tu navegador no soporta geolocalización';
         statusDiv.className = '';
         statusDiv.style.color = 'var(--danger)';
         return;
     }
+
     statusDiv.textContent = '📍 Obteniendo ubicación...';
     statusDiv.className = 'location-pulse';
     statusDiv.style.color = 'var(--info)';
+
     navigator.geolocation.getCurrentPosition(
         async (position) => {
             const lat = position.coords.latitude;
@@ -1064,8 +1096,10 @@ function switchMobileTab(tab, button) {
     const productsPanel = document.getElementById('productsPanel');
     const cartPanel = document.getElementById('cartPanel');
     if (!productsPanel || !cartPanel) return;
+
     document.querySelectorAll('.mobile-tab-btn').forEach(btn => btn.classList.remove('active'));
     if (button) button.classList.add('active');
+
     if (tab === 'products') { productsPanel.classList.remove('mobile-hidden'); cartPanel.classList.add('mobile-hidden'); }
     else if (tab === 'cart') { productsPanel.classList.add('mobile-hidden'); cartPanel.classList.remove('mobile-hidden'); }
 }
@@ -1075,12 +1109,15 @@ function switchView(view, event) {
     const inventory = document.getElementById('view-inventory');
     const receivables = document.getElementById('view-receivables');
     const purchase = document.getElementById('view-purchase');
+    
     if (pos) pos.style.display = view === 'pos' ? 'grid' : 'none';
     if (inventory) inventory.style.display = view === 'inventory' ? 'grid' : 'none';
     if (receivables) receivables.style.display = view === 'receivables' ? 'grid' : 'none';
     if (purchase) purchase.style.display = view === 'purchase' ? 'block' : 'none';
+
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     if (event && event.target && event.target.classList) event.target.classList.add('active');
+
     if (view === 'inventory') { renderInventoryTable(); loadStockMovements(); }
     else if (view === 'receivables') { loadReceivables(); }
     else if (view === 'purchase') { loadPurchaseOrders(); }
@@ -1092,20 +1129,32 @@ function switchView(view, event) {
 function renderProducts(products) {
     const grid = document.getElementById('productsGrid');
     if (!grid) return;
+
     let visibleProducts = Array.isArray(products) ? products : [];
-    visibleProducts = visibleProducts.filter(p => getStockStatus(getStockForProduct(p)).status === 'low');
+    
+    // ✅ CORREGIDO: Filtro que ocultaba todos los productos excepto los de stock bajo
+    if (!showOutOfStockProducts) {
+        visibleProducts = visibleProducts.filter(p => {
+            const stock = getStockForProduct(p);
+            return !stock || stock.cantidad > 0;
+        });
+    }
+
     const counter = document.getElementById('productCount');
     if (counter) counter.textContent = `${visibleProducts.length} productos`;
+
     if (visibleProducts.length === 0) {
         grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #999; padding: 20px;">No hay productos disponibles en inventario</div>';
         return;
     }
+
     grid.innerHTML = visibleProducts.map(p => {
         const hasVariants = p.variantes && p.variantes.length > 0;
         const stock = getStockForProduct(p);
         const stockStatus = getStockStatus(stock);
         const isOutOfStock = stock && stock.cantidad <= 0;
         const isLowStock = stock && stock.cantidad > 0 && stock.cantidad <= LOW_STOCK_THRESHOLD;
+
         return `
         <div class="product-card ${hasVariants ? 'has-variants' : ''} ${isOutOfStock ? 'out-of-stock' : ''} ${isLowStock ? 'low-stock' : ''}" 
              onclick="${isOutOfStock ? `alert('⚠️ Producto agotado.'); return false;` : `openProductModal('${p.id}')`}">
@@ -1122,7 +1171,11 @@ function filterProducts(query) {
     let filtered = allProducts;
     if (query) {
         const q = query.toLowerCase();
-        filtered = filtered.filter(p => (p.nombre || '').toLowerCase().includes(q) || String(p.id).toLowerCase().includes(q) || (p.categoria || '').toLowerCase().includes(q));
+        filtered = filtered.filter(p => 
+            (p.nombre || '').toLowerCase().includes(q) || 
+            String(p.id).toLowerCase().includes(q) || 
+            (p.categoria || '').toLowerCase().includes(q)
+        );
     }
     renderProducts(filtered);
 }
@@ -1137,12 +1190,14 @@ function toggleOutOfStock() {
 function openProductModal(productId) {
     const product = allProducts.find(p => p.id === productId);
     if (!product) return;
+
     const discountInput = document.getElementById('modalDiscount');
     discountInput.dataset.percent = '0';
     document.getElementById('modalProductId').value = product.id;
     document.getElementById('modalProductName').textContent = product.nombre;
     document.getElementById('modalQuantity').value = 1;
     discountInput.value = 0;
+
     const stock = getStockForProduct(product);
     const stockBar = document.getElementById('modalStockBar');
     const stockIcon = document.getElementById('modalStockIcon');
@@ -1151,6 +1206,7 @@ function openProductModal(productId) {
     const maxQtyLabel = document.getElementById('maxQtyLabel');
     const pricePreview = document.getElementById('modalPricePreview');
     const qtyInput = document.getElementById('modalQuantity');
+
     if (stock) {
         stockQty.textContent = stock.cantidad;
         maxQtyLabel.textContent = stock.cantidad;
@@ -1163,9 +1219,11 @@ function openProductModal(productId) {
         stockIcon.textContent = 'ℹ️'; stockText.textContent = 'Sin registro en inventario.';
         stockBar.style.background = '#f0f9ff'; pricePreview.classList.remove('warning');
     }
+
     const variantGroup = document.getElementById('variantGroup');
     const variantSelect = document.getElementById('modalVariantSelect');
     variantSelect.innerHTML = '';
+
     if (product.variantes && product.variantes.length > 0) {
         variantGroup.style.display = 'block';
         if (product.precioBase > 0) {
@@ -1184,6 +1242,7 @@ function openProductModal(productId) {
         });
         variantSelect.selectedIndex = 0;
     } else { variantGroup.style.display = 'none'; }
+
     updateModalPricePreview();
     document.getElementById('productModal').classList.add('active');
 }
@@ -1211,23 +1270,29 @@ function updateModalPricePreview() {
     const productId = document.getElementById('modalProductId').value;
     const product = allProducts.find(p => p.id === productId);
     if (!product) return;
+
     const basePrice = getSelectedBasePrice(product);
     const qty = parseInt(document.getElementById('modalQuantity').value) || 1;
     const discountInput = document.getElementById('modalDiscount');
     const discountColones = parseFloat(discountInput.value) || 0;
     const totalBase = basePrice * qty;
+
     if (discountColones > totalBase) {
         discountInput.value = totalBase;
         alert(`⚠️ El descuento no puede ser mayor al total (₡${formatMoney(totalBase)})`);
         return updateModalPricePreview();
     }
+
     const discountPercent = totalBase > 0 ? (discountColones / totalBase) * 100 : 0;
     const totalFinal = Math.max(0, totalBase - discountColones);
+
     document.getElementById('modalOriginalPrice').textContent = `₡${formatMoney(basePrice)} c/u`;
     document.getElementById('modalFinalPrice').textContent = `₡${formatMoney(totalFinal)}`;
+
     const percentLabel = document.getElementById('discountPercentLabel');
     if (discountColones > 0) { percentLabel.textContent = `Equivale a ${discountPercent.toFixed(1)}% de descuento (-₡${formatMoney(discountColones)})`; percentLabel.style.color = 'var(--success)'; }
     else { percentLabel.textContent = 'Sin descuento'; percentLabel.style.color = 'var(--text-light)'; }
+
     discountInput.dataset.percent = discountPercent.toFixed(2);
 }
 
@@ -1235,8 +1300,10 @@ function confirmAddToCart() {
     const productId = document.getElementById('modalProductId').value;
     const product = allProducts.find(p => p.id === productId);
     if (!product) return;
+
     const stock = getStockForProduct(product);
     if (stock && stock.cantidad <= 0) { alert('❌ Producto agotado.'); return; }
+
     let basePrice = product.precioBase;
     let variantName = '';
     const variantSelect = document.getElementById('modalVariantSelect');
@@ -1244,29 +1311,35 @@ function confirmAddToCart() {
         basePrice = parseFloat(variantSelect.options[variantSelect.selectedIndex].dataset.price);
         variantName = variantSelect.value;
     }
+
     const qty = parseInt(document.getElementById('modalQuantity').value) || 1;
     const discountInput = document.getElementById('modalDiscount');
     const discountColones = parseFloat(discountInput.value) || 0;
     const discountPercent = parseFloat(discountInput.dataset.percent) || 0;
+
     const currentInCart = cart.filter(item => item.id === product.id && (!variantName || item.nombre.includes(variantName))).reduce((sum, item) => sum + item.cantidad, 0);
     const totalRequested = currentInCart + qty;
+
     if (stock && totalRequested > stock.cantidad) {
         alert(`⚠️ Stock insuficiente.\nDisponible: ${stock.cantidad}\nEn carrito: ${currentInCart}\nSolicitado: ${qty}\nMáximo: ${stock.cantidad - currentInCart}`);
         return;
     }
+
     const totalBase = basePrice * qty;
     const totalFinal = Math.max(0, totalBase - discountColones);
-    // ✅ Redondeo a 2 decimales para evitar errores de centavos
     const finalPriceUnit = Math.round((totalFinal / qty) * 100) / 100;
+    
     const baseDescription = buildProductDescription(product.nombre, product.nombreOriginal);
     const displayName = variantName ? `${product.nombre} (${variantName})` : product.nombre;
     const nombreOriginal = variantName ? `${product.nombreOriginal || product.nombre} (${variantName})` : (product.nombreOriginal || product.nombre);
     const descripcion = variantName ? `${baseDescription} (${variantName})` : baseDescription;
+
     cart.push({
         id: product.id, nombre: displayName, nombreOriginal, descripcion,
         precioUnitario: basePrice, descuentoColones, descuentoPct: discountPercent,
         precioFinalUnitario: finalPriceUnit, cantidad: qty, stockId: stock ? stock.id : null
     });
+
     closeProductModal();
     renderCart();
 }
@@ -1282,18 +1355,21 @@ function updateCartBadge() {
 function renderCart() {
     const container = document.getElementById('cartItems');
     if (!container) return;
+
     if (cart.length === 0) {
         container.innerHTML = '<div style="text-align: center; color: var(--text-light); padding: 40px 20px; font-size: 0.9rem;">Carrito vacío.<br>Agregue productos o escanee un código.</div>';
         updateTotals(); updateCartBadge(); return;
     }
+
     container.innerHTML = cart.map((item, index) => {
         const product = allProducts.find(p => p.id === item.id);
         const stock = product ? getStockForProduct(product) : null;
         const stockWarning = stock && item.cantidad >= stock.cantidad ? '<div class="cart-item-stock-warning">⚠️ Últimas unidades</div>' : '';
+        
         return `
         <div class="cart-item">
             <div class="cart-item-info">
-                <div class="cart-item-name">${item.nombre}</div>
+                <div class="cart-item-name">${getItemDescription(item)}</div>
                 ${item.descuentoColones > 0 ? `<div class="cart-item-discount">🏷️ -₡${formatMoney(item.descuentoColones)} desc. (${Number(item.descuentoPct || 0).toFixed(1)}%)</div>` : ''}
                 <div class="cart-item-price">₡${formatMoney(item.precioFinalUnitario)} c/u</div>
                 ${stockWarning}
@@ -1306,6 +1382,7 @@ function renderCart() {
             </div>
         </div>`;
     }).join('');
+
     updateTotals(); updateCartBadge();
 }
 
@@ -1314,13 +1391,13 @@ function updateCartItemQty(index, change) {
     const product = allProducts.find(p => p.id === item.id);
     const stock = product ? getStockForProduct(product) : null;
     const newQty = item.cantidad + change;
+
     if (stock && newQty > stock.cantidad) { alert(`⚠️ Stock máximo: ${stock.cantidad} unidades`); return; }
     if (newQty <= 0) cart.splice(index, 1); else item.cantidad = newQty;
     renderCart();
 }
 
 function removeFromCart(index) { cart.splice(index, 1); renderCart(); }
-
 function clearCart() {
     if (cart.length === 0) return;
     if (confirm('¿Limpiar el carrito?')) { cart = []; renderCart(); }
@@ -1338,22 +1415,27 @@ function getShippingTotals() {
 function updateTotals() {
     const transportInput = document.getElementById('transportCost');
     transportCost = parseFloat(transportInput?.value) || 0;
+
     const totalConIva = cart.reduce((sum, item) => sum + (item.precioFinalUnitario * item.cantidad), 0);
     const subtotalReal = totalConIva / 1.13;
     const ivaReal = totalConIva - subtotalReal;
-    // ✅ Redondeo controlado: subtotal + IVA = total exacto (sin céntimos fantasma)
+    
     const subtotalRedondeado = Math.round(subtotalReal * 100) / 100;
     const ivaAjustado = Math.round((totalConIva - subtotalRedondeado) * 100) / 100;
     const productsTotal = subtotalRedondeado + ivaAjustado;
+
     const ship = getShippingTotals();
     shippingDiscount = ship.discount;
     const finalTotal = productsTotal + ship.net;
+
     currentSubtotal = subtotalRedondeado;
     currentIva = ivaAjustado;
     currentTotal = finalTotal;
+
     document.getElementById('subtotalAmount').textContent = `₡${formatMoney(subtotalRedondeado)}`;
     document.getElementById('taxAmount').textContent = `₡${formatMoney(ivaAjustado)}`;
     document.getElementById('productsTotal').textContent = `₡${formatMoney(productsTotal)}`;
+
     const transportRow = document.getElementById('transportRow');
     if (transportRow) {
         if (ship.gross > 0) {
@@ -1362,12 +1444,12 @@ function updateTotals() {
                 ship.discount > 0 ? `₡${formatMoney(ship.net)} (desc. envío -₡${formatMoney(ship.discount)})` : `₡${formatMoney(ship.net)}`;
         } else { transportRow.style.display = 'none'; }
     }
+
     document.getElementById('totalAmount').textContent = `₡${formatMoney(finalTotal)}`;
 }
 
 // ==========================================
 // GUARDAR FACTURA
-// ✅ Consentimiento NO bloqueante: se anota si ya existía
 // ==========================================
 async function saveInvoice() {
     if (cart.length === 0) { alert('El carrito está vacío'); return; }
@@ -1382,6 +1464,7 @@ async function saveInvoice() {
     }
 
     if (currentEditingInvoice) { await updateExistingInvoice(); return; }
+
     try {
         await db.runTransaction(async (transaction) => {
             const stockGroups = new Map();
@@ -1398,13 +1481,16 @@ async function saveInvoice() {
                 group.items.push({ product, item });
                 group.totalQty += item.cantidad;
             }
+
             for (const group of stockGroups.values()) {
                 const currentStock = group.stockDoc.exists ? (group.stockDoc.data().cantidad || 0) : 0;
                 if (group.totalQty > currentStock) throw new Error(`Stock insuficiente para "${group.product.nombre}": necesita ${group.totalQty}, disponible ${currentStock}`);
             }
+
             const shipSave = getShippingTotals();
             const effectiveTransport = requiresShipping ? shipSave.net : 0;
             const invoiceRef = db.collection('facturas').doc();
+            
             const invoiceData = {
                 numero: currentInvoiceNumber,
                 fecha: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1427,11 +1513,14 @@ async function saveInvoice() {
                 consentimientoMora: consentNote || null
             };
             transaction.set(invoiceRef, invoiceData);
+
             for (const group of stockGroups.values()) {
                 const currentStock = group.stockDoc.exists ? (group.stockDoc.data().cantidad || 0) : 0;
                 const stockData = group.stockDoc.exists ? group.stockDoc.data() : { nombre: group.product.nombre, categoria: group.product.categoria, precioVenta: group.product.precioBase, cantidad: 0, costoUnitario: 0, ultimaCompra: '-' };
                 const newCantidad = Math.max(0, currentStock - group.totalQty);
+                
                 transaction.set(group.stockRef, { ...stockData, id: group.stockId, nombre: stockData.nombre || group.product.nombre, cantidad: newCantidad, ultimaActualizacion: new Date().toISOString() }, { merge: true });
+
                 for (const { product, item } of group.items) {
                     const movementRef = db.collection('stock_movements').doc();
                     transaction.set(movementRef, {
@@ -1445,6 +1534,7 @@ async function saveInvoice() {
                 }
             }
         });
+
         alert('✅ Factura guardada y stock actualizado');
         cart = []; renderCart();
         document.getElementById('transportCost').value = '';
@@ -1464,15 +1554,18 @@ async function saveInvoice() {
 async function updateExistingInvoice() {
     const original = currentEditingInvoice;
     if (!original || !original.id) return;
+    
     const originalItems = Array.isArray(original.items) ? original.items : [];
     const oldByStock = new Map();
     const newByStock = new Map();
+    
     const addQuantities = (target, items) => items.forEach(item => {
         const product = allProducts.find(p => String(p.id) === String(item.id));
         const stockId = item.stockId || (product ? getStockDocId(product) : '');
         if (!stockId) throw new Error(`No se encontró el inventario de "${item.nombre || item.id}"`);
         target.set(stockId, (target.get(stockId) || 0) + (parseInt(item.cantidad) || 0));
     });
+
     try {
         addQuantities(oldByStock, originalItems);
         addQuantities(newByStock, cart);
@@ -1480,23 +1573,28 @@ async function updateExistingInvoice() {
         const shipSave = getShippingTotals();
         const effectiveTransport = requiresShipping ? shipSave.net : 0;
         const totalPaid = (original.abonos || []).reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
+
         await db.runTransaction(async transaction => {
             const stockDocs = new Map();
             for (const stockId of allStockIds) {
                 const ref = db.collection('stock').doc(stockId);
                 stockDocs.set(stockId, { ref, doc: await transaction.get(ref) });
             }
+
             for (const stockId of allStockIds) {
                 const entry = stockDocs.get(stockId);
                 const currentStock = entry.doc.exists ? (parseInt(entry.doc.data().cantidad) || 0) : 0;
                 const delta = (newByStock.get(stockId) || 0) - (oldByStock.get(stockId) || 0);
+                
                 if (delta > 0 && currentStock < delta) {
                     const product = allProducts.find(p => getStockDocId(p) === stockId);
                     throw new Error(`Stock insuficiente para "${product?.nombre || stockId}": necesita ${delta}, disponible ${currentStock}`);
                 }
+                
                 const stockData = entry.doc.exists ? entry.doc.data() : {};
                 transaction.set(entry.ref, { ...stockData, id: stockId, cantidad: Math.max(0, currentStock - delta), ultimaActualizacion: new Date().toISOString() }, { merge: true });
             }
+
             transaction.update(db.collection('facturas').doc(original.id), {
                 clienteId: currentClient.id || original.clienteId || 'contado',
                 clienteNombre: currentClient.nombre || original.clienteNombre || 'Cliente Contado',
@@ -1513,6 +1611,7 @@ async function updateExistingInvoice() {
                 estado: totalPaid >= currentTotal && currentTotal > 0 ? 'pagada' : (totalPaid > 0 ? 'parcial' : 'pendiente'),
                 fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
             });
+
             for (const stockId of allStockIds) {
                 const delta = (newByStock.get(stockId) || 0) - (oldByStock.get(stockId) || 0);
                 if (!delta) continue;
@@ -1528,6 +1627,7 @@ async function updateExistingInvoice() {
                 });
             }
         });
+
         alert('✅ Factura actualizada y stock ajustado correctamente');
         currentEditingInvoice = null; cart = []; renderCart();
         document.getElementById('transportCost').value = ''; resetShippingControls();
@@ -1546,9 +1646,11 @@ async function updateExistingInvoice() {
 function renderInventoryTable(filter = currentInventoryFilter, searchQuery = '') {
     const tbody = document.getElementById('inventoryTableBody');
     if (!tbody) return;
+
     const q = (searchQuery || '').toLowerCase();
     let totalProducts = 0, inStock = 0, lowStock = 0, outOfStock = 0;
     const rows = [];
+
     allProducts.forEach(p => {
         const stock = getStockForProduct(p);
         const stockQty = stock ? stock.cantidad : 0;
@@ -1557,12 +1659,15 @@ function renderInventoryTable(filter = currentInventoryFilter, searchQuery = '')
         if (stockQty <= 0) outOfStock++;
         else if (stockQty <= LOW_STOCK_THRESHOLD) lowStock++;
         else inStock++;
+
         if (filter === 'ok' && stockStatus.status !== 'ok') return;
         if (filter === 'low' && stockStatus.status !== 'low') return;
         if (filter === 'out' && stockStatus.status !== 'out') return;
         if (q && !(p.nombre || '').toLowerCase().includes(q) && !(p.categoria || '').toLowerCase().includes(q)) return;
+
         const stockCellClass = stockStatus.status === 'ok' ? 'ok' : (stockStatus.status === 'low' ? 'low' : 'out');
         const lastPurchase = stock && stock.ultimaCompra ? new Date(stock.ultimaCompra).toLocaleDateString('es-CR') : '-';
+
         rows.push(`
             <tr>
                 <td><strong>${p.nombre}</strong><br><small style="color: #999;">ID: ${p.id}</small></td>
@@ -1574,6 +1679,7 @@ function renderInventoryTable(filter = currentInventoryFilter, searchQuery = '')
                 <td><button class="btn btn-success btn-sm" onclick="openRestockModal('${p.id}')">📦 Reabastecer</button></td>
             </tr>`);
     });
+
     document.getElementById('invTotalProducts').textContent = totalProducts;
     document.getElementById('invInStock').textContent = inStock;
     document.getElementById('invLowStock').textContent = lowStock;
@@ -1594,6 +1700,7 @@ function openRestockModal(productId) {
     const product = allProducts.find(p => p.id === productId);
     if (!product) return;
     const stock = getStockForProduct(product);
+
     document.getElementById('restockProductId').value = productId;
     document.getElementById('restockProductName').textContent = product.nombre;
     document.getElementById('restockCurrentStock').textContent = stock ? stock.cantidad : 0;
@@ -1609,21 +1716,27 @@ async function confirmRestock() {
     const productId = document.getElementById('restockProductId').value;
     const product = allProducts.find(p => p.id === productId);
     if (!product) return;
+
     const quantity = parseInt(document.getElementById('restockQuantity').value) || 0;
     const cost = parseFloat(document.getElementById('restockCost').value) || 0;
     const note = document.getElementById('restockNote').value.trim();
     if (quantity <= 0) { alert('Ingrese una cantidad válida'); return; }
+
     try {
         await db.runTransaction(async (transaction) => {
             const stockId = getStockDocId(product);
             const stockRef = db.collection('stock').doc(stockId);
             const stockDoc = await transaction.get(stockRef);
             let currentStock = 0, stockData = {};
+            
             if (stockDoc.exists) { currentStock = stockDoc.data().cantidad || 0; stockData = stockDoc.data(); }
             else { stockData = { id: stockId, nombre: product.nombre, categoria: product.categoria, precioVenta: product.precioBase, ultimaCompra: '-' }; }
+            
             const newCantidad = currentStock + quantity;
             const today = new Date().toISOString().split('T')[0];
+            
             transaction.set(stockRef, { ...stockData, id: stockId, nombre: stockData.nombre || product.nombre, cantidad: newCantidad, costoUnitario: cost > 0 ? cost : (stockData.costoUnitario || 0), ultimaActualizacion: new Date().toISOString(), ultimaCompra: today }, { merge: true });
+
             const movementRef = db.collection('stock_movements').doc();
             transaction.set(movementRef, {
                 productId: product.id, productName: product.nombre, type: 'entrada', quantity,
@@ -1632,6 +1745,7 @@ async function confirmRestock() {
                 fecha: firebase.firestore.FieldValue.serverTimestamp(), fechaLocal: new Date().toISOString()
             });
         });
+
         alert(`✅ Stock actualizado: ${product.nombre}\n+${quantity} unidades`);
         closeRestockModal();
         await loadStock();
@@ -1655,11 +1769,13 @@ async function loadStockMovements() {
 function renderMovementsTable(filter = currentMovementFilter) {
     const tbody = document.getElementById('movementsTableBody');
     if (!tbody) return;
+
     const filtered = filter === 'all' ? stockMovements : stockMovements.filter(m => m.type === filter);
     if (filtered.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-light);">No hay movimientos registrados</td></tr>';
         return;
     }
+
     tbody.innerHTML = filtered.map(m => {
         const dateObj = m.fecha?.toDate ? m.fecha.toDate() : new Date(m.fechaLocal);
         const dateStr = dateObj.toLocaleString('es-CR');
@@ -1693,25 +1809,31 @@ async function loadReceivables() {
     const container = document.getElementById('receivablesList');
     if (!container) return;
     container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-light);"><div class="spinner" style="margin: 0 auto 15px;"></div>Cargando facturas pendientes...</div>';
+
     try {
         const snapshot = await db.collection('facturas').get();
         const allInvoices = [];
         snapshot.forEach(doc => allInvoices.push({ id: doc.id, ...doc.data() }));
+
         const receivables = [];
         const clientDebtMap = new Map();
+
         for (const inv of allInvoices) {
             const abonos = inv.abonos || [];
             const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
             const totalFactura = parseFloat(inv.total) || 0;
             const saldoPendiente = Math.max(0, totalFactura - totalAbonado);
+
             if (saldoPendiente > 0) {
                 const dateObj = inv.fecha?.toDate ? inv.fecha.toDate() : new Date(inv.fecha);
                 const today = new Date();
                 const diffTime = Math.abs(today - dateObj);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
                 let urgency = 'normal';
                 if (diffDays > 60) urgency = 'urgent';
                 else if (diffDays > 30) urgency = 'warning';
+
                 receivables.push({
                     id: inv.id, numero: inv.numero, clienteId: inv.clienteId,
                     clienteNombre: inv.clienteNombre || 'Cliente Contado',
@@ -1719,26 +1841,32 @@ async function loadReceivables() {
                     total: totalFactura, abonado: totalAbonado, saldo: saldoPendiente,
                     fecha: dateObj, dias: diffDays, urgencia: urgency, items: inv.items
                 });
+
                 const currentDebt = clientDebtMap.get(inv.clienteId) || { nombre: inv.clienteNombre || 'Cliente', total: 0 };
                 clientDebtMap.set(inv.clienteId, { ...currentDebt, total: currentDebt.total + saldoPendiente });
             }
         }
+
         receivables.sort((a, b) => {
             const urgencyOrder = { urgent: 0, warning: 1, normal: 2 };
             if (urgencyOrder[a.urgencia] !== urgencyOrder[b.urgencia]) return urgencyOrder[a.urgencia] - urgencyOrder[b.urgencia];
             return b.saldo - a.saldo;
         });
+
         allReceivables = receivables;
         const totalDebt = receivables.reduce((sum, r) => sum + r.saldo, 0);
         const urgentCount = receivables.filter(r => r.urgencia === 'urgent').length;
+
         let topClient = '-', topDebt = 0;
         clientDebtMap.forEach((data) => {
             if (data.total > topDebt) { topDebt = data.total; topClient = data.nombre.split(' ')[0]; }
         });
+
         document.getElementById('recTotalDebt').textContent = `₡${formatMoney(totalDebt)}`;
         document.getElementById('recTotalInvoices').textContent = receivables.length;
         document.getElementById('recUrgentCount').textContent = urgentCount;
         document.getElementById('recTopClient').textContent = topClient;
+
         renderReceivablesList(receivables);
     } catch (error) {
         console.error("Error cargando cuentas por cobrar:", error);
@@ -1749,22 +1877,25 @@ async function loadReceivables() {
 function renderReceivablesList(receivables) {
     const container = document.getElementById('receivablesList');
     if (!container) return;
+
     if (receivables.length === 0) {
         container.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: var(--success);"><div style="font-size: 4rem; margin-bottom: 15px;">✅</div><h3 style="color: var(--primary); margin-bottom: 10px;">¡Excelente!</h3><p>No hay facturas pendientes de cobro.</p></div>';
         return;
     }
+
     container.innerHTML = receivables.map(r => {
         const urgencyClass = r.urgencia === 'urgent' ? 'urgent' : (r.urgencia === 'warning' ? 'warning' : 'normal');
         const daysClass = r.urgencia === 'urgent' ? 'days-urgent' : (r.urgencia === 'warning' ? 'days-warning' : 'days-normal');
         const daysText = r.dias === 0 ? 'Hoy' : (r.dias === 1 ? '1 día' : `${r.dias} días`);
         const urgencyLabel = r.urgencia === 'urgent' ? '🔴 URGENTE' : (r.urgencia === 'warning' ? '🟡 Moderada' : '🔵 Reciente');
         const dateStr = r.fecha.toLocaleDateString('es-CR', { day: '2-digit', month: 'short', year: 'numeric' });
-        // ✅ Mora usando la FECHA de la factura (no días calendario)
+        
         const interest = calculateMoratoryInterest(r.saldo, r.fecha);
         const moraBlock = interest.porcentaje > 0
             ? `<div style="font-size:0.72rem;color:#d97706;margin-top:2px;">+₡${formatMoney(interest.monto)} recargo (${interest.porcentaje}%)</div>
                <div style="font-size:0.75rem;font-weight:700;color:#b45309;">Total: ₡${formatMoney(interest.totalConInteres)}</div>`
             : `<div style="font-size:0.72rem;color:var(--success);margin-top:2px;">Sin recargo (${interest.diasHabilesTranscurridos} días hábiles)</div>`;
+
         return `
         <div class="receivable-card ${urgencyClass}" onclick="openInvoiceDetailModal('${r.id}')">
             <div class="receivable-header">
@@ -1804,13 +1935,16 @@ function filterReceivablesTable(query) { applyReceivablesFilters(query); }
 function applyReceivablesFilters(searchQuery = '') {
     const q = (searchQuery || '').toLowerCase();
     let filtered = allReceivables;
+
     if (currentReceivableFilter === 'urgent') filtered = filtered.filter(r => r.urgencia === 'urgent');
     else if (currentReceivableFilter === 'warning') filtered = filtered.filter(r => r.urgencia === 'warning');
     else if (currentReceivableFilter === 'normal') filtered = filtered.filter(r => r.urgencia === 'normal');
     else if (currentReceivableFilter === 'high') filtered = filtered.filter(r => r.saldo > 50000);
+
     if (q) {
         filtered = filtered.filter(r => (r.clienteNombre || '').toLowerCase().includes(q) || (r.numero && r.numero.toLowerCase().includes(q)));
     }
+
     renderReceivablesList(filtered);
 }
 
@@ -1819,15 +1953,18 @@ async function sendReminder(invoiceId) {
         const doc = await db.collection('facturas').doc(invoiceId).get();
         if (!doc.exists) { alert('Factura no encontrada'); return; }
         const factura = { id: doc.id, ...doc.data() };
+        
         let phone = '';
         const clienteLocal = allClients.find(c => c.id === factura.clienteId);
         if (clienteLocal && clienteLocal.telefono) phone = normalizePhone(clienteLocal.telefono);
         else if (factura.clienteTelefono) phone = normalizePhone(factura.clienteTelefono);
+
         if (!phone) {
             phone = prompt(`Ingrese el número de WhatsApp para enviar recordatorio:`);
             if (!phone) return;
             phone = normalizePhone(phone);
         }
+
         const { message } = buildWhatsAppMessage(factura, 'reminder');
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
     } catch (error) {
@@ -1844,6 +1981,7 @@ async function openHistoryModal() {
     document.getElementById('historyClientName').textContent = currentClient.nombre || 'Cliente';
     document.getElementById('historyModal').classList.add('active');
     document.getElementById('historyList').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-light);">Cargando historial...</div>';
+
     try {
         const snapshot = await db.collection('facturas').where('clienteId', '==', currentClient.id).get();
         let facturas = [];
@@ -1853,8 +1991,10 @@ async function openHistoryModal() {
             const dateB = b.fecha?.toDate ? b.fecha.toDate() : new Date(b.fecha);
             return dateB - dateA;
         });
+
         let totalGastado = 0, totalDebt = 0;
         const listContainer = document.getElementById('historyList');
+
         if (facturas.length === 0) {
             listContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-light);">Este cliente aún no tiene facturas registradas.</div>';
         } else {
@@ -1865,12 +2005,15 @@ async function openHistoryModal() {
                 const saldoPendiente = Math.max(0, totalFactura - totalAbonado);
                 totalGastado += totalFactura;
                 if (saldoPendiente > 0) totalDebt += saldoPendiente;
+
                 let estado, estadoClass, itemClass;
                 if (saldoPendiente <= 0 && totalFactura > 0) { estado = 'Pagada'; estadoClass = 'status-pagada'; itemClass = 'paid'; }
                 else if (totalAbonado > 0) { estado = 'Parcial'; estadoClass = 'status-parcial'; itemClass = 'partial'; }
                 else { estado = 'Pendiente'; estadoClass = 'status-pendiente'; itemClass = 'has-debt'; }
+
                 const dateObj = f.fecha?.toDate ? f.fecha.toDate() : new Date(f.fecha);
                 const dateStr = dateObj.toLocaleDateString('es-CR', { day: '2-digit', month: 'short', year: 'numeric' });
+
                 return `
                 <div class="history-item ${itemClass}" style="cursor: pointer;" onclick="openInvoiceDetailModal('${f.id}')">
                     <div class="history-info">
@@ -1890,6 +2033,7 @@ async function openHistoryModal() {
                 </div>`;
             }).join('');
         }
+
         document.getElementById('statTotalSpent').textContent = `₡${formatMoney(totalGastado)}`;
         document.getElementById('statInvoiceCount').textContent = facturas.length;
         document.getElementById('statTotalDebt').textContent = `₡${formatMoney(totalDebt)}`;
@@ -1908,14 +2052,17 @@ async function openPaymentModal(invoiceId) {
     try {
         const doc = await db.collection('facturas').doc(invoiceId).get();
         if (!doc.exists) { alert('Factura no encontrada'); return; }
+
         currentPaymentInvoice = { id: doc.id, ...doc.data() };
         const abonos = currentPaymentInvoice.abonos || [];
         const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
         const saldo = Math.max(0, (parseFloat(currentPaymentInvoice.total) || 0) - totalAbonado);
+
         document.getElementById('payInvoiceNum').textContent = currentPaymentInvoice.numero || 'S/N';
         document.getElementById('payTotal').textContent = `₡${formatMoney(parseFloat(currentPaymentInvoice.total) || 0)}`;
         document.getElementById('payPaid').textContent = `₡${formatMoney(totalAbonado)}`;
         document.getElementById('payBalance').textContent = `₡${formatMoney(saldo)}`;
+        
         const amountInput = document.getElementById('paymentAmount');
         amountInput.value = ''; amountInput.max = saldo;
         document.getElementById('paymentNote').value = '';
@@ -1948,6 +2095,7 @@ function updatePaymentPreview() {
     const saldo = Math.max(0, (parseFloat(currentPaymentInvoice.total) || 0) - totalAbonado);
     const newBalance = Math.max(0, saldo - amount);
     const preview = document.getElementById('paymentPreview');
+    
     if (amount > 0) { preview.style.display = 'block'; document.getElementById('newBalancePreview').textContent = `₡${formatMoney(newBalance)}`; }
     else { preview.style.display = 'none'; }
 }
@@ -1955,21 +2103,27 @@ function updatePaymentPreview() {
 async function confirmPayment() {
     if (!selectedPaymentMethod) { alert('Seleccione un método de pago'); return; }
     if (!currentPaymentInvoice) { alert('No hay factura seleccionada'); return; }
+
     const amount = parseFloat(document.getElementById('paymentAmount').value) || 0;
     if (amount <= 0) { alert('Ingrese un monto válido'); return; }
+
     const abonos = currentPaymentInvoice.abonos || [];
     const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
     const saldo = Math.max(0, (parseFloat(currentPaymentInvoice.total) || 0) - totalAbonado);
+
     if (amount > saldo) {
         if (!confirm(`El monto (₡${formatMoney(amount)}) excede el saldo pendiente (₡${formatMoney(saldo)}). ¿Desea continuar?`)) return;
     }
+
     const note = document.getElementById('paymentNote').value.trim();
     try {
         const newAbono = { monto: amount, metodo: selectedPaymentMethod, nota: note || '-', fecha: new Date() };
         await db.collection('facturas').doc(currentPaymentInvoice.id).update({ abonos: firebase.firestore.FieldValue.arrayUnion(newAbono) });
+
         alert(`✅ Abono de ₡${formatMoney(amount)} registrado exitosamente`);
         const invoiceId = currentPaymentInvoice.id;
         closePaymentModal();
+
         if (document.getElementById('view-receivables')?.style.display !== 'none') loadReceivables();
         else if (currentClient) openHistoryModal();
         else openInvoiceDetailModal(invoiceId);
@@ -1984,15 +2138,18 @@ async function resendInvoice(invoiceId) {
         const doc = await db.collection('facturas').doc(invoiceId).get();
         if (!doc.exists) { alert('Factura no encontrada'); return; }
         const factura = { id: doc.id, ...doc.data() };
+        
         let phone = '';
         const clienteLocal = allClients.find(c => c.id === factura.clienteId);
         if (clienteLocal && clienteLocal.telefono) phone = normalizePhone(clienteLocal.telefono);
         else if (factura.clienteTelefono) phone = normalizePhone(factura.clienteTelefono);
+
         if (!phone) {
             phone = prompt(`Ingrese el número de WhatsApp para reenviar la factura ${factura.numero}:`);
             if (!phone) return;
             phone = normalizePhone(phone);
         }
+
         const { message } = buildWhatsAppMessage(factura, 'resend');
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
     } catch (error) {
@@ -2008,22 +2165,28 @@ async function openInvoiceDetailModal(invoiceId) {
     try {
         const doc = await db.collection('facturas').doc(invoiceId).get();
         if (!doc.exists) { alert('Factura no encontrada'); return; }
+
         currentDetailInvoice = { id: doc.id, ...doc.data() };
         const factura = currentDetailInvoice;
+
         document.getElementById('detailInvoiceNum').textContent = factura.numero || 'S/N';
         const dateObj = factura.fecha?.toDate ? factura.fecha.toDate() : new Date(factura.fecha);
         document.getElementById('detailDate').textContent = dateObj.toLocaleString('es-CR');
         document.getElementById('detailClient').textContent = factura.clienteNombre || 'Cliente Contado';
+
         const abonos = factura.abonos || [];
         const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
         const totalFactura = parseFloat(factura.total) || 0;
         const saldoPendiente = Math.max(0, totalFactura - totalAbonado);
+
         let estado, estadoClass;
         if (saldoPendiente <= 0 && totalFactura > 0) { estado = '✅ Pagada'; estadoClass = 'status-pagada'; }
         else if (totalAbonado > 0) { estado = '⚠️ Pago Parcial'; estadoClass = 'status-parcial'; }
         else { estado = '⏳ Pendiente'; estadoClass = 'status-pendiente'; }
+        
         document.getElementById('detailStatus').innerHTML = `<span class="history-status ${estadoClass}">${estado}</span>`;
         document.getElementById('detailTotal').textContent = `₡${formatMoney(totalFactura)}`;
+
         const productsTable = document.getElementById('detailProductsTable');
         if (factura.items && factura.items.length > 0) {
             productsTable.innerHTML = factura.items.map(item => {
@@ -2045,11 +2208,13 @@ async function openInvoiceDetailModal(invoiceId) {
         } else {
             productsTable.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-light);">No hay productos registrados</td></tr>';
         }
+
         document.getElementById('detailSubtotal').textContent = `₡${formatMoney(factura.subtotal || 0)}`;
         document.getElementById('detailTax').textContent = `₡${formatMoney(factura.impuesto || 0)}`;
         const detailTransportEl = document.getElementById('detailTransport');
         if (detailTransportEl) detailTransportEl.textContent = `₡${formatMoney(factura.transporte || 0)}`;
         document.getElementById('detailTotalFinal').textContent = `₡${formatMoney(totalFactura)}`;
+
         const paymentsSection = document.getElementById('detailPaymentsSection');
         if (abonos.length > 0 || saldoPendiente > 0) {
             paymentsSection.style.display = 'block';
@@ -2069,8 +2234,7 @@ async function openInvoiceDetailModal(invoiceId) {
             }
             document.getElementById('detailTotalPaid').textContent = `₡${formatMoney(totalAbonado)}`;
             document.getElementById('detailBalance').textContent = `₡${formatMoney(saldoPendiente)}`;
-
-            // ✅ Mora usando la FECHA de la factura
+            
             const interest = calculateMoratoryInterest(saldoPendiente, factura.fecha);
             const interestBox = document.getElementById('detailInterestBox');
             if (interestBox) {
@@ -2103,6 +2267,7 @@ async function openInvoiceDetailModal(invoiceId) {
             paymentsSection.style.display = 'none';
             document.getElementById('detailPaymentBtn').style.display = 'none';
         }
+
         ensureInvoiceDetailActions();
         document.getElementById('invoiceDetailModal').classList.add('active');
     } catch (error) {
@@ -2114,6 +2279,7 @@ async function openInvoiceDetailModal(invoiceId) {
 function ensureInvoiceDetailActions() {
     const modal = document.getElementById('invoiceDetailModal');
     if (!modal || document.getElementById('invoiceDetailActions')) return;
+    
     const actions = document.createElement('div');
     actions.id = 'invoiceDetailActions';
     actions.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0;';
@@ -2121,6 +2287,7 @@ function ensureInvoiceDetailActions() {
         <button type="button" class="btn btn-info" onclick="printHistoricalInvoice()">🖨️ Imprimir factura</button>
         <button type="button" class="btn btn-warning" onclick="editCurrentInvoice()">✏️ Editar factura</button>
         <button type="button" class="btn btn-gold" onclick="sendConsentFromDetail()">📋 Enviar consentimiento</button>`;
+        
     const closeBtn = modal.querySelector('[onclick*="closeInvoiceDetailModal"]');
     if (closeBtn && closeBtn.parentElement) closeBtn.parentElement.insertBefore(actions, closeBtn);
     else modal.querySelector('.modal-content, .modal-body')?.appendChild(actions);
@@ -2130,19 +2297,23 @@ function editCurrentInvoice() {
     const invoice = currentDetailInvoice;
     if (!invoice) return;
     if ((invoice.abonos || []).length > 0 && !confirm('Esta factura tiene abonos registrados. ¿Desea continuar con la edición?')) return;
+
     currentEditingInvoice = JSON.parse(JSON.stringify(invoice, (key, value) => {
         if (value && typeof value.toDate === 'function') return value.toDate().toISOString();
         return value;
     }));
+    
     currentInvoiceNumber = invoice.numero || currentInvoiceNumber;
     document.getElementById('invoiceNumber').textContent = currentInvoiceNumber;
     cart = (invoice.items || []).map(item => ({ ...item }));
+    
     const knownClient = allClients.find(c => String(c.id) === String(invoice.clienteId));
     currentClient = knownClient || {
         id: invoice.clienteId || 'contado', nombre: invoice.clienteNombre || 'Cliente Contado',
         telefono: invoice.clienteTelefono || '', direccion: invoice.clienteDireccion || '',
         provincia: invoice.clienteProvincia || '', canton: invoice.clienteCanton || '', distrito: invoice.clienteDistrito || ''
     };
+    
     if (knownClient) selectClient(knownClient.id);
     else {
         document.getElementById('invoiceClientInfo').innerHTML = `<strong>${currentClient.nombre}</strong>`;
@@ -2151,15 +2322,18 @@ function editCurrentInvoice() {
         document.getElementById('clientIdDisplay').textContent = currentClient.id;
         document.getElementById('clientPhoneDisplay').textContent = currentClient.telefono || 'N/A';
     }
+
     requiresShipping = Boolean(invoice.requiereEnvio || invoice.clienteDireccion);
     shippingDiscount = parseFloat(invoice.descuentoEnvio) || 0;
     document.getElementById('transportCost').value = requiresShipping ? ((parseFloat(invoice.transporte) || 0) + shippingDiscount) : '';
+    
     const shippingChk = document.getElementById('requiresShippingChk');
     if (shippingChk) shippingChk.checked = requiresShipping;
     const shippingWrap = document.getElementById('shippingDiscountWrap');
     if (shippingWrap) shippingWrap.style.display = requiresShipping ? 'flex' : 'none';
     const discountInput = document.getElementById('shippingDiscountInput');
     if (discountInput) discountInput.value = shippingDiscount;
+
     renderCart();
     closeInvoiceDetailModal();
     switchView('pos');
@@ -2168,7 +2342,7 @@ function editCurrentInvoice() {
 }
 
 // ==========================================
-// IMPRESIÓN UNIFICADA: TICKET (POS y facturas guardadas)
+// IMPRESIÓN UNIFICADA: TICKET
 // ==========================================
 function printHistoricalInvoice() {
     if (currentDetailInvoice) printTicketFromInvoice(currentDetailInvoice);
@@ -2176,7 +2350,7 @@ function printHistoricalInvoice() {
 
 function printTicketFromInvoice(invoice) {
     if (!invoice) { alert('No hay factura para imprimir'); return; }
-
+    
     const dateObj = invoice.fecha?.toDate ? invoice.fecha.toDate() : new Date(invoice.fecha || Date.now());
     const items = invoice.items || [];
     const abonos = invoice.abonos || [];
@@ -2222,7 +2396,6 @@ function printTicketFromInvoice(invoice) {
 
     document.getElementById('ticketTotal').textContent = `₡${formatMoney(totalFactura)}`;
 
-    // 🎯 Línea de ESTADO de pago
     let estadoLine = document.getElementById('ticketEstadoLine');
     if (!estadoLine) {
         estadoLine = document.createElement('div');
@@ -2238,13 +2411,13 @@ function printTicketFromInvoice(invoice) {
         estadoLine.innerHTML = `<div class="ticket-item"><div class="ticket-item-desc">⚠️ ESTADO: ${totalAbonado > 0 ? 'PAGO PARCIAL' : 'PENDIENTE'}</div><div>Saldo: ₡${formatMoney(saldoPendiente)}</div></div>`;
     }
 
-    // 🎯 Línea de MORA ESTIMADA (solo si está vencida con recargo)
     let moraLine = document.getElementById('ticketMoraLine');
     if (!moraLine) {
         moraLine = document.createElement('div');
         moraLine.id = 'ticketMoraLine';
         if (estadoLine && estadoLine.parentElement) estadoLine.parentElement.insertBefore(moraLine, estadoLine.nextSibling);
     }
+    
     const interest = calculateMoratoryInterest(saldoPendiente, invoice.fecha);
     if (saldoPendiente > 0 && interest.porcentaje > 0) {
         moraLine.style.display = 'block';
@@ -2259,7 +2432,6 @@ function printTicketFromInvoice(invoice) {
         moraLine.style.display = 'none';
         moraLine.innerHTML = '';
     }
-
     window.print();
 }
 
@@ -2316,37 +2488,45 @@ function onScanFailure() { }
 // ==========================================
 function printTicket() {
     if (cart.length === 0 || !currentClient) { alert('Carrito vacío o cliente no seleccionado'); return; }
+    
     document.getElementById('ticketDate').textContent = new Date().toLocaleString('es-CR');
     document.getElementById('ticketInvoiceNum').textContent = document.getElementById('invoiceNumber').textContent;
     document.getElementById('ticketClientName').textContent = currentClient.nombre || 'Cliente Contado';
     document.getElementById('ticketClientId').textContent = currentClient.cedula || currentClient.id || 'N/A';
+
     const phoneLine = document.getElementById('ticketPhoneLine');
     const phoneSpan = document.getElementById('ticketPhone');
     if (currentClient.telefono && currentClient.telefono !== 'N/A') { phoneSpan.textContent = currentClient.telefono; phoneLine.style.display = 'block'; }
     else { phoneLine.style.display = 'none'; }
+
     const addressLine = document.getElementById('ticketAddressLine');
     const addressSpan = document.getElementById('ticketAddress');
     if (requiresShipping && currentClient.direccion) { addressSpan.textContent = [currentClient.direccion, currentClient.distrito, currentClient.canton, currentClient.provincia].filter(Boolean).join(', '); addressLine.style.display = 'block'; }
     else { addressLine.style.display = 'none'; }
+
     document.getElementById('ticketItems').innerHTML = cart.map(item => {
         let desc = `${item.cantidad} x ${getItemDescription(item)}`;
         if (item.descuentoColones > 0) desc += ` (-₡${formatMoney(item.descuentoColones)})`;
         return `<div class="ticket-item"><div class="ticket-item-desc">${desc}</div><div>₡${formatMoney(item.precioFinalUnitario * item.cantidad)}</div></div>`;
     }).join('');
+
     document.getElementById('ticketSubtotal').textContent = `₡${formatMoney(currentSubtotal)}`;
     document.getElementById('ticketTax').textContent = `₡${formatMoney(currentIva)}`;
     document.getElementById('ticketProductsTotal').textContent = `₡${formatMoney(currentSubtotal + currentIva)}`;
+
     const shipTicket = getShippingTotals();
     if (shipTicket.gross > 0) {
         document.getElementById('ticketTransportLine').style.display = 'flex';
         document.getElementById('ticketTransport').textContent = shipTicket.discount > 0 ? `₡${formatMoney(shipTicket.net)} (desc. -₡${formatMoney(shipTicket.discount)})` : `₡${formatMoney(shipTicket.net)}`;
     } else { document.getElementById('ticketTransportLine').style.display = 'none'; }
+
     document.getElementById('ticketTotal').textContent = `₡${formatMoney(currentTotal)}`;
-    // En venta al contado no hay mora (factura recién creada)
+    
     const estadoLine = document.getElementById('ticketEstadoLine');
     if (estadoLine) estadoLine.style.display = 'none';
     const moraLine = document.getElementById('ticketMoraLine');
     if (moraLine) moraLine.style.display = 'none';
+    
     window.print();
 }
 
@@ -2362,25 +2542,29 @@ function buildWhatsAppMessage(invoice, type = 'invoice') {
     const abonos = invoice.abonos || [];
     const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
     const saldoPendiente = Math.max(0, totalFactura - totalAbonado);
-    // ✅ Mora con días hábiles desde la FECHA de la factura
+    
     const interest = calculateMoratoryInterest(saldoPendiente, invoice.fecha);
 
     let header = '';
     if (type === 'reminder') {
-        header = `🌿 *Recordatorio amable de pago* 🌿\n\nHola ${clientName} 👋, esperamos que estés muy bien.\n\nTe escribimos de *EWE Esentia* para recordarte amablemente que tienes un saldo pendiente con nosotros:\n\n`;
+        header = `🌿 *Recordatorio amable de pago* 🌿\nHola ${clientName} 👋, esperamos que estés muy bien.\nTe escribimos de *EWE Esentia* para recordarte amablemente que tienes un saldo pendiente con nosotros:\n`;
     } else if (type === 'resend') {
-        header = `🌿 *Factura EWE Esentia* 🌿\nHola ${clientName} 👋, te reenviamos tu factura:\n\n`;
+        header = `🌿 *Factura EWE Esentia* 🌿\nHola ${clientName} 👋, te reenviamos tu factura:\n`;
     } else {
-        header = `🌿 *¡Gracias por tu compra en EWE Esentia!* 🌿\nHola ${clientName} 👋, aquí tienes tu factura:\n\n`;
+        header = `🌿 *¡Gracias por tu compra en EWE Esentia!* 🌿\nHola ${clientName} 👋, aquí tienes tu factura:\n`;
     }
+
     let msg = header;
     msg += `📄 *Factura:* ${numero}\n`;
     msg += `📅 *Fecha:* ${fechaStr}\n`;
+    
     if (invoice.requiereEnvio && invoice.clienteDireccion) {
         const dir = [invoice.clienteDireccion, invoice.clienteDistrito, invoice.clienteCanton, invoice.clienteProvincia].filter(Boolean).join(', ');
         msg += `📍 *Envío a:* ${dir}\n`;
     }
+    
     msg += `\n━━━━━━━━━━━━━━━━━━\n*🛍️ Detalle de productos:*\n`;
+    
     if (invoice.items && invoice.items.length > 0) {
         invoice.items.forEach(item => {
             let desc = getItemDescription(item);
@@ -2388,14 +2572,18 @@ function buildWhatsAppMessage(invoice, type = 'invoice') {
             msg += `▪️ ${item.cantidad} x ${desc}\n   ₡${formatMoney(item.precioFinalUnitario * item.cantidad)}\n`;
         });
     }
+    
     msg += `━━━━━━━━━━━━━━━━━━\n`;
     msg += `Subtotal: ₡${formatMoney(invoice.subtotal || 0)}\n`;
     msg += `IVA (13%): ₡${formatMoney(invoice.impuesto || 0)}\n`;
+    
     if (invoice.transporte > 0) {
         msg += `🚚 Transporte: ₡${formatMoney(invoice.transporte)}\n`;
         if (invoice.descuentoEnvio > 0) msg += `🏷️ Desc. envío: -₡${formatMoney(invoice.descuentoEnvio)}\n`;
     }
+    
     msg += `\n💰 *TOTAL: ₡${formatMoney(totalFactura)}*\n`;
+    
     if (abonos.length > 0) {
         msg += `\n💳 *Pagos realizados:*\n`;
         abonos.forEach((a, idx) => {
@@ -2404,13 +2592,14 @@ function buildWhatsAppMessage(invoice, type = 'invoice') {
         });
         msg += `\n*Total abonado:* ₡${formatMoney(totalAbonado)}\n`;
     }
+    
     if (saldoPendiente > 0) {
         msg += `\n⚠️ *Saldo pendiente:* ₡${formatMoney(saldoPendiente)}\n`;
         if (interest.porcentaje > 0) {
             msg += `\n⏰ *Política de pago:*\n`;
             msg += `Después de *15 días hábiles* de atraso se aplica un recargo acumulable:\n`;
             msg += `  • 16 a 30 días hábiles → *1.5%*\n`;
-            msg += `  • 31+ días hábiles → *3.5%* (1.5% + 2%)\n\n`;
+            msg += `  • 31+ días hábiles → *3.5%* (1.5% + 2%)\n`;
             msg += `📌 En tu caso (${interest.diasHabilesTranscurridos} días hábiles): *${interest.porcentaje}%*\n`;
             msg += `💸 Recargo actual: *₡${formatMoney(interest.monto)}*\n`;
             msg += `💵 *Total a pagar hoy: ₡${formatMoney(interest.totalConInteres)}*\n`;
@@ -2420,24 +2609,27 @@ function buildWhatsAppMessage(invoice, type = 'invoice') {
     } else {
         msg += `\n✅ *Factura totalmente pagada.* ¡Gracias!\n`;
     }
+    
     if (type === 'reminder') {
-        msg += `\n🙏 Te agradecemos mucho realizar el pago a la brevedad.\n`;
-        msg += `Cualquier consulta estamos con gusto 😊\n`;
+        msg += `\n🙏 Te agradecemos mucho realizar el pago a la brevedad.\nCualquier consulta estamos con gusto 😊\n`;
     } else {
         msg += `\n¡Gracias por tu preferencia! 🙏🌿\n`;
     }
+    
     msg += `\n💳 *SINPE Móvil:* 7295-2454\n*EWE Esentia*`;
     return { message: msg, interest };
 }
 
 function sendWhatsApp() {
     if (cart.length === 0) { alert('El carrito está vacío'); return; }
+    
     let phone = currentClient && currentClient.telefono ? normalizePhone(currentClient.telefono) : '';
     if (!phone) {
         phone = prompt("Ingrese el número de WhatsApp:");
         if (!phone) return;
         phone = normalizePhone(phone);
     }
+
     const shipWA = getShippingTotals();
     const invoice = {
         numero: document.getElementById('invoiceNumber').textContent,
@@ -2454,6 +2646,7 @@ function sendWhatsApp() {
         transporte: shipWA.net, descuentoEnvio: shipWA.discount,
         total: currentTotal, abonos: []
     };
+    
     const { message } = buildWhatsAppMessage(invoice, 'invoice');
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
 }
@@ -2473,6 +2666,7 @@ function initPurchaseModule() {
         btn.onclick = (e) => switchView('purchase', e);
         navContainer.appendChild(btn);
     }
+
     if (document.getElementById('view-purchase')) return;
     const view = document.createElement('div');
     view.id = 'view-purchase';
@@ -2514,6 +2708,7 @@ function initPurchaseModule() {
             <div id="poApprovedMsg" style="display:none;color:var(--success);font-weight:600;margin-top:8px;">✅ Orden aprobada: el inventario ya fue actualizado. Vista de solo lectura.</div>
         </div>
         <div id="poList"></div>`;
+        
     const receivablesView = document.getElementById('view-receivables');
     if (receivablesView && receivablesView.parentElement) receivablesView.parentElement.appendChild(view);
     else document.body.appendChild(view);
@@ -2552,9 +2747,11 @@ function getClientRuta(clientId) {
 async function generatePOFromWeek() {
     if (!allProducts.length) { alert('Los productos aún no están cargados.'); return; }
     const since = new Date(); since.setDate(since.getDate() - 7); since.setHours(0, 0, 0, 0);
+    
     try {
         const snapshot = await db.collection('facturas').where('fecha', '>=', since).get();
         const demand = new Map();
+        
         snapshot.forEach(doc => {
             const f = doc.data();
             (f.items || []).forEach(item => {
@@ -2567,6 +2764,7 @@ async function generatePOFromWeek() {
                 d.detalle.push(`${f.clienteNombre || 'Cliente'} · ${ruta}: ${qty}`);
             });
         });
+
         const lines = [];
         for (const d of demand.values()) {
             const product = allProducts.find(p => String(p.id) === d.id);
@@ -2574,13 +2772,20 @@ async function generatePOFromWeek() {
             const stockQty = stock ? (stock.cantidad || 0) : 0;
             const sugerido = d.total - stockQty;
             if (sugerido <= 0) continue;
+            
             lines.push({
-                productId: d.id, nombre: d.nombre, cantidad: sugerido,
+                productId: d.id, 
+                nombre: product ? product.nombre : d.nombre,
+                nombreOriginal: product ? (product.nombreOriginal || product.nombre) : d.nombre, // ✅ CORREGIDO
+                descripcion: product ? buildProductDescription(product.nombre, product.nombreOriginal) : d.nombre, // ✅ CORREGIDO
+                cantidad: sugerido,
                 costoUnitario: stock ? (stock.costoUnitario || 0) : 0,
                 detalle: `📦 Demanda semanal: ${d.total} | Stock: ${stockQty} | Pedidos: ${d.detalle.join(' | ')}`
             });
         }
+
         if (lines.length === 0) { alert('✅ No hay faltantes: el stock cubre todos los pedidos de la última semana.'); return; }
+        
         newPurchaseOrder();
         poLines = lines;
         renderPOLines();
@@ -2596,6 +2801,7 @@ function renderPOLines() {
     if (!container) return;
     const readOnly = currentPO && currentPO.estado === 'aprobada';
     const dis = readOnly ? 'disabled' : '';
+
     if (!poLines.length) {
         container.innerHTML = '<div style="color:var(--text-light,#999);padding:10px 4px;">Sin productos.</div>';
     } else {
@@ -2627,8 +2833,10 @@ function addPOLineFromSearch() {
     const input = document.getElementById('poQuickSearch');
     const q = (input?.value || '').trim().toLowerCase();
     if (!q) { alert('Escriba el nombre o ID del producto'); return; }
+    
     const product = allProducts.find(p => p.nombre.toLowerCase() === q || p.nombre.toLowerCase().includes(q) || String(p.id).toLowerCase() === q || String(p.id).toLowerCase().includes(q));
     if (!product) { alert(`❌ Producto no encontrado: "${q}"`); return; }
+
     const already = poLines.findIndex(l => String(l.productId) === String(product.id));
     if (already !== -1) { poLines[already].cantidad = (parseInt(poLines[already].cantidad) || 0) + 1; }
     else {
@@ -2653,6 +2861,7 @@ function printPurchaseOrderData(o) {
     const estadoTxt = o.estado === 'aprobada' ? 'APROBADA' : 'BORRADOR';
     const solicitadoPor = o.solicitadoPor || 'M Elena Gutierrez S.';
     const autorizadoPor = o.autorizadoPor || 'Wilber Calderon M.';
+    
     const rows = lineas.map((l, i) => `
         <tr>
             <td style="text-align:center;">${i + 1}</td>
@@ -2661,31 +2870,33 @@ function printPurchaseOrderData(o) {
             <td style="text-align:right;">₡${formatMoney(l.costoUnitario || 0)}</td>
             <td style="text-align:right;">₡${formatMoney((l.cantidad || 0) * (l.costoUnitario || 0))}</td>
         </tr>`).join('');
+
     const win = window.open('', '_blank');
     if (!win) { alert('Permita las ventanas emergentes para imprimir'); return; }
+    
     win.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Orden de Compra ${o.numero || ''}</title>
-        <style>body{font-family:Arial,sans-serif;margin:24px;color:#222;}h1{font-size:20px;margin:0 0 4px;color:#2e7d32;}.sub{color:#666;font-size:12px;margin-bottom:16px;}.info{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:14px;font-size:13px;}.info div{min-width:150px;}.label{color:#888;font-size:11px;text-transform:uppercase;}table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;}th,td{border:1px solid #ccc;padding:7px 8px;}th{background:#f0f0f0;}.total-row td{font-weight:bold;font-size:15px;background:#fafafa;}.firma{display:flex;justify-content:space-between;margin-top:70px;gap:30px;}.firma div{flex:1;text-align:center;border-top:1px solid #333;padding-top:6px;font-size:12px;color:#555;}.estado{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:bold;background:${o.estado === 'aprobada' ? '#e6f4ea' : '#f3e8ff'};color:${o.estado === 'aprobada' ? '#1e7e34' : '#6d28d9'};}@media print{body{margin:10mm;}}</style>
-        </head><body>
-        <h1>📋 ORDEN DE COMPRA</h1>
-        <div class="sub">EWE Esentia · Documento generado desde el sistema</div>
-        <div class="info">
-            <div><div class="label">No. Orden</div><strong>${o.numero || 'S/N'}</strong></div>
-            <div><div class="label">Fecha</div>${fecha}</div>
-            <div><div class="label">Proveedor</div>${o.proveedor || '-'}</div>
-            <div><div class="label">Estado</div><span class="estado">${estadoTxt}</span></div>
-        </div>
-        ${o.notas ? `<div style="font-size:12px;margin-bottom:8px;"><span class="label">Notas:</span> ${o.notas}</div>` : ''}
-        <table><thead><tr><th>#</th><th style="text-align:left;">Producto</th><th>Cant.</th><th style="text-align:right;">Costo unit.</th><th style="text-align:right;">Subtotal</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:#888;">Sin productos</td></tr>'}
-        <tr class="total-row"><td colspan="4" style="text-align:right;">TOTAL ORDEN</td><td style="text-align:right;">₡${formatMoney(o.total || 0)}</td></tr>
-        </tbody></table>
-        <div class="firma">
-            <div>Solicitado por<br><strong>${solicitadoPor}</strong></div>
-            <div>Autorizado por<br><strong>${autorizadoPor}</strong></div>
-            <div>Recibido conforme</div>
-        </div>
-        <script>window.onload = function() { window.print(); }<\/script>
-        </body></html>`);
+<style>body{font-family:Arial,sans-serif;margin:24px;color:#222;}h1{font-size:20px;margin:0 0 4px;color:#2e7d32;}.sub{color:#666;font-size:12px;margin-bottom:16px;}.info{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:14px;font-size:13px;}.info div{min-width:150px;}.label{color:#888;font-size:11px;text-transform:uppercase;}table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;}th,td{border:1px solid #ccc;padding:7px 8px;}th{background:#f0f0f0;}.total-row td{font-weight:bold;font-size:15px;background:#fafafa;}.firma{display:flex;justify-content:space-between;margin-top:70px;gap:30px;}.firma div{flex:1;text-align:center;border-top:1px solid #333;padding-top:6px;font-size:12px;color:#555;}.estado{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:bold;background:${o.estado === 'aprobada' ? '#e6f4ea' : '#f3e8ff'};color:${o.estado === 'aprobada' ? '#1e7e34' : '#6d28d9'};}@media print{body{margin:10mm;}}</style>
+</head><body>
+<h1>📋 ORDEN DE COMPRA</h1>
+<div class="sub">EWE Esentia · Documento generado desde el sistema</div>
+<div class="info">
+    <div><div class="label">No. Orden</div><strong>${o.numero || 'S/N'}</strong></div>
+    <div><div class="label">Fecha</div>${fecha}</div>
+    <div><div class="label">Proveedor</div>${o.proveedor || '-'}</div>
+    <div><div class="label">Estado</div><span class="estado">${estadoTxt}</span></div>
+</div>
+${o.notas ? `<div style="font-size:12px;margin-bottom:8px;"><span class="label">Notas:</span> ${o.notas}</div>` : ''}
+<table><thead><tr><th>#</th><th style="text-align:left;">Producto</th><th>Cant.</th><th style="text-align:right;">Costo unit.</th><th style="text-align:right;">Subtotal</th></tr></thead>
+<tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:#888;">Sin productos</td></tr>'}
+<tr class="total-row"><td colspan="4" style="text-align:right;">TOTAL ORDEN</td><td style="text-align:right;">₡${formatMoney(o.total || 0)}</td></tr>
+</tbody></table>
+<div class="firma">
+    <div>Solicitado por<br><strong>${solicitadoPor}</strong></div>
+    <div>Autorizado por<br><strong>${autorizadoPor}</strong></div>
+    <div>Recibido conforme</div>
+</div>
+<script>window.onload = function() { window.print(); }<\/script>
+</body></html>`);
     win.document.close();
 }
 
@@ -2742,6 +2953,7 @@ async function savePurchaseOrder(estado) {
     if (!proveedor) { alert('Ingrese el proveedor'); return; }
     const lineasValidas = poLines.filter(l => l.productId && (parseInt(l.cantidad) || 0) > 0);
     if (!lineasValidas.length) { alert('Agregue al menos un producto con cantidad válida'); return; }
+
     const numero = document.getElementById('poNumero').value || generatePONumber();
     const total = recalcPOTotals();
     const lineas = lineasValidas.map(l => ({
@@ -2754,9 +2966,11 @@ async function savePurchaseOrder(estado) {
         subtotal: (parseInt(l.cantidad) || 0) * (parseFloat(l.costoUnitario) || 0),
         detalle: l.detalle || ''
     }));
+
     try {
         if (estado === 'aprobada') {
-            if (!confirm(`✅ ¿Aprobar la orden ${numero} por ₡${formatMoney(total)}?\n\nSe sumará al inventario cada producto de la orden.`)) return;
+            if (!confirm(`✅ ¿Aprobar la orden ${numero} por ₡${formatMoney(total)}?\nSe sumará al inventario cada producto de la orden.`)) return;
+            
             await db.runTransaction(async (transaction) => {
                 for (const l of lineas) {
                     const product = allProducts.find(p => String(p.id) === String(l.productId));
@@ -2764,10 +2978,13 @@ async function savePurchaseOrder(estado) {
                     const stockRef = db.collection('stock').doc(stockId);
                     const stockDoc = await transaction.get(stockRef);
                     let currentStock = 0, stockData = {};
+                    
                     if (stockDoc.exists) { currentStock = stockDoc.data().cantidad || 0; stockData = stockDoc.data(); }
                     else { stockData = { id: stockId, nombre: l.nombre, categoria: product ? product.categoria : 'General', precioVenta: product ? product.precioBase : 0, ultimaCompra: '-' }; }
+                    
                     const today = new Date().toISOString().split('T')[0];
                     transaction.set(stockRef, { ...stockData, id: stockId, nombre: stockData.nombre || l.nombre, cantidad: currentStock + l.cantidad, costoUnitario: l.costoUnitario > 0 ? l.costoUnitario : (stockData.costoUnitario || 0), ultimaActualizacion: new Date().toISOString(), ultimaCompra: today }, { merge: true });
+                    
                     const movementRef = db.collection('stock_movements').doc();
                     transaction.set(movementRef, {
                         productId: l.productId, productName: l.nombre, type: 'entrada', quantity: l.cantidad,
@@ -2778,6 +2995,7 @@ async function savePurchaseOrder(estado) {
                 }
             });
         }
+
         const data = {
             numero, proveedor,
             notas: document.getElementById('poNotas').value.trim(),
@@ -2787,13 +3005,16 @@ async function savePurchaseOrder(estado) {
             fecha: firebase.firestore.FieldValue.serverTimestamp(),
             ultimaActualizacion: new Date().toISOString()
         };
+
         if (currentPO && currentPO.id) await db.collection('ordenes_compra').doc(currentPO.id).update(data);
         else { const ref = await db.collection('ordenes_compra').add(data); currentPO = { id: ref.id }; }
+
         if (estado === 'aprobada') {
             await loadStock(); checkLowStockAlerts();
             if (document.getElementById('view-inventory')?.style.display !== 'none') renderInventoryTable(currentInventoryFilter, document.getElementById('inventorySearch')?.value || '');
             alert('✅ Compra aprobada e inventario actualizado');
         } else { alert('💾 Orden guardada como borrador'); }
+        
         await loadPurchaseOrders();
         if (estado === 'aprobada') editPurchaseOrder(currentPO.id, true);
     } catch (error) {
@@ -2819,10 +3040,12 @@ async function loadPurchaseOrders() {
 function renderPurchaseOrdersList() {
     const container = document.getElementById('poList');
     if (!container) return;
+
     if (!purchaseOrders.length) {
         container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-light);">No hay órdenes de compra registradas.</div>';
         return;
     }
+
     container.innerHTML = purchaseOrders.map(o => {
         const fecha = o.fecha?.toDate ? o.fecha.toDate().toLocaleString('es-CR') : (o.ultimaActualizacion ? new Date(o.ultimaActualizacion).toLocaleString('es-CR') : '-');
         const aprobada = o.estado === 'aprobada';
@@ -2852,17 +3075,20 @@ async function editPurchaseOrder(id, silent = false) {
         if (!doc.exists) { alert('Orden no encontrada'); return; }
         currentPO = { id: doc.id, ...doc.data() };
         poLines = (currentPO.lineas || []).map(l => ({ ...l }));
+        
         document.getElementById('poNumero').value = currentPO.numero || '';
         document.getElementById('poProveedor').value = currentPO.proveedor || '';
         document.getElementById('poNotas').value = currentPO.notas || '';
         document.getElementById('poSolicitadoPor').value = currentPO.solicitadoPor || 'M Elena Gutierrez S.';
         document.getElementById('poAutorizadoPor').value = currentPO.autorizadoPor || 'Wilber Calderon M.';
         document.getElementById('poEstadoBadge').innerHTML = currentPO.estado === 'aprobada' ? '<span style="color:var(--success);">✅ Aprobada</span>' : '<span style="color:#6d28d9;">🟣 Borrador</span>';
+        
         document.getElementById('poEditor').style.display = 'block';
         const readOnly = currentPO.estado === 'aprobada';
         document.getElementById('poActions').style.display = readOnly ? 'none' : 'flex';
         document.getElementById('poApprovedMsg').style.display = readOnly ? 'block' : 'none';
         ['poProveedor', 'poNotas', 'poSolicitadoPor', 'poAutorizadoPor'].forEach(fid => { document.getElementById(fid).disabled = readOnly; });
+        
         renderPOLines();
         if (!silent) document.getElementById('poEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (error) {
