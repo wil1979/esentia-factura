@@ -1449,6 +1449,36 @@ function updateTotals() {
     document.getElementById('totalAmount').textContent = `₡${formatMoney(finalTotal)}`;
 }
 
+function triggerTicketPrint() {
+    const ticketEl = document.getElementById('ticket-print');
+    if (!ticketEl) {
+        window.print();
+        return;
+    }
+
+    ticketEl.classList.add('is-printing-mobile');
+    ticketEl.style.display = 'block';
+
+    const cleanup = () => {
+        ticketEl.classList.remove('is-printing-mobile');
+        ticketEl.style.display = '';
+        window.removeEventListener('afterprint', cleanup);
+    };
+
+    window.addEventListener('afterprint', cleanup);
+
+    setTimeout(() => {
+        try {
+            window.print();
+        } catch (err) {
+            console.error('Error al invocar window.print():', err);
+            alert('No se pudo abrir el diálogo de impresión en este dispositivo.');
+        } finally {
+            setTimeout(cleanup, 1200);
+        }
+    }, 120);
+}
+
 // ==========================================
 // GUARDAR FACTURA
 // ✅ Consentimiento NO bloqueante: se anota si ya existía
@@ -2439,7 +2469,7 @@ function printTicket() {
     if (estadoLine) estadoLine.style.display = 'none';
     const moraLine = document.getElementById('ticketMoraLine');
     if (moraLine) moraLine.style.display = 'none';
-    window.print();
+    triggerTicketPrint();
 }
 
 // ==========================================
