@@ -441,7 +441,7 @@ async function sendConsentLinkByWhatsApp(clienteId, facturaId = null) {
     const token = await generateConsentToken(cliente.id, facturaId);
     if (!token) return;
     const url = buildConsentUrl(token, cliente.id, facturaId);
-    const msg = `🌿 *EWE ESENTIA - Consentimiento de Pago*\n\n` +
+    const msg = `🌿 *EWE ESENTIA - Politica de Credito*\n\n` +
         `Hola ${cliente.nombre} 👋\n\n` +
         `Para completar su registro en nuestro sistema, le solicitamos amablemente aceptar nuestras *condiciones de pago y cargos por mora*.\n\n` +
         `📋 Por favor abra el siguiente enlace desde su celular:\n` +
@@ -993,8 +993,22 @@ function selectClient(clientId) {
                 </button>`;
         }
 
+
+
         const infoBox = document.getElementById('invoiceClientInfo');
         if (infoBox) infoBox.appendChild(indicator);
+
+        const creditBlockBanner = document.getElementById('creditBlockBanner');
+    if (creditBlockBanner) creditBlockBanner.remove();
+
+    if (currentClient.creditoBloqueado === true) {
+        const blockDiv = document.createElement('div');
+        blockDiv.id = 'creditBlockBanner';
+        blockDiv.style.cssText = 'margin-top:8px;padding:8px 10px;border-radius:8px;font-size:0.76rem;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:600;';
+        blockDiv.innerHTML = `🔒 <strong>Crédito bloqueado</strong>${currentClient.motivoBloqueo ? `: ${currentClient.motivoBloqueo}` : ' para este cliente.'}`;
+        const infoBox = document.getElementById('invoiceClientInfo');
+        if (infoBox) infoBox.appendChild(blockDiv);
+    }
     }
 }
 
@@ -1442,6 +1456,14 @@ function updateTotals() {
 async function saveInvoice() {
     if (cart.length === 0) { alert('El carrito está vacío'); return; }
     if (!currentClient) { alert('Seleccione un cliente'); return; }
+    if (currentClient && currentClient.creditoBloqueado === true) {
+        const motivoTxt = currentClient.motivoBloqueo ? `\nMotivo: ${currentClient.motivoBloqueo}` : '';
+        const continuar = confirm(
+            `🔒 ADVERTENCIA: ${currentClient.nombre || 'Este cliente'} tiene el CRÉDITO BLOQUEADO.${motivoTxt}\n\n` +
+            `¿Desea continuar de todas formas con esta factura?`
+        );
+        if (!continuar) return;
+    }
 
     let consentNote = null;
     if (currentClient && currentClient.id && currentClient.id !== 'contado') {
@@ -2542,6 +2564,15 @@ function initPurchaseModule() {
         btn.textContent = '📋 Órdenes';
         btn.onclick = (e) => switchView('purchase', e);
         navContainer.appendChild(btn);
+    }
+    if (navContainer && !document.getElementById('navConsentimientosBtn')) {
+        const consentBtn = document.createElement('a');
+        consentBtn.id = 'navConsentimientosBtn';
+        consentBtn.href = 'consentimientos.html';
+        consentBtn.className = 'nav-btn';
+        consentBtn.style.cssText = 'background:#b45309;color:#fff;text-decoration:none;display:inline-flex;align-items:center;';
+        consentBtn.textContent = '📋 Consentimientos';
+        navContainer.appendChild(consentBtn);
     }
     if (document.getElementById('view-purchase')) return;
     const view = document.createElement('div');

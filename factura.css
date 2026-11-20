@@ -676,3 +676,74 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--tex
         max-height: 100px;
     }
 }
+/* ==========================================
+   FIJAR PIE DE FACTURA Y BOTONES SIEMPRE VISIBLES
+   ========================================== */
+.main-container {
+    min-height: 0;
+}
+
+.right-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.invoice-header {
+    flex-shrink: 0;
+}
+
+.cart-items {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.invoice-footer {
+    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    z-index: 15;
+    background: #fafafa;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+    max-height: 55vh;
+    overflow-y: auto;
+}
+
+/* Ajuste específico para móvil y pantallas pequeñas */
+@media (max-width: 768px) {
+    .right-panel {
+        height: calc(100dvh - 105px);
+        max-height: calc(100dvh - 105px);
+        overflow: hidden;
+    }
+
+    .cart-items {
+        flex: 1 1 auto;
+        max-height: none;
+        overflow-y: auto;
+    }
+
+    .invoice-footer {
+        position: sticky;
+        bottom: 0;
+        padding: 10px 12px;
+    }
+
+    .invoice-footer .action-buttons {
+        margin-top: 8px;
+        gap: 6px;
+    }
+
+    .invoice-footer .action-buttons-full {
+        margin-top: 6px;
+        gap: 6px;
+    }
+
+    .invoice-footer .btn {
+        padding: 9px 10px;
+        font-size: 0.84rem;
+    }
+}
