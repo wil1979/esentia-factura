@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consentimientos Informados y Control de Crédito — EWE Esentia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2d5016;
+            --primary-light: #3d6b20;
+            --accent: #d4a843;
+            --bg: #f5f0eb;
+            --surface: #ffffff;
+            --text: #1a1a1a;
+            --text-light: #666666;
+            --border: #e0d5c7;
+            --whatsapp: #25D366;
+            --danger: #dc3545;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --success: #10b981;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        .header {
+            background: var(--surface);
+            padding: 14px 22px;
+            border-bottom: 2px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            color: var(--primary);
+            font-size: 1.35rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+
+        .btn-sm { padding: 6px 10px; font-size: 0.78rem; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-light); }
+        .btn-secondary { background: #e9ecef; color: var(--text); }
+        .btn-secondary:hover { background: #dee2e6; }
+        .btn-success { background: var(--success); color: #fff; }
+        .btn-success:hover { background: #059669; }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-warning { background: var(--warning); color: #fff; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-whatsapp { background: var(--whatsapp); color: #fff; }
+        .btn-whatsapp:hover { background: #128C7E; }
+
+        .container {
+            max-width: 1240px;
+            margin: 20px auto;
+            padding: 0 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-light);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-value.ok { color: var(--success); }
+        .stat-value.warn { color: #d97706; }
+        .stat-value.danger { color: var(--danger); }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            padding: 7px 13px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-light);
+            transition: all 0.2s;
+        }
+
+        .filter-tab:hover { background: var(--bg); }
+        .filter-tab.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .search-input {
+            padding: 9px 14px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            min-width: 260px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.86rem;
+        }
+
+        th {
+            background: #f9f5f0;
+            color: var(--primary);
+            font-weight: 700;
+            text-align: left;
+            padding: 11px 12px;
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 11px 12px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #fcfaf7; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 9px;
+            border-radius: 999px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .badge-ok { background: #dcfce7; color: #166534; }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-overdue { background: #fee2e2; color: #991b1b; }
+        .badge-blocked { background: #1f2937; color: #ffffff; }
+        .badge-active { background: #e0f2fe; color: #075985; }
+
+        .actions-cell {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 14px;
+            width: min(680px, 100%);
+            max-height: 92vh;
+            overflow-y: auto;
+            box-shadow: 0 12px 36px rgba(0,0,0,0.25);
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #14532d, #b8860b);
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 14px 14px 0 0;
+        }
+
+        .modal-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .modal-body { padding: 18px 20px; }
+
+        pre.policy-box {
+            white-space: pre-wrap;
+            font-family: Arial, sans-serif;
+            font-size: 0.85rem;
+            line-height: 1.45;
+            background: #fffbeb;
+            border: 1px solid #facc15;
+            color: #3f3f46;
+            padding: 12px;
+            border-radius: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            margin: 12px 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 36px 16px;
+            color: var(--text-light);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div>
+            <h1>📋 Consentimientos y Control de Crédito</h1>
+            <div style="font-size: 0.8rem; color: var(--text-light);">EWE Esentia · Política vigente: <strong id="policyVersionLabel"></strong></div>
+        </div>
+        <div class="header-actions">
+            <button type="button" class="btn btn-secondary" onclick="loadAllData()">🔄 Actualizar</button>
+            <a href="factura.html" class="btn btn-primary">🧾 Volver a Facturación</a>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Clientes</div>
+                <div class="stat-value" id="statTotalClients">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Consentimiento Aceptado</div>
+                <div class="stat-value ok" id="statAccepted">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Deuda > 30 Días</div>
+                <div class="stat-value warn" id="statOverdue30">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Crédito Bloqueado</div>
+                <div class="stat-value danger" id="statBlocked">0</div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="toolbar">
+                <div class="filter-tabs" id="filterTabs">
+                    <button type="button" class="filter-tab active" data-filter="all" onclick="setFilter('all', this)">Todos</button>
+                    <button type="button" class="filter-tab" data-filter="accepted" onclick="setFilter('accepted', this)">✅ Consentimiento aceptado</button>
+                    <button type="button" class="filter-tab" data-filter="pending" onclick="setFilter('pending', this)">⚠️ Sin consentimiento</button>
+                    <button type="button" class="filter-tab" data-filter="overdue30" onclick="setFilter('overdue30', this)">⏰ Deuda > 30 días</button>
+                    <button type="button" class="filter-tab" data-filter="blocked" onclick="setFilter('blocked', this)">🔒 Crédito bloqueado</button>
+                </div>
+                <input type="text" id="searchInput" class="search-input" placeholder="🔍 Buscar cliente, cédula o teléfono..." oninput="renderTable()">
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Teléfono</th>
+                            <th>Consentimiento</th>
+                            <th>Saldo Pendiente</th>
+                            <th>Antigüedad Máx.</th>
+                            <th>Estado Crédito</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clientsTableBody">
+                        <tr>
+                            <td colspan="7" class="empty-state">Cargando clientes, consentimientos y cuentas pendientes...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal para registrar consentimiento manual -->
+    <div class="modal-overlay" id="consentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h3 style="margin:0; font-size:1.05rem;">📋 Registrar Consentimiento Informado</h3>
+                    <div style="font-size:0.78rem; opacity:0.9;">Aceptación presencial o telefónica registrada por el sistema</div>
+                </div>
+                <button type="button" class="modal-close" onclick="closeConsentModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="modalClientSummary" style="background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px; padding:12px; font-size:0.88rem;"></div>
+                <pre class="policy-box" id="modalPolicyText"></pre>
+                <label style="display:flex; gap:10px; align-items:flex-start; font-size:0.88rem; cursor:pointer; margin-bottom:14px;">
+                    <input type="checkbox" id="modalAcceptCheck" style="margin-top:3px; width:18px; height:18px;">
+                    <span>Confirmo que las condiciones de pago y recargos por mora fueron informadas al cliente y que este las acepta.</span>
+                </label>
+                <div style="display:flex; gap:8px; justify-content:flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeConsentModal()">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="saveManualConsent()">✅ Guardar Aceptación</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDuMNZrLgxBs6CbuPp8j0iyynejt6WCpnQ",
+            authDomain: "esentiacreditos-8345f.firebaseapp.com",
+            projectId: "esentiacreditos-8345f",
+            storageBucket: "esentiacreditos-8345f.firebasestorage.app",
+            messagingSenderId: "888658236080",
+            appId: "1:888658236080:web:506e5e2085b5a452dba175"
+        };
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+
+        const MORA_POLICY_VERSION = 'EWE-MORA-2026-11-V1';
+        const CONSENT_PAGE_URL = 'https://wil1979.github.io/esentia-factura/consentimiento-mora.html';
+        const OVERDUE_DAYS_THRESHOLD = 30;
+
+        let records = [];
+        let activeFilter = 'all';
+        let selectedClientForModal = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('policyVersionLabel').textContent = MORA_POLICY_VERSION;
+            document.getElementById('modalPolicyText').textContent = getConsentPlainText();
+            loadAllData();
+        });
+
+        function getConsentPlainText() {
+            return `CONSENTIMIENTO INFORMADO DE CONDICIONES DE PAGO Y CARGOS POR MORA
+
+Los precios indicados en la factura corresponden a condiciones de pago de contado. El cliente se compromete a cancelar el monto total adeudado dentro de un plazo máximo de quince (15) días hábiles contados a partir de la fecha de emisión de la factura.
+
+Si la factura no ha sido cancelada dentro de ese plazo, EWE Esentia podrá aplicar cargos por mora sobre el saldo pendiente:
+• De 0 a 15 días hábiles: sin recargo.
+• A partir de 16 días hábiles: recargo del 1.5% sobre el saldo pendiente.
+• Al superar 30 días hábiles: se suma un 2% adicional, para un total acumulado de 3.5%.
+• A los 45 días o más: recargo acumulado de 3.5%, salvo condiciones especiales previamente acordadas.
+
+Los recargos se calculan únicamente sobre el saldo pendiente y no sobre montos ya abonados.`;
+        }
+
+        function formatMoney(amount) {
+            const val = Number(amount) || 0;
+            const [intPart, decPart] = val.toFixed(2).split('.');
+            return `${intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${decPart}`;
+        }
+
+        function normalizePhone(phone) {
+            let digits = String(phone || '').replace(/\D/g, '');
+            if (digits.startsWith('00506')) digits = digits.slice(2);
+            if (digits.length === 8) digits = '506' + digits;
+            return digits;
+        }
+
+        function toJsDate(value) {
+            if (!value) return null;
+            if (typeof value.toDate === 'function') return value.toDate();
+            const d = new Date(value);
+            return isNaN(d.getTime()) ? null : d;
+        }
+
+        async function loadAllData() {
+            const tbody = document.getElementById('clientsTableBody');
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Sincronizando datos de Firestore...</td></tr>';
+
+            try {
+                const [clientsSnap, consentsSnap, invoicesSnap] = await Promise.all([
+                    db.collection('clientesBD').get(),
+                    db.collection('consentimientos_mora').where('aceptado', '==', true).get(),
+                    db.collection('facturas').get()
+                ]);
+
+                const consentByClient = new Map();
+                consentsSnap.forEach(doc => {
+                    const data = doc.data();
+                    if (!data.clienteId) return;
+                    const key = String(data.clienteId);
+                    const dateObj = toJsDate(data.fechaAceptacion) || toJsDate(data.fechaLocal);
+                    const existing = consentByClient.get(key);
+                    const existingDate = existing ? (toJsDate(existing.fechaAceptacion) || toJsDate(existing.fechaLocal)) : null;
+                    if (!existing || ((dateObj && existingDate && dateObj > existingDate) || (data.version === MORA_POLICY_VERSION && existing.version !== MORA_POLICY_VERSION))) {
+                        consentByClient.set(key, { id: doc.id, ...data, parsedDate: dateObj });
+                    }
+                });
+
+                const debtByClient = new Map();
+                const now = new Date();
+                invoicesSnap.forEach(doc => {
+                    const inv = doc.data();
+                    const total = parseFloat(inv.total) || 0;
+                    const paid = (inv.abonos || []).reduce((acc, a) => acc + (parseFloat(a.monto) || 0), 0);
+                    const balance = Math.max(0, total - paid);
+                    if (balance > 0 && inv.clienteId) {
+                        const key = String(inv.clienteId);
+                        const invDate = toJsDate(inv.fecha) || now;
+                        const days = Math.max(0, Math.floor((now - invDate) / (1000 * 60 * 60 * 24)));
+                        const current = debtByClient.get(key) || { saldo: 0, maxDays: 0, invoices: [] };
+                        current.saldo += balance;
+                        if (days > current.maxDays) current.maxDays = days;
+                        current.invoices.push({ numero: inv.numero || doc.id, saldo: balance, days });
+                        debtByClient.set(key, current);
+                    }
+                });
+
+                records = clientsSnap.docs.map(doc => {
+                    const c = { id: doc.id, ...doc.data() };
+                    const key = String(c.id);
+                    const logConsent = consentByClient.get(key);
+                    const localConsent = c.consentimientoMora;
+
+                    const accepted = Boolean(
+                        (logConsent && logConsent.aceptado === true) ||
+                        (localConsent && localConsent.aceptado === true)
+                    );
+                    const consentDate =
+                        logConsent?.parsedDate ||
+                        toJsDate(localConsent?.fechaLocal) ||
+                        toJsDate(localConsent?.fecha) ||
+                        null;
+                    const consentVersion = logConsent?.version || localConsent?.version || '';
+
+                    const debtInfo = debtByClient.get(key) || { saldo: 0, maxDays: 0, invoices: [] };
+                    const overdueOver30 = debtInfo.saldo > 0 && debtInfo.maxDays > OVERDUE_DAYS_THRESHOLD;
+                    const creditoBloqueado = Boolean(c.creditoBloqueado === true);
+
+                    return {
+                        id: c.id,
+                        nombre: c.nombre || 'Sin nombre',
+                        cedula: c.cedula || 'N/A',
+                        telefono: c.telefono || '',
+                        accepted,
+                        consentDate,
+                        consentVersion,
+                        saldo: debtInfo.saldo,
+                        maxDays: debtInfo.maxDays,
+                        overdueOver30,
+                        creditoBloqueado,
+                        motivoBloqueo: c.motivoBloqueo || '',
+                        raw: c
+                    };
+                }).sort((a, b) => {
+                    if (a.overdueOver30 !== b.overdueOver30) return a.overdueOver30 ? -1 : 1;
+                    if (a.creditoBloqueado !== b.creditoBloqueado) return a.creditoBloqueado ? -1 : 1;
+                    return a.nombre.localeCompare(b.nombre, 'es');
+                });
+
+                updateStats();
+                renderTable();
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="color:var(--danger);">Error al cargar información: ${error.message}</td></tr>`;
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('statTotalClients').textContent = records.length;
+            document.getElementById('statAccepted').textContent = records.filter(r => r.accepted).length;
+            document.getElementById('statOverdue30').textContent = records.filter(r => r.overdueOver30).length;
+            document.getElementById('statBlocked').textContent = records.filter(r => r.creditoBloqueado).length;
+        }
+
+        function setFilter(filter, btnEl) {
+            activeFilter = filter;
+            document.querySelectorAll('#filterTabs .filter-tab').forEach(b => b.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('clientsTableBody');
+            const q = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
+
+            const filtered = records.filter(r => {
+                if (activeFilter === 'accepted' && !r.accepted) return false;
+                if (activeFilter === 'pending' && r.accepted) return false;
+                if (activeFilter === 'overdue30' && !r.overdueOver30) return false;
+                if (activeFilter === 'blocked' && !r.creditoBloqueado) return false;
+
+                if (q) {
+                    const matchName = r.nombre.toLowerCase().includes(q);
+                    const matchCedula = String(r.cedula).toLowerCase().includes(q);
+                    const matchPhone = String(r.telefono).toLowerCase().includes(q);
+                    if (!matchName && !matchCedula && !matchPhone) return false;
+                }
+                return true;
+            });
+
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No hay clientes que coincidan con el filtro seleccionado.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(r => {
+                const consentBadge = r.accepted
+                    ? `<span class="badge badge-ok">✅ Aceptado</span><br><small style="color:var(--text-light);">${r.consentDate ? r.consentDate.toLocaleDateString('es-CR') : ''} ${r.consentVersion ? `(${r.consentVersion})` : ''}</small>`
+                    : `<span class="badge badge-pending">⚠️ Sin aceptar</span>`;
+
+                const daysBadge = r.saldo <= 0
+                    ? `<span style="color:var(--text-light);">—</span>`
+                    : r.overdueOver30
+                        ? `<span class="badge badge-overdue">⏰ ${r.maxDays} días (>30)</span>`
+                        : `<span class="badge badge-active">${r.maxDays} días</span>`;
+
+                const creditBadge = r.creditoBloqueado
+                    ? `<span class="badge badge-blocked">🔒 Bloqueado</span>${r.motivoBloqueo ? `<br><small style="color:var(--danger);">${r.motivoBloqueo}</small>` : ''}`
+                    : `<span class="badge badge-ok">🔓 Habilitado</span>`;
+
+                const safeId = String(r.id).replace(/'/g, "\\'");
+
+                const toggleBtn = r.creditoBloqueado
+                    ? `<button type="button" class="btn btn-success btn-sm" onclick="toggleCreditBlock('${safeId}', false)">🔓 Desbloquear</button>`
+                    : `<button type="button" class="btn btn-danger btn-sm" onclick="toggleCreditBlock('${safeId}', true, ${r.overdueOver30})">🔒 Bloquear</button>`;
+
+                const consentActions = !r.accepted
+                    ? `<button type="button" class="btn btn-primary btn-sm" onclick="openConsentModal('${safeId}')">✍️ Registrar</button>
+                       <button type="button" class="btn btn-whatsapp btn-sm" onclick="sendConsentWhatsapp('${safeId}')">📱 Enlace</button>`
+                    : `<button type="button" class="btn btn-secondary btn-sm" onclick="sendConsentWhatsapp('${safeId}')">🔁 Reenviar</button>`;
+
+                return `
+                    <tr>
+                        <td>
+                            <strong>${r.nombre}</strong><br>
+                            <small style="color:var(--text-light);">CC: ${r.cedula}</small>
+                        </td>
+                        <td>${r.telefono || '<span style="color:var(--text-light);">Sin teléfono</span>'}</td>
+                        <td>${consentBadge}</td>
+                        <td><strong style="color:${r.saldo > 0 ? 'var(--danger)' : 'var(--text)'};">₡${formatMoney(r.saldo)}</strong></td>
+                        <td>${daysBadge}</td>
+                        <td>${creditBadge}</td>
+                        <td>
+                            <div class="actions-cell">
+                                ${consentActions}
+                                ${toggleBtn}
+                            </div>
+                        </td>
+                    </tr>`;
+            }).join('');
+        }
+
+        async function toggleCreditBlock(clientId, shouldBlock, isOverdue30 = false) {
+            const client = records.find(r => String(r.id) === String(clientId));
+            if (!client) return;
+
+            let motivo = '';
+            if (shouldBlock) {
+                const defaultReason = isOverdue30
+                    ? `Deuda pendiente superior a 30 días (${client.maxDays} días)`
+                    : 'Bloqueo manual de crédito';
+                const input = prompt(`Bloquear crédito a ${client.nombre}.\nIndique el motivo:`, defaultReason);
+                if (input === null) return;
+                motivo = input.trim() || defaultReason;
+            } else {
+                if (!confirm(`¿Desea habilitar nuevamente el crédito para ${client.nombre}?`)) return;
+            }
+
+            try {
+                await db.collection('clientesBD').doc(String(client.id)).set({
+                    creditoBloqueado: shouldBlock,
+                    motivoBloqueo: shouldBlock ? motivo : '',
+                    fechaCambioCredito: new Date().toISOString()
+                }, { merge: true });
+
+                await db.collection('bloqueos_credito').add({
+                    clienteId: String(client.id),
+                    clienteNombre: client.nombre,
+                    accion: shouldBlock ? 'bloqueado' : 'desbloqueado',
+                    motivo: shouldBlock ? motivo : 'Crédito rehabilitado',
+                    saldoPendiente: client.saldo,
+                    diasAtraso: client.maxDays,
+                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                    fechaLocal: new Date().toISOString()
+                });
+
+                alert(shouldBlock
+                    ? `🔒 Crédito bloqueado para ${client.nombre}.`
+                    : `🔓 Crédito habilitado para ${client.nombre}.`);
+                await loadAllData();
+            } catch (error) {
+                console.error('Error actualizando crédito:', error);
+                alert('Error al actualizar el estado de crédito: ' + error.message);
+            }
+        }
+
+        function openConsentModal(clientId) {
+            const client = records.find(r => String(r.id) === String(clientId));
+            if (!client) return;
+            selectedClientForModal = client;
+            document.getElementById('modalClientSummary').innerHTML = `
+                <strong>Cliente:</strong> ${client.nombre}<br>
+                <strong>Cédula:</strong> ${client.cedula}<br>
+                <strong>Teléfono:</strong> ${client.telefono || 'N/A'}<br>
+                <strong>Saldo pendiente:</strong> ₡${formatMoney(client.saldo)}
+            `;
+            document.getElementById('modalAcceptCheck').checked = false;
+            document.getElementById('consentModal').classList.add('active');
+        }
+
+        function closeConsentModal() {
+            document.getElementById('consentModal').classList.remove('active');
+            selectedClientForModal = null;
+        }
+
+        async function saveManualConsent() {
+            if (!selectedClientForModal) return;
+            if (!document.getElementById('modalAcceptCheck').checked) {
+                alert('Debe marcar la casilla de confirmación antes de guardar.');
+                return;
+            }
+
+            const client = selectedClientForModal;
+            const fechaLocal = new Date().toISOString();
+
+            try {
+                await db.collection('consentimientos_mora').add({
+                    clienteId: String(client.id),
+                    clienteNombre: client.nombre,
+                    clienteTelefono: client.telefono || '',
+                    clienteCedula: client.cedula || '',
+                    saldoPendiente: client.saldo,
+                    canal: 'panel_consentimientos',
+                    aceptado: true,
+                    version: MORA_POLICY_VERSION,
+                    textoAceptado: getConsentPlainText(),
+                    fechaLocal,
+                    fechaAceptacion: firebase.firestore.FieldValue.serverTimestamp(),
+                    userAgent: navigator.userAgent || ''
+                });
+
+                await db.collection('clientesBD').doc(String(client.id)).set({
+                    consentimientoMora: {
+                        aceptado: true,
+                        version: MORA_POLICY_VERSION,
+                        fechaLocal,
+                        canal: 'panel_consentimientos'
+                    }
+                }, { merge: true });
+
+                alert(`✅ Consentimiento registrado para ${client.nombre}.`);
+                closeConsentModal();
+                await loadAllData();
+            } catch (error) {
+                console.error('Error guardando consentimiento:', error);
+                alert('Error al guardar el consentimiento: ' + error.message);
+            }
+        }
+
+        async function sendConsentWhatsapp(clientId) {
+            const client = records.find(r => String(r.id) === String(clientId));
+            if (!client) return;
+            const phone = normalizePhone(client.telefono);
+            if (!phone) {
+                alert('Este cliente no tiene un número de teléfono válido registrado.');
+                return;
+            }
+
+            try {
+                const array = new Uint8Array(24);
+                crypto.getRandomValues(array);
+                const token = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+
+                await db.collection('consent_tokens').doc(token).set({
+                    clienteId: String(client.id),
+                    facturaId: null,
+                    version: MORA_POLICY_VERSION,
+                    aceptado: false,
+                    creado: firebase.firestore.FieldValue.serverTimestamp(),
+                    expira: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                    creadoPor: 'panel_consentimientos'
+                });
+
+                const url = `${CONSENT_PAGE_URL}?token=${encodeURIComponent(token)}&c=${encodeURIComponent(client.id)}`;
+                const msg = `🌿 *EWE ESENTIA - Consentimiento de Pago*\n\n` +
+                    `Hola ${client.nombre} 👋\n\n` +
+                    `Le solicitamos aceptar nuestras *condiciones de pago y cargos por mora* en el siguiente enlace:\n` +
+                    `🔗 ${url}\n\n` +
+                    `⏰ Válido por 7 días. ¡Gracias! 🙏`;
+
+                window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+            } catch (error) {
+                console.error('Error generando enlace de consentimiento:', error);
+                alert('Error al generar el enlace: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
