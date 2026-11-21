@@ -1,6 +1,6 @@
 // ==========================================
 // EWE ESENTIA - FACTURA.JS
-// Versión: 2026-11-V5 (COMPLETO Y CORREGIDO)
+// Versión: 2026-11-V3 (LIMPIO Y CORREGIDO)
 // ==========================================
 
 const firebaseConfig = {
@@ -11,9 +11,7 @@ const firebaseConfig = {
     messagingSenderId: "888658236080",
     appId: "1:888658236080:web:506e5e2085b5a452dba175"
 };
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
+firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 const ProductManager = {
@@ -51,11 +49,8 @@ let currentEditingInvoice = null;
 const LOW_STOCK_THRESHOLD = 5;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const dateEl = document.getElementById('currentDate');
-    const invEl = document.getElementById('invoiceNumber');
-    if (dateEl) dateEl.textContent = new Date().toLocaleDateString('es-CR');
-    if (invEl) invEl.textContent = currentInvoiceNumber;
-
+    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('es-CR');
+    document.getElementById('invoiceNumber').textContent = currentInvoiceNumber;
     const overlay = document.getElementById('loadingOverlay');
     const hideLoading = () => {
         if (!overlay) return;
@@ -72,7 +67,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         initShippingControls();
         initUberFloatingButton();
         initPurchaseModule();
-        ensureMoraConsentModal();
         const results = await Promise.allSettled([
             withTimeout(loadClients(), 15000, 'Clientes'),
             withTimeout(loadStock(), 15000, 'Stock'),
@@ -82,7 +76,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (result.status === 'rejected') console.error(`Error en carga ${index + 1}:`, result.reason);
         });
         checkLowStockAlerts();
-        renderCart();
     } catch (error) {
         console.error('Error al iniciar la página:', error);
     } finally {
@@ -116,6 +109,7 @@ function getPOLineDescription(line) {
     return line.descripcion || buildProductDescription(line.nombre, line.nombreOriginal);
 }
 
+// ✅ CORREGIDO: sin doble coma en colones
 function formatMoney(amount) {
     const value = Number(amount) || 0;
     const fixed = value.toFixed(2);
@@ -136,30 +130,24 @@ function generateInvoiceNumber() {
 
 function normalizePhone(phone) {
     let digits = String(phone || '').replace(/\D/g, '');
-    if (digits.startsWith('00506')) digits = digits.slice(2);
     if (digits.length === 8) digits = '506' + digits;
     return digits;
 }
 
-function openWhatsAppUrl(phone, message) {
-    const cleanPhone = normalizePhone(phone);
-    if (!cleanPhone || cleanPhone.length < 8) {
-        alert('⚠️ Número de teléfono no válido para WhatsApp.');
-        return false;
-    }
-    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-    const win = window.open(url, '_blank', 'noopener,noreferrer');
-    if (!win) {
-        window.location.href = url;
-    }
-    return true;
-}
+// ==========================================
+// CALENDARIO DE PAGOS (CADA 14 DÍAS DESDE 25 NOV)
+// Y CÁLCULO DE INTERESES POR MORA
+// ==========================================
+const PAYMENT_SCHEDULE_CONFIG = {
+    anchorMonth: 10, // Noviembre (0-indexed: 10 = noviembre)
+    anchorDay: 25,   // Día 25
+    anchorYear: 2026,
+    intervalDays: 14,
+    maxGraceDaysAfterDueDate: 1 // 1 día después de la fecha indicada como máximo
+};
 
-// ==========================================
-// CÁLCULO DE INTERESES POR MORA (DÍAS HÁBILES)
-// ==========================================
 const MORA_POLICY = {
-    version: 'EWE-MORA-2026-11-V1',
+    version: 'EWE-MORA-2026-11-V2',
     graceBusinessDays: 15,
     firstPercent: 1.5,
     secondPercent: 2,
@@ -168,13 +156,27 @@ const MORA_POLICY = {
     businessDaysSecondCharge: 31
 };
 
-const MORA_HOLIDAYS = new Set([]);
+const MORA_HOLIDAYS = new Set([
+    // '2026-12-25', '2027-01-01'  ← feriados CR si deseas excluirlos
+]);
 
 function getMoraDate(value) {
     if (!value) return new Date();
     if (value?.toDate) return value.toDate();
     const d = new Date(value);
     return isNaN(d.getTime()) ? new Date() : d;
+}
+
+function startOfDay(date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
+
+function addCalendarDays(date, days) {
+    const d = startOfDay(date);
+    d.setDate(d.getDate() + days);
+    return d;
 }
 
 function toDateKey(date) {
@@ -191,8 +193,7 @@ function isMoraBusinessDay(date) {
 }
 
 function addMoraBusinessDays(startDate, days) {
-    const date = new Date(startDate);
-    date.setHours(0, 0, 0, 0);
+    const date = startOfDay(startDate);
     let added = 0;
     while (added < days) {
         date.setDate(date.getDate() + 1);
@@ -202,10 +203,8 @@ function addMoraBusinessDays(startDate, days) {
 }
 
 function getMoraBusinessDaysElapsed(startDate, endDate = new Date()) {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    start.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
+    const start = startOfDay(startDate);
+    const end = startOfDay(endDate);
     if (end <= start) return 0;
     let count = 0;
     const current = new Date(start);
@@ -216,31 +215,77 @@ function getMoraBusinessDaysElapsed(startDate, endDate = new Date()) {
     return count;
 }
 
+/**
+ * Calcula la fecha de pago más cercana a partir de la fecha de compra (referenceDate)
+ * según el calendario que inicia el 25 de noviembre y avanza cada 14 días.
+ * La fecha máxima de pago es 1 día después de la fecha indicada.
+ */
+function getNextScheduledPayment(referenceDate = new Date()) {
+    const refDay = startOfDay(referenceDate);
+    const interval = PAYMENT_SCHEDULE_CONFIG.intervalDays;
+
+    // Si la compra ocurre antes del 25 de noviembre del año de referencia,
+    // usamos el ciclo del año anterior para mantener la continuidad cada 14 días.
+    let anchorYear = refDay.getFullYear();
+    let anchor = startOfDay(new Date(anchorYear, PAYMENT_SCHEDULE_CONFIG.anchorMonth, PAYMENT_SCHEDULE_CONFIG.anchorDay));
+    if (refDay < anchor && anchorYear > PAYMENT_SCHEDULE_CONFIG.anchorYear) {
+        anchor = startOfDay(new Date(anchorYear - 1, PAYMENT_SCHEDULE_CONFIG.anchorMonth, PAYMENT_SCHEDULE_CONFIG.anchorDay));
+    }
+
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const diffDays = Math.floor((refDay - anchor) / msPerDay);
+    const step = diffDays > 0 ? Math.ceil(diffDays / interval) : 0;
+
+    const fechaProximoPago = addCalendarDays(anchor, step * interval);
+    const fechaMaximaPago = addCalendarDays(
+        fechaProximoPago,
+        PAYMENT_SCHEDULE_CONFIG.maxGraceDaysAfterDueDate
+    );
+
+    return {
+        fechaReferencia: refDay,
+        fechaProximoPago,
+        fechaMaximaPago,
+        intervaloDias: interval
+    };
+}
+
 function calculateMoratoryInterest(saldoPendiente, fechaFactura) {
     const saldo = Math.max(0, parseFloat(saldoPendiente) || 0);
     const invoiceDate = getMoraDate(fechaFactura);
-    const dueDate = addMoraBusinessDays(invoiceDate, MORA_POLICY.graceBusinessDays);
-    const businessDaysElapsed = getMoraBusinessDaysElapsed(invoiceDate, new Date());
-    const overdueBusinessDays = Math.max(0, businessDaysElapsed - MORA_POLICY.graceBusinessDays);
+    const schedule = getNextScheduledPayment(invoiceDate);
+    const today = startOfDay(new Date());
+
+    const businessDaysElapsed = getMoraBusinessDaysElapsed(invoiceDate, today);
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const diasAtrasoCalendario = Math.max(0, Math.floor((today - schedule.fechaMaximaPago) / msPerDay));
+    const diasHabilesAtraso = Math.max(0, getMoraBusinessDaysElapsed(schedule.fechaMaximaPago, today));
+    const estaVencida = saldo > 0 && today > schedule.fechaMaximaPago;
 
     let porcentaje = 0;
     let tramo = 'sin_recargo';
-    if (saldo > 0 && businessDaysElapsed >= MORA_POLICY.businessDaysFirstCharge) {
-        porcentaje = MORA_POLICY.firstPercent;
-        tramo = 'primer_recargo';
-    }
-    if (saldo > 0 && businessDaysElapsed >= MORA_POLICY.businessDaysSecondCharge) {
-        porcentaje = MORA_POLICY.maxPercent;
-        tramo = 'recargo_acumulado';
+
+    if (estaVencida) {
+        if (businessDaysElapsed >= MORA_POLICY.businessDaysSecondCharge || diasAtrasoCalendario >= 15) {
+            porcentaje = MORA_POLICY.maxPercent;
+            tramo = 'recargo_acumulado';
+        } else {
+            porcentaje = MORA_POLICY.firstPercent;
+            tramo = 'primer_recargo';
+        }
     }
 
     const monto = +(saldo * (porcentaje / 100)).toFixed(2);
     return {
         saldo,
         fechaFactura: invoiceDate,
-        fechaVencimiento: dueDate,
+        fechaProximoPago: schedule.fechaProximoPago,
+        fechaVencimiento: schedule.fechaMaximaPago, // Fecha máxima (+1 día)
+        fechaMaximaPago: schedule.fechaMaximaPago,
+        estaVencida,
+        diasAtrasoCalendario,
         diasHabilesTranscurridos: businessDaysElapsed,
-        diasHabilesAtraso: overdueBusinessDays,
+        diasHabilesAtraso,
         porcentaje,
         monto,
         totalConInteres: +(saldo + monto).toFixed(2),
@@ -249,9 +294,13 @@ function calculateMoratoryInterest(saldoPendiente, fechaFactura) {
 }
 
 function getMoratoryLabel(interest) {
-    if (!interest || interest.porcentaje === 0) return { text: 'Al día (sin recargo)', class: 'days-normal', icon: '✅' };
-    if (interest.tramo === 'primer_recargo') return { text: `Recargo 1.5% (${interest.diasHabilesTranscurridos} días hábiles)`, class: 'days-warning', icon: '🟡' };
-    return { text: `Recargo 3.5% (${interest.diasHabilesTranscurridos} días hábiles)`, class: 'days-urgent', icon: '🟠' };
+    if (!interest || interest.porcentaje === 0) {
+        return { text: `Al día (máx. ${interest?.fechaMaximaPago?.toLocaleDateString('es-CR') || '-'})`, class: 'days-normal', icon: '✅' };
+    }
+    if (interest.tramo === 'primer_recargo') {
+        return { text: `Recargo 1.5% (${interest.diasAtrasoCalendario} días de atraso)`, class: 'days-warning', icon: '🟡' };
+    }
+    return { text: `Recargo 3.5% (${interest.diasAtrasoCalendario} días de atraso)`, class: 'days-urgent', icon: '🟠' };
 }
 
 // ==========================================
@@ -263,14 +312,15 @@ let moraConsentContext = null;
 function getMoraPolicyPlainText() {
     return `CONSENTIMIENTO INFORMADO DE CONDICIONES DE PAGO Y CARGOS POR MORA
 
-Los precios indicados en la factura corresponden a condiciones de pago de contado. El cliente se compromete a cancelar el monto total adeudado dentro de un plazo máximo de quince (15) días hábiles contados a partir de la fecha de emisión de la factura.
+Los precios indicados en la factura corresponden a condiciones de pago de contado. Para compras a crédito, la fecha de pago se determina según el calendario quincenal (cada 14 días a partir del 25 de noviembre).
 
-Si la factura no ha sido cancelada dentro de ese plazo, EWE Esentia podrá aplicar cargos por mora sobre el saldo pendiente, de la siguiente manera:
+El cliente se compromete a cancelar el monto total adeudado a más tardar un (1) día después de la fecha de pago indicada en la factura como plazo máximo.
 
-• De 0 a 15 días hábiles desde la fecha de factura: sin recargo.
-• A partir de 16 días hábiles: recargo del 1.5% sobre el saldo pendiente.
-• Al superar 30 días hábiles: se suma un 2% adicional, para un total acumulado de 3.5%.
-• A los 45 días o más: el recargo acumulado será de 3.5%, salvo condiciones especiales previamente acordadas.
+Si la factura no ha sido cancelada después de esa fecha máxima, EWE Esentia aplicará cargos por mora sobre el saldo pendiente de la siguiente manera:
+
+• Hasta 1 día después de la fecha de pago programada: sin recargo.
+• A partir del día siguiente al vencimiento (primer tramo): recargo del 1.5% sobre el saldo pendiente.
+• Al superar 15 días de atraso o 30 días hábiles desde la compra: se suma un 2% adicional, para un total acumulado de 3.5%.
 
 Los recargos se calculan únicamente sobre el saldo pendiente y no sobre montos ya abonados.
 
@@ -279,12 +329,12 @@ El cliente declara que ha sido informado claramente sobre estas condiciones, que
 
 async function hasMoraConsentAccepted(clienteId) {
     if (!clienteId || clienteId === 'contado') return false;
-    const localClient = allClients.find(c => String(c.id) === String(clienteId));
+    const localClient = allClients.find(c => c.id === clienteId);
     const localConsent = localClient?.consentimientoMora;
     if (localConsent && localConsent.aceptado === true && localConsent.version === MORA_POLICY.version) return true;
     try {
         const snap = await db.collection('consentimientos_mora')
-            .where('clienteId', '==', String(clienteId))
+            .where('clienteId', '==', clienteId)
             .where('version', '==', MORA_POLICY.version)
             .where('aceptado', '==', true)
             .limit(1).get();
@@ -317,7 +367,7 @@ function ensureMoraConsentModal() {
                     <span>Declaro que la información fue explicada claramente y que el cliente acepta las condiciones de pago y cargos por mora indicadas.</span>
                 </label>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
-                    <button type="button" class="btn btn-secondary" onclick="cancelMoraConsent()">Cancelar</button>
+                    <button type="button" class="btn" onclick="cancelMoraConsent()">Cancelar</button>
                     <button type="button" class="btn btn-success" onclick="acceptMoraConsent()">✅ Registrar aceptación</button>
                 </div>
             </div>
@@ -326,11 +376,14 @@ function ensureMoraConsentModal() {
 }
 
 async function requestMoraConsent(context = {}) {
-    const cliente = context.cliente || currentClient;
+    const cliente = context.cliente;
     if (!cliente || !cliente.id || cliente.id === 'contado') {
         alert('Seleccione un cliente registrado para aceptar las condiciones de pago.');
         return false;
     }
+    const accepted = await hasMoraConsentAccepted(cliente.id);
+    if (accepted) return true;
+
     ensureMoraConsentModal();
     moraConsentContext = {
         cliente,
@@ -354,17 +407,11 @@ async function requestMoraConsent(context = {}) {
 
 async function acceptMoraConsent() {
     const check = document.getElementById('moraConsentCheck');
-    if (!check?.checked) {
-        alert('Debe confirmar que el cliente acepta las condiciones.');
-        return;
-    }
-    if (!moraConsentContext?.cliente?.id) {
-        alert('No hay cliente seleccionado.');
-        return;
-    }
+    if (!check?.checked) { alert('Debe confirmar que el cliente acepta las condiciones.'); return; }
+    if (!moraConsentContext?.cliente?.id) { alert('No hay cliente seleccionado.'); return; }
     const cliente = moraConsentContext.cliente;
     const consentData = {
-        clienteId: String(cliente.id),
+        clienteId: cliente.id,
         clienteNombre: cliente.nombre || '',
         clienteTelefono: cliente.telefono || '',
         clienteCedula: cliente.cedula || '',
@@ -388,28 +435,16 @@ async function acceptMoraConsent() {
     };
     try {
         await db.collection('consentimientos_mora').add(consentData);
-        const resumenConsent = {
-            aceptado: true,
-            version: MORA_POLICY.version,
-            fechaLocal: consentData.fechaLocal,
-            canal: consentData.canal
-        };
+        const resumenConsent = { aceptado: true, version: MORA_POLICY.version, fechaLocal: consentData.fechaLocal, canal: consentData.canal };
         try {
-            await db.collection('clientesBD').doc(String(cliente.id)).set({ consentimientoMora: resumenConsent }, { merge: true });
-        } catch (e) {
-            console.warn('No se pudo actualizar resumen en cliente:', e);
-        }
-        const idx = allClients.findIndex(c => String(c.id) === String(cliente.id));
+            await db.collection('clientesBD').doc(cliente.id).update({ consentimientoMora: resumenConsent });
+        } catch (e) { console.warn('No se pudo actualizar resumen en cliente:', e); }
+        const idx = allClients.findIndex(c => c.id === cliente.id);
         if (idx !== -1) allClients[idx].consentimientoMora = resumenConsent;
-        if (currentClient && String(currentClient.id) === String(cliente.id)) {
-            currentClient.consentimientoMora = resumenConsent;
-        }
-        const modal = document.getElementById('moraConsentModal');
-        if (modal) modal.style.display = 'none';
-        const resolver = moraConsentResolver;
+        document.getElementById('moraConsentModal').style.display = 'none';
+        if (moraConsentResolver) moraConsentResolver(true);
         moraConsentResolver = null;
         moraConsentContext = null;
-        if (resolver) resolver(true);
         alert('✅ Consentimiento registrado correctamente.');
     } catch (error) {
         console.error('Error guardando consentimiento:', error);
@@ -420,10 +455,9 @@ async function acceptMoraConsent() {
 function cancelMoraConsent() {
     const modal = document.getElementById('moraConsentModal');
     if (modal) modal.style.display = 'none';
-    const resolver = moraConsentResolver;
+    if (moraConsentResolver) moraConsentResolver(false);
     moraConsentResolver = null;
     moraConsentContext = null;
-    if (resolver) resolver(false);
 }
 
 // ==========================================
@@ -432,16 +466,13 @@ function cancelMoraConsent() {
 const CONSENT_PAGE_URL = 'https://wil1979.github.io/esentia-factura/consentimiento-mora.html';
 
 async function generateConsentToken(clienteId, facturaId = null) {
-    if (!clienteId || clienteId === 'contado') {
-        alert('Seleccione un cliente registrado.');
-        return null;
-    }
+    if (!clienteId || clienteId === 'contado') { alert('Seleccione un cliente registrado.'); return null; }
     const array = new Uint8Array(24);
     crypto.getRandomValues(array);
     const token = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
     const tokenData = {
-        clienteId: String(clienteId),
-        facturaId: facturaId ? String(facturaId) : null,
+        clienteId,
+        facturaId,
         version: MORA_POLICY.version,
         aceptado: false,
         creado: firebase.firestore.FieldValue.serverTimestamp(),
@@ -459,8 +490,8 @@ async function generateConsentToken(clienteId, facturaId = null) {
 }
 
 function buildConsentUrl(token, clienteId, facturaId = null) {
-    let url = `${CONSENT_PAGE_URL}?token=${encodeURIComponent(token)}&c=${encodeURIComponent(clienteId)}`;
-    if (facturaId) url += `&f=${encodeURIComponent(facturaId)}`;
+    let url = `${CONSENT_PAGE_URL}?token=${token}&c=${clienteId}`;
+    if (facturaId) url += `&f=${facturaId}`;
     return url;
 }
 
@@ -477,7 +508,7 @@ async function sendConsentLinkByWhatsApp(clienteId, facturaId = null) {
     const token = await generateConsentToken(cliente.id, facturaId);
     if (!token) return;
     const url = buildConsentUrl(token, cliente.id, facturaId);
-    const msg = `🌿 *EWE ESENTIA - Política de Crédito*\n\n` +
+    const msg = `🌿 *EWE ESENTIA - Politica de Credito*\n\n` +
         `Hola ${cliente.nombre} 👋\n\n` +
         `Para completar su registro en nuestro sistema, le solicitamos amablemente aceptar nuestras *condiciones de pago y cargos por mora*.\n\n` +
         `📋 Por favor abra el siguiente enlace desde su celular:\n` +
@@ -486,6 +517,19 @@ async function sendConsentLinkByWhatsApp(clienteId, facturaId = null) {
         `El proceso toma menos de 1 minuto. ¡Gracias! 🙏\n\n` +
         `Cualquier consulta estamos al teléfono 7295-2454.`;
     openWhatsAppUrl(cliente.telefono, msg);
+}
+function openWhatsAppUrl(phone, message) {
+    const cleanPhone = normalizePhone(phone);
+    if (!cleanPhone || cleanPhone.length < 8) {
+        alert('⚠️ Número de teléfono no válido para WhatsApp.');
+        return false;
+    }
+    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    const win = window.open(url, '_blank', 'noopener,noreferrer');
+    if (!win) {
+        window.location.href = url;
+    }
+    return true;
 }
 
 async function copyConsentLink(clienteId, facturaId = null) {
@@ -503,20 +547,11 @@ async function copyConsentLink(clienteId, facturaId = null) {
 async function sendConsentFromDetail() {
     if (!currentDetailInvoice) return;
     const clienteId = currentDetailInvoice.clienteId;
-    if (!clienteId || clienteId === 'contado') {
-        alert('Esta factura no tiene cliente registrado.');
-        return;
-    }
-    const cliente = allClients.find(c => String(c.id) === String(clienteId));
-    if (!cliente) {
-        alert('Cliente no encontrado en la base de datos.');
-        return;
-    }
+    if (!clienteId || clienteId === 'contado') { alert('Esta factura no tiene cliente registrado.'); return; }
+    const cliente = allClients.find(c => c.id === clienteId);
+    if (!cliente) { alert('Cliente no encontrado en la base de datos.'); return; }
     const yaAcepto = await hasMoraConsentAccepted(clienteId);
-    if (yaAcepto) {
-        alert(`✅ ${cliente.nombre} ya aceptó las condiciones de mora.`);
-        return;
-    }
+    if (yaAcepto) { alert(`✅ ${cliente.nombre} ya aceptó las condiciones de mora.`); return; }
     const accion = confirm(
         `📋 Enviar consentimiento a:\n\n${cliente.nombre}\n📞 ${cliente.telefono || 'Sin teléfono'}\n\n` +
         `Aceptar = Enviar por WhatsApp\nCancelar = Copiar enlace al portapapeles`
@@ -531,7 +566,7 @@ async function sendConsentFromDetail() {
 function initShippingControls() {
     const transportInput = document.getElementById('transportCost');
     if (!transportInput || document.getElementById('shippingToggleWrap')) return;
-    const anchor = transportInput.closest('.summary-row') || transportInput.closest('.transport-section') || transportInput.parentElement;
+    const anchor = transportInput.closest('.summary-row') || transportInput.parentElement;
     if (!anchor || !anchor.parentElement) return;
     const wrap = document.createElement('div');
     wrap.id = 'shippingToggleWrap';
@@ -702,7 +737,7 @@ function getStockForProduct(product) {
     }
     for (const [key, value] of allStock.entries()) {
         const stockNameNorm = normalizeString(value.nombre);
-        if (stockNameNorm && normalizedName && (stockNameNorm.includes(normalizedName) || normalizedName.includes(stockNameNorm))) return value;
+        if (stockNameNorm.includes(normalizedName) || normalizedName.includes(stockNameNorm)) return value;
     }
     return null;
 }
@@ -737,7 +772,6 @@ async function loadClients() {
 }
 
 async function loadProducts() {
-    allProducts = [];
     const urls = [
         { url: ProductManager.URLS.ESENCIAS, catDefault: 'Esencias' },
         { url: ProductManager.URLS.LIMPIEZA, catDefault: 'Limpieza' },
@@ -752,17 +786,17 @@ async function loadProducts() {
             let productsToProcess = [];
             if (Array.isArray(data)) {
                 productsToProcess = data.map(p => ({ ...p, categoriaDetectada: item.catDefault }));
-            } else if (data && typeof data === 'object') {
+            } else {
                 for (const [categoria, items] of Object.entries(data)) {
                     if (Array.isArray(items)) {
                         items.forEach(p => { p.categoriaDetectada = categoria; productsToProcess.push(p); });
                     }
                 }
             }
-            const mapped = productsToProcess.map((p, idx) => {
-                const precioBase = (p.precioOferta && p.precioOferta > 0) ? p.precioOferta : (p.precioOriginal || p.precio || 0);
+            const mapped = productsToProcess.map(p => {
+                const precioBase = (p.precioOferta && p.precioOferta > 0) ? p.precioOferta : (p.precioOriginal || 0);
                 return {
-                    id: String(p.id ?? `${item.catDefault}-${idx}`),
+                    id: String(p.id),
                     nombre: p.nombre || p.nombreOriginal || 'Producto sin nombre',
                     nombreOriginal: p.nombreOriginal || p.nombre || 'Producto sin nombre',
                     precioBase: parseFloat(precioBase) || 0,
@@ -784,7 +818,7 @@ async function loadProducts() {
         errorBanner.style.display = 'none';
         errorBanner.innerHTML = '';
     }
-    filterProducts(document.getElementById('productSearch')?.value || '');
+    filterProducts('');
     if (typeof refreshPODatalist === 'function') refreshPODatalist();
 }
 
@@ -934,8 +968,8 @@ async function saveNewClient() {
         if (editId) {
             await db.collection('clientesBD').doc(editId).update(clientData);
             clientId = editId;
-            const index = allClients.findIndex(c => String(c.id) === String(editId));
-            if (index !== -1) allClients[index] = { ...allClients[index], id: editId, ...clientData };
+            const index = allClients.findIndex(c => c.id === editId);
+            if (index !== -1) allClients[index] = { id: editId, ...clientData };
             alert('✅ Cliente actualizado exitosamente');
         } else {
             clientData.fechaRegistro = firebase.firestore.FieldValue.serverTimestamp();
@@ -959,7 +993,7 @@ function searchClients(query) {
     const q = query.toLowerCase();
     const filtered = allClients.filter(c => (c.nombre || '').toLowerCase().includes(q) || (c.cedula || c.id || '').toLowerCase().includes(q) || (c.telefono || '').toLowerCase().includes(q));
     if (filtered.length > 0) {
-        resultsDiv.innerHTML = filtered.map(c => `<div class="result-item" onclick="selectClient('${String(c.id).replace(/'/g, "\\'")}')"><div class="result-name">${c.nombre || 'Sin nombre'}</div><div class="result-meta">CC: ${c.cedula || c.id || 'N/A'} | Tel: ${c.telefono || 'N/A'}</div></div>`).join('');
+        resultsDiv.innerHTML = filtered.map(c => `<div class="result-item" onclick="selectClient('${c.id}')"><div class="result-name">${c.nombre || 'Sin nombre'}</div><div class="result-meta">CC: ${c.cedula || c.id || 'N/A'} | Tel: ${c.telefono || 'N/A'}</div></div>`).join('');
         resultsDiv.style.display = 'block';
     } else {
         resultsDiv.innerHTML = '<div class="result-item" style="color: #999;">No se encontraron clientes</div>';
@@ -968,7 +1002,7 @@ function searchClients(query) {
 }
 
 function selectClient(clientId) {
-    currentClient = allClients.find(c => String(c.id) === String(clientId));
+    currentClient = allClients.find(c => c.id === clientId);
     if (!currentClient) return;
     document.getElementById('clientSearch').value = '';
     document.getElementById('clientResults').style.display = 'none';
@@ -990,13 +1024,9 @@ function selectClient(clientId) {
         <br><span style="font-size: 0.8rem; color: #666;">CC: ${currentClient.cedula || currentClient.id}</span>
         ${currentClient.direccion ? `<br><span style="font-size: 0.75rem; color: var(--info);">📍 ${[currentClient.distrito, currentClient.canton, currentClient.provincia].filter(Boolean).join(', ')}</span>` : ''}`;
 
+    // 🎯 Indicador de consentimiento con botón individual (no molesta a todos)
     const consentIndicator = document.getElementById('consentIndicator');
     if (consentIndicator) consentIndicator.remove();
-
-    const creditBlockBanner = document.getElementById('creditBlockBanner');
-    if (creditBlockBanner) creditBlockBanner.remove();
-
-    const infoBox = document.getElementById('invoiceClientInfo');
 
     if (currentClient.id && currentClient.id !== 'contado') {
         const consent = currentClient.consentimientoMora;
@@ -1011,7 +1041,7 @@ function selectClient(clientId) {
             indicator.style.color = '#14532d';
             indicator.innerHTML = `
                 <span>✅ Consentimiento aceptado (${new Date(consent.fechaLocal).toLocaleDateString('es-CR')})</span>
-                <button type="button" onclick="sendConsentLinkByWhatsApp('${String(currentClient.id).replace(/'/g, "\\'")}')" 
+                <button type="button" onclick="sendConsentLinkByWhatsApp('${currentClient.id}')" 
                     style="background:rgba(0,0,0,0.08);color:#14532d;border:none;padding:3px 8px;border-radius:5px;font-size:0.68rem;cursor:pointer;">
                     🔁 Reenviar
                 </button>`;
@@ -1024,21 +1054,28 @@ function selectClient(clientId) {
                     style="background:#14532d;color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:0.7rem;cursor:pointer;font-weight:700;">
                     📋 Registrar aquí
                 </button>
-                <button type="button" onclick="sendConsentLinkByWhatsApp('${String(currentClient.id).replace(/'/g, "\\'")}')" 
+                <button type="button" onclick="sendConsentLinkByWhatsApp('${currentClient.id}')" 
                     style="background:#25D366;color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:0.7rem;cursor:pointer;font-weight:700;">
                     📱 Enviar enlace
                 </button>`;
         }
 
+
+
+        const infoBox = document.getElementById('invoiceClientInfo');
         if (infoBox) infoBox.appendChild(indicator);
-    }
+
+        const creditBlockBanner = document.getElementById('creditBlockBanner');
+    if (creditBlockBanner) creditBlockBanner.remove();
 
     if (currentClient.creditoBloqueado === true) {
         const blockDiv = document.createElement('div');
         blockDiv.id = 'creditBlockBanner';
         blockDiv.style.cssText = 'margin-top:8px;padding:8px 10px;border-radius:8px;font-size:0.76rem;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:600;';
         blockDiv.innerHTML = `🔒 <strong>Crédito bloqueado</strong>${currentClient.motivoBloqueo ? `: ${currentClient.motivoBloqueo}` : ' para este cliente.'}`;
+        const infoBox = document.getElementById('invoiceClientInfo');
         if (infoBox) infoBox.appendChild(blockDiv);
+    }
     }
 }
 
@@ -1046,10 +1083,6 @@ function clearClient() {
     currentClient = null;
     document.getElementById('selectedClientInfo').style.display = 'none';
     document.getElementById('invoiceClientInfo').innerHTML = '<em>Seleccione un cliente</em>';
-    const consentIndicator = document.getElementById('consentIndicator');
-    if (consentIndicator) consentIndicator.remove();
-    const creditBlockBanner = document.getElementById('creditBlockBanner');
-    if (creditBlockBanner) creditBlockBanner.remove();
 }
 
 // ==========================================
@@ -1061,7 +1094,7 @@ function requestLocation() {
     if (!phone) { alert('El cliente no tiene teléfono registrado.'); return; }
     const message = `Hola ${currentClient.nombre} 🌿\n\nSomos de *EWE Esentia*. Para realizar el envío de su pedido, necesitamos que nos comparta su *ubicación actual*.\n\n📍 Por favor, envíenos su ubicación usando esta opción de WhatsApp:\n   1. Toque el clip 📎 o el + junto al campo de texto\n   2. Seleccione "Ubicación"\n   3. Elija "Enviar mi ubicación actual"\n\nTambién puede escribirnos la dirección completa con referencias.\n\n¡Gracias! 🙏`;
     if (confirm(`📍 Se abrirá WhatsApp para solicitar la ubicación a:\n\n${currentClient.nombre}\n📞 ${currentClient.telefono}\n\n¿Continuar?`)) {
-        openWhatsAppUrl(phone, message);
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
     }
 }
 
@@ -1159,9 +1192,7 @@ function renderProducts(products) {
     const grid = document.getElementById('productsGrid');
     if (!grid) return;
     let visibleProducts = Array.isArray(products) ? products : [];
-    if (!showOutOfStockProducts) {
-        visibleProducts = visibleProducts.filter(p => getStockStatus(getStockForProduct(p)).status !== 'out');
-    }
+    visibleProducts = visibleProducts.filter(p => getStockStatus(getStockForProduct(p)).status === 'low');
     const counter = document.getElementById('productCount');
     if (counter) counter.textContent = `${visibleProducts.length} productos`;
     if (visibleProducts.length === 0) {
@@ -1176,7 +1207,7 @@ function renderProducts(products) {
         const isLowStock = stock && stock.cantidad > 0 && stock.cantidad <= LOW_STOCK_THRESHOLD;
         return `
         <div class="product-card ${hasVariants ? 'has-variants' : ''} ${isOutOfStock ? 'out-of-stock' : ''} ${isLowStock ? 'low-stock' : ''}" 
-             onclick="${isOutOfStock ? `alert('⚠️ Producto agotado.'); return false;` : `openProductModal('${String(p.id).replace(/'/g, "\\'")}')`}">
+             onclick="${isOutOfStock ? `alert('⚠️ Producto agotado.'); return false;` : `openProductModal('${p.id}')`}">
             <div class="stock-badge ${stockStatus.class}">${stockStatus.label}</div>
             <div class="product-category">${p.categoria}</div>
             <div class="product-name">${buildProductDescription(p.nombre, p.nombreOriginal)}</div>
@@ -1189,7 +1220,7 @@ function renderProducts(products) {
 function filterProducts(query) {
     let filtered = allProducts;
     if (query) {
-        const q = String(query).toLowerCase();
+        const q = query.toLowerCase();
         filtered = filtered.filter(p => (p.nombre || '').toLowerCase().includes(q) || String(p.id).toLowerCase().includes(q) || (p.categoria || '').toLowerCase().includes(q));
     }
     renderProducts(filtered);
@@ -1203,21 +1234,14 @@ function toggleOutOfStock() {
 }
 
 function openProductModal(productId) {
-    const product = allProducts.find(p => String(p.id) === String(productId));
-    if (!product) {
-        alert('⚠️ No se encontró el producto seleccionado.');
-        return;
-    }
+    const product = allProducts.find(p => p.id === productId);
+    if (!product) return;
     const discountInput = document.getElementById('modalDiscount');
-    const qtyInput = document.getElementById('modalQuantity');
-    if (discountInput) {
-        discountInput.dataset.percent = '0';
-        discountInput.value = 0;
-    }
+    discountInput.dataset.percent = '0';
     document.getElementById('modalProductId').value = product.id;
     document.getElementById('modalProductName').textContent = product.nombre;
-    if (qtyInput) qtyInput.value = 1;
-
+    document.getElementById('modalQuantity').value = 1;
+    discountInput.value = 0;
     const stock = getStockForProduct(product);
     const stockBar = document.getElementById('modalStockBar');
     const stockIcon = document.getElementById('modalStockIcon');
@@ -1225,122 +1249,85 @@ function openProductModal(productId) {
     const stockText = document.getElementById('modalStockText');
     const maxQtyLabel = document.getElementById('maxQtyLabel');
     const pricePreview = document.getElementById('modalPricePreview');
-
+    const qtyInput = document.getElementById('modalQuantity');
     if (stock) {
-        if (stockQty) stockQty.textContent = stock.cantidad;
-        if (maxQtyLabel) maxQtyLabel.textContent = stock.cantidad;
-        if (qtyInput) qtyInput.max = Math.max(1, stock.cantidad);
-        if (stock.cantidad <= 0) {
-            if (stockIcon) stockIcon.textContent = '❌';
-            if (stockText) stockText.textContent = 'Producto agotado.';
-            if (stockBar) stockBar.style.background = '#fee2e2';
-            if (pricePreview) pricePreview.classList.add('warning');
-        } else if (stock.cantidad <= LOW_STOCK_THRESHOLD) {
-            if (stockIcon) stockIcon.textContent = '⚠️';
-            if (stockText) stockText.textContent = `¡Últimas ${stock.cantidad} unidades!`;
-            if (stockBar) stockBar.style.background = '#fef3c7';
-            if (pricePreview) pricePreview.classList.remove('warning');
-        } else {
-            if (stockIcon) stockIcon.textContent = '✅';
-            if (stockText) stockText.textContent = 'Stock suficiente';
-            if (stockBar) stockBar.style.background = '#dcfce7';
-            if (pricePreview) pricePreview.classList.remove('warning');
-        }
+        stockQty.textContent = stock.cantidad;
+        maxQtyLabel.textContent = stock.cantidad;
+        qtyInput.max = stock.cantidad;
+        if (stock.cantidad <= 0) { stockIcon.textContent = '❌'; stockText.textContent = 'Producto agotado.'; stockBar.style.background = '#fee2e2'; pricePreview.classList.add('warning'); }
+        else if (stock.cantidad <= LOW_STOCK_THRESHOLD) { stockIcon.textContent = '⚠️'; stockText.textContent = `¡Últimas ${stock.cantidad} unidades!`; stockBar.style.background = '#fef3c7'; pricePreview.classList.remove('warning'); }
+        else { stockIcon.textContent = '✅'; stockText.textContent = 'Stock suficiente'; stockBar.style.background = '#dcfce7'; pricePreview.classList.remove('warning'); }
     } else {
-        if (stockQty) stockQty.textContent = '?';
-        if (maxQtyLabel) maxQtyLabel.textContent = '∞';
-        if (qtyInput) qtyInput.max = 999;
-        if (stockIcon) stockIcon.textContent = 'ℹ️';
-        if (stockText) stockText.textContent = 'Sin registro en inventario.';
-        if (stockBar) stockBar.style.background = '#f0f9ff';
-        if (pricePreview) pricePreview.classList.remove('warning');
+        stockQty.textContent = '?'; maxQtyLabel.textContent = '∞'; qtyInput.max = 999;
+        stockIcon.textContent = 'ℹ️'; stockText.textContent = 'Sin registro en inventario.';
+        stockBar.style.background = '#f0f9ff'; pricePreview.classList.remove('warning');
     }
-
     const variantGroup = document.getElementById('variantGroup');
     const variantSelect = document.getElementById('modalVariantSelect');
-    if (variantGroup && variantSelect) {
-        variantSelect.innerHTML = '';
-        if (product.variantes && product.variantes.length > 0) {
-            variantGroup.style.display = 'block';
-            if (product.precioBase > 0) {
-                const opt = document.createElement('option');
-                opt.value = 'base';
-                opt.textContent = `Tamaño Único / Base (₡${formatMoney(product.precioBase)})`;
-                opt.dataset.price = product.precioBase;
-                variantSelect.appendChild(opt);
-            }
-            product.variantes.forEach(v => {
-                const opt = document.createElement('option');
-                opt.value = v.nombre;
-                opt.textContent = `${v.nombre} - ₡${formatMoney(v.precio)}`;
-                opt.dataset.price = v.precio;
-                variantSelect.appendChild(opt);
-            });
-            variantSelect.selectedIndex = 0;
-        } else {
-            variantGroup.style.display = 'none';
+    variantSelect.innerHTML = '';
+    if (product.variantes && product.variantes.length > 0) {
+        variantGroup.style.display = 'block';
+        if (product.precioBase > 0) {
+            const opt = document.createElement('option');
+            opt.value = 'base';
+            opt.textContent = `Tamaño Único / Base (₡${formatMoney(product.precioBase)})`;
+            opt.dataset.price = product.precioBase;
+            variantSelect.appendChild(opt);
         }
-    }
+        product.variantes.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v.nombre;
+            opt.textContent = `${v.nombre} - ₡${formatMoney(v.precio)}`;
+            opt.dataset.price = v.precio;
+            variantSelect.appendChild(opt);
+        });
+        variantSelect.selectedIndex = 0;
+    } else { variantGroup.style.display = 'none'; }
     updateModalPricePreview();
     document.getElementById('productModal').classList.add('active');
 }
 
 function validateQuantity() {
     const qtyInput = document.getElementById('modalQuantity');
-    if (!qtyInput) return;
-    const maxQty = parseInt(qtyInput.max, 10) || 999;
-    const qty = parseInt(qtyInput.value, 10) || 1;
+    const maxQty = parseInt(qtyInput.max) || 999;
+    const qty = parseInt(qtyInput.value) || 1;
     if (qty > maxQty) { qtyInput.value = maxQty; alert(`⚠️ Stock máximo: ${maxQty} unidades`); }
     if (qty < 1) qtyInput.value = 1;
     updateModalPricePreview();
 }
 
-function closeProductModal() {
-    const modal = document.getElementById('productModal');
-    if (modal) modal.classList.remove('active');
-}
+function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
 
 function getSelectedBasePrice(product) {
     const variantSelect = document.getElementById('modalVariantSelect');
-    const variantGroup = document.getElementById('variantGroup');
-    const isVariantVisible = variantGroup
-        ? variantGroup.style.display !== 'none'
-        : (variantSelect && variantSelect.style.display !== 'none');
-    if (variantSelect && isVariantVisible && variantSelect.value !== 'base') {
-        return parseFloat(variantSelect.options[variantSelect.selectedIndex]?.dataset?.price) || product.precioBase;
+    if (variantSelect && variantSelect.style.display !== 'none' && variantSelect.value !== 'base') {
+        return parseFloat(variantSelect.options[variantSelect.selectedIndex]?.dataset.price) || product.precioBase;
     }
     return product.precioBase;
 }
 
 function updateModalPricePreview() {
-    const productId = document.getElementById('modalProductId')?.value;
-    const product = allProducts.find(p => String(p.id) === String(productId));
+    const productId = document.getElementById('modalProductId').value;
+    const product = allProducts.find(p => p.id === productId);
     if (!product) return;
     const basePrice = getSelectedBasePrice(product);
-    const qty = Math.max(1, parseInt(document.getElementById('modalQuantity')?.value, 10) || 1);
+    const qty = parseInt(document.getElementById('modalQuantity').value) || 1;
     const discountInput = document.getElementById('modalDiscount');
-    const descuentoColones = Math.max(0, parseFloat(discountInput?.value) || 0);
+    const discountColones = parseFloat(discountInput.value) || 0;
     const totalBase = basePrice * qty;
-    if (descuentoColones > totalBase && discountInput) {
+    if (discountColones > totalBase) {
         discountInput.value = totalBase;
         alert(`⚠️ El descuento no puede ser mayor al total (₡${formatMoney(totalBase)})`);
         return updateModalPricePreview();
     }
-    const discountPercent = totalBase > 0 ? (descuentoColones / totalBase) * 100 : 0;
-    const totalFinal = Math.max(0, totalBase - descuentoColones);
+    const discountPercent = totalBase > 0 ? (discountColones / totalBase) * 100 : 0;
+    const totalFinal = Math.max(0, totalBase - discountColones);
     document.getElementById('modalOriginalPrice').textContent = `₡${formatMoney(basePrice)} c/u`;
     document.getElementById('modalFinalPrice').textContent = `₡${formatMoney(totalFinal)}`;
     const percentLabel = document.getElementById('discountPercentLabel');
-    if (percentLabel) {
-        if (descuentoColones > 0) {
-            percentLabel.textContent = `Equivale a ${discountPercent.toFixed(1)}% de descuento (-₡${formatMoney(descuentoColones)})`;
-            percentLabel.style.color = 'var(--success)';
-        } else {
-            percentLabel.textContent = 'Sin descuento';
-            percentLabel.style.color = 'var(--text-light)';
-        }
-    }
-    if (discountInput) discountInput.dataset.percent = discountPercent.toFixed(2);
+    if (discountColones > 0) { percentLabel.textContent = `Equivale a ${discountPercent.toFixed(1)}% de descuento (-₡${formatMoney(discountColones)})`; percentLabel.style.color = 'var(--success)'; }
+    else { percentLabel.textContent = 'Sin descuento'; percentLabel.style.color = 'var(--text-light)'; }
+    discountInput.dataset.percent = discountPercent.toFixed(2);
 }
 
 function confirmAddToCart() {
@@ -1438,7 +1425,7 @@ function confirmAddToCart() {
 function updateCartBadge() {
     const badge = document.getElementById('cartBadge');
     if (!badge) return;
-    const totalItems = cart.reduce((sum, item) => sum + (parseInt(item.cantidad, 10) || 0), 0);
+    const totalItems = cart.reduce((sum, item) => sum + item.cantidad, 0);
     if (totalItems > 0) { badge.textContent = totalItems; badge.style.display = 'inline-block'; }
     else { badge.style.display = 'none'; }
 }
@@ -1446,14 +1433,12 @@ function updateCartBadge() {
 function renderCart() {
     const container = document.getElementById('cartItems');
     if (!container) return;
-    if (!Array.isArray(cart) || cart.length === 0) {
+    if (cart.length === 0) {
         container.innerHTML = '<div style="text-align: center; color: var(--text-light); padding: 40px 20px; font-size: 0.9rem;">Carrito vacío.<br>Agregue productos o escanee un código.</div>';
-        updateTotals();
-        updateCartBadge();
-        return;
+        updateTotals(); updateCartBadge(); return;
     }
     container.innerHTML = cart.map((item, index) => {
-        const product = allProducts.find(p => String(p.id) === String(item.id));
+        const product = allProducts.find(p => p.id === item.id);
         const stock = product ? getStockForProduct(product) : null;
         const stockWarning = stock && item.cantidad >= stock.cantidad ? '<div class="cart-item-stock-warning">⚠️ Últimas unidades</div>' : '';
         return `
@@ -1465,20 +1450,19 @@ function renderCart() {
                 ${stockWarning}
             </div>
             <div class="cart-item-controls">
-                <button type="button" class="qty-btn" onclick="updateCartItemQty(${index}, -1)">-</button>
+                <button class="qty-btn" onclick="updateCartItemQty(${index}, -1)">-</button>
                 <span class="qty-display">${item.cantidad}</span>
-                <button type="button" class="qty-btn" onclick="updateCartItemQty(${index}, 1)" ${stock && item.cantidad >= stock.cantidad ? 'disabled' : ''}>+</button>
+                <button class="qty-btn" onclick="updateCartItemQty(${index}, 1)" ${stock && item.cantidad >= stock.cantidad ? 'disabled' : ''}>+</button>
                 <span class="remove-btn" onclick="removeFromCart(${index})">&times;</span>
             </div>
         </div>`;
     }).join('');
-    updateTotals();
-    updateCartBadge();
+    updateTotals(); updateCartBadge();
 }
 
 function updateCartItemQty(index, change) {
     const item = cart[index]; if (!item) return;
-    const product = allProducts.find(p => String(p.id) === String(item.id));
+    const product = allProducts.find(p => p.id === item.id);
     const stock = product ? getStockForProduct(product) : null;
     const newQty = item.cantidad + change;
     if (stock && newQty > stock.cantidad) { alert(`⚠️ Stock máximo: ${stock.cantidad} unidades`); return; }
@@ -1505,8 +1489,10 @@ function getShippingTotals() {
 function updateTotals() {
     const transportInput = document.getElementById('transportCost');
     transportCost = parseFloat(transportInput?.value) || 0;
-    const totalConIva = cart.reduce((sum, item) => sum + ((parseFloat(item.precioFinalUnitario) || 0) * (parseInt(item.cantidad, 10) || 0)), 0);
+    const totalConIva = cart.reduce((sum, item) => sum + (item.precioFinalUnitario * item.cantidad), 0);
     const subtotalReal = totalConIva / 1.13;
+    const ivaReal = totalConIva - subtotalReal;
+    // ✅ Redondeo controlado: subtotal + IVA = total exacto (sin céntimos fantasma)
     const subtotalRedondeado = Math.round(subtotalReal * 100) / 100;
     const ivaAjustado = Math.round((totalConIva - subtotalRedondeado) * 100) / 100;
     const productsTotal = subtotalRedondeado + ivaAjustado;
@@ -1516,14 +1502,9 @@ function updateTotals() {
     currentSubtotal = subtotalRedondeado;
     currentIva = ivaAjustado;
     currentTotal = finalTotal;
-
-    const subEl = document.getElementById('subtotalAmount');
-    const taxEl = document.getElementById('taxAmount');
-    const prodEl = document.getElementById('productsTotal');
-    const totEl = document.getElementById('totalAmount');
-    if (subEl) subEl.textContent = `₡${formatMoney(subtotalRedondeado)}`;
-    if (taxEl) taxEl.textContent = `₡${formatMoney(ivaAjustado)}`;
-    if (prodEl) prodEl.textContent = `₡${formatMoney(productsTotal)}`;
+    document.getElementById('subtotalAmount').textContent = `₡${formatMoney(subtotalRedondeado)}`;
+    document.getElementById('taxAmount').textContent = `₡${formatMoney(ivaAjustado)}`;
+    document.getElementById('productsTotal').textContent = `₡${formatMoney(productsTotal)}`;
     const transportRow = document.getElementById('transportRow');
     if (transportRow) {
         if (ship.gross > 0) {
@@ -1532,16 +1513,46 @@ function updateTotals() {
                 ship.discount > 0 ? `₡${formatMoney(ship.net)} (desc. envío -₡${formatMoney(ship.discount)})` : `₡${formatMoney(ship.net)}`;
         } else { transportRow.style.display = 'none'; }
     }
-    if (totEl) totEl.textContent = `₡${formatMoney(finalTotal)}`;
+    document.getElementById('totalAmount').textContent = `₡${formatMoney(finalTotal)}`;
+}
+
+function triggerTicketPrint() {
+    const ticketEl = document.getElementById('ticket-print');
+    if (!ticketEl) {
+        window.print();
+        return;
+    }
+
+    ticketEl.classList.add('is-printing-mobile');
+    ticketEl.style.display = 'block';
+
+    const cleanup = () => {
+        ticketEl.classList.remove('is-printing-mobile');
+        ticketEl.style.display = '';
+        window.removeEventListener('afterprint', cleanup);
+    };
+
+    window.addEventListener('afterprint', cleanup);
+
+    setTimeout(() => {
+        try {
+            window.print();
+        } catch (err) {
+            console.error('Error al invocar window.print():', err);
+            alert('No se pudo abrir el diálogo de impresión en este dispositivo.');
+        } finally {
+            setTimeout(cleanup, 1200);
+        }
+    }, 120);
 }
 
 // ==========================================
 // GUARDAR FACTURA
+// ✅ Consentimiento NO bloqueante: se anota si ya existía
 // ==========================================
 async function saveInvoice() {
     if (cart.length === 0) { alert('El carrito está vacío'); return; }
     if (!currentClient) { alert('Seleccione un cliente'); return; }
-
     if (currentClient && currentClient.creditoBloqueado === true) {
         const motivoTxt = currentClient.motivoBloqueo ? `\nMotivo: ${currentClient.motivoBloqueo}` : '';
         const continuar = confirm(
@@ -1564,7 +1575,7 @@ async function saveInvoice() {
         await db.runTransaction(async (transaction) => {
             const stockGroups = new Map();
             for (const item of cart) {
-                const product = allProducts.find(p => String(p.id) === String(item.id));
+                const product = allProducts.find(p => p.id === item.id);
                 if (!product) throw new Error(`Producto no encontrado: ${item.nombre}`);
                 const stockId = getStockDocId(product);
                 if (!stockGroups.has(stockId)) {
@@ -1649,7 +1660,7 @@ async function updateExistingInvoice() {
         const product = allProducts.find(p => String(p.id) === String(item.id));
         const stockId = item.stockId || (product ? getStockDocId(product) : '');
         if (!stockId) throw new Error(`No se encontró el inventario de "${item.nombre || item.id}"`);
-        target.set(stockId, (target.get(stockId) || 0) + (parseInt(item.cantidad, 10) || 0));
+        target.set(stockId, (target.get(stockId) || 0) + (parseInt(item.cantidad) || 0));
     });
     try {
         addQuantities(oldByStock, originalItems);
@@ -1666,7 +1677,7 @@ async function updateExistingInvoice() {
             }
             for (const stockId of allStockIds) {
                 const entry = stockDocs.get(stockId);
-                const currentStock = entry.doc.exists ? (parseInt(entry.doc.data().cantidad, 10) || 0) : 0;
+                const currentStock = entry.doc.exists ? (parseInt(entry.doc.data().cantidad) || 0) : 0;
                 const delta = (newByStock.get(stockId) || 0) - (oldByStock.get(stockId) || 0);
                 if (delta > 0 && currentStock < delta) {
                     const product = allProducts.find(p => getStockDocId(p) === stockId);
@@ -1749,7 +1760,7 @@ function renderInventoryTable(filter = currentInventoryFilter, searchQuery = '')
                 <td class="stock-cell ${stockCellClass}">${stockQty} ${stockStatus.status === 'out' ? '❌' : (stockStatus.status === 'low' ? '⚠️' : '✅')}</td>
                 <td>${stock ? `₡${formatMoney(stock.costoUnitario)}` : '-'}</td>
                 <td>${lastPurchase}</td>
-                <td><button class="btn btn-success btn-sm" onclick="openRestockModal('${String(p.id).replace(/'/g, "\\'")}')">📦 Reabastecer</button></td>
+                <td><button class="btn btn-success btn-sm" onclick="openRestockModal('${p.id}')">📦 Reabastecer</button></td>
             </tr>`);
     });
     document.getElementById('invTotalProducts').textContent = totalProducts;
@@ -1769,10 +1780,10 @@ function filterInventory(filter, element) {
 function filterInventoryTable(query) { renderInventoryTable(currentInventoryFilter, query); }
 
 function openRestockModal(productId) {
-    const product = allProducts.find(p => String(p.id) === String(productId));
+    const product = allProducts.find(p => p.id === productId);
     if (!product) return;
     const stock = getStockForProduct(product);
-    document.getElementById('restockProductId').value = product.id;
+    document.getElementById('restockProductId').value = productId;
     document.getElementById('restockProductName').textContent = product.nombre;
     document.getElementById('restockCurrentStock').textContent = stock ? stock.cantidad : 0;
     document.getElementById('restockQuantity').value = 1;
@@ -1785,9 +1796,9 @@ function closeRestockModal() { document.getElementById('restockModal').classList
 
 async function confirmRestock() {
     const productId = document.getElementById('restockProductId').value;
-    const product = allProducts.find(p => String(p.id) === String(productId));
+    const product = allProducts.find(p => p.id === productId);
     if (!product) return;
-    const quantity = parseInt(document.getElementById('restockQuantity').value, 10) || 0;
+    const quantity = parseInt(document.getElementById('restockQuantity').value) || 0;
     const cost = parseFloat(document.getElementById('restockCost').value) || 0;
     const note = document.getElementById('restockNote').value.trim();
     if (quantity <= 0) { alert('Ingrese una cantidad válida'); return; }
@@ -1937,12 +1948,14 @@ function renderReceivablesList(receivables) {
         const daysText = r.dias === 0 ? 'Hoy' : (r.dias === 1 ? '1 día' : `${r.dias} días`);
         const urgencyLabel = r.urgencia === 'urgent' ? '🔴 URGENTE' : (r.urgencia === 'warning' ? '🟡 Moderada' : '🔵 Reciente');
         const dateStr = r.fecha.toLocaleDateString('es-CR', { day: '2-digit', month: 'short', year: 'numeric' });
+        // ✅ Mora usando la FECHA de la factura (no días calendario)
         const interest = calculateMoratoryInterest(r.saldo, r.fecha);
+        const maxDateStr = interest.fechaMaximaPago.toLocaleDateString('es-CR', { day: '2-digit', month: 'short', year: 'numeric' });
         const moraBlock = interest.porcentaje > 0
-            ? `<div style="font-size:0.72rem;color:#d97706;margin-top:2px;">+₡${formatMoney(interest.monto)} recargo (${interest.porcentaje}%)</div>
+            ? `<div style="font-size:0.72rem;color:#d97706;margin-top:2px;">+₡${formatMoney(interest.monto)} recargo (${interest.porcentaje}% • ${interest.diasAtrasoCalendario}d atraso)</div>
                <div style="font-size:0.75rem;font-weight:700;color:#b45309;">Total: ₡${formatMoney(interest.totalConInteres)}</div>`
-            : `<div style="font-size:0.72rem;color:var(--success);margin-top:2px;">Sin recargo (${interest.diasHabilesTranscurridos} días hábiles)</div>`;
-        return `
+            : `<div style="font-size:0.72rem;color:var(--success);margin-top:2px;">Sin recargo • Máx: ${maxDateStr}</div>`;
+             return `
         <div class="receivable-card ${urgencyClass}" onclick="openInvoiceDetailModal('${r.id}')">
             <div class="receivable-header">
                 <div>
@@ -1997,7 +2010,7 @@ async function sendReminder(invoiceId) {
         if (!doc.exists) { alert('Factura no encontrada'); return; }
         const factura = { id: doc.id, ...doc.data() };
         let phone = '';
-        const clienteLocal = allClients.find(c => String(c.id) === String(factura.clienteId));
+        const clienteLocal = allClients.find(c => c.id === factura.clienteId);
         if (clienteLocal && clienteLocal.telefono) phone = normalizePhone(clienteLocal.telefono);
         else if (factura.clienteTelefono) phone = normalizePhone(factura.clienteTelefono);
         if (!phone) {
@@ -2006,7 +2019,7 @@ async function sendReminder(invoiceId) {
             phone = normalizePhone(phone);
         }
         const { message } = buildWhatsAppMessage(factura, 'reminder');
-        openWhatsAppUrl(phone, message);
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
     } catch (error) {
         console.error("Error enviando recordatorio:", error);
         alert('Error al enviar el recordatorio.');
@@ -2162,7 +2175,7 @@ async function resendInvoice(invoiceId) {
         if (!doc.exists) { alert('Factura no encontrada'); return; }
         const factura = { id: doc.id, ...doc.data() };
         let phone = '';
-        const clienteLocal = allClients.find(c => String(c.id) === String(factura.clienteId));
+        const clienteLocal = allClients.find(c => c.id === factura.clienteId);
         if (clienteLocal && clienteLocal.telefono) phone = normalizePhone(clienteLocal.telefono);
         else if (factura.clienteTelefono) phone = normalizePhone(factura.clienteTelefono);
         if (!phone) {
@@ -2171,7 +2184,7 @@ async function resendInvoice(invoiceId) {
             phone = normalizePhone(phone);
         }
         const { message } = buildWhatsAppMessage(factura, 'resend');
-        openWhatsAppUrl(phone, message);
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
     } catch (error) {
         console.error("Error reenviando factura:", error);
         alert('Error al reenviar la factura.');
@@ -2247,16 +2260,20 @@ async function openInvoiceDetailModal(invoiceId) {
             document.getElementById('detailTotalPaid').textContent = `₡${formatMoney(totalAbonado)}`;
             document.getElementById('detailBalance').textContent = `₡${formatMoney(saldoPendiente)}`;
 
+            // ✅ Mora usando la FECHA de la factura
             const interest = calculateMoratoryInterest(saldoPendiente, factura.fecha);
+            const progDateStr = interest.fechaProximoPago.toLocaleDateString('es-CR');
+            const maxDateStr = interest.fechaMaximaPago.toLocaleDateString('es-CR');
             const interestBox = document.getElementById('detailInterestBox');
             if (interestBox) {
                 if (interest.porcentaje > 0) {
                     interestBox.style.display = 'block';
                     interestBox.innerHTML = `
                         <div style="padding:10px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;margin-top:8px;">
-                            <div style="font-weight:700;color:#856404;">⏰ Intereses por mora</div>
-                            <div style="font-size:0.85rem;color:#664d03;margin-top:4px;">
-                                ${interest.diasHabilesTranscurridos} días hábiles transcurridos → ${interest.porcentaje}% de recargo
+                            <div style="font-weight:700;color:#856404;">⏰ Intereses por mora (${interest.diasAtrasoCalendario} días de atraso)</div>
+                            <div style="font-size:0.82rem;color:#664d03;margin-top:4px;">
+                                Pago programado: <strong>${progDateStr}</strong> • Máximo (+1 día): <strong>${maxDateStr}</strong><br>
+                                Recargo aplicado sobre saldo: <strong>${interest.porcentaje}%</strong>
                             </div>
                             <div style="font-size:0.9rem;margin-top:6px;">
                                 Recargo: <strong>₡${formatMoney(interest.monto)}</strong><br>
@@ -2267,9 +2284,9 @@ async function openInvoiceDetailModal(invoiceId) {
                     interestBox.style.display = 'block';
                     interestBox.innerHTML = `
                         <div style="padding:10px;background:#d1fae5;border:1px solid #10b981;border-radius:8px;margin-top:8px;">
-                            <div style="font-weight:700;color:#065f46;">✅ Al día</div>
-                            <div style="font-size:0.85rem;color:#064e3b;margin-top:4px;">
-                                ${interest.diasHabilesTranscurridos} días hábiles — sin recargo (plazo libre: 15 días hábiles)
+                            <div style="font-weight:700;color:#065f46;">✅ Al día (sin recargo)</div>
+                            <div style="font-size:0.82rem;color:#064e3b;margin-top:4px;">
+                                Fecha de pago: <strong>${progDateStr}</strong> • Fecha máxima (+1 día): <strong>${maxDateStr}</strong>
                             </div>
                         </div>`;
                 }
@@ -2296,7 +2313,7 @@ function ensureInvoiceDetailActions() {
     actions.innerHTML = `
         <button type="button" class="btn btn-info" onclick="printHistoricalInvoice()">🖨️ Imprimir factura</button>
         <button type="button" class="btn btn-warning" onclick="editCurrentInvoice()">✏️ Editar factura</button>
-        <button type="button" class="btn btn-accent" onclick="sendConsentFromDetail()">📋 Enviar consentimiento</button>`;
+        <button type="button" class="btn btn-gold" onclick="sendConsentFromDetail()">📋 Enviar consentimiento</button>`;
     const closeBtn = modal.querySelector('[onclick*="closeInvoiceDetailModal"]');
     if (closeBtn && closeBtn.parentElement) closeBtn.parentElement.insertBefore(actions, closeBtn);
     else modal.querySelector('.modal-content, .modal-body')?.appendChild(actions);
@@ -2344,38 +2361,8 @@ function editCurrentInvoice() {
 }
 
 // ==========================================
-// IMPRESIÓN UNIFICADA: TICKET (PC y MÓVIL)
+// IMPRESIÓN UNIFICADA: TICKET (POS y facturas guardadas)
 // ==========================================
-function triggerTicketPrint() {
-    const ticketEl = document.getElementById('ticket-print');
-    if (!ticketEl) {
-        window.print();
-        return;
-    }
-
-    ticketEl.classList.add('is-printing-mobile');
-    ticketEl.style.display = 'block';
-
-    const cleanup = () => {
-        ticketEl.classList.remove('is-printing-mobile');
-        ticketEl.style.display = '';
-        window.removeEventListener('afterprint', cleanup);
-    };
-
-    window.addEventListener('afterprint', cleanup);
-
-    setTimeout(() => {
-        try {
-            window.print();
-        } catch (err) {
-            console.error('Error al invocar window.print():', err);
-            alert('No se pudo abrir el diálogo de impresión en este dispositivo.');
-        } finally {
-            setTimeout(cleanup, 1500);
-        }
-    }, 150);
-}
-
 function printHistoricalInvoice() {
     if (currentDetailInvoice) printTicketFromInvoice(currentDetailInvoice);
 }
@@ -2428,6 +2415,7 @@ function printTicketFromInvoice(invoice) {
 
     document.getElementById('ticketTotal').textContent = `₡${formatMoney(totalFactura)}`;
 
+    // 🎯 Línea de ESTADO de pago
     let estadoLine = document.getElementById('ticketEstadoLine');
     if (!estadoLine) {
         estadoLine = document.createElement('div');
@@ -2443,6 +2431,7 @@ function printTicketFromInvoice(invoice) {
         estadoLine.innerHTML = `<div class="ticket-item"><div class="ticket-item-desc">⚠️ ESTADO: ${totalAbonado > 0 ? 'PAGO PARCIAL' : 'PENDIENTE'}</div><div>Saldo: ₡${formatMoney(saldoPendiente)}</div></div>`;
     }
 
+    // 🎯 Línea de FECHA DE PAGO Y MORA (calendario cada 14 días desde 25 nov + 1 día máximo)
     let moraLine = document.getElementById('ticketMoraLine');
     if (!moraLine) {
         moraLine = document.createElement('div');
@@ -2450,14 +2439,22 @@ function printTicketFromInvoice(invoice) {
         if (estadoLine && estadoLine.parentElement) estadoLine.parentElement.insertBefore(moraLine, estadoLine.nextSibling);
     }
     const interest = calculateMoratoryInterest(saldoPendiente, invoice.fecha);
-    if (saldoPendiente > 0 && interest.porcentaje > 0) {
+    const progDateStr = interest.fechaProximoPago.toLocaleDateString('es-CR');
+    const maxDateStr = interest.fechaMaximaPago.toLocaleDateString('es-CR');
+
+    if (saldoPendiente > 0) {
         moraLine.style.display = 'block';
         moraLine.innerHTML = `
-            <div style="border-top:1px dashed #d97706;margin-top:6px;padding-top:6px;font-size:0.78rem;color:#92400e;">
-                <div>⏰ MORA ESTIMADA (${interest.diasHabilesTranscurridos} días hábiles)</div>
-                <div style="display:flex;justify-content:space-between;"><span>Recargo ${interest.porcentaje}%:</span><span>₡${formatMoney(interest.monto)}</span></div>
-                <div style="display:flex;justify-content:space-between;font-weight:700;"><span>Total estimado hoy:</span><span>₡${formatMoney(interest.totalConInteres)}</span></div>
-                <div style="font-size:0.68rem;color:#b45309;">Venció el ${interest.fechaVencimiento.toLocaleDateString('es-CR')}. Cálculo sobre saldo pendiente.</div>
+            <div style="border-top:1px dashed #000;margin-top:6px;padding-top:6px;font-size:10px;line-height:1.35;">
+                <div><strong>📅 Próximo pago:</strong> ${progDateStr}</div>
+                <div><strong>⏳ Pago máximo (+1 día):</strong> ${maxDateStr}</div>
+                <div style="margin-top:3px;">El pago del artículo debe efectuarse 1 día después de la fecha indicada como máximo. Si cancela después de esa fecha se aplicará % por monto en crédito (1.5% / 3.5% según tabla establecida).</div>
+                ${interest.porcentaje > 0 ? `
+                <div style="margin-top:4px;border-top:1px dashed #000;padding-top:4px;">
+                    <div><strong>⏰ MORA (${interest.diasAtrasoCalendario} días de atraso):</strong></div>
+                    <div style="display:flex;justify-content:space-between;"><span>Recargo ${interest.porcentaje}%:</span><span>₡${formatMoney(interest.monto)}</span></div>
+                    <div style="display:flex;justify-content:space-between;font-weight:700;"><span>Total a pagar hoy:</span><span>₡${formatMoney(interest.totalConInteres)}</span></div>
+                </div>` : ''}
             </div>`;
     } else {
         moraLine.style.display = 'none';
@@ -2546,10 +2543,26 @@ function printTicket() {
         document.getElementById('ticketTransport').textContent = shipTicket.discount > 0 ? `₡${formatMoney(shipTicket.net)} (desc. -₡${formatMoney(shipTicket.discount)})` : `₡${formatMoney(shipTicket.net)}`;
     } else { document.getElementById('ticketTransportLine').style.display = 'none'; }
     document.getElementById('ticketTotal').textContent = `₡${formatMoney(currentTotal)}`;
+    // En venta al contado no hay mora (factura recién creada)
     const estadoLine = document.getElementById('ticketEstadoLine');
     if (estadoLine) estadoLine.style.display = 'none';
-    const moraLine = document.getElementById('ticketMoraLine');
-    if (moraLine) moraLine.style.display = 'none';
+
+    let moraLine = document.getElementById('ticketMoraLine');
+    if (!moraLine) {
+        moraLine = document.createElement('div');
+        moraLine.id = 'ticketMoraLine';
+        const totalsEl = document.querySelector('#ticket-print .ticket-totals');
+        if (totalsEl && totalsEl.parentElement) totalsEl.parentElement.insertBefore(moraLine, totalsEl.nextSibling);
+    }
+    const schedule = getNextScheduledPayment(new Date());
+    moraLine.style.display = 'block';
+    moraLine.innerHTML = `
+        <div style="border-top:1px dashed #000;margin-top:6px;padding-top:6px;font-size:10px;line-height:1.35;">
+            <div><strong>📅 Próximo pago calendario:</strong> ${schedule.fechaProximoPago.toLocaleDateString('es-CR')}</div>
+            <div><strong>⏳ Pago máximo (+1 día):</strong> ${schedule.fechaMaximaPago.toLocaleDateString('es-CR')}</div>
+            <div style="margin-top:3px;">Si es compra a crédito, el pago debe efectuarse 1 día después de la fecha indicada como máximo. Si cancela después de esa fecha se aplicará % por monto en crédito (1.5% / 3.5% según tabla establecida).</div>
+        </div>`;
+
     triggerTicketPrint();
 }
 
@@ -2560,11 +2573,12 @@ function buildWhatsAppMessage(invoice, type = 'invoice') {
     const clientName = invoice.clienteNombre || 'Cliente';
     const numero = invoice.numero || 'S/N';
     const dateObj = invoice.fecha?.toDate ? invoice.fecha.toDate() : new Date(invoice.fecha || Date.now());
-    const fechaStr = isNaN(dateObj.getTime()) ? new Date().toLocaleDateString('es-CR') : dateObj.toLocaleDateString('es-CR');
+    const fechaStr = dateObj.toLocaleDateString('es-CR');
     const totalFactura = parseFloat(invoice.total) || 0;
-    const abonos = Array.isArray(invoice.abonos) ? invoice.abonos : [];
+    const abonos = invoice.abonos || [];
     const totalAbonado = abonos.reduce((sum, a) => sum + (parseFloat(a.monto) || 0), 0);
     const saldoPendiente = Math.max(0, totalFactura - totalAbonado);
+    // ✅ Mora con días hábiles desde la FECHA de la factura
     const interest = calculateMoratoryInterest(saldoPendiente, invoice.fecha);
 
     let header = '';
@@ -2587,7 +2601,7 @@ function buildWhatsAppMessage(invoice, type = 'invoice') {
         invoice.items.forEach(item => {
             let desc = getItemDescription(item);
             if (item.descuentoColones > 0) desc += ` (-₡${formatMoney(item.descuentoColones)})`;
-            msg += `▪️ ${item.cantidad} x ${desc}\n   ₡${formatMoney((item.precioFinalUnitario || 0) * (item.cantidad || 0))}\n`;
+            msg += `▪️ ${item.cantidad} x ${desc}\n   ₡${formatMoney(item.precioFinalUnitario * item.cantidad)}\n`;
         });
     }
     msg += `━━━━━━━━━━━━━━━━━━\n`;
@@ -2601,26 +2615,27 @@ function buildWhatsAppMessage(invoice, type = 'invoice') {
     if (abonos.length > 0) {
         msg += `\n💳 *Pagos realizados:*\n`;
         abonos.forEach((a, idx) => {
-            const aDate = a.fecha?.toDate ? a.fecha.toDate() : new Date(a.fecha || Date.now());
-            const aDateStr = isNaN(aDate.getTime()) ? '' : ` (${aDate.toLocaleDateString('es-CR')})`;
-            msg += `  ${idx + 1}. ₡${formatMoney(a.monto)} - ${a.metodo || 'Pago'}${aDateStr}\n`;
+            const aDate = a.fecha?.toDate ? a.fecha.toDate() : new Date(a.fecha);
+            msg += `  ${idx + 1}. ₡${formatMoney(a.monto)} - ${a.metodo} (${aDate.toLocaleDateString('es-CR')})\n`;
         });
         msg += `\n*Total abonado:* ₡${formatMoney(totalAbonado)}\n`;
     }
-    if (saldoPendiente > 0 && type === 'reminder') {
+   if (saldoPendiente > 0) {
+        const progDateStr = interest.fechaProximoPago.toLocaleDateString('es-CR');
+        const maxDateStr = interest.fechaMaximaPago.toLocaleDateString('es-CR');
         msg += `\n⚠️ *Saldo pendiente:* ₡${formatMoney(saldoPendiente)}\n`;
+        msg += `📅 *Fecha de pago (calendario):* ${progDateStr}\n`;
+        msg += `⏳ *Fecha máxima de pago (+1 día):* ${maxDateStr}\n`;
+        msg += `_El pago debe efectuarse máximo 1 día después de la fecha indicada. Después de esa fecha se aplica recargo sobre el saldo pendiente (1.5% / 3.5% según tabla establecida)._\n`;
         if (interest.porcentaje > 0) {
-            msg += `\n⏰ *Política de pago:*\n`;
-            msg += `Después de *15 días hábiles* de atraso se aplica un recargo acumulable:\n`;
-            msg += `  • 16 a 30 días hábiles → *1.5%*\n`;
-            msg += `  • 31+ días hábiles → *3.5%* (1.5% + 2%)\n\n`;
-            msg += `📌 En tu caso (${interest.diasHabilesTranscurridos} días hábiles): *${interest.porcentaje}%*\n`;
+            msg += `\n⏰ *Detalle de recargo por atraso (${interest.diasAtrasoCalendario} días):*\n`;
+            msg += `📌 Porcentaje aplicado: *${interest.porcentaje}%*\n`;
             msg += `💸 Recargo actual: *₡${formatMoney(interest.monto)}*\n`;
             msg += `💵 *Total a pagar hoy: ₡${formatMoney(interest.totalConInteres)}*\n`;
         } else {
-            msg += `\n🕐 Llevas *${interest.diasHabilesTranscurridos} días hábiles* sin recargo. ¡Paga dentro de los primeros 15 días hábiles y evita intereses!\n`;
+            msg += `\n✅ Estás al día. Cancela a más tardar el *${maxDateStr}* para evitar recargos.\n`;
         }
-    } else if (saldoPendiente <= 0 && type !== 'invoice') {
+    } else {
         msg += `\n✅ *Factura totalmente pagada.* ¡Gracias!\n`;
     }
     if (type === 'reminder') {
@@ -2637,16 +2652,16 @@ function sendWhatsApp() {
     if (cart.length === 0) { alert('El carrito está vacío'); return; }
     let phone = currentClient && currentClient.telefono ? normalizePhone(currentClient.telefono) : '';
     if (!phone) {
-        const inputPhone = prompt("Ingrese el número de WhatsApp:");
-        if (!inputPhone) return;
-        phone = normalizePhone(inputPhone);
+        phone = prompt("Ingrese el número de WhatsApp:");
+        if (!phone) return;
+        phone = normalizePhone(phone);
     }
     const shipWA = getShippingTotals();
     const invoice = {
-        numero: document.getElementById('invoiceNumber')?.textContent || currentInvoiceNumber,
+        numero: document.getElementById('invoiceNumber').textContent,
         fecha: new Date(),
         clienteNombre: currentClient ? currentClient.nombre : 'Cliente',
-        clienteTelefono: currentClient?.telefono || phone,
+        clienteTelefono: currentClient?.telefono || '',
         requiereEnvio: requiresShipping,
         clienteDireccion: requiresShipping && currentClient ? currentClient.direccion : '',
         clienteDistrito: requiresShipping && currentClient ? currentClient.distrito : '',
@@ -2658,7 +2673,7 @@ function sendWhatsApp() {
         total: currentTotal, abonos: []
     };
     const { message } = buildWhatsAppMessage(invoice, 'invoice');
-    openWhatsAppUrl(phone, message);
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
 }
 
 // ==========================================
@@ -2757,8 +2772,320 @@ function newPurchaseOrder() {
 function closePOEditor() { document.getElementById('poEditor').style.display = 'none'; }
 
 function getClientRuta(clientId) {
-    const c = allClients.find(x => String(x.id) === String(clientId));
+    const c = allClients.find(x => x.id === clientId);
     return (c && c.ruta) ? c.ruta : 'Sin ruta';
+}
+
+// ==========================================
+// EXPORTAR TICKET COMO IMAGEN (PNG / JPG)
+// ==========================================
+async function generateTicketImageBlob(mimeType = 'image/png', quality = 0.92) {
+    const ticketEl = document.getElementById('ticket-print');
+    if (!ticketEl) throw new Error('No se encontró el contenedor #ticket-print');
+
+    const width = 420;
+    const padding = 24;
+    const lineHeight = 20;
+
+    // Extraer líneas de texto visibles del ticket
+    const lines = [];
+    const headerTitle = ticketEl.querySelector('.ticket-header h2')?.textContent?.trim() || 'EWE ESENTIA';
+    lines.push({ text: headerTitle, align: 'center', bold: true, size: 20 });
+
+    const headerSubs = Array.from(ticketEl.querySelectorAll('.ticket-header > div'))
+        .map(el => el.innerText.trim())
+        .filter(Boolean);
+    headerSubs.forEach(t => lines.push({ text: t, align: 'center', bold: false, size: 13 }));
+    lines.push({ divider: true });
+
+    const infoLines = Array.from(ticketEl.querySelectorAll('.ticket-info > div'))
+        .filter(el => el.style.display !== 'none' && el.innerText.trim() !== '')
+        .map(el => el.innerText.trim());
+    infoLines.forEach(t => lines.push({ text: t, align: 'left', bold: false, size: 13 }));
+    lines.push({ divider: true });
+
+    const itemRows = Array.from(ticketEl.querySelectorAll('#ticketItems .ticket-item'));
+    itemRows.forEach(row => {
+        const left = row.children[0]?.innerText?.trim() || '';
+        const right = row.children[1]?.innerText?.trim() || '';
+        lines.push({ text: left, rightText: right, align: 'split', bold: false, size: 13 });
+    });
+    lines.push({ divider: true });
+
+    const totalRows = Array.from(ticketEl.querySelectorAll('#ticket-print .ticket-total-line'))
+        .filter(el => el.style.display !== 'none');
+    totalRows.forEach(row => {
+        const isFinal = row.classList.contains('final');
+        const left = row.children[0]?.innerText?.trim() || '';
+        const right = row.children[1]?.innerText?.trim() || '';
+        lines.push({ text: left, rightText: right, align: 'split', bold: isFinal, size: isFinal ? 16 : 13 });
+    });
+
+    const extraMoraText = document.getElementById('ticketMoraLine')?.style.display !== 'none'
+        ? (document.getElementById('ticketMoraLine')?.innerText || '').trim()
+        : '';
+    if (extraMoraText) {
+        lines.push({ divider: true });
+        extraMoraText.split('\n').map(s => s.trim()).filter(Boolean).forEach(t => {
+            lines.push({ text: t, align: 'left', bold: false, size: 12 });
+        });
+    }
+
+    const footerLines = Array.from(ticketEl.querySelectorAll('.ticket-footer > div'))
+        .map(el => el.innerText.trim())
+        .filter(Boolean);
+    if (footerLines.length) {
+        lines.push({ divider: true });
+        footerLines.forEach(t => lines.push({ text: t, align: 'center', bold: false, size: 13 }));
+    }
+
+    // Calcular alto dinámico con ajuste de palabras
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    const maxTextWidth = width - padding * 2;
+
+    function wrapText(ctx, text, maxW, font) {
+        ctx.font = font;
+        const words = String(text || '').split(/\s+/).filter(Boolean);
+        if (!words.length) return [''];
+        const wrapped = [];
+        let current = words[0];
+        for (let i = 1; i < words.length; i++) {
+            const test = current + ' ' + words[i];
+            if (ctx.measureText(test).width <= maxW) {
+                current = test;
+            } else {
+                wrapped.push(current);
+                current = words[i];
+            }
+        }
+        wrapped.push(current);
+        return wrapped;
+    }
+
+    const renderedItems = [];
+    let totalHeight = padding * 2;
+
+    for (const item of lines) {
+        if (item.divider) {
+            renderedItems.push({ type: 'divider', h: 16 });
+            totalHeight += 16;
+            continue;
+        }
+        const font = `${item.bold ? 'bold ' : ''}${item.size}px "Courier New", monospace`;
+        if (item.align === 'split') {
+            const rightWidth = tempCtx.measureText(item.rightText || '').width + 12;
+            const leftWrapped = wrapText(tempCtx, item.text, Math.max(120, maxTextWidth - rightWidth), font);
+            const h = leftWrapped.length * lineHeight + 4;
+            renderedItems.push({ type: 'split', leftLines: leftWrapped, rightText: item.rightText || '', font, h });
+            totalHeight += h;
+        } else {
+            const wrapped = wrapText(tempCtx, item.text, maxTextWidth, font);
+            const h = wrapped.length * lineHeight + 4;
+            renderedItems.push({ type: 'text', textLines: wrapped, align: item.align, font, h });
+            totalHeight += h;
+        }
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = Math.ceil(totalHeight);
+    const ctx = canvas.getContext('2d');
+
+    // Fondo blanco (necesario especialmente para JPG)
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    let y = padding;
+    for (const r of renderedItems) {
+        if (r.type === 'divider') {
+            ctx.strokeStyle = '#333333';
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(padding, y + r.h / 2);
+            ctx.lineTo(width - padding, y + r.h / 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            y += r.h;
+            continue;
+        }
+        ctx.fillStyle = '#000000';
+        ctx.font = r.font;
+        ctx.textBaseline = 'top';
+
+        if (r.type === 'split') {
+            ctx.textAlign = 'left';
+            r.leftLines.forEach((ln, idx) => {
+                ctx.fillText(ln, padding, y + idx * lineHeight);
+            });
+            ctx.textAlign = 'right';
+            ctx.fillText(r.rightText, width - padding, y);
+            y += r.h;
+        } else {
+            ctx.textAlign = r.align || 'left';
+            const x = r.align === 'center' ? width / 2 : padding;
+            r.textLines.forEach((ln, idx) => {
+                ctx.fillText(ln, x, y + idx * lineHeight);
+            });
+            y += r.h;
+        }
+    }
+
+    return new Promise((resolve, reject) => {
+        canvas.toBlob(blob => {
+            if (blob) resolve(blob);
+            else reject(new Error('No se pudo generar la imagen del ticket'));
+        }, mimeType, quality);
+    });
+}
+
+async function openTicketImageModal(format = 'image/png') {
+    if (cart.length === 0 || !currentClient) {
+        alert('Carrito vacío o cliente no seleccionado');
+        return;
+    }
+    // Reutiliza la población de datos del ticket sin lanzar window.print()
+    document.getElementById('ticketDate').textContent = new Date().toLocaleString('es-CR');
+    document.getElementById('ticketInvoiceNum').textContent = document.getElementById('invoiceNumber').textContent;
+    document.getElementById('ticketClientName').textContent = currentClient.nombre || 'Cliente Contado';
+    document.getElementById('ticketClientId').textContent = currentClient.cedula || currentClient.id || 'N/A';
+    document.getElementById('ticketItems').innerHTML = cart.map(item => {
+        let desc = `${item.cantidad} x ${getItemDescription(item)}`;
+        if (item.descuentoColones > 0) desc += ` (-₡${formatMoney(item.descuentoColones)})`;
+        return `<div class="ticket-item"><div class="ticket-item-desc">${desc}</div><div>₡${formatMoney(item.precioFinalUnitario * item.cantidad)}</div></div>`;
+    }).join('');
+    document.getElementById('ticketSubtotal').textContent = `₡${formatMoney(currentSubtotal)}`;
+    document.getElementById('ticketTax').textContent = `₡${formatMoney(currentIva)}`;
+    document.getElementById('ticketProductsTotal').textContent = `₡${formatMoney(currentSubtotal + currentIva)}`;
+    document.getElementById('ticketTotal').textContent = `₡${formatMoney(currentTotal)}`;
+
+    const ext = format === 'image/jpeg' ? 'jpg' : 'png';
+    const blob = await generateTicketImageBlob(format, 0.92);
+    const url = URL.createObjectURL(blob);
+    const fileName = `ticket-${document.getElementById('invoiceNumber').textContent}.${ext}`;
+
+    // Compartir directo en móvil si el navegador soporta archivos
+    const file = new File([blob], fileName, { type: format });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+            await navigator.share({
+                title: `Ticket ${fileName}`,
+                files: [file]
+            });
+            URL.revokeObjectURL(url);
+            return;
+        } catch (err) {
+            if (err.name === 'AbortError') {
+                URL.revokeObjectURL(url);
+                return;
+            }
+        }
+    }
+
+    // Respaldo: descarga directa o copiar en escritorio
+    if (navigator.clipboard && window.ClipboardItem && format === 'image/png') {
+        try {
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            alert(`✅ Imagen PNG copiada al portapapeles (${fileName}). Ya puedes pegarla en WhatsApp.`);
+        } catch (_) {
+            // Si no permite portapapeles, descarga el archivo
+        }
+    }
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+}
+
+async function exportDetailTicketImage(format = 'image/png') {
+    if (!currentDetailInvoice) {
+        alert('No hay factura seleccionada');
+        return;
+    }
+
+    const invoice = currentDetailInvoice;
+    const dateObj = invoice.fecha?.toDate ? invoice.fecha.toDate() : new Date(invoice.fecha || Date.now());
+    const items = invoice.items || [];
+    const totalFactura = parseFloat(invoice.total) || 0;
+
+    document.getElementById('ticketDate').textContent = dateObj.toLocaleString('es-CR');
+    document.getElementById('ticketInvoiceNum').textContent = invoice.numero || 'S/N';
+    document.getElementById('ticketClientName').textContent = invoice.clienteNombre || 'Cliente Contado';
+    document.getElementById('ticketClientId').textContent = invoice.clienteCedula || invoice.clienteId || 'N/A';
+
+    const phoneLine = document.getElementById('ticketPhoneLine');
+    const phoneSpan = document.getElementById('ticketPhone');
+    if (invoice.clienteTelefono && invoice.clienteTelefono !== 'N/A') {
+        phoneSpan.textContent = invoice.clienteTelefono;
+        phoneLine.style.display = 'block';
+    } else {
+        phoneLine.style.display = 'none';
+    }
+
+    const addressLine = document.getElementById('ticketAddressLine');
+    const addressSpan = document.getElementById('ticketAddress');
+    if (invoice.requiereEnvio && invoice.clienteDireccion) {
+        addressSpan.textContent = [invoice.clienteDireccion, invoice.clienteDistrito, invoice.clienteCanton, invoice.clienteProvincia]
+            .filter(Boolean)
+            .join(', ');
+        addressLine.style.display = 'block';
+    } else {
+        addressLine.style.display = 'none';
+    }
+
+    document.getElementById('ticketItems').innerHTML = items.map(item => {
+        let desc = `${item.cantidad} x ${getItemDescription(item)}`;
+        if (item.descuentoColones > 0) desc += ` (-₡${formatMoney(item.descuentoColones)})`;
+        return `<div class="ticket-item"><div class="ticket-item-desc">${desc}</div><div>₡${formatMoney((item.precioFinalUnitario || 0) * (item.cantidad || 0))}</div></div>`;
+    }).join('');
+
+    document.getElementById('ticketSubtotal').textContent = `₡${formatMoney(invoice.subtotal || 0)}`;
+    document.getElementById('ticketTax').textContent = `₡${formatMoney(invoice.impuesto || 0)}`;
+    document.getElementById('ticketProductsTotal').textContent = `₡${formatMoney((invoice.subtotal || 0) + (invoice.impuesto || 0))}`;
+
+    const transportLine = document.getElementById('ticketTransportLine');
+    const transportSpan = document.getElementById('ticketTransport');
+    if ((parseFloat(invoice.transporte) || 0) > 0) {
+        transportLine.style.display = 'flex';
+        transportSpan.textContent = (parseFloat(invoice.descuentoEnvio) || 0) > 0
+            ? `₡${formatMoney(invoice.transporte)} (desc. -₡${formatMoney(invoice.descuentoEnvio)})`
+            : `₡${formatMoney(invoice.transporte)}`;
+    } else {
+        transportLine.style.display = 'none';
+    }
+
+    document.getElementById('ticketTotal').textContent = `₡${formatMoney(totalFactura)}`;
+
+    const ext = format === 'image/jpeg' ? 'jpg' : 'png';
+    const blob = await generateTicketImageBlob(format, 0.92);
+    const url = URL.createObjectURL(blob);
+    const fileName = `ticket-${invoice.numero || 'factura'}.${ext}`;
+    const file = new File([blob], fileName, { type: format });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+            await navigator.share({ title: `Ticket ${fileName}`, files: [file] });
+            URL.revokeObjectURL(url);
+            return;
+        } catch (err) {
+            if (err.name === 'AbortError') {
+                URL.revokeObjectURL(url);
+                return;
+            }
+        }
+    }
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
 }
 
 async function generatePOFromWeek() {
@@ -2773,7 +3100,7 @@ async function generatePOFromWeek() {
                 const key = String(item.id);
                 if (!demand.has(key)) demand.set(key, { id: key, nombre: item.nombre || 'Producto', total: 0, detalle: [] });
                 const d = demand.get(key);
-                const qty = parseInt(item.cantidad, 10) || 0;
+                const qty = parseInt(item.cantidad) || 0;
                 d.total += qty;
                 const ruta = getClientRuta(f.clienteId);
                 d.detalle.push(`${f.clienteNombre || 'Cliente'} · ${ruta}: ${qty}`);
@@ -2788,7 +3115,7 @@ async function generatePOFromWeek() {
             if (sugerido <= 0) continue;
             lines.push({
                 productId: d.id, nombre: d.nombre, cantidad: sugerido,
-                costoUnitario: stock ? (stock.costoUnitario || 0) : (product?.precioBase || 0),
+                costoUnitario: stock ? (stock.costoUnitario || 0) : 0,
                 detalle: `📦 Demanda semanal: ${d.total} | Stock: ${stockQty} | Pedidos: ${d.detalle.join(' | ')}`
             });
         }
@@ -2842,7 +3169,7 @@ function addPOLineFromSearch() {
     const product = allProducts.find(p => p.nombre.toLowerCase() === q || p.nombre.toLowerCase().includes(q) || String(p.id).toLowerCase() === q || String(p.id).toLowerCase().includes(q));
     if (!product) { alert(`❌ Producto no encontrado: "${q}"`); return; }
     const already = poLines.findIndex(l => String(l.productId) === String(product.id));
-    if (already !== -1) { poLines[already].cantidad = (parseInt(poLines[already].cantidad, 10) || 0) + 1; }
+    if (already !== -1) { poLines[already].cantidad = (parseInt(poLines[already].cantidad) || 0) + 1; }
     else {
         const stock = getStockForProduct(product);
         poLines.push({
@@ -2902,7 +3229,7 @@ function printPurchaseOrderData(o) {
 }
 
 function printPurchaseOrder() {
-    const lineasValidas = poLines.filter(l => l.productId && (parseInt(l.cantidad, 10) || 0) > 0);
+    const lineasValidas = poLines.filter(l => l.productId && (parseInt(l.cantidad) || 0) > 0);
     if (!lineasValidas.length) { alert('No hay productos para imprimir'); return; }
     printPurchaseOrderData({
         numero: document.getElementById('poNumero')?.value || generatePONumber(),
@@ -2918,7 +3245,7 @@ function printPurchaseOrder() {
 }
 
 function printPurchaseOrderById(id) {
-    const o = purchaseOrders.find(x => String(x.id) === String(id));
+    const o = purchaseOrders.find(x => x.id === id);
     if (!o) { alert('Orden no encontrada'); return; }
     printPurchaseOrderData(o);
 }
@@ -2935,7 +3262,7 @@ function updatePOLine(index, field, value) {
             const stock = getStockForProduct(product);
             line.costoUnitario = stock ? (stock.costoUnitario || 0) : (product.precioBase || 0);
         }
-    } else if (field === 'cantidad') { line.cantidad = Math.max(1, parseInt(value, 10) || 1); }
+    } else if (field === 'cantidad') { line.cantidad = Math.max(1, parseInt(value) || 1); }
     else if (field === 'costoUnitario') { line.costoUnitario = Math.max(0, parseFloat(value) || 0); }
     renderPOLines();
 }
@@ -2943,7 +3270,7 @@ function updatePOLine(index, field, value) {
 function removePOLine(index) { poLines.splice(index, 1); renderPOLines(); }
 
 function recalcPOTotals() {
-    const total = poLines.reduce((sum, l) => sum + ((parseInt(l.cantidad, 10) || 0) * (parseFloat(l.costoUnitario) || 0)), 0);
+    const total = poLines.reduce((sum, l) => sum + ((parseInt(l.cantidad) || 0) * (parseFloat(l.costoUnitario) || 0)), 0);
     const el = document.getElementById('poTotals');
     if (el) el.innerHTML = `TOTAL ORDEN: <span style="color:var(--primary,#2e7d32);">₡${formatMoney(total)}</span>`;
     return total;
@@ -2952,7 +3279,7 @@ function recalcPOTotals() {
 async function savePurchaseOrder(estado) {
     const proveedor = document.getElementById('poProveedor').value.trim();
     if (!proveedor) { alert('Ingrese el proveedor'); return; }
-    const lineasValidas = poLines.filter(l => l.productId && (parseInt(l.cantidad, 10) || 0) > 0);
+    const lineasValidas = poLines.filter(l => l.productId && (parseInt(l.cantidad) || 0) > 0);
     if (!lineasValidas.length) { alert('Agregue al menos un producto con cantidad válida'); return; }
     const numero = document.getElementById('poNumero').value || generatePONumber();
     const total = recalcPOTotals();
@@ -2961,9 +3288,9 @@ async function savePurchaseOrder(estado) {
         nombre: l.nombre || (allProducts.find(p => String(p.id) === String(l.productId))?.nombre || ''),
         nombreOriginal: l.nombreOriginal || (allProducts.find(p => String(p.id) === String(l.productId))?.nombreOriginal || ''),
         descripcion: getPOLineDescription(l),
-        cantidad: parseInt(l.cantidad, 10) || 0,
+        cantidad: parseInt(l.cantidad) || 0,
         costoUnitario: parseFloat(l.costoUnitario) || 0,
-        subtotal: (parseInt(l.cantidad, 10) || 0) * (parseFloat(l.costoUnitario) || 0),
+        subtotal: (parseInt(l.cantidad) || 0) * (parseFloat(l.costoUnitario) || 0),
         detalle: l.detalle || ''
     }));
     try {
@@ -3089,11 +3416,11 @@ async function quickApprovePO(id) {
 }
 
 async function deletePurchaseOrder(id) {
-    const o = purchaseOrders.find(x => String(x.id) === String(id));
+    const o = purchaseOrders.find(x => x.id === id);
     if (!confirm(`¿Eliminar la orden ${o?.numero || id}?${o?.estado === 'aprobada' ? '\n\n⚠️ Esta orden ya fue aprobada: el inventario NO se revertirá.' : ''}`)) return;
     try {
         await db.collection('ordenes_compra').doc(id).delete();
-        if (currentPO && String(currentPO.id) === String(id)) closePOEditor();
+        if (currentPO && currentPO.id === id) closePOEditor();
         await loadPurchaseOrders();
     } catch (error) {
         console.error('Error eliminando orden:', error);
