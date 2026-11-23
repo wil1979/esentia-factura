@@ -3293,46 +3293,104 @@ async function savePurchaseOrder(estado) {
         subtotal: (parseInt(l.cantidad) || 0) * (parseFloat(l.costoUnitario) || 0),
         detalle: l.detalle || ''
     }));
+    
     try {
         if (estado === 'aprobada') {
             if (!confirm(`✅ ¿Aprobar la orden ${numero} por ₡${formatMoney(total)}?\n\nSe sumará al inventario cada producto de la orden.`)) return;
+            
             await db.runTransaction(async (transaction) => {
+                // ✅ PASO 1: Realizar TODAS las lecturas primero
+                const stockReads = [];
                 for (const l of lineas) {
                     const product = allProducts.find(p => String(p.id) === String(l.productId));
                     const stockId = product ? getStockDocId(product) : normalizeString(l.nombre);
                     const stockRef = db.collection('stock').doc(stockId);
                     const stockDoc = await transaction.get(stockRef);
+                    
+                    stockReads.push({
+                        l,
+                        product,
+                        stockId,
+                        stockRef,
+                        stockDoc
+                    });
+                }
+                
+                // ✅ PASO 2: Realizar TODAS las escrituras después
+                const today = new Date().toISOString().split('T')[0];
+                for (const read of stockReads) {
+                    const { l, product, stockId, stockRef, stockDoc } = read;
+                    
                     let currentStock = 0, stockData = {};
-                    if (stockDoc.exists) { currentStock = stockDoc.data().cantidad || 0; stockData = stockDoc.data(); }
-                    else { stockData = { id: stockId, nombre: l.nombre, categoria: product ? product.categoria : 'General', precioVenta: product ? product.precioBase : 0, ultimaCompra: '-' }; }
-                    const today = new Date().toISOString().split('T')[0];
-                    transaction.set(stockRef, { ...stockData, id: stockId, nombre: stockData.nombre || l.nombre, cantidad: currentStock + l.cantidad, costoUnitario: l.costoUnitario > 0 ? l.costoUnitario : (stockData.costoUnitario || 0), ultimaActualizacion: new Date().toISOString(), ultimaCompra: today }, { merge: true });
+                    if (stockDoc.exists) { 
+                        currentStock = stockDoc.data().cantidad || 0; 
+                        stockData = stockDoc.data(); 
+                    } else { 
+                        stockData = { 
+                            id: stockId, 
+                            nombre: l.nombre, 
+                            categoria: product ? product.categoria : 'General', 
+                            precioVenta: product ? product.precioBase : 0, 
+                            ultimaCompra: '-' 
+                        }; 
+                    }
+                    
+                    transaction.set(stockRef, { 
+                        ...stockData, 
+                        id: stockId, 
+                        nombre: stockData.nombre || l.nombre, 
+                        cantidad: currentStock + l.cantidad, 
+                        costoUnitario: l.costoUnitario > 0 ? l.costoUnitario : (stockData.costoUnitario || 0), 
+                        ultimaActualizacion: new Date().toISOString(), 
+                        ultimaCompra: today 
+                    }, { merge: true });
+                    
                     const movementRef = db.collection('stock_movements').doc();
                     transaction.set(movementRef, {
-                        productId: l.productId, productName: l.nombre, type: 'entrada', quantity: l.cantidad,
-                        reference: numero, notes: `Compra aprobada - Proveedor: ${proveedor}`,
+                        productId: l.productId, 
+                        productName: l.nombre, 
+                        type: 'entrada', 
+                        quantity: l.cantidad,
+                        reference: numero, 
+                        notes: `Compra aprobada - Proveedor: ${proveedor}`,
                         costoUnitario: l.costoUnitario,
-                        fecha: firebase.firestore.FieldValue.serverTimestamp(), fechaLocal: new Date().toISOString()
+                        fecha: firebase.firestore.FieldValue.serverTimestamp(), 
+                        fechaLocal: new Date().toISOString()
                     });
                 }
             });
         }
+        
         const data = {
-            numero, proveedor,
+            numero, 
+            proveedor,
             notas: document.getElementById('poNotas').value.trim(),
             solicitadoPor: document.getElementById('poSolicitadoPor')?.value.trim() || 'M Elena Gutierrez S.',
             autorizadoPor: document.getElementById('poAutorizadoPor')?.value.trim() || 'Wilber Calderon M.',
-            lineas, total, estado,
+            lineas, 
+            total, 
+            estado,
             fecha: firebase.firestore.FieldValue.serverTimestamp(),
             ultimaActualizacion: new Date().toISOString()
         };
-        if (currentPO && currentPO.id) await db.collection('ordenes_compra').doc(currentPO.id).update(data);
-        else { const ref = await db.collection('ordenes_compra').add(data); currentPO = { id: ref.id }; }
+        
+        if (currentPO && currentPO.id) 
+            await db.collection('ordenes_compra').doc(currentPO.id).update(data);
+        else { 
+            const ref = await db.collection('ordenes_compra').add(data); 
+            currentPO = { id: ref.id }; 
+        }
+        
         if (estado === 'aprobada') {
-            await loadStock(); checkLowStockAlerts();
-            if (document.getElementById('view-inventory')?.style.display !== 'none') renderInventoryTable(currentInventoryFilter, document.getElementById('inventorySearch')?.value || '');
+            await loadStock(); 
+            checkLowStockAlerts();
+            if (document.getElementById('view-inventory')?.style.display !== 'none') 
+                renderInventoryTable(currentInventoryFilter, document.getElementById('inventorySearch')?.value || '');
             alert('✅ Compra aprobada e inventario actualizado');
-        } else { alert('💾 Orden guardada como borrador'); }
+        } else { 
+            alert('💾 Orden guardada como borrador'); 
+        }
+        
         await loadPurchaseOrders();
         if (estado === 'aprobada') editPurchaseOrder(currentPO.id, true);
     } catch (error) {
