@@ -2583,7 +2583,7 @@ function buildWhatsAppMessage(invoice, type = 'invoice') {
 
     let header = '';
     if (type === 'reminder') {
-        header = `🌿 *Recordatorio amable de pago* 🌿\n\nHola ${clientName} 👋, esperamos que estés muy bien.\n\nTe escribimos de *EWE Esentia* para recordarte amablemente que tienes un saldo pendiente con nosotros:\n\n`;
+        header = `🌿 *Factura* 🌿\n\nHola ${clientName} 👋, esperamos que estés muy bien.\n\nTe escribimos de *EWE Esentia* para recordarte amablemente que tienes un saldo pendiente con nosotros:\n\n`;
     } else if (type === 'resend') {
         header = `🌿 *Factura EWE Esentia* 🌿\nHola ${clientName} 👋, te reenviamos tu factura:\n\n`;
     } else {
